@@ -1,0 +1,12 @@
+﻿任务ID,任务类型,任务说明,任务ICON,任务描述,任务内容,任务奖励,解锁关卡
+id,type,,icon,des,value,reward,unlockLv
+1,1,通关XX关,levelicon,DailyTasksDes01,3#6#10,5#10#15,1
+2,2,找出XX个成语,bookicon,DailyTasksDes02,20#50#100,5#10#15,1
+3,3,使用XX个提示道具,tipicon,DailyTasksDes03,1#3#5,5#10#15,1
+4,3,使用XX个展示道具,reseticon,DailyTasksDes04,1#3#5,5#10#15,1
+5,3,使用XX个蝴蝶道具,butterflyicon,DailyTasksDes05,2#3#5,5#10#15,1000000
+6,4,游戏累计时长XX分钟,timeicon,DailyTasksDes06,10#20#30,5#10#15,1
+7,5,观看XX次视频广告,adsicon,DailyTasksDes07,1#3#5,5#10#15,10000000
+8,5,点亮XX个灯笼(需要确保剩余灯笼足够),limiticon,DailyTasksDes08,1#2#4,5#10#15,19
+9,5,赢得XX次竞赛（获得前3名）,fishicon,DailyTasksDes09,1#2#3,5#10#15,40000000
+10,5,在商店中进行一次购买,shopicon,DailyTasksDes10,1,50,200000000

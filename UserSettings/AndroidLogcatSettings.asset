@@ -1,0 +1,212 @@
+{
+    "m_SelectedDeviceId": "emulator-5554",
+    "m_SelectedProcess": {
+        "deviceId": "",
+        "name": "",
+        "processId": 0,
+        "exited": false
+    },
+    "m_SelectedPriority": 2,
+    "m_KnownProcessesForSerialization": [
+        {
+            "deviceId": "988a1b4657554d5947",
+            "name": "com.samsung.android.packageinstaller",
+            "processId": 19879,
+            "exited": true
+        },
+        {
+            "deviceId": "988a1b4657554d5947",
+            "name": "com.DefaultCompany.puzzle",
+            "processId": 20397,
+            "exited": true
+        },
+        {
+            "deviceId": "988a1b4657554d5947",
+            "name": "com.DefaultCompany.puzzle",
+            "processId": 14852,
+            "exited": true
+        },
+        {
+            "deviceId": "988a1b4657554d5947",
+            "name": "com.DefaultCompany.puzzle",
+            "processId": 30991,
+            "exited": true
+        },
+        {
+            "deviceId": "988a1b4657554d5947",
+            "name": "com.DefaultCompany.puzzle",
+            "processId": 28508,
+            "exited": false
+        },
+        {
+            "deviceId": "emulator-5554",
+            "name": "com.android.launcher3",
+            "processId": 1763,
+            "exited": true
+        },
+        {
+            "deviceId": "emulator-5554",
+            "name": "six.puzzle.word.relax",
+            "processId": 4229,
+            "exited": true
+        },
+        {
+            "deviceId": "emulator-5554",
+            "name": "com.android.launcher3",
+            "processId": 1767,
+            "exited": true
+        },
+        {
+            "deviceId": "emulator-5554",
+            "name": "hexa.word.search.puzzle.hexlogic.block",
+            "processId": 9061,
+            "exited": true
+        },
+        {
+            "deviceId": "emulator-5554",
+            "name": "com.android.settings",
+            "processId": 1554,
+            "exited": false
+        },
+        {
+            "deviceId": "R28M80D5JNA",
+            "name": "com.DefaultCompany.puzzle",
+            "processId": 13075,
+            "exited": true
+        },
+        {
+            "deviceId": "R28M80D5JNA",
+            "name": "com.DefaultCompany.puzzle",
+            "processId": 8412,
+            "exited": true
+        },
+        {
+            "deviceId": "R28M80D5JNA",
+            "name": "com.samsung.android.packageinstaller",
+            "processId": 5620,
+            "exited": true
+        },
+        {
+            "deviceId": "R28M80D5JNA",
+            "name": "com.samsung.android.MtpApplication",
+            "processId": 13329,
+            "exited": true
+        },
+        {
+            "deviceId": "R28M80D5JNA",
+            "name": "idiom.block.free.puzzle.zen.word.relax.games",
+            "processId": 5011,
+            "exited": false
+        },
+        {
+            "deviceId": "8ba7ff0d",
+            "name": "com.android.settings",
+            "processId": 27224,
+            "exited": false
+        },
+        {
+            "deviceId": "8ba7ff0d",
+            "name": "idiom.block.free.puzzle.zen.word.relax.games",
+            "processId": 22334,
+            "exited": false
+        }
+    ],
+    "m_Tags": {
+        "m_Entries": [
+            {
+                "m_Name": "Filter by all listed tags",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "No Filter",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "Tag Control...",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "Unity",
+                "m_Selected": true
+            },
+            {
+                "m_Name": "CRASH",
+                "m_Selected": true
+            }
+        ]
+    },
+    "m_ExtraWindowState": {
+        "Type": 0,
+        "Height": 255.0
+    },
+    "m_MemoryViewerState": {
+        "MemoryWindowWidth": 170.0,
+        "MemoryTypeEnabled": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+        ],
+        "MemoryGroup": 2,
+        "AutoCapture": true
+    },
+    "m_FilterOptions": {
+        "m_Filter": "",
+        "m_UseRegularExpressions": true,
+        "m_MatchCase": true
+    },
+    "m_SymbolPaths": [
+        {
+            "Name": "D:\\Unity\\2022.3.48f1c1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\Variations\\il2cpp\\Release\\Symbols\\arm64-v8a",
+            "Enabled": true
+        }
+    ],
+    "m_CaptureVideoSettings": {
+        "TimeLimitEnabled": false,
+        "TimeLimit": 180,
+        "VideoSizeEnabled": false,
+        "VideoSizeX": 1280,
+        "VideoSizeY": 720,
+        "BitRateEnabled": false,
+        "BitRateK": 20000,
+        "DisplayIdEnabled": false,
+        "DisplayId": ""
+    },
+    "m_ScreenCaptureSettings": {
+        "Mode": 1,
+        "m_LastSaveLocation": [
+            "E:\\Work\\Word Block",
+            "E:\\Work\\Word Block"
+        ]
+    },
+    "m_QueryLayoutSettings": {
+        "LastLayoutSaveLocation": "",
+        "LastScreenshotSaveLocation": ""
+    },
+    "m_InputSettings": {
+        "ShiftModifier": false,
+        "SendText": "",
+        "PosixKillSignal": 0,
+        "TargetProcess": {
+            "deviceId": "",
+            "name": "",
+            "processId": 0,
+            "exited": false
+        }
+    },
+    "m_AutoScroll": 2
+}

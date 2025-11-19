@@ -1,0 +1,121 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: trailAltas
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: Android
+      m_MaxTextureSize: 2048
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 65
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 2
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 0
+      enableAlphaDilation: 1
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: 055fcf70713464445a6bc13329df3afc, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - 74b96171dbc144f4d85a8efd411d2c9f: 21300000
+    - d4cbdd91101dc834ea66d264cc7bb170: 21300000
+    - b5d585227df35c0478f309c78f824c2a: 21300000
+    - e03bd673a5b2cb44a98abbd21175ea74: 21300000
+    - ccd62ce3cf8359841a516ff12597239d: 21300000
+    - bf39e7f3b621e1f489aa3f9e01407655: 21300000
+    - ab360f048f68a8a4f8013f666f0fdce9: 21300000
+    - ad2b7e166d3a58a47b4c2e3e8c487616: 21300000
+    - be6ace56d80ac014f9f7df88d48fe1c7: 21300000
+    - 74041d76b5a84174bb0a8bfd55463375: 21300000
+    - 15ae18e6fa7b5b642a60bf0d975f22dd: 21300000
+    - 76c0057706d6bde44a4abd70985a50cc: 21300000
+    - ce86a508aba095b4fb1f05c6ccc2a755: 21300000
+    - ac4639589f0ddaf43a9dadcc9e8a7cc3: 21300000
+    - c8aaa95b660795a43a03c808caa1e4fd: 21300000
+    - 60b7bd5b135cc1441959a8ed0d5f494f: 21300000
+    - 5472548cf6d2f8c439cc32cadf51ef8c: 21300000
+    - 85d2cfbde0ae89c49896cb0a980315be: 21300000
+    - 9499edede8ccde04783179beace9a4d1: 21300000
+    - 9c3fd0fd011675443b8c0154f53627a9: 21300000
+    - 98d3688ed18beb040a848e435722aa5a: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 74b96171dbc144f4d85a8efd411d2c9f, type: 3}
+  - {fileID: 21300000, guid: d4cbdd91101dc834ea66d264cc7bb170, type: 3}
+  - {fileID: 21300000, guid: b5d585227df35c0478f309c78f824c2a, type: 3}
+  - {fileID: 21300000, guid: e03bd673a5b2cb44a98abbd21175ea74, type: 3}
+  - {fileID: 21300000, guid: ccd62ce3cf8359841a516ff12597239d, type: 3}
+  - {fileID: 21300000, guid: bf39e7f3b621e1f489aa3f9e01407655, type: 3}
+  - {fileID: 21300000, guid: ab360f048f68a8a4f8013f666f0fdce9, type: 3}
+  - {fileID: 21300000, guid: ad2b7e166d3a58a47b4c2e3e8c487616, type: 3}
+  - {fileID: 21300000, guid: be6ace56d80ac014f9f7df88d48fe1c7, type: 3}
+  - {fileID: 21300000, guid: 74041d76b5a84174bb0a8bfd55463375, type: 3}
+  - {fileID: 21300000, guid: 15ae18e6fa7b5b642a60bf0d975f22dd, type: 3}
+  - {fileID: 21300000, guid: 76c0057706d6bde44a4abd70985a50cc, type: 3}
+  - {fileID: 21300000, guid: ce86a508aba095b4fb1f05c6ccc2a755, type: 3}
+  - {fileID: 21300000, guid: ac4639589f0ddaf43a9dadcc9e8a7cc3, type: 3}
+  - {fileID: 21300000, guid: c8aaa95b660795a43a03c808caa1e4fd, type: 3}
+  - {fileID: 21300000, guid: 60b7bd5b135cc1441959a8ed0d5f494f, type: 3}
+  - {fileID: 21300000, guid: 5472548cf6d2f8c439cc32cadf51ef8c, type: 3}
+  - {fileID: 21300000, guid: 85d2cfbde0ae89c49896cb0a980315be, type: 3}
+  - {fileID: 21300000, guid: 9499edede8ccde04783179beace9a4d1, type: 3}
+  - {fileID: 21300000, guid: 9c3fd0fd011675443b8c0154f53627a9, type: 3}
+  - {fileID: 21300000, guid: 98d3688ed18beb040a848e435722aa5a, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - UI_03
+  - Finish_02
+  - ujytkytkuy
+  - uytuytutujytjn
+  - UI_05
+  - UI_02
+  - hrtfhtrhtr
+  - huytuytuyt
+  - htrhtrhtrhtr
+  - beam02
+  - uh6truytujytjn
+  - UI_04
+  - hrthrthrt
+  - jtyujytjty
+  - Butterfly01
+  - ytuytuyjtjn
+  - UI_01
+  - Finish_01
+  - yt6uytuytujty
+  - jhgjhgjhg
+  - beam01
+  m_RenderDataMap: {}
+  m_Tag: trailAltas
+  m_IsVariant: 0

@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Metaball_liquid
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - video
+  - Water
+  - UI
+  - SignWater
+  - 
+  - Background
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: BasePanel
+    uniqueID: 2281878443
+    locked: 0
+  - name: BaseEffect
+    uniqueID: 3926264287
+    locked: 0
+  - name: PopPanel
+    uniqueID: 2352322453
+    locked: 0
+  - name: TopPanel
+    uniqueID: 2787770753
+    locked: 0
+  - name: UpPopPanel
+    uniqueID: 2596690705
+    locked: 0
+  - name: UpPopTwoPanel
+    uniqueID: 3788755339
+    locked: 0
+  - name: RewardPanel
+    uniqueID: 2937610821
+    locked: 0
+  - name: TipsPanel
+    uniqueID: 2473926065
+    locked: 0
+  - name: FlyEffect
+    uniqueID: 2187189491
+    locked: 0

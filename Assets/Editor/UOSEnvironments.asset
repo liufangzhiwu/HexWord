@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5f1c0254cc6f415396fab55e2b1a880, type: 3}
+  m_Name: UOSEnvironments
+  m_EditorClassIdentifier: 
+  environments:
+  - environmentName: "\u6210\u8BED\u6D88:\u7985\u610F\u4E4B\u5883"
+    appID: 96856add-f0ea-4687-b3e7-e6d59c36fa7a
+    appSecret: 73e13eac4c4341d2b0e8897e4ebf4ad6
+    appServiceSecret: 6a0ddc8733e84101bf8488c4f1b7e427
+    roomProfileUUID: 
+    matchmakingConfigID: 
+    configPairs: []
+  selectedAppID: 96856add-f0ea-4687-b3e7-e6d59c36fa7a

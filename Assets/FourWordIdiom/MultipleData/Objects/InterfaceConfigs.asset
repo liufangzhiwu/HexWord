@@ -1,0 +1,170 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51a9cc164a84d064483349fa652d26f7, type: 3}
+  m_Name: InterfaceConfigs
+  m_EditorClassIdentifier: 
+  viewsData:
+  - panelName: GamePlayArea
+    panelLayer: BasePanel
+    bundleName: RootCanvas
+    spriteAtlasName: UI_MainBase
+    prefab: {fileID: 3928016723604912977, guid: 121a649aa227684499243306c180f5a1,
+      type: 3}
+  - panelName: HeaderSection
+    panelLayer: BasePanel
+    bundleName: RootCanvas
+    spriteAtlasName: UI_MainBase
+    prefab: {fileID: 3024168589130899512, guid: 8d757dade3725104282bf2df52e4a93f,
+      type: 3}
+  - panelName: PrimaryInterface
+    panelLayer: BasePanel
+    bundleName: RootCanvas
+    spriteAtlasName: UI_MainBase
+    prefab: {fileID: 592529793067197676, guid: 829bf00ec3a94154ca8ff0bf5ed7592a, type: 3}
+  - panelName: AppRating
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: ced4f644b3e41d6448ce7f348b97936d,
+      type: 3}
+  - panelName: PolicyView
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: ddd65efeb65644eecaad22b6cde4abf0,
+      type: 3}
+  - panelName: LearningGuide
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: dc241aaca6db0fa41b1bc1e474d38ff3,
+      type: 3}
+  - panelName: DebugMenu
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 168bdf41c2f05cb4984f4cdaa7c1ffe6,
+      type: 3}
+  - panelName: OptionsView
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 5922bedc73f20174bb191be1079858e7,
+      type: 3}
+  - panelName: StageFinishView
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 4165248868016293823, guid: 0405853341f0aa841837fa413d182b50,
+      type: 3}
+  - panelName: LimitTimeScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 0c91000c32552554e950874e209f4d91,
+      type: 3}
+  - panelName: SignWaterScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 7a5e878dacc175840bb62c0c9b435402,
+      type: 3}
+  - panelName: LimitHelpScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: f8bde65bb25980a4dbeac57745a25476,
+      type: 3}
+  - panelName: DailyTasksScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: b3fff65cb8128254688331df67ae3b50,
+      type: 3}
+  - panelName: HeadScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 6d8eeb1c522d1194e9f71f2cbf4810d0,
+      type: 3}
+  - panelName: CompetitionStart
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 784f99c2c908e0c439783d6aa92c042e,
+      type: 3}
+  - panelName: DashCompetition
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 21c66e00116e30d4ba506a1b7ff418bf,
+      type: 3}
+  - panelName: MatchSuccess
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: debfca372b5dcf74e832de7807d23b89,
+      type: 3}
+  - panelName: CompetitionFail
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 59f0b10f00079d74cbdc7f405b613d43,
+      type: 3}
+  - panelName: CompetitionHelp
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: f7d4ed6d05c193c4593da32d3116779b,
+      type: 3}
+  - panelName: ShopScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: e354a790ae565f94c9dbcba6d498b6ac,
+      type: 3}
+  - panelName: AdsDiscountScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 2a51c3225d5da4e43b5af8a7cbf419e3,
+      type: 3}
+  - panelName: RewardAdsScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 80d9b9ce78383854fb95ccd9ac86a9d1,
+      type: 3}
+  - panelName: WordVocabularyScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 4165248868016293823, guid: 9381fa4cf2669054481d13ac950d02c8,
+      type: 3}
+  - panelName: LevelWordScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 4165248868016293823, guid: 439b3194f53de2444af593365da6e693,
+      type: 3}
+  - panelName: LevelWordDetail
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 4165248868016293823, guid: 7649335b0aca52e44886a1e104325484,
+      type: 3}
+  - panelName: WordDetailScreen
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 4165248868016293823, guid: 3829a928e24ad4f408586c70e4f7a487,
+      type: 3}

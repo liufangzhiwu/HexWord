@@ -1,0 +1,12 @@
+﻿商品ID,日语商品名ID,繁体内购ID,商品类型,商品名（策划用）,商品大类,商品内容,价格（策划用，日元）,展示图,名称,说明文本,感叹号说明,是否首页展示,正常排序,首页排序,弹出条件,限时时间,折扣显示
+id,nameID,nameID_tw,purchaseType,,type,productContent,,showIcon,name,des,pointDes,isHomeDisplay,sort,homeSort,unlock,limitedTime,discount
+0,Gold0,GoldF0,0,金币1,0,0;200,6,gold0,,,,1,11,7,,,
+1,Gold1,GoldF1,0,金币2,0,0;1220,30,gold1,,,,,13,,,,
+2,Gold2,GoldF2,0,金币3,0,0;6280,120,gold2,,,,,15,,,,
+3,Gold3,GoldF3,0,金币4,0,0;18400,300,gold3,,,,,16,,,,
+4,Gold4,GoldF4,0,金币5,0,0;660,18,gold1,,,,,12,,,,
+5,Gold5,GoldF5,0,金币6,0,0;2680,60,gold2,,,,,14,,,,
+6,Box0,BoxF0,0,初级宝箱,2,0;1080#2;8#3;8,30,shopgift1,ShopBoxName01,,,1,4,3,,,50%
+7,Box1,BoxF1,0,中级宝箱,2,0;3690#2;10#3;10,60,shopgift2,ShopBoxName02,,,1,5,4,,,60%
+8,Box2,BoxF2,0,上级宝箱,2,0;11800#2;12#3;12,120,shopgift3,ShopBoxName03,,,1,6,5,,,70%
+9,Box3,BoxF3,0,超级宝箱,2,0;48800#2;18#3;18,300,shopgift4,ShopBoxName04,,,,7,,,,80%
