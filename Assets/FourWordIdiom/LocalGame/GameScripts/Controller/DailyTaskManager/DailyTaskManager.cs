@@ -458,7 +458,7 @@ public class DailyTaskManager : MonoBehaviour
             }
         }
         
-        GameDataManager.instance.UserData.SaveTaskData();
+        //GameDataManager.instance.UserData.SaveTaskData();
     }
 
     public TaskDataItem GetTaskItem(int limitItemID)

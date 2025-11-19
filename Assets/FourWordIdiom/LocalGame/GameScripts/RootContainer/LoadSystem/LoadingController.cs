@@ -1,8 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
-using Unity.Passport.Runtime.UI;
-using Unity.Passport.Sample.Scripts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -37,16 +35,9 @@ public class LoadingController : MonoBehaviour
 
     private void Start()
     {
-        //AccountQuitBtn.gameObject.SetActive(false);
         StartCoroutine(InitializeLoadingProcess());
-        
-        //AccountQuitBtn.onClick.AddListener(AccountQuit);
     }
-    
-    private void AccountQuit()
-    {
-        UIController.Instance.Logout();
-    }
+
 
     /// <summary>
     /// 初始化加载流程
@@ -96,12 +87,8 @@ public class LoadingController : MonoBehaviour
         // 并行执行模拟加载和实际加载
         yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
-        
-        UIController.Instance.ShowLoginScreen();
-        
-        // 等待登录完成
-        yield return new WaitUntil(() => UIController.Instance.IsCompleteLogin);
         //AudioManager.Instance.Initialize();
+        GameDataManager.instance.LoadPlayerProfile();
         sceneLoadOperation.allowSceneActivation = true;
     }
 

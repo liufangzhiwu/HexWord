@@ -3,7 +3,6 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using Unity.Passport.Sample.Scripts;
 
 public class OptionsView : UIWindow
 {
@@ -102,7 +101,6 @@ public class OptionsView : UIWindow
     private void AccountQuit()
     {
         SystemManager.Instance.ShowPanel(PanelType.AppRating);
-        UIController.Instance.Logout();
         OnHideButton();
         //WaterManager.instance.ClearWater();
     }

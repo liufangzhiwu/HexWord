@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using Unity.Passport.Sample.Scripts;
 using UnityEngine;
 using UnityEngine.Events;
 #if UNITY_IOS
@@ -49,7 +48,6 @@ public sealed class GameCoreManager: MonoBehaviour
     {
         StartCoroutine(InitializeGameRoutine());
         //StartCoroutine(CheckNetworkConnection());
-        UIController.Instance.InitPassportUI();
     }
    
     #endregion

@@ -5,8 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Passport;
-using Unity.Passport.Sample.Scripts;
 // using ThinkingAnalytics;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -68,25 +66,13 @@ public class UserData
     #region 时间相关数据
 
     public string logoutTime;           // 退出时间
-    //public string curStageStartTime;    // 当前关卡开始时间
+    public string curStageStartTime;    // 当前关卡开始时间
     public bool curIsEnter;    // 当前关卡是否已经进入
-    //public int curStageOnlineTime;      // 当前关卡在线时长(秒)
+    public int curStageOnlineTime;      // 当前关卡在线时长(秒)
     // 关卡对应通关时长
-    //public Dictionary<int, int> passLevelUseTime=new Dictionary<int, int>();
+    public Dictionary<int, int> passLevelUseTime=new Dictionary<int, int>();
 
     #endregion
-
-    #region 统计计数数据
-
-    // public int hudiecount;              // 蝴蝶道具数量
-    // public int showRateusCount;         // 好评界面显示次数
-    // public int dayPassStageCount;       // 当日通关次数
-    // public bool isChangeUserName;       // 是否更改过用户名称
-    // public int totallogin;       // 总登录次数
-    // public int totalSeeAds;       // 总看广告次数
-
-    #endregion
-
 
     #region 道具数据
 
@@ -154,21 +140,53 @@ public class UserData
     private const string TOOL_KEY_PREFIX = "Tool_";
 
     #region 数据初始化方法
+    
+    /// <summary>
+    /// 加载用户数据
+    /// </summary>
+    public void LoadData()
+    {
+        string filePath = Getfilepath;
+        
+        if (!File.Exists(filePath))
+        {
+            Debug.LogWarning("未找到用户数据文件，使用默认数据初始化");
+            InitData();
+            return;
+        }
+
+        try
+        {
+            string encryptedJson = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
+            //解密
+            string json = SecurityProvider.RestoreData(encryptedJson);
+            
+            Debug.Log($"加载用户数据: {json}");
+            UserData loadedData = JsonConvert.DeserializeObject<UserData>(json);
+                
+            if (loadedData.CurrentStage <=0)
+            {
+                Debug.LogError($"关卡数据异常: {json}");
+                InitData();
+                //AnalyticMgr.BugRecord("关卡存档异常",json);
+                return;
+            }
+
+            InitData(loadedData);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"加载用户数据异常: {ex.Message}");
+            InitData();
+        }
+    }
+    
 
     /// <summary>
     /// 加载用户数据
     /// </summary>
-    public void LoadData(Persona persona)
+    public void InitData()
     {
-        // 检查数据版本
-        int savedVersion = PlayerPrefs.GetInt(USER_DATA_VERSION_KEY, 0);
-        
-        if (savedVersion < CURRENT_DATA_VERSION)
-        {
-            Debug.Log($"数据版本更新: {savedVersion} -> {CURRENT_DATA_VERSION}");
-          
-        }
-        
         # region 初始数据
         
         // 基础数据
@@ -183,6 +201,9 @@ public class UserData
         isShowVocabulary = false;
         // 时间数据
         logoutTime = DateTime.Now.ToString();
+        curStageStartTime = null;
+        curStageOnlineTime = 0;
+        curIsEnter = false;
         curIsEnter = false;
         // 初始化道具数据
         toolInfo = new Dictionary<int, ToolInfo>
@@ -195,6 +216,7 @@ public class UserData
         signOpenTime = null;
         signid = 0;
         isDayEnterSign = true;
+        
         //显示奖励数据
         timerePuzzleid = 0;
         limitOpenTime = null;
@@ -210,284 +232,60 @@ public class UserData
         wordVocabularyChinSim = new WordVocabulary<string>();
         
         #endregion
-
-        if (persona != null)
-        {
-            // 基础数据
-            if (persona.Properties.ContainsKey("Gold"))
-                Gold = int.Parse(persona.Properties["Gold"].ToString());
-            if (persona.Properties.ContainsKey(CURRENT_STAGE_KEY))
-                CurrentStage = int.Parse(persona.Properties[CURRENT_STAGE_KEY].ToString());
-            // 系统设置
-            if (persona.Properties.ContainsKey("LanguageCode"))
-                LanguageCode = persona.Properties["LanguageCode"].ToString();
-            if (persona.Properties.ContainsKey("IsMusicOn"))
-                IsMusicOn = int.Parse(persona.Properties["IsMusicOn"].ToString()) == 1;
-            if (persona.Properties.ContainsKey("IsSoundOn"))
-                IsSoundOn = int.Parse(persona.Properties["IsSoundOn"].ToString()) == 1;
-            // 游戏进度
-            if (persona.Properties.ContainsKey("TutorialProgress"))
-                TutorialProgress = int.Parse(persona.Properties["TutorialProgress"].ToString());
-            if (persona.Properties.ContainsKey("IsFirstLaunch"))
-                IsFirstLaunch = int.Parse(persona.Properties["IsFirstLaunch"].ToString()) == 1;
-            if (persona.Properties.ContainsKey("isShowVocabulary"))
-                isShowVocabulary = int.Parse(persona.Properties["isShowVocabulary"].ToString()) == 1;
-            // 时间数据
-            if (persona.Properties.ContainsKey("logoutTime"))
-                logoutTime = persona.Properties["logoutTime"].ToString();
-            if (persona.Properties.ContainsKey("curIsEnter"))
-                curIsEnter = int.Parse(persona.Properties["curIsEnter"].ToString()) == 1;
-            // 道具数据 - 需要特殊处理字典类型
-            if (persona.Properties.ContainsKey("ToolInfo"))
-            {
-                string toolInfoJson = persona.Properties["ToolInfo"].ToString();
-                if(!string.IsNullOrEmpty(toolInfoJson)&&toolInfoJson!="{}")
-                    toolInfo = JsonConvert.DeserializeObject<Dictionary<int, ToolInfo>>(toolInfoJson);
-            }
-            
-            // 签到数据
-            if (persona.Properties.ContainsKey("signOpenTime"))
-                signOpenTime = persona.Properties["signOpenTime"].ToString();
-            if (persona.Properties.ContainsKey("signid"))
-                signid = int.Parse(persona.Properties["signid"].ToString());
-            if (persona.Properties.ContainsKey("isDayEnterSign"))
-                isDayEnterSign = int.Parse(persona.Properties["isDayEnterSign"].ToString()) == 1;
-            // 限时活动数据
-            if (persona.Properties.ContainsKey("timerePuzzleid"))
-                timerePuzzleid = int.Parse(persona.Properties["timerePuzzleid"].ToString());
-            if (persona.Properties.ContainsKey("limitOpenTime"))
-                limitOpenTime = persona.Properties["limitOpenTime"].ToString();
-            if (persona.Properties.ContainsKey("limitMinPeriod"))
-                limitMinPeriod = int.Parse(persona.Properties["limitMinPeriod"].ToString());
-            if (persona.Properties.ContainsKey("limitEndTime"))
-                limitEndTime = persona.Properties["limitEndTime"].ToString();
-            if (persona.Properties.ContainsKey("isDayEnterLimint"))
-                isDayEnterLimint = int.Parse(persona.Properties["isDayEnterLimint"].ToString()) == 1;
-            if (persona.Properties.ContainsKey("timePuzzlecount"))
-                timePuzzlecount = int.Parse(persona.Properties["timePuzzlecount"].ToString());
-            if (persona.Properties.ContainsKey("isNeedShowHelp"))
-                isNeedShowHelp = int.Parse(persona.Properties["isNeedShowHelp"].ToString()) == 1;
-            // 每日任务数据
-            if (persona.Properties.ContainsKey("completeTaskList"))
-            {
-                string completeTaskJson = persona.Properties["completeTaskList"].ToString();
-                if(!string.IsNullOrEmpty(completeTaskJson)&&completeTaskJson!="{}")
-                    completeTaskList = JsonConvert.DeserializeObject<List<CompleteTaskData>>(completeTaskJson);
-            }
-            if (persona.Properties.ContainsKey("taskSaveDatas"))
-            {
-                // 修改反序列化代码
-                string taskSaveJson = persona.Properties["taskSaveDatas"].ToString();
-                if(!string.IsNullOrEmpty(taskSaveJson)&&taskSaveJson!="{}")
-                    taskSaveDatas = JsonConvert.DeserializeObject<List<TaskSaveData>>(taskSaveJson);
-            }
-            if (persona.Properties.ContainsKey("isAllCompleteTask"))
-                isAllCompleteTask = int.Parse(persona.Properties["isAllCompleteTask"].ToString()) == 1;
-            
-            // 词汇数据
-            if (persona.Properties.ContainsKey("wordVocabularyChinSim"))
-            {
-                string vocabularyJson = persona.Properties["wordVocabularyChinSim"].ToString();
-                if(!string.IsNullOrEmpty(vocabularyJson)&&vocabularyJson!="{}")
-                    wordVocabularyChinSim = JsonConvert.DeserializeObject<WordVocabulary<string>>(vocabularyJson);
-            }
-        }
-        
-        // // 加载道具数据
-        // LoadToolData();
-        //
-        // // 加载列表数据
-        // LoadListData();
-        //
-        // // 加载词库数据
-        // LoadVocabulary();
-        // 检查是否需要重置每日数据
-        CheckResetLimitTime();
-
-        SubmitInitialUserData();
     }
     
-     // 首次初始化数据提交方法
-    private void SubmitInitialUserData()
+    /// <summary>
+    /// 从现有用户数据初始化
+    /// </summary>
+    /// <param name="user">源用户数据</param>
+    public void InitData(UserData user)
     {
-        // 创建字典并添加键值对（所有值转换为字符串）
-        Dictionary<string, string> userData = new Dictionary<string, string>();
-        
+        if (user == null) return;
+      
         // 基础数据
-        userData["Gold"] = AppGameSettings.StartingGold.ToString();
-        userData["CurrentStage"] = AppGameSettings.FirstLevel.ToString();
-        userData["LanguageCode"] = GetLanguage();
-        userData["IsMusicOn"] = "1"; // true转换为1
-        userData["IsSoundOn"] = "1"; // true转换为1
-        
+        Gold = user.Gold;
+        CurrentStage = user.CurrentStage;
+        LanguageCode = GetLanguage();
+        IsMusicOn = user.IsMusicOn;
+        IsSoundOn = user.IsSoundOn;
         // 游戏进度
-        userData["TutorialProgress"] = "0";
-        userData["IsFirstLaunch"] = "1"; // true转换为1
-        userData["isShowVocabulary"] = "0"; // false转换为0
-        
+        TutorialProgress = user.TutorialProgress;
+        IsFirstLaunch = user.IsFirstLaunch;
+        isShowVocabulary = user.isShowVocabulary;
         // 时间数据
-        userData["logoutTime"] = DateTime.Now.ToString();
-        userData["curIsEnter"] = "0"; // false转换为0
-        
-        // 道具数据（JSON序列化）
-        Dictionary<int, ToolInfo> initialTools = new Dictionary<int, ToolInfo>
-        {
-            { 101, new ToolInfo { cost = AppGameSettings.ShopItems.ResetCost, type = "Reset", count = AppGameSettings.ShopItems.StartingResets } },
-            { 102, new ToolInfo { cost = AppGameSettings.ShopItems.HintCost, type = "Hint", count = AppGameSettings.ShopItems.StartingHints } },
-            { 103, new ToolInfo { cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly", count = AppGameSettings.ShopItems.StartingButterflies } }
-        };
-        userData["ToolInfo"] = JsonUtility.ToJson(initialTools);
-        
+        logoutTime = DateTime.Now.ToString();
+        curIsEnter = user.curIsEnter;
+        // 初始化道具数据
+        toolInfo = user.toolInfo;
         // 签到数据
-        userData["signOpenTime"] = ""; // null转换为空字符串
-        userData["signid"] = "0";
-        userData["isDayEnterSign"] = "1"; // true转换为1
+        signOpenTime = user.signOpenTime;
+        signid = user.signid;
+        isDayEnterSign = user.isDayEnterSign;
+        curStageStartTime= user.curStageStartTime;
+        curStageOnlineTime = user.curStageOnlineTime;
+        //显示奖励数据
+        timerePuzzleid = user.timerePuzzleid;
+        limitOpenTime = user.limitOpenTime;
+        limitMinPeriod = user.limitMinPeriod;
+        limitEndTime = user.limitEndTime;
+        isDayEnterLimint = user.isDayEnterLimint;
+        timePuzzlecount = user.timePuzzlecount;
+        isNeedShowHelp = user.isNeedShowHelp;
+        //每日任务数据
+        completeTaskList = user.completeTaskList;
+        taskSaveDatas = user.taskSaveDatas;
+        isAllCompleteTask = user.isAllCompleteTask;
+        wordVocabularyChinSim = user.wordVocabularyChinSim;
         
-        // 限时活动数据
-        userData["timerePuzzleid"] = "0";
-        userData["limitOpenTime"] = ""; // null转换为空字符串
-        userData["limitMinPeriod"] = "0";
-        userData["limitEndTime"] = ""; // null转换为空字符串
-        userData["isDayEnterLimint"] = "1"; // true转换为1
-        userData["timePuzzlecount"] = "0";
-        userData["isNeedShowHelp"] = "1"; // true转换为1
-        
-        // 每日任务数据（JSON序列化）
-        userData["completeTaskList"] = JsonUtility.ToJson(new List<CompleteTaskData>());
-        userData["taskSaveDatas"] = JsonUtility.ToJson(new List<TaskSaveData>());
-        userData["isAllCompleteTask"] = "0"; // false转换为0
-        
-        // 词汇数据（JSON序列化）
-        userData["wordVocabularyChinSim"] = JsonUtility.ToJson(new WordVocabulary<string>());
-        
-        // 调用更新接口
-        UIController.Instance.UpdateUserInfo(userData);
+        // 检查是否需要重置每日数据
+        CheckResetLimitTime();
+       
     }
 
     #endregion
 
     #region 数据维护方法
-    
-    // /// <summary>
-    // /// 加载道具数据
-    // /// </summary>
-    // private void LoadToolData()
-    // {
-    //     toolInfo = new Dictionary<int, ToolInfo>
-    //     {
-    //         { 101, LoadSingleTool(101,20,"Reset") },
-    //         { 102, LoadSingleTool(102,50,"Hint") },
-    //         { 103, LoadSingleTool(103,60,"Butterfly") }
-    //     };
-    // }
-    
-    // /// <summary>
-    // /// 加载单个道具数据
-    // /// </summary>
-    // private ToolInfo LoadSingleTool(int toolId,int cost,string type)
-    // {
-    //     string keyPrefix = $"{TOOL_KEY_PREFIX}{toolId}_";
-    //     return new ToolInfo
-    //     {
-    //         cost = PlayerPrefs.GetInt(keyPrefix + "cost", cost),
-    //         type = PlayerPrefs.GetString(keyPrefix + "type", type),
-    //         count = PlayerPrefs.GetInt(keyPrefix + "count", 1),
-    //         addcount = PlayerPrefs.GetInt(keyPrefix + "addcount", 0),
-    //         reducecount = PlayerPrefs.GetInt(keyPrefix + "reducecount", 0)
-    //     };
-    // }
-    
-    
-    // /// <summary>
-    // /// 加载列表数据
-    // /// </summary>
-    // private void LoadListData()
-    // {
-    //     // 加载完成任务列表
-    //     completeTaskList = LoadList<CompleteTaskData>("CompleteTask");
-    //     
-    //     // 加载任务数据
-    //     taskSaveDatas = LoadList<TaskSaveData>("TaskSaveData");
-    //     
-    //     // 加载限时商店数据
-    //     //limitShopItems = LoadList<ShopLimitData>("LimitShopItems");
-    //     
-    //     // 加载通关时间数据
-    //     //passLevelUseTime = LoadDictionary<int, int>("PassLevelUseTime");
-    // }
-    
-    // /// <summary>
-    // /// 加载词库数据
-    // /// </summary>
-    // private void LoadVocabulary()
-    // {
-    //     // wordVocabularyJan = LoadVocabulary("JanVocabulary");
-    //     // wordVocabularyChinTra = LoadVocabulary("ChinTraVocabulary");
-    //     wordVocabularyChinSim = LoadVocabulary("ChinSimVocabulary");
-    // }
-    
-    // /// <summary>
-    // /// 加载词库
-    // /// </summary>
-    // private WordVocabulary<string> LoadVocabulary(string key)
-    // {
-    //     string json = PlayerPrefs.GetString(key, null);
-    //     if (!string.IsNullOrEmpty(json))
-    //     {
-    //         try
-    //         {
-    //             return JsonConvert.DeserializeObject<WordVocabulary<string>>(json);
-    //         }
-    //         catch
-    //         {
-    //             // 解析失败时返回新对象
-    //             return new WordVocabulary<string>();
-    //         }
-    //     }
-    //     return new WordVocabulary<string>();
-    // }
-    
-    // /// <summary>
-    // /// 加载列表
-    // /// </summary>
-    // private List<T> LoadList<T>(string key)
-    // {
-    //     string json = PlayerPrefs.GetString(key, null);
-    //     if (!string.IsNullOrEmpty(json))
-    //     {
-    //         try
-    //         {
-    //             return JsonConvert.DeserializeObject<List<T>>(json);
-    //         }
-    //         catch
-    //         {
-    //             // 解析失败时返回新列表
-    //             return new List<T>();
-    //         }
-    //     }
-    //     return new List<T>();
-    // }
-    
-    // /// <summary>
-    // /// 加载字典
-    // /// </summary>
-    // private Dictionary<K, V> LoadDictionary<K, V>(string key)
-    // {
-    //     string json = PlayerPrefs.GetString(key, null);
-    //     if (!string.IsNullOrEmpty(json))
-    //     {
-    //         try
-    //         {
-    //             return JsonConvert.DeserializeObject<Dictionary<K, V>>(json);
-    //         }
-    //         catch
-    //         {
-    //             // 解析失败时返回新字典
-    //             return new Dictionary<K, V>();
-    //         }
-    //     }
-    //     return new Dictionary<K, V>();
-    // }
+ 
 
     /// <summary>
     /// 检查并重置每日限时数据
@@ -573,32 +371,35 @@ public class UserData
 
     
     /// <summary>
-    /// 保存用户数据 - 现在只保存变化的部分
+    /// 保存用户数据
     /// </summary>
     public void SaveData()
     {
         try
         {
+            if(CurrentStage<=0) return;
+            
             // 更新登出时间
             if (!string.IsNullOrEmpty(logoutTime) && DateTime.Now > DateTime.Parse(logoutTime))
             {
                 logoutTime = DateTime.Now.ToString();
-                SaveString("logoutTime", logoutTime);
             }
             
             // 更新在线时长
-            //UpdateOnlineStageTime();
+            UpdateOnlineStageTime();
             
             // 标记非首次进入
-            if (IsFirstLaunch)
-            {
-                IsFirstLaunch = false;
-                SaveBool("IsFirstLaunch", IsFirstLaunch);
-            }
+            IsFirstLaunch = false;
 
-            // 保存版本号
-            PlayerPrefs.SetInt(USER_DATA_VERSION_KEY, CURRENT_DATA_VERSION);
-            PlayerPrefs.Save();
+            // 序列化并加密数据
+            string json = JsonConvert.SerializeObject(this, Formatting.Indented);
+            string encryptedJson = SecurityProvider.ProtectData(json);
+            
+            // 写入文件
+            File.WriteAllText(Getfilepath, encryptedJson);
+            Debug.Log("用户数据保存成功");
+
+           
         }
         catch (Exception ex)
         {
@@ -606,124 +407,41 @@ public class UserData
         }
     }
 
-    /// <summary>
-    /// 保存字符串
-    /// </summary>
-    private void SaveString(string key, string value)
-    {
-        PlayerPrefs.SetString(key, value);
-        PlayerPrefs.Save();
-        
-        // 创建字典并添加键值对（整数需转换为字符串）
-        Dictionary<string, string> userData = new Dictionary<string, string>();
-        userData[key] = value.ToString();  // 关键转换
-
-        // 调用更新接口
-        UIController.Instance.UpdateUserInfo(userData);
-    }
-    
-    /// <summary>
-    /// 保存整数
-    /// </summary>
-    private void SaveInt(string key, int value)
-    {
-        PlayerPrefs.SetInt(key, value);
-        PlayerPrefs.Save();
-        
-        // 创建字典并添加键值对（整数需转换为字符串）
-        Dictionary<string, string> userData = new Dictionary<string, string>();
-        userData[key] = value.ToString();  // 关键转换
-
-        // 调用更新接口
-        UIController.Instance.UpdateUserInfo(userData);
-    }
-    
-    /// <summary>
-    /// 保存布尔值
-    /// </summary>
-    private void SaveBool(string key, bool value)
-    {
-        int tvalue = value ? 1 : 0;
-        
-        PlayerPrefs.SetInt(key, tvalue);
-        PlayerPrefs.Save();
-        
-        // 创建字典并添加键值对（整数需转换为字符串）
-        Dictionary<string, string> userData = new Dictionary<string, string>();
-        userData[key] = tvalue.ToString();  // 关键转换
-
-        // 调用更新接口
-        UIController.Instance.UpdateUserInfo(userData);
-    }
-    
-    /// <summary>
-    /// 保存列表
-    /// </summary>
-    private void SaveList<T>(string key, List<T> list)
-    {
-        string json = JsonConvert.SerializeObject(list);
-        SaveString(key, json);
-        
-        // 创建字典并添加键值对（整数需转换为字符串）
-        Dictionary<string, string> userData = new Dictionary<string, string>();
-        userData[key] = json;  // 关键转换
-        
-        // 调用更新接口
-        UIController.Instance.UpdateUserInfo(userData);
-    }
-    
-    
-    /// <summary>
-    /// 保存字典
-    /// </summary>
-    private void SaveDictionary<K, V>(string key, Dictionary<K, V> dict)
-    {
-        string json = JsonConvert.SerializeObject(dict);
-        SaveString(key, json);
-    }
-    
-    /// <summary>
-    /// 保存词库
-    /// </summary>
-    private void SaveVocabulary(string key, WordVocabulary<string> vocabulary)
-    {
-        string json = JsonConvert.SerializeObject(vocabulary);
-        SaveString(key, json);
-    }
-    
-    /// <summary>
-    /// 保存单个道具
-    /// </summary>
-    private void SaveTool()
-    {
-        SaveList("toolList", toolInfo.ToList());
-    }
-
-
     #endregion
 
     #region 游戏数据操作方法
     
+    /// <summary>
+    /// 更新当前关卡在线时长
+    /// </summary>
+    public void UpdateOnlineStageTime()
+    {
+        if (!string.IsNullOrEmpty(curStageStartTime))
+        {
+            DateTime startTime = DateTime.Parse(curStageStartTime);
+            TimeSpan duration = DateTime.Now - startTime;
+            
+            if (duration.TotalSeconds >= 0)
+            {
+                curStageOnlineTime += (int)duration.TotalSeconds;
+            }
+        }
+    }
+
+
    
     public void UdpateTimePuzzleCount(int value)
     {
         timePuzzlecount+=value;
-        SaveInt("timePuzzlecount", timePuzzlecount);
     }
-
     /// <summary>
     /// 新增任务数据
     /// </summary>
     public void UpdateDailyTaskData(TaskSaveData taskSave)
     {
         taskSaveDatas.Add(taskSave);
-        SaveTaskData();
     }
 
-    public void SaveTaskData()
-    {
-        SaveList("taskSaveDatas", taskSaveDatas);
-    }
 
     /// <summary>
     /// 更新关卡进度
@@ -736,15 +454,11 @@ public class UserData
     public void UpdateStage(int value = 1, bool isSet = false)
     {
         CurrentStage = isSet ? value : CurrentStage + value;
-        SaveInt(CURRENT_STAGE_KEY, CurrentStage);
-        
-        Debug.Log($"关卡更新: {(isSet ? "设置为" : "增加")}{value}, 当前关卡: {CurrentStage}");
     }
 
     public void UpdateTutorialProgress()
     {
         TutorialProgress +=1;
-        SaveInt("TutorialProgress", TutorialProgress);
     }
 
     /// <summary>
@@ -754,8 +468,6 @@ public class UserData
     {
         //int oldGold = Gold;
         Gold += value;
-        
-        SaveInt("Gold", Gold);
         
         if (updateui)
         {
@@ -770,9 +482,6 @@ public class UserData
     {
         signOpenTime = DateTime.Now.ToString();
         isDayEnterSign = false;
-        
-        SaveString("signOpenTime", signOpenTime);
-        SaveBool("isDayEnterSign", isDayEnterSign);
     }
     
     /// <summary>
@@ -781,12 +490,12 @@ public class UserData
     public void UpdateSignid()
     {
         signid++;
-        SaveInt("signid", signid);
-        
-        if (string.IsNullOrEmpty(signOpenTime))
+        if (string.IsNullOrEmpty(signOpenTime)) signOpenTime = DateTime.Now.ToString();
+        TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(signOpenTime));
+        //AnalyticMgr.ActivityProgress("签到活动",signid,(int)ts.TotalSeconds);
+        if (signid > 3)
         {
-            signOpenTime = DateTime.Now.ToString();
-            SaveString("signOpenTime", signOpenTime);
+            //AnalyticMgr.ActivityComplete("签到活动",(int)ts.TotalSeconds);
         }
     }
    
@@ -801,8 +510,6 @@ public class UserData
             taskid = taskid,
             typeid = typeid
         });
-        
-        SaveList("CompleteTask", completeTaskList);
     }
     
     /// <summary>
@@ -811,7 +518,6 @@ public class UserData
     public void UpdateAllCompleteTask()
     {
         isAllCompleteTask = true;
-        SaveBool("isAllCompleteTask", isAllCompleteTask);
     }
     
     /// <summary>
@@ -820,12 +526,10 @@ public class UserData
     public void UpdateLImitid()
     {
         timerePuzzleid++;
-        SaveInt("timerePuzzleid", timerePuzzleid);
         
         if (string.IsNullOrEmpty(limitOpenTime))
         {
             limitOpenTime = DateTime.Now.ToString();
-            SaveString("limitOpenTime", limitOpenTime);
         }
     }
     
@@ -836,9 +540,6 @@ public class UserData
     {
         limitOpenTime = DateTime.Now.ToString();
         isDayEnterLimint = false;
-        
-        SaveString("limitOpenTime", limitOpenTime);
-        SaveBool("isDayEnterLimint", isDayEnterLimint);
     }
     
     /// <summary>
@@ -848,8 +549,6 @@ public class UserData
     {
         limitEndTime = DateTime.Now.AddMinutes(minutes).ToString();
         UpdatelimitMinPeriod(minutes);
-        
-        SaveString("limitEndTime", limitEndTime);
     }
     
     /// <summary>
@@ -858,7 +557,6 @@ public class UserData
     public void UpdatelimitMinPeriod(int minutes)
     {
         limitMinPeriod = minutes;
-        SaveInt("limitMinPeriod", limitMinPeriod);
     }
 
     /// <summary>
@@ -880,9 +578,6 @@ public class UserData
             {
                 toolInfo[toolId].reducecount += Mathf.Abs(value);
             }
-            
-            // 保存单个道具
-            SaveTool();
             
             //Debug.Log($"{type}道具{(value > 0 ? "增加" : "减少")}: {Math.Abs(value)}, 当前数量: {toolInfo[toolId].count}");
         }
@@ -916,7 +611,6 @@ public class UserData
         if (!vocabulary.LevelWords.Contains(Puzzle))
         {
             vocabulary.LevelWords.Insert(0, Puzzle);
-            SaveVocabulary(GetVocabularyKey(), vocabulary);
         }
     }
 
@@ -930,12 +624,10 @@ public class UserData
         if (!vocabulary.UserNotes.Contains(Puzzle))
         {
             vocabulary.UserNotes.Insert(0, Puzzle);
-            SaveVocabulary(GetVocabularyKey(), vocabulary);
             
             if (!isShowVocabulary)
             {
                 isShowVocabulary = true;
-                SaveBool("isShowVocabulary", isShowVocabulary);
             }
         }
     }
@@ -949,7 +641,6 @@ public class UserData
         if (vocabulary.UserNotes.Contains(Puzzle))
         {
             vocabulary.UserNotes.Remove(Puzzle);
-            SaveVocabulary(GetVocabularyKey(), vocabulary);
         }
     }
     
@@ -990,7 +681,6 @@ public class UserData
     {
         WordVocabulary<string> vocabulary = GetWordVocabulary();
         vocabulary.LevelWords.Clear();
-        SaveVocabulary(GetVocabularyKey(), vocabulary);
     }
 
     #endregion

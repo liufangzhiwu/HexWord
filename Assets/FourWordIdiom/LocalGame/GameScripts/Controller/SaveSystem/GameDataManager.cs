@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
-using Passport;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
 using UnityEngine.Android;
@@ -68,9 +67,9 @@ public class GameDataManager : MonoBehaviour
 
     #region 初始化方法
 
-    public void LoadPlayerProfile(Persona persona)
+    public void LoadPlayerProfile()
     {
-        playerProfile.LoadData(persona);
+        playerProfile.LoadData();
         //fishUserSave.LoadData();
         //leaderboardCache.LoadData();
         dataInitialized = true;
@@ -198,7 +197,7 @@ public class GameDataManager : MonoBehaviour
     {
         PurgePersistentFiles();
         playerProfile.ClearAllData();
-        playerProfile.LoadData(null);
+        playerProfile.LoadData();
         // fishUserSave.InitData();
         // leaderboardCache.InitData();
         // LevelProgressDict.Clear();

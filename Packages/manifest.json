@@ -1,9 +1,5 @@
 {
   "dependencies": {
-    "cn.unity.uos.launcher": "https://cnb.cool/unity/uos/UOSLauncher.git",
-    "cn.unity.uos.passport.core": "https://cnb.cool/unity/uos/PassportCore.git",
-    "cn.unity.uos.passport.feature": "https://cnb.cool/unity/uos/PassportFeatureSDK.git",
-    "cn.unity.uos.passport.login": "https://cnb.cool/unity/uos/PassportLoginSDK.git",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "1.1.6",
     "com.unity.collab-proxy": "2.8.2",

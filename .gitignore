@@ -1,0 +1,9 @@
+﻿Library
+Logs
+Assembly-CSharp.csproj
+*.csproj
+*.sln
+Temp/ScriptUpdater
+obj
+Temp/Burst
+Temp

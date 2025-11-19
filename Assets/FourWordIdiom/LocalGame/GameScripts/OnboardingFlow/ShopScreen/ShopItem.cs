@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using Unity.Passport.Sample.Scripts;
 using UnityEngine;
 using UnityEngine.EventSystems;
 //using UnityEngine.Purchasing;
@@ -407,9 +406,9 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         //// 处理购买逻辑
         Debug.Log($"Buying: {data.name}, Price: {data.GetProduceName()}");
         
-        bool isPayable = await UIController.Instance.CheckPayable((int)data.price);
+        //bool isPayable = await UIController.Instance.CheckPayable((int)data.price);
         
-        if (isPayable)
+        //if (isPayable)
         {
             OnPurchaseSuccess(data);
         }
@@ -466,7 +465,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
         MessageSystem.Instance.ShowTip("购买成功！");
 
-        UIController.Instance.SubmitPayment((int)product.price);
+        //UIController.Instance.SubmitPayment((int)product.price);
 
         //AdjustManager.Instance.SendPurchaseEvent();
         // 处理购买成功后的逻辑，例如增加游戏内货币

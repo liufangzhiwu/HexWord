@@ -1,7 +1,6 @@
 using UnityEngine.UI;
 using UnityEngine;
 using System.Collections;
-using Unity.Passport.Sample.Scripts;
 
 public class MessageWindow : UIWindow
 {
@@ -23,7 +22,6 @@ public class MessageWindow : UIWindow
     
     private void OnCloseBtn()
     {
-        UIController.Instance.Logout();
         base.Close(); // 隐藏面板
         //UIManager.Instance.ShowPanel(PanelName.TopContainer);
     }
