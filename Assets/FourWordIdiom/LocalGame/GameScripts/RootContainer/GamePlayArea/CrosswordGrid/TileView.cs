@@ -66,14 +66,13 @@ public class TileView : MonoBehaviour
     }
     
     /// <summary>
-    /// 初始化字块显示
+    /// 底层字块显示
     /// </summary>
     public void DownCharSetCharacter(char character)
     {
-        ShowElement();
+        starttile.gameObject.SetActive(false);
         // 设置显示内容
         _textDisplay.text = character.ToString();
-        starttile.SetActive(character != '\0');
         tipPuzzle.SetActive(false);
         // 记录初始状态
         _baseScale = transform.localScale;
@@ -83,7 +82,11 @@ public class TileView : MonoBehaviour
         // 重置特效状态
         showTipObj.GetComponentInChildren<Text>().text = character.ToString();
         selectionPuzzle.GetComponentInChildren<Text>().text = character.ToString();
-        selectionPuzzle.GetComponent<CanvasGroup>().DOFade(0, 0);
+        selectionPuzzle.GetComponent<CanvasGroup>().DOFade(0, 0.2f).OnComplete(() =>
+        {
+            starttile.SetActive(character != '\0');
+            ShowElement();
+        });
         tipPuzzle.GetComponentInChildren<Text>().text = character.ToString();
         
         StopPulseAnimation();

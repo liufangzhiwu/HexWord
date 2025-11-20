@@ -81,7 +81,12 @@ SpriteAtlas:
     - a0eac19cc0e29de47a5bf67e0e362fab: 21300000
     - 5db46b0e5925cf84eb214f4acc9af589: 21300000
     - 400471be92fa74449aa9a5af9c4c7dd6: 21300000
-    - 86bc03de44b5a394bbb6865ca2c480d2: 21300000
+    - 86bc03de44b5a394bbb6865ca2c480d2: -450227504
+    - 86bc03de44b5a394bbb6865ca2c480d2: 939213851
+    - 86bc03de44b5a394bbb6865ca2c480d2: 2079473602
+    - 86bc03de44b5a394bbb6865ca2c480d2: 1734363329
+    - 86bc03de44b5a394bbb6865ca2c480d2: 1389509551
+    - fd31692fc9732de4485adc6270d1934f: 21300000
     - f823b53f1fd0b7546b6751f30978b687: 21300000
     - 496eedcf64b82454c8886a9924d72bc4: 21300000
   m_MasterAtlas: {fileID: 0}
@@ -117,7 +122,12 @@ SpriteAtlas:
   - {fileID: 21300000, guid: a0eac19cc0e29de47a5bf67e0e362fab, type: 3}
   - {fileID: 21300000, guid: 5db46b0e5925cf84eb214f4acc9af589, type: 3}
   - {fileID: 21300000, guid: 400471be92fa74449aa9a5af9c4c7dd6, type: 3}
-  - {fileID: 21300000, guid: 86bc03de44b5a394bbb6865ca2c480d2, type: 3}
+  - {fileID: -450227504, guid: 86bc03de44b5a394bbb6865ca2c480d2, type: 3}
+  - {fileID: 939213851, guid: 86bc03de44b5a394bbb6865ca2c480d2, type: 3}
+  - {fileID: 2079473602, guid: 86bc03de44b5a394bbb6865ca2c480d2, type: 3}
+  - {fileID: 1734363329, guid: 86bc03de44b5a394bbb6865ca2c480d2, type: 3}
+  - {fileID: 1389509551, guid: 86bc03de44b5a394bbb6865ca2c480d2, type: 3}
+  - {fileID: 21300000, guid: fd31692fc9732de4485adc6270d1934f, type: 3}
   - {fileID: 21300000, guid: f823b53f1fd0b7546b6751f30978b687, type: 3}
   - {fileID: 21300000, guid: 496eedcf64b82454c8886a9924d72bc4, type: 3}
   m_PackedSpriteNamesToIndex:
@@ -152,7 +162,12 @@ SpriteAtlas:
   - UI_Icon_circle
   - UI_Icon_goldbg
   - deng
-  - tilepagebg
+  - tilepagebg_4
+  - tilepagebg_2
+  - tilepagebg_3
+  - tilepagebg_0
+  - tilepagebg_1
+  - wordProgressbg
   - puzzleTitleBg
   - UI_Icon_lojdbg
   m_RenderDataMap: {}

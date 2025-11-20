@@ -10,11 +10,11 @@ using System.Collections.Generic;
 public class PuzzleTileBoard : UIWindow
 {
     [Header("UI References")]
-    [SerializeField] private Toggle puzzleToggle;
+    [SerializeField] private Image puzzleProgress;
     [SerializeField] private Transform PageListTrans;
     [SerializeField] private Transform TileParents;
     [SerializeField] private ScrollRect scrollRect;
-    [SerializeField] private ToggleGroup toggleGroup;
+    [SerializeField] private Text wordCountText;
 
     [Header("Settings")]
     public float snapSpeed = 15f;
@@ -28,7 +28,8 @@ public class PuzzleTileBoard : UIWindow
 
     // 内部状态
     private List<PuzzleTileItem> puzzleTileItems = new List<PuzzleTileItem>();
-    private List<Toggle> pageToggles = new List<Toggle>();
+    private List<WordProgress> pageProgresses = new List<WordProgress>();
+    private List<int> pageWords = new List<int>();
     private ObjectPool puzzlePool;
     private ObjectPool togglePool;
     private ObjectPool puzzleHorizonPool;
@@ -69,7 +70,7 @@ public class PuzzleTileBoard : UIWindow
         }
 
         puzzlePool = new ObjectPool(puzzleTilePrefab, ObjectPool.CreatePoolContainer(transform, "puzzleTilePool"));
-        togglePool = new ObjectPool(puzzleToggle.gameObject, ObjectPool.CreatePoolContainer(transform, "togglePool"));
+        togglePool = new ObjectPool(puzzleProgress.gameObject, ObjectPool.CreatePoolContainer(transform, "togglePool"));
         puzzleHorizonPool = new ObjectPool(tileHorizontalPrefab, ObjectPool.CreatePoolContainer(transform, "puzzleHorizonPool"));
     }
 
@@ -172,7 +173,7 @@ public class PuzzleTileBoard : UIWindow
         int totalPages = Mathf.CeilToInt(sortedPuzzles.Count / 8.0f);
 
         // 创建页面指示器
-        CreatePageToggles(totalPages);
+        CreatePageToggles(totalPages,sortedPuzzles.Count);
 
         // 创建拼图项
         CreatePuzzleItems(sortedPuzzles, stageData);
@@ -181,20 +182,20 @@ public class PuzzleTileBoard : UIWindow
         InitializeScrollSettings(totalPages);
     }
 
-    private void CreatePageToggles(int totalPages)
+    private void CreatePageToggles(int totalPages,int totalWords)
     {
         for (int i = 0; i < totalPages; i++)
         {
-            Toggle toggle = togglePool.GetObject<Toggle>(PageListTrans);
+            WordProgress toggle = togglePool.GetObject<WordProgress>(PageListTrans);
             toggle.gameObject.SetActive(true);
-            toggle.group = toggleGroup;
+            toggle.ImageProgress.fillAmount = 0;
+            pageProgresses.Add(toggle);
 
-            if (i == 0)
-            {
-                toggle.isOn = true;
-            }
-
-            pageToggles.Add(toggle);
+            int maxcount = totalWords - i * 8;
+            if(maxcount >8) maxcount = 8;
+            
+            // 记录每页的成语数量
+            pageWords.Add(maxcount);
         }
     }
 
@@ -302,11 +303,11 @@ public class PuzzleTileBoard : UIWindow
         isSnapping = true;
         currentPageIndex = pageIndex; // 更新当前页面索引
 
-        // 更新Toggle状态
-        if (pageIndex < pageToggles.Count)
-        {
-            pageToggles[pageIndex].isOn = true;
-        }
+        // // 更新当前页面的进度条
+        // if (pageIndex < pageProgresses.Count)
+        // {
+        //     pageProgresses[pageIndex].ImageProgress.fillAmount = 1;
+        // }
     }
 
     /// <summary>
@@ -314,12 +315,15 @@ public class PuzzleTileBoard : UIWindow
     /// </summary>
     public void Clear()
     {
+        wordCountText.text = "0%";
+        currentPageIndex = 0;
         puzzlePool.ReturnAllObjectsToPool();
         togglePool.ReturnAllObjectsToPool();
         puzzleHorizonPool.ReturnAllObjectsToPool();
 
         puzzleTileItems.Clear();
-        pageToggles.Clear();
+        pageProgresses.Clear();
+        pageWords.Clear();
     }
 
     /// <summary>
@@ -368,6 +372,21 @@ public class PuzzleTileBoard : UIWindow
         {
             puzzleTileItem.ShowText(callback);
         }
+        
+        // 更新当前页面的进度条
+        // 计算总页数（每页8个成语）
+        int wordsInCurrentPage = pageWords[currentPageIndex];
+        int leftWordCount = StageController.Instance.CurStageData.FoundTargetPuzzles.Count%8;
+
+        if (leftWordCount == 0) leftWordCount = wordsInCurrentPage;
+        pageProgresses[currentPageIndex].ImageProgress.fillAmount = (float)leftWordCount / wordsInCurrentPage;
+        
+        float progress = (float)StageController.Instance.CurStageData.FoundTargetPuzzles.Count/StageController.Instance.CurStageInfo.Puzzles.Count;
+        
+        int  wordProgress = Mathf.FloorToInt(progress*100);
+        
+        wordCountText.text = $"{wordProgress}%";
+        
     }
 
     private void OnDisable()
