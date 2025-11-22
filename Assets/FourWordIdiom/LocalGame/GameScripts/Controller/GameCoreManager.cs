@@ -40,7 +40,7 @@ public sealed class GameCoreManager: MonoBehaviour
     /// </summary>
     public void ShowGamePanel()
     {
-        StageController.Instance.SetStageData(GameDataManager.instance.UserData.CurrentStage);
+        StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
         SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
     }
 
@@ -69,7 +69,7 @@ public sealed class GameCoreManager: MonoBehaviour
     {
         yield return new WaitForSeconds(0.2f);
         
-        StageController.Instance.CreateStageInfo(1);
+        StageHexController.Instance.CreateStageInfo(1);
         
         // if (GameDataManager.instance.UserData.IsFirstLaunch)
         // {

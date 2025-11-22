@@ -34,7 +34,7 @@ public class WordMatrixExplorer
 
     public HashSet<string> ExploreWordMatrix()
     {
-        GameBoard = StageController.Instance.CurStageData.BoardSnapshot;
+        GameBoard = StageHexController.Instance.CurStageData.BoardSnapshot;
         HashSet<string> discoveredWords = new HashSet<string>();
         bool[,] visited = new bool[GameBoard.rows, GameBoard.cols];
 

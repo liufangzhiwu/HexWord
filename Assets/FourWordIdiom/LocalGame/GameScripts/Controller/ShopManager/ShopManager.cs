@@ -32,11 +32,11 @@ public class ShopDataItem
     /// <returns></returns>
     public string GetProduceName()
     {
-        if(GameDataManager.instance.UserData.LanguageCode=="JS")
-            return produceNameId.ToLower();
-        if(GameDataManager.instance.UserData.LanguageCode=="CT")
-            return produceNameId_tw;
-        return produceNameId;
+        // if(GameDataManager.Instance.UserData.LanguageCode=="JS")
+        //     return produceNameId.ToLower();
+        // if(GameDataManager.Instance.UserData.LanguageCode=="CT")
+        //     return produceNameId_tw;
+        return produceNameId.ToLower();
     }
 }
 
@@ -93,7 +93,7 @@ public class ShopManager : MonoBehaviour
 
     public void Initialize()
     {
-        // shoplimitDatas = GameDataManager.instance.UserData.limitShopItems
+        // shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
         //     .ToDictionary(x => x.id, x => x);
         // 初始化查找结构
         _limitAdsGifts = GetLimitAdsGifts();
@@ -212,11 +212,11 @@ public class ShopManager : MonoBehaviour
     {
         var type2Count = 0;
         var maxType2 = 3; // 最多允许的type2商品数量
-        // shoplimitDatas = GameDataManager.instance.UserData.limitShopItems
+        // shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
         //     .ToDictionary(x => x.id, x => x);
 
         // 检查限购状态(永久去广告)
-        //bool removeads = GameDataManager.instance.UserData.limitShopItems.Any(itemdata => itemdata.isget && !itemdata.isoverdate && itemdata.adstype == 6);
+        //bool removeads = GameDataManager.Instance.UserData.limitShopItems.Any(itemdata => itemdata.isget && !itemdata.isoverdate && itemdata.adstype == 6);
        
         return shopItems
             .Where(item =>
@@ -279,7 +279,7 @@ public class ShopManager : MonoBehaviour
     public List<ShopDataItem> GetShopItems()
     {
         // 检查限购状态(永久去广告)
-        //bool removeads = GameDataManager.instance.UserData.limitShopItems.Any(itemdata => itemdata.isget && !itemdata.isoverdate&&itemdata.adstype==6);
+        //bool removeads = GameDataManager.Instance.UserData.limitShopItems.Any(itemdata => itemdata.isget && !itemdata.isoverdate&&itemdata.adstype==6);
 
         // shopItems = shopItems.OrderBy(item => item.sort).ToList();
         // return shopItems;
@@ -319,7 +319,7 @@ public class ShopManager : MonoBehaviour
     public async void ShowLimitAdsPanel()
     {
         // 检查限购状态
-        //ShopLimitData buyshopDta = GameDataManager.instance.UserData.limitShopItems.Find(itemdata => itemdata.isget && !itemdata.isoverdate);
+        //ShopLimitData buyshopDta = GameDataManager.Instance.UserData.limitShopItems.Find(itemdata => itemdata.isget && !itemdata.isoverdate);
 
         // foreach (var item in _limitAdsGifts)
         // {
@@ -345,7 +345,7 @@ public class ShopManager : MonoBehaviour
         //     // 设置当前广告项目
         //     curshopAdsItem = item;
         //
-        //     ShopLimitData shopdata = GameDataManager.instance.UserData.limitShopItems.Find(itemdata => itemdata.id == curshopAdsItem.id);
+        //     ShopLimitData shopdata = GameDataManager.Instance.UserData.limitShopItems.Find(itemdata => itemdata.id == curshopAdsItem.id);
         //
         //     int hours = int.Parse(curshopAdsItem.limitedTime);
         //     DateTime endtime = DateTime.Now.AddHours(hours);
@@ -366,7 +366,7 @@ public class ShopManager : MonoBehaviour
         //     }
         //     else
         //     {
-        //         GameDataManager.instance.UserData.limitShopItems.Add(new ShopLimitData()
+        //         GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData()
         //         {
         //             id = curshopAdsItem.id,
         //             endtime = endtime.ToString(),

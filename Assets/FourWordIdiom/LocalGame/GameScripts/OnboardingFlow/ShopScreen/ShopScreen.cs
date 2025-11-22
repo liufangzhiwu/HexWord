@@ -71,7 +71,7 @@ public class ShopScreen : UIWindow
 
         BuyRemoveAdsEvent();
 
-        //GameDataManager.instance.UserData.CheckShopBuyData();
+        //GameDataManager.Instance.UserData.CheckShopBuyData();
     }
 
     private void InitUI(int value = 0, bool isanim = false)
@@ -82,15 +82,15 @@ public class ShopScreen : UIWindow
         }
         else
         {
-            GoldText.text = GameDataManager.instance.UserData.Gold.ToString();
+            GoldText.text = GameDataManager.Instance.UserData.Gold.ToString();
         }
-        ButteryText.text = GameDataManager.instance.UserData.toolInfo[103].count.ToString();
+        ButteryText.text = GameDataManager.Instance.UserData.toolInfo[103].count.ToString();
     }
 
     private IEnumerator AnimateCoinAddition(int amount)
     {
-        int startValue = GameDataManager.instance.UserData.Gold - amount;
-        int targetValue = GameDataManager.instance.UserData.Gold;
+        int startValue = GameDataManager.Instance.UserData.Gold - amount;
+        int targetValue = GameDataManager.Instance.UserData.Gold;
         float duration = 0.2f; // 动画持续时间
         float elapsed = 0f;
 
@@ -236,7 +236,7 @@ public class ShopScreen : UIWindow
     {
         await Task.Delay(100); // 等待1秒
 
-        // foreach (ShopLimitData shopLimitData in GameDataManager.instance.UserData.limitShopItems)
+        // foreach (ShopLimitData shopLimitData in GameDataManager.Instance.UserData.limitShopItems)
         // {
         //     if (shopLimitData.isget && !shopLimitData.isoverdate)
         //     {
@@ -254,7 +254,7 @@ public class ShopScreen : UIWindow
     
     private void ShowBanner()
     {
-        if (GameDataManager.instance.UserData.CurrentStage >= 7)
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= 7)
         {
             if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
             {

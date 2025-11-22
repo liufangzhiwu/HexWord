@@ -18,6 +18,8 @@ public class EventDispatcher:MonoBehaviour
     private Action<string> _onRemoveNotePuzzle;
     private Action<bool> _onUpdateRewardPuzzle;
     private Action<bool, bool> _onUpdateLayerCoin;
+    
+    private Action _onCheckShowChessTutorial; // 填字教程检查
     /// <summary>
     /// 设置选中词语展示区显状态
     /// </summary>
@@ -123,6 +125,14 @@ public class EventDispatcher:MonoBehaviour
         add => _onUpdateGameLobbyUI += value;
         remove => _onUpdateGameLobbyUI -= value;
     }
+    
+    /// <summary>检查填字新手引导事件</summary>
+    public event Action OnCheckShowChessTutorial
+    {
+        add => _onCheckShowChessTutorial += value;
+        remove => _onCheckShowChessTutorial -= value;
+    }
+    
     #endregion
 
     #region 事件触发方法
@@ -159,7 +169,17 @@ public class EventDispatcher:MonoBehaviour
     public void TriggerChangeTopRaycast(bool enable)
         => _onChangeTopRaycast?.Invoke(enable);
     
+   
+    
     public void TriggerOnUpdateGameLobbyUI()
         => _onUpdateGameLobbyUI?.Invoke();
+    
+    
+    /// <summary>
+    /// 触发填字检查
+    /// </summary>
+    public void TriggerCheckShowChessTutorial()
+        => _onCheckShowChessTutorial?.Invoke();
+    
     #endregion
 }

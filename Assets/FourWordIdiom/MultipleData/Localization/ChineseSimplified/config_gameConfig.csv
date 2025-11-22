@@ -1,0 +1,12 @@
+﻿key,Japanese,ChineseSimplified,des
+PrivacyUrl,https://neoplaygame.com/privacy-policy,https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1750050033266373376,设置界面隐私链接
+TermsUrl,https://neoplaygame.com/terms-and-conditions,https://mindwordplay.cn/yhxy,设置界面服务条款链接
+Appid,6740372571,ca-app-pub-9253366158869098/6807645959,苹果后台Appid
+BannerAdUnitId,ca-app-pub-9253366158869098/6807645959,a3czsxbndo,Admob横幅广告id
+InterstitialAdId,ca-app-pub-9253366158869098/7367701543,d1gvqb0ekl,Admob插屏广告id
+RewardAdIdStoreGold,ca-app-pub-9253366158869098/1098355407,d7m8galprp,Admob激励广告id_商店金币弹窗
+RewardAdIdItemGold,ca-app-pub-7411257667944622/5692290312,q1tdc0qv0h,Admob激励广告id_道具金币弹窗（暂未用到）
+RewardAdIdCheckinGold1,ca-app-pub-9253366158869098/8765663251,q1tdc0qv0h,Admob激励广告id_签到1金币弹窗
+RewardAdIdCheckinGold2,ca-app-pub-9253366158869098/7452581583,s432849zyg,Admob激励广告id_签到2金币弹窗
+RewardAdIdCheckinGold3,ca-app-pub-9253366158869098/4235391302,u5hvqbfkvu,Admob激励广告id_签到3金币弹窗
+OpinionUrl,https://neoplaygame.com/contact,https://mindwordplay.cn/lxwm,反馈链接

@@ -82,12 +82,13 @@ public class SystemManager : MonoBehaviour
     /// <summary>
     /// 显示指定面板
     /// </summary>
-    public void ShowPanel(string panelName)
+    public UIWindow ShowPanel(string panelName)
     {
-        if (string.IsNullOrEmpty(panelName)) return;
+        if (string.IsNullOrEmpty(panelName)) return null;
 
         UIWindow panel;
         
+
         if (_loadedPanels.TryGetValue(panelName, out panel))
         {
             panel.gameObject.SetActive(true);
@@ -95,13 +96,14 @@ public class SystemManager : MonoBehaviour
         else
         {
             panel = LoadAndInstantiatePanel(panelName);
-            if (panel == null) return;
+            if (panel == null) return null;
             
             _loadedPanels.Add(panelName, panel);
             InitializePanelInfo(panel, panelName);
         }
-
+       
         RaisePanelEvent(panel, PanelState.Show);
+        return panel;
     }
 
     /// <summary>

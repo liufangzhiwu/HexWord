@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Middleware;
+using Newtonsoft.Json;
 using UnityEngine;
 
 public class LimitDataItem
@@ -15,32 +17,19 @@ public class LimitDataItem
 //对应限时奖励配置表中奖励配置批准中的奖励索引表示的类型
 public enum LimitRewordType
 {
-    Coins,Butterfly,Tipstool,Resettool,Min5Double,Min15Double,RemoveAds,Remove7DayAds,
+    Coins,Butterfly,Tipstool,Resettool,Min5Double,Min15Double,RemoveAds,Remove7DayAds,AutoComplete
 }
 
-public class LimitTimeManager : MonoBehaviour
+public class LimitTimeManager : Singleton<LimitTimeManager>
 {
     private List<LimitDataItem> limitItems;
-    public static LimitTimeManager instance;
-    public event System.Action<string> OnLimitTimeUpdated; // 定义事件
-    public event System.Action<string> OnDailyTimeUpdated; // 定义事件
-    public event System.Action OnLimitTimeBtnUI; // 定义事件
+    public event Action<string> OnLimitTimeUpdated; // 定义事件
+    public event Action<string> OnDailyTimeUpdated; // 定义事件
+    public event Action OnLimitTimeBtnUI; // 定义事件
     public LimitDataItem CurlimitData;
     
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject); // 保持广告管理器在场景切换时不销毁
-        }
-        else
-        {
-            Destroy(gameObject);
-        }       
-    }
 
-    void Start()
+    public override void Init()
     {
         TextAsset data = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "limittime");
         if (data != null)
@@ -51,24 +40,15 @@ public class LimitTimeManager : MonoBehaviour
         {
             Debug.LogError("Failed to load CSV data.");
         }
-        
-        StartCoroutine(UpdateTime());
+
+
+        UnityTimer.Loop(1f, TickTime);
     }
     
- 
-    void ParseLimitItems(string data)
-    {
-        // 将 CSV 数据转换为 JSON 格式
-        ConvertCSVToJSON(data);
-
-        // 现在limitItems列表中包含所有商品
-        Debug.Log("Limit items loaded: " + limitItems.Count);
-    }
-
-    private string Gettime()
+    
+    private void TickTime()
     {
         // 假设 logoutTime 是用户的登出时间
-        //DateTime logoutTime = DateTime.Parse(SaveSystem.Instance.UserData.logoutTime); // 将字符串转换为 DateTime
         DateTime logoutTime = DateTime.Now; // 将字符串转换为 DateTime
         DateTime midnight = logoutTime.Date.AddDays(1); // 获取当天的 00:00
 
@@ -78,31 +58,21 @@ public class LimitTimeManager : MonoBehaviour
         {
             if (timeRemaining.Hours == 24)
             {
-                GameDataManager.instance.UserData.CheckResetLimitTime();
+                GameDataManager.Instance.UserData.CheckResetLimitTime();
             }
             string time = UIUtilities.FormatTimeRemaining(timeRemaining);
             OnLimitTimeUpdated?.Invoke(time); // 触发事件，通知所有订阅者
             OnDailyTimeUpdated?.Invoke(time); // 触发事件，通知所有订阅者
         }
-        // 输出倒计时
-        return timeRemaining.TotalMinutes.ToString();
     }
-    
-    private IEnumerator UpdateTime()
+ 
+    void ParseLimitItems(string data)
     {
-        yield return new WaitForSeconds(0.2f); // 等待 10 秒
-        string time = Gettime();
-       
-        while (true)
-        {
-            time = Gettime();
-            if (string.IsNullOrEmpty(time))
-            {
-                break; // 如果时间为空，退出循环
-            }
-            
-            yield return new WaitForSeconds(1f); // 等待 10 秒
-        }
+        // 将 CSV 数据转换为 JSON 格式
+        ConvertCSVToJSON(data);
+
+        // 现在limitItems列表中包含所有商品
+        Debug.Log("Limit items loaded: " + limitItems.Count);
     }
     
     /// <summary>
@@ -112,17 +82,17 @@ public class LimitTimeManager : MonoBehaviour
     public int GetCurWordCount()
     {
         int needword = 0;
-        for (int i = 0; i <= GameDataManager.instance.UserData.timerePuzzleid; i++)
+        for (int i = 0; i <= GameDataManager.Instance.UserData.timerePuzzleid; i++)
         {
             LimitDataItem TemplimitData=GetLimitItem(i);
             if (TemplimitData != null)
             {
-                if (i == GameDataManager.instance.UserData.timerePuzzleid)
+                if (i == GameDataManager.Instance.UserData.timerePuzzleid)
                 {
                     CurlimitData = TemplimitData;
-                    if (GameDataManager.instance.UserData.timePuzzlecount >= needword + CurlimitData.num)
+                    if (GameDataManager.Instance.UserData.timePuzzlecount >= needword + CurlimitData.num)
                         return CurlimitData.num;
-                    return GameDataManager.instance.UserData.timePuzzlecount - needword;
+                    return GameDataManager.Instance.UserData.timePuzzlecount - needword;
                 }
                 needword += TemplimitData.num;
             }         
@@ -198,7 +168,9 @@ public class LimitTimeManager : MonoBehaviour
     /// <returns></returns>
     public bool IsComplete()
     {
-        return GameDataManager.instance.UserData.timerePuzzleid>=limitItems.Count;
+        if(GameDataManager.Instance==null) return false;
+        
+        return GameDataManager.Instance.UserData.timerePuzzleid>=limitItems.Count;
     }
     
     /// <summary>
@@ -219,9 +191,9 @@ public class LimitTimeManager : MonoBehaviour
     /// <returns></returns>
     public bool LimitTimeCanShow()
     {
-        if (!string.IsNullOrEmpty(GameDataManager.instance.UserData.limitEndTime))
+        if (!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitEndTime))
         {
-            DateTime endTime = DateTime.Parse(GameDataManager.instance.UserData.limitEndTime);
+            DateTime endTime = DateTime.Parse(GameDataManager.Instance.UserData.limitEndTime);
             if (endTime > DateTime.Now)
             {
                 return true;
@@ -237,7 +209,7 @@ public class LimitTimeManager : MonoBehaviour
 
     public void UpdateLimitProgress(int value)
     {
-        GameDataManager.instance.UserData.UdpateTimePuzzleCount(value);
+        GameDataManager.Instance.UserData.timePuzzlecount += value;
     }
     
     /// <summary>
@@ -247,7 +219,7 @@ public class LimitTimeManager : MonoBehaviour
     /// <returns></returns>
     public int GetLimitWordMinTime()
     {
-        DateTime endtime = DateTime.Parse(GameDataManager.instance.UserData.limitEndTime);
+        DateTime endtime = DateTime.Parse(GameDataManager.Instance.UserData.limitEndTime);
         if (endtime > DateTime.Now)
         {
             TimeSpan timeSpan = endtime - DateTime.Now;

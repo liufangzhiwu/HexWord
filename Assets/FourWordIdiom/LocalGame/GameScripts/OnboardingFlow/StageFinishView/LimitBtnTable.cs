@@ -30,27 +30,42 @@ public class LimitBtnTable : MonoBehaviour
     /// </summary>
     public void CheckAndShowLimitedTimeEvent()
     {
-        if (GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
-            ||!string.IsNullOrEmpty(GameDataManager.instance.UserData.limitOpenTime))
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
+            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
+            ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime))
         {
             // 限时活动逻辑
-            LimitTimeManager.instance.OnLimitTimeBtnUI += InitLimtBtnUI;                
+            LimitTimeManager.Instance.OnLimitTimeBtnUI += InitLimtBtnUI;                
             _limitTimeEventButton.gameObject.SetActive(true);
-            if (!LimitTimeManager.instance.IsComplete())
+            if (!LimitTimeManager.Instance.IsComplete())
             {
-                int wordcount = LimitTimeManager.instance.GetCurWordCount();
-                txtwordprogress.text = wordcount + "/" + LimitTimeManager.instance.CurlimitData.num;
-                LimitTimeManager.instance.UpdateLimitProgress(StageController.Instance.LimitPuzzlecount);
+                int wordcount = LimitTimeManager.Instance.GetCurWordCount();
+                txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
+                if (GameDataManager.Instance.UserData.levelMode == 1)
+                {
+                    LimitTimeManager.Instance.UpdateLimitProgress(StageHexController.Instance.LimitPuzzlecount);
+                }else if (GameDataManager.Instance.UserData.levelMode == 2)
+                {
+                    LimitTimeManager.Instance.UpdateLimitProgress(ChessStageController.Instance.LimitPuzzleCount);
+                }
                 Effect.gameObject.SetActive(false);
                 AddCount.gameObject.SetActive(false);
-                AddCount.text = "+" + StageController.Instance.LimitPuzzlecount;
+                if (GameDataManager.Instance.UserData.levelMode == 1)
+                {
+                    AddCount.text = "+" + StageHexController.Instance.LimitPuzzlecount ;
+                }else if (GameDataManager.Instance.UserData.levelMode == 2)
+                {
+                    AddCount.text = "+" + ChessStageController.Instance.LimitPuzzleCount;
+                }
+              
                 StartCoroutine(ShowLimitWordAnim());
             }
             
-            if(GameDataManager.instance.UserData.CurrentStage > AppGameSettings.UnlockRequirements.TimeLimitMode
-               ||!string.IsNullOrEmpty(GameDataManager.instance.UserData.limitOpenTime))
+            if(GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.TimeLimitMode
+               || GameDataManager.Instance.UserData.CurrentChessStage > AppGameSettings.UnlockRequirements.TimeLimitMode
+               ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime))
             {
-                if (LimitTimeManager.instance.IsComplete())
+                if (LimitTimeManager.Instance.IsComplete())
                 {
                     txtwordprogress.gameObject.SetActive(false);
                     LimitClaim.gameObject.SetActive(false);
@@ -78,14 +93,14 @@ public class LimitBtnTable : MonoBehaviour
     
     public void InitLimtBtnUI()
     {
-        TimeObj.gameObject.SetActive(!LimitTimeManager.instance.IsClaim());
-        if (!LimitTimeManager.instance.IsComplete())
+        TimeObj.gameObject.SetActive(!LimitTimeManager.Instance.IsClaim());
+        if (!LimitTimeManager.Instance.IsComplete())
         {
-            if (!LimitTimeManager.instance.IsClaim())
+            if (!LimitTimeManager.Instance.IsClaim())
             {
-                Worddouble.gameObject.SetActive(LimitTimeManager.instance.LimitTimeCanShow());
-                int wordcount = LimitTimeManager.instance.GetCurWordCount();
-                txtwordprogress.text = wordcount + "/" + LimitTimeManager.instance.CurlimitData.num;
+                Worddouble.gameObject.SetActive(LimitTimeManager.Instance.LimitTimeCanShow());
+                int wordcount = LimitTimeManager.Instance.GetCurWordCount();
+                txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
                 if (LimitClaim.activeSelf)
                 {
                     LimitClaim.gameObject.SetActive(false);
@@ -162,9 +177,13 @@ public class LimitBtnTable : MonoBehaviour
 
     private void OnDisable()
     {
-        if(GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.TimeLimitMode)
+        if (GameDataManager.Instance != null)
         {
-            LimitTimeManager.instance.OnLimitTimeBtnUI -= InitLimtBtnUI;
+            if(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode 
+               || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode)
+            {
+                LimitTimeManager.Instance.OnLimitTimeBtnUI -= InitLimtBtnUI;
+            }
         }
     }
 }

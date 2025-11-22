@@ -1,10 +1,12 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.U2D;
 using UnityEngine.Video;
+using Object = UnityEngine.Object;
 
 /// <summary>
 /// 高级资源包管理系统 (非MonoBehaviour版本)
@@ -45,7 +47,7 @@ public sealed class AdvancedBundleLoader
     /// <returns>完整资源路径</returns>
     private string GetPlatformAdaptedPath(string fileName)
     {
-        string fullPath = Path.Combine(Application.streamingAssetsPath, fileName);
+        string fullPath = Path.Combine(Application.streamingAssetsPath, "Res", fileName);
 
         // 平台特定路径处理
         switch (Application.platform)
@@ -76,7 +78,7 @@ public sealed class AdvancedBundleLoader
     /// </summary>
     /// <param name="bundleName">资源包名称</param>
     /// <returns>资源字节数组</returns>
-    public byte[] LoadRawBundleData(string bundleName)
+    private byte[] LoadRawBundleData(string bundleName)
     {
         string uri = GetPlatformAdaptedPath(bundleName);
         Debug.Log($"资源加载路径: {uri}");
@@ -104,7 +106,7 @@ public sealed class AdvancedBundleLoader
     /// </summary>
     /// <param name="encryptedData">加密的资源数据</param>
     /// <returns>解密后的资源包</returns>
-    public AssetBundle LoadDecryptedBundle(byte[] encryptedData)
+    private AssetBundle LoadDecryptedBundle(byte[] encryptedData)
     {
         // 解密过程
         byte[] decryptedData = SecurityProvider.RecoverBytes(encryptedData);
@@ -128,6 +130,20 @@ public sealed class AdvancedBundleLoader
         }
         return _loadedBundles[bundleName];
     }
+
+    private T LoadFromEditorAsset<T>(string bundleName, string assetName) where T : Object
+    {
+#if UNITY_EDITOR && !Unity_ResourceAb
+        var paths = AssetDatabase.GetAssetPathsFromAssetBundle(bundleName);
+        foreach (var path in paths)
+        {
+            if (Path.GetFileNameWithoutExtension(path).Equals(assetName))
+                return AssetDatabase.LoadAssetAtPath<T>(path);
+        }
+        Debug.LogError($"{assetName}不在{bundleName}中");
+#endif
+        return null;
+    }
     #endregion
 
     #region 资源加载接口
@@ -136,6 +152,9 @@ public sealed class AdvancedBundleLoader
     /// </summary>
     public GameObject LoadGameObject(string bundleName, string assetName)
     {
+        var go = LoadFromEditorAsset<GameObject>(bundleName, assetName);
+        if (go) return go;
+        
         AssetBundle bundle = LoadBundleInternal(bundleName);
         return bundle?.LoadAsset<GameObject>(assetName);
     }
@@ -145,6 +164,9 @@ public sealed class AdvancedBundleLoader
     /// </summary>
     public TextAsset LoadTextFile(string bundleName, string assetName)
     {
+        var go = LoadFromEditorAsset<TextAsset>(bundleName, assetName);
+        if (go) return go;
+        
         AssetBundle bundle = LoadBundleInternal(bundleName.ToLower());
         return bundle?.LoadAsset<TextAsset>(assetName);
     }
@@ -154,14 +176,13 @@ public sealed class AdvancedBundleLoader
     /// </summary>
     public Material LoadMaterialResource(string bundleName, string assetName)
     {
+        var go = LoadFromEditorAsset<Material>(bundleName, assetName);
+        if (go) return go;
+        
         AssetBundle bundle = LoadBundleInternal(bundleName);
         Material mat = bundle?.LoadAsset<Material>(assetName);
-        
         if (mat == null)
-        {
             Debug.LogError($"材质加载失败: {assetName} @ {bundleName}");
-        }
-        
         return mat;
     }
 
@@ -171,16 +192,31 @@ public sealed class AdvancedBundleLoader
     public SpriteAtlas LoadAtlas(string bundleName, string atlasName)
     {
         Debug.Log($"正在加载图集: {atlasName} | 资源包: {bundleName}");
-        
-        AssetBundle bundle = LoadBundleInternal(bundleName);
-        SpriteAtlas atlas = bundle?.LoadAsset<SpriteAtlas>(atlasName);
-        
-        if (!_spriteAtlasCache.ContainsKey(atlasName) && atlasName == "UI_Universal")
+        var go = LoadFromEditorAsset<SpriteAtlas>(bundleName, atlasName);
+        if (go)
         {
-            _spriteAtlasCache.Add(atlasName, atlas);
+            if (!_spriteAtlasCache.ContainsKey(atlasName))
+                _spriteAtlasCache.TryAdd(atlasName, go);
+            return go;
         }
         
+        var bundle = LoadBundleInternal(bundleName);
+        var atlas = bundle?.LoadAsset<SpriteAtlas>(atlasName);
+        if (!_spriteAtlasCache.ContainsKey(atlasName))
+            _spriteAtlasCache.TryAdd(atlasName, atlas);
         return atlas;
+    }
+
+    public Sprite GetSpriteFromBundle(string bundleName, string spName)
+    {
+        var go = LoadFromEditorAsset<Sprite>(bundleName, spName);
+        if (go) return go;
+        
+        var bundle = LoadBundleInternal(bundleName);
+        var mat = bundle?.LoadAsset<Sprite>(spName);
+        if (mat == null)
+            Debug.LogError($"图片加载失败: {spName} @ {bundleName}");
+        return mat;
     }
 
     /// <summary>
@@ -188,27 +224,35 @@ public sealed class AdvancedBundleLoader
     /// </summary>
     public Sprite GetSpriteFromAtlas(string spriteName, string atlasName = "UI_Universal")
     {
-        if (!_spriteAtlasCache.ContainsKey(atlasName))
+        if (_spriteAtlasCache.TryGetValue(atlasName, out var spriteAtlas))
+        {
+            var sprite =  spriteAtlas?.GetSprite(spriteName);
+            if (sprite == null)
+                Debug.LogError($"精灵不存在: {spriteName} @ {atlasName}");
+            return sprite;
+        }
+        
+        var atlas = LoadAtlas(atlasName.ToLower(), atlasName);
+        if (atlas == null)
         {
             Debug.LogError($"图集未加载: {atlasName}");
             return null;
         }
         
-        Sprite sprite = _spriteAtlasCache[atlasName].GetSprite(spriteName);
-        
-        if (sprite == null)
-        {
-            Debug.LogError($"精灵不存在: {spriteName} @ {atlasName}");
-        }
-        
-        return sprite;
+        var sp = atlas.GetSprite(spriteName);
+        if(sp == null)
+            Debug.LogError($"图集@ {atlasName} 不存在精灵: {spriteName} ");
+        return sp;
     }
     
     /// <summary>
     /// 加载音频资源
     /// </summary>
     public AudioClip LoadAudioClip(string bundleName, string audioName)
-    {           
+    {          
+        var go = LoadFromEditorAsset<AudioClip>(bundleName, audioName);
+        if (go) return go;
+        
         AssetBundle bundle = LoadBundleInternal(bundleName);
         return bundle?.LoadAsset<AudioClip>(audioName);
     }
@@ -218,6 +262,9 @@ public sealed class AdvancedBundleLoader
     /// </summary>
     public ScriptableObject LoadScriptableObject(string bundleName, string assetName)
     {
+        var go = LoadFromEditorAsset<ScriptableObject>(bundleName, assetName);
+        if (go) return go;
+        
         AssetBundle bundle = LoadBundleInternal(bundleName);
         return bundle?.LoadAsset<ScriptableObject>(assetName);
     }
@@ -227,18 +274,13 @@ public sealed class AdvancedBundleLoader
     /// </summary>
     public Font LoadFont(string bundleName, string fontName)
     {
+        var go = LoadFromEditorAsset<Font>(bundleName, fontName);
+        if (go) return go;
+        
         AssetBundle bundle = LoadBundleInternal(bundleName);
         return bundle?.LoadAsset<Font>(fontName);
     }
-
-    // /// <summary>
-    // /// 加载TMP字体资源
-    // /// </summary>
-    // public TMP_FontAsset LoadTMPFont(string bundleName, string fontName)
-    // {
-    //     AssetBundle bundle = LoadBundleInternal(bundleName);
-    //     return bundle?.LoadAsset<TMP_FontAsset>(fontName);
-    // }
+    
     #endregion
 
     #region 资源管理

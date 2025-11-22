@@ -315,7 +315,9 @@ public class PuzzleTileBoard : UIWindow
     /// </summary>
     public void Clear()
     {
-        wordCountText.text = "0%";
+        float progress = (float)StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count/StageHexController.Instance.CurStageInfo.Puzzles.Count;
+        int  wordProgress = Mathf.FloorToInt(progress*100);
+        wordCountText.text = $"{wordProgress}%";
         currentPageIndex = 0;
         puzzlePool.ReturnAllObjectsToPool();
         togglePool.ReturnAllObjectsToPool();
@@ -331,7 +333,7 @@ public class PuzzleTileBoard : UIWindow
     /// </summary>
     public PuzzleTileItem GetPuzzleTile(string puzzle)
     {
-        int wordCount = StageController.Instance?.CurStageData?.FoundTargetPuzzles?.Count ?? 0;
+        int wordCount = StageHexController.Instance?.CurStageData?.FoundTargetPuzzles?.Count ?? 0;
 
         if (wordCount > 0 && wordCount <= puzzleTileItems.Count)
         {
@@ -363,7 +365,7 @@ public class PuzzleTileBoard : UIWindow
         if (puzzleTileItem == null) return;
 
         if (index == puzzleTileItem.TextPuzzles.Count - 1 &&
-            StageController.Instance?.CurStageData?.PuzzleHints?.Contains(puzzle) == true)
+            StageHexController.Instance?.CurStageData?.PuzzleHints?.Contains(puzzle) == true)
         {
             puzzleTileItem.ShowText(callback);
             // StartCoroutine(ShowFlyButterCoin(puzzle, callback));
@@ -376,12 +378,12 @@ public class PuzzleTileBoard : UIWindow
         // 更新当前页面的进度条
         // 计算总页数（每页8个成语）
         int wordsInCurrentPage = pageWords[currentPageIndex];
-        int leftWordCount = StageController.Instance.CurStageData.FoundTargetPuzzles.Count%8;
+        int leftWordCount = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count%8;
 
         if (leftWordCount == 0) leftWordCount = wordsInCurrentPage;
         pageProgresses[currentPageIndex].ImageProgress.fillAmount = (float)leftWordCount / wordsInCurrentPage;
         
-        float progress = (float)StageController.Instance.CurStageData.FoundTargetPuzzles.Count/StageController.Instance.CurStageInfo.Puzzles.Count;
+        float progress = (float)StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count/StageHexController.Instance.CurStageInfo.Puzzles.Count;
         
         int  wordProgress = Mathf.FloorToInt(progress*100);
         

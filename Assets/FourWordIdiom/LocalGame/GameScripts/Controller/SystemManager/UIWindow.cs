@@ -177,6 +177,16 @@ public abstract class UIWindow : MonoBehaviour, IPointerDownHandler
         if (_windowCanvas)
             _windowCanvas.sortingOrder = layer;
     }
+    
+    /// <summary>
+    /// 播放bool类型的动画
+    /// </summary>
+    /// <param name="animationName"></param>
+    /// <param name="playOnStart"></param>
+    public void PlayNameAnimationBool(string animationName, bool playOnStart = true)
+    {
+        _windowAnimator.SetBool(animationName, playOnStart);
+    }
 
     #endregion
 

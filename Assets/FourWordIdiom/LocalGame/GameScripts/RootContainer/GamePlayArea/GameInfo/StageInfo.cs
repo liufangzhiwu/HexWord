@@ -349,7 +349,7 @@ public class StageInfo
     /// </summary>
     private string GetStageFileNameByLanguage()
     {
-        switch (GameDataManager.instance.UserData.LanguageCode)
+        switch (GameDataManager.Instance.UserData.LanguageCode)
         {
             case "ChineseSimplified": return "chineseStage";
             case "CT": return "chinesetraStage";

@@ -42,7 +42,7 @@ public class TextPunctuationAdjuster : MonoBehaviour
         
         InitializeGenerator();
 
-        if (StageController.Instance.IsEnterVocabulary)
+        if (StageHexController.Instance.IsEnterVocabulary)
         {
             hangcharCount = 15;
         }

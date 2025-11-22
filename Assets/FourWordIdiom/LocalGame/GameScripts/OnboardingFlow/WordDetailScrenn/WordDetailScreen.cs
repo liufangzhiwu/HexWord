@@ -23,7 +23,7 @@ public class WordDetailScreen : UIWindow
   
     protected override void OnEnable()
     {
-        if (StageController.Instance.IsEnterVocabulary)
+        if (StageHexController.Instance.IsEnterVocabulary)
         {               
             ShowVocabularyWords();
             HeadTitle.text = MultilingualManager.Instance.GetString("LevelWord");                
@@ -47,7 +47,7 @@ public class WordDetailScreen : UIWindow
     
     private void ShowNoteWords()
     {
-        foreach (var word in GameDataManager.instance.UserData.GetWordVocabulary().UserNotes)
+        foreach (var word in GameDataManager.Instance.UserData.GetWordVocabulary().UserNotes)
         {
             if (!words.Contains(word))
             {
@@ -58,7 +58,7 @@ public class WordDetailScreen : UIWindow
 
     private void ShowVocabularyWords()
     {
-        foreach (var word in GameDataManager.instance.UserData.GetWordVocabulary().LevelWords)
+        foreach (var word in GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords)
         {
             if (!words.Contains(word))
             {
@@ -114,7 +114,7 @@ public class WordDetailScreen : UIWindow
     private void UpdateVisibleWords()
     {
         width = wordProfab.GetComponent<RectTransform>().rect.width;
-        curPage = StageController.Instance.PuzzleData.PageIndex;
+        curPage = StageHexController.Instance.PuzzleData.PageIndex;
         viewList.InitList(words);
         ParentMovePos(width * -(curPage-1),false);
         PageCount.text= curPage+"/"+ words.Count;

@@ -52,9 +52,9 @@ public class AudioManager : MonoBehaviour
         ToggleMusic(); // 初始化音乐开关
         //ToggleSounds(); // 初始化音效开关
 
-        Debug.Log("判断音乐开关是否开启"+GameDataManager.instance.UserData.IsMusicOn);
+        Debug.Log("判断音乐开关是否开启"+GameDataManager.Instance.UserData.IsMusicOn);
         // 如果用户设置允许音乐播放，播放默认音乐
-        if (GameDataManager.instance.UserData.IsMusicOn) 
+        if (GameDataManager.Instance.UserData.IsMusicOn) 
         {
             PlayMusic("music");
         }       
@@ -87,7 +87,7 @@ public class AudioManager : MonoBehaviour
         {
             clip = AdvancedBundleLoader.SharedInstance.LoadAudioClip("musics", clipName);
             AudioSource sfxSource = audioSourcePool.GetObject<AudioSource>(); // 获取 AudioSource
-            sfxSource.volume = GameDataManager.instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
+            sfxSource.volume = GameDataManager.Instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
             sfxSource.clip = clip; // 设置要播放的音效
             musicClips.Add(clipName, sfxSource);
         }
@@ -117,7 +117,7 @@ public class AudioManager : MonoBehaviour
         {
             AudioClip clips = sfxSource.clip;
             sfxSource = audioSourcePool.GetObject<AudioSource>(); // 获取 AudioSource
-            sfxSource.volume = GameDataManager.instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
+            sfxSource.volume = GameDataManager.Instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
             sfxSource.clip = clips; // 设置要播放的音效
         }
         else
@@ -132,7 +132,7 @@ public class AudioManager : MonoBehaviour
         }
        
         // 从对象池中获取 AudioSource
-        sfxSource.volume = GameDataManager.instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
+        sfxSource.volume = GameDataManager.Instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
         sfxSource.Play(); // 播放音效
         if (time > 0)
         {
@@ -150,8 +150,8 @@ public class AudioManager : MonoBehaviour
 
     // 切换背景音乐的播放状态
     public void ToggleMusic()
-    {            
-        if (!GameDataManager.instance.UserData.IsMusicOn)
+    {                
+        if (!GameDataManager.Instance.UserData.IsMusicOn)
         {
             musicSource.Stop(); // 如果音乐关闭，停止播放
         }

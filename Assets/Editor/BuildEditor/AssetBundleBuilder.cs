@@ -22,12 +22,12 @@ public class AssetBundleBuilder : EditorWindow
     {
         public BundleInfo[] bundles;
     }
-
+    
     private static string folderPath = "Assets/FourWordIdiom/MultipleData"; // 默认路径
     private static string outputPath = "./BuildBundles"; // 确保此路径有效
     //private static string hotfixPath = "./HotfixBundles"; // 热更资源输出路径
-    private string currentVersionInfo; // 显示当前版本信息
-    private string oldVersionInfo; // 之前版本信息
+    private static string currentVersionInfo; // 显示当前版本信息
+    private static string oldVersionInfo; // 之前版本信息
 
     [MenuItem("Tools/资源打包/AssetBundle Builder")]
     public static void ShowWindow()
@@ -74,7 +74,7 @@ public class AssetBundleBuilder : EditorWindow
         EditorGUILayout.TextArea(string.IsNullOrEmpty(versionInfo) ? "没有可用的版本信息" : versionInfo, GUILayout.Height(200), GUILayout.ExpandWidth(true));
     }
 
-    private void BuildAssetBundles(bool hotfix)
+    public static void BuildAssetBundles(bool hotfix)
     {
         if (!Directory.Exists(folderPath))
         {
@@ -134,13 +134,14 @@ public class AssetBundleBuilder : EditorWindow
 
         // 更新当前版本信息
         currentVersionInfo = GetCurrentVersionInfo(outputPath);
+        AssetDatabase.Refresh();
     }
 
     /// <summary>
     /// 加密指定路径下的 AssetBundle 文件。
     /// </summary>
     /// <param name="bundlePath">要加密的 AssetBundle 文件的路径。</param>
-    public void EncryptAssetBundle(string bundlePath)
+    public static void EncryptAssetBundle(string bundlePath)
     {
         // 获取所有文件
         string[] files = Directory.GetFiles(bundlePath);
@@ -160,7 +161,7 @@ public class AssetBundleBuilder : EditorWindow
                 byte[] encryptedData = SecurityProvider.SecureBytes(data);
                 // 保存加密后的文件
                 File.WriteAllBytes(file, encryptedData);
-                Debug.Log("AssetBundle 加密完成: " + file);
+                //Debug.Log("AssetBundle 加密完成: " + file);
             }
             catch (Exception ex)
             {
@@ -201,7 +202,7 @@ public class AssetBundleBuilder : EditorWindow
                 if (assetImporter != null)
                 {
                     assetImporter.SetAssetBundleNameAndVariant(assetBundleName, "");
-                    Debug.Log($"Set AssetBundle for {relativePath} to {assetBundleName}");
+                   // Debug.Log($"Set AssetBundle for {relativePath} to {assetBundleName}");
                 }
                 else
                 {
@@ -239,19 +240,17 @@ public class AssetBundleBuilder : EditorWindow
 
     private static void CopyAssetBundlesToStreamingAssets(string sourcePath)
     {
-        string streamingAssetsPath = Path.Combine(Application.dataPath, "StreamingAssets");
-
-        if (!Directory.Exists(streamingAssetsPath))
-        {
-            Directory.CreateDirectory(streamingAssetsPath);
-        }
+        var streamingAssetsPath = Path.Combine(Application.dataPath, "StreamingAssets","Res");
+        if (Directory.Exists(streamingAssetsPath))
+            Directory.Delete(streamingAssetsPath,true);
+        Directory.CreateDirectory(streamingAssetsPath);
 
         foreach (var file in Directory.GetFiles(sourcePath))
         {
             string fileName = Path.GetFileName(file);
             string destinationFile = Path.Combine(streamingAssetsPath, fileName);
             File.Copy(file, destinationFile, true);
-            Debug.Log($"Copied {fileName} to StreamingAssets.");
+            //Debug.Log($"Copied {fileName} to StreamingAssets.");
         }
     }
 
@@ -292,7 +291,7 @@ public class AssetBundleBuilder : EditorWindow
     }
 
     // 获取当前版本信息
-    private string GetCurrentVersionInfo(string path)
+    private static string GetCurrentVersionInfo(string path)
     {
         //解密
         if (File.Exists(Path.Combine(path, "version.json")))

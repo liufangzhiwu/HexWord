@@ -28,7 +28,7 @@ public class WordButton : MonoBehaviour
 
     private void InitUI()
     {
-        bool isJan = GameDataManager.instance.UserData.LanguageCode == "JS";
+        bool isJan = GameDataManager.Instance.UserData.LanguageCode == "JS";
 
         if (pinText != null)
         {
@@ -70,10 +70,10 @@ public class WordButton : MonoBehaviour
    
     private void ClickWord()
     {
-        StageController.Instance.PuzzleData = wordData;
+         StageHexController.Instance.PuzzleData = wordData;
         //Debug.LogError("点击词语的索引"+LevelManager.Instance.WordData.PageIndex);
         //LevelManager.Instance.WordData.CurWord=word;
-        if (StageController.Instance.IsEnterVocabulary)
+        if (StageHexController.Instance.IsEnterVocabulary)
         {
             SystemManager.Instance.HidePanel(PanelType.LevelWordScreen,false);
             SystemManager.Instance.ShowPanel(PanelType.LevelWordDetail);

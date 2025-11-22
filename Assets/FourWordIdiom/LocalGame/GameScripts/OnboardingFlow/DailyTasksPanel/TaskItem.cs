@@ -64,7 +64,7 @@ public class TaskItem : MonoBehaviour
         if (taskSaveData.iscomplete && !taskSaveData.iscliam)
         {
             int rewardvalue = taskDataItem.rewards[taskSaveData.typeid];
-            GameDataManager.instance.UserData.UpdateGold(rewardvalue, true,true,"任务获得");
+            GameDataManager.Instance.UserData.UpdateGold(rewardvalue, true,true,"任务获得");
             taskSaveData.iscliam = true;
             UpdateNextTask();   
             //ThinkManager.instance.Event_TaskCompleted(taskSaveData.taskid.ToString(),rewardvalue);
@@ -91,7 +91,7 @@ public class TaskItem : MonoBehaviour
     public void UpdateNextTask()
     {
         //更新完成任务
-        GameDataManager.instance.UserData.UpdateCompleteTask(taskSaveData.taskid, taskSaveData.typeid);
+        GameDataManager.Instance.UserData.UpdateCompleteTask(taskSaveData.taskid, taskSaveData.typeid);
         TimeSpan ts = DateTime.Now.Subtract(DateTime.Today);
         //ThinkManager.instance.Event_ActivityProgress("每日任务", taskSaveData.progressvalue, (int)ts.TotalSeconds);
 
@@ -103,7 +103,7 @@ public class TaskItem : MonoBehaviour
             bool leftcountCancomplete = true;
             if ((TaskEvent)taskDataItem.id == TaskEvent.NeedLightLimit)
             {
-                int leftlimitcount = LimitTimeManager.instance.GetLimitItems().Count - GameDataManager.instance.UserData.timePuzzlecount;
+                int leftlimitcount = LimitTimeManager.Instance.GetLimitItems().Count - GameDataManager.Instance.UserData.timePuzzlecount;
                 if (leftlimitcount < taskDataItem.values[taskSaveData.typeid + 1])
                 {
                     leftcountCancomplete = false;

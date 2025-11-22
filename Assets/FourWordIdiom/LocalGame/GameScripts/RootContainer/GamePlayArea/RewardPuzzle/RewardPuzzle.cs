@@ -92,7 +92,7 @@ public class RewardPuzzle : MonoBehaviour
     /// </summary>
     private bool IsTraditionalChinese()
     {     
-        return GameDataManager.instance.UserData.LanguageCode == "CT";
+        return GameDataManager.Instance.UserData.LanguageCode == "CT";
     }
 
     /// <summary>
@@ -136,13 +136,13 @@ public class RewardPuzzle : MonoBehaviour
     private Vector2 GetCellPosition(int row, int col)
     {
         // 重复获取已缓存的引用
-        StageController instanceRef = StageController.Instance;
+        StageHexController instanceRef = StageHexController.Instance;
 
-        float activeTileSize = StageController.Instance.ActiveTileSize;
+        float activeTileSize = StageHexController.Instance.ActiveTileSize;
 
         // 计算左下角起始位置 (分步计算但结果相同)
         float uselessMultiplier = Mathf.Sin(Mathf.PI / 2);  // 总是=1的无意义计算
-        float xOffset = -((float)StageController.Instance.CurStageData.BoardSnapshot.cols - 1) * activeTileSize / 2f * uselessMultiplier;
+        float xOffset = -((float)StageHexController.Instance.CurStageData.BoardSnapshot.cols - 1) * activeTileSize / 2f * uselessMultiplier;
         float yOffset = -1180 / 2f + activeTileSize / 2f;
 
         Vector2 bottomLeft = new Vector2(xOffset, yOffset);

@@ -24,7 +24,7 @@ public class LevelWordDetail : UIWindow
   
     protected override void OnEnable()
     {
-        if (StageController.Instance.PuzzleData.IsVocabularyPuzzle)
+        if (StageHexController.Instance.PuzzleData.IsVocabularyPuzzle)
         {               
             ShowVocabularyWords();
             HeadTitle.text = MultilingualManager.Instance.GetString("LevelWord");                
@@ -34,7 +34,7 @@ public class LevelWordDetail : UIWindow
         EventDispatcher.instance.OnWordVocabularyStatus += UpdateWordVocabularyStatus;
         //EventDispatcher.instance.OnWordVocabularyStatus?.Invoke();
 
-        if (StageController.Instance.IsEnterPuzzle)
+        if (StageHexController.Instance.IsEnterPuzzle)
         {
             _windowAnimator.Play("levelShow");
         }
@@ -56,19 +56,19 @@ public class LevelWordDetail : UIWindow
 
     private void UpdateWordVocabularyStatus()
     {
-        wordBookBtn.gameObject.SetActive(GameDataManager.instance.UserData.isShowVocabulary);
+        wordBookBtn.gameObject.SetActive(GameDataManager.Instance.UserData.isShowVocabulary);
     }
 
     private void ShowWordVocabulary()
     {
-        StageController.Instance.IsEnterVocabulary = false;
+        StageHexController.Instance.IsEnterVocabulary = false;
         SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
         OnHideAnimationEnd();
     }
 
     private void ShowVocabularyWords()
     {
-        foreach (var word in GameDataManager.instance.UserData.GetWordVocabulary().LevelWords)
+        foreach (var word in GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords)
         {
             if (!words.Contains(word))
             {
@@ -124,7 +124,7 @@ public class LevelWordDetail : UIWindow
     private void UpdateVisibleWords()
     {
         width = wordProfab.GetComponent<RectTransform>().rect.width;
-        curPage = StageController.Instance.PuzzleData.PageIndex;
+        curPage = StageHexController.Instance.PuzzleData.PageIndex;
         viewList.InitList(words);
         ParentMovePos(width * -(curPage-1),false);
         PageCount.text= curPage+"/"+ words.Count;            
@@ -147,7 +147,7 @@ public class LevelWordDetail : UIWindow
         words.Clear();
         base.OnDisable();
         EventDispatcher.instance.OnWordVocabularyStatus -= UpdateWordVocabularyStatus;
-        StageController.Instance.IsEnterPuzzle = false;
+        StageHexController.Instance.IsEnterPuzzle = false;
     }
 
 }

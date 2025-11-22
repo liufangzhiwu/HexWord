@@ -19,7 +19,7 @@ public class LightItem : MonoBehaviour
         lightImage.gameObject.SetActive(false);
         if(limitdata == null) return;
         
-        if (Curlimitdata.id <GameDataManager.instance.UserData.timerePuzzleid)
+        if (Curlimitdata.id <GameDataManager.Instance.UserData.timerePuzzleid)
         {
             ShowComplete(limitdata.rewardContent.Count);
         }
@@ -38,7 +38,7 @@ public class LightItem : MonoBehaviour
         LimitRewordType type = (LimitRewordType)rlist[0];
         Image icon=rewardList[rewardid].GetComponentInChildren<Image>();
         Text count=rewardList[rewardid].GetComponentInChildren<Text>();
-        icon.sprite = GetSprite(type,id>=LimitTimeManager.instance.GetLimitItems().Count-1);
+        icon.sprite = GetSprite(type,id>=LimitTimeManager.Instance.GetLimitItems().Count-1);
         //icon.SetNativeSize();
         rewardList[rewardid].transform.localScale = Vector3.one;
         gouImage.transform.localScale=Vector3.zero;
@@ -221,28 +221,28 @@ public class LightItem : MonoBehaviour
                         ShowComplete(Curlimitdata.rewardContent.Count);
                         //AudioManager.Instance.PlaySoundEffect("limitTimeOver");
                     //}
-                    GameDataManager.instance.UserData.UpdateGold(rlist[1],true,true,message);
+                    GameDataManager.Instance.UserData.UpdateGold(rlist[1],true,true,message);
                     //NextLevelBtn.gameObject.SetActive(true);
                 });
                 break;
             case LimitRewordType.Butterfly:
                 //GameDataManager.instance.UserData.toolInfo[103].count+=rlist[1];
-                GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Butterfly, rlist[1],message);
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, rlist[1],message);
                 break;
             case LimitRewordType.Tipstool:
                 //GameDataManager.instance.UserData.toolInfo[102].count+=rlist[1];
-                GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist[1],message);
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist[1],message);
                 break;
             case LimitRewordType.Resettool:
                 //GameDataManager.instance.UserData.toolInfo[101].count+=rlist[1];
-                GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Resettool, rlist[1],message);
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, rlist[1],message);
                 break;
             case LimitRewordType.Min5Double:
-                GameDataManager.instance.UserData.UpdateLimitEndTime(5);
+                GameDataManager.Instance.UserData.UpdateLimitEndTime(5);
                 //GameDataManager.instance.UserData.SendCurrencyEvent(1,"限时奖励5分钟翻倍",message);
                 break;
             case LimitRewordType.Min15Double:
-                GameDataManager.instance.UserData.UpdateLimitEndTime(15);
+                GameDataManager.Instance.UserData.UpdateLimitEndTime(15);
                 //GameDataManager.instance.UserData.SendCurrencyEvent(1,"限时奖励15分钟翻倍",message);
                 break;
             default:

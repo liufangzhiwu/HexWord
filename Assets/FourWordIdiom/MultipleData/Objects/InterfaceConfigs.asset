@@ -168,3 +168,27 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 4165248868016293823, guid: 3829a928e24ad4f408586c70e4f7a487,
       type: 3}
+  - panelName: SelectMode
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2901091611323133692, guid: a626ff0c784c44c4687a2a412e3a682e,
+      type: 3}
+  - panelName: ChessPlayArea
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2746254273192117949, guid: 47c9d0604f9e185459adf71fd94bf9da,
+      type: 3}
+  - panelName: ChessLearningGuide
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 1327257544548013465, guid: 61b38a17f7adddb46a94631f2c253a2c,
+      type: 3}
+  - panelName: ChessFinishView
+    panelLayer: UpPopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 4236006176551709113, guid: 777a3d5cdafc06e42b51a49c8d71e479,
+      type: 3}

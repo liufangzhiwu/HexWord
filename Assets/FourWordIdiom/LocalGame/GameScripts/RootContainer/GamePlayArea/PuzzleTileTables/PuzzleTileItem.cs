@@ -36,7 +36,7 @@ public class PuzzleTileItem : MonoBehaviour
     {
         if (!string.IsNullOrEmpty(currentPuzzle))
         {
-            StageController.Instance.IsEnterVocabulary = true;
+            StageHexController.Instance.IsEnterVocabulary = true;
             UpdateLevelData();
             SystemManager.Instance.ShowPanel(PanelType.LevelWordDetail);
             AudioManager.Instance.PlaySoundEffect("ShowUI");
@@ -45,16 +45,16 @@ public class PuzzleTileItem : MonoBehaviour
 
     private void UpdateLevelData()
     {
-        StageController.Instance.PuzzleData.CurPuzzle = currentPuzzle;
-        if (!GameDataManager.instance.UserData.GetWordVocabulary().LevelWords.Contains(currentPuzzle))
+        StageHexController.Instance.PuzzleData.CurPuzzle = currentPuzzle;
+        if (!GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Contains(currentPuzzle))
         {
-            GameDataManager.instance.UserData.AddStagePuzzle(currentPuzzle);
+            GameDataManager.Instance.UserData.AddStagePuzzle(currentPuzzle);
         }
-        int wordIndex = GameDataManager.instance.UserData.GetWordVocabulary().LevelWords.IndexOf(currentPuzzle);
-        StageController.Instance.PuzzleData.IsVocabularyPuzzle = true;
-        StageController.Instance.IsEnterVocabulary = true;
-        StageController.Instance.IsEnterPuzzle = true;
-        StageController.Instance.PuzzleData.PageIndex = wordIndex + 1;
+        int wordIndex = GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.IndexOf(currentPuzzle);
+        StageHexController.Instance.PuzzleData.IsVocabularyPuzzle = true;
+        StageHexController.Instance.IsEnterVocabulary = true;
+        StageHexController.Instance.IsEnterPuzzle = true;
+        StageHexController.Instance.PuzzleData.PageIndex = wordIndex + 1;
     }
 
 

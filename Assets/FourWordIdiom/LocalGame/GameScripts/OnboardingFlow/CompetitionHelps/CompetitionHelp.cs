@@ -17,7 +17,7 @@ public class CompetitionHelp : UIWindow
     
     protected void Start()
     {
-        switch (GameDataManager.instance.UserData.LanguageCode)
+        switch (GameDataManager.Instance.UserData.LanguageCode)
         {
             case "JS":
                 titleImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("dashJantitle");

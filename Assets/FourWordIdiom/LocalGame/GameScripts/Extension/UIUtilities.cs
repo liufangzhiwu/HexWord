@@ -129,7 +129,7 @@ public static class UIUtilities
         }
         if (totalHours == 24)
         {
-            GameDataManager.instance.UserData.CheckResetLimitTime();
+            GameDataManager.Instance.UserData.CheckResetLimitTime();
         }
 
         string hoursText = totalHours.ToString();

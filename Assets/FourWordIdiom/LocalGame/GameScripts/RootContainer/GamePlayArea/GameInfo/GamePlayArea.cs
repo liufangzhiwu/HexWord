@@ -58,12 +58,12 @@ public class GamePlayArea : UIWindow
 
     private StageInfo CurStageInfo
     {
-        get { return StageController.Instance.CurStageInfo; }
+        get { return StageHexController.Instance.CurStageInfo; }
     }
     
     private StageProgressData CurStageData
     {
-        get { return StageController.Instance.CurStageData; }
+        get { return StageHexController.Instance.CurStageData; }
     }
 
     protected override void Awake()
@@ -99,28 +99,28 @@ public class GamePlayArea : UIWindow
 
     private void InitToolUI(int value=0,bool isfirst=false)
     {
-        if (GameDataManager.instance.UserData.toolInfo[101].count > 0) 
+        if (GameDataManager.Instance.UserData.toolInfo[101].count > 0) 
         {
-            ResetCounttxt.GetComponentInChildren<Text>().text =GameDataManager.instance.UserData.toolInfo[101].count.ToString();
+            ResetCounttxt.GetComponentInChildren<Text>().text =GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
             ResetCostObj.gameObject.SetActive(false);
             ResetCounttxt.gameObject.SetActive(true);
         }
         else
         {
-            ResetCostObj.GetComponentInChildren<Text>().text = GameDataManager.instance.UserData.toolInfo[101].cost.ToString();
+            ResetCostObj.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
             ResetCostObj.gameObject.SetActive(true);
             ResetCounttxt.gameObject.SetActive(false);
         }
 
-        if (GameDataManager.instance.UserData.toolInfo[102].count > 0)
+        if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
         {
-            HintCounttxt.GetComponentInChildren<Text>().text = GameDataManager.instance.UserData.toolInfo[102].count.ToString();
+            HintCounttxt.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
             HintCostObj.gameObject.SetActive(false);
             HintCounttxt.gameObject.SetActive(true);
         }
         else
         {
-            HintCostObj.GetComponentInChildren<Text>().text = GameDataManager.instance.UserData.toolInfo[102].cost.ToString();
+            HintCostObj.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
             HintCostObj.gameObject.SetActive(true);
             HintCounttxt.gameObject.SetActive(false);
         }
@@ -141,13 +141,13 @@ public class GamePlayArea : UIWindow
         EventDispatcher.instance.TriggerChoicePuzzleSetStatus(true);
         
         LevelPuzzleBtn.gameObject.SetActive(false);
-        //LevelPuzzleBtn.gameObject.SetActive(GameDataManager.instance.UserData.GetWordVocabulary().LevelWords.Count > 0);
+        //LevelPuzzleBtn.gameObject.SetActive(GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Count > 0);
         
         StartTime = DateTime.Now;
         EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
         
-        // ToolInfo toolInfo = GameDataManager.instance.UserData.toolInfo[103];
-        // if (GameDataManager.instance.UserData.butterflyTaskIsOpen)
+        // ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[103];
+        // if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
         // {
         //     useButterflyCount =AppGameSettings.MaxButterfliesPerLevel;
         // }
@@ -161,7 +161,7 @@ public class GamePlayArea : UIWindow
         if (CurStageInfo.StageNumber <= 4)
         {
             StartCoroutine(CheckInactivity());
-            StageController.Instance.tipPuzzle = "";
+            StageHexController.Instance.tipPuzzle = "";
         }
         
        
@@ -174,8 +174,8 @@ public class GamePlayArea : UIWindow
         yield return new WaitForSeconds(0.2f);
 
         SetupGame();
-        PuzzleTipsBtn.gameObject.SetActive(GameDataManager.instance.UserData.CurrentStage >=3);
-        LayerBtn.gameObject.SetActive(GameDataManager.instance.UserData.CurrentStage >=2);
+        PuzzleTipsBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=3);
+        LayerBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=2);
         // 获取 RectTransform 组件
         RectTransform rectTransform = GetComponent<RectTransform>();
         rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
@@ -209,7 +209,7 @@ public class GamePlayArea : UIWindow
         yield return new WaitForSeconds(0.4f);
         
         if (CurStageData.StageId !=1&&CurStageData.StageId !=2&&CurStageData.StageId !=3&&CurStageData.StageId !=6&& CurStageData.PuzzleHints.Count <= 0
-            &&StageController.Instance.IsFirstEnterStage)
+            &&StageHexController.Instance.IsFirstEnterStage)
         {
             if (useButterflyCount <= 2)
             {
@@ -220,7 +220,7 @@ public class GamePlayArea : UIWindow
                 }
             }
             
-            //ToolInfo toolInfo =  GameDataManager.instance.UserData.toolInfo[103];
+            //ToolInfo toolInfo =  GameDataManager.Instance.UserData.toolInfo[103];
 
             crossPuzzleGrid.SetPuzzleBoardState(true);
         }
@@ -229,7 +229,7 @@ public class GamePlayArea : UIWindow
             crossPuzzleGrid.SetPuzzleBoardState(true);
         }
         
-        if (StageController.Instance.IsFirstEnterStage)
+        if (StageHexController.Instance.IsFirstEnterStage)
         {
             wordErrorCount = 0;
             usetoolCount = 0;
@@ -262,11 +262,11 @@ public class GamePlayArea : UIWindow
         /// <summary>
         /// 检查词语是否为当前关卡词语
         /// </summary>
-        if (StageController.Instance.CurStageInfo.IsPuzzleInStage(Puzzle))
+        if (StageHexController.Instance.CurStageInfo.IsPuzzleInStage(Puzzle))
         {
             StartCoroutine(PuzzleSelectedEvent(Puzzle, gridCellPositions));
             //是否新手引导的词
-            if (Puzzle == GuideSystem.Instance.targetPuzzle && GameDataManager.instance.UserData.GetTutorialProgress() <= 2)
+            if (Puzzle == GuideSystem.Instance.targetPuzzle && GameDataManager.Instance.UserData.GetTutorialProgress() <= 2)
             {
                 GuideSystem.Instance.CloseGuide();
             }
@@ -292,7 +292,7 @@ public class GamePlayArea : UIWindow
         if (choicePuzzleTable.CheckPuzzleFound(puzzle)) yield break;
         
         // 保存词语
-        StageController.Instance.AddFoundPuzzle(puzzle);
+         StageHexController.Instance.AddFoundPuzzle(puzzle);
 
         // 差异化点2：根据词语类型选择动画
         PlayPuzzleAnimation(puzzle, gridCellPositions);
@@ -306,7 +306,7 @@ public class GamePlayArea : UIWindow
         // 差异化点4：存档条件判断
         if (ShouldSaveProgress(puzzle))
         {
-            GameDataManager.instance.UpdateLevelProgress(CurStageData);
+            GameDataManager.Instance.UpdateLevelProgress(CurStageData);
         }
 
         yield return new WaitForSeconds(0.2f);
@@ -396,9 +396,9 @@ public class GamePlayArea : UIWindow
     {       
         _windowAnimator.Play("StageOver");
         StageOverObj.gameObject.SetActive(true);
-        StageController.Instance.CompleteStage(CurStageInfo.StageNumber);
+        StageHexController.Instance.CompleteStage(CurStageInfo.StageNumber);
 
-        StageController.Instance.ActiveTileSize = 0;
+        StageHexController.Instance.ActiveTileSize = 0;
         //EventDispatcher.instance.TriggerChangeTopRaycast(false);
     }
     
@@ -417,7 +417,7 @@ public class GamePlayArea : UIWindow
     { 
         yield return new WaitForSeconds(0.1f);
         
-        // if (GameDataManager.instance.UserData.GetTutorialProgress() < 2)
+        // if (GameDataManager.Instance.UserData.GetTutorialProgress() < 2)
         // {
         //     string Str = GetRandomTipsPuzzle(true);
         //     //selectablePuzzles.Contains(Str);
@@ -426,7 +426,7 @@ public class GamePlayArea : UIWindow
         //     GuideSystem.Instance.DisplayGuide();
         // }
 
-        if (CurStageData.StageId == 2&&GameDataManager.instance.UserData.GetTutorialProgress()==2)
+        if (CurStageData.StageId == 2&&GameDataManager.Instance.UserData.GetTutorialProgress()==2)
         {
             yield return new WaitForSeconds(0.2f);
             //提示首字
@@ -434,7 +434,7 @@ public class GamePlayArea : UIWindow
             GuideSystem.Instance.DisplayGuide();
         }
         
-        if (CurStageData.StageId == 3&&GameDataManager.instance.UserData.GetTutorialProgress()==3)
+        if (CurStageData.StageId == 3&&GameDataManager.Instance.UserData.GetTutorialProgress()==3)
         {
             yield return new WaitForSeconds(0.2f);
             GuideSystem.Instance.activeToolObject =PuzzleTipsBtn.gameObject;
@@ -586,13 +586,13 @@ public class GamePlayArea : UIWindow
     
     private void OnClickWordVocabulary()
     {
-        StageController.Instance.IsEnterVocabulary = true;
+        StageHexController.Instance.IsEnterVocabulary = true;
         SystemManager.Instance.ShowPanel(PanelType.LevelWordScreen);
     }
 
     private bool CanUseTool(ToolInfo toolInfo)
     {
-        if (toolInfo.cost <= GameDataManager.instance.UserData.Gold)
+        if (toolInfo.cost <= GameDataManager.Instance.UserData.Gold)
         {                
             return true;
         }
@@ -617,7 +617,7 @@ public class GamePlayArea : UIWindow
             return;
         }
         
-        ToolInfo toolInfo = GameDataManager.instance.UserData.toolInfo[101];
+        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
         
         if (toolInfo == null)
         {
@@ -651,13 +651,13 @@ public class GamePlayArea : UIWindow
         {
             if (useCoins) 
             {
-                GameDataManager.instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
-                GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Resettool, 1,"购买道具");
-                GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Resettool, -1,"关卡内使用");
+                GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, 1,"购买道具");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, -1,"关卡内使用");
             }
             else
             {
-                GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Resettool, -1, "关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, -1, "关卡内使用");
                 InitToolUI();
             }
             
@@ -716,7 +716,7 @@ public class GamePlayArea : UIWindow
 
     private void OnClickPuzzleVocabulary()
     {
-        StageController.Instance.IsEnterVocabulary = true;
+        StageHexController.Instance.IsEnterVocabulary = true;
         //UIManager.Instance.ShowPanel(PanelName.StagePuzzleScreen);
     }
 
@@ -725,7 +725,7 @@ public class GamePlayArea : UIWindow
     /// </summary>
     public void UseTips()
     {
-        ToolInfo toolInfo = GameDataManager.instance.UserData.toolInfo[102];
+        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
         
         if (toolInfo == null)
         {
@@ -763,15 +763,15 @@ public class GamePlayArea : UIWindow
             //CurStageData.UpdateCharacterHint(Str,index);
             if (useCoins)
             {
-                GameDataManager.instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
-                GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1,"道具购买");
-                GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1,"关卡内使用");
+                GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1,"道具购买");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1,"关卡内使用");
                 AudioManager.Instance.PlaySoundEffect("tishidaoju");
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipsTool,1);
             }
             else
             {
-                GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Tipstool,-1,"关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,-1,"关卡内使用");
                 InitToolUI();
                 AudioManager.Instance.PlaySoundEffect("tishidaoju");
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipsTool,1);
@@ -810,7 +810,7 @@ public class GamePlayArea : UIWindow
         if (!string.IsNullOrEmpty(Str))
         {
             //CurStageData.AddPuzzleHints(Str);
-            StageController.Instance.tipPuzzle = Str;
+            StageHexController.Instance.tipPuzzle = Str;
             //int index= CurStageData.GetPuzzleHintCount(Str)+1;
             List<PuzzleTile> puzzleDatas= crossPuzzleGrid.GetPuzzleTileRowCol(Str);
 
@@ -868,13 +868,13 @@ public class GamePlayArea : UIWindow
         
         while (true)
         {
-            float elapsed = Time.time - StageController.Instance.lastActivityTime;
+            float elapsed = Time.time - StageHexController.Instance.lastActivityTime;
         
-            Debug.Log($"无操作时间:{elapsed} 提示词 {StageController.Instance.tipPuzzle}");
+            Debug.Log($"无操作时间:{elapsed} 提示词 {StageHexController.Instance.tipPuzzle}");
             
             // 检查是否超过阈值
-            if (elapsed > inactivityThreshold&&GameDataManager.instance.UserData.GetTutorialProgress()>=2
-                                             &&string.IsNullOrEmpty(StageController.Instance.tipPuzzle))
+            if (elapsed > inactivityThreshold&&GameDataManager.Instance.UserData.GetTutorialProgress()>=2
+                                             &&string.IsNullOrEmpty(StageHexController.Instance.tipPuzzle))
             {
                 ShowTipPuzzle(); // 直接调用UseTips方法
                 // 可选: 触发后暂停检查一段时间，避免频繁调用

@@ -152,7 +152,7 @@ public class FishItem : MonoBehaviour
                 //ThinkManager.instance.SetRoleName(GameDataManager.instance.UserData.UserName);
             }
             //userName.text = GameDataManager.instance.UserData.UserName;
-            userLevel.text= $"{MultilingualManager.Instance.GetString("Level")} {GameDataManager.instance.UserData.CurrentStage}"; 
+            userLevel.text= $"{MultilingualManager.Instance.GetString("Level")} {GameDataManager.Instance.UserData.CurrentHexStage}"; 
             //targetcount.text = GameDataManager.instance.FishUserSave.Puzzleprogress.ToString();
         }
         ainamebg.gameObject.SetActive(curisai);
@@ -217,7 +217,7 @@ public class FishItem : MonoBehaviour
         else
         {
             //userName.text = GameDataManager.instance.UserData.UserName;
-            userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {GameDataManager.instance.UserData.CurrentStage}";
+            userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {GameDataManager.Instance.UserData.CurrentHexStage}";
             //targetcount.text = GameDataManager.instance.FishUserSave.Puzzleprogress.ToString();     
             // userLevel.transform.DOMoveZ(0, 0.5f).OnComplete(() =>
             // {

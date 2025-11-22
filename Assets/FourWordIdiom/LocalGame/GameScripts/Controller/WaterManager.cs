@@ -54,14 +54,14 @@ public class WaterManager : MonoBehaviour
             float curscreenRatio = Screen.width / (float)Screen.height;
 
             float scale = curscreenRatio / baseRatio;
-            float scaleFactor = 3.68f;
+            float scaleFactor = 4.6f;
             waterCamera.orthographicSize = scaleFactor;
             waterqundCamera.orthographicSize = scaleFactor;
         }
         else
         {
-            waterCamera.orthographicSize = 3.68f;
-            waterqundCamera.orthographicSize = 3.68f;
+            waterCamera.orthographicSize = 4.6f;
+            waterqundCamera.orthographicSize = 4.6f;
         }
         
         // 比较当前比例与基准比例
@@ -95,9 +95,9 @@ public class WaterManager : MonoBehaviour
     public void CheckShowWater()
     {
         waterParCount = 0;
-        if (GameDataManager.instance.UserData.signid > 0)
+        if (GameDataManager.Instance.UserData.signid > 0)
         {           
-            if (GameDataManager.instance.UserData.signid >= 4)
+            if (GameDataManager.Instance.UserData.signid >= 4)
             {
                 waterCamera.gameObject.SetActive(false);
                 Water2DSpawner.gameObject.SetActive(true);
@@ -113,10 +113,10 @@ public class WaterManager : MonoBehaviour
                 WaterGame.SetActive(true);
                 PlayerWater(true);
                 water.gameObject.SetActive(true);
-                float yscale = 0.2f * GameDataManager.instance.UserData.signid;
+                float yscale = 0.2f * GameDataManager.Instance.UserData.signid;
                 water.transform.DOScaleY(yscale, 0f);
 
-                switch (GameDataManager.instance.UserData.signid)
+                switch (GameDataManager.Instance.UserData.signid)
                 {
                     case 1:
                         water.transform.DOLocalMoveY(0.32f, 0f);
@@ -130,7 +130,7 @@ public class WaterManager : MonoBehaviour
                 }
             }
 
-            for (int i = 0; i < GameDataManager.instance.UserData.signid; i++)
+            for (int i = 0; i < GameDataManager.Instance.UserData.signid; i++)
             {
                 lines[i].gameObject.SetActive(false);
             }
@@ -191,8 +191,8 @@ public class WaterManager : MonoBehaviour
         }
         else
         {
-            GameDataManager.instance.UserData.UpdateSignid();
-            GameDataManager.instance.UserData.UpdateGold(value, false, false,"签到广告获得");
+            GameDataManager.Instance.UserData.UpdateSignid();
+            GameDataManager.Instance.UserData.UpdateGold(value, false, false,"签到广告获得");
 
             hu.transform.DOLocalRotate(new Vector3(0f, 0f, 35f), 1.2f, RotateMode.Fast).OnComplete(() =>
             {
@@ -225,7 +225,7 @@ public class WaterManager : MonoBehaviour
         waterParCount += waterPar;
         if (!Water2DSpawner.instance.isEnter)
         {
-            int waterLine = GameDataManager.instance.UserData.signid-1;
+            int waterLine = GameDataManager.Instance.UserData.signid-1;
             lines[waterLine].gameObject.SetActive(false);
             OnWaterProgress?.Invoke(waterLine);
         }

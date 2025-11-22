@@ -136,13 +136,13 @@ public class DebugMenu : UIWindow
         InputField Stagenumtxt = FindPuzzleBtn.GetComponentInChildren<InputField>();
         int value = int.Parse(Stagenumtxt.text);
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedFindWord,value);
-        LimitTimeManager.instance.UpdateLimitProgress(value);
+        LimitTimeManager.Instance.UpdateLimitProgress(value);
         //GameDataManager.instance.FishUserSave.UpdateFishProgress(value);
     }
 
     private void OnPassStageClick()
     {
-        GameDataManager.instance.UserData.UpdateStage();
+        GameDataManager.Instance.UserData.UpdateHexStage();
         //EventManager.OnChangeLanguageUpdateUI?.Invoke();
         MessageSystem.Instance.ShowTip("通关成功！");
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedPassLevel,1);
@@ -150,11 +150,11 @@ public class DebugMenu : UIWindow
 
     private void OnReSetClick()
     {           
-        GameDataManager.instance.WipeAllGameData();            
+        GameDataManager.Instance.WipeAllGameData();            
         //EventDispatcher.instance.TriggerChangeGoldUI(0,false);
         //EventDispatcher.OnChangeLanguageUpdateUI?.Invoke();
-        StageController.Instance.LimitPuzzlecount = 0;
-        LimitTimeManager.instance.UpdateLimitTimeBtnUI();
+        StageHexController.Instance.LimitPuzzlecount = 0;
+        LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
         //AdsManager.Instance.HideBannerAd();
         WaterManager.instance.ClearWater();
         DailyTaskManager.Instance.GetTaskSaveData();
@@ -165,7 +165,7 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = AddResetToolBtn.GetComponentInChildren<InputField>();
         int value = int.Parse(Stagenumtxt.text);
-        GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Resettool, value);
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, value);
         //EventManager.OnChangeLanguageUpdateUI?.Invoke();
         MessageSystem.Instance.ShowTip("重置道具增加成功！");
     }
@@ -174,7 +174,7 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = AddButterflyToolBtn.GetComponentInChildren<InputField>();
         int value = int.Parse(Stagenumtxt.text);
-        GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Butterfly, value);
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, value);
         //EventManager.OnChangeLanguageUpdateUI?.Invoke();
         MessageSystem.Instance.ShowTip("蝴蝶道具增加成功！");
     }
@@ -183,7 +183,7 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = AddHintToolBtn.GetComponentInChildren<InputField>();
         int value = int.Parse(Stagenumtxt.text);
-        GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Tipstool, value);
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, value);
         //EventManager.OnChangeLanguageUpdateUI?.Invoke();
         MessageSystem.Instance.ShowTip("提示道具增加成功！");
     }
@@ -192,7 +192,7 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = AddGoldBtn.GetComponentInChildren<InputField>();
         int Stagenum = int.Parse(Stagenumtxt.text);
-        GameDataManager.instance.UserData.UpdateGold(Stagenum);
+        GameDataManager.Instance.UserData.UpdateGold(Stagenum);
 
         MessageSystem.Instance.ShowTip("金币增加成功！");
     }
@@ -208,12 +208,12 @@ public class DebugMenu : UIWindow
         }
         
         //设置关卡数据 向前跳转关卡后，进度需要跟关卡同步；向后跳关不需要同步
-        if (Stagenum > GameDataManager.instance.UserData.CurrentStage)
+        if (Stagenum > GameDataManager.Instance.UserData.CurrentHexStage)
         {
-            GameDataManager.instance.UserData.UpdateStage(Stagenum,true);
+            GameDataManager.Instance.UserData.UpdateHexStage(Stagenum,true);
         }
-        StageController.Instance.SetStageData(Stagenum);
-        StageController.Instance.IsGMEnterStage = true;
+        StageHexController.Instance.SetStageData(Stagenum);
+        StageHexController.Instance.IsGMEnterStage = true;
 
         OnPlayClick();
         //EventManager.RequestChangeBack(true);

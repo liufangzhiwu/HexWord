@@ -139,7 +139,7 @@ public class RewardAdsScreen : UIWindow
             CustomFlyInManager.Instance.FlyInGold(AwardIcon.transform, () =>
             {
                 int coins=50;
-                GameDataManager.instance.UserData.UpdateGold(coins,true,true,"金币广告弹窗获得");
+                GameDataManager.Instance.UserData.UpdateGold(coins,true,true,"金币广告弹窗获得");
             });
             isCanClaim = false;
             

@@ -37,7 +37,12 @@ public class PanelType  // Renamed class
     public const string WordVocabularyScreen = "WordVocabularyScreen";  
     public const string WordDetailScreen = "WordDetailScreen";  
     public const string LevelWordScreen = "LevelWordScreen";  
-    public const string LevelWordDetail = "LevelWordDetail";  
+    public const string LevelWordDetail = "LevelWordDetail"; 
+    
+    public const string SelectMode = "SelectMode";
+    public const string ChessFinishView = "ChessFinishView";
+     public const string ChessPlayArea = "ChessPlayArea";
+     public const string ChessLearningGuide = "ChessLearningGuide";
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

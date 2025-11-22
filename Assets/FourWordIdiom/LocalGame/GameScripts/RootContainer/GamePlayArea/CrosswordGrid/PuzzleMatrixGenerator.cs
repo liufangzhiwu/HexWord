@@ -17,8 +17,8 @@ public class PuzzleMatrixGenerator
 
     private int MaxAttempts = 20;
 
-    private StageInfo CurrentStageConfig => StageController.Instance.CurStageInfo;
-    private StageProgressData CurrentStageState => StageController.Instance.CurStageData;
+    private StageInfo CurrentStageConfig => StageHexController.Instance.CurStageInfo;
+    private StageProgressData CurrentStageState => StageHexController.Instance.CurStageData;
 
     // 单例访问点
     public static PuzzleMatrixGenerator Shared => _shared ??= new PuzzleMatrixGenerator();
@@ -36,7 +36,7 @@ public class PuzzleMatrixGenerator
             if (tempMatrix != null)
             {
                 FillEmptyCells(tempMatrix);
-                StageController.Instance.BoardData = GenerateBoardSnapshot(tempMatrix);
+                StageHexController.Instance.BoardData = GenerateBoardSnapshot(tempMatrix);
             }
         }
         catch (Exception ex)

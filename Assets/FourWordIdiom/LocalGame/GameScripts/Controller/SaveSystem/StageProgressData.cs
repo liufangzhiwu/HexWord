@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using System;
+using System.IO;
 
 [System.Serializable]
 public class StageProgressData
@@ -15,6 +16,9 @@ public class StageProgressData
     public Dictionary<string, int> CharacterHints = new Dictionary<string, int>();
     public List<string> PuzzleHints = new List<string>();
     public BoardGame BoardSnapshot = new BoardGame();
+    
+    public string SaveFileName;
+    
     #endregion
 
     #region 初始化方法
@@ -45,59 +49,77 @@ public class StageProgressData
         return $"StageProgress_{StageId}";
     }
 
-    public void LoadFromPlayerPrefs(StageInfo stageInfo)
+    public void LoadFromFile(StageInfo stageInfo)
     {
-        // StageId = stageInfo.StageNumber;
-        // string key = GetPlayerPrefsKey();
 
-        // if (!PlayerPrefs.HasKey(key))
-        // {
-        //     Debug.LogWarning("未找到关卡进度，使用默认数据初始化");
+        SaveFileName = $"StageProgress_{stageInfo.StageNumber}.json";
+
+        string filePath = Path.Combine(Application.persistentDataPath, SaveFileName);
+
+        if (!File.Exists(filePath))
+        {
+            Debug.LogWarning("未找到关卡进度文件，使用默认数据初始化");
+            InitializeFromStageInfo(stageInfo);           
+            return;
+        }
+
+        try
+        {
+            string encryptedJson = File.ReadAllText(filePath, Encoding.UTF8);
+            //解密
+            string json = SecurityProvider.RestoreData(encryptedJson);
+
+            if (!ValidateJson(json))
+            {
+                Debug.LogError("JSON数据格式无效");
+                InitializeFromStageInfo(stageInfo);
+                return;
+            }
+
+            var loadedData = JsonConvert.DeserializeObject<StageProgressData>(json);
+            
+            bool foundword=true;
+            for (int i = 0; i < loadedData.Puzzles.Count; i++)
+            {
+                string targetWord = loadedData.Puzzles[i];
+                if (!stageInfo.Puzzles.Contains(targetWord))
+                {
+                    foundword = false;
+                    break;
+                }
+            }
+        
+            if (loadedData.StageId <= 0||!foundword)
+            {
+                InitializeFromStageInfo(stageInfo);
+            }
+            else
+            {
+                Debug.Log("关卡数据数据已加载: " + json+" 关卡数据 "+loadedData.StageId);
+                InitializeFromExisting(loadedData);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"加载关卡数据失败: {e.Message}");
             InitializeFromStageInfo(stageInfo);
-        //     return;
-        // }
-
-        // try
-        // {
-        //     string encryptedJson = PlayerPrefs.GetString(key);
-        //     string json = SecurityProvider.RestoreData(encryptedJson);
-        //
-        //     if (!ValidateJson(json))
-        //     {
-        //         Debug.LogError("JSON数据格式无效");
-        //         InitializeFromStageInfo(stageInfo);
-        //         return;
-        //     }
-        //
-        //     var loadedData = JsonConvert.DeserializeObject<StageProgressData>(json);
-        //
-        //     if (loadedData != null && loadedData.BoardSnapshot != null)
-        //     {
-        //         InitializeFromExisting(loadedData);
-        //     }
-        //     else
-        //     {
-        //         InitializeFromStageInfo(stageInfo);
-        //     }
-        // }
-        // catch (System.Exception e)
-        // {
-        //     Debug.LogError($"加载关卡数据失败: {e.Message}");
-        //     InitializeFromStageInfo(stageInfo);
-        // }
+        }
     }
 
     public void SaveToPlayerPrefs()
     {
-        string key = GetPlayerPrefsKey();
+        SaveFileName = $"StageProgress_{StageId}.json";
+        string filePath = Path.Combine(Application.persistentDataPath, SaveFileName);
+
         try
         {
-            // string json = JsonConvert.SerializeObject(this);
-            // string encryptedJson = SecurityProvider.ProtectData(json);
-            // PlayerPrefs.SetString(key, encryptedJson);
-            // PlayerPrefs.Save(); // 确保立即写入
-            
-            Debug.Log($"关卡进度已保存到PlayerPrefs: {key}");
+            // 虚拟加密前处理
+            string json = JsonConvert.SerializeObject(this);
+            //加密
+            string encryptedJson = SecurityProvider.ProtectData(json);
+            File.WriteAllText(filePath, encryptedJson);
+          
+            Debug.Log($"关卡进度已保存: {filePath}");
         }
         catch (System.Exception e)
         {
@@ -130,7 +152,6 @@ public class StageProgressData
         if (!FoundTargetPuzzles.Contains(Puzzle))
         {
             FoundTargetPuzzles.Add(Puzzle);
-            SaveToPlayerPrefs(); // 数据变动立即保存
         }
     }
 
@@ -181,7 +202,6 @@ public class StageProgressData
         {
             CharacterHints.Add(Puzzle, hintIndex);
         }
-        SaveToPlayerPrefs(); // 数据变动立即保存
     }
 
     public void AddPuzzleHints(string Puzzle)
@@ -189,7 +209,6 @@ public class StageProgressData
         if (!PuzzleHints.Contains(Puzzle))
         {
             PuzzleHints.Add(Puzzle);
-            SaveToPlayerPrefs(); // 数据变动立即保存
         }
     }
 

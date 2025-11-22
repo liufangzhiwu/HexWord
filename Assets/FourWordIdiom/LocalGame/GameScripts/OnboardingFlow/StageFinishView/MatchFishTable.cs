@@ -26,7 +26,7 @@ public class MatchFishTable : MonoBehaviour
     {
         if (GameCoreManager.Instance.IsNetworkActive)
         {
-            // if (string.IsNullOrEmpty(GameDataManager.instance.FishUserSave.roundstarttime))
+            // if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
             // {
             //     SystemManager.Instance.ShowPanel(PanelType.CompetitionStart);
             // }
@@ -44,9 +44,9 @@ public class MatchFishTable : MonoBehaviour
     public void CheckFishBtn()
     {
         claimObj.gameObject.SetActive(false);
-        if (GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
         {
-            if (GameDataManager.instance.UserData.CurrentStage == AppGameSettings.UnlockRequirements.FishOpenLevel)
+            if (GameDataManager.Instance.UserData.CurrentHexStage == AppGameSettings.UnlockRequirements.FishOpenLevel)
             {
                 DateTime openTime = DateTime.Now;
                 //DateTime openTime = DateTime.Today.AddDays(1);
@@ -62,8 +62,8 @@ public class MatchFishTable : MonoBehaviour
                     closeTime = openTime.AddDays(daysUntilMonday);
                 }
                 
-                // GameDataManager.instance.FishUserSave.opentime = openTime.ToString();
-                // GameDataManager.instance.FishUserSave.cloestime = closeTime.ToString();
+                // GameDataManager.Instance.FishUserSave.opentime = openTime.ToString();
+                // GameDataManager.Instance.FishUserSave.cloestime = closeTime.ToString();
                 //FishInfoController.Instance.UpdateFishTime();
                 FishBtn.gameObject.SetActive(true);
             }
@@ -71,9 +71,9 @@ public class MatchFishTable : MonoBehaviour
             {
                 //FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
                 
-                if (GameDataManager.instance.UserData.CurrentStage > AppGameSettings.UnlockRequirements.FishOpenLevel)
+                if (GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.FishOpenLevel)
                 {
-                    //GameDataManager.instance.FishUserSave.UpdateFishProgress(StageController.Instance.CurStageInfo.Puzzles.Count);
+                    //GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageController.Instance.CurStageInfo.Puzzles.Count);
                 }
             }
         }
@@ -87,7 +87,7 @@ public class MatchFishTable : MonoBehaviour
     public void UpdateFishTime(string time="")
     {
         fishTime.text = time;
-        if (GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
         {
             //FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
         }  

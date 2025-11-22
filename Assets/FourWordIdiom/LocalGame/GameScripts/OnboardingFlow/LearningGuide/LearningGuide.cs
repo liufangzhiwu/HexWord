@@ -38,7 +38,7 @@ public class LearningGuide : UIWindow
     private void ShowUIStyle()
     {
         //GameDataManager.instance.UserData.UpdateTutorialProgress();
-        int id = GameDataManager.instance.UserData.GetTutorialProgress()+1;
+        int id = GameDataManager.Instance.UserData.GetTutorialProgress()+1;
         string tips = MultilingualManager.Instance.GetString("GuidingTips0"+id);
         switch (id)
         {
@@ -104,7 +104,7 @@ public class LearningGuide : UIWindow
     IEnumerator ShowPuzzle()
     {
         bool isheng = true;
-        if (GameDataManager.instance.UserData.GetTutorialProgress() <2)
+        if (GameDataManager.Instance.UserData.GetTutorialProgress() <2)
         {
             foreach (var PuzzleGrid in GuideSystem.Instance.PuzzleGrids)
             {
@@ -123,7 +123,7 @@ public class LearningGuide : UIWindow
             //     isheng = false;
             // }
             
-            if (GameDataManager.instance.UserData.GetTutorialProgress()<=0)
+            if (GameDataManager.Instance.UserData.GetTutorialProgress()<=0)
             {
                 shushouTable.gameObject.SetActive(false);
                 yield return new WaitForSeconds(0.25f);
@@ -159,7 +159,7 @@ public class LearningGuide : UIWindow
         //TimeSpan timeSpan = DateTime.Now.Subtract(startTime);
         //ThinkManager.instance.Event_CompleteGuide();
         hengshouTable.gameObject.SetActive(false);
-        GameDataManager.instance.UserData.UpdateTutorialProgress();
+        GameDataManager.Instance.UserData.UpdateTutorialProgress();
         OnHideAnimationEnd();
     }
 

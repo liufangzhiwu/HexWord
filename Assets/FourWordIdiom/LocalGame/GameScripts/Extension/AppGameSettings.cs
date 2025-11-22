@@ -24,6 +24,8 @@ public static class AppGameSettings
         
         public static int ButterflyCost { get; } = 50;   
         public static int StartingButterflies { get; } = 0; 
+        
+        public static int AutoCompleteCost { get; } = 150;   
     }
 
     // ===== 游戏机制开关 =====

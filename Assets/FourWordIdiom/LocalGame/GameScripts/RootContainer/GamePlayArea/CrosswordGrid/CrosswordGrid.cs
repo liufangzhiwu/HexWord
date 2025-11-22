@@ -46,7 +46,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
     private StageProgressData curStageData
     {
-        get { return StageController.Instance.CurStageData; }
+        get { return StageHexController.Instance.CurStageData; }
     }
 
     /// <summary>
@@ -143,7 +143,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         {
             float height= (RectT.rect.height + 120) / (float)(boardData.rows-boardData.minRow+1);
 
-            StageController.Instance.ActiveTileSize = Mathf.Min(PuzzleItemObj.GetComponent<RectTransform>().rect.width, (RectT.rect.width+520) / 
+             StageHexController.Instance.ActiveTileSize = Mathf.Min(PuzzleItemObj.GetComponent<RectTransform>().rect.width, (RectT.rect.width+520) / 
                 (float)(boardData.cols-boardData.minCol+1),height);
         }			
 
@@ -309,7 +309,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// </summary>
     private Vector2 GetCellPosition(int row, int col, int layer)
     {
-        float activeTileSize = StageController.Instance.ActiveTileSize;
+        float activeTileSize = StageHexController.Instance.ActiveTileSize;
 
         // 平顶六边形参数（行对齐）
         float hexWidth = activeTileSize * Mathf.Sqrt(3) / 2.3f;                  // 六边形宽度（水平方向）
@@ -555,8 +555,8 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// </summary>
     private void SetPuzzleItemScale(RectTransform PuzzleTileRectT)
 	{
-		float xScale	= StageController.Instance.ActiveTileSize / PuzzleTileRectT.rect.width;
-		float yScale	= StageController.Instance.ActiveTileSize / PuzzleTileRectT.rect.height;
+		float xScale	= StageHexController.Instance.ActiveTileSize / PuzzleTileRectT.rect.width;
+		float yScale	= StageHexController.Instance.ActiveTileSize / PuzzleTileRectT.rect.height;
 		float scale		= Mathf.Min(xScale, yScale);
 
         PuzzleTileRectT.localScale = new Vector3(scale, scale, 1);
@@ -591,7 +591,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// </summary>
     private void UpdateSelected(Vector2 screenPosition)
     {
-        Vector2 localPosition = StageController.Instance.ScreenToLocalPosition(screenPosition,PuzzleParent);
+        Vector2 localPosition = StageHexController.Instance.ScreenToLocalPosition(screenPosition,PuzzleParent);
         PuzzleTile PuzzleGrid = GetPuzzleGridAt(localPosition);
 
         if (PuzzleGrid == null) return;          
@@ -612,16 +612,16 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             }
             //Debug.LogError("拖曳字块"+PuzzleGrid.Letter);                    
             UpdateSelectedBoard();
-            StageController.Instance.ResetInactivityTimer();
+            StageHexController.Instance.ResetInactivityTimer();
             ClearPuzzleGrid();
         }
     }
 
     private void ClearPuzzleGrid()
     {
-        if (!string.IsNullOrEmpty(StageController.Instance.tipPuzzle));
+        if (!string.IsNullOrEmpty(StageHexController.Instance.tipPuzzle));
         {
-            List<PuzzleTile> puzzleDatas= GetPuzzleTileRowCol(StageController.Instance.tipPuzzle);
+            List<PuzzleTile> puzzleDatas= GetPuzzleTileRowCol(StageHexController.Instance.tipPuzzle);
     
             foreach (PuzzleTile puzzleTile in puzzleDatas)
             {
@@ -629,7 +629,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 puzzleTile.TileView.StopPulseAnimation();
             }
 
-            StageController.Instance.tipPuzzle = "";
+            StageHexController.Instance.tipPuzzle = "";
         }
     }
 
@@ -657,7 +657,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     private PuzzleTile GetPuzzleGridAt(Vector2 localPosition)
     {
         // 计算点击检测范围（基于字块大小）
-        float tileSize = StageController.Instance.ActiveTileSize;
+        float tileSize = StageHexController.Instance.ActiveTileSize;
         float halfSize = tileSize / 2f;
         // 扩大检测范围（适应六边形形状）
         float detectionSize = tileSize * 0.5f;
@@ -1277,7 +1277,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             return resultTiles;
         }
 
-        List<IdiomData> currentIdioms = StageController.Instance.CurStageInfo.idioms;
+        List<IdiomData> currentIdioms = StageHexController.Instance.CurStageInfo.idioms;
 
         IdiomData idiomData = null;
 
@@ -1389,7 +1389,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         {
             int row = group.Key.Row;
             int col = group.Key.Column;
-            var tiles = group.ToList();
 
             // 修复2：先处理数据层再处理视图
             List<char> layers = curStageData.BoardSnapshot.board[row][col];
@@ -1424,14 +1423,11 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             PuzzleTile tile = tiles[i];
             if (tile.TileView != null)
             {
-               
                 // 修复7：终止关联动画
                 //DOTween.Kill(tile.TileView.GetComponent<CanvasGroup>());
-                
                 tile.TileView.HideElement();
                  letterTilePool.ReturnObjectToPool(tile.TileView.GetComponent<PoolObject>());
                 tile.SetAsEmpty();
-              
             }
         }
 
@@ -1446,33 +1442,13 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         {
             PuzzleTile tile = tiles[i];
             tile.Letter = layers[i];
-            //tile.Layer = i;
+            tile.Layer = i;
         
             if (tile.TileView != null)
             {
                 // 修复10：使用局部变量避免闭包陷阱
                 var tileView = tile.TileView;
                 tileView.DownCharSetCharacter(tile.Letter);
-        
-                // Vector2 newPos = tileView._startPosition;
-                // if (tile.Layer > 0)
-                // {
-                //     newPos.y += tile.Layer * LAYER_OFFSET;
-                // }
-        
-                // CanvasGroup canvasGroup = tileView.GetComponent<CanvasGroup>();
-                // canvasGroup.alpha = 0;
-                // //tileView.TileTransform.anchoredPosition = newPos;
-                //
-                // // 修复11：安全的动画回调
-                // canvasGroup.DOFade(0, 0.2f).OnComplete(() => 
-                // {
-                //     // 关键修复：验证对象是否仍然有效
-                //     if (tileView != null && canvasGroup != null) 
-                //     {
-                //         canvasGroup.DOFade(1, 0.2f);
-                //     }
-                // });
             }
         }
     }

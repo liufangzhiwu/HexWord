@@ -267,7 +267,7 @@ public class DashCompetition : UIWindow
             // }
         }
         
-        switch (GameDataManager.instance.UserData.LanguageCode)
+        switch (GameDataManager.Instance.UserData.LanguageCode)
         {
             case "JS":
                 titleImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("dashJantitle");

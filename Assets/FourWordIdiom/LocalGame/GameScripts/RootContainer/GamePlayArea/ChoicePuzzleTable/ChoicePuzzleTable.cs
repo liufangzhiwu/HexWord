@@ -105,8 +105,8 @@ public class ChoicePuzzleTable : MonoBehaviour
 
     public bool CheckPuzzleFound(string puzzle)
     {
-        if (StageController.Instance.CurStageData.FoundTargetPuzzles != null)
-            return StageController.Instance.CurStageData.FoundTargetPuzzles.Contains(puzzle);
+        if (StageHexController.Instance.CurStageData.FoundTargetPuzzles != null)
+            return StageHexController.Instance.CurStageData.FoundTargetPuzzles.Contains(puzzle);
         return false;
     }
 

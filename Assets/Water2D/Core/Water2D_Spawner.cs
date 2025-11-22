@@ -1359,7 +1359,7 @@ namespace Water2D {
                 // 如果条件满足，调用填充事件
                 if (isEnter)
                 {
-                    if (DropsUsed==GameDataManager.instance.UserData.signid*60)
+                    if (DropsUsed==GameDataManager.Instance.UserData.signid*60)
                     {
                         WaterManager.instance.TriggerWaterline(DropsUsed);
                         _checkOnFillComplete = true; // 标记检查完成
@@ -1367,7 +1367,7 @@ namespace Water2D {
                         isEnter=false;
                     }
                    
-                }else if (DropsUsed+WaterManager.instance.waterParCount==(GameDataManager.instance.UserData.signid)*60)
+                }else if (DropsUsed+WaterManager.instance.waterParCount==(GameDataManager.Instance.UserData.signid)*60)
                 {
                     WaterManager.instance.TriggerWaterline(DropsUsed);
                     //InvokeOnShapeFill(instance.gameObject, shapeCollider[0].gameObject); // 触发填充事件

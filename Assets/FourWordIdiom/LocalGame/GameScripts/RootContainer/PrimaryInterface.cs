@@ -11,6 +11,8 @@ public class PrimaryInterface : UIWindow
 {
     [Header("UI组件")]
     [SerializeField] private Button GameStageBtn;          // 开始游戏按钮
+    [SerializeField] private Button ModeBtn;          // 模式选择按钮
+    [SerializeField] private Animator ModeIndicator;
     [SerializeField] private Image logo;       // 文字类型组件
     [SerializeField] private Text Stagetxt;           // 关卡文本
     [Header("UI LimitTime")]
@@ -51,6 +53,7 @@ public class PrimaryInterface : UIWindow
     protected override void InitializeUIComponents()
     {      
         GameStageBtn.AddClickAction(OnPlayClick);
+        ModeBtn.AddClickAction(OnModeClick);
         SignInBtn.AddClickAction(ShowSignInPanel);
         LimitTimeBtn.AddClickAction(ClickLimintTime);
         TasksBtn.AddClickAction(OnTaskClick);
@@ -64,7 +67,7 @@ public class PrimaryInterface : UIWindow
     protected override void OnEnable()
     {
         EnhancedVideoController.Instance.PlayVideo();
-        LimitTimeManager.instance.OnLimitTimeBtnUI += InitLimtBtnUI;
+        LimitTimeManager.Instance.OnLimitTimeBtnUI += InitLimtBtnUI;
         DailyTaskManager.Instance.OnDailyTaskBtnUI += UpdateDailyTaskBtnUI;
         DailyTaskManager.Instance.OnDailyButterflyTaskUI += UpdateButterflyTime;
         EventDispatcher.instance.OnUpdateGameLobbyUI += UpdateGameLobbyUI;
@@ -88,7 +91,7 @@ public class PrimaryInterface : UIWindow
         CheckFishBtn();
         FishClaim.gameObject.SetActive(false);
         // 提取重复使用的SaveData引用
-        //var fishSave = GameDataManager.instance.FishUserSave;
+        //var fishSave = GameDataManager.Instance.FishUserSave;
         //FishInfoController.Instance.RoundResultFishRank();
         UpdateFishRank();
         
@@ -107,11 +110,29 @@ public class PrimaryInterface : UIWindow
     }
     
     
+    /// <summary>
+    /// 点击选择游戏模式
+    /// </summary>
+    private void OnModeClick()
+    {
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+        _windowAnimator.SetBool("IsCollapse", true);
+        SystemManager.Instance.ShowPanel(PanelType.SelectMode);
+    }
+    
     private void OnFishClick()
     {
         if (GameCoreManager.Instance.IsNetworkActive)
         {
-          
+            if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
+            {
+                SystemManager.Instance.ShowPanel(PanelType.CompetitionStart);
+                //GameDataManager.MainInstance.FishUserSave.UpdateOpenTime();
+            }
+            else
+            {
+                SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
+            }
         }
         else
         {
@@ -139,9 +160,9 @@ public class PrimaryInterface : UIWindow
     
     private void UpdateHeadBtnUI()
     {
-        // if (GameDataManager.instance.UserData.UserHeadId > 0)
+        // if (GameDataManager.Instance.UserData.UserHeadId > 0)
         // {
-        //     headicon.sprite = LoadheadIcon("head" + GameDataManager.instance.UserData.UserHeadId);
+        //     headicon.sprite = LoadheadIcon("head" + GameDataManager.Instance.UserData.UserHeadId);
         //     headicon.transform.gameObject.SetActive(true);
         //     starticon.transform.gameObject.SetActive(false);
         // }
@@ -154,11 +175,11 @@ public class PrimaryInterface : UIWindow
     
     private void UpdateTaskBtnUI()
     {
-         if (LimitTimeManager.instance.IsComplete())
+         if (LimitTimeManager.Instance.IsComplete())
          {
              TaskClaim.gameObject.SetActive(false);
          }
-        TasksBtn.gameObject.SetActive(GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.DailyMissions);
+        TasksBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions);
         TaskClaim.GetComponentInChildren<Text>().text= MultilingualManager.Instance.GetString("ADPopReceive");
     }
     
@@ -192,21 +213,21 @@ public class PrimaryInterface : UIWindow
 
     private void CheckButtonsIsOpen()
     {
-        //HeadBtn.gameObject.SetActive(GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
-        TasksBtn.gameObject.SetActive(GameDataManager.instance.UserData.CurrentStage>= AppGameSettings.UnlockRequirements.DailyMissions);
+        //HeadBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
+        TasksBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage>= AppGameSettings.UnlockRequirements.DailyMissions);
         
-        LimitTimeBtn.gameObject.SetActive(GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
-        ||!string.IsNullOrEmpty(GameDataManager.instance.UserData.limitOpenTime));
+        LimitTimeBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
+        ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime));
         
-        SignInBtn.gameObject.SetActive(GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.SignInRewards
-        ||!string.IsNullOrEmpty(GameDataManager.instance.UserData.signOpenTime));
+        SignInBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.SignInRewards
+        ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.signOpenTime));
     }
     
     private void UpdateTimeDisplay(string time)
     {
         if (!string.IsNullOrEmpty(time))
         {
-            if (!LimitTimeManager.instance.IsClaim())
+            if (!LimitTimeManager.Instance.IsClaim())
             {
                 timetxt.text = time; // 更新文本
             }
@@ -215,14 +236,14 @@ public class PrimaryInterface : UIWindow
     
     private void UpdateLimintBtnUI()
     {
-        if (!LimitTimeManager.instance.IsComplete())
+        if (!LimitTimeManager.Instance.IsComplete())
         {
-            LimitTimeManager.instance.OnLimitTimeUpdated += UpdateTimeDisplay; // 订阅事件
+            LimitTimeManager.Instance.OnLimitTimeUpdated += UpdateTimeDisplay; // 订阅事件
         }
     
         if (!DailyTaskManager.Instance.IsAllComplete())
         {
-            LimitTimeManager.instance.OnDailyTimeUpdated += UpdateDailyTaskTimeDisplay; // 订阅事件
+            LimitTimeManager.Instance.OnDailyTimeUpdated += UpdateDailyTaskTimeDisplay; // 订阅事件
         }
     
         InitLimtBtnUI();
@@ -248,14 +269,14 @@ public class PrimaryInterface : UIWindow
 
     private void InitLimtBtnUI()
     {
-        LimitTimeObj.gameObject.SetActive(!LimitTimeManager.instance.IsClaim());
-        LimitClaim.gameObject.SetActive(LimitTimeManager.instance.IsClaim());
+        LimitTimeObj.gameObject.SetActive(!LimitTimeManager.Instance.IsClaim());
+        LimitClaim.gameObject.SetActive(LimitTimeManager.Instance.IsClaim());
     
-        if (!LimitTimeManager.instance.IsComplete())
+        if (!LimitTimeManager.Instance.IsComplete())
         {
-            if (!LimitTimeManager.instance.IsClaim())
+            if (!LimitTimeManager.Instance.IsClaim())
             {
-                Worddouble.gameObject.SetActive(LimitTimeManager.instance.LimitTimeCanShow());
+                Worddouble.gameObject.SetActive(LimitTimeManager.Instance.LimitTimeCanShow());
             
                 if (LimitClaim.activeSelf)
                 {
@@ -303,20 +324,20 @@ public class PrimaryInterface : UIWindow
         base.OnDisable();
         //EventManager.OnChangeLanguageUpdateUI -= InitUI;
         
-         LimitTimeManager.instance.OnLimitTimeBtnUI -= InitLimtBtnUI;
+         LimitTimeManager.Instance.OnLimitTimeBtnUI -= InitLimtBtnUI;
          DailyTaskManager.Instance.OnDailyTaskBtnUI -= UpdateDailyTaskBtnUI;
          DailyTaskManager.Instance.OnDailyButterflyTaskUI -= UpdateButterflyTime;
          EventDispatcher.instance.OnUpdateGameLobbyUI -=UpdateGameLobbyUI ;
          //FishInfoController.Instance.OnFishTimeUpdated -= UpdateFishTime;
         
-         if (!LimitTimeManager.instance.IsComplete())
+         if (!LimitTimeManager.Instance.IsComplete())
          {
-             LimitTimeManager.instance.OnLimitTimeUpdated -= UpdateTimeDisplay; // 订阅事件
+             LimitTimeManager.Instance.OnLimitTimeUpdated -= UpdateTimeDisplay; // 订阅事件
          }
         
          if (!DailyTaskManager.Instance.IsAllComplete())
          {
-             LimitTimeManager.instance.OnDailyTimeUpdated -= UpdateDailyTaskTimeDisplay; // 订阅事件
+             LimitTimeManager.Instance.OnDailyTimeUpdated -= UpdateDailyTaskTimeDisplay; // 订阅事件
          }
      
     }
@@ -324,18 +345,40 @@ public class PrimaryInterface : UIWindow
     /// <summary>
     /// 初始化UI
     /// </summary>
-    private void InitUI()
+    public void InitUI()
     {
         // 设置关卡文本
-        int Stage = GameDataManager.instance.UserData.CurrentStage != 0 ? 
-                   GameDataManager.instance.UserData.CurrentStage : 1;
-        Stagetxt.text =MultilingualManager.Instance.GetString("Level")+" " + Stage;   
+        int Stage = 0;
+        // 设置模式图标
+        Sprite sprite = null;
+        switch (GameDataManager.Instance.UserData.levelMode)
+        {
+            // case 1:
+            //     Stage = GameDataManager.Instance.UserData.CurrentStage != 0 ? 
+            //         GameDataManager.Instance.UserData.CurrentStage : 1;
+            //     sprite = LoadheadIcon("icon_xiao");
+            //     break;
+            case 2:
+                Stage = GameDataManager.Instance.UserData.CurrentChessStage;
+                sprite = LoadheadIcon("icon_pinzi");
+                break;
+            case 3:
+                Stage = GameDataManager.Instance.UserData.CurrentHexStage;
+                sprite = LoadheadIcon("icon_layer");
+                break;
+        }
+        
+        Stage=Stage==0?1:Stage;
+        
+        Stagetxt.text = MultilingualManager.Instance.GetString("Level")+" " + Stage;
+        if(sprite != null)
+            ModeBtn.GetComponent<Image>().sprite = sprite;
     }
 
     
     private void UpdateButterflyTime(string time="")
     {
-        // bool shouldActivate = GameDataManager.instance.UserData.butterflyTaskIsOpen;
+        // bool shouldActivate = GameDataManager.Instance.UserData.butterflyTaskIsOpen;
         // if (ButterflyTime.activeSelf != shouldActivate)
         // {
         //     ButterflyTime.gameObject.SetActive(shouldActivate);
@@ -382,8 +425,32 @@ public class PrimaryInterface : UIWindow
     /// </summary>
     private void OnEnterStageClick()
     {
-        StageController.Instance.SetStageData(StageController.Instance.CurrentStage);
-        SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);       
+        
+        switch (GameDataManager.Instance.UserData.levelMode)
+        {
+            case 1:
+                StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
+                break;
+            case 2:
+                ChessStageController.Instance.SetStageData(ChessStageController.Instance.CurrentStage);
+                break;
+            case 3:
+                StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
+                break;
+        }
+
+        switch (GameDataManager.Instance.UserData.levelMode)
+        {
+            case 1:
+                SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
+                break;
+            case 2:
+                SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
+                break;
+            case 3:
+                SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
+                break;
+        }
     }
 
     public override void OnHideAnimationEnd()

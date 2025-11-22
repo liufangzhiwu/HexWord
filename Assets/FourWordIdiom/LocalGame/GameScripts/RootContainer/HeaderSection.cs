@@ -29,14 +29,14 @@ public class HeaderSection : UIWindow
         }
         else
         {
-            Goldtxt.text = GameDataManager.instance.UserData.Gold.ToString();
+            Goldtxt.text = GameDataManager.Instance.UserData.Gold.ToString();
         }
     }
     
     private IEnumerator AnimateCoinAddition(int amount)
     {
-        int startValue = GameDataManager.instance.UserData.Gold-amount;
-        int targetValue = GameDataManager.instance.UserData.Gold;
+        int startValue = GameDataManager.Instance.UserData.Gold-amount;
+        int targetValue = GameDataManager.Instance.UserData.Gold;
         float duration = 0.2f; // 动画持续时间
         float elapsed = 0f;
 
@@ -70,7 +70,7 @@ public class HeaderSection : UIWindow
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
          EventDispatcher.instance.OnChangeTopRaycast += ChangeTopRaycast;
         bool ishomeshow = SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface);
-        PuzzlebookBtn.gameObject.SetActive(ishomeshow&& GameDataManager.instance.UserData.isShowVocabulary);
+        PuzzlebookBtn.gameObject.SetActive(ishomeshow&& GameDataManager.Instance.UserData.isShowVocabulary);
         GmBtn.gameObject.SetActive(ishomeshow);
         BackBtn.gameObject.SetActive(!ishomeshow);
         SetBtn.gameObject.SetActive(ishomeshow);
@@ -105,7 +105,7 @@ public class HeaderSection : UIWindow
     
             if (isgameshow)
             {
-                bool hasLevelWords = StageController.Instance.CurStageData.FoundTargetPuzzles.Count > 0;
+                bool hasLevelWords = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count > 0;
                 LevelPuzzleBtn.gameObject.SetActive(hasLevelWords);
             }
         }
@@ -142,13 +142,13 @@ public class HeaderSection : UIWindow
     
     private void OnClickPuzzleVocabulary()
     {
-        StageController.Instance.IsEnterVocabulary = false;
+        StageHexController.Instance.IsEnterVocabulary = false;
         SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
     }
     
     private void OnClickStagePuzzleScreen()
     {
-        StageController.Instance.IsEnterVocabulary = true;
+        StageHexController.Instance.IsEnterVocabulary = true;
         SystemManager.Instance.ShowPanel(PanelType.LevelWordScreen);
     }
 
@@ -194,8 +194,18 @@ public class HeaderSection : UIWindow
         if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
         {
             SystemManager.Instance.HidePanel(PanelType.GamePlayArea);
-            //GameDataManager.instance.UserData.UpdateOnlineStageTime();
-        }          
+            GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+        }   
+        
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
+        {
+            SystemManager.Instance.HidePanel(PanelType.ChessFinishView);
+        }   
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        {
+            SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
+            GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+        } 
     }
 
     public void ChangeBackBtnState(bool isshow)

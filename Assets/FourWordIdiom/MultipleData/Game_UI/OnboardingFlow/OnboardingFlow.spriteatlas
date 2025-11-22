@@ -23,9 +23,9 @@ SpriteAtlas:
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
-      m_MaxTextureSize: 8192
+      m_MaxTextureSize: 4096
       m_ResizeAlgorithm: 0
-      m_TextureFormat: 48
+      m_TextureFormat: 65
       m_TextureCompression: 1
       m_CompressionQuality: 50
       m_CrunchedCompression: 0
@@ -63,6 +63,7 @@ SpriteAtlas:
     - 0469b3c1fdeb8c64181b0cba5e98cef1: 21300000
     - a200d2020c3cc7147885ab53fef872ee: 21300000
     - 84414432a2265f64dbe32241087ac902: 21300000
+    - e14a9b526c43d63448b846fbc55626e5: 21300000
     - e5d713627edbe874bb6e4f118859e5c0: 21300000
     - 29218972f8eb76246b4f43510a783c95: 21300000
     - c0fcfbb2ab8d6df4cb3dfc4828fb000f: 21300000
@@ -115,6 +116,7 @@ SpriteAtlas:
     - 39395c0b67f74e0438228c903d1a6880: 21300000
     - acbc5e4b34754994d8e1b268fa11943f: 21300000
     - cbeebd5bdeddbbd4e90f7a980536c073: 21300000
+    - e553636bcc59bb44389ecff371d172ae: 21300000
     - 3636b56bf61c9cb499ee1f6e8eabca83: 21300000
     - 88d5d1ab8e8d53d4891d6e8cda9419e8: 21300000
     - 534387ab71b224b41a254fcc3473b3dc: 21300000
@@ -128,6 +130,7 @@ SpriteAtlas:
     - a4672b2e33d48244baf774d11864001e: 21300000
     - 4a13025e0a844a3479141eeab5b3bc5e: 21300000
     - dbb06f5ec256d3b4ca25fed1ae4e9173: 21300000
+    - dabcd98edce6323469a71a236255bef4: 21300000
     - 6b28bf9ed0edefc46ba8a7e2fa7fa8b7: 21300000
     - 89bfe3de69ef5dc4db3eb9e8378516ac: 21300000
     - 1b99102f31039004fa674f669c566738: 21300000
@@ -151,6 +154,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 0469b3c1fdeb8c64181b0cba5e98cef1, type: 3}
   - {fileID: 21300000, guid: a200d2020c3cc7147885ab53fef872ee, type: 3}
   - {fileID: 21300000, guid: 84414432a2265f64dbe32241087ac902, type: 3}
+  - {fileID: 21300000, guid: e14a9b526c43d63448b846fbc55626e5, type: 3}
   - {fileID: 21300000, guid: e5d713627edbe874bb6e4f118859e5c0, type: 3}
   - {fileID: 21300000, guid: 29218972f8eb76246b4f43510a783c95, type: 3}
   - {fileID: 21300000, guid: c0fcfbb2ab8d6df4cb3dfc4828fb000f, type: 3}
@@ -203,6 +207,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 39395c0b67f74e0438228c903d1a6880, type: 3}
   - {fileID: 21300000, guid: acbc5e4b34754994d8e1b268fa11943f, type: 3}
   - {fileID: 21300000, guid: cbeebd5bdeddbbd4e90f7a980536c073, type: 3}
+  - {fileID: 21300000, guid: e553636bcc59bb44389ecff371d172ae, type: 3}
   - {fileID: 21300000, guid: 3636b56bf61c9cb499ee1f6e8eabca83, type: 3}
   - {fileID: 21300000, guid: 88d5d1ab8e8d53d4891d6e8cda9419e8, type: 3}
   - {fileID: 21300000, guid: 534387ab71b224b41a254fcc3473b3dc, type: 3}
@@ -216,6 +221,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: a4672b2e33d48244baf774d11864001e, type: 3}
   - {fileID: 21300000, guid: 4a13025e0a844a3479141eeab5b3bc5e, type: 3}
   - {fileID: 21300000, guid: dbb06f5ec256d3b4ca25fed1ae4e9173, type: 3}
+  - {fileID: 21300000, guid: dabcd98edce6323469a71a236255bef4, type: 3}
   - {fileID: 21300000, guid: 6b28bf9ed0edefc46ba8a7e2fa7fa8b7, type: 3}
   - {fileID: 21300000, guid: 89bfe3de69ef5dc4db3eb9e8378516ac, type: 3}
   - {fileID: 21300000, guid: 1b99102f31039004fa674f669c566738, type: 3}
@@ -238,6 +244,7 @@ SpriteAtlas:
   - time
   - time
   - fishshadow
+  - text_bg
   - enablebtn
   - tiptool
   - itembg
@@ -290,6 +297,7 @@ SpriteAtlas:
   - timebg
   - taskbg
   - titleimage
+  - prop_bg
   - puzzleBook
   - UI_Icon_togglebg
   - tips
@@ -303,6 +311,7 @@ SpriteAtlas:
   - endeng
   - shopgiftbg
   - UI_Icon_sound
+  - UI_Icon_tutorialbg
   - downbtn
   - taskitembg
   - UI_Icon_liangStar

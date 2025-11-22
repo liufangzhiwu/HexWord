@@ -51,8 +51,8 @@ public class OptionsView : UIWindow
 
     private void UpdateToggleStates(bool animate)
     {
-        musicToggle.isOn = GameDataManager.instance.UserData.IsMusicOn; // 更新音乐开关状态
-        soundsToggle.isOn = GameDataManager.instance.UserData.IsSoundOn; // 更新音效开关状态
+        musicToggle.isOn = GameDataManager.Instance.UserData.IsMusicOn; // 更新音乐开关状态
+        soundsToggle.isOn = GameDataManager.Instance.UserData.IsSoundOn; // 更新音效开关状态
         //vibrateToggle.isOn = GameDataManager.instance.UserData.IsVibrationOn; // 更新音效开关状态
         // 根据当前开关状态更新视觉效果
         if (animate)
@@ -117,7 +117,7 @@ public class OptionsView : UIWindow
 
     private void ToggleMusic(bool isOn)
     {
-        GameDataManager.instance.UserData.IsMusicOn = isOn; // 保存音乐开关状态
+        GameDataManager.Instance.UserData.IsMusicOn = isOn; // 保存音乐开关状态
         AudioManager.Instance.ToggleMusic(); // 切换音乐状态
         UpdateToggleVisuals(muHandle, isOn); // 更新音乐手柄视觉
         
@@ -131,7 +131,7 @@ public class OptionsView : UIWindow
 
     private void ToggleSounds(bool isOn)
     {
-        GameDataManager.instance.UserData.IsSoundOn = isOn; // 保存音效开关状态
+        GameDataManager.Instance.UserData.IsSoundOn = isOn; // 保存音效开关状态
         UpdateToggleVisuals(soHandle, isOn); // 更新音效手柄视觉
 
         // 无意义的额外操作

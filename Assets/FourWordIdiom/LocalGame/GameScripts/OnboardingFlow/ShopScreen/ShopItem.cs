@@ -146,7 +146,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         if (shouldShowTimeBg)
         {
-            // _shopLimitData = GameDataManager.instance.UserData.limitShopItems?
+            // _shopLimitData = GameDataManager.Instance.UserData.limitShopItems?
             //     .Find(item => item.id == data.id);
             //
             // if (_shopLimitData != null &&
@@ -431,21 +431,21 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.instance.UserData.UpdateGold(count,true,true);
+                        GameDataManager.Instance.UserData.UpdateGold(count,true,true);
                         break;
                     case (int)LimitRewordType.Butterfly:
-                        GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Butterfly, count);
-                        //GameDataManager.instance.UserData.toolInfo[103].count += count;
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count);
+                        //GameDataManager.Instance.UserData.toolInfo[103].count += count;
                         //EventManager.OnChangGoldUI?.Invoke(0, false);
                         break;
                     case (int)LimitRewordType.Tipstool:
-                        GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Tipstool, count);
-                        //GameDataManager.instance.UserData.toolInfo[102].count += count;
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count);
+                        //GameDataManager.Instance.UserData.toolInfo[102].count += count;
                         //EventManager.OnChangGoldUI?.Invoke(0, false);
                         break;
                     case (int)LimitRewordType.Resettool:
-                        GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Resettool, count);
-                        //GameDataManager.instance.UserData.toolInfo[101].count += count;
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, count);
+                        //GameDataManager.Instance.UserData.toolInfo[101].count += count;
                         //EventDispatcher.instance.TriggerChangeGoldUI(0, false);
                         break;
                     case (int)LimitRewordType.RemoveAds:
@@ -473,7 +473,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
     private void BuyRemoveAdsEvent(int type)
     {
-        // ShopLimitData reshopLimitData= GameDataManager.instance.UserData.limitShopItems.Find(item =>item.id == shopDataItem.id);
+        // ShopLimitData reshopLimitData= GameDataManager.Instance.UserData.limitShopItems.Find(item =>item.id == shopDataItem.id);
         // if (reshopLimitData != null)
         // {
         //     reshopLimitData.isoverdate = false;
@@ -483,7 +483,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         // }
         // else
         // {
-        //     GameDataManager.instance.UserData.limitShopItems.Add(new ShopLimitData()
+        //     GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData()
         //     {
         //         id = shopDataItem.id,
         //         endtime = null,

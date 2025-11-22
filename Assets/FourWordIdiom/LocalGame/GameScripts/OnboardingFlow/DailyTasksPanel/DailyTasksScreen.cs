@@ -78,7 +78,7 @@ public class DailyTasksScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
-        LimitTimeManager.instance.OnDailyTimeUpdated += UpdateTimeDisplay; // 订阅事件
+        LimitTimeManager.Instance.OnDailyTimeUpdated += UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyTaskBtnUI += UpdateButterflyUI;
         
         // if (DailyTaskManager.Instance.isResetDailyTask&& taskItems.Count>0)
@@ -126,7 +126,7 @@ public class DailyTasksScreen : UIWindow
 
     private void UpdateButterflyUI()
     {
-        int count = GameDataManager.instance.UserData.completeTaskList.Count;
+        int count = GameDataManager.Instance.UserData.completeTaskList.Count;
         if (count > 8) count = 8;
         flySliderValue.text = count+"/8";
         float value = count / 8.0f;
@@ -215,7 +215,7 @@ public class DailyTasksScreen : UIWindow
 
     protected override void OnDisable() 
     {
-        LimitTimeManager.instance.OnDailyTimeUpdated -= UpdateTimeDisplay; // 订阅事件
+        LimitTimeManager.Instance.OnDailyTimeUpdated -= UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyTaskBtnUI -= UpdateButterflyUI;
         DailyTaskManager.Instance.isResetDailyTask=false;
         //EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);

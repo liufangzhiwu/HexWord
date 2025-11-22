@@ -29,7 +29,7 @@ public class MatchSuccess : UIWindow
         // 初始化对象池
         _objectPool = new ObjectPool(awardIconprofab.gameObject, ObjectPool.CreatePoolContainer(transform, "RewardItemPool"));
 
-        //switch (GameDataManager.instance.UserData.LanguageCode)
+        //switch (GameDataManager.Instance.UserData.LanguageCode)
         //{
         //    case "Japanese":
         //        titleImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("riMatchWin");
@@ -57,7 +57,7 @@ public class MatchSuccess : UIWindow
         // string spinePath = "Effect_FishBox01";
         // // 修正局部变量命名
         // Vector3 startVector = FishInfoController.Instance.dashparent.threeBoxImage.transform.position;
-        // // switch (GameDataManager.instance.FishUserSave.rank)
+        // // switch (GameDataManager.Instance.FishUserSave.rank)
         // // {
         // //     case 1:
         // //         spinePath = "Effect_FishBox01";
@@ -125,16 +125,16 @@ public class MatchSuccess : UIWindow
             switch (type)
             {
                 case LimitRewordType.Coins:
-                    GameDataManager.instance.UserData.UpdateGold(award[1],true,false,message);
+                    GameDataManager.Instance.UserData.UpdateGold(award[1],true,false,message);
                     break;
                 case LimitRewordType.Butterfly:
-                    GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Butterfly, award[1],message);
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, award[1],message);
                     break;
                 case LimitRewordType.Tipstool:
-                    GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Tipstool, award[1],message);
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, award[1],message);
                     break;
                 case LimitRewordType.Resettool:
-                    GameDataManager.instance.UserData.UpdateTool(LimitRewordType.Resettool, award[1],message);
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, award[1],message);
                     break;
             }
         }
@@ -189,16 +189,16 @@ public class MatchSuccess : UIWindow
     private void OnCloseBtn()
     {
         // 显式指定字符串区域性
-        // if (string.IsNullOrEmpty(GameDataManager.instance.FishUserSave.roundstarttime)) 
-        //     GameDataManager.instance.FishUserSave.roundstarttime = DateTime.Now.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        // if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime)) 
+        //     GameDataManager.Instance.FishUserSave.roundstarttime = DateTime.Now.ToString(System.Globalization.CultureInfo.InvariantCulture);
         //
-        // TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(GameDataManager.instance.FishUserSave.roundstarttime, System.Globalization.CultureInfo.InvariantCulture));
-        // //int progress = GameDataManager.instance.FishUserSave.matchCount;
+        // TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(GameDataManager.Instance.FishUserSave.roundstarttime, System.Globalization.CultureInfo.InvariantCulture));
+        // //int progress = GameDataManager.Instance.FishUserSave.matchCount;
         // ThinkManager.instance.Event_ActivityComplete("竞速活动",(int)ts.TotalSeconds);
         // //FirebaseManager.Instance.ActivityProgress("竞速活动",progress,(int)ts.TotalSeconds);
         //
-        // GameDataManager.instance.FishUserSave.UpdateRound(1);
-        // GameDataManager.instance.FishUserSave.ResetFishData();
+        // GameDataManager.Instance.FishUserSave.UpdateRound(1);
+        // GameDataManager.Instance.FishUserSave.ResetFishData();
         //FishInfoController.Instance.FishMatchOver();
         
         _boxSpine.gameObject.SetActive(false);

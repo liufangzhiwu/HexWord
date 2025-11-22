@@ -30,13 +30,13 @@ public class TaskTable : MonoBehaviour
     
     public void CheckTasksScreen()
     {
-        if (GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.DailyMissions)
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions)
         {
             DailyTaskManager.Instance.OnDailyTaskBtnUI += InitTaskBtnUI;                
             TaskBtn.gameObject.SetActive(true);
-            if(GameDataManager.instance.UserData.CurrentStage > AppGameSettings.UnlockRequirements.DailyMissions)
+            if(GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.DailyMissions)
             {
-                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedFindWord,StageController.Instance.LimitPuzzlecount);
+                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedFindWord,StageHexController.Instance.LimitPuzzlecount);
                 
                 if(DailyTaskManager.Instance.UpdatetaskItem.Count > 0)
                     StartCoroutine(ShowTaskWordAnim());
@@ -121,7 +121,7 @@ public class TaskTable : MonoBehaviour
 
     private void OnDisable()
     {
-        if (GameDataManager.instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.DailyMissions)
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions)
         {
             DailyTaskManager.Instance.OnDailyTaskBtnUI -= InitTaskBtnUI;              
            

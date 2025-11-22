@@ -29,7 +29,7 @@ public class LevelWordScreen : UIWindow
         ShowLevelWord();
         headTitle.text = MultilingualManager.Instance.GetString("LevelWord");
         AudioManager.Instance.PlaySoundEffect("ShowUI");
-        VocabularyBtn.gameObject.SetActive(GameDataManager.instance.UserData.isShowVocabulary);
+        VocabularyBtn.gameObject.SetActive(GameDataManager.Instance.UserData.isShowVocabulary);
     }
     
     protected override void InitializeUIComponents()
@@ -40,7 +40,7 @@ public class LevelWordScreen : UIWindow
 
     private void ShowWordVocabulary()
     {
-        StageController.Instance.IsEnterVocabulary = false;
+        StageHexController.Instance.IsEnterVocabulary = false;
         SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
         OnHideAnimationEnd();
     }
@@ -52,7 +52,7 @@ public class LevelWordScreen : UIWindow
     {
         int i = 1;
         
-        foreach (var word in GameDataManager.instance.UserData.GetWordVocabulary().LevelWords)
+        foreach (var word in GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords)
         {
             if (!WordVocabularys.Keys.Contains(word))
             {

@@ -39,7 +39,7 @@ public class WordDetailTable : MonoBehaviour
        exampstr = MultilingualManager.Instance.GetString("ExampleSentence");
        synonstr = MultilingualManager.Instance.GetString("Synonym");
 
-       //pinText.gameObject.SetActive(GameDataManager.instance.UserData.LanguageCode=="Japanese");
+       //pinText.gameObject.SetActive(GameDataManager.Instance.UserData.LanguageCode=="Japanese");
     }
 
     public void SetText(string str)
@@ -47,7 +47,7 @@ public class WordDetailTable : MonoBehaviour
         word = str;
         wordText.text = word;
         
-        starToggle.isOn = GameDataManager.instance.UserData.GetWordVocabulary().UserNotes.Contains(word);
+        starToggle.isOn = GameDataManager.Instance.UserData.GetWordVocabulary().UserNotes.Contains(word);
         
         DictionaryEntry entry = WordVocabularyManager.Instance.GetEntry(str);
         
@@ -115,12 +115,12 @@ public class WordDetailTable : MonoBehaviour
         
         if (isStar)
         {
-            GameDataManager.instance.UserData.AddNoteBook(word);
+            GameDataManager.Instance.UserData.AddNoteBook(word);
             EventDispatcher.instance.OnWordVocabularyStatus?.Invoke();
         }
         else
         {
-            GameDataManager.instance.UserData.RemoveNoteBook(word);
+            GameDataManager.Instance.UserData.RemoveNoteBook(word);
         }
     }
 }

@@ -39,7 +39,7 @@ public class WordVocabularyScreen : UIWindow
     private void ShowNoteBook()
     {
         int i = 1;
-        foreach (var word in GameDataManager.instance.UserData.GetWordVocabulary().UserNotes)
+        foreach (var word in GameDataManager.Instance.UserData.GetWordVocabulary().UserNotes)
         {
             if (!NoteBooks.Keys.Contains(word))
             {

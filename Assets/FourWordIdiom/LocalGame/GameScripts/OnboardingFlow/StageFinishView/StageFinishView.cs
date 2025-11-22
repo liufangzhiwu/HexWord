@@ -43,8 +43,8 @@ public class StageFinishView : UIWindow
         InitializeUI();
         UnlockBtnsUI();
         
-        GameDataManager.instance.UserData.curIsEnter = false;
-        LimitTimeManager.instance.OnDailyTimeUpdated += UpdateTimeDisplay; // 订阅事件
+        GameDataManager.Instance.UserData.curIsEnter = false;
+        LimitTimeManager.Instance.OnDailyTimeUpdated += UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyButterflyTaskUI += UpdateButterflyTime;
         //FishInfoController.Instance.OnFishTimeUpdated += _matchFishtable.UpdateFishTime;
         //EventDispatcher.OnChangeHeadIconUpdateUI += UpdateHeadBtnUI;
@@ -63,7 +63,7 @@ public class StageFinishView : UIWindow
         //_rewardCountText.transform.DOLocalMoveY(-10, 0.1f);
         _currentProgressSegment = 0;
         
-        _StageNumberText.text = MultilingualManager.Instance.GetString("Level")+" " + GameDataManager.instance.UserData.CurrentStage; 
+        _StageNumberText.text = MultilingualManager.Instance.GetString("Level")+" " + GameDataManager.Instance.UserData.CurrentHexStage; 
         _progressSlider.value = 0;
         
         CalculateProgressSegments();
@@ -130,17 +130,17 @@ public class StageFinishView : UIWindow
         if (sliderProgress >=1)
         {
             yield return new WaitForSeconds(0.6f);
-            GameDataManager.instance.UserData.UpdateGold(AppGameSettings.LevelCompleteBonus, false, false
+            GameDataManager.Instance.UserData.UpdateGold(AppGameSettings.LevelCompleteBonus, false, false
                 ,"结算获得");
         }
         
-         if (!LimitTimeManager.instance.IsComplete()&&_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
+         if (!LimitTimeManager.Instance.IsComplete()&&_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
          {
              _limitBtnTable.CheckAndShowLimitedTimeEvent();
              yield return new WaitForSeconds(0.5f);
          }
         
-        if (!GameDataManager.instance.UserData.isAllCompleteTask&&_tasktable.TaskBtn.gameObject.activeSelf)
+        if (!GameDataManager.Instance.UserData.isAllCompleteTask&&_tasktable.TaskBtn.gameObject.activeSelf)
         {
             _tasktable.CheckTasksScreen();
             yield return new WaitForSeconds(1.5f);
@@ -185,7 +185,7 @@ public class StageFinishView : UIWindow
         for (int i = 0; i < AppGameSettings.ProgressMilestones.Count; i++)
         {
             accumulatedProgress += AppGameSettings.ProgressMilestones[i];
-            if (StageController.Instance.CurStageInfo.StageNumber <= accumulatedProgress)
+            if (StageHexController.Instance.CurStageInfo.StageNumber <= accumulatedProgress)
             {
                 _currentProgressSegment = i;
                 break;
@@ -211,7 +211,7 @@ public class StageFinishView : UIWindow
     /// </summary>
     private void DetermineCurrentProgressSegment(int totalStages)
     {
-        if (StageController.Instance.CurStageInfo.StageNumber > totalStages)
+        if (StageHexController.Instance.CurStageInfo.StageNumber > totalStages)
         {
             _currentProgressSegment = AppGameSettings.ProgressMilestones.Count - 1;
         }
@@ -222,10 +222,10 @@ public class StageFinishView : UIWindow
     /// </summary>
     private int CalculateCurrentStageInSegment(int totalStages)
     {
-        int StageInSegment = StageController.Instance.CurStageInfo.StageNumber;
+        int StageInSegment = StageHexController.Instance.CurStageInfo.StageNumber;
         if (totalStages >= StageInSegment)
         {
-            StageInSegment = StageController.Instance.CurStageInfo.StageNumber % totalStages;
+            StageInSegment = StageHexController.Instance.CurStageInfo.StageNumber % totalStages;
         }
         StageInSegment %= AppGameSettings.ProgressMilestones[_currentProgressSegment];
         return StageInSegment == 0 ? AppGameSettings.ProgressMilestones[_currentProgressSegment] : StageInSegment;
@@ -292,17 +292,17 @@ public class StageFinishView : UIWindow
             "");
 
         UnlockButton(SignBtn, AppGameSettings.UnlockRequirements.SignInRewards, PanelType.SignWaterScreen,
-            GameDataManager.instance.UserData.signOpenTime);
+            GameDataManager.Instance.UserData.signOpenTime);
         
         UnlockButton(_limitBtnTable._limitTimeEventButton, AppGameSettings.UnlockRequirements.TimeLimitMode, PanelType.LimitTimeScreen,
-            GameDataManager.instance.UserData.limitOpenTime);
+            GameDataManager.Instance.UserData.limitOpenTime);
 
         //UnlockButton(ranktable.RankBtn,StaticGameData.RankOpenLevel,PanelType.RankScreen, false);
     }
 
     private void UnlockButton(Button button, int unlockLevel, string panelName, string opentime)
     {
-        int currentStage = GameDataManager.instance.UserData.CurrentStage;
+        int currentStage = GameDataManager.Instance.UserData.CurrentHexStage;
         bool isUnlocked = currentStage >= unlockLevel||!string.IsNullOrEmpty(opentime);
     
         button.gameObject.SetActive(isUnlocked);
@@ -357,7 +357,7 @@ public class StageFinishView : UIWindow
     /// </summary>
     private void LoadNextStage()
     {
-        StageController.Instance.SetStageData(StageController.Instance.CurrentStage);
+        StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
         SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
     }
 
@@ -376,12 +376,12 @@ public class StageFinishView : UIWindow
 
     protected override void OnDisable()
     {
-        LimitTimeManager.instance.OnDailyTimeUpdated -= UpdateTimeDisplay; // 订阅事件
+        LimitTimeManager.Instance.OnDailyTimeUpdated -= UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyButterflyTaskUI -= UpdateButterflyTime;
         //FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
         //EventDispatcher.OnChangeHeadIconUpdateUI -= UpdateHeadBtnUI;
         
-        GameDataManager.instance.UserData.ClearPuzzleVocabulary();
+        GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
         base.OnDisable();
         EventDispatcher.instance.TriggerChangeGoldUI(AppGameSettings.LevelCompleteBonus, false);
         if (_treasureBoxEffect != null)

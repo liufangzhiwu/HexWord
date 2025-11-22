@@ -74,7 +74,7 @@ public class DailyTaskManager : MonoBehaviour
         yield return new WaitForEndOfFrame();
         
         // 从用户数据中读取
-        foreach (TaskSaveData taskSave in GameDataManager.instance.UserData.taskSaveDatas)
+        foreach (TaskSaveData taskSave in GameDataManager.Instance.UserData.taskSaveDatas)
         {
             TaskDataItem taskItem = taskItems[taskSave.taskid-1];
             if ((TaskEvent)taskItem.id == TaskEvent.NeedOnlineTime)
@@ -83,9 +83,9 @@ public class DailyTaskManager : MonoBehaviour
             }
         }
         
-        // if (GameDataManager.instance.UserData.butterflyTaskIsOpen)
+        // if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
         // {
-        //     int leftminutes =AppGameSettings.TaskButterflyUseTime- GameDataManager.instance.UserData.taskButterflyUseMinutes;
+        //     int leftminutes =AppGameSettings.TaskButterflyUseTime- GameDataManager.Instance.UserData.taskButterflyUseMinutes;
         //     StartCoroutine(OnMaxButterlfyTask(leftminutes));
         // }
     }
@@ -212,13 +212,13 @@ public class DailyTaskManager : MonoBehaviour
             yield return new WaitForSeconds(60);
 
             timeSpan = endTime.Subtract(DateTime.Now);
-            //GameDataManager.instance.UserData.taskButterflyUseMinutes++;
+            //GameDataManager.Instance.UserData.taskButterflyUseMinutes++;
             time = timeSpan.TotalMinutes.ToString("#")+fen;
             if (timeSpan.TotalMinutes <= 0)
             {
-                // if (GameDataManager.instance.UserData.butterflyTaskIsOpen)
+                // if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
                 // {
-                //     GameDataManager.instance.UserData.butterflyTaskIsOpen=false;
+                //     GameDataManager.Instance.UserData.butterflyTaskIsOpen=false;
                 // } 
                 yield break;
             }
@@ -232,13 +232,13 @@ public class DailyTaskManager : MonoBehaviour
     /// <returns></returns>
     public List<TaskSaveData> GetTaskSaveData()
     {
-        List<TaskSaveData> taskSaveDatas = GameDataManager.instance.UserData.taskSaveDatas;
+        List<TaskSaveData> taskSaveDatas = GameDataManager.Instance.UserData.taskSaveDatas;
 
-        if (GameDataManager.instance.UserData.taskSaveDatas.Count <= 0 && !IsAllComplete())
+        if (GameDataManager.Instance.UserData.taskSaveDatas.Count <= 0 && !IsAllComplete())
         {
             // 获取所有满足解锁条件的任务
             List<TaskDataItem> eligibleTasks = taskItems
-                .Where(t => GameDataManager.instance.UserData.CurrentStage >= t.unlocklv)
+                .Where(t => GameDataManager.Instance.UserData.CurrentHexStage >= t.unlocklv)
                 .ToList();
 
             // 随机打乱任务顺序
@@ -263,7 +263,7 @@ public class DailyTaskManager : MonoBehaviour
                             progressvalue = 0
                         };
                         
-                        GameDataManager.instance.UserData.UpdateDailyTaskData(taskSave);
+                        GameDataManager.Instance.UserData.UpdateDailyTaskData(taskSave);
 
                         if (!UpdatetaskItem.Contains((TaskEvent)taskItem.id))
                         {
@@ -284,11 +284,11 @@ public class DailyTaskManager : MonoBehaviour
     
     public TaskSaveData GetSigleTaskSaveData(int taskid)
     {
-        List<TaskSaveData> taskSaveDatas = GameDataManager.instance.UserData.taskSaveDatas;
+        List<TaskSaveData> taskSaveDatas = GameDataManager.Instance.UserData.taskSaveDatas;
         
         // 获取所有满足解锁条件的任务
         List<TaskDataItem> eligibleTasks = taskItems
-            .Where(t => GameDataManager.instance.UserData.CurrentStage >= t.unlocklv)
+            .Where(t => GameDataManager.Instance.UserData.CurrentHexStage >= t.unlocklv)
             .ToList();
         
         // 随机打乱任务顺序
@@ -305,7 +305,7 @@ public class DailyTaskManager : MonoBehaviour
             bool exists = taskSaveDatas.Any(t => t.type == (int)taskItem.tasktype);
             bool complete = false;
             int typeid = 0;
-            List<CompleteTaskData> curpletetask = GameDataManager.instance.UserData.completeTaskList.FindAll(t => t.taskid == taskItem.id);
+            List<CompleteTaskData> curpletetask = GameDataManager.Instance.UserData.completeTaskList.FindAll(t => t.taskid == taskItem.id);
 
             if (curpletetask.Count >= taskItem.values.Count)
             {
@@ -318,7 +318,7 @@ public class DailyTaskManager : MonoBehaviour
 
             if ((TaskEvent)taskItem.id == TaskEvent.NeedLightLimit)
             {
-                int leftlimitcount = LimitTimeManager.instance.GetLimitItems().Count - GameDataManager.instance.UserData.timePuzzlecount;
+                int leftlimitcount = LimitTimeManager.Instance.GetLimitItems().Count - GameDataManager.Instance.UserData.timePuzzlecount;
                 if (leftlimitcount < taskItem.values[0])
                 {
                     continue;
@@ -337,7 +337,7 @@ public class DailyTaskManager : MonoBehaviour
                     iscliam = false,
                 };
                 
-                GameDataManager.instance.UserData.UpdateDailyTaskData(taskSave);
+                GameDataManager.Instance.UserData.UpdateDailyTaskData(taskSave);
                 
                 if (!UpdatetaskItem.Contains((TaskEvent)taskItem.id))
                 {
@@ -359,9 +359,9 @@ public class DailyTaskManager : MonoBehaviour
     
     public void CheckOpenButterflyTask()
     {
-        // if (!GameDataManager.instance.UserData.butterflyTaskIsOpen)
+        // if (!GameDataManager.Instance.UserData.butterflyTaskIsOpen)
         // {
-        //     GameDataManager.instance.UserData.butterflyTaskIsOpen = true;
+        //     GameDataManager.Instance.UserData.butterflyTaskIsOpen = true;
         //     StartCoroutine(OnMaxButterlfyTask(AppGameSettings.TaskButterflyUseTime));
         // }
     }
@@ -372,7 +372,7 @@ public class DailyTaskManager : MonoBehaviour
     /// <returns></returns>
     public bool IsOpen()
     {
-        return GameDataManager.instance.UserData.CurrentStage>=AppGameSettings.UnlockRequirements.DailyMissions;
+        return GameDataManager.Instance.UserData.CurrentHexStage>=AppGameSettings.UnlockRequirements.DailyMissions;
     }
 
     /// <summary>
@@ -385,16 +385,16 @@ public class DailyTaskManager : MonoBehaviour
         int count = 0;
         foreach (TaskDataItem dataItem in taskItems)
         {
-            if(GameDataManager.instance.UserData.CurrentStage >= dataItem.unlocklv)
+            if(GameDataManager.Instance.UserData.CurrentHexStage >= dataItem.unlocklv)
                 count+=dataItem.values.Count;
         }
 
-        if (GameDataManager.instance.UserData.completeTaskList.Count >= count)
+        if (GameDataManager.Instance.UserData.completeTaskList.Count >= count)
             isallover = true;
 
-        if (!GameDataManager.instance.UserData.isAllCompleteTask&&isallover)
+        if (!GameDataManager.Instance.UserData.isAllCompleteTask&&isallover)
         {
-            GameDataManager.instance.UserData.UpdateAllCompleteTask();           
+            GameDataManager.Instance.UserData.UpdateAllCompleteTask();           
             TimeSpan ts = DateTime.Now.Subtract(DateTime.Today);
             //ThinkManager.instance.Event_ActivityComplete("每日任务",  (int)ts.TotalSeconds);
             //FirebaseManager.Instance.ActivityComplete("每日任务", DateTime.Now.ToString(), (int)ts.TotalSeconds);
@@ -409,7 +409,7 @@ public class DailyTaskManager : MonoBehaviour
     /// <returns></returns>
     public bool IsClaim()
     {
-        foreach (var taskSave in GameDataManager.instance.UserData.taskSaveDatas)
+        foreach (var taskSave in GameDataManager.Instance.UserData.taskSaveDatas)
         {
             if (taskSave.iscomplete&&!taskSave.iscliam)
                 return true;
@@ -427,7 +427,7 @@ public class DailyTaskManager : MonoBehaviour
     {
         if(!IsOpen()) return;
         
-        List<TaskSaveData> taskSaveDatas = GameDataManager.instance.UserData.taskSaveDatas;
+        List<TaskSaveData> taskSaveDatas = GameDataManager.Instance.UserData.taskSaveDatas;
         // 查找匹配的 TaskSaveData
         TaskSaveData taskSave = taskSaveDatas.FirstOrDefault(t => t.taskid == (int)taskevent);
         if (taskSave != null)
@@ -458,7 +458,7 @@ public class DailyTaskManager : MonoBehaviour
             }
         }
         
-        //GameDataManager.instance.UserData.SaveTaskData();
+        //GameDataManager.Instance.UserData.SaveTaskData();
     }
 
     public TaskDataItem GetTaskItem(int limitItemID)

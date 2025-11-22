@@ -12,6 +12,7 @@ public class ConfigManager : MonoBehaviour
     
     public static ConfigManager Instance;
     [HideInInspector] public GameObject SpineObject;
+    [HideInInspector] public GameObject SpineObject2;
 
     private void Awake()
     {
@@ -36,6 +37,12 @@ public class ConfigManager : MonoBehaviour
         {
             SpineObject = Resources.Load<GameObject>("StageBox");
         }
+        
+        if (SpineObject == null)
+        {
+            SpineObject = Resources.Load<GameObject>("StageBox");
+        }
+        
         //Debug.unityLogger.logEnabled = isLog;
         Application.targetFrameRate = 60; // 平台设置为60帧
     }
@@ -73,7 +80,7 @@ public class ConfigManager : MonoBehaviour
     //根据不同语言找到对应参数
     public string GetString(string key)
     {
-        string languageCode = GameDataManager.instance.UserData.LanguageCode; 
+        string languageCode = GameDataManager.Instance.UserData.LanguageCode; 
         
         // string languagekey = "Japanese";
         // if (languageCode == "CS")

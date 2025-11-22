@@ -125,7 +125,7 @@ public class RewardPuzzleManager : MonoBehaviour
             //EventManager.OnComboTriggerButterfly?.Invoke(1);
            
         }
-        StageController.Instance.PuzzleComboCount=correctPuzzleCount;
+        StageHexController.Instance.PuzzleComboCount=correctPuzzleCount;
     }
 
     /// <summary>

@@ -4,49 +4,47 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
+using Middleware;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
 using UnityEngine.Android;
 #endif
 
 
-public class GameDataManager : MonoBehaviour
+public class GameDataManager : SingletonMono<GameDataManager>
 {
-    public static GameDataManager instance;
     
     #region 数据字段
     private UserData playerProfile = new UserData();
     //private RankSaveData leaderboardCache = new RankSaveData();
-    //private Dictionary<string, StageProgressData> LevelProgressDict = new Dictionary<string, StageProgressData>();
-    //private FishUserSaveData fishUserSave = new FishUserSaveData(); 
-   
+    private Dictionary<string, StageProgressData> LevelProgressDict = new Dictionary<string, StageProgressData>();
+    private Dictionary<string, ChessStageProgressData> ChessLevelProgressDict = new Dictionary<string, ChessStageProgressData>();
+    private FishUserSaveData fishUserSave = new FishUserSaveData(); 
+    private DynamicHardSave dynamicHard = new DynamicHardSave();
+    private ChessDynamicHardSave chessDynamicHard = new ChessDynamicHardSave();
+    
     private bool dataInitialized = false;
     private bool requireFocusCheck = false;
     private DateTime lastSaveTime;
-    
-    private bool hasExited = false;
    
     #endregion
 
     #region 属性
-    // public FishUserSaveData FishUserSave { get { return fishUserSave; } }
-    // public RankSaveData Leaderboard { get { return leaderboardCache; } }
+    public FishUserSaveData FishUserSave { get { return fishUserSave; } }
+    //public RankSaveData Leaderboard { get { return leaderboardCache; } }
     public UserData UserData { get { return playerProfile; } }
+    
+    public DynamicHardSave DynamicHardSave { get { return dynamicHard; } }
+    public ChessDynamicHardSave ChessDynamicHardSave { get { return chessDynamicHard; } }
     #endregion
+    
 
     #region Unity生命周期方法
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-    }
-
-    private void Start()
+    public override void Init()
     {
         lastSaveTime = DateTime.Now;
+        //Game.Analytics.OnSdkInit += AnalyticMgr.OnAnalyticsSdkInit;
+        //Application.wantsToQuit += OnWantsToQuit;
     }
 
     private void OnApplicationFocus(bool focusStatus)
@@ -66,25 +64,82 @@ public class GameDataManager : MonoBehaviour
     #endregion
 
     #region 初始化方法
+    
+    bool logoutCompleted = false;
+    private bool OnWantsToQuit()
+    {
+        // if (dataInitialized)
+        // {
+        //     Debug.Log("应用请求关闭，保存数据中...");
+        //     CommitGameData();
+        //     StartCoroutine(APIGateway.Instance.LoginApi.Logout(playerProfile,(res) =>
+        //     {
+        //         logoutCompleted = res;
+        //         Application.Quit();
+        //     }));
+        // }
+        return true;
+    }
+
 
     public void LoadPlayerProfile()
     {
         playerProfile.LoadData();
-        //fishUserSave.LoadData();
-        //leaderboardCache.LoadData();
+        fishUserSave.LoadData();
+        dynamicHard.LoadData();
+        chessDynamicHard.LoadData();
         dataInitialized = true;
     }
     #endregion
 
     #region 关卡数据管理
-    public StageProgressData GetLevelProgress(StageInfo levelDetails)
+    
+    public ChessStageProgressData RetrieveChessLevelProgress(ChessStageInfo levelDetails)
+    {
+        string identifier = ChessStageProgressData.CreateLevelIdentifier(levelDetails.StageNumber);
+
+        if (!ChessLevelProgressDict.ContainsKey(identifier))
+        {
+            ChessStageProgressData progress = new ChessStageProgressData();
+            progress.LoadFromFile(levelDetails);
+            ChessLevelProgressDict[identifier] = progress;
+        }
+
+        // 无用数据转换
+        var tempData = ChessLevelProgressDict[identifier];
+        return tempData;
+    }
+    // 更新拼字关卡进度
+    public void UpdateChessLevelProgress(ChessStageProgressData progressData)
+    {
+        string identifier = ChessStageProgressData.CreateLevelIdentifier(progressData.StageId);
+        if (ChessLevelProgressDict.ContainsKey(identifier))
+        {
+            ChessLevelProgressDict[identifier] = progressData;
+        }
+    }
+    
+    
+    public StageProgressData RetrieveLevelProgress(StageInfo levelDetails)
+    {
+        string identifier = CreateLevelIdentifier(levelDetails.StageNumber);
+
+        if (!LevelProgressDict.ContainsKey(identifier))
+        {
+            FetchLevelProgress(levelDetails);
+        }
+
+        // 无用数据转换
+        var tempData = LevelProgressDict[identifier];
+        return tempData;
+    }
+    
+    private void FetchLevelProgress(StageInfo levelDetails)
     {
         StageProgressData progress = new StageProgressData();
-        progress.LoadFromPlayerPrefs(levelDetails);
-        //string identifier = CreateLevelIdentifier(levelDetails.StageNumber);
-        //LevelProgressDict[identifier] = progress;
-        
-        return progress;
+        progress.LoadFromFile(levelDetails);
+        string identifier = CreateLevelIdentifier(levelDetails.StageNumber);
+        LevelProgressDict[identifier] = progress;
     }
 
     private string CreateLevelIdentifier(int levelId)
@@ -94,9 +149,22 @@ public class GameDataManager : MonoBehaviour
 
     public bool IsNewLevelEntry(int StageNumber)
     {
-        string SaveFileName = CreateLevelIdentifier(StageNumber);
+        string saveFileName=null;
 
-        string filePath = Path.Combine(Application.persistentDataPath, SaveFileName);
+        switch ((LevelType)UserData.levelMode)
+        {
+            case LevelType.BlockWord:
+                saveFileName= CreateLevelIdentifier(StageNumber);
+                break;
+            case LevelType.ChessWord:
+                saveFileName = ChessStageProgressData.CreateLevelIdentifier(StageNumber);
+                break;
+            case LevelType.HexWord:
+                saveFileName= CreateLevelIdentifier(StageNumber);
+                break;
+        }
+
+        string filePath = Path.Combine(Application.persistentDataPath, saveFileName);
 
         if (!File.Exists(filePath))
         {
@@ -142,11 +210,11 @@ public class GameDataManager : MonoBehaviour
         playerProfile.SaveData();
         //fishUserSave.SaveData();
         //leaderboardCache.SaveData();
-         // string currentLevelId = CreateLevelIdentifier(playerProfile.CurrentStage);
-         // if (LevelProgressDict.ContainsKey(currentLevelId))
-         // {
-         //     LevelProgressDict[currentLevelId].SaveToPlayerPrefs();
-         // }
+         string currentLevelId = CreateLevelIdentifier(playerProfile.CurrentHexStage);
+         if (LevelProgressDict.ContainsKey(currentLevelId))
+         {
+             LevelProgressDict[currentLevelId].SaveToPlayerPrefs();
+         }
     }
     #endregion
 

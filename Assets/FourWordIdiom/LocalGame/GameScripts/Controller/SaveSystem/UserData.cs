@@ -32,8 +32,17 @@ using UnityEngine;
 public class UserData
 {
     #region 用户基础数据
+    public string PlayerId;              // 玩家ID
+    public string ABName;           // AB测试包名
+    public string UserName;
+    public int UserHeadId;
+    public string UserId;            // 用户唯一标识
     public int Gold;                // 当前金币数量
-    public int CurrentStage;        // 当前关卡进度
+    public int CurrentHexStage;        // 当前六边形关卡进度
+    
+    public int CurrentChessStage;        // 当前拼字关卡进度
+    public int levelMode;               // 当前游戏模式 1:普通模式 2:拼字模式 3:六边形模式
+    public int dayPassStageCount;        // 每日通关数量
 
     #endregion
 
@@ -48,11 +57,18 @@ public class UserData
 
     #region 游戏进度数据
 
-    private int TutorialProgress;        // 新手引导进度
+    public int TutorialProgress;        // 新手引导进度
+    public Dictionary<int, bool> ChessTutorialProgress;   // 填字引导进度
     public int GetTutorialProgress() { return TutorialProgress; }
-    
+    public bool Rigister;   // 注册标志
     public bool IsFirstLaunch = true;   // 首次启动标志
     public bool isShowVocabulary;       // 是否显示词库标志
+    
+    public int TotalPayTimes; //支付次数
+    public float TotalRevenue; //累计付费金额
+    public int totallogin;       // 总登录次数
+    public int totalSeeAds;       // 总看广告次数
+    public int activeDayCnt; //活跃天数
     
     /// <summary>
     /// 词库数据
@@ -71,6 +87,11 @@ public class UserData
     public int curStageOnlineTime;      // 当前关卡在线时长(秒)
     // 关卡对应通关时长
     public Dictionary<int, int> passLevelUseTime=new Dictionary<int, int>();
+    
+    public string firstPayTime;//首次充值时间
+    public string lastPayTime;//最后充值时间
+    public long firstLoginStamp;//首次登录时间戳
+    public string lastLoginDay;//最后登录时间
 
     #endregion
 
@@ -104,8 +125,8 @@ public class UserData
     /// 
     /// 完成任务id
     public List<CompleteTaskData> completeTaskList=new List<CompleteTaskData>();
-    //public bool butterflyTaskIsOpen;        // 每日任务无限蝴蝶任务是否开启
-    //public int taskButterflyUseMinutes;             // 每日任务无限蝴蝶任务使用分钟
+    public bool butterflyTaskIsOpen;        // 每日任务无限蝴蝶任务是否开启
+    public int taskButterflyUseMinutes;             // 每日任务无限蝴蝶任务使用分钟
     public bool isAllCompleteTask;      // 每日任务活动是否全部完成
     /// 任务数据
     public List<TaskSaveData> taskSaveDatas=new List<TaskSaveData>();
@@ -164,7 +185,7 @@ public class UserData
             Debug.Log($"加载用户数据: {json}");
             UserData loadedData = JsonConvert.DeserializeObject<UserData>(json);
                 
-            if (loadedData.CurrentStage <=0)
+            if (loadedData.CurrentHexStage <=0)
             {
                 Debug.LogError($"关卡数据异常: {json}");
                 InitData();
@@ -190,17 +211,41 @@ public class UserData
         # region 初始数据
         
         // 基础数据
+        // 用户基础数据
+        PlayerId = null;
+        ABName = null;
+        UserHeadId = 0;
+        UserName=null;
+        UserId = null;
         Gold = AppGameSettings.StartingGold;
-        CurrentStage = AppGameSettings.FirstLevel;
+        CurrentHexStage = AppGameSettings.FirstLevel;
+        CurrentChessStage = AppGameSettings.FirstLevel;
+        levelMode = 3;
+        dayPassStageCount = 0;
         LanguageCode = GetLanguage();
         IsMusicOn = true;
         IsSoundOn = true;
         // 游戏进度
         TutorialProgress = 0;
+        ChessTutorialProgress = new Dictionary<int,bool> {{1,false},{2,false},{3,false},{4,false},{5,false}};
         IsFirstLaunch = true;
         isShowVocabulary = false;
+        //支付次数
+        TotalPayTimes = 0;
+        //累计付费金额
+        TotalRevenue = 0;
+        //总登录次数
+        totallogin = 0;
+        //总看广告次数
+        totalSeeAds = 0;
+        //活跃天数
+        activeDayCnt = 0;
         // 时间数据
         logoutTime = DateTime.Now.ToString();
+        firstPayTime = DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss");
+        lastPayTime = DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss");
+        firstLoginStamp = DateTime.Now.Ticks;
+        lastLoginDay = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         curStageStartTime = null;
         curStageOnlineTime = 0;
         curIsEnter = false;
@@ -210,12 +255,15 @@ public class UserData
         {
             { 101, new ToolInfo { cost = AppGameSettings.ShopItems.ResetCost, type = "Reset", count = AppGameSettings.ShopItems.StartingResets } },
             { 102, new ToolInfo { cost = AppGameSettings.ShopItems.HintCost, type = "Hint", count = AppGameSettings.ShopItems.StartingHints } },
-            { 103, new ToolInfo { cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly", count = AppGameSettings.ShopItems.StartingButterflies } }
+            { 103, new ToolInfo { cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly", count = AppGameSettings.ShopItems.StartingButterflies } },
+            { 104, new ToolInfo { cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete", count = AppGameSettings.ShopItems.StartingHints } }
         };
         // 签到数据
         signOpenTime = null;
         signid = 0;
         isDayEnterSign = true;
+        butterflyTaskIsOpen = false;
+        taskButterflyUseMinutes = 0;
         
         //显示奖励数据
         timerePuzzleid = 0;
@@ -243,13 +291,39 @@ public class UserData
         if (user == null) return;
       
         // 基础数据
+        PlayerId = user.PlayerId;
+        ABName = user.ABName;
+        UserHeadId = user.UserHeadId;
+        UserName = user.UserName;
+        UserId = user.UserId;
         Gold = user.Gold;
-        CurrentStage = user.CurrentStage;
+        CurrentHexStage = user.CurrentHexStage;
+        CurrentChessStage = user.CurrentChessStage;
+        levelMode = user.levelMode;
+        dayPassStageCount = user.dayPassStageCount;
         LanguageCode = GetLanguage();
         IsMusicOn = user.IsMusicOn;
         IsSoundOn = user.IsSoundOn;
+        Rigister = user.Rigister;
+        firstLoginStamp = user.firstLoginStamp;
+        lastLoginDay = user.lastLoginDay;
+        firstPayTime = user.firstPayTime;
+        lastPayTime = user.lastPayTime;
+        //支付次数
+        TotalPayTimes = user.TotalPayTimes;
+        //累计付费金额
+        TotalRevenue = user.TotalRevenue;
+        //总登录次数
+        totallogin = user.totallogin;
+        //总看广告次数
+        totalSeeAds = user.totalSeeAds;
+        //活跃天数
+        activeDayCnt = user.activeDayCnt;
         // 游戏进度
         TutorialProgress = user.TutorialProgress;
+        butterflyTaskIsOpen = user.butterflyTaskIsOpen;
+        taskButterflyUseMinutes = user.taskButterflyUseMinutes;
+        ChessTutorialProgress = user.ChessTutorialProgress ?? new Dictionary<int,bool> {{1,false},{2,false},{3,false},{4,false},{5,false}};
         IsFirstLaunch = user.IsFirstLaunch;
         isShowVocabulary = user.isShowVocabulary;
         // 时间数据
@@ -286,7 +360,22 @@ public class UserData
 
     #region 数据维护方法
  
-
+    /// <summary>
+    /// 获得关卡模式中文描述
+    /// </summary>
+    /// <returns></returns>
+    public string GetLevelMode()
+    {
+        switch (levelMode)
+        {
+            case 1:
+                return "方块消";
+            case 2:
+                return "禅意拼字";
+        }
+        return "方块消";
+    }
+    
     /// <summary>
     /// 检查并重置每日限时数据
     /// </summary>
@@ -313,9 +402,9 @@ public class UserData
     {
         await Task.Delay(10); // 等待2秒
         
-        //butterflyTaskIsOpen=false;
+        butterflyTaskIsOpen=false;
         completeTaskList = new List<CompleteTaskData>();
-        //taskButterflyUseMinutes = 0;
+        taskButterflyUseMinutes = 0;
         taskSaveDatas=new List<TaskSaveData>();
         isAllCompleteTask = false;
         //每日任务重置
@@ -337,7 +426,7 @@ public class UserData
         signid = 0;
         isDayEnterSign = true;
         //每日通过数据
-        //dayPassStageCount = 0;
+        dayPassStageCount = 0;
         // 可在此添加其他需要每日重置的数据
     }
     
@@ -377,7 +466,7 @@ public class UserData
     {
         try
         {
-            if(CurrentStage<=0) return;
+            if(CurrentHexStage<=0) return;
             
             // 更新登出时间
             if (!string.IsNullOrEmpty(logoutTime) && DateTime.Now > DateTime.Parse(logoutTime))
@@ -412,6 +501,18 @@ public class UserData
     #region 游戏数据操作方法
     
     /// <summary>
+    /// 获得道具消耗总数
+    /// </summary>
+    /// <returns></returns>
+    public int GetTotalToolCost()
+    {
+        int totalToolCost = 0;
+        totalToolCost += toolInfo[101].reducecount+toolInfo[102].reducecount
+                                                  +toolInfo[103].reducecount;
+        return totalToolCost;
+    }
+    
+    /// <summary>
     /// 更新当前关卡在线时长
     /// </summary>
     public void UpdateOnlineStageTime()
@@ -428,7 +529,16 @@ public class UserData
         }
     }
 
-
+    /// <summary>
+    /// 更新关卡进度
+    /// </summary>
+    /// <param name="value">变化值</param>
+    /// <param name="isSet">是否直接设置值</param>
+    public void UpdateChessStage(int value = 1, bool isSet = false)
+    {
+        CurrentChessStage = isSet ? value : CurrentChessStage + value;
+        Debug.Log($"关卡更新: {(isSet ? "设置为" : "增加")}{value}, 当前关卡: {CurrentChessStage}");
+    }
    
     public void UdpateTimePuzzleCount(int value)
     {
@@ -449,11 +559,11 @@ public class UserData
     /// <param name="value">变化值</param>
     /// <param name="isSet">是否直接设置值</param>
     /// <summary>
-    /// 更新关卡进度
+    /// 更新六边形关卡进度
     /// </summary>
-    public void UpdateStage(int value = 1, bool isSet = false)
+    public void UpdateHexStage(int value = 1, bool isSet = false)
     {
-        CurrentStage = isSet ? value : CurrentStage + value;
+        CurrentHexStage = isSet ? value : CurrentHexStage + value;
     }
 
     public void UpdateTutorialProgress()

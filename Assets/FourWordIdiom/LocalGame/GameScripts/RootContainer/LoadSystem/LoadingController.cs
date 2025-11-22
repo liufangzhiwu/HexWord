@@ -88,7 +88,7 @@ public class LoadingController : MonoBehaviour
         yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
         //AudioManager.Instance.Initialize();
-        GameDataManager.instance.LoadPlayerProfile();
+        GameDataManager.Instance.LoadPlayerProfile();
         sceneLoadOperation.allowSceneActivation = true;
     }
 
@@ -140,7 +140,7 @@ public class LoadingController : MonoBehaviour
             "Circle");       
         
         //预加载关卡文件
-        StageController.Instance.LoadPackInfos();
+         StageHexController.Instance.LoadPackInfos();
 
         // 开始场景加载
         yield return LoadMainSceneAsync();
