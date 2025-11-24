@@ -15,16 +15,16 @@ public class PuzzleTileBoard : UIWindow
     [SerializeField] private Transform TileParents;
     [SerializeField] private ScrollRect scrollRect;
     [SerializeField] private Text wordCountText;
+    [SerializeField] private GameObject WordProgressTable;
 
     [Header("Settings")]
     public float snapSpeed = 15f;
     public float snapThreshold = 0.9f;
     public float stopVelocityThreshold = 50f;
-    public float pageSwitchThreshold = 0.1f;
 
     [Header("Prefabs")]
-    [SerializeField] private GameObject puzzleTilePrefab;
-    [SerializeField] private GameObject tileHorizontalPrefab;
+    private GameObject puzzleTilePrefab;
+    private GameObject tileHorizontalPrefab;
 
     // 内部状态
     private List<PuzzleTileItem> puzzleTileItems = new List<PuzzleTileItem>();
@@ -39,6 +39,7 @@ public class PuzzleTileBoard : UIWindow
     private bool wasDragging;
     private int pageCount;
     private float pageWidth;
+    private float totalWordImageWidth; // 总单词进度条宽度
 
     private float dragStartPosition; // 记录拖动开始时的位置
     private bool isDragStartRecorded = false; // 是否已记录拖动起始点
@@ -180,6 +181,40 @@ public class PuzzleTileBoard : UIWindow
 
         // 初始化滚动设置
         InitializeScrollSettings(totalPages);
+
+        // 初始化单词进度
+        UpdateWordProgress();
+        
+        ScrollToPage(currentPageIndex);
+    }
+
+    public void UpdateWordProgress()
+    {
+        currentPageIndex = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count/8;
+        
+        // 更新当前页面的进度条
+        int wordsInCurrentPage = pageWords[currentPageIndex];
+        int leftWordCount = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count%8;
+        float progress = (float)leftWordCount / wordsInCurrentPage;
+        
+        for (int i = 0; i <= currentPageIndex; i++)
+        {
+            if (i < currentPageIndex)
+            {
+                pageProgresses[i].ImageProgress.fillAmount = 1.0f;
+            }
+            else
+            {
+                pageProgresses[currentPageIndex].ImageProgress.fillAmount =progress;
+            }
+        }
+        
+        int wordProgress = Mathf.FloorToInt(progress*100);
+        float startx= -totalWordImageWidth/2;
+        float addinX = 20*currentPageIndex;
+        Vector3 position = new Vector3(startx+175*currentPageIndex+175*progress+addinX,0,0);
+        WordProgressTable.GetComponent<RectTransform>().anchoredPosition = position;
+        wordCountText.text = $"{wordProgress}%";
     }
 
     private void CreatePageToggles(int totalPages,int totalWords)
@@ -197,6 +232,8 @@ public class PuzzleTileBoard : UIWindow
             // 记录每页的成语数量
             pageWords.Add(maxcount);
         }
+        
+        totalWordImageWidth = pageProgresses[0].ImageProgress.GetComponent<RectTransform>().rect.width*pageProgresses.Count+20*(pageProgresses.Count-1);
     }
 
     private void CreatePuzzleItems(List<string> sortedPuzzles, StageProgressData stageData)
@@ -302,12 +339,6 @@ public class PuzzleTileBoard : UIWindow
         targetPosition = pagePositions[pageIndex];
         isSnapping = true;
         currentPageIndex = pageIndex; // 更新当前页面索引
-
-        // // 更新当前页面的进度条
-        // if (pageIndex < pageProgresses.Count)
-        // {
-        //     pageProgresses[pageIndex].ImageProgress.fillAmount = 1;
-        // }
     }
 
     /// <summary>
@@ -315,9 +346,6 @@ public class PuzzleTileBoard : UIWindow
     /// </summary>
     public void Clear()
     {
-        float progress = (float)StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count/StageHexController.Instance.CurStageInfo.Puzzles.Count;
-        int  wordProgress = Mathf.FloorToInt(progress*100);
-        wordCountText.text = $"{wordProgress}%";
         currentPageIndex = 0;
         puzzlePool.ReturnAllObjectsToPool();
         togglePool.ReturnAllObjectsToPool();
@@ -355,7 +383,7 @@ public class PuzzleTileBoard : UIWindow
         yield return new WaitForSeconds(0.7f);
         ScrollToPage(currentPage);
     }
-
+ 
     /// <summary>
     /// 显示已找到的单词
     /// </summary>
@@ -374,20 +402,6 @@ public class PuzzleTileBoard : UIWindow
         {
             puzzleTileItem.ShowText(callback);
         }
-        
-        // 更新当前页面的进度条
-        // 计算总页数（每页8个成语）
-        int wordsInCurrentPage = pageWords[currentPageIndex];
-        int leftWordCount = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count%8;
-
-        if (leftWordCount == 0) leftWordCount = wordsInCurrentPage;
-        pageProgresses[currentPageIndex].ImageProgress.fillAmount = (float)leftWordCount / wordsInCurrentPage;
-        
-        float progress = (float)StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count/StageHexController.Instance.CurStageInfo.Puzzles.Count;
-        
-        int  wordProgress = Mathf.FloorToInt(progress*100);
-        
-        wordCountText.text = $"{wordProgress}%";
         
     }
 

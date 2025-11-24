@@ -215,6 +215,12 @@ public class GameDataManager : SingletonMono<GameDataManager>
          {
              LevelProgressDict[currentLevelId].SaveToPlayerPrefs();
          }
+         
+         string chessCurrentLevelId = ChessStageProgressData.CreateLevelIdentifier(playerProfile.CurrentChessStage);
+         if (ChessLevelProgressDict.ContainsKey(chessCurrentLevelId))
+         {
+             ChessLevelProgressDict[chessCurrentLevelId].SaveToFile();
+         }
     }
     #endregion
 

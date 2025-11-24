@@ -141,10 +141,9 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
         //if (StageController.Instance.ActiveTileSize<=0||GameDataManager.MainInstance.UserData.CurrentStage!=curStageData.StageId||StageController.Instance.IsGMEnterStage)
         {
-            float height= (RectT.rect.height + 120) / (float)(boardData.rows-boardData.minRow+1);
+            float height= (RectT.rect.height ) /(boardData.rows-boardData.minRow+1);
 
-             StageHexController.Instance.ActiveTileSize = Mathf.Min(PuzzleItemObj.GetComponent<RectTransform>().rect.width, (RectT.rect.width+520) / 
-                (float)(boardData.cols-boardData.minCol+1),height);
+             StageHexController.Instance.ActiveTileSize = Mathf.Min(RectT.rect.width, (RectT.rect.width+550)/(boardData.cols-boardData.minCol+1),height);
         }			
 
         yield return new WaitForSeconds(1.2f);
@@ -195,8 +194,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
                         if (layer > 0)
                         {
-                            LayerpuzzleTiles.Add(puzzleTile);                            
-                            //tileView.TileTransform.SetAsFirstSibling();
+                            LayerpuzzleTiles.Add(puzzleTile);    
                         }
                         else
                         {
@@ -206,24 +204,9 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                             // 动画处理
                             if (isanim)
                             {
-                                // //// 初始位置在屏幕上方（层级越高偏移越大）
-                                // float yOffset = 0; // 高层级偏移更大
-                                //
-                                // //// 设置初始位置（上方偏移）
-                                // tileView.TileTransform.anchoredPosition = new Vector2(cellPos.x, cellPos.y + yOffset);
-
-                                //// 动画延迟：底层先下落，上层后下落（0.1秒间隔）
-                                //float delay = (layerChars.Count - 1 - actualLayer) * 0.1f; // 层级越低延迟越小
-
-                                //// 创建下落动画
-                                //tileView.TileTransform.DOLocalMove(cellPos, 0.25f)
-                                //    .SetEase(Ease.InQuad)
-                                //    .SetDelay(delay);
-
                                 tileView.TileTransform.DOScale(tempscale + 0.1f, 0.2f).OnComplete(() =>
                                 {
                                     tileView.TileTransform.DOScale(tempscale, 0.2f);
-                                    //AudioManager.Instance.PlaySoundEffect("cichufa", 1f);
                                 });
                                 tileView.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
 

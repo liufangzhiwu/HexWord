@@ -1126,7 +1126,7 @@ GameObject:
   - component: {fileID: 3458505132683263760}
   - component: {fileID: 2497294577242226159}
   m_Layer: 5
-  m_Name: GamePlayArea
+  m_Name: HexGamePlayArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1487,7 +1487,7 @@ GameObject:
   - component: {fileID: 8976650454488752476}
   - component: {fileID: 366680214247971550}
   m_Layer: 5
-  m_Name: progressImage
+  m_Name: WordProgressTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1508,11 +1508,11 @@ RectTransform:
   - {fileID: 3306491190060822125}
   m_Father: {fileID: 5837033818847164006}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 482, y: 23.4}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0.4274292, y: 0}
   m_SizeDelta: {x: 141, y: 80}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.18731569, y: 0.39240447}
 --- !u!222 &8976650454488752476
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1759,10 +1759,10 @@ RectTransform:
   - {fileID: 2194017893775477335}
   m_Father: {fileID: 3576668217037530677}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -76.73547}
-  m_SizeDelta: {x: 1063.37, y: 1403.3926}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: -143.66998}
+  m_SizeDelta: {x: -178.63, y: -654.6074}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3460685222712354206
 CanvasRenderer:
@@ -2777,12 +2777,10 @@ MonoBehaviour:
   TileParents: {fileID: 7880358053919472241}
   scrollRect: {fileID: 8884132876970546054}
   wordCountText: {fileID: 2494504068591152067}
+  WordProgressTable: {fileID: 4527918617022067690}
   snapSpeed: 15
   snapThreshold: 0.01
   stopVelocityThreshold: 50
-  pageSwitchThreshold: 0.1
-  puzzleTilePrefab: {fileID: 0}
-  tileHorizontalPrefab: {fileID: 0}
 --- !u!1 &7997599448036622374
 GameObject:
   m_ObjectHideFlags: 0

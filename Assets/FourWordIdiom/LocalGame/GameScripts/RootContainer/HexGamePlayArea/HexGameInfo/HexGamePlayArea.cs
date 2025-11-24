@@ -7,7 +7,7 @@ using UnityEngine.UI;
 using DG.Tweening;
 using Random = System.Random;
 
-public class GamePlayArea : UIWindow
+public class HexGamePlayArea : UIWindow
 {
     [SerializeField] private GameObject GameBase;   
     [SerializeField] private GameObject ButterflyPrefab;
@@ -301,15 +301,12 @@ public class GamePlayArea : UIWindow
         crossPuzzleGrid.RemovePuzzleFound(gridCellPositions);
 
         // 差异化点3：根据游戏模式调整反馈
-        PlaySelectionFeedback(0);
-
-        // 差异化点4：存档条件判断
-        if (ShouldSaveProgress(puzzle))
-        {
-            GameDataManager.Instance.UpdateLevelProgress(CurStageData);
-        }
+        PlaySelectionFeedback();
 
         yield return new WaitForSeconds(0.2f);
+        
+        // 更新单词进度
+        PuzzleTileBoard.UpdateWordProgress();
 
         // 更新可选词语
         UpdateSelectablePuzzles();
@@ -323,8 +320,6 @@ public class GamePlayArea : UIWindow
         }
         else
         {
-            // 差异化点5：智能重置判断
-            //StartCoroutine(HandleResetLogic());
             EventDispatcher.instance.TriggerUpdateRewardPuzzle(true);
             EventDispatcher.instance.TriggerCheckShowTutorial();
         }
@@ -346,50 +341,16 @@ public class GamePlayArea : UIWindow
         {
             LettersToMovePuzzleTileAnim(puzzle, positions);
         }
-        
-        // if(puzzle==tipPuzzle)
-        // {
-        //     tipPuzzle = "";
-        // }
     }
 
     // 差异化点3：反馈调整
-    private void PlaySelectionFeedback(int mode)
+    private void PlaySelectionFeedback()
     {
         // 基础音效
         AudioManager.Instance.PlaySoundEffect("ciright");
-
-        // 仅限普通模式触发震动
-        if (mode == 0)
-        {
-            AudioManager.Instance.TriggerVibration(1, 10);
-        }
-
-        // 解谜模式添加额外效果
-        if (mode == 1)
-        {
-            AudioManager.Instance.TriggerVibration(1, 10);
-            //PlaySparkleEffect();
-        }
+        AudioManager.Instance.TriggerVibration(1, 10);
     }
 
-    // 差异化点4：存档逻辑
-    private bool ShouldSaveProgress(string puzzle)
-    {
-        // 重要词语立即保存，普通词语延迟保存
-        return CurStageData.Puzzles.Contains(puzzle);
-    }
-
-    // 差异化点5：智能重置
-    private IEnumerator HandleResetLogic()
-    {
-        // 无选择时：根据关卡进度决定重置方式
-        if (selectablePuzzles.Count == 0)
-        {
-            // 进度不足时使用普通重置
-            yield return ResetTool();
-        }
-    }
 
     // 差异化点6：完成处理
     private void HandleStageCompletion()
