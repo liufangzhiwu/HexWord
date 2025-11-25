@@ -196,10 +196,14 @@ public class PuzzleTileBoard : UIWindow
         if(currentPageIndex >= pageWords.Count) currentPageIndex = pageWords.Count-1;
         
         // 更新当前页面的进度条
+        float totalprogress = (float)StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count / StageHexController.Instance.CurStageData.Puzzles.Count;
         int wordsInCurrentPage = pageWords[currentPageIndex];
         int leftWordCount = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count%8;
+        if(leftWordCount == 0&&totalprogress>=1) leftWordCount = wordsInCurrentPage;
+        
+        leftWordCount = leftWordCount <= 0 ? 0 : leftWordCount;
         float progress = (float)leftWordCount / wordsInCurrentPage;
-        float totalprogress = (float)StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count / StageHexController.Instance.CurStageData.Puzzles.Count;
+       
         
         for (int i = 0; i <= currentPageIndex; i++)
         {
