@@ -356,7 +356,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
         // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
         float totalGridHeight = (curStageData.BoardSnapshot.cols+curStageData.BoardSnapshot.minCol-1) * horizontalSpacing;
-        int addrow = 1;
+        int addrow =0;
         if (curStageData.BoardSnapshot.rows<=8)
         {
             addrow = 1;
@@ -385,34 +385,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             yPos -= layerOffset;
         }
         return new Vector2(xPos, yPos);
-    }
-
-    /// <summary>
-    /// 确保位置在父容器边界内（考虑六边形尺寸）
-    /// </summary>
-    private Vector2 ClampPosition(Vector2 position, RectTransform parent, float hexWidth, float hexHeight)
-    {
-        Rect rect = parent.rect;
-
-        // 计算安全边界（使用半尺寸进行中心点计算）
-        float halfWidth = hexWidth * 0.5f;    // 半宽
-        float halfHeight = hexHeight * 0.5f;  // 半高
-
-        // 水平边界限制
-        position.x = Mathf.Clamp(
-            position.x,
-            rect.xMin + halfWidth,   // 最小X（左边界+半宽）
-            rect.xMax - halfWidth    // 最大X（右边界-半宽）
-        );
-
-        // 垂直边界限制
-        position.y = Mathf.Clamp(
-            position.y,
-            rect.yMin + halfHeight,  // 最小Y（下边界+半高）
-            rect.yMax - halfHeight   // 最大Y（上边界-半高）
-        );
-
-        return position;
     }
 
     /// <summary>
@@ -528,15 +500,27 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     private void SetSelectEnd(PuzzleTile PuzzleGrid)
     {
         // 开始字块跟结束字块的行或者列一致，或者在右斜方向(尖顶六边形消除逻辑)
-        //if (PuzzleGrid.Row == selectStart.Row|| IsRightDirection(selectStart, PuzzleGrid)
-        //    || IsLeftDirection(selectStart, PuzzleGrid))
-        //开始字块跟结束字块的行或者列一致，或者在右斜方向(平顶六边形消除逻辑)
-        if (PuzzleGrid.Column == selectStart.Column || IsRightPingDirection(selectStart, PuzzleGrid)
-           || IsLeftPingDirection(selectStart, PuzzleGrid))
+        
+        if((HexType)StageHexController.Instance.CurStageInfo.HexType==HexType.JianHexagon)
         {
-            //Debug.Log("结束字块" + PuzzleGrid.Letter);
-            selectEnd = PuzzleGrid;
-        }       
+            //Debug.Log("尖顶六边形消除逻辑");
+            if (PuzzleGrid.Row == selectStart.Row || IsRightJianDirection(selectStart, PuzzleGrid)
+                                                  || IsLeftJianDirection(selectStart, PuzzleGrid))
+            {
+                selectEnd = PuzzleGrid;
+            }
+        }
+        else
+        {
+            
+            //开始字块跟结束字块的行或者列一致，或者在右斜方向(平顶六边形消除逻辑)
+            if (PuzzleGrid.Column == selectStart.Column || IsRightPingDirection(selectStart, PuzzleGrid)
+                                                        || IsLeftPingDirection(selectStart, PuzzleGrid))
+            {
+                //Debug.Log("结束字块" + PuzzleGrid.Letter);
+                selectEnd = PuzzleGrid;
+            }    
+        }
     }
 
 
@@ -668,15 +652,24 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
         //清除棋盘字块
         ClearBoardPuzzles(selectedPuzzleGrids);
-
-        //设置棋盘选中字块
-        SetSelectedBoard(selectStart, selectEnd);
+        
+        if((HexType)StageHexController.Instance.CurStageInfo.HexType==HexType.PingHexagon)
+        {
+            //Debug.Log("平顶六边形消除逻辑");
+            SetPingSelectedBoard(selectStart, selectEnd);
+        }
+        else
+        {
+            //设置棋盘选中字块
+            SetJianSelectedBoard(selectStart, selectEnd);
+           
+        }
     }
 
     /// <summary>
     /// 设置棋盘选中字块（平顶六边形—— 支持横向和斜向选择）
     /// </summary>
-    private void SetSelectedBoard(PuzzleTile start, PuzzleTile end)
+    private void SetPingSelectedBoard(PuzzleTile start, PuzzleTile end)
     {
         // 判断选择方向：竖向或斜向
         bool isVertical = start.Column == end.Column;
@@ -834,126 +827,126 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         EventDispatcher.instance.TriggerShowSelectedPuzzle(selectedPuzzle);
     }
 
-    ///// <summary>
-    ///// 设置棋盘选中字块（尖顶六边形—— 支持横向和斜向选择）
-    ///// </summary>
-    //private void SetSelectedBoard(PuzzleTile start, PuzzleTile end)
-    //{
-    //    // 判断选择方向：横向或斜向
-    //    bool isHorizontal = start.Row == end.Row;
-    //    bool isLeftDiagonal = IsLeftDirection(start, end);
-    //    bool isRightDiagonal = IsRightDirection(start, end);
+    /// <summary>
+    /// 设置棋盘选中字块（尖顶六边形—— 支持横向和斜向选择）
+    /// </summary>
+    private void SetJianSelectedBoard(PuzzleTile start, PuzzleTile end)
+    {
+        // 判断选择方向：横向或斜向
+        bool isHorizontal = start.Row == end.Row;
+        bool isLeftDiagonal = IsLeftJianDirection(start, end);
+        bool isRightDiagonal = IsRightJianDirection(start, end);
 
-    //    Debug.Log($"选择方向 - 横向:{isHorizontal}左下斜:{isLeftDiagonal} 右下斜:{isRightDiagonal} {start.Letter}{end.Letter}");
+        Debug.Log($"选择方向 - 横向:{isHorizontal}左下斜:{isLeftDiagonal} 右下斜:{isRightDiagonal} {start.Letter}{end.Letter}");
 
-    //    // 如果不是有效的选择方向，则只选中起点
-    //    if (!isHorizontal && !isRightDiagonal&& !isLeftDiagonal)
-    //    {
-    //        end = start;
-    //    }
+        // 如果不是有效的选择方向，则只选中起点
+        if (!isHorizontal && !isRightDiagonal&& !isLeftDiagonal)
+        {
+            end = start;
+        }
 
-    //    HashSet<PuzzleTile> lastSelectedPuzzleGrids = new HashSet<PuzzleTile>(selectedPuzzleGrids);
-    //    selectedPuzzle = "";
-    //    selectedPuzzleGrids.Clear();
+        HashSet<PuzzleTile> lastSelectedPuzzleGrids = new HashSet<PuzzleTile>(selectedPuzzleGrids);
+        selectedPuzzle = "";
+        selectedPuzzleGrids.Clear();
 
-    //    // 计算步数和方向
-    //    int steps = isHorizontal ? Math.Abs(end.Column - start.Column) :
-    //                Math.Abs(end.Row - start.Row); // 斜向用行差计算步数
+        // 计算步数和方向
+        int steps = isHorizontal ? Math.Abs(end.Column - start.Column) :
+                    Math.Abs(end.Row - start.Row); // 斜向用行差计算步数
 
-    //    Debug.Log($"斜向用行差计算步数:{steps}");
+        Debug.Log($"斜向用行差计算步数:{steps}");
 
-    //    for (int i = 0; i <= steps; i++)
-    //    {
-    //        int row, col;
+        for (int i = 0; i <= steps; i++)
+        {
+            int row, col;
 
-    //        if (isLeftDiagonal)
-    //        { 
-    //            // 计算行移动方向
-    //            int rowStep = Math.Sign(end.Row - start.Row);
-    //            row = start.Row + i * rowStep;
+            if (isLeftDiagonal)
+            { 
+                // 计算行移动方向
+                int rowStep = Math.Sign(end.Row - start.Row);
+                row = start.Row + i * rowStep;
 
-    //            if (start.Row % 2 == 0)
-    //            {
-    //                col = start.Column - (i+1) / 2;
-    //            }
-    //            else
-    //            {
-    //                col = start.Column - i / 2;
-    //            }
+                if (start.Row % 2 == 0)
+                {
+                    col = start.Column - (i+1) / 2;
+                }
+                else
+                {
+                    col = start.Column - i / 2;
+                }
 
-    //            Debug.Log($"左斜向计算位置:{row}:{col}");
-    //        }
-    //        else if(isRightDiagonal) // isRightDiagonal
-    //        {
+                Debug.Log($"左斜向计算位置:{row}:{col}");
+            }
+            else if(isRightDiagonal) // isRightDiagonal
+            {
 
-    //            // 计算行移动方向
-    //            int rowStep = Math.Sign(end.Row - start.Row);
-    //            row = start.Row + i * rowStep;
+                // 计算行移动方向
+                int rowStep = Math.Sign(end.Row - start.Row);
+                row = start.Row + i * rowStep;
 
-    //            if (start.Row % 2 == 0)
-    //            {
-    //                col = start.Column + i / 2;
-    //            }
-    //            else
-    //            {
-    //                col = start.Column + (i + 1) / 2;
-    //            }
+                if (start.Row % 2 == 0)
+                {
+                    col = start.Column + i / 2;
+                }
+                else
+                {
+                    col = start.Column + (i + 1) / 2;
+                }
 
-    //            Debug.Log($"右斜向计算位置:{row}:{col}");
-    //        }
-    //        else
-    //        {
-    //            // 横向：行不变，列变化
-    //            row = start.Row;
-    //            col = start.Column + i * Math.Sign(end.Column - start.Column);
-    //        }            
+                Debug.Log($"右斜向计算位置:{row}:{col}");
+            }
+            else
+            {
+                // 横向：行不变，列变化
+                row = start.Row;
+                col = start.Column + i * Math.Sign(end.Column - start.Column);
+            }            
 
-    //        // 检查边界
-    //        if (row < 0 || row >= gridList.Count || col < 0 || col >= gridList[0].Count)
-    //            break;
+            // 检查边界
+            if (row < 0 || row >= gridList.Count || col < 0 || col >= gridList[0].Count)
+                break;
 
-    //        if (gridList[row][col].Count <= 0) break;
+            if (gridList[row][col].Count <= 0) break;
 
-    //        // 获取该位置的最大层级
-    //        int maxLayer = GetMaxLayerAtPosition(row, col);            
+            // 获取该位置的最大层级
+            int maxLayer = GetMaxLayerAtPosition(row, col);            
 
-    //        PuzzleTile puzzleGrid = gridList[row][col][0];
+            PuzzleTile puzzleGrid = gridList[row][col][0];
 
-    //        Debug.Log("选中字块信息：" + puzzleGrid.Letter+"层级:"+maxLayer);
+            Debug.Log("选中字块信息：" + puzzleGrid.Letter+"层级:"+maxLayer);
 
-    //        // 遇到空白格退出设置选中词
-    //        if (puzzleGrid.IsEmpty||puzzleGrid.Letter=='\0')
-    //        {
-    //            break;
-    //        }
+            // 遇到空白格退出设置选中词
+            if (puzzleGrid.IsEmpty||puzzleGrid.Letter=='\0')
+            {
+                break;
+            }
 
-    //        bool justSelected = !lastSelectedPuzzleGrids.Contains(puzzleGrid);
+            bool justSelected = !lastSelectedPuzzleGrids.Contains(puzzleGrid);
 
-    //        puzzleGrid.TileView.SetSelectionState(true, justSelected);
-    //        selectedPuzzle += puzzleGrid.Letter;
-    //        selectedPuzzleGrids.Add(puzzleGrid);
+            puzzleGrid.TileView.SetSelectionState(true, justSelected);
+            selectedPuzzle += puzzleGrid.Letter;
+            selectedPuzzleGrids.Add(puzzleGrid);
 
-    //        // 刚选中
-    //        if (justSelected)
-    //        {
-    //            if (selectedPuzzle.Length > 0)
-    //            {
-    //                AudioManager.Instance.PlaySoundEffect("Puzzle" + selectedPuzzle.Length);
-    //            }
-    //        }
-    //    }
+            // 刚选中
+            if (justSelected)
+            {
+                if (selectedPuzzle.Length > 0)
+                {
+                    AudioManager.Instance.PlaySoundEffect("Puzzle" + selectedPuzzle.Length);
+                }
+            }
+        }
 
-    //    if (selectedPuzzleGrids.Count < lastSelectedPuzzleGrids.Count)
-    //    {
-    //        AudioManager.Instance.TriggerVibration(1, 10);
-    //        AudioManager.Instance.PlaySoundEffect("Puzzle" + lastSelectedPuzzleGrids.Count);
-    //    }
+        if (selectedPuzzleGrids.Count < lastSelectedPuzzleGrids.Count)
+        {
+            AudioManager.Instance.TriggerVibration(1, 10);
+            AudioManager.Instance.PlaySoundEffect("Puzzle" + lastSelectedPuzzleGrids.Count);
+        }
 
-    //    EventDispatcher.instance.TriggerShowSelectedPuzzle(selectedPuzzle);
-    //}
+        EventDispatcher.instance.TriggerShowSelectedPuzzle(selectedPuzzle);
+    }
 
     /// <summary>
-    /// 判断是否是左斜方向（包括左上和左下方向）
+    /// 判断是否是左斜方向（包括左上和左下方向_平顶六边形）
     /// </summary>
     private bool IsLeftPingDirection(PuzzleTile start, PuzzleTile end)
     {
@@ -992,7 +985,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     }
 
     /// <summary>
-    /// 判断是否是右斜方向（包括右上和右下方向）
+    /// 判断是否是右斜方向（包括右上和右下方向_平顶六边形）
     /// </summary>
     private bool IsRightPingDirection(PuzzleTile start, PuzzleTile end)
     {
@@ -1030,83 +1023,83 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         return false;
     }
 
-    // /// <summary>
-    // /// 判断是否是左斜方向（包括左上和左下方向）
-    // /// </summary>
-    // private bool IsLeftDirection(PuzzleTile start, PuzzleTile end)
-    // {
-    //     // 计算行列差值
-    //     int deltaRow = end.Row - start.Row;
-    //     int deltaCol = end.Column - start.Column;
-    //
-    //     Debug.Log($"{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为左斜方向");
-    //
-    //     if (deltaCol >= 0) return false;
-    //
-    //     // 左上方向（行号减小，列号减小）的检查
-    //     if (deltaRow < 0) // 行号减小（向上移动）
-    //     {
-    //         // 左上方向需要满足：每移动一行，列减少约0.5
-    //         // 数学关系：2 * deltaCol ≈ deltaRow
-    //         if (Mathf.Abs(2 * deltaCol - deltaRow) <= 1)
-    //         {
-    //             Debug.Log($"{start.Letter} {end.Letter}为左上方向的字块");
-    //             return true;
-    //         }
-    //     }
-    //     // 左下方向（行号增加，列号减小）的检查
-    //     else if (deltaRow > 0) // 行号增加（向下移动）
-    //     {
-    //         // 左下方向需要满足：每移动一行，列减少约0.5
-    //         // 数学关系：2 * deltaCol ≈ -deltaRow
-    //         if (Mathf.Abs(2 * deltaCol + deltaRow) <= 1)
-    //         {
-    //             Debug.Log($"{start.Letter} {end.Letter}为左下方向的字块");
-    //             return true;
-    //         }
-    //     }
-    //
-    //     return false;
-    // }
+    /// <summary>
+    /// 判断是否是左斜方向（包括左上和左下方向_尖顶六边形）
+    /// </summary>
+    private bool IsLeftJianDirection(PuzzleTile start, PuzzleTile end)
+    {
+        // 计算行列差值
+        int deltaRow = end.Row - start.Row;
+        int deltaCol = end.Column - start.Column;
+    
+        Debug.Log($"{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为左斜方向");
+    
+        if (deltaCol >= 0) return false;
+    
+        // 左上方向（行号减小，列号减小）的检查
+        if (deltaRow < 0) // 行号减小（向上移动）
+        {
+            // 左上方向需要满足：每移动一行，列减少约0.5
+            // 数学关系：2 * deltaCol ≈ deltaRow
+            if (Mathf.Abs(2 * deltaCol - deltaRow) <= 1)
+            {
+                Debug.Log($"{start.Letter} {end.Letter}为左上方向的字块");
+                return true;
+            }
+        }
+        // 左下方向（行号增加，列号减小）的检查
+        else if (deltaRow > 0) // 行号增加（向下移动）
+        {
+            // 左下方向需要满足：每移动一行，列减少约0.5
+            // 数学关系：2 * deltaCol ≈ -deltaRow
+            if (Mathf.Abs(2 * deltaCol + deltaRow) <= 1)
+            {
+                Debug.Log($"{start.Letter} {end.Letter}为左下方向的字块");
+                return true;
+            }
+        }
+    
+        return false;
+    }
 
-    // /// <summary>
-    // /// 判断是否是右斜方向（包括右上和右下方向）
-    // /// </summary>
-    // private bool IsRightDirection(PuzzleTile start, PuzzleTile end)
-    // {
-    //     // 计算行列差值
-    //     int deltaRow = end.Row - start.Row;
-    //     int deltaCol = end.Column - start.Column;
-    //
-    //     Debug.Log($"{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为右斜方向");
-    //
-    //     if (deltaCol < 0) return false;
-    //
-    //     // 右下方向（行号减小，列号增加）的检查      
-    //     if (deltaRow < 0) // 行号减小（向上移动）
-    //     {
-    //         // 右上方向需要满足：每移动一行，列增加约0.5
-    //         // 数学关系：2 * deltaCol ≈ -deltaRow
-    //         if (Mathf.Abs(2 * deltaCol + deltaRow) <= 1)
-    //         {
-    //             Debug.Log($"{start.Letter} {end.Letter}为右下方向的字块");
-    //             return true;
-    //         }
-    //     }
-    //     // 右上方向（行号增加，列号增加）的检查
-    //     else if (deltaRow > 0) // 行号增加（向下移动）
-    //     {
-    //         // 右下方向需要满足：每移动一行，列增加约0.5
-    //         // 数学关系：2 * deltaCol ≈ deltaRow
-    //         if (Mathf.Abs(2 * deltaCol - deltaRow) <= 1)
-    //         {
-    //             Debug.Log($"{start.Letter} {end.Letter}为右上方向的字块");
-    //             return true;
-    //         }
-    //     }
-    //
-    //     return false;
-    // }
+    /// <summary>
+    /// 判断是否是右斜方向（包括右上和右下方向）
+    /// </summary>
+    private bool IsRightJianDirection(PuzzleTile start, PuzzleTile end)
+    {
+        // 计算行列差值
+        int deltaRow = end.Row - start.Row;
+        int deltaCol = end.Column - start.Column;
+    
+        Debug.Log($"{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为右斜方向");
+    
+        if (deltaCol < 0) return false;
+    
+        // 右下方向（行号减小，列号增加）的检查      
+        if (deltaRow < 0) // 行号减小（向上移动）
+        {
+            // 右上方向需要满足：每移动一行，列增加约0.5
+            // 数学关系：2 * deltaCol ≈ -deltaRow
+            if (Mathf.Abs(2 * deltaCol + deltaRow) <= 1)
+            {
+                Debug.Log($"{start.Letter} {end.Letter}为右下方向的字块");
+                return true;
+            }
+        }
+        // 右上方向（行号增加，列号增加）的检查
+        else if (deltaRow > 0) // 行号增加（向下移动）
+        {
+            // 右下方向需要满足：每移动一行，列增加约0.5
+            // 数学关系：2 * deltaCol ≈ deltaRow
+            if (Mathf.Abs(2 * deltaCol - deltaRow) <= 1)
+            {
+                Debug.Log($"{start.Letter} {end.Letter}为右上方向的字块");
+                return true;
+            }
+        }
+    
+        return false;
+    }
 
 
     /// <summary>
