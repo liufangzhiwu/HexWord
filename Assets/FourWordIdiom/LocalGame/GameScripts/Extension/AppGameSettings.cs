@@ -43,9 +43,9 @@ public static class AppGameSettings
     // ===== 功能解锁关卡 =====
     public static class UnlockRequirements 
     {
-        public static int TimeLimitMode { get; } = 3;   
-        public static int SignInRewards { get; } = 2;   
-        public static int DailyMissions { get; } = 4;   
+        public static int TimeLimitMode { get; } = 1;   
+        public static int SignInRewards { get; } = 1;   
+        public static int DailyMissions { get; } = 1;   
         //30关卡进入结算界面时开启(鲤鱼跃龙门活动)
         public static int FishOpenLevel { get; } = 31;
         //10关卡进入结算界面时开启（命名界面）
@@ -64,11 +64,11 @@ public static class AppGameSettings
     /// </summary>
     public static bool SaveOnlineTimeProgress { get; } = true;   
 
-    // ===== 进度系统 =====
-    public static List<int> ProgressMilestones { get; } = new List<int>() 
-    {
-        5, 5, 10, 10, 10, 10, 20
-    };
+    // ===== 结算界面关卡进度数值 =====
+    // public static List<int> ProgressMilestones { get; } = new List<int>() 
+    // {
+    //     5, 5, 10, 10, 10, 10, 20
+    // };
 
     // ===== 设备白名单 =====
     public static HashSet<string> AuthorizedDevices { get; } = new HashSet<string>() 

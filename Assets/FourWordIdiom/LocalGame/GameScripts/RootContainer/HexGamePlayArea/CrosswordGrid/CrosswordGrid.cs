@@ -42,7 +42,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 	private PuzzleTile selectEnd;
 	private int	numTilesMoving;
     
-    const float LAYER_OFFSET = 7f; // 每层偏移量
+    const float LAYER_OFFSET = 10f; // 每层偏移量
 
     private StageProgressData curStageData
     {
@@ -143,7 +143,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         {
             float height= (RectT.rect.height ) /(boardData.rows-boardData.minRow+1);
 
-             StageHexController.Instance.ActiveTileSize = Mathf.Min(RectT.rect.width, (RectT.rect.width+550)/(boardData.cols-boardData.minCol+1),height);
+             StageHexController.Instance.ActiveTileSize = Mathf.Min(RectT.rect.width, (RectT.rect.width+400)/(boardData.cols-boardData.minCol+1),height);
         }			
 
         yield return new WaitForSeconds(1.2f);

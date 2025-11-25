@@ -54,7 +54,6 @@ SpriteAtlas:
     - bd3a5e7069495454c830db04f24b7ef7: 21300000
     - 4743af112b1441248ba45a1c0be492cc: 21300000
     - 37e0a441d3d3b3641a45774a65b4fff3: 21300000
-    - 93367fb1744c9aa419b685b5df589016: 21300000
     - 426367d1323e99a49b8928d42beaa09b: 21300000
     - 5ef604029d7f60049814db9021c25173: 21300000
     - ea3160a2c4495774fbb02982f366dc72: 21300000
@@ -62,7 +61,6 @@ SpriteAtlas:
     - f02dd343f42bd414694ea4f4eff0363f: 21300000
     - 36ee6173cccd77244871acc11e05e202: 21300000
     - 41041e738d42aba4db6b726a58ba73a4: 21300000
-    - 203ea6c3d27b7034b82047f9235f5586: 21300000
     - 171fbcc3043387749981b9b6bb9399dd: 21300000
     - 7593ecf3e1f282b40b82accb535335a3: 21300000
     - ea68cd2586b8ced4498c124dadc36a94: 21300000
@@ -110,7 +108,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: bd3a5e7069495454c830db04f24b7ef7, type: 3}
   - {fileID: 21300000, guid: 4743af112b1441248ba45a1c0be492cc, type: 3}
   - {fileID: 21300000, guid: 37e0a441d3d3b3641a45774a65b4fff3, type: 3}
-  - {fileID: 21300000, guid: 93367fb1744c9aa419b685b5df589016, type: 3}
   - {fileID: 21300000, guid: 426367d1323e99a49b8928d42beaa09b, type: 3}
   - {fileID: 21300000, guid: 5ef604029d7f60049814db9021c25173, type: 3}
   - {fileID: 21300000, guid: ea3160a2c4495774fbb02982f366dc72, type: 3}
@@ -118,7 +115,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: f02dd343f42bd414694ea4f4eff0363f, type: 3}
   - {fileID: 21300000, guid: 36ee6173cccd77244871acc11e05e202, type: 3}
   - {fileID: 21300000, guid: 41041e738d42aba4db6b726a58ba73a4, type: 3}
-  - {fileID: 21300000, guid: 203ea6c3d27b7034b82047f9235f5586, type: 3}
   - {fileID: 21300000, guid: 171fbcc3043387749981b9b6bb9399dd, type: 3}
   - {fileID: 21300000, guid: 7593ecf3e1f282b40b82accb535335a3, type: 3}
   - {fileID: 21300000, guid: ea68cd2586b8ced4498c124dadc36a94, type: 3}
@@ -165,7 +161,6 @@ SpriteAtlas:
   - UI_Icon_gou
   - UI_Icon_complete
   - maxbutterfly
-  - shader
   - bottom_bg
   - UI_Icon_lojd
   - UI_Icon_DownLine
@@ -173,7 +168,6 @@ SpriteAtlas:
   - titleitembg
   - tilepage
   - giftbg
-  - UI_Icon_fudai
   - signicon
   - UI_Icon_dengbg
   - headicon

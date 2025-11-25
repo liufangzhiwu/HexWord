@@ -5,7 +5,7 @@
 public class PanelType  // Renamed class
 {
     /* 核心游戏界面 (Core Game Interfaces) */
-    public const string GamePlayArea = "GamePlayArea";  // Changed from GameContainer
+    public const string HexGamePlayArea = "HexGamePlayArea";  // Changed from GameContainer
     public const string HeaderSection = "HeaderSection";  // Changed from TopContainer
     public const string PrimaryInterface = "PrimaryInterface";  // Changed from MainInterface
    

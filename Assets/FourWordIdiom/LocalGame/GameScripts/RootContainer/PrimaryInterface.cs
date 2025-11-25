@@ -442,13 +442,13 @@ public class PrimaryInterface : UIWindow
         switch (GameDataManager.Instance.UserData.levelMode)
         {
             case 1:
-                SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
+                SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
                 break;
             case 2:
                 SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
                 break;
             case 3:
-                SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
+                SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
                 break;
         }
     }

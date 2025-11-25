@@ -229,7 +229,7 @@ public class DebugMenu : UIWindow
     private void EnterStageClick()
     {
         //StageController.Instance.SetStageData(StageController.Instance.CurStageData.StageId);
-        SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
+        SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
         //EventManager.RequestChangeBack(true);
     }
     

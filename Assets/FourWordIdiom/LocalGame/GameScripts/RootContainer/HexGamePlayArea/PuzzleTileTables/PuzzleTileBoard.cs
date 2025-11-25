@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using DG.Tweening;
 
 /// <summary>
 /// 处理单词拼接的面板
@@ -40,6 +41,7 @@ public class PuzzleTileBoard : UIWindow
     private int pageCount;
     private float pageWidth;
     private float totalWordImageWidth; // 总单词进度条宽度
+    private float SingleWordImageWidth; // 单页单词进度条宽度
 
     private float dragStartPosition; // 记录拖动开始时的位置
     private bool isDragStartRecorded = false; // 是否已记录拖动起始点
@@ -191,38 +193,56 @@ public class PuzzleTileBoard : UIWindow
     public void UpdateWordProgress()
     {
         currentPageIndex = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count/8;
+        if(currentPageIndex >= pageWords.Count) currentPageIndex = pageWords.Count-1;
         
         // 更新当前页面的进度条
         int wordsInCurrentPage = pageWords[currentPageIndex];
         int leftWordCount = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count%8;
         float progress = (float)leftWordCount / wordsInCurrentPage;
+        float totalprogress = (float)StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count / StageHexController.Instance.CurStageData.Puzzles.Count;
         
         for (int i = 0; i <= currentPageIndex; i++)
         {
             if (i < currentPageIndex)
             {
-                pageProgresses[i].ImageProgress.fillAmount = 1.0f;
+                pageProgresses[i].ImageProgress.DOFillAmount(1.0f,0.2f);
             }
             else
             {
-                pageProgresses[currentPageIndex].ImageProgress.fillAmount =progress;
+                pageProgresses[currentPageIndex].ImageProgress.DOFillAmount(progress,0.2f);
             }
         }
         
-        int wordProgress = Mathf.FloorToInt(progress*100);
+        if(StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count >= StageHexController.Instance.CurStageData.Puzzles.Count)
+        {
+            totalprogress = 1;
+        }
+        
+        int wordProgress = Mathf.FloorToInt(totalprogress*100);
         float startx= -totalWordImageWidth/2;
         float addinX = 20*currentPageIndex;
-        Vector3 position = new Vector3(startx+175*currentPageIndex+175*progress+addinX,0,0);
-        WordProgressTable.GetComponent<RectTransform>().anchoredPosition = position;
+        
+        Vector3 position = new Vector3(startx+SingleWordImageWidth*currentPageIndex+SingleWordImageWidth*progress+addinX,0,0);
+        
+        WordProgressTable.GetComponent<RectTransform>().DOLocalMoveX(position.x,0.2f);
         wordCountText.text = $"{wordProgress}%";
     }
 
     private void CreatePageToggles(int totalPages,int totalWords)
     {
+        SingleWordImageWidth = 175f;
+        if(totalPages<=2)
+            SingleWordImageWidth *=2;
+        else if(totalPages<=4)
+            SingleWordImageWidth =200;
+        else if(totalPages<=6)
+            SingleWordImageWidth =125f;
+        
         for (int i = 0; i < totalPages; i++)
         {
             WordProgress toggle = togglePool.GetObject<WordProgress>(PageListTrans);
             toggle.gameObject.SetActive(true);
+            toggle.GetComponent<RectTransform>().sizeDelta = new Vector2(SingleWordImageWidth,50);
             toggle.ImageProgress.fillAmount = 0;
             pageProgresses.Add(toggle);
 

@@ -28,7 +28,7 @@ public class LimitBtnTable : MonoBehaviour
      /// <summary>
     /// 检查并显示限时活动
     /// </summary>
-    public void CheckAndShowLimitedTimeEvent()
+    public void CheckAndShowLimitedTimeEvent(Transform parent)
     {
         if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
             || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
@@ -41,7 +41,7 @@ public class LimitBtnTable : MonoBehaviour
             {
                 int wordcount = LimitTimeManager.Instance.GetCurWordCount();
                 txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
-                if (GameDataManager.Instance.UserData.levelMode == 1)
+                if (GameDataManager.Instance.UserData.levelMode == 3)
                 {
                     LimitTimeManager.Instance.UpdateLimitProgress(StageHexController.Instance.LimitPuzzlecount);
                 }else if (GameDataManager.Instance.UserData.levelMode == 2)
@@ -58,7 +58,7 @@ public class LimitBtnTable : MonoBehaviour
                     AddCount.text = "+" + ChessStageController.Instance.LimitPuzzleCount;
                 }
               
-                StartCoroutine(ShowLimitWordAnim());
+                StartCoroutine(ShowLimitWordAnim(parent));
             }
             
             if(GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.TimeLimitMode
@@ -77,12 +77,12 @@ public class LimitBtnTable : MonoBehaviour
             else
             {
                 //_limitTimeEventButton.GetComponent<Animator>().enabled = true;
-                AudioManager.Instance.PlaySoundEffect("BtnUnlock");
-                AddCount.transform.DOScaleZ(1,1f).OnComplete(()=>
-                {
-                    SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
-                    //_limitTimeEventButton.GetComponent<Animator>().enabled = false;
-                });
+                // AudioManager.Instance.PlaySoundEffect("BtnUnlock");
+                // AddCount.transform.DOScaleZ(1,1f).OnComplete(()=>
+                // {
+                //     SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
+                //     //_limitTimeEventButton.GetComponent<Animator>().enabled = false;
+                // });
             }
         }
         else
@@ -127,13 +127,18 @@ public class LimitBtnTable : MonoBehaviour
      /// <summary>
     /// 播放连词更新动画
     /// </summary>
-    IEnumerator ShowLimitWordAnim()
+    IEnumerator ShowLimitWordAnim(Transform parent)
     { 
         yield return new WaitForSeconds(1f);
-        GameObject dengObj = Instantiate(lantern.gameObject,lantern.transform);
-        dengObj.transform.localScale=new Vector3(0.7f,0.7f,0.7f);
+        GameObject dengObj = Instantiate(lantern.gameObject,parent);
+        AddCount.transform.SetParent(parent);
+        AddCount.transform.localPosition=new Vector3(0f,0f,0f); 
+        Effect.transform.SetParent(parent);
+        Effect.transform.localPosition=new Vector3(0f,0f,0f); 
+        
+        dengObj.transform.localScale=new Vector3(1.2f,1.2f,1.2f);
         dengObj.transform.SetAsLastSibling();
-        dengObj.transform.localPosition=new Vector3(165f,165f,0f);
+        dengObj.transform.localPosition=new Vector3(-165f,165f,0f);
         CanvasGroup canvas = dengObj.GetComponent<CanvasGroup>();
         if (canvas == null)
         {

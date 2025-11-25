@@ -18,7 +18,8 @@ public class StageFinishView : UIWindow
     [SerializeField] private TaskTable _tasktable;
     
     [SerializeField] private Button _nextStageButton;
-    [SerializeField] private GameObject _goldRewardIcon;
+    [SerializeField] private GameObject Showlimiticon;
+    [SerializeField] private GameObject Enlimiticon;
     [SerializeField] private Slider _progressSlider;
     [SerializeField] private Text _StageNumberText;
     [SerializeField] private Toggle _puzzletoggle;
@@ -40,12 +41,11 @@ public class StageFinishView : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
-        InitializeUI();
-        UnlockBtnsUI();
         
         GameDataManager.Instance.UserData.curIsEnter = false;
         LimitTimeManager.Instance.OnDailyTimeUpdated += UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyButterflyTaskUI += UpdateButterflyTime;
+        LimitTimeManager.Instance.OnLimitTimeBtnUI += UpdateProgress;       
         //FishInfoController.Instance.OnFishTimeUpdated += _matchFishtable.UpdateFishTime;
         //EventDispatcher.OnChangeHeadIconUpdateUI += UpdateHeadBtnUI;
         //_matchFishtable.CheckFishBtn();
@@ -53,6 +53,11 @@ public class StageFinishView : UIWindow
         StartCoroutine(PlayRewardSequence());
         
         //AdsManager.Instance.HideBannerAd();
+        
+        InitializeUI();
+        UnlockBtnsUI();
+        
+        SetUIInteractable(true);
     }
 
     /// <summary>
@@ -60,27 +65,59 @@ public class StageFinishView : UIWindow
     /// </summary>
     private void InitializeUI()
     {
-        //_rewardCountText.transform.DOLocalMoveY(-10, 0.1f);
         _currentProgressSegment = 0;
         
         _StageNumberText.text = MultilingualManager.Instance.GetString("Level")+" " + GameDataManager.Instance.UserData.CurrentHexStage; 
-        _progressSlider.value = 0;
+        _progressText.text = "0/" + LimitTimeManager.Instance.CurlimitData.num;
+        // CalculateProgressSegments();
+        // int totalStagesInSegment = CalculateTotalStagesInSegment();
+        // DetermineCurrentProgressSegment(totalStagesInSegment);
+        //
+        // int currentStageInSegment = CalculateCurrentStageInSegment(totalStagesInSegment);
+        // sliderProgress = currentStageInSegment / (float)AppGameSettings.ProgressMilestones[_currentProgressSegment];        
+        //
+        // _progressText.text = $"0/{AppGameSettings.ProgressMilestones[_currentProgressSegment]}";
+        //
+        // _progressSlider.DOValue(sliderProgress, 0.6f)
+        //     .OnComplete(() => UpdateProgressText(currentStageInSegment, sliderProgress));
+
+        UpdateProgress();
         
-        CalculateProgressSegments();
-        int totalStagesInSegment = CalculateTotalStagesInSegment();
-        DetermineCurrentProgressSegment(totalStagesInSegment);
         
-        int currentStageInSegment = CalculateCurrentStageInSegment(totalStagesInSegment);
-        sliderProgress = currentStageInSegment / (float)AppGameSettings.ProgressMilestones[_currentProgressSegment];        
+    }
+    
+    private void UpdateProgress()
+    {
+        int wordcount = LimitTimeManager.Instance.GetCurWordCount();
+        LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
+        float durtime = wordcount==0?0.1f:0.5f;
+        sliderProgress = (float)wordcount/limitData.num;    
         
-        _progressText.text = $"0/{AppGameSettings.ProgressMilestones[_currentProgressSegment]}";
+        _progressSlider.DOValue(sliderProgress,durtime).OnComplete(() =>
+        {
+            _progressSlider.DOValue(sliderProgress, 0.35f).OnComplete(() =>
+            {
+                _progressText.text = wordcount + "/" + limitData.num;
+            });
+            
+        });
+    }
+    
+    IEnumerator ShowLimitTimeScreen()
+    {
+        yield return new WaitForSeconds(0.5f);
         
-        _progressSlider.DOValue(sliderProgress, 0.6f)
-            .OnComplete(() => UpdateProgressText(currentStageInSegment, sliderProgress));
-        
-        SetUIInteractable(true);
-        _goldRewardIcon.GetComponent<Image>().enabled = true;
-       
+        if (sliderProgress >=1)
+        {
+            // 显示关卡金币
+            // StartCoroutine(ShowGoldReward());
+            Showlimiticon.SetActive(true);
+            SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);    
+        }
+        else
+        {
+            Showlimiticon.SetActive(false);
+        }
     }
     
     private void UpdateTimeDisplay(string time)
@@ -127,16 +164,9 @@ public class StageFinishView : UIWindow
         _tasktable.taskEffect.gameObject.SetActive(false);
         _matchFishtable.matchEffect.gameObject.SetActive(false);
         
-        if (sliderProgress >=1)
-        {
-            yield return new WaitForSeconds(0.6f);
-            GameDataManager.Instance.UserData.UpdateGold(AppGameSettings.LevelCompleteBonus, false, false
-                ,"结算获得");
-        }
-        
          if (!LimitTimeManager.Instance.IsComplete()&&_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
          {
-             _limitBtnTable.CheckAndShowLimitedTimeEvent();
+             _limitBtnTable.CheckAndShowLimitedTimeEvent(Enlimiticon.transform);
              yield return new WaitForSeconds(0.5f);
          }
         
@@ -151,15 +181,10 @@ public class StageFinishView : UIWindow
         //    StartCoroutine(UpdateFishRankUI());
         //    yield return new WaitForSeconds(1.2f);
         //}
-        
-        if (sliderProgress >=1)
-        {
-            // 显示关卡金币
-            StartCoroutine(ShowGoldReward());
-            //yield return new WaitForSeconds(1.2f);
-        }
 
         //Animator.Play("ShowLevelBtn");
+        
+        StartCoroutine(ShowLimitTimeScreen());
     }
     
     private IEnumerator UpdateFishRankUI()
@@ -174,116 +199,6 @@ public class StageFinishView : UIWindow
             //FishInfoController.Instance.RoundResultFishRank();
             _matchFishtable.UpdateFishRank();
         }
-    }
-
-    /// <summary>
-    /// 计算当前所在的进度段
-    /// </summary>
-    private void CalculateProgressSegments()
-    {
-        int accumulatedProgress = 0;
-        for (int i = 0; i < AppGameSettings.ProgressMilestones.Count; i++)
-        {
-            accumulatedProgress += AppGameSettings.ProgressMilestones[i];
-            if (StageHexController.Instance.CurStageInfo.StageNumber <= accumulatedProgress)
-            {
-                _currentProgressSegment = i;
-                break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// 计算当前段内的总关卡数
-    /// </summary>
-    private int CalculateTotalStagesInSegment()
-    {
-        int total = 0;
-        foreach (int segment in AppGameSettings.ProgressMilestones)
-        {
-            total += segment;
-        }
-        return total;
-    }
-
-    /// <summary>
-    /// 确定当前进度段
-    /// </summary>
-    private void DetermineCurrentProgressSegment(int totalStages)
-    {
-        if (StageHexController.Instance.CurStageInfo.StageNumber > totalStages)
-        {
-            _currentProgressSegment = AppGameSettings.ProgressMilestones.Count - 1;
-        }
-    }
-
-    /// <summary>
-    /// 计算当前段内的关卡序号
-    /// </summary>
-    private int CalculateCurrentStageInSegment(int totalStages)
-    {
-        int StageInSegment = StageHexController.Instance.CurStageInfo.StageNumber;
-        if (totalStages >= StageInSegment)
-        {
-            StageInSegment = StageHexController.Instance.CurStageInfo.StageNumber % totalStages;
-        }
-        StageInSegment %= AppGameSettings.ProgressMilestones[_currentProgressSegment];
-        return StageInSegment == 0 ? AppGameSettings.ProgressMilestones[_currentProgressSegment] : StageInSegment;
-    }
-
-    /// <summary>
-    /// 更新进度文本显示
-    /// </summary>
-    private void UpdateProgressText(int currentStage, float progress)
-    {
-        _progressText.text = progress >= 1 
-            ? $"{AppGameSettings.ProgressMilestones[_currentProgressSegment]}/{AppGameSettings.ProgressMilestones[_currentProgressSegment]}" 
-            : $"{currentStage}/{AppGameSettings.ProgressMilestones[_currentProgressSegment]}";
-    }
-
-    /// <summary>
-    /// 显示金币奖励
-    /// </summary>
-    private IEnumerator ShowGoldReward()
-    {           
-        yield return new WaitForSeconds(0.6f);
-        PlayTreasureBoxAnimation(true);
-        _windowAnimator.Play("StageGold");
-        yield return new WaitForSeconds(1f);
-        PlayGoldFlyAnimation();
-    }
-
-    /// <summary>
-    /// 播放宝箱开启动画
-    /// </summary>
-    private void PlayTreasureBoxAnimation(bool isPlay)
-    {
-        if (_treasureBoxEffect == null)
-        {
-            _treasureBoxEffect = Instantiate(ConfigManager.Instance.SpineObject, _goldRewardIcon.transform);
-        }
-
-        _treasureBoxEffect.gameObject.SetActive(true);
-        
-        if (isPlay)
-        {
-            _treasureBoxEffect.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "idle01", false);
-            _treasureBoxEffect.GetComponent<SkeletonAnimation>().DOPlay();
-            _goldRewardIcon.GetComponent<Image>().enabled = false;
-            AudioManager.Instance.PlaySoundEffect("OpenStageBox");
-        }
-       
-    }
-
-    /// <summary>
-    /// 播放金币飞入动画
-    /// </summary>
-    public void PlayGoldFlyAnimation()
-    {            
-        CustomFlyInManager.Instance.FlyInGold(_goldRewardIcon.transform, () =>
-        {
-            EventDispatcher.instance.TriggerChangeGoldUI(AppGameSettings.LevelCompleteBonus, true);
-        });
     }
    
     private void UnlockBtnsUI()
@@ -324,7 +239,7 @@ public class StageFinishView : UIWindow
         // // 无动画版本（RankButton 专用）
         // else
         // {
-            SystemManager.Instance.ShowPanel(panelName);
+         //   SystemManager.Instance.ShowPanel(panelName);
         //}
     }
 
@@ -358,7 +273,7 @@ public class StageFinishView : UIWindow
     private void LoadNextStage()
     {
         StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
-        SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
+        SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
     }
 
     /// <summary>
@@ -378,6 +293,7 @@ public class StageFinishView : UIWindow
     {
         LimitTimeManager.Instance.OnDailyTimeUpdated -= UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyButterflyTaskUI -= UpdateButterflyTime;
+        LimitTimeManager.Instance.OnLimitTimeBtnUI -= InitializeUI;       
         //FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
         //EventDispatcher.OnChangeHeadIconUpdateUI -= UpdateHeadBtnUI;
         

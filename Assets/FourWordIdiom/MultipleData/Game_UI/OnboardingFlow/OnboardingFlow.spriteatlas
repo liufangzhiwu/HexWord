@@ -66,11 +66,13 @@ SpriteAtlas:
     - e14a9b526c43d63448b846fbc55626e5: 21300000
     - e5d713627edbe874bb6e4f118859e5c0: 21300000
     - 29218972f8eb76246b4f43510a783c95: 21300000
+    - e563ac922d7d95c4d8f2e7815ef2678c: 21300000
     - c0fcfbb2ab8d6df4cb3dfc4828fb000f: 21300000
     - fa09f6d2ff43d9048ada00317fb6761d: 21300000
     - 2ba19d03c3401cb4caa46dffbfdcc9c5: 21300000
     - 7f9e206373123e24d90b343ab9087baf: 21300000
     - 2b9c54a3aa7bbdc41a113b3f08699f68: 21300000
+    - cb7046e3252d37f4698dbb3cf6f0be98: 21300000
     - c9ffd21451f8ddc4698d65f680a24a18: 21300000
     - 3757b924ba5ca10458233aa64cfd96eb: 21300000
     - d69dbe447ed1d1b4c9a0bea83cf1e48a: 21300000
@@ -157,11 +159,13 @@ SpriteAtlas:
   - {fileID: 21300000, guid: e14a9b526c43d63448b846fbc55626e5, type: 3}
   - {fileID: 21300000, guid: e5d713627edbe874bb6e4f118859e5c0, type: 3}
   - {fileID: 21300000, guid: 29218972f8eb76246b4f43510a783c95, type: 3}
+  - {fileID: 21300000, guid: e563ac922d7d95c4d8f2e7815ef2678c, type: 3}
   - {fileID: 21300000, guid: c0fcfbb2ab8d6df4cb3dfc4828fb000f, type: 3}
   - {fileID: 21300000, guid: fa09f6d2ff43d9048ada00317fb6761d, type: 3}
   - {fileID: 21300000, guid: 2ba19d03c3401cb4caa46dffbfdcc9c5, type: 3}
   - {fileID: 21300000, guid: 7f9e206373123e24d90b343ab9087baf, type: 3}
   - {fileID: 21300000, guid: 2b9c54a3aa7bbdc41a113b3f08699f68, type: 3}
+  - {fileID: 21300000, guid: cb7046e3252d37f4698dbb3cf6f0be98, type: 3}
   - {fileID: 21300000, guid: c9ffd21451f8ddc4698d65f680a24a18, type: 3}
   - {fileID: 21300000, guid: 3757b924ba5ca10458233aa64cfd96eb, type: 3}
   - {fileID: 21300000, guid: d69dbe447ed1d1b4c9a0bea83cf1e48a, type: 3}
@@ -247,11 +251,13 @@ SpriteAtlas:
   - text_bg
   - enablebtn
   - tiptool
+  - ldengicon
   - itembg
   - UI_Icon_huiStar
   - timebg
   - lbigdeng
   - rightjian
+  - endengicon
   - timebg
   - taskjd
   - gift

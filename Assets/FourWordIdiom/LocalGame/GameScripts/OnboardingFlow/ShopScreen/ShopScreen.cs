@@ -256,7 +256,7 @@ public class ShopScreen : UIWindow
     {
         if (GameDataManager.Instance.UserData.CurrentHexStage >= 7)
         {
-            if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
+            if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
             {
                 // if(StageController.Instance.CurStageInfo.Puzzles.Count <= 9)
                 //     AdsManager.Instance.ShowBannerAd();

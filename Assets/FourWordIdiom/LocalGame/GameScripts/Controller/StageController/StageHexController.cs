@@ -265,7 +265,7 @@ public class StageHexController
 
         // UI切换
         SystemManager.Instance.HidePanel(PanelType.HeaderSection);
-        SystemManager.Instance.HidePanel(PanelType.GamePlayArea);
+        SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
 
         yield return new WaitForSeconds(0.8f);
 

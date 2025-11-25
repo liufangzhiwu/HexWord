@@ -101,7 +101,7 @@ public class HeaderSection : UIWindow
     {
         if (SystemManager.Instance != null)
         {
-            bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea);
+            bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea);
     
             if (isgameshow)
             {
@@ -191,9 +191,9 @@ public class HeaderSection : UIWindow
             SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }
         
-        if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
+        if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
         {
-            SystemManager.Instance.HidePanel(PanelType.GamePlayArea);
+            SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
             GameDataManager.Instance.UserData.UpdateOnlineStageTime();
         }   
         

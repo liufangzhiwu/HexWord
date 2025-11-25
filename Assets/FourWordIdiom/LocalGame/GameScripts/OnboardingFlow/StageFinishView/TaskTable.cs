@@ -53,7 +53,7 @@ public class TaskTable : MonoBehaviour
         GameObject taskye = Instantiate(taskyezi.gameObject,taskyezi.transform);
         taskye.transform.localScale=new Vector3(0.8f,0.8f,0.8f);
         taskye.transform.SetAsLastSibling();
-        taskye.transform.localPosition=new Vector3(-165f,165f,0f);
+        taskye.transform.localPosition=new Vector3(165f,165f,0f);
         CanvasGroup canvas = taskye.GetComponent<CanvasGroup>();
         if (canvas == null)
         {

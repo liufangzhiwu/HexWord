@@ -41,7 +41,7 @@ public sealed class GameCoreManager: MonoBehaviour
     public void ShowGamePanel()
     {
         StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
-        SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
+        SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
     }
 
     private void Start()

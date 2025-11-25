@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: InterfaceConfigs
   m_EditorClassIdentifier: 
   viewsData:
-  - panelName: GamePlayArea
+  - panelName: HexGamePlayArea
     panelLayer: BasePanel
     bundleName: RootCanvas
     spriteAtlasName: UI_MainBase
