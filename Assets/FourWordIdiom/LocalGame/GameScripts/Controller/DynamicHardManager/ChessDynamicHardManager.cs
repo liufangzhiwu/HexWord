@@ -137,8 +137,8 @@ public class ChessDynamicHardManager : MonoBehaviour
     /// </summary>
     private void LoadDynamicConfig()
     {
-        TextAsset csvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_dynamicConfig");
-        TextAsset levelCsvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_levelDifficultyChange");
+        TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_dynamicConfig");
+        TextAsset levelCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_levelDifficultyChange");
         
         if(csvFile != null)
             ConverCSVToJSON(csvFile.text);

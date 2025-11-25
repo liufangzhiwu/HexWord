@@ -17,15 +17,15 @@ using Object = UnityEngine.Object;
 /// 4. 支持多种资源类型加载
 /// 5. 线程安全的单例实现
 /// </summary>
-public sealed class AdvancedBundleLoader
+public sealed class AssetBundleLoader
 {
     #region 单例实现
-    private static readonly Lazy<AdvancedBundleLoader> _instance = 
-        new Lazy<AdvancedBundleLoader>(() => new AdvancedBundleLoader());
+    private static readonly Lazy<AssetBundleLoader> _instance = 
+        new Lazy<AssetBundleLoader>(() => new AssetBundleLoader());
     
-    public static AdvancedBundleLoader SharedInstance => _instance.Value;
+    public static AssetBundleLoader SharedInstance => _instance.Value;
     
-    private AdvancedBundleLoader() { }
+    private AssetBundleLoader() { }
     #endregion
 
     #region 资源缓存

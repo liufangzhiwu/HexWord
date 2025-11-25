@@ -57,7 +57,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 		CreatePuzzleParent();
         if (PuzzleItemObj == null)
         {
-            PuzzleItemObj = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "TileView");
+            PuzzleItemObj = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "TileView");
         }
 		//创建对象池用于管理字块
 		letterTilePool = new ObjectPool(PuzzleItemObj.gameObject, PuzzleParent,3, PoolBehaviour.CanvasGroup);        
@@ -177,10 +177,18 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                     if (!puzzleTile.IsEmpty)
                     {
                         // 从对象池获取TileView
-                        TileView tileView = letterTilePool.GetObject<TileView>();                     
-
-                        // 获取位置（考虑层级偏移）
-                        Vector2 cellPos = GetCellPosition(row, col, layer);                                             
+                        TileView tileView = letterTilePool.GetObject<TileView>();   
+                        Vector2 cellPos = Vector2.zero;
+                        if((HexType)StageHexController.Instance.CurStageInfo.HexType==HexType.PingHexagon)
+                        {
+                            // 获取位置（考虑层级偏移）
+                            cellPos = GetPingHexCellPosition(row, col, layer);     
+                        }
+                        else
+                        {
+                            // 获取位置（考虑层级偏移）
+                            cellPos = GetJianCellPosition(row, col, layer);     
+                        }
                         
                         // 设置位置和缩放
                         tileView.TileTransform.anchoredPosition = cellPos;
@@ -290,7 +298,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// <summary>
     /// 获取六边形字块位置（平顶六边形，行对齐）
     /// </summary>
-    private Vector2 GetCellPosition(int row, int col, int layer)
+    private Vector2 GetPingHexCellPosition(int row, int col, int layer)
     {
         float activeTileSize = StageHexController.Instance.ActiveTileSize;
 
@@ -314,7 +322,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             -totalGridWidth / 2f,
             -totalGridHeight / 2f
         );
-
         // 计算基础位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + col * horizontalSpacing;
         float yPos = bottomLeft.y + row * verticalSpacing;      
@@ -324,18 +331,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         {
             yPos += hexHeight * 0.42f;  // 下移半个垂直间距
         }
-
-        // ===== 层级偏移逻辑 =====
-        //int maxLayer = GetMaxLayerAtPosition(row, col);
-
         // 取消注释启用层级偏移
         if (layer>=0)
         {
             float layerOffset =layer * LAYER_OFFSET;
             yPos -= layerOffset; // 向下偏移
-            //Debug.LogError($"Letter:{curStageData.BoardSnapshot.board[row][col][layer].ToString()} yPos:{yPos} layer:{layer} maxLayer:{maxLayer} layerOffset:{layerOffset}");
         }
-        //Debug.LogWarning($"Letter:{curStageData.BoardSnapshot.board[row][col][layer].ToString()} yPos:{yPos} layer:{layer} maxLayer:{maxLayer}");
 
         return new Vector2(xPos, yPos);
     }
@@ -343,87 +344,48 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     ///// <summary>
     ///// 获取六边形格子位（尖顶六边形，列对齐）
     ///// </summary>
-    //private Vector2 GetCellPosition(int row, int col, int layer)
-    //{
-    //    // 缓存常用值
-    //    float activeTileSize = StageController.Instance.ActiveTileSize;       
+    private Vector2 GetJianCellPosition(int row, int col, int layer)
+    {
+        float activeTileSize = StageHexController.Instance.ActiveTileSize;
 
-    //    // 六边形几何参数计算（预计算常量）    
-    //    float hexWidth = activeTileSize;  // 六边形宽度
-    //    float hexHeight = activeTileSize;               // 六边形高度
+        // 六边形几何参数计算
+        float hexHeight = activeTileSize;                    // 六边形高度（垂直方向）
+        float hexWidth = activeTileSize;  // 六边形宽度（水平方向）
+        float horizontalSpacing = hexWidth*0.9f;                   // 列间距
+        float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
 
-    //    // 间距配置（使用常量定义）        
-    //    const float SAFE_MARGIN_PERCENT = 0.01f;       // 安全边距百分比
-    //    const float MARGIN_MULTIPLIER = 1.3f;          // 边距乘数
+        // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
+        float totalGridHeight = (curStageData.BoardSnapshot.cols+curStageData.BoardSnapshot.minCol-1) * horizontalSpacing;
+        int addrow = 1;
+        if (curStageData.BoardSnapshot.rows<=8)
+        {
+            addrow = 1;
+        }
+        float totalGridWidth = (curStageData.BoardSnapshot.rows+curStageData.BoardSnapshot.minRow+addrow) * verticalSpacing;
+        
+        // 动态计算起始点（居中）
+        Vector2 bottomLeft = new Vector2(
+            -totalGridWidth / 2f,
+            -totalGridHeight / 2f
+        );
 
-    //    // 获取父容器尺寸（只获取一次）
-    //    Rect parentRect = PuzzleParent.rect;
-    //    float parentWidth = parentRect.width;    // 父容器宽度
-    //    float parentHeight = parentRect.height;  // 父容器高度
+        // 计算当前格子位置
+        float xPos = bottomLeft.x + col * horizontalSpacing;
+        float yPos = bottomLeft.y + row * verticalSpacing;
 
-    //    // 计算网格行列数
-    //    int totalCols = curStageData.BoardSnapshot.cols;  // 总列数
-    //    int totalRows = curStageData.BoardSnapshot.rows;  // 总行数
-
-    //    // 计算所需网格空间（优化公式）
-    //    float requiredGridWidth = (totalCols - 1) * hexWidth + hexWidth;  // 所需宽度
-    //    float requiredGridHeight = (totalRows - 1) * hexHeight +
-    //                             (totalCols > 1 ? hexHeight * 0.5f : 0) + hexHeight;  // 所需高度
-
-    //    // 计算带安全边距的最大允许尺寸
-    //    float maxGridWidth = parentWidth * (1 - MARGIN_MULTIPLIER * SAFE_MARGIN_PERCENT);
-    //    float maxGridHeight = parentHeight * (1 - 10 * 0.001f);
-
-    //    // 计算缩放因子（如果需要缩放）
-    //    float scaleFactor = 2f;
-    //    bool needsScaling = requiredGridWidth > maxGridWidth || requiredGridHeight > maxGridHeight;
-
-    //    if (needsScaling)  // 需要缩放的情况
-    //    {
-    //        // 取宽度和高度的最小缩放比例
-    //        scaleFactor = Mathf.Min(
-    //            maxGridWidth / requiredGridWidth,
-    //            maxGridHeight / requiredGridHeight
-    //        );
-
-    //        // 应用缩放比例到所有尺寸
-    //        hexWidth *= scaleFactor;
-    //        hexHeight *= scaleFactor;          
-    //    }
-
-    //    // 计算网格原点（居中）
-    //    float scaledGridWidth = (totalCols - 1) * hexWidth + hexWidth;  // 缩放后网格宽度
-    //    float scaledGridHeight = (totalRows - 1) * hexHeight +
-    //                           (totalCols > 1 ? hexHeight * 0.5f : 0) + hexHeight;  // 缩放后网格高度
-
-    //    Vector2 gridOrigin = new Vector2(
-    //        -scaledGridWidth * 0.5f,  // 水平居中
-    //        -scaledGridHeight * 0.5f  // 垂直居中
-    //    );
-
-    //    // 计算基础位置
-    //    Vector2 position = new Vector2(
-    //        gridOrigin.x + col * hexWidth,  // 水平位置
-    //        gridOrigin.y + row * hexHeight     // 垂直位置
-    //    );
-
-    //    // 为奇数列添加垂直偏移（六边形网格特性）
-    //    if ((col & 1) == 1)  // 位运算判断奇数列（比取模运算更快）
-    //    {
-    //        position.y += hexHeight * 0.5f;  // 下移半个垂直间距
-    //    }
-
-    //    // 处理层级堆叠（当前LAYER_OFFSET为0，无实际偏移）
-    //    int maxLayer = GetMaxLayerAtPosition(row, col);
-    //    if (layer < maxLayer)
-    //    {
-    //        // 如需启用层级偏移，取消注释并设置LAYER_OFFSET值
-    //        // position.y -= (maxLayer - layer) * LAYER_OFFSET;
-    //    }
-
-    //    // 应用边界限制
-    //    return ClampPosition(position, PuzzleParent, hexWidth, hexHeight);
-    //}
+        // 奇数行横向偏移（蜂窝状交错）
+        if (row % 2 == 1)
+        {
+            xPos += horizontalSpacing / 2f;
+        }
+        // 计算偏移量：层级越低（值越小），偏移越大
+        if (layer>=0)
+        {
+            float layerOffset = layer * LAYER_OFFSET;
+            yPos -= layerOffset;
+        }
+        return new Vector2(xPos, yPos);
+    }
 
     /// <summary>
     /// 确保位置在父容器边界内（考虑六边形尺寸）
@@ -452,62 +414,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
         return position;
     }
-
-    ///// <summary>
-    ///// 获取六边形字块位置（蜂窝布局）
-    ///// </summary>
-    //private Vector2 GetCellPosition(int row, int col, int layer)
-    //{
-    //    float activeTileSize = StageController.Instance.ActiveTileSize;
-
-    //    // 六边形几何参数计算
-    //    float hexHeight = activeTileSize;                     // 六边形高度（垂直方向）
-    //    float hexWidth = activeTileSize * Mathf.Sqrt(3) / 1.8f;  // 六边形宽度（水平方向）
-    //    float horizontalSpacing = hexWidth;                   // 列间距
-    //    float verticalSpacing = hexHeight * 0.78f;            // 行间距（考虑重叠）
-
-    //    // 计算网格左下角起始点（整个网格居中）
-    //    //float totalGridWidth = (curStageData.BoardSnapshot.cols) * horizontalSpacing;
-    //    //float totalGridHeight = (curStageData.BoardSnapshot.rows) * verticalSpacing;
-    //    float totalGridWidth = 1050;
-    //    float totalGridHeight = (curStageData.BoardSnapshot.rows) * verticalSpacing;
-
-    //    Vector2 bottomLeft = new Vector2(
-    //        -totalGridWidth / 1.6f,
-    //        -PuzzleParent.rect.height / 4.5f + hexHeight / 4.5f - totalGridHeight / 4.5f
-    //    );
-
-    //    // 计算当前格子位置
-    //    float xPos = bottomLeft.x + col * horizontalSpacing;
-    //    float yPos = bottomLeft.y + row * verticalSpacing;
-
-    //    // 奇数行横向偏移（蜂窝状交错）
-    //    if (row % 2 == 1)
-    //    {
-    //        xPos += horizontalSpacing / 2f;
-    //    }
-
-    //    // ===== 修改层级偏移逻辑 =====
-    //    const float LAYER_OFFSET = 0f; // 每层偏移量（单位：像素）
-
-    //    // 获取该位置的最大层级（需要从网格数据中获取）
-    //    int maxLayer = GetMaxLayerAtPosition(row, col);
-
-    //    //// 计算偏移量：层级越低（值越小），偏移越大
-    //    //if (layer < maxLayer)
-    //    //{
-    //    //    // 计算偏移量：(最大层级 - 当前层级) * 偏移量
-    //    //    float layerOffset = (maxLayer - layer) * LAYER_OFFSET;
-
-    //    //    // 层级偏移方向（向下偏移）
-    //    //    yPos -= layerOffset;
-    //    //}
-
-    //    // 调试信息（需要时取消注释）
-    //    // Debug.Log($"六边形位置: 行={row} 列={col} 层级={layer}/{maxLayer} 坐标=({xPos},{yPos})");
-
-    //    return new Vector2(xPos, yPos);
-    //}
 
     /// <summary>
     /// 获取指定位置的最大层级数（统计非空字符的数量）
@@ -659,9 +565,18 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 {
                     PuzzleTile puzzleTile = layers[layer];
                     if (puzzleTile.IsEmpty) continue;
-
-                    // 获取当前层的实际位置
-                    Vector2 cellPos = GetCellPosition(row, col, layer);
+                    
+                    Vector2 cellPos = Vector2.zero;
+                    if((HexType)StageHexController.Instance.CurStageInfo.HexType==HexType.PingHexagon)
+                    {
+                        // 获取位置（考虑层级偏移）
+                        cellPos = GetPingHexCellPosition(row, col, layer);     
+                    }
+                    else
+                    {
+                        // 获取位置（考虑层级偏移）
+                        cellPos = GetJianCellPosition(row, col, layer);     
+                    }
                   
                     if (localPosition.x >= cellPos.x - halfSize && localPosition.x <= cellPos.x + halfSize
                         && localPosition.y >= cellPos.y - halfSize && localPosition.y <= cellPos.y + halfSize)

@@ -30,9 +30,9 @@ public class MultilingualManager:MonoBehaviour
     public void LoadLocalization()
     {
         // 从AssetBundle中加载CSV文件
-        TextAsset defCsvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "multilingual");
+        TextAsset defCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "multilingual");
         localizedStrings = ToolUtil.ParseCvsLanguage(defCsvFile,"multilingual");
-        TextAsset pinCsvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "pingzi_lang");
+        TextAsset pinCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "pingzi_lang");
         pinziLocalized = ToolUtil.ParseCvsLanguage(pinCsvFile,"pingzi_lang");
         
     }
@@ -60,7 +60,7 @@ public class MultilingualManager:MonoBehaviour
     public void LoadLocalizationNameTable()
     {
         // 从AssetBundle中加载CSV文件
-        TextAsset csvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile(ToolUtil.GetLanguageBundle(), "config_choiceNiCheng");
+        TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile(ToolUtil.GetLanguageBundle(), "config_choiceNiCheng");
         localizedNames = ToolUtil.ParseCvsLanguage(csvFile,"config_choiceNiCheng");
     }
 
@@ -100,7 +100,7 @@ public class MultilingualManager:MonoBehaviour
     public void InitbiddenWords()
     {
         // 加载 TextAsset
-        TextAsset textAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo","NoneedLetter");
+        TextAsset textAsset = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo","NoneedLetter");
         if (textAsset == null)
         {
             Debug.LogError("Could not load the dictionary file.");

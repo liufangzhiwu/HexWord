@@ -80,7 +80,7 @@ public class MessageSystem : MonoBehaviour
     /// </summary>
     private IEnumerator LoadTipPrefab()
     {
-        var loadRequest = AdvancedBundleLoader.SharedInstance.LoadGameObject(
+        var loadRequest = AssetBundleLoader.SharedInstance.LoadGameObject(
             bundleName,
             prefabName
         );

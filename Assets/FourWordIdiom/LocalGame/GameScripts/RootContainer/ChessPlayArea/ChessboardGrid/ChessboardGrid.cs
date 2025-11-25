@@ -40,7 +40,7 @@ public class ChessboardGrid : MonoBehaviour
     {
         if (PuzzleItemObj == null)
         {
-            PuzzleItemObj = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ChessTileView");
+            PuzzleItemObj = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "ChessTileView");
         }
 
         LetterTilePool = new ObjectPool(PuzzleItemObj.gameObject, transform, 3, PoolBehaviour.CanvasGroup);

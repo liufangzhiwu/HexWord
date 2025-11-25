@@ -76,7 +76,7 @@ public class ShopManager : MonoBehaviour
 
     void Start()
     {
-        TextAsset data = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "shop");
+        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "shop");
         if (data != null)
         {
             ParseShopItems(data.text);

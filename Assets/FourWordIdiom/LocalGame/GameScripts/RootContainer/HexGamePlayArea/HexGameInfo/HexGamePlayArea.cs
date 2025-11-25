@@ -651,7 +651,7 @@ public class HexGamePlayArea : UIWindow
         if (start != null)
         {
             Transform startTransform = puzzleTile.TileView.gameObject.transform;
-            GameObject effect = AdvancedBundleLoader.SharedInstance.LoadGameObject("useritems", "ShowTipTuowei");
+            GameObject effect = AssetBundleLoader.SharedInstance.LoadGameObject("useritems", "ShowTipTuowei");
             CustomFlyInManager.Instance.FlyIn(start, startTransform, effect, () =>
             {
                 puzzleTile.TileView.ShowTipPuzzle();       

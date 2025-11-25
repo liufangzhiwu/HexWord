@@ -12,7 +12,7 @@ public class LevelSplitterWindow : EditorWindow
     private bool includeSampleData = true;
     private string fileContentPreview = "";
 
-    [MenuItem("Tools/关卡拆分工具")]
+    [MenuItem("Tools/方块消关卡拆分工具")]
     public static void ShowWindow()
     {
         GetWindow<LevelSplitterWindow>("关卡拆分工具");

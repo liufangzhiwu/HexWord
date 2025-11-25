@@ -176,7 +176,7 @@ public class PuzzleTileItem : MonoBehaviour
         const string effectAsset = "ToolTipsEffect"; // 修改资源名称
 
         // 2. 异步加载优化
-        var loadOperation = AdvancedBundleLoader.SharedInstance.LoadGameObject(effectBundle, effectAsset);      
+        var loadOperation = AssetBundleLoader.SharedInstance.LoadGameObject(effectBundle, effectAsset);      
 
         // 3. 特效实例化与定位
         var effectInstance = Instantiate(loadOperation, transform.parent);

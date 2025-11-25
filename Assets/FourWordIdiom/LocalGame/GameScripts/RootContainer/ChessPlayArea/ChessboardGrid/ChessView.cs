@@ -80,10 +80,10 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         int maxRC = Mathf.Max(row + 1, col);   // 7 7 →7   8 8 →8   8 9 →9
         _choose.GetComponent<Image>().sprite = maxRC switch
         {
-            7 => AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_162"),
-            8 => AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_142"),
-            9 => AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_126"),
-            _ => AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_162")   // 更大也按最小格
+            7 => AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_162"),
+            8 => AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_142"),
+            9 => AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_126"),
+            _ => AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_162")   // 更大也按最小格
         };
         //_choose.GetComponent<Image>().SetNativeSize();
         UpdateTile();
@@ -155,7 +155,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             case TileState.Default:
                 _textDisplay.text = Answer.ToString();
                 _textDisplay.color = new Color32(100, 80, 66, 255);
-                _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
+                _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
                 _bg.gameObject.SetActive(true);
                 break;
             case TileState.Fill:
@@ -164,20 +164,20 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                     _textDisplay.text = chesspiece.bowl.letter;
                     _textDisplay.color = new Color32(100,80,66,255);
                 }
-                _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+                _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
                 _bg.gameObject.SetActive(true);
                 break;
             case TileState.Error:
                 //Debug.LogWarning($"更新词: {Answer} " + JsonUtility.ToJson(chesspiece));
                  _textDisplay.text = chesspiece.bowl.letter;
                  _textDisplay.color = Color.red;
-                _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+                _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
                 _bg.gameObject.SetActive(true);
                 break;
             case TileState.Success:
                 _textDisplay.text = Answer.ToString();
                 _textDisplay.color = Color.white;
-                _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
+                _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
                 _bg.gameObject.SetActive(true);
                 break;
         }

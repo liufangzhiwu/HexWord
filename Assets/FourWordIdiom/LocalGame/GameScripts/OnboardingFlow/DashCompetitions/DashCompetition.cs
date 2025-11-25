@@ -34,7 +34,7 @@ public class DashCompetition : UIWindow
         
         if (_fishItemPrefab == null)
         {
-            _fishItemPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "FishItem").GetComponent<FishItem>();
+            _fishItemPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "FishItem").GetComponent<FishItem>();
         }
     
         // 初始化对象池
@@ -226,7 +226,7 @@ public class DashCompetition : UIWindow
         RectTransform rectTransform =FishLists.GetComponent<RectTransform>();
         if (UIUtilities.IsiPad())
         {
-            Background.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbigbg");
+            Background.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbigbg");
             FishLists.GetComponent<VerticalLayoutGroup>().spacing = -60;
             BoxsParent.transform.localScale = new Vector3(1.051f, 1.051f, 1f);
             BoxsParent.GetComponent<HorizontalLayoutGroup>().spacing =-70;
@@ -239,7 +239,7 @@ public class DashCompetition : UIWindow
         }
         else
         {
-            Background.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbg");
+            Background.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbg");
             float scale=UIUtilities.GetScreenRatio();
             // if (scale <= 0.95f)
             // {
@@ -270,10 +270,10 @@ public class DashCompetition : UIWindow
         switch (GameDataManager.Instance.UserData.LanguageCode)
         {
             case "JS":
-                titleImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("dashJantitle");
+                titleImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("dashJantitle");
                 break;  
             case "CT":
-                titleImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fanDashTitle");
+                titleImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fanDashTitle");
                 break;
         }
     }

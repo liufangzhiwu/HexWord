@@ -56,7 +56,7 @@ public class DailyTaskManager : MonoBehaviour
 
     void Start()
     {
-        TextAsset data = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "dailytask");
+        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "dailytask");
         if (data != null)
         {
             ParseLimitItems(data.text);

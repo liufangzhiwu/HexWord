@@ -33,8 +33,8 @@ public class OptionsView : UIWindow
     {
        
         AttachToggleListeners(); // 绑定开关监听器
-        Opensprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_OpenToggle");
-        Closesprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
+        Opensprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_OpenToggle");
+        Closesprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
         UpdateToggleStates(false); // 启用时更新状态，不带动画
         
     }

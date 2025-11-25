@@ -10,6 +10,12 @@ public enum LevelType
     HexWord=3,//六边形游戏
 }
 
+public enum HexType
+{
+    PingHexagon=0,//平顶六边形
+    JianHexagon=1,//尖顶六边形
+}
+
 /// <summary>
 /// 词语数据类 - 存储当前选中的词语信息
 /// </summary>
@@ -123,7 +129,7 @@ public class StageHexController
     /// </summary>
     private PackInfo LoadPackInfoAsset(string assetName)
     {
-        return AdvancedBundleLoader.SharedInstance.LoadScriptableObject(
+        return AssetBundleLoader.SharedInstance.LoadScriptableObject(
             "objects", 
             assetName
         ) as PackInfo;

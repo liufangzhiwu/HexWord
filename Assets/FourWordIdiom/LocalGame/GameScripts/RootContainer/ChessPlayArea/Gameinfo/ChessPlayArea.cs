@@ -77,7 +77,7 @@ public class ChessPlayArea : UIWindow
     {
         if(_stageOverObj == null)
         {
-            var go = AdvancedBundleLoader.SharedInstance.LoadGameObject(ToolUtil.GetLanguageBundle(), "item_finishEffect");
+            var go = AssetBundleLoader.SharedInstance.LoadGameObject(ToolUtil.GetLanguageBundle(), "item_finishEffect");
             _stageOverObj = Instantiate(go, transform); 
             _stageOverObj.transform.SetAsLastSibling();
             _stageOverObj.SetActive(false);

@@ -62,6 +62,22 @@ public class TileView : MonoBehaviour
         tipPuzzle.GetComponentInChildren<Text>().text = character.ToString();
         SetSelectionState(false);
         
+        switch((HexType)StageHexController.Instance.CurStageInfo.HexType)
+        {
+            case HexType.PingHexagon:
+                tipPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingWord");
+                starttile.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingWord");
+                showTipObj.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingTipWord");
+                selectionPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingSeleWord");
+                break;
+            case HexType.JianHexagon:
+                tipPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianWord");
+                starttile.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianWord");
+                showTipObj.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianTipWord");
+                selectionPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianSeleWord");
+                break;
+        }
+        
         StopPulseAnimation();
     }
     
@@ -252,16 +268,6 @@ public class TileView : MonoBehaviour
         _textDisplay.gameObject.SetActive(false);
         transform.gameObject.SetActive(false);
     }
-
-    //public void SetDownLayer()
-    //{
-    //    //starttile.GetComponent<Image>().DOColor(Color.gray, 1.2f);
-    //}
-
-    //public void SetTopLayer()
-    //{
-    //    //starttile.GetComponent<Image>().DOColor(Color.white,0.5f);
-    //}
     
     /// <summary>
     /// 隐藏字块

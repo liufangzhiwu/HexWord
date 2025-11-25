@@ -79,11 +79,11 @@ public class HeaderSection : UIWindow
 
         if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
         {
-            BackBtn.GetComponent<Image>().sprite =AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Home");
+            BackBtn.GetComponent<Image>().sprite =AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Home");
         }
         else
         {
-            BackBtn.GetComponent<Image>().sprite =AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_back");
+            BackBtn.GetComponent<Image>().sprite =AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_back");
         }
          EventDispatcher.instance.TriggerChangeTopRaycast(true);
          EventDispatcher.instance.TriggerChangeGoldUI(0,false);       

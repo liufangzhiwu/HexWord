@@ -66,6 +66,7 @@ public class StageInfo
 
     private TextAsset _StageFile;       // 关卡文本资源
     private readonly int _StageNumber;  // 关卡编号
+    private int _HexType;  // 六边形类型 0:平顶六边形 1:尖顶六边形
     private readonly int _StageInfoId;  // 关卡配置ID
     private bool _isStageFileLoaded;    // 文件加载状态
     private int _maxPuzzleLength = -1;    // 最大单词长度(延迟计算)
@@ -89,17 +90,8 @@ public class StageInfo
     /// <summary> 关卡编号 </summary>
     public int StageNumber => _StageNumber;
 
-
-    /// <summary> 最大单词长度(延迟计算) </summary>
-    public int MaxPuzzleLength
-    {
-        get
-        {
-            if (_maxPuzzleLength == -1)
-                CalculateMaxPuzzleLength();
-            return _maxPuzzleLength;
-        }
-    }
+    /// <summary> 六边形类型 0:平顶六边形 1:尖顶六边形 </summary>
+    public int HexType => _HexType;
 
     #endregion
 
@@ -144,7 +136,7 @@ public class StageInfo
         if (_StageFile == null)
         {
             string fileName = GetStageFileNameByLanguage();
-            _StageFile = AdvancedBundleLoader.SharedInstance.LoadTextFile(fileName, "hexlevel_"+_StageInfoId);
+            _StageFile = AssetBundleLoader.SharedInstance.LoadTextFile(fileName, "hexlevel_"+_StageInfoId);
         }    
 
         string jsonContent = _StageFile.text;
@@ -298,11 +290,9 @@ public class StageInfo
         }
         
         // 处理开头的"1_0="部分（如果存在）
-        int startIndex = passContent.IndexOf('=');
-        if (startIndex >= 0 && startIndex + 1 < passContent.Length)
-        {
-            passContent = passContent.Substring(startIndex + 1);
-        }
+        string[] keyParts = passContent.Split('=');
+        _HexType = int.Parse(keyParts[0].Split('_')[1]);
+        passContent = keyParts[1];
         string[] cells = passContent.Split('|');
 
         foreach (string cell in cells)
@@ -313,34 +303,45 @@ public class StageInfo
 
             string positionPart = cell.Substring(0, colonIndex);
             string[] position = positionPart.Split('_');
+            
+            int row = int.Parse(position[1]);
+            int col = int.Parse(position[0]);       
+
+            if (HexType == 1)
+            {
+                row = int.Parse(position[0]);
+                col = int.Parse(position[1]);       
+            }
 
             if (position.Length < 2) continue;
 
             // 解析行索引
-            if (int.TryParse(position[1], out int row) && row > maxRow)
+            if (row > maxRow)
             {
                 maxRow = row;
             }
 
             // 解析列索引
-            if (int.TryParse(position[0], out int col) && col > maxCol)
+            if (col > maxCol)
             {
                 maxCol = col;
             }
             
             // 解析行索引
-            if (int.TryParse(position[1], out int mrow) && mrow < minRow)
+            if (row < minRow)
             {
                 minRow = row;
             }
 
             // 解析列索引
-            if (int.TryParse(position[0], out int mcol) && mcol < minCol)
+            if (col < minCol)
             {
                 minCol = col;
             }
         }
+        
         return (maxRow+1, maxCol+1, minRow, minCol);
+        
     }
 
 
@@ -403,9 +404,15 @@ public class StageInfo
             // 解析位置 (格式: "行_列")
             string[] position = positionPart.Split('_');
             if (position.Length < 2) continue;
-
+            
             int row = int.Parse(position[1]);
-            int col = int.Parse(position[0]);           
+            int col = int.Parse(position[0]);       
+
+            if (HexType == 1)
+            {
+                row = int.Parse(position[0]);
+                col = int.Parse(position[1]);       
+            }
           
             // 确保位置在棋盘范围内
             if (row >= 0 && row < _boardData.rows &&
@@ -480,27 +487,6 @@ public class StageInfo
 
             idioms.Add(idiom);
             _Puzzles.Add(idiom.word);
-        }
-    }
-
-    /// <summary>
-    /// 按单词长度排序
-    /// </summary>
-    private void SortPuzzles()
-    {
-        _Puzzles.Sort((a, b) => a.Length.CompareTo(b.Length));
-    }
-
-    /// <summary>
-    /// 计算最大单词长度
-    /// </summary>
-    private void CalculateMaxPuzzleLength()
-    {
-        _maxPuzzleLength = 0;
-        foreach (var Puzzle in _Puzzles)
-        {
-            if (Puzzle.Length > _maxPuzzleLength)
-                _maxPuzzleLength = Puzzle.Length;
         }
     }
 

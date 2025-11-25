@@ -417,7 +417,7 @@ public class PrimaryInterface : UIWindow
     
     private Sprite LoadheadIcon(string showIcon)
     {
-        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
 
     /// <summary>

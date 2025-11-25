@@ -31,7 +31,7 @@ public class DailyTasksScreen : UIWindow
     {
         if (taskItemPrefab == null)
         {
-            taskItemPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "TaskItem").GetComponent<TaskItem>();
+            taskItemPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "TaskItem").GetComponent<TaskItem>();
         }
         // 初始化对象池
         objectPool = new ObjectPool(taskItemPrefab.gameObject, ObjectPool.CreatePoolContainer(transform, "TaskItemPool"));

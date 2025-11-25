@@ -63,7 +63,7 @@ public class RewardPuzzleManager : MonoBehaviour
     {
         if (PuzzlePrefab == null)
         {
-            PuzzlePrefab = AdvancedBundleLoader.SharedInstance
+            PuzzlePrefab = AssetBundleLoader.SharedInstance
                 .LoadGameObject("commonitem", "rewardPuzzle")
                 .GetComponent<RewardPuzzle>();
             

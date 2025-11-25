@@ -162,16 +162,16 @@ public class MatchSuccess : UIWindow
             switch (type)
             {
                 case LimitRewordType.Coins:
-                    awardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
+                    awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
                     break;
                 case LimitRewordType.Butterfly:
-                    awardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Butterfly");
+                    awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Butterfly");
                     break;
                 case LimitRewordType.Tipstool:
-                    awardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
+                    awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
                     break;
                 case LimitRewordType.Resettool:
-                    awardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
+                    awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
                     break;
             }                
             

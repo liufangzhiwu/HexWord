@@ -44,7 +44,7 @@ public class LightItem : MonoBehaviour
         gouImage.transform.localScale=Vector3.zero;
         if (Curlimitdata.id >= 1)
         {
-            jianImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("jian");
+            jianImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("jian");
             jianImage.SetNativeSize();
         }
         count.fontSize = 70;
@@ -81,18 +81,18 @@ public class LightItem : MonoBehaviour
         {
             case LimitRewordType.Coins:
                 if(max)
-                    return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin1");
+                    return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
+                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin1");
             case LimitRewordType.Butterfly:
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
+                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
             case LimitRewordType.Tipstool:
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
+                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
             case LimitRewordType.Resettool:
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
+                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
             case LimitRewordType.Min5Double:
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
+                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
             case LimitRewordType.Min15Double:
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
+                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
                
         }
 
@@ -111,7 +111,7 @@ public class LightItem : MonoBehaviour
                     gouImage.transform.DOScale(Vector3.one, 0.4f);
                     if (Curlimitdata.id >= 1)
                     {
-                        jianImage.sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("anjian");
+                        jianImage.sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("anjian");
                         jianImage.SetNativeSize();
                     }
                 }
@@ -180,7 +180,7 @@ public class LightItem : MonoBehaviour
                     UpdateRewardValue();
                     if (Curlimitdata.id >= 1)
                     {
-                        jianImage.sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("anjian");
+                        jianImage.sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("anjian");
                         jianImage.SetNativeSize();
                     }
                 }

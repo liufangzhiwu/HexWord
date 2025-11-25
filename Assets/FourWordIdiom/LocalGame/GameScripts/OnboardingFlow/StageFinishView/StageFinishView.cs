@@ -286,7 +286,7 @@ public class StageFinishView : UIWindow
     
     private Sprite LoadheadIcon(string showIcon)
     {
-        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
 
     protected override void OnDisable()

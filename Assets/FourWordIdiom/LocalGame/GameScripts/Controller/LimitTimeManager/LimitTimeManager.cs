@@ -31,7 +31,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
 
     public override void Init()
     {
-        TextAsset data = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "limittime");
+        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "limittime");
         if (data != null)
         {
             ParseLimitItems(data.text);

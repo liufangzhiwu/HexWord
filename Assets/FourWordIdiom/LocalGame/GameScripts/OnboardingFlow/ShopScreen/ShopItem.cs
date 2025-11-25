@@ -219,9 +219,9 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
     private void LoadAndSetupTipButton(ShopDataItem data)
     {
-        if (AdvancedBundleLoader.SharedInstance == null) return;
+        if (AssetBundleLoader.SharedInstance == null) return;
 
-        tipBtnPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "Shop_tipbtn");
+        tipBtnPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "Shop_tipbtn");
         if (tipBtnPrefab == null || nameText == null) return;
 
         if (tipBtn == null)
@@ -323,9 +323,9 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     {
         if (data.productContent == null || data.productContent.Count <= 1) return;
 
-        if (AdvancedBundleLoader.SharedInstance == null) return;
+        if (AssetBundleLoader.SharedInstance == null) return;
 
-        var prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "GiftItem");
+        var prefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "GiftItem");
         if (prefab == null) return;
 
         giftItemPrefab = prefab.GetComponent<GiftItem>();
@@ -519,7 +519,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
     private Sprite LoadShopIcon(string showIcon)
     {
-        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
 
     private void OnDisable()

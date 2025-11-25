@@ -85,7 +85,7 @@ public class AudioManager : MonoBehaviour
         AudioClip clip;
         if (!musicClips.ContainsKey(clipName))
         {
-            clip = AdvancedBundleLoader.SharedInstance.LoadAudioClip("musics", clipName);
+            clip = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", clipName);
             AudioSource sfxSource = audioSourcePool.GetObject<AudioSource>(); // 获取 AudioSource
             sfxSource.volume = GameDataManager.Instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
             sfxSource.clip = clip; // 设置要播放的音效

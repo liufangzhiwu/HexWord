@@ -351,7 +351,7 @@ public class FishItem : MonoBehaviour
 
     private Sprite LoadtaskIcon(string showIcon)
     {
-        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
 
     private void HideBosSpine()

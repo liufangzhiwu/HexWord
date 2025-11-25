@@ -94,8 +94,8 @@ public class DynamicHardManager : MonoBehaviour
     public void LoadDynamicConfig()
     {
         // 从AssetBundle中加载CSV文件
-        TextAsset csvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile(ToolUtil.GetLanguageBundle(), "config_dynamicConfig");
-        TextAsset levelcsvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile(ToolUtil.GetLanguageBundle(), "config_levelDifficultyChange");
+        TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile(ToolUtil.GetLanguageBundle(), "config_dynamicConfig");
+        TextAsset levelcsvFile = AssetBundleLoader.SharedInstance.LoadTextFile(ToolUtil.GetLanguageBundle(), "config_levelDifficultyChange");
         if (csvFile != null)
         {
             // 将 CSV 数据转换为 JSON 格式

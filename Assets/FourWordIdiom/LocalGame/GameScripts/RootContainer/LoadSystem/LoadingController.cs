@@ -119,23 +119,23 @@ public class LoadingController : MonoBehaviour
     {
         Debug.Log("开始预加载游戏资源");
 
-        yield return AdvancedBundleLoader.SharedInstance.LoadAtlas(
+        yield return AssetBundleLoader.SharedInstance.LoadAtlas(
            "ui_universal",
            "UI_Universal");
 
         //LoadFont();
         // 加载字体资源
-        Font mainFont = AdvancedBundleLoader.SharedInstance.LoadFont(
+        Font mainFont = AssetBundleLoader.SharedInstance.LoadFont(
              "stagefonts",
              "FZKTK");
         //loadingHintText.font = mainFont;
 
         // 并行加载其他关键资源
-        yield return AdvancedBundleLoader.SharedInstance.LoadAtlas(
+        yield return AssetBundleLoader.SharedInstance.LoadAtlas(
             "effect_sprite",
             "trailAltas");
 
-        yield return AdvancedBundleLoader.SharedInstance.LoadMaterialResource(
+        yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
             "effectsitemmats",
             "Circle");       
         

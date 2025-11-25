@@ -8,10 +8,10 @@ public class LevelJsonSplitter : EditorWindow
     private TextAsset inputJson;
     private string outputFolder = "Assets/FourWordIdiom/MultipleData/StageDatas/StageInfos/chineseStage";
 
-    [MenuItem("Tools/Level JSON Splitter")]
+    [MenuItem("Tools/六边形关卡拆分工具-LevelJSONSplitter")]
     public static void ShowWindow()
     {
-        GetWindow<LevelJsonSplitter>("Level JSON Splitter");
+        GetWindow<LevelJsonSplitter>("六边形关卡拆分工具-LevelJSONSplitter");
     }
 
     private void OnGUI()

@@ -21,7 +21,7 @@ public class CustomFlyInManager : MonoBehaviour
 
     private void Start()
     {
-        GoldPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "GameGole");
+        GoldPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "GameGole");
     }
     
     public void FlyInGold(Transform start,Action call=null,int count=5)

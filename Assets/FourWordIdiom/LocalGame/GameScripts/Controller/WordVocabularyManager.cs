@@ -67,7 +67,7 @@ public class WordVocabularyManager
         //         break;
         // }
         // 加载 TextAsset
-        TextAsset textAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo",txtname);
+        TextAsset textAsset = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo",txtname);
         if (textAsset == null)
         {
             Debug.LogError("Could not load the dictionary file.");
