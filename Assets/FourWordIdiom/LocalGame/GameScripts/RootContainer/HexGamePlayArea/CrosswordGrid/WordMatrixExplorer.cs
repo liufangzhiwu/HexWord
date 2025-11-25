@@ -17,11 +17,33 @@ public class WordMatrixExplorer
         (-1, 1)     // 右下
     };
 
+    //平顶六边形网格的六个方向定义（行为奇数时）
     private static readonly (int, int)[] HexDirectionsOdd = {
         (1, 0),    // 上
         (1, 1),   // 右上
         (1, -1),  // 左上
         (-1, 0),   // 下
+        (0, -1),   // 左下
+        (0, 1)     // 右下
+    };
+    
+    
+    // 平顶六边形网格的六个方向定义（行为偶数时）
+    private static readonly (int, int)[] HexJianDirectionsEven = {
+        (1, 0),    // 上
+        (0, 1),   // 右上
+        (0, -1),   // 左上
+        (-1, 0),   // 下
+        (-1, -1),  // 左下
+        (-1, 1)     // 右下
+    };
+
+    //平顶六边形网格的六个方向定义（行为奇数时）
+    private static readonly (int, int)[] HexJianDirectionsOdd = {
+        (1, 0),    // 左
+        (1, 1),   // 右上
+        (1, -1),  // 左上
+        (-1, 0),   // 右
         (0, -1),   // 左下
         (0, 1)     // 右下
     };
@@ -95,7 +117,18 @@ public class WordMatrixExplorer
 
         // 在搜索函数中使用
         int parity = col % 2;
-        var directions = (parity == 0) ? HexDirectionsEven : HexDirectionsOdd;
+        var directions=new (int, int)[6];
+            
+        if ((HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon)
+        {
+            directions = (parity == 0) ? HexDirectionsEven : HexDirectionsOdd;
+        }
+        else
+        {
+            directions = (parity == 0) ? HexJianDirectionsEven : HexJianDirectionsOdd;
+        }
+        
+        
         
         // 在六边形网格的六个方向上进行搜索
         foreach (var (dr, dc) in directions)

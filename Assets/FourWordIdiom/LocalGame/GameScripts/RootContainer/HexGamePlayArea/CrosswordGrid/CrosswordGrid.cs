@@ -357,7 +357,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
         float totalGridHeight = (curStageData.BoardSnapshot.cols+curStageData.BoardSnapshot.minCol-1) * horizontalSpacing;
         int addrow =0;
-        if (curStageData.BoardSnapshot.rows<=8)
+        if (curStageData.BoardSnapshot.cols<=8)
         {
             addrow = 1;
         }
@@ -1198,10 +1198,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 if (tilesAtPosition != null)
                 {
                     resultTiles.Add(tilesAtPosition);
-                }
-                else
-                {
-                    //Debug.LogWarning($"No matching tile found for character '{block.character}' at position {pos}");
                 }
             }
 

@@ -77,7 +77,7 @@ public class HexGamePlayArea : UIWindow
 
     protected  void InitializeButtons()
     {
-        LayerBtn.AddClickAction(()=>ToolItemReset(),"");
+        LayerBtn.AddClickAction(ToolItemFirstLetter,"");
         PuzzleTipsBtn.AddClickAction(UseTips,"");
         LevelPuzzleBtn.AddClickAction(OnClickWordVocabulary);
     }
@@ -560,24 +560,11 @@ public class HexGamePlayArea : UIWindow
         return false;
     }
 
-    IEnumerator ResetTool()
-    {
-        yield return new WaitForSeconds(0.45f);
-        ToolItemReset(true);
-    }
-
     /// <summary>
-    /// 使用重置工具
+    /// 使用首字提示工具
     /// </summary>
-    public void ToolItemReset(bool isReset=false)
+    private void ToolItemFirstLetter()
     {
-        //LayerBtn.enabled = false;
-        if (isReset)
-        {
-            //GamPuzzleBoard();
-            return;
-        }
-        
         ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
         
         if (toolInfo == null)
