@@ -410,7 +410,7 @@ public class StageInfo
 
             if (HexType == 1)
             {
-                row = int.Parse(position[0]);
+                row = _boardData.rows- int.Parse(position[0])+1;
                 col = int.Parse(position[1]);       
             }
           

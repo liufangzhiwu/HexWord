@@ -353,25 +353,25 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float hexWidth = activeTileSize;  // 六边形宽度（水平方向）
         float horizontalSpacing = hexWidth*0.9f;                   // 列间距
         float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
+        
+        int cols=curStageData.BoardSnapshot.cols-curStageData.BoardSnapshot.minCol;
+        int rows=curStageData.BoardSnapshot.rows-curStageData.BoardSnapshot.minRow;
 
         // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
-        float totalGridHeight = (curStageData.BoardSnapshot.cols+curStageData.BoardSnapshot.minCol-1) * horizontalSpacing;
-        int addrow =0;
-        if (curStageData.BoardSnapshot.cols<=8)
-        {
-            addrow = 1;
-        }
-        float totalGridWidth = (curStageData.BoardSnapshot.rows+curStageData.BoardSnapshot.minRow+addrow) * verticalSpacing;
+        float totalGridWidth = cols * horizontalSpacing;
+        float totalGridHeight = rows * verticalSpacing;
         
-        // 动态计算起始点（居中）
+        //动态计算起始点（居中）
         Vector2 bottomLeft = new Vector2(
             -totalGridWidth / 2f,
             -totalGridHeight / 2f
         );
+        
+        float soffsetx = curStageData.BoardSnapshot.minCol%2==0?0.5f:0f;
 
         // 计算当前格子位置
-        float xPos = bottomLeft.x + col * horizontalSpacing;
-        float yPos = bottomLeft.y + row * verticalSpacing;
+        float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol+soffsetx) * horizontalSpacing;
+        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minRow) * verticalSpacing;
 
         // 奇数行横向偏移（蜂窝状交错）
         if (row % 2 == 1)
