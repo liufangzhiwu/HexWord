@@ -214,6 +214,15 @@ public class StageProgressData
 
     public string FindFirstHintedPuzzle(HashSet<string> availablePuzzles)
     {
+
+        foreach (string puzzle in availablePuzzles)
+        {
+            if (!PuzzleHints.Contains(puzzle))
+            {
+                return puzzle;
+            }
+        }
+        
         return null;
     }
     #endregion

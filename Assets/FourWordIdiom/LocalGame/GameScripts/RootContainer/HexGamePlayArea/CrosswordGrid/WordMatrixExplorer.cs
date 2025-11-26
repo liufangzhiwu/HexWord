@@ -28,24 +28,24 @@ public class WordMatrixExplorer
     };
     
     
-    // 平顶六边形网格的六个方向定义（行为偶数时）
+    // 尖顶六边形网格的六个方向定义（行为偶数时）
     private static readonly (int, int)[] HexJianDirectionsEven = {
-        (1, 0),    // 上
-        (0, 1),   // 右上
-        (0, -1),   // 左上
-        (-1, 0),   // 下
-        (-1, -1),  // 左下
-        (-1, 1)     // 右下
+        (0, -1),    // 左
+        (0, 1),   // 右
+        (1, 0),   // 右上1，0
+        (1, -1),   // 左上
+        (-1, -1),   // 左下(-1, -1),
+        (-1, 0)     // 右下（-1，0）
     };
 
-    //平顶六边形网格的六个方向定义（行为奇数时）
+    //尖顶六边形网格的六个方向定义（行为奇数时）
     private static readonly (int, int)[] HexJianDirectionsOdd = {
-        (1, 0),    // 左
-        (1, 1),   // 右上
-        (1, -1),  // 左上
-        (-1, 0),   // 右
-        (0, -1),   // 左下
-        (0, 1)     // 右下
+        (0, -1),    // 左
+        (0, 1),   // 右
+        (-1, 1),   // 右上
+        (1, 0),  // 左上1，0
+        (-1, 0),  // 左下（-1，0）
+        (1, 1)     // 右下
     };
 
     public WordMatrixExplorer(BoardGame gameBoard, List<string> levelWords)
@@ -125,6 +125,7 @@ public class WordMatrixExplorer
         }
         else
         {
+            parity = row % 2;
             directions = (parity == 0) ? HexJianDirectionsEven : HexJianDirectionsOdd;
         }
         

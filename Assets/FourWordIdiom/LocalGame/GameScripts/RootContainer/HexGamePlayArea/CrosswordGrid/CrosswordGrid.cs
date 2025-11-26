@@ -6,9 +6,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
-using Unity.VisualScripting;
-using System.Data;
-using UnityEditor.Playables;
 
 
 /// <summary>
@@ -138,7 +135,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 		BoardGame boardData = curStageData.BoardSnapshot;
 
         List<PuzzleTile> LayerpuzzleTiles = new List<PuzzleTile>();
-        float tempscale = 0;
+        Vector3 tempscale = Vector3.one;
         
         float sizeoffsetw = 800*UIUtilities.GetScreenRatio();
         float sizeoffseth = (boardData.rows - boardData.minRow) >= 6 ? 140 : 0;
@@ -158,6 +155,8 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         }			
 
         yield return new WaitForSeconds(1.2f);
+        
+        tempscale = SetPuzzleItemScale(PuzzleItemObj.GetComponent<TileView>().TileTransform);
         
 		for (int row = 0; row < boardData.rows; row++)
 		{
@@ -203,14 +202,13 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                         
                         // 设置位置和缩放
                         tileView.TileTransform.anchoredPosition = cellPos;
-                        SetPuzzleItemScale(tileView.TileTransform);
+                        tileView.TileTransform.localScale = tempscale;
+                       
                         tileView.SetupCharacter(letter);
                         puzzleTile.TileView = tileView;
                         puzzleTile.Layer = actualLayer; // 存储可视化层级
                         tileView.TileTransform.GetComponent<CanvasGroup>().alpha = 0;
-                        tempscale= tileView.TileTransform.localScale.x;                        
                         // 设置层级关系：上层对象显示在顶层
-
                         if (layer > 0)
                         {
                             LayerpuzzleTiles.Add(puzzleTile);    
@@ -223,7 +221,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                             // 动画处理
                             if (isanim)
                             {
-                                tileView.TileTransform.DOScale(tempscale + 0.1f, 0.2f).OnComplete(() =>
+                                tileView.TileTransform.DOScale(tempscale.x + 0.1f, 0.2f).OnComplete(() =>
                                 {
                                     tileView.TileTransform.DOScale(tempscale, 0.2f);
                                 });
@@ -426,13 +424,13 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// <summary>
     /// 设置字块缩放
     /// </summary>
-    private void SetPuzzleItemScale(RectTransform PuzzleTileRectT)
+    private Vector3 SetPuzzleItemScale(RectTransform PuzzleTileRectT)
 	{
 		float xScale	= StageHexController.Instance.ActiveTileSize / PuzzleTileRectT.rect.width;
 		float yScale	= StageHexController.Instance.ActiveTileSize / PuzzleTileRectT.rect.height;
 		float scale		= Mathf.Min(xScale, yScale);
 
-        PuzzleTileRectT.localScale = new Vector3(scale, scale, 1);
+        return new Vector3(scale, scale, 1);
 	}
 
     /// <summary>

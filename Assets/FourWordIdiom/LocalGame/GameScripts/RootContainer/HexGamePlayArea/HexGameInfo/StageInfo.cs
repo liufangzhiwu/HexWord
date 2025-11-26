@@ -482,6 +482,13 @@ public class StageInfo
                     position = new Vector2Int(int.Parse(blockParts[3]), int.Parse(blockParts[2]))
                 };
 
+                if (HexType == 1)
+                {
+                   int row = _boardData.rows- int.Parse(blockParts[2])+1;
+                      
+                    idiomBlock.position = new Vector2Int(row, int.Parse(blockParts[3]));
+                }
+
                 idiom.blocks.Add(idiomBlock);
             }
 
