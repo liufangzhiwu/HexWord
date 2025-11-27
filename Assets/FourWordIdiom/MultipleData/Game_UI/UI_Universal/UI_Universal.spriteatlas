@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!687078895 &4343727234628468602
 SpriteAtlas:
   m_ObjectHideFlags: 0
@@ -7,10 +7,11 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: UI_Universal
+  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 2
+      serializedVersion: 3
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -19,11 +20,13 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
+      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 4096
+      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -56,7 +59,9 @@ SpriteAtlas:
     - 2de596819bbe6de4f844ee7a9f7a9fb5: 21300000
     - 59ea3691fbe1c5e4fbad3b5aa8a3f6fc: 21300000
     - 2b0f130293b820745b107018f464a52f: 21300000
+    - b30a30328487169408b9699b61f39cc0: 21300000
     - 47ab8d32ff46fd64980ade56ac8084f0: 21300000
+    - 534f3372e7dc02246b3d013420dc5cb6: 21300000
     - ee3499d29cd90d443bef433053b79c3b: 21300000
     - 0526f3837c1ece949aee3e4a00dba353: 21300000
     - d70c34e3a648b0947aefe7c5856a2760: 21300000
@@ -83,6 +88,7 @@ SpriteAtlas:
     - 58a29598c84c90c4c88209e07f1c6563: 21300000
     - b17c8ea85ebcc034192922b881cb5a81: 21300000
     - 7a7a40c867e4d594ba4102bc7621cc42: 21300000
+    - bb4007c84c654044c816289461ebd8b4: 21300000
     - d7818bc85bcd070489f7ecd558529faa: 21300000
     - 18373ec83ff964343af0b4246ec17b17: 21300000
     - ed1d23f87a6456a4f96b8ef7e2014849: 21300000
@@ -121,7 +127,9 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 2de596819bbe6de4f844ee7a9f7a9fb5, type: 3}
   - {fileID: 21300000, guid: 59ea3691fbe1c5e4fbad3b5aa8a3f6fc, type: 3}
   - {fileID: 21300000, guid: 2b0f130293b820745b107018f464a52f, type: 3}
+  - {fileID: 21300000, guid: b30a30328487169408b9699b61f39cc0, type: 3}
   - {fileID: 21300000, guid: 47ab8d32ff46fd64980ade56ac8084f0, type: 3}
+  - {fileID: 21300000, guid: 534f3372e7dc02246b3d013420dc5cb6, type: 3}
   - {fileID: 21300000, guid: ee3499d29cd90d443bef433053b79c3b, type: 3}
   - {fileID: 21300000, guid: 0526f3837c1ece949aee3e4a00dba353, type: 3}
   - {fileID: 21300000, guid: d70c34e3a648b0947aefe7c5856a2760, type: 3}
@@ -148,6 +156,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 58a29598c84c90c4c88209e07f1c6563, type: 3}
   - {fileID: 21300000, guid: b17c8ea85ebcc034192922b881cb5a81, type: 3}
   - {fileID: 21300000, guid: 7a7a40c867e4d594ba4102bc7621cc42, type: 3}
+  - {fileID: 21300000, guid: bb4007c84c654044c816289461ebd8b4, type: 3}
   - {fileID: 21300000, guid: d7818bc85bcd070489f7ecd558529faa, type: 3}
   - {fileID: 21300000, guid: 18373ec83ff964343af0b4246ec17b17, type: 3}
   - {fileID: 21300000, guid: ed1d23f87a6456a4f96b8ef7e2014849, type: 3}
@@ -185,7 +194,9 @@ SpriteAtlas:
   - anjian
   - UI_Icon_PingTipWord
   - UI_Icon_OpenToggle
+  - Butterfly
   - UI_Icon_CloseToggle
+  - giftgold
   - Coin2
   - icon_xiao
   - Highlight_162
@@ -212,6 +223,7 @@ SpriteAtlas:
   - jian
   - gold2
   - icon_layer
+  - adsgift
   - shopads
   - UI_Icon_Butterfly
   - shopgift4
@@ -245,3 +257,4 @@ SpriteAtlas:
   m_RenderDataMap: {}
   m_Tag: UI_Universal
   m_IsVariant: 0
+  m_IsPlaceholder: 0
