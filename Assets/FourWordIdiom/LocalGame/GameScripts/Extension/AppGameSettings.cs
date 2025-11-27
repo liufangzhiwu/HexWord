@@ -16,10 +16,10 @@ public static class AppGameSettings
     // ===== 道具商店 =====
     public static class ShopItems 
     {
-        public static int HintCost { get; } = 50;        
+        public static int SingleHintCost { get; } = 80;        
         public static int StartingHints { get; } = 1;    
         
-        public static int ResetCost { get; } = 20;       
+        public static int WordHintCost { get; } = 150;       
         public static int StartingResets { get; } = 1;   
         
         public static int ButterflyCost { get; } = 50;   
@@ -44,10 +44,10 @@ public static class AppGameSettings
     public static class UnlockRequirements 
     {
         public static int TimeLimitMode { get; } = 1;   
-        public static int SignInRewards { get; } = 1;   
-        public static int DailyMissions { get; } = 1;   
+        public static int SignInRewards { get; } = 11;   
+        public static int DailyMissions { get; } = 16;   
         //30关卡进入结算界面时开启(鲤鱼跃龙门活动)
-        public static int FishOpenLevel { get; } = 31;
+        public static int FishOpenLevel { get; } = 21;
         //10关卡进入结算界面时开启（命名界面）
         public static int HeadOpenLevel { get; } = 11;
     }

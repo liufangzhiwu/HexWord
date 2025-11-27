@@ -395,17 +395,10 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             -totalGridHeight / 2f
         );
         
-         float soffsetx = curStageData.BoardSnapshot.minCol%2==1&&cols%2==0?0f:0.5f;
-        // float soffsetx = curStageData.BoardSnapshot.minCol%2==0&&cols%2==0?-horizontalSpacing / 2f:0f;
-         float soffsety = rows%2==0?0.5f:0f;
-        //
-        if(curStageData.BoardSnapshot.minCol%2==1&&cols>5&&curStageData.StageId==25)
-        {
-            soffsetx = 0.5f;
-        }
+        float soffsety = rows%2==0?0.5f:0f;
 
         // 计算当前格子位置（列控制X轴，行控制Y轴）
-        float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol+soffsetx) * horizontalSpacing;
+        float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol) * horizontalSpacing;
         float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minRow+soffsety) * verticalSpacing;
 
         // 奇数行横向偏移（蜂窝状交错）
@@ -414,15 +407,11 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             xPos += horizontalSpacing / 2f;
         }
         
-        // //纠正初始列为奇数时，偶数行的偏移
-        //  if(cols%2==0&&curStageData.BoardSnapshot.minCol%2==0)
-        //  {
-        //     //xPos -= horizontalSpacing / 2f;
-        // }
-        //  else
-        //  {
-        //      xPos += horizontalSpacing / 2f;
-        //  }
+        //纠正row为奇数时，xPos偏移
+        if (curStageData.BoardSnapshot.minRow % 2 == 1)
+        {
+            xPos += horizontalSpacing / 2f;
+        }
         
         // 计算偏移量：层级越低（值越小），偏移越大
         if (layer>=0)

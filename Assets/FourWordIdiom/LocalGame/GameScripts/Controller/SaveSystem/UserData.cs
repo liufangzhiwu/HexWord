@@ -253,8 +253,8 @@ public class UserData
         // 初始化道具数据
         toolInfo = new Dictionary<int, ToolInfo>
         {
-            { 101, new ToolInfo { cost = AppGameSettings.ShopItems.ResetCost, type = "Reset", count = AppGameSettings.ShopItems.StartingResets } },
-            { 102, new ToolInfo { cost = AppGameSettings.ShopItems.HintCost, type = "Hint", count = AppGameSettings.ShopItems.StartingHints } },
+            { 101, new ToolInfo { cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint", count = AppGameSettings.ShopItems.StartingResets } },
+            { 102, new ToolInfo { cost = AppGameSettings.ShopItems.WordHintCost, type = "WordHint", count = AppGameSettings.ShopItems.StartingHints } },
             { 103, new ToolInfo { cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly", count = AppGameSettings.ShopItems.StartingButterflies } },
             { 104, new ToolInfo { cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete", count = AppGameSettings.ShopItems.StartingHints } }
         };
