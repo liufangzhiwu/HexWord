@@ -42,20 +42,20 @@ public class LearningGuide : UIWindow
         string tips = MultilingualManager.Instance.GetString("GuidingTips0"+id);
         switch (id)
         {
-            // case 1:
-            //     //tips = "スライド熟語";
-            //     PuzzletipsText.gameObject.SetActive(true);
-            //     ItemTable.gameObject.SetActive(false);
-            //     tipsText.text = tips + "<color=#E18129>\n「 " + GuideSystem.Instance.targetPuzzle + " 」</color>";
-            //     dianshouTable.gameObject.SetActive(false);
-            //     break;
-            // case 2:
-            //     //tips = "よくやった！別の熟語を探してください";
-            //     PuzzletipsText.gameObject.SetActive(true);
-            //     ItemTable.gameObject.SetActive(false);
-            //     tipsText.text = tips + "<color=#E18129>\n「 " + GuideSystem.Instance.targetPuzzle + " 」</color>";
-            //     dianshouTable.gameObject.SetActive(false);
-            //     break;
+            case 1:
+                //tips = "スライド熟語";
+                PuzzletipsText.gameObject.SetActive(true);
+                ItemTable.gameObject.SetActive(false);
+                tipsText.text = tips + "<color=#E18129>\n「 " + GuideSystem.Instance.targetPuzzle + " 」</color>";
+                dianshouTable.gameObject.SetActive(false);
+                break;
+            case 2:
+                //tips = "よくやった！別の熟語を探してください";
+                PuzzletipsText.gameObject.SetActive(true);
+                ItemTable.gameObject.SetActive(false);
+                tipsText.text = tips + "<color=#E18129>\n「 " + GuideSystem.Instance.targetPuzzle + " 」</color>";
+                dianshouTable.gameObject.SetActive(false);
+                break;
             case 3:
                 //tips = "ヒントツールをクリックすると、次のスライド可能な言葉が<color=#E18129>提示</color>されます。";
                 PuzzletipsText.gameObject.SetActive(false);
@@ -127,7 +127,7 @@ public class LearningGuide : UIWindow
             {
                 shushouTable.gameObject.SetActive(false);
                 yield return new WaitForSeconds(0.25f);
-                hengshouTable.transform.localScale=new Vector3(1f,1f,1f);
+                hengshouTable.transform.localScale=new Vector3(-1f,1f,1f);
                 hengshouTable.gameObject.SetActive(true);
                 hengshouTable.transform.position = Puzzles[0].transform.position;
                 _windowAnimator.Play("hengAnim");
@@ -136,8 +136,8 @@ public class LearningGuide : UIWindow
             {
                 hengshouTable.gameObject.SetActive(false);
                 yield return new WaitForSeconds(0.25f);
-                shushouObj.transform.localScale=new Vector3(-1f,1f,1f);
-                shushouTable.transform.localScale=new Vector3(-1f,1f,1f);
+                shushouObj.transform.localScale=new Vector3(1f,1f,1f);
+                shushouTable.transform.localScale=new Vector3(1f,1f,1f);
                 shushouTable.gameObject.SetActive(true);
                 shushouTable.transform.position = Puzzles[0].transform.position;
                 _windowAnimator.Play("ShuAnim");

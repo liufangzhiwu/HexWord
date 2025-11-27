@@ -378,14 +378,14 @@ public class HexGamePlayArea : UIWindow
     { 
         yield return new WaitForSeconds(0.1f);
         
-        // if (GameDataManager.Instance.UserData.GetTutorialProgress() < 2)
-        // {
-        //     string Str = GetRandomTipsPuzzle(true);
-        //     //selectablePuzzles.Contains(Str);
-        //     GuideSystem.Instance.PuzzleGrids= crossPuzzleGrid.GetPuzzleTileRowCol(Str);
-        //     GuideSystem.Instance.targetPuzzle = Str;
-        //     GuideSystem.Instance.DisplayGuide();
-        // }
+        if (GameDataManager.Instance.UserData.GetTutorialProgress() < 2)
+        {
+            string Str = GetRandomTipsPuzzle(true);
+            selectablePuzzles.Contains(Str);
+            GuideSystem.Instance.PuzzleGrids= crossPuzzleGrid.GetPuzzleTileRowCol(Str);
+            GuideSystem.Instance.targetPuzzle = Str;
+            GuideSystem.Instance.DisplayGuide();
+        }
 
         if (CurStageData.StageId == 2&&GameDataManager.Instance.UserData.GetTutorialProgress()==2)
         {
