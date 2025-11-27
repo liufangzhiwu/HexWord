@@ -410,7 +410,8 @@ public class StageInfo
 
             if (HexType == 1)
             {
-                row = _boardData.rows- int.Parse(position[0])+1;
+                int xoffset = _boardData.rows%2==0 ? 0 : 1;
+                row = _boardData.rows- int.Parse(position[0])+xoffset;
                 col = int.Parse(position[1]);       
             }
           
@@ -484,8 +485,8 @@ public class StageInfo
 
                 if (HexType == 1)
                 {
-                   int row = _boardData.rows- int.Parse(blockParts[2])+1;
-                      
+                    int xoffset = _boardData.rows%2==0 ? 0 : 1;
+                    int row = _boardData.rows- int.Parse(blockParts[2])+xoffset;
                     idiomBlock.position = new Vector2Int(row, int.Parse(blockParts[3]));
                 }
 

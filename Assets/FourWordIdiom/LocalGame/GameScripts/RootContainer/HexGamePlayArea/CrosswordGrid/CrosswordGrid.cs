@@ -137,23 +137,36 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         List<PuzzleTile> LayerpuzzleTiles = new List<PuzzleTile>();
         Vector3 tempscale = Vector3.one;
         
+        int rows = boardData.rows - boardData.minRow;
+        int cols = boardData.cols - boardData.minCol;
+        
         float sizeoffsetw = 800*UIUtilities.GetScreenRatio();
-        float sizeoffseth = (boardData.rows - boardData.minRow) >= 6 ? 140 : 0;
+        //float sizeoffseth = rows >= 6 ? 5-(rows-6)*0.5f : 0;
+        float sizeoffseth = 0;
 
         //if (StageController.Instance.ActiveTileSize<=0||GameDataManager.MainInstance.UserData.CurrentStage!=curStageData.StageId||StageController.Instance.IsGMEnterStage)
         {
-            float height= (RectT.rect.height-sizeoffseth ) /(boardData.rows-boardData.minRow+1);
-            float width= (RectT.rect.width+sizeoffsetw)/(boardData.cols-boardData.minCol+1);
+            float height= (RectT.rect.height+sizeoffsetw ) /(rows+1);
+            float width= (RectT.rect.width+sizeoffsetw)/(cols+1);
             float tileSize = Mathf.Min(width, height);
+            float temptileSize = 0;
             
             if(tileSize>=220)
             {
-                tileSize = sizeoffseth > 0 ? 180 : 230;
+                temptileSize = sizeoffseth > 0 ? 180 : 230;
+                tileSize = Mathf.Min(temptileSize, tileSize);
             }
 
-            if ((boardData.cols - boardData.minCol) >= 6)
+            if (cols >= 6)
             {
-                tileSize = 190;
+                temptileSize = 185-(cols-6)*10;
+                tileSize = Mathf.Min(temptileSize, tileSize);
+            }
+            
+            if (rows >= 6)
+            {
+                temptileSize = 185-(rows-6)*10;
+                tileSize = Mathf.Min(temptileSize, tileSize);
             }
             
             StageHexController.Instance.ActiveTileSize = tileSize;
@@ -382,17 +395,35 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             -totalGridHeight / 2f
         );
         
-        float soffsetx = curStageData.BoardSnapshot.minCol%2==0?0.5f:0f;
+         float soffsetx = curStageData.BoardSnapshot.minCol%2==1&&cols%2==0?0f:0.5f;
+        // float soffsetx = curStageData.BoardSnapshot.minCol%2==0&&cols%2==0?-horizontalSpacing / 2f:0f;
+         float soffsety = rows%2==0?0.5f:0f;
+        //
+        if(curStageData.BoardSnapshot.minCol%2==1&&cols>5&&curStageData.StageId==25)
+        {
+            soffsetx = 0.5f;
+        }
 
-        // 计算当前格子位置
+        // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol+soffsetx) * horizontalSpacing;
-        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minRow+soffsetx) * verticalSpacing;
+        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minRow+soffsety) * verticalSpacing;
 
         // 奇数行横向偏移（蜂窝状交错）
         if (row % 2 == 1)
         {
             xPos += horizontalSpacing / 2f;
         }
+        
+        // //纠正初始列为奇数时，偶数行的偏移
+        //  if(cols%2==0&&curStageData.BoardSnapshot.minCol%2==0)
+        //  {
+        //     //xPos -= horizontalSpacing / 2f;
+        // }
+        //  else
+        //  {
+        //      xPos += horizontalSpacing / 2f;
+        //  }
+        
         // 计算偏移量：层级越低（值越小），偏移越大
         if (layer>=0)
         {
