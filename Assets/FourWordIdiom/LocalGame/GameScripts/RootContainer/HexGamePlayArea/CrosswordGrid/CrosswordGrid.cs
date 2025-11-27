@@ -148,7 +148,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             
             if(tileSize>=220)
             {
-                tileSize = sizeoffseth > 0 || (boardData.cols - boardData.minCol) >= 6 ? 215 : 230;
+                tileSize = sizeoffseth > 0 ? 180 : 230;
+            }
+
+            if ((boardData.cols - boardData.minCol) >= 6)
+            {
+                tileSize = 190;
             }
             
             StageHexController.Instance.ActiveTileSize = tileSize;
