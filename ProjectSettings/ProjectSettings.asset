@@ -174,7 +174,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 1.1.0
+  bundleVersion: 1.0
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -1080,7 +1080,7 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: UNITY_UOS_SECURITY
+    Android: UNITY_UOS_SECURITY;Unity_ShowLog
     HMIAndroid: UNITY_UOS_SECURITY
     OpenHarmony: UNITY_UOS_SECURITY
     Server: UNITY_UOS_SECURITY
@@ -1222,7 +1222,7 @@ PlayerSettings:
   openHarmonyDeviceTypes: 3
   openHarmonyAppIconTypes: 1
   openHarmonySupportWindowModes: 1
-  OpenHarmonyBundleVersionCode: 100
+  OpenHarmonyBundleVersionCode: 10
   forceOpenHarmonyInternetPermission: 0
   forceOpenHarmonySDCardPermission: 0
   openHarmonyUseLowAccuracyLocation: 0

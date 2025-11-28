@@ -11,6 +11,7 @@ public class LearningGuide : UIWindow
     [SerializeField] private Button HideBtn; // 关闭按钮
     
     [SerializeField] private GameObject shushouObj; 
+    [SerializeField] private GameObject hengshouObj; 
     [SerializeField] private GameObject dianshouTable; 
     [SerializeField] private GameObject hengshouTable; // 关闭按钮
     [SerializeField] private GameObject shushouTable; // 关闭按钮
@@ -127,7 +128,8 @@ public class LearningGuide : UIWindow
             {
                 shushouTable.gameObject.SetActive(false);
                 yield return new WaitForSeconds(0.25f);
-                hengshouTable.transform.localScale=new Vector3(-1f,1f,1f);
+                hengshouObj.transform.localScale=new Vector3(-1f,-1f,1f);
+                hengshouTable.transform.localScale=new Vector3(-1f,-1f,1f);
                 hengshouTable.gameObject.SetActive(true);
                 hengshouTable.transform.position = Puzzles[0].transform.position;
                 _windowAnimator.Play("hengAnim");

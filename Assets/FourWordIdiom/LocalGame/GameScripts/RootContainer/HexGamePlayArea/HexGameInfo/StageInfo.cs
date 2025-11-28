@@ -340,7 +340,7 @@ public class StageInfo
             }
         }
         
-        return (maxRow+1, maxCol+1, minRow, minCol);
+        return (maxRow+2, maxCol+1, minRow, minCol);
         
     }
 

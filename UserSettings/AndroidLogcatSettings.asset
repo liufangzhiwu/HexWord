@@ -40,24 +40,6 @@
         },
         {
             "deviceId": "emulator-5554",
-            "name": "com.android.launcher3",
-            "processId": 1763,
-            "exited": true
-        },
-        {
-            "deviceId": "emulator-5554",
-            "name": "six.puzzle.word.relax",
-            "processId": 4229,
-            "exited": true
-        },
-        {
-            "deviceId": "emulator-5554",
-            "name": "com.android.launcher3",
-            "processId": 1767,
-            "exited": true
-        },
-        {
-            "deviceId": "emulator-5554",
             "name": "hexa.word.search.puzzle.hexlogic.block",
             "processId": 9061,
             "exited": true
@@ -66,6 +48,24 @@
             "deviceId": "emulator-5554",
             "name": "com.android.settings",
             "processId": 1554,
+            "exited": true
+        },
+        {
+            "deviceId": "emulator-5554",
+            "name": "six.puzzle.word.relax",
+            "processId": 3387,
+            "exited": true
+        },
+        {
+            "deviceId": "emulator-5554",
+            "name": "com.android.launcher3",
+            "processId": 2269,
+            "exited": true
+        },
+        {
+            "deviceId": "emulator-5554",
+            "name": "six.puzzle.word.relax",
+            "processId": 12501,
             "exited": false
         },
         {

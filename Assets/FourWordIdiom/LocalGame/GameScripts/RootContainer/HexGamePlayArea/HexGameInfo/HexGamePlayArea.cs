@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using Middleware;
 using Random = System.Random;
 
 public class HexGamePlayArea : UIWindow
@@ -47,7 +48,7 @@ public class HexGamePlayArea : UIWindow
     private bool firstenter;
     
     [Header("Detection Settings")]
-    public float inactivityThreshold = 8f; // 无操作判定阈值（秒）
+    public float inactivityThreshold = 5f; // 无操作判定阈值（秒）
     public bool checkKeyboard = true;
     public bool checkMouseMovement = true;
     public bool checkMouseClicks = true;
@@ -134,7 +135,7 @@ public class HexGamePlayArea : UIWindow
         //EventManager.OnComboTriggerButterfly +=UseButterfly;
         EventDispatcher.instance.OnChoicePuzzleSetStatus += ChoicePuzzleSetStatus;
         EventDispatcher.instance.OnCheckShowTutorial += CheackShowTotrialEvent;
-            
+        
         StartCoroutine(SetupGameData());
         boardExplorer = new WordMatrixExplorer(CurStageData.BoardSnapshot,CurStageInfo.Puzzles);
         AudioManager.Instance.PlaySoundEffect("EnterStage");
@@ -158,7 +159,7 @@ public class HexGamePlayArea : UIWindow
         
         // 开始检测协程
 
-        if (CurStageInfo.StageNumber <= 4)
+        if (CurStageInfo.StageNumber <= 1)
         {
             StartCoroutine(CheckInactivity());
             StageHexController.Instance.tipPuzzle = "";
@@ -180,31 +181,21 @@ public class HexGamePlayArea : UIWindow
         RectTransform rectTransform = GetComponent<RectTransform>();
         rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
         //在第7关且词语少于9个的时候可以显示横幅广告
-        //if (CurStageInfo.StageNumber >= 7 && StageController.Instance.CurStageInfo.Puzzles.Count <= 9)
-        if (CurStageInfo.StageNumber >= 7)
+        int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
+        if (CurStageInfo.StageNumber > 1&&rows<7)
         {
- //             bool ishowbanner= AdsManager.Instance.ShowBannerAd(rectTransform);
- //             if (ishowbanner)
- //             {
- //                 rectTransform.offsetMin = new Vector2(0, 140); // Left 和 Bottom
- //             }
- //             else
- //             {
- // #if UNITY_IOS 
- //                 // 设置偏移值
- //                 rectTransform.offsetMin = new Vector2(0, 230); // Left 和 Bottom
- // #elif UNITY_ANDROID
- //                 rectTransform.offsetMin = new Vector2(0, 140); // Left 和 Bottom
- // #endif
- //             }
-            //Debug.LogError("底部位置" + rectTransform.offsetMin);
+#if UNITY_OPENHARMONY
+            Game.Ads.ShowBanner();
+            rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom
+            Debug.LogError("底部位置" + rectTransform.offsetMin);
+#endif
         }
-        else
-        {
-            //AdsManager.Instance.HideBannerAd();
-            // 设置偏移值
-            //rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
-        }
+        // else
+        // {
+        //     //AdsManager.Instance.HideBannerAd();
+        //     // 设置偏移值
+        //     //rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
+        // }
 
         yield return new WaitForSeconds(0.4f);
         

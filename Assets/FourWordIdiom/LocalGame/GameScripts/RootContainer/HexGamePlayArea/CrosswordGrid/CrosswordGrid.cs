@@ -97,9 +97,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
     IEnumerator ShowPuzzleTitle()
     {
-        //animator.Play("Showbuttons"); 
-        //yield return new WaitForSeconds(0.1f); 
-        EventDispatcher.instance.TriggerCheckShowTutorial();
         EnhancedVideoController.Instance.TogglePause();
         yield return new WaitForSeconds(0.3f); 
         PuzzleTitle.DOFade(1, 0.3f);
@@ -140,7 +137,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         int rows = boardData.rows - boardData.minRow;
         int cols = boardData.cols - boardData.minCol;
         
-        float sizeoffsetw = 800*UIUtilities.GetScreenRatio();
+        float screenRatio = UIUtilities.GetScreenRatio();
+        bool isipad = UIUtilities.IsiPad();
+        
+        float sizeoffsetw =isipad? 500*(1+screenRatio-1) : 850*(1+1-screenRatio);
+        float sizemaxh =isipad? 175*(1+screenRatio-1)  :200*(1+1-screenRatio);
+        float sizemaxw =isipad? 175*(1+screenRatio-1) : 200*(1+1-screenRatio);
         //float sizeoffseth = rows >= 6 ? 5-(rows-6)*0.5f : 0;
         float sizeoffseth = 0;
 
@@ -153,19 +155,19 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             
             if(tileSize>=220)
             {
-                temptileSize = sizeoffseth > 0 ? 180 : 230;
+                temptileSize = isipad ? 185 : 220;
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
 
             if (cols >= 6)
             {
-                temptileSize = 185-(cols-6)*10;
+                temptileSize = sizemaxw-(cols-6)*10;
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
             
             if (rows >= 6)
             {
-                temptileSize = 185-(rows-6)*10;
+                temptileSize = sizemaxh-(rows-6)*10;
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
             
@@ -264,6 +266,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         if (isanim)
         { 
+            EventDispatcher.instance.TriggerCheckShowTutorial();
             yield return new WaitForSeconds(0.01f);
             call?.Invoke();
         }
@@ -348,11 +351,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             -totalGridHeight / 2f
         );
         
-        float soffsetx = 0.5f;
+        float soffsetx =0.5f;
+        float soffsety =rows>=7? 0f:0.5f;
         
         // 计算基础位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol+soffsetx) * horizontalSpacing;
-        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minRow-soffsetx/2f) * verticalSpacing;        
+        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minRow+soffsety) * verticalSpacing;        
         
         // 为奇数列添加垂直偏移（六边形网格特性）
         if ((col & 1) == 1)  // 位运算判断奇数列（比取模运算更快）
@@ -395,7 +399,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             -totalGridHeight / 2f
         );
         
-        float soffsety = rows%2==0?0.5f:0f;
+        float soffsety = rows>8&&curStageData.BoardSnapshot.minRow<=2?-0.5f:0.5f;
 
         // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol) * horizontalSpacing;

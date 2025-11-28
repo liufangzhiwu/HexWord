@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Middleware;
 using UnityEngine;
 
 public enum LevelType
@@ -242,23 +243,23 @@ public class StageHexController
 
         yield return new WaitForSeconds(0.7f);
         
-        if (StageNumber >= 20)
-        {                
+        if (StageNumber >= 1)
+        {        
+#if UNITY_OPENHARMONY
             // 显示插屏广告
-            // AdsManager.Instance.ShowInterstitialAd((bool issuccess) => 
-            // {
-            //     if (issuccess)
-            //     {
-            //         //AdjustManager.Instance.SendInAdsSuccessEvent("关卡插屏");
-            //         //FirebaseManager.Instance.InsertAdSuccess("关卡插屏");
-            //         ThinkManager.instance.Event_InsetAdSuccss("关卡插屏");
-            //     }
-            //     else
-            //     {
-            //         //FirebaseManager.Instance.InsertAdFail("关卡插屏");
-            //         ThinkManager.instance.Event_InsetAdFail("关卡插屏");
-            //     }
-            // });
+            Game.Ads.ShowInterstitial((bool issuccess) => 
+            {
+                if (issuccess)
+                {
+                    //AnalyticMgr.InsetAdSuccess("关卡插屏");
+                    GameDataManager.Instance.UserData.totalSeeAds++;
+                }
+                else
+                {
+                    //AnalyticMgr.InsetAdFail("关卡插屏");
+                }
+            });
+#endif
         }
 
         // 更新每日计数

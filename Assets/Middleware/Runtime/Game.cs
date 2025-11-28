@@ -16,7 +16,9 @@ namespace Middleware
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
     
-            //CreateAd();
+#if UNITY_OPENHARMONY
+            CreateAd();
+#endif
             CreateAnalytic();
             //CreateShop();
             InitManagers();
@@ -34,7 +36,7 @@ namespace Middleware
         private void CreateAd()
         {
     #if UNITY_ANDROID
-            //Ads = new Ads_android();
+            Ads = new Ads_android();
     #elif UNITY_IOS
             Ads = new Ads_ios();
     #elif UNITY_OPENHARMONY

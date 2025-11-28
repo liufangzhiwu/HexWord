@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using DG.Tweening;
+using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -35,59 +36,38 @@ public class RewardAdsScreen : UIWindow
         //count.text = "x"+GameDataManager.instance.UserData.ABseeAdsRewardCoins;
         adsloading.gameObject.SetActive(false);
         adsIcon.gameObject.SetActive(true);
-        StartCoroutine(CheckIsReadyToShowAd());
+        //StartCoroutine(CheckIsReadyToShowAd());
         
-        //ThinkManager.instance.Event_VideoAdShow("金币弹窗广告");
+        AnalyticMgr.VideoAdShow("金币弹窗广告");
     }
 
-    IEnumerator CheckIsReadyToShowAd()
-    {
-        const float checkInterval = 2f;
-        const int maxAttempts = 10; // 防止无限循环
-
-        // 初始状态检查
-        bool isReady = true;
-        bool isConnected = GameCoreManager.Instance.IsNetworkActive;
-
-        // 立即更新UI状态
-        adsIcon.gameObject.SetActive(isReady);
-        adsloading.gameObject.SetActive(!isReady);
-
-        // 如果没有网络连接，直接退出
-        if (!isConnected)
-        {
-            yield break;
-        }
-
-        // 轮询检查
-        int attempt = 0;
-        while (attempt < maxAttempts && isConnected&&!isReady)
-        {
-            yield return new WaitForSeconds(checkInterval);
-    
-            attempt++;
-            isReady = true;
-            isConnected = GameCoreManager.Instance.IsNetworkActive;
-    
-            // 状态变化处理
-            if (isReady&&isConnected)
-            {
-                adsloading.gameObject.SetActive(false);
-                yield break;
-            }
-        }
-
-        // 立即更新UI状态
-        adsIcon.gameObject.SetActive(isReady);
-        adsloading.gameObject.SetActive(!isReady);
-
-        // 可选：超过最大尝试次数的处理
-        if (!isReady)
-        {
-            Debug.LogWarning($"广告加载超时，最大尝试次数 {maxAttempts} 次");
-            // 可以在这里触发备用广告加载或错误处理
-        }
-    }
+    // IEnumerator CheckIsReadyToShowAd()
+    // {
+    //     const float checkInterval = 2f;
+    //     const int maxAttempts = 10; // 防止无限循环
+    //
+    //     // 初始状态检查
+    //     bool isReady = true;
+    //     bool isConnected = GameCoreManager.Instance.IsNetworkActive;
+    //
+    //     // 立即更新UI状态
+    //     adsIcon.gameObject.SetActive(isReady);
+    //     adsloading.gameObject.SetActive(!isReady);
+    //
+    //     // 如果没有网络连接，直接退出
+    //     if (!isConnected)
+    //     {
+    //         yield break;
+    //     }
+    //
+    //     // 轮询检查
+    //     int attempt = 0;
+    //
+    //     // 立即更新UI状态
+    //     adsIcon.gameObject.SetActive(isReady);
+    //     adsloading.gameObject.SetActive(!isReady);
+    //     
+    // }
 
     protected override void InitializeUIComponents()
     {
@@ -99,12 +79,12 @@ public class RewardAdsScreen : UIWindow
     private void ClickClaimBtn()
     {
         //FirebaseManager.Instance.VideoAdClick("商店弹窗",SaveSystem.Instance.UserData.CurrentStage.ToString());
-        // ThinkManager.instance.Event_VideoAdClick("金币弹窗广告");
-        // AdsManager.Instance.ShowRewardedAd((bool issuccess) =>
-        // {
-        //     UpdateAdsRewardUI(issuccess);
-        // }
-        // ,"金币弹窗广告","RewardAdId_StoreGold");
+        
+        
+#if UNITY_OPENHARMONY
+        AnalyticMgr.VideoAdClick("金币弹窗广告");
+        Game.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+#endif
     }
 
     private void UpdateAdsRewardUI(bool isClaimed)
@@ -112,14 +92,13 @@ public class RewardAdsScreen : UIWindow
         if (isClaimed)
         {
             UpdateCliamBtn(true);
-            //ThinkManager.instance.Event_VideoAdSuccss("金币弹窗广告");
-            //AdjustManager.Instance.SendVIAdsSuccessEvent("商店弹窗");
-            //FirebaseManager.Instance.VideoAdSuccess("商店弹窗",SaveSystem.Instance.UserData.CurrentStage.ToString());
+            AnalyticMgr.VideoAdSuccess("金币弹窗广告");
+            GameDataManager.Instance.UserData.totalSeeAds++;
+            //DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
         }
         else
         {
-            //ThinkManager.instance.Event_VideoAdFail("金币弹窗广告");
-            //FirebaseManager.Instance.VideoFail("商店弹窗",SaveSystem.Instance.UserData.CurrentStage.ToString());
+            AnalyticMgr.VideoAdFail("金币弹窗广告");
         }
     }
 

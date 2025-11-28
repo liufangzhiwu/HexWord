@@ -105,7 +105,7 @@ public class LoadingController : MonoBehaviour
         while (progress < 1f)
         {
             elapsedTime = Time.time - loadStartTime;
-            progress = Mathf.Clamp01(elapsedTime / 5f);
+            progress = Mathf.Clamp01(elapsedTime / 2f);
             UpdateProgressDisplay(progress);
             yield return null;
         }

@@ -246,7 +246,7 @@ public class PuzzleTileBoard : UIWindow
         {
             WordProgress toggle = togglePool.GetObject<WordProgress>(PageListTrans);
             toggle.gameObject.SetActive(true);
-            toggle.GetComponent<RectTransform>().sizeDelta = new Vector2(SingleWordImageWidth,30);
+            toggle.GetComponent<RectTransform>().sizeDelta = new Vector2(SingleWordImageWidth,20);
             toggle.ImageProgress.fillAmount = 0;
             pageProgresses.Add(toggle);
 
