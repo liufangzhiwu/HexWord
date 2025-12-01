@@ -66,8 +66,8 @@ public class TaskItem : MonoBehaviour
             int rewardvalue = taskDataItem.rewards[taskSaveData.typeid];
             GameDataManager.Instance.UserData.UpdateGold(rewardvalue, true,true,"任务获得");
             taskSaveData.iscliam = true;
-            UpdateNextTask();   
-            //ThinkManager.instance.Event_TaskCompleted(taskSaveData.taskid.ToString(),rewardvalue);
+            AnalyticMgr.TaskCompleted(taskSaveData.taskid.ToString(),rewardvalue);
+            UpdateNextTask();  
             yield return new WaitForSeconds(0.2f);
                   
             CustomFlyInManager.Instance.FlyInGold(giftIcon.transform,() =>
@@ -93,9 +93,9 @@ public class TaskItem : MonoBehaviour
         //更新完成任务
         GameDataManager.Instance.UserData.UpdateCompleteTask(taskSaveData.taskid, taskSaveData.typeid);
         TimeSpan ts = DateTime.Now.Subtract(DateTime.Today);
-        //ThinkManager.instance.Event_ActivityProgress("每日任务", taskSaveData.progressvalue, (int)ts.TotalSeconds);
-
-
+        int completecount=GameDataManager.Instance.UserData.completeTaskList.Count;
+        AnalyticMgr.ActivityProgress("每日任务", completecount, (int)ts.TotalSeconds);
+        
         //更新到下一个任务
         if (taskSaveData.typeid < taskDataItem.rewards.Count - 1)
         {
@@ -113,7 +113,6 @@ public class TaskItem : MonoBehaviour
             if (leftcountCancomplete && rage == 0)
             {
                 taskSaveData.AddTypeidTask();
-
                 if ((TaskEvent)taskSaveData.taskid == TaskEvent.NeedOnlineTime && AppGameSettings.SaveOnlineTimeProgress)
                 {
                     taskSaveData.progressvalue = leftprogress;

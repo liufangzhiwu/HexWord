@@ -316,8 +316,23 @@ public class HexGamePlayArea : UIWindow
         }
 
         UpdateLeftPuzzles();
-        
+        RecordPuzzleAnalytics(puzzle);
         wordErrorCount = 0;
+        usetoolCount = 0;
+    }
+    
+    // 数据分析封装
+    private void RecordPuzzleAnalytics(string puzzle)
+    {   
+        int puzzleId = CurStageData.FoundTargetPuzzles.Count;
+        TimeSpan timeSpan = DateTime.Now.Subtract(StartTime);
+        // 获取数值
+        float secondsValue = (float)Math.Round(timeSpan.TotalSeconds, 1);
+        
+        AnalyticMgr.LevelProgress(puzzleId, puzzle, secondsValue,
+            wordErrorCount,StageHexController.Instance.PuzzleComboCount,usetoolCount);
+        
+        StartTime = DateTime.Now;
     }
 
     // 差异化点2：动画选择

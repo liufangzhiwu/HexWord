@@ -133,7 +133,7 @@ public class DailyTasksScreen : UIWindow
         if (DailyTaskManager.Instance.isResetDailyTask)
         {
             flySlider.value=value;
-            //ThinkManager.instance.Event_ActivityBegin("每日任务");       
+            AnalyticMgr.ActivityBegin("每日任务");     
         }
         else
         {

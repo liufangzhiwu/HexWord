@@ -20,18 +20,7 @@ public partial class AnalyticMgr
     
     public static void Purchase(string transactionId,string currency,float value,List<Item> items)
     {
-        
-#if UNITY_ANDROID
-        var itemJson = JsonConvert.SerializeObject(items);
-        var properties = new Dictionary<string, object>
-        {
-            {"transaction_id", transactionId},
-            {"currency", currency},
-            {"value",value},
-            {"items",itemJson},
-        }; 
-        Game.Analytics.LogEvent("purchase", properties, Define.DataTarget.Firebase);
-#endif
+
     }
     
     public static void PurchaseFailed(string transactionId,string reason)
@@ -43,9 +32,6 @@ public partial class AnalyticMgr
         }; 
 
         Game.Analytics.LogEvent("purchase_failed", properties, Define.DataTarget.Think);
-#if UNITY_ANDROID
-        Game.Analytics.LogEvent("purchase_failed", properties, Define.DataTarget.Firebase);
-#endif
     }
     
     /// <summary>
@@ -57,12 +43,7 @@ public partial class AnalyticMgr
         {
             {"adName",adName},
         }; 
-        
-
         Game.Analytics.LogEvent("insertAd_start", properties, Define.DataTarget.Think);
-#if UNITY_ANDROID
-        Game.Analytics.LogEvent("insertAd_start", properties, Define.DataTarget.Firebase);
-#endif
     }
     
     /// <summary>
@@ -76,10 +57,6 @@ public partial class AnalyticMgr
         }; 
 
         Game.Analytics.LogEvent("insertAd_fail", properties, Define.DataTarget.Think);
-#if UNITY_ANDROID
-        Game.Analytics.LogEvent("insertAd_fail", properties, Define.DataTarget.Firebase);
-#endif
-        
     }
     
     /// <summary>
@@ -93,9 +70,6 @@ public partial class AnalyticMgr
         }; 
 
         Game.Analytics.LogEvent("insertAd_success", properties, Define.DataTarget.Think);
-#if UNITY_ANDROID
-        Game.Analytics.LogEvent("insertAd_success", properties, Define.DataTarget.Firebase);
-#endif
     }
     
     /// <summary>
@@ -108,16 +82,6 @@ public partial class AnalyticMgr
             {"adName",adName},
         }; 
         Game.Analytics.LogEvent("videoAd_start", properties, Define.DataTarget.Think);
-        
-#if UNITY_ANDROID
-        
-        properties = new Dictionary<string, object>
-        {
-            {"adName",adName},
-            {"level_name",GameDataManager.Instance.UserData.CurrentHexStage}
-        }; 
-        Game.Analytics.LogEvent("videoAd_start", properties, Define.DataTarget.Firebase);
-#endif
     }
     
     /// <summary>
@@ -125,22 +89,11 @@ public partial class AnalyticMgr
     /// </summary>
     public static void VideoAdFail(string adName)
     {
-
         var properties = new Dictionary<string, object>
         {
             {"adName",adName},
         }; 
         Game.Analytics.LogEvent("videoAd_fail", properties, Define.DataTarget.Think);
-        
-#if UNITY_ANDROID
-        
-        properties = new Dictionary<string, object>
-        {
-            {"adName",adName},
-            {"level_name",GameDataManager.Instance.UserData.CurrentHexStage}
-        }; 
-        Game.Analytics.LogEvent("videoAd_fail", properties, Define.DataTarget.Firebase);
-#endif
     }
     
     /// <summary>
@@ -148,22 +101,11 @@ public partial class AnalyticMgr
     /// </summary>
     public static void VideoAdSuccess(string adName)
     {
-
         var properties = new Dictionary<string, object>
         {
             {"adName",adName}
         }; 
         Game.Analytics.LogEvent("videoAd_success", properties, Define.DataTarget.Think);
-        
-#if UNITY_ANDROID
-        
-        properties = new Dictionary<string, object>
-        {
-            {"adName",adName},
-            {"level_name",GameDataManager.Instance.UserData.CurrentHexStage}
-        }; 
-        Game.Analytics.LogEvent("videoAd_success", properties, Define.DataTarget.Firebase);
-#endif
     }
     
     /// <summary>

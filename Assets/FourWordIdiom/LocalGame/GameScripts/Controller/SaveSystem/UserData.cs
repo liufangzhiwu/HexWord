@@ -38,11 +38,15 @@ public class UserData
     public int UserHeadId;
     public string UserId;            // 用户唯一标识
     public int Gold;                // 当前金币数量
+    public int TotalConsumedGold;   // 历史累计消耗金币
+    public int TotalEarnedGold;     // 历史累计获得金币
     public int CurrentHexStage;        // 当前六边形关卡进度
     
     public int CurrentChessStage;        // 当前拼字关卡进度
     public int levelMode;               // 当前游戏模式 1:普通模式 2:拼字模式 3:六边形模式
     public int dayPassStageCount;        // 每日通关数量
+    public int showRateusCount;         // 好评界面显示次数
+    public string showRateusTime;       // 好评界面显示时间
 
     #endregion
 
@@ -218,6 +222,8 @@ public class UserData
         UserName=null;
         UserId = null;
         Gold = AppGameSettings.StartingGold;
+        TotalConsumedGold = 0;
+        TotalEarnedGold = 0;
         CurrentHexStage = AppGameSettings.FirstLevel;
         CurrentChessStage = AppGameSettings.FirstLevel;
         levelMode = 3;
@@ -225,6 +231,10 @@ public class UserData
         LanguageCode = GetLanguage();
         IsMusicOn = true;
         IsSoundOn = true;
+        // 评价界面显示次数
+        showRateusCount = 0;
+        // 评价界面显示时间
+        showRateusTime = null;
         // 游戏进度
         TutorialProgress = 0;
         ChessTutorialProgress = new Dictionary<int,bool> {{1,false},{2,false},{3,false},{4,false},{5,false}};
@@ -297,6 +307,8 @@ public class UserData
         UserName = user.UserName;
         UserId = user.UserId;
         Gold = user.Gold;
+        TotalConsumedGold = user.TotalConsumedGold;
+        TotalEarnedGold = user.TotalEarnedGold;
         CurrentHexStage = user.CurrentHexStage;
         CurrentChessStage = user.CurrentChessStage;
         levelMode = user.levelMode;
@@ -309,6 +321,10 @@ public class UserData
         lastLoginDay = user.lastLoginDay;
         firstPayTime = user.firstPayTime;
         lastPayTime = user.lastPayTime;
+        // 评价界面显示次数
+        showRateusCount = user.showRateusCount;
+        // 评价界面显示时间
+        showRateusTime = user.showRateusTime;
         //支付次数
         TotalPayTimes = user.TotalPayTimes;
         //累计付费金额
@@ -583,6 +599,18 @@ public class UserData
         {
             EventDispatcher.instance.TriggerChangeGoldUI(value, isanim);
         }
+        
+        
+        if (value <= 0)
+        {
+            TotalConsumedGold += Math.Abs(value);
+            SendCurrencyEvent(value, "金币",message); // 消耗金币事件
+        }
+        else
+        {
+            TotalEarnedGold += value;
+            SendCurrencyEvent(value, "金币",message); // 获得金币事件
+        }
     }
     
     /// <summary>
@@ -602,13 +630,29 @@ public class UserData
         signid++;
         if (string.IsNullOrEmpty(signOpenTime)) signOpenTime = DateTime.Now.ToString();
         TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(signOpenTime));
-        //AnalyticMgr.ActivityProgress("签到活动",signid,(int)ts.TotalSeconds);
+        AnalyticMgr.ActivityProgress("签到活动",signid,(int)ts.TotalSeconds);
         if (signid > 3)
         {
-            //AnalyticMgr.ActivityComplete("签到活动",(int)ts.TotalSeconds);
+            AnalyticMgr.ActivityComplete("签到活动",(int)ts.TotalSeconds);
         }
     }
-   
+    
+    /// <summary>
+    /// 发送货币事件（用于统计）
+    /// </summary>
+    public void SendCurrencyEvent(int value, string currencyName,string message = "")
+    {
+        AnalyticMgr.SetCommonProperties();
+        
+        if (value <= 0)
+        {
+            AnalyticMgr.ResourceReduce(currencyName,Mathf.Abs(value),message);
+        }
+        else
+        {
+            AnalyticMgr.ResourceGet(currencyName,value,message);
+        }
+    }
     
     /// <summary>
     /// 更新完成任务列表
@@ -636,10 +680,12 @@ public class UserData
     public void UpdateLImitid()
     {
         timerePuzzleid++;
-        
-        if (string.IsNullOrEmpty(limitOpenTime))
+        if (string.IsNullOrEmpty(limitOpenTime)) limitOpenTime = DateTime.Now.ToString();
+        TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(limitOpenTime));
+        AnalyticMgr.ActivityProgress("限时活动",timerePuzzleid,(int)ts.TotalSeconds);
+        if (timerePuzzleid > 10)
         {
-            limitOpenTime = DateTime.Now.ToString();
+            AnalyticMgr.ActivityComplete("限时活动",(int)ts.TotalSeconds);
         }
     }
     
@@ -672,14 +718,16 @@ public class UserData
     /// <summary>
     /// 更新道具数量
     /// </summary>
-    public void UpdateTool(LimitRewordType type, int value, string message = "")
+    /// <param name="type">道具类型</param>
+    /// <param name="value">变化值</param>
+    public void UpdateTool(LimitRewordType type, int value,string message = "")
     {
         int toolId = GetToolIdByType(type);
         
         if (toolInfo.ContainsKey(toolId))
         {
             toolInfo[toolId].count += value;
-            
+            Debug.Log($"{type}道具{(value > 0 ? "增加" : "减少")}: {Math.Abs(value)}, 当前数量: {toolInfo[toolId].count}");
             if (value > 0)
             {
                 toolInfo[toolId].addcount += value;
@@ -688,8 +736,27 @@ public class UserData
             {
                 toolInfo[toolId].reducecount += Mathf.Abs(value);
             }
+
+            string toolName = null;
+
+            switch (type)
+            {
+                case LimitRewordType.Resettool:
+                    toolName = "重置道具";
+                    break;
+                case LimitRewordType.Tipstool:
+                    toolName = "提示道具";
+                    break;
+                case LimitRewordType.Butterfly:
+                    toolName = "蝴蝶道具";
+                    break;
+                case LimitRewordType.AutoComplete:
+                    toolName = "自动拼字";
+                    break;
+            }
             
-            //Debug.Log($"{type}道具{(value > 0 ? "增加" : "减少")}: {Math.Abs(value)}, 当前数量: {toolInfo[toolId].count}");
+            // 发送道具统计事件
+            SendCurrencyEvent(value, toolName,message); // 假设货币类型从1开始
         }
     }
 

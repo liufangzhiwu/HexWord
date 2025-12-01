@@ -46,7 +46,7 @@ PlayerSettings:
   - logo: {fileID: 21300000, guid: 38d9559ab14d5944da36a0dee1785cef, type: 3}
     duration: 2
   m_VirtualRealitySplashScreen: {fileID: 0}
-  expectedBundleIdentifier: six.puzzle.word.relax
+  expectedBundleIdentifier: chengyu.idiom.hexa.zen.huawei
   integrityHash: 
   m_HolographicTrackingLossScreen: {fileID: 0}
   defaultScreenWidth: 1024

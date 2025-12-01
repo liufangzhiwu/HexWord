@@ -22,11 +22,11 @@ public class RateUsScreen : UIWindow
         opinionBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("EvaluateButton03");
         closeBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("EvaluateButton02");
         clickindex = -1;
-        //GameDataManager.instance.UserData.showRateusCount++;
+        GameDataManager.Instance.UserData.showRateusCount++;
         InitToggles();
         ShowBtnsStatic(true);
         
-        //ThinkManager.instance.Event_PopShow("评价");
+        AnalyticMgr.PopShow("评价");
     }
 
     private void InitToggles()
@@ -35,13 +35,11 @@ public class RateUsScreen : UIWindow
         {
             Toggle gToggle = starToggles[i];
             int index = i;
-            //gToggle.enabled = true;
             gToggle.onValueChanged.AddListener((bool ison) =>
             {
                 if(clickindex == -1)
                     clickindex = index;                   
                 OnToggleValueChanged(ison,index);
-                //gToggle.enabled = false;
             });
         }
     }
@@ -94,32 +92,40 @@ public class RateUsScreen : UIWindow
     
     private void OnOpinionBtn()
     {
-       // GameDataManager.instance.UserData.showRateusCount = 3;
-        //Application.OpenURL(ConfigManager.Instance.GetString("OpinionUrl"));
+       GameDataManager.Instance.UserData.showRateusCount = 3;
+       Application.OpenURL(ConfigManager.Instance.GetString("OpinionUrl"));
     }
     
     private void OnRateusBtn()
     {
-        //GameDataManager.instance.UserData.showRateusCount = 3;
-        //string appId = ConfigManager.Instance.GetString("Appid"); // 替换为你的App ID
-        string url = $"https://appgallery.huawei.com/app/detail?id={Application.identifier}";
+        GameDataManager.Instance.UserData.showRateusCount = 3;
+        
+        string url = "";
+#if UNITY_ANDROID
+        url = $"market://details?id={Application.identifier}";
+#elif UNITY_IOS
+        string appId = ConfigManager.Instance.GetString("Appid"); // 替换为你的App ID
+        url = $"itms-apps://itunes.apple.com/app/id{appId}?action=write-review";
+#elif UNITY_OPENHARMONY
+        url = $"https://appgallery.huawei.com/app/detail?id={Application.identifier}";
+#endif
         Application.OpenURL(url);
         OnClosePanel();
-        //ThinkManager.instance.Event_PopAccept("评价");
+        AnalyticMgr.PopAccept("评价");
     }
     
     private void OnNextBtn()
     {
-        //GameDataManager.instance.UserData.showRateusTime=DateTime.Now.ToString();
+        GameDataManager.Instance.UserData.showRateusTime=DateTime.Now.ToString();
         OnClosePanel();
-        //ThinkManager.instance.Event_PopRefuse("评价");
+        AnalyticMgr.PopRefuse("评价");
     }
     
     private void OnCloseBtn()
     {
-        //GameDataManager.instance.UserData.showRateusCount = 3;
+        GameDataManager.Instance.UserData.showRateusCount = 3;
         OnClosePanel();
-        //ThinkManager.instance.Event_PopRefuse("评价");
+        AnalyticMgr.PopRefuse("评价");
     }
     
     private void OnClosePanel()

@@ -154,16 +154,20 @@ public class StageHexController
         ResetStageState(StageIndex);
         
         // 记录关卡开始时间
-        //GameDataManager.Instance.UserData.curStageStartTime = DateTime.Now.ToString();
+        GameDataManager.Instance.UserData.curStageStartTime = DateTime.Now.ToString();
+        AnalyticMgr.SetCommonProperties();
 
         // 首次进入关卡的特殊处理
         if (!GameDataManager.Instance.UserData.curIsEnter)
         {
             GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Clear();
-            //GameDataManager.Instance.UserData.curStageOnlineTime = 0;
-            PuzzleComboCount = 0;
+            GameDataManager.Instance.UserData.curStageOnlineTime = 0;
+            PuzzleComboCount = 0;  
+            // 可在此处添加分析事件...
+            AnalyticMgr.LevelStart();
             GameDataManager.Instance.UserData.curIsEnter = true;
-        } 
+            GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
+        }
     }
 
     /// <summary>
@@ -243,20 +247,30 @@ public class StageHexController
 
         yield return new WaitForSeconds(0.7f);
         
+        // 计算耗时
+        DateTime startTime = DateTime.Parse(GameDataManager.Instance.UserData.curStageStartTime);
+        float duration = (float)(DateTime.Now - startTime).TotalSeconds + 
+                         GameDataManager.Instance.UserData.curStageOnlineTime;
+
+        // 发送分析事件（示例）
+        AnalyticMgr.LevelCompleted(duration);
+        
         if (StageNumber >= 1)
         {        
 #if UNITY_OPENHARMONY
+            
+            AnalyticMgr.InsetAdStart("关卡插屏");
             // 显示插屏广告
             Game.Ads.ShowInterstitial((bool issuccess) => 
             {
                 if (issuccess)
                 {
-                    //AnalyticMgr.InsetAdSuccess("关卡插屏");
+                    AnalyticMgr.InsetAdSuccess("关卡插屏");
                     GameDataManager.Instance.UserData.totalSeeAds++;
                 }
                 else
                 {
-                    //AnalyticMgr.InsetAdFail("关卡插屏");
+                    AnalyticMgr.InsetAdFail("关卡插屏");
                 }
             });
 #endif

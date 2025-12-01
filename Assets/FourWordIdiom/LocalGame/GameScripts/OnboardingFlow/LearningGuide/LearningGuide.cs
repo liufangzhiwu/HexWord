@@ -31,14 +31,12 @@ public class LearningGuide : UIWindow
         StartCoroutine(ShowPuzzle());
         ShowUIStyle();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
-        //FirebaseManager.Instance.TurorialBegin(GameDataManager.instance.UserData.tutorial);
         startTime=DateTime.Now;
     }
    
 
     private void ShowUIStyle()
     {
-        //GameDataManager.instance.UserData.UpdateTutorialProgress();
         int id = GameDataManager.Instance.UserData.GetTutorialProgress()+1;
         string tips = MultilingualManager.Instance.GetString("GuidingTips0"+id);
         switch (id)
@@ -158,8 +156,7 @@ public class LearningGuide : UIWindow
 
     private void OnCloseBtn()
     {
-        //TimeSpan timeSpan = DateTime.Now.Subtract(startTime);
-        //ThinkManager.instance.Event_CompleteGuide();
+        AnalyticMgr.GuideComplete();
         hengshouTable.gameObject.SetActive(false);
         GameDataManager.Instance.UserData.UpdateTutorialProgress();
         OnHideAnimationEnd();

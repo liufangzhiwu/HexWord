@@ -49,8 +49,7 @@ public class LimitTimeScreen : UIWindow
     {
         if (GameDataManager.Instance.UserData.isDayEnterLimint)
         {      
-            //ThinkManager.instance.Event_ActivityBegin("限时活动");
-            //FirebaseManager.Instance.ActivityBegin("限时活动", DateTime.Today.ToString());
+            AnalyticMgr.ActivityBegin("限时活动");
             GameDataManager.Instance.UserData.EveryDayOpenLimit();
         }
     }

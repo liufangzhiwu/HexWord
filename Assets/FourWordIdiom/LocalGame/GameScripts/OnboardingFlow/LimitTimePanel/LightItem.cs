@@ -239,11 +239,11 @@ public class LightItem : MonoBehaviour
                 break;
             case LimitRewordType.Min5Double:
                 GameDataManager.Instance.UserData.UpdateLimitEndTime(5);
-                //GameDataManager.instance.UserData.SendCurrencyEvent(1,"限时奖励5分钟翻倍",message);
+                GameDataManager.Instance.UserData.SendCurrencyEvent(1,"限时奖励5分钟翻倍",message);
                 break;
             case LimitRewordType.Min15Double:
                 GameDataManager.Instance.UserData.UpdateLimitEndTime(15);
-                //GameDataManager.instance.UserData.SendCurrencyEvent(1,"限时奖励15分钟翻倍",message);
+                GameDataManager.Instance.UserData.SendCurrencyEvent(1,"限时奖励15分钟翻倍",message);
                 break;
             default:
                 break;

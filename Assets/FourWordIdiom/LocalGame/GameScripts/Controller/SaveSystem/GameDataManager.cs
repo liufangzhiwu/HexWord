@@ -43,8 +43,8 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public override void Init()
     {
         lastSaveTime = DateTime.Now;
-        //Game.Analytics.OnSdkInit += AnalyticMgr.OnAnalyticsSdkInit;
-        //Application.wantsToQuit += OnWantsToQuit;
+        Game.Analytics.OnSdkInit += AnalyticMgr.OnAnalyticsSdkInit;
+        Application.wantsToQuit += OnWantsToQuit;
     }
 
     private void OnApplicationFocus(bool focusStatus)
@@ -227,18 +227,22 @@ public class GameDataManager : SingletonMono<GameDataManager>
     #region 应用程序状态处理
     private void HandleFocusChange(bool hasFocus)
     {
+        // 应用进入后台
         if (!hasFocus)
         {
-            //ThinkManager.instance.SetUserProperties();
             //初始化完成后才可以保存，不然保存的数据都为默认数值
-            if(dataInitialized)
+            if (dataInitialized)
                 CommitGameData();
-            
+       
+            if(Game.Ads.IsPlaying) return; //播放广告中
+            AnalyticMgr.GameEnd();
+                
             requireFocusCheck = true;
-            Debug.Log(" Project Enter HouTai ,Data Had Save 应用进入后台，数据已保存");
+            Debug.Log("应用进入后台，数据已保存");
         }
         else if (requireFocusCheck)
         {
+            AnalyticMgr.GameStart();
             Debug.Log("应用回到前台，验证数据");
             requireFocusCheck = false;
             playerProfile.CheckResetLimitTime();

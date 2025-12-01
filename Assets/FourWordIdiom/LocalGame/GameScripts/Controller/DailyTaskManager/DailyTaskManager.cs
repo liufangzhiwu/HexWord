@@ -396,10 +396,8 @@ public class DailyTaskManager : MonoBehaviour
         {
             GameDataManager.Instance.UserData.UpdateAllCompleteTask();           
             TimeSpan ts = DateTime.Now.Subtract(DateTime.Today);
-            //ThinkManager.instance.Event_ActivityComplete("每日任务",  (int)ts.TotalSeconds);
-            //FirebaseManager.Instance.ActivityComplete("每日任务", DateTime.Now.ToString(), (int)ts.TotalSeconds);
+            AnalyticMgr.ActivityComplete("每日任务",  (int)ts.TotalSeconds);
         }
-
         return isallover;
     }
     

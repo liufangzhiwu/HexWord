@@ -63,14 +63,12 @@ public partial class AnalyticMgr
     /// </summary>
     public static void TaskCompleted(string taskId,int value)
     {
-
         var properties = new Dictionary<string, object>()
         {
             {"task_id",taskId},
             {"task_reward",value},
         }; 
         Game.Analytics.LogEvent("task_completed", properties, Define.DataTarget.Think);
-
     }
     
     /// <summary>

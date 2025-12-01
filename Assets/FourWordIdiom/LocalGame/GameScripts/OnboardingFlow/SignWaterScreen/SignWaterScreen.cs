@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Middleware;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -27,7 +28,7 @@ public class SignWaterScreen : UIWindow
     //[SerializeField] private Image coins; // 隐私条款按钮
     bool iswater = false;
 
-    private int minutes = 3;
+    private int minutes = 10;
 
     private int[] AwardValues = { 15,35,50,100};
    
@@ -55,68 +56,78 @@ public class SignWaterScreen : UIWindow
         title.text = MultilingualManager.Instance.GetString("SignTile");
         int signid = GameDataManager.Instance.UserData.signid + 1;
         WaitTimeText.text = MultilingualManager.Instance.GetString("SignPourTea0" +signid);
-        StartBtn.gameObject.SetActive(true);
-        //AdsAnniuDes.text= MultilingualManager.Instance.GetString("SignPourTea0" +signid);
-        //StartBtn.gameObject.SetActive(GameDataManager.Instance.UserData.signid==0);
-        //AdsStartBtn.gameObject.SetActive(GameDataManager.Instance.UserData.signid>0&&GameDataManager.Instance.UserData.signid<4);
+        
+        AdsAnniuDes.text= MultilingualManager.Instance.GetString("SignPourTea0" +signid);
+        StartBtn.gameObject.SetActive(GameDataManager.Instance.UserData.signid==0);
+        AdsStartBtn.gameObject.SetActive(GameDataManager.Instance.UserData.signid>0&&GameDataManager.Instance.UserData.signid<4);
         SignOverText.gameObject.SetActive(GameDataManager.Instance.UserData.signid>3);
         SignOverText.text = MultilingualManager.Instance.GetString("SignPourTeaFinish");
         closetips.text = MultilingualManager.Instance.GetString("limitedRewardsDes05");
         StartBtn.interactable = true;
         //WaitTimeText.gameObject.SetActive(false);
-        //adsIcon.gameObject.SetActive(true);
+        adsIcon.gameObject.SetActive(true);
         adsloading.gameObject.SetActive(false);
         if(GameDataManager.Instance.UserData.signid > 0&&GameDataManager.Instance.UserData.signid <= 3)
         {
-            StartBtn.interactable = false;
-            //StartCoroutine(CheckIsReadyToShowAd());
-            StartCoroutine(WaitTime());
+            //StartBtn.interactable = false;
+            StartCoroutine(CheckIsReadyToShowAd());
+            //StartCoroutine(WaitTime());
         }
 
         if (GameDataManager.Instance.UserData.signid > 3)
         {
             StartBtn.gameObject.SetActive(false);
         }
+
+        SendShowAdsBtn();
     }
-    
+
+    private void SendShowAdsBtn()
+    {
+        if (AdsStartBtn.gameObject.activeSelf)
+        {
+            AnalyticMgr.VideoAdShow("签到"+GameDataManager.Instance.UserData.signid);
+        }
+    }
+
     private void CheckSignEvent()
     {
         if (GameDataManager.Instance.UserData.isDayEnterSign)
         {
-            DateTime dateTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);// 将字符串转换为 DateTime
-            //FirebaseManager.Instance.ActivityBegin("签到活动", dateTime.ToString());
+            //DateTime dateTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);// 将字符串转换为 DateTime
+            AnalyticMgr.ActivityBegin("签到活动");
             GameDataManager.Instance.UserData.EveryDayOpenSign();
         }
     }
 
-    IEnumerator WaitTime()
-    {
-        TimeSpan timeSpan=WaterManager.instance.StartTime.AddMinutes(minutes).Subtract(DateTime.Now);
-        while (timeSpan.TotalSeconds > 0)
-        {
-            timeSpan = WaterManager.instance.StartTime.AddMinutes(minutes).Subtract(DateTime.Now);
-          
-            WaitTimeText.gameObject.SetActive(true);
-            WaitTimeText.text = UIUtilities.GetDateMintueStyle(timeSpan);
-            yield return new WaitForSeconds(1f);
-    
-            if (timeSpan.TotalSeconds <= 0)
-            {
-                int signid = GameDataManager.Instance.UserData.signid + 1;
-                WaitTimeText.text = MultilingualManager.Instance.GetString("SignPourTea0" +signid);
-                StartBtn.interactable = true;
-                yield break;
-            }
-        }
-    
-        if (timeSpan.TotalSeconds <= 0)
-        {
-            int signid = GameDataManager.Instance.UserData.signid + 1;
-            WaitTimeText.text = MultilingualManager.Instance.GetString("SignPourTea0" +signid);
-            //WaitTimeText.gameObject.SetActive(false);
-            StartBtn.interactable = true;
-        }
-    }
+    // IEnumerator WaitTime()
+    // {
+    //     TimeSpan timeSpan=WaterManager.instance.StartTime.AddMinutes(minutes).Subtract(DateTime.Now);
+    //     while (timeSpan.TotalSeconds > 0)
+    //     {
+    //         timeSpan = WaterManager.instance.StartTime.AddMinutes(minutes).Subtract(DateTime.Now);
+    //       
+    //         WaitTimeText.gameObject.SetActive(true);
+    //         WaitTimeText.text = UIUtilities.GetDateMintueStyle(timeSpan);
+    //         yield return new WaitForSeconds(1f);
+    //
+    //         if (timeSpan.TotalSeconds <= 0)
+    //         {
+    //             int signid = GameDataManager.MainInstance.UserData.signid + 1;
+    //             WaitTimeText.text = MultilingualManager.Instance.GetString("SignPourTea0" +signid);
+    //             StartBtn.interactable = true;
+    //             yield break;
+    //         }
+    //     }
+    //
+    //     if (timeSpan.TotalSeconds <= 0)
+    //     {
+    //         int signid = GameDataManager.MainInstance.UserData.signid + 1;
+    //         WaitTimeText.text = MultilingualManager.Instance.GetString("SignPourTea0" +signid);
+    //         //WaitTimeText.gameObject.SetActive(false);
+    //         StartBtn.interactable = true;
+    //     }
+    // }
 
     IEnumerator ShowWaterAnim()
     {
@@ -128,11 +139,10 @@ public class SignWaterScreen : UIWindow
     {
         const float checkInterval = 2f;
         const int maxAttempts = 10; // 防止无限循环
-        string adskey = "checkingold" + GameDataManager.Instance.UserData.signid;
-        //AdsManager.Instance.rewardedAdskey = adskey;
+        
         // 初始状态检查
-        bool isReady =false;
-        bool isConnected = false;
+        bool isReady = Game.Ads.IsReady(GetAdKey());
+        bool isConnected = GameCoreManager.Instance.IsNetworkActive;
 
         // 立即更新UI状态
         adsIcon.gameObject.SetActive(isReady);
@@ -151,7 +161,7 @@ public class SignWaterScreen : UIWindow
             yield return new WaitForSeconds(checkInterval);
     
             attempt++;
-            //isReady = AdsManager.Instance.IsReadyToShowAd();
+            isReady = Game.Ads.IsReady(GetAdKey());
             isConnected = GameCoreManager.Instance.IsNetworkActive;
     
             // 状态变化处理
@@ -182,37 +192,46 @@ public class SignWaterScreen : UIWindow
         StartBtn.AddClickAction(OnStartBtn);
         AdsStartBtn.AddClickAction(OnAdsStartBtn);
     }
-    
-    public void OnAdsStartBtn()
+
+    private Define.AdKey GetAdKey()
     {
-        int sign = GameDataManager.Instance.UserData.signid;
-        if (sign > 3||iswater)
+        switch (GameDataManager.Instance.UserData.signid)
         {
-            return;
+            case 1:
+                return Define.AdKey.RewardAdIdCheckinGold1;
+            case 2:
+                return Define.AdKey.RewardAdIdCheckinGold2;
+            case 3:
+                return Define.AdKey.RewardAdIdCheckinGold3;
         }
-        
-        //FirebaseManager.Instance.VideoAdClick("签到"+sign,GameDataManager.Instance.UserData.CurrentStage.ToString());
-        
-        string adskey = "checkingold" + sign;
-        // AdsManager.Instance.ShowRewardedAd((bool isover) =>
-        // {
-        //     if (isover)
-        //     {
-        //         iswater = true;
-        //         AdsStartBtn.enabled = false;
-        //         closeBtn.enabled = false;
-        //         HideBtn.enabled = false;
-        //         int value = AwardValues[sign];
-        //         WaterManager.instance.PlayerWater(false, value);
-        //         StartCoroutine(CheckIsReadyToShowAd());
-        //         //AdjustManager.Instance.SendVIAdsSuccessEvent("签到"+sign);
-        //         //FirebaseManager.Instance.VideoAdSuccess("签到"+sign,GameDataManager.Instance.UserData.CurrentStage.ToString());
-        //      }
-        //      else
-        //      {
-        //          //FirebaseManager.Instance.VideoFail("签到"+sign,GameDataManager.Instance.UserData.CurrentStage.ToString());
-        //      }
-        //  }, adskey, true);
+        return Define.AdKey.RewardAdIdCheckinGold1;
+    }
+    
+    private void OnAdsStartBtn()
+    {
+        if(iswater) return;
+        Define.AdKey key;
+        var sign = GameDataManager.Instance.UserData.signid;
+        AnalyticMgr.VideoAdClick("签到"+sign);
+        Game.Ads.ShowReward(GetAdKey(),success => {
+            if (!success)
+            {
+                AnalyticMgr.VideoAdFail("签到"+sign);
+            }
+            else
+            {
+                iswater = true;
+                AdsStartBtn.enabled = false;
+                closeBtn.enabled = false;
+                HideBtn.enabled = false;
+                int value = AwardValues[sign];
+                WaterManager.instance.PlayerWater(false, value);
+                StartCoroutine(CheckIsReadyToShowAd());
+                AnalyticMgr.VideoAdSuccess("签到"+sign);
+                GameDataManager.Instance.UserData.totalSeeAds++;
+                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
+            }
+        });
     }
 
     public void OnStartBtn()
@@ -236,8 +255,8 @@ public class SignWaterScreen : UIWindow
         if (progressid ==lineid-1)
         {
             WaterPause(progressid);
-            //StartBtn.gameObject.SetActive(lineid==0);
-            //AdsStartBtn.gameObject.SetActive(lineid>0&&lineid<4);               
+            StartBtn.gameObject.SetActive(lineid==0);
+            AdsStartBtn.gameObject.SetActive(lineid>0&&lineid<4);               
             int textid=GameDataManager.Instance.UserData.signid + 1;
             if (lineid > 3)
             {
@@ -251,11 +270,11 @@ public class SignWaterScreen : UIWindow
                 //WaitTimeText.text = MultilingualManager.Instance.GetString("SignPourTea0"+textid);
                 if(GameDataManager.Instance.UserData.signid > 0&&GameDataManager.Instance.UserData.signid <= 3)
                 {
-                    StartBtn.interactable = false;
-                    StartCoroutine(WaitTime());
-                    //StartCoroutine(CheckIsReadyToShowAd());
+                    StartCoroutine(CheckIsReadyToShowAd());
                 }
             }
+            
+            SendShowAdsBtn();
         }
     }
 
@@ -265,7 +284,7 @@ public class SignWaterScreen : UIWindow
         CustomFlyInManager.Instance.FlyInGold(CoinsObjs[id].transform,() =>
         {
             EventDispatcher.instance.TriggerChangeGoldUI(value,true);
-            //GameDataManager.Instance.UserData.UpdateGold(value,true);
+            //GameDataManager.MainInstance.UserData.UpdateGold(value,true);
             //NextLevelBtn.gameObject.SetActive(true);
         });
         DisCoinsTable(id);

@@ -121,12 +121,9 @@ public class RewardAdsScreen : UIWindow
                 GameDataManager.Instance.UserData.UpdateGold(coins,true,true,"金币广告弹窗获得");
             });
             isCanClaim = false;
-            
             yield return new WaitForSeconds(0.8f);
         }
-        
         base.Close(); // 隐藏面板
-       
     }
     
     

@@ -9,20 +9,6 @@ public partial class AnalyticMgr
     private static DateTime _startTime;
     public static void GameStart()
     {
-#if UNITY_ANDROID
-        _startTime = DateTime.Now;
-        var key = "start";
-        var timeFormat = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        if (!PlayerPrefs.HasKey("GameFirstStart"))
-        {
-            PlayerPrefs.SetInt("GameFirstStart", 1);
-            key = "start_first";
-            Game.Analytics.SetUserProperty("player_id",GameDataManager.Instance.UserData.UserId,Define.DataTarget.Firebase);
-            Game.Analytics.SetUserProperty("first_start_time",timeFormat,Define.DataTarget.Firebase);
-        }
-        Game.Analytics.SetUserProperty("last_start_time",timeFormat,Define.DataTarget.Firebase);
-        Game.Analytics.LogEvent(key, Define.DataTarget.Firebase);
-#endif
         SetLoginProperties();
     }
 
@@ -30,10 +16,6 @@ public partial class AnalyticMgr
     {
         if(GameDataManager.Instance == null) return;
         SetLogoutProperties();
-#if UNITY_ANDROID
-       var duration = (DateTime.Now - _startTime).TotalSeconds;
-        Game.Analytics.LogEvent("end", "duration", duration, Define.DataTarget.Firebase);
-#endif
     }
 
     private static void SetLoginProperties()
@@ -57,8 +39,6 @@ public partial class AnalyticMgr
             { "life_day", span.Days + 1},
         };
         Game.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
-        
-        //Game.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
     }
 
     private static void SetLogoutProperties()
@@ -75,8 +55,6 @@ public partial class AnalyticMgr
             { "current_level", GameDataManager.Instance.UserData.CurrentHexStage },
         };
         Game.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
-        
-        //Game.Analytics.LogEvent("ta_app_end", Define.DataTarget.Think);
     }
     
     public static void SetCommonProperties()
@@ -155,16 +133,6 @@ public partial class AnalyticMgr
     public static void LevelStart()
     {
         Game.Analytics.LogEvent("level_start",Define.DataTarget.Think);
-        
-#if UNITY_ANDROID
-        
-        var properties = new Dictionary<string, object>
-        {
-            {"lv_type",GameDataManager.Instance.UserData.levelMode},
-            {"level_name",GameDataManager.Instance.UserData.CurrentHexStage}
-        };
-        Game.Analytics.LogEvent("level_start", properties,Define.DataTarget.Firebase);
-#endif
     }
     
     public static void LevelProgress(int wordIndex,string word,float duration,int errorCount,int combo,int userToolCount)
@@ -198,16 +166,6 @@ public partial class AnalyticMgr
             {"lv_duration", duration}
         };
         Game.Analytics.LogEvent("level_completed",thproperties,Define.DataTarget.Think);
-        
-#if UNITY_ANDROID
-        
-        var properties = new Dictionary<string, object>()
-        {
-            {"lv_type",GameDataManager.Instance.UserData.levelMode},
-            {"level_name",GameDataManager.Instance.UserData.CurrentHexStage}
-        };
-        Game.Analytics.LogEvent("level_completed", properties,Define.DataTarget.Firebase);
-#endif
     }
     #endregion
 

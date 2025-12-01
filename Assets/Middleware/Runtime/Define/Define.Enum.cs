@@ -23,8 +23,8 @@ namespace Middleware
         {
             None =  0,
             Think = 1 << 0,
-            Firebase = 1 << 1,
-            All = Think | Firebase
+            //Firebase = 1 << 1,
+            //All = Think | Firebase
         }
     }
 }

@@ -66,8 +66,7 @@ public class GuideSystem : MonoBehaviour
         if (SystemManager.Instance != null)
         {
             SystemManager.Instance.ShowPanel(PanelType.LearningGuide);
-            //AnalyticsManager.TrackTutorialStart(); // 埋点：教程开始
-            //ThinkManager.instance.Event_Guide();
+            AnalyticMgr.GuideBegin();
         }
         else
         {
@@ -87,7 +86,6 @@ public class GuideSystem : MonoBehaviour
         {
             SystemManager.Instance.HidePanel(PanelType.LearningGuide); 
             CleanCurrentTutorial();
-            //AnalyticsManager.TrackTutorialEnd(); // 埋点：教程结束
         }
         else
         {
