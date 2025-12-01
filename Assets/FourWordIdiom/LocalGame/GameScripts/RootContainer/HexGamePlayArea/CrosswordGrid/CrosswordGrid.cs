@@ -140,7 +140,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float screenRatio = UIUtilities.GetScreenRatio();
         bool isipad = UIUtilities.IsiPad();
         
-        float sizeoffsetw =isipad? 500*(1+screenRatio-1) : 850*(1+1-screenRatio);
+        float sizeoffsetw =isipad? 500*(1+screenRatio-1) : 800*(1+1-screenRatio);
         float sizemaxh =isipad? 175*(1+screenRatio-1)  :200*(1+1-screenRatio);
         float sizemaxw =isipad? 175*(1+screenRatio-1) : 200*(1+1-screenRatio);
         //float sizeoffseth = rows >= 6 ? 5-(rows-6)*0.5f : 0;
@@ -161,7 +161,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
             if (cols >= 6)
             {
-                temptileSize = sizemaxw-(cols-6)*10;
+                temptileSize = sizemaxw-(cols-6)*35;
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
             
