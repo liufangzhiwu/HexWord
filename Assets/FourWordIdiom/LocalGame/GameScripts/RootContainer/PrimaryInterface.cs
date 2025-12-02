@@ -1,5 +1,6 @@
 using System.Collections;
 using DG.Tweening;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
@@ -76,6 +77,11 @@ public class PrimaryInterface : UIWindow
         UpdateGameLobbyUI();
         //UpdateHeadBtnUI();
         //StartCoroutine(UpdateFishRankUI());
+
+        if (GameCoreManager.Instance.IsTrueAuto)
+        {
+            OnPlayClick();
+        }
     }
 
     private void UpdateGameLobbyUI()

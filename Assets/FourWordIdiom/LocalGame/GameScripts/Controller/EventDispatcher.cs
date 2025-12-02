@@ -20,6 +20,7 @@ public class EventDispatcher:MonoBehaviour
     private Action<bool, bool> _onUpdateLayerCoin;
     
     private Action _onCheckShowChessTutorial; // 填字教程检查
+    private Action _onAutoPassLevel; // 自动通过关卡事件
     /// <summary>
     /// 设置选中词语展示区显状态
     /// </summary>
@@ -133,6 +134,13 @@ public class EventDispatcher:MonoBehaviour
         remove => _onCheckShowChessTutorial -= value;
     }
     
+    /// <summary>自动通过关卡事件</summary>
+    public event Action OnAutoPassLevel
+    {
+        add => _onAutoPassLevel += value;
+        remove => _onAutoPassLevel -= value;
+    }
+    
     #endregion
 
     #region 事件触发方法
@@ -180,6 +188,12 @@ public class EventDispatcher:MonoBehaviour
     /// </summary>
     public void TriggerCheckShowChessTutorial()
         => _onCheckShowChessTutorial?.Invoke();
+    
+    /// <summary>
+    /// 触发自动通过关卡事件
+    /// </summary>
+    public void TriggerAutoPassLevel()
+        => _onAutoPassLevel?.Invoke();
     
     #endregion
 }

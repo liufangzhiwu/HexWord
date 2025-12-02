@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.UI;
 #if UNITY_IOS
 using UnityEngine.iOS;
 #endif
@@ -22,6 +22,8 @@ public sealed class GameCoreManager: MonoBehaviour
     #endregion
      
     [HideInInspector] public bool IsNetworkActive;
+    public bool IsTrueAuto;
+    public GameObject AutoLevelTalbe;
 
     void Awake()
     {
@@ -31,8 +33,6 @@ public sealed class GameCoreManager: MonoBehaviour
             DontDestroyOnLoad(gameObject); // 保持广告管理器在场景切换时不销毁
         }
     }
-
-    #region 公共API
 
 
     /// <summary>
@@ -48,9 +48,23 @@ public sealed class GameCoreManager: MonoBehaviour
     {
         StartCoroutine(InitializeGameRoutine());
         //StartCoroutine(CheckNetworkConnection());
+        AutoLevelTalbe.GetComponent<Toggle>().onValueChanged.AddListener(OnAutoLevelTalbeValueChanged);
+        
+#if Unity_ShowLog
+        IsTrueAuto = true;
+#else 
+        IsTrueAuto = false;
+#endif
+        
+        AutoLevelTalbe.gameObject.SetActive(IsTrueAuto);
     }
-   
-    #endregion
+    
+    private void OnAutoLevelTalbeValueChanged(bool ison)
+    {
+        IsTrueAuto = ison;
+        
+        EventDispatcher.instance.TriggerAutoPassLevel();
+    }
 
     #region 私有方法
     /// <summary>

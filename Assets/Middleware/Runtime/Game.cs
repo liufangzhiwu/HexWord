@@ -9,6 +9,7 @@ namespace Middleware
     public class Game : MonoBehaviour
     {
         public static IAds Ads { private set; get; }
+        public static IAccounts Accounts { private set; get; }
         public static IAnalytics Analytics { private set; get; }
         public static IShop Shop { private set; get; }
         private void Awake()
@@ -18,6 +19,7 @@ namespace Middleware
     
 #if UNITY_OPENHARMONY
             CreateAd();
+            CreateAccounts();
 #endif
             CreateAnalytic();
             //CreateShop();
@@ -31,6 +33,14 @@ namespace Middleware
 	        LimitTimeManager.Instance.Init();
             
             ChessStageController.Instance.Init();
+        }
+        
+        private void CreateAccounts()
+        {
+#if UNITY_OPENHARMONY
+            Accounts = new Account_harmony();
+            Accounts.Init(0.2f);
+#endif
         }
     
         private void CreateAd()

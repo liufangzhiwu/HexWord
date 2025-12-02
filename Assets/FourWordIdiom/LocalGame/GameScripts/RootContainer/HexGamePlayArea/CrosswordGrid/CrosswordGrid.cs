@@ -100,6 +100,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         EnhancedVideoController.Instance.TogglePause();
         yield return new WaitForSeconds(0.3f); 
         PuzzleTitle.DOFade(1, 0.3f);
+        EventDispatcher.instance.TriggerAutoPassLevel();
     }
 
 	/// <summary>
@@ -399,7 +400,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             -totalGridHeight / 2f
         );
         
-        float soffsety = rows>8&&curStageData.BoardSnapshot.minRow<=2?-0.5f:0.5f;
+        float soffsety = 0.5f;
 
         // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol) * horizontalSpacing;
@@ -661,7 +662,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// <summary>
     /// 保存选中字块的行列
     /// </summary>
-    private List<int[]> GetPuzzleGridRowCol(List<PuzzleTile> PuzzleGrids)
+    public List<int[]> GetPuzzleGridRowCol(List<PuzzleTile> PuzzleGrids)
     {
         List<int[]> PuzzleGridRowCol = new List<int[]>();
         foreach (PuzzleTile grid in PuzzleGrids)
@@ -1171,26 +1172,10 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         for (int i = 0; i < PuzzleGrids.Count; i++)
         {
             PuzzleTile Puzzle = PuzzleGrids[i];
-        
-            //if (isValid)
-            //{
-            //    //SoundManager.Instance.Play("Puzzle_already_found");
-            //    //Puzzle.PuzzleItem.PlayDown();
-            //}
-            //else
             Puzzle.TileView.TriggerErrorState(isx);
-        
-            //if (i == 0)
-            //{
-            //    Puzzle.PuzzleItem.Vibrate();
-            //}
         }
-
-        // if (PuzzleGrids.Count > 1)
-        // {
-            AudioManager.Instance.PlaySoundEffect("xuanzhecuowu");
-            AudioManager.Instance.TriggerVibration(1, 10);
-        //}
+        AudioManager.Instance.PlaySoundEffect("xuanzhecuowu");
+        AudioManager.Instance.TriggerVibration(1, 10);
     }
 
 

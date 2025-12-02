@@ -135,6 +135,7 @@ public class HexGamePlayArea : UIWindow
         //EventManager.OnComboTriggerButterfly +=UseButterfly;
         EventDispatcher.instance.OnChoicePuzzleSetStatus += ChoicePuzzleSetStatus;
         EventDispatcher.instance.OnCheckShowTutorial += CheackShowTotrialEvent;
+        EventDispatcher.instance.OnAutoPassLevel += AutoPassLevel;
         
         StartCoroutine(SetupGameData());
         boardExplorer = new WordMatrixExplorer(CurStageData.BoardSnapshot,CurStageInfo.Puzzles);
@@ -313,6 +314,8 @@ public class HexGamePlayArea : UIWindow
         {
             EventDispatcher.instance.TriggerUpdateRewardPuzzle(true);
             EventDispatcher.instance.TriggerCheckShowTutorial();
+            yield return new WaitForSeconds(1f);
+            EventDispatcher.instance.TriggerAutoPassLevel();
         }
 
         UpdateLeftPuzzles();
@@ -373,7 +376,19 @@ public class HexGamePlayArea : UIWindow
     {
         choicePuzzleTable.gameObject.SetActive(status);
     }
-  
+
+    private void AutoPassLevel()
+    {
+        if (GameCoreManager.Instance.IsTrueAuto)
+        {
+            string selectedPuzzle = GetRandomTipsPuzzle();
+            if (!string.IsNullOrEmpty(selectedPuzzle))
+            {
+                List<PuzzleTile> puzzleDatas = crossPuzzleGrid.GetPuzzleTileRowCol(selectedPuzzle);
+                EventDispatcher.instance.TriggerLetterSelected(selectedPuzzle, crossPuzzleGrid.GetPuzzleGridRowCol(puzzleDatas));
+            }
+        }
+    }
 
     private void CheackShowTotrialEvent()
     {
@@ -846,6 +861,7 @@ public class HexGamePlayArea : UIWindow
         firstenter = false;
         //StageOverObj.gameObject.SetActive(false);
         EventDispatcher.instance.OnLetterSelected -= OnLetterSelected;
+        EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
         //EventManager.OnChangeLanguageUpdateUI -= InitUI;
         //EventManager.OnComboTriggerButterfly -=UseButterfly;
         EventDispatcher.instance.OnChoicePuzzleSetStatus -= ChoicePuzzleSetStatus;

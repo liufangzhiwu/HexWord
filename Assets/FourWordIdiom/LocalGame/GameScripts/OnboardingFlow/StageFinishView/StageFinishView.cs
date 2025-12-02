@@ -58,6 +58,8 @@ public class StageFinishView : UIWindow
         UnlockBtnsUI();
         
         SetUIInteractable(true);
+        
+      
     }
 
     /// <summary>
@@ -185,6 +187,11 @@ public class StageFinishView : UIWindow
         //Animator.Play("ShowLevelBtn");
         
         StartCoroutine(ShowLimitTimeScreen());
+        
+        if (GameCoreManager.Instance.IsTrueAuto)
+        {
+            OnNextStageButtonClicked();
+        }
     }
     
     private IEnumerator UpdateFishRankUI()
