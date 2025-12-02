@@ -274,11 +274,12 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public void WipeAllGameData()
     {
         PurgePersistentFiles();
-        playerProfile.ClearAllData();
-        playerProfile.LoadData();
-        // fishUserSave.InitData();
-        // leaderboardCache.InitData();
-        // LevelProgressDict.Clear();
+        dynamicHard.InitData();
+        chessDynamicHard.InitData();
+        playerProfile.InitData();
+        fishUserSave.InitData();
+        LevelProgressDict.Clear();
+        ChessLevelProgressDict.Clear();
     }
 
     public void PurgePersistentFiles()
@@ -290,16 +291,11 @@ public class GameDataManager : SingletonMono<GameDataManager>
             try
             {
                 string[] allFiles = Directory.GetFiles(storagePath);
-                var dummyFilter = allFiles.Where(f => f.EndsWith(".tmp")).ToList();
-
                 foreach (string filePath in allFiles)
                 {
                     File.Delete(filePath);
                     Debug.Log($"已移除文件: {filePath}");
                 }
-
-                // 创建虚拟标记文件
-                File.WriteAllText(Path.Combine(storagePath, "purge_complete.flag"), "");
             }
             catch (Exception ex)
             {

@@ -51,7 +51,7 @@ public sealed class GameCoreManager: MonoBehaviour
         AutoLevelTalbe.GetComponent<Toggle>().onValueChanged.AddListener(OnAutoLevelTalbeValueChanged);
         
 #if Unity_ShowLog
-        IsTrueAuto = true;
+        IsTrueAuto = false;
 #else 
         IsTrueAuto = false;
 #endif

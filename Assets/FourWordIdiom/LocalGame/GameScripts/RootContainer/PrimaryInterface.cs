@@ -77,11 +77,6 @@ public class PrimaryInterface : UIWindow
         UpdateGameLobbyUI();
         //UpdateHeadBtnUI();
         //StartCoroutine(UpdateFishRankUI());
-
-        if (GameCoreManager.Instance.IsTrueAuto)
-        {
-            OnPlayClick();
-        }
     }
 
     private void UpdateGameLobbyUI()
@@ -405,9 +400,12 @@ public class PrimaryInterface : UIWindow
         UpdateLimintBtnUI();
         UpdateDailyTaskBtnUI();
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
-        
-        yield return new WaitForSeconds(0.1f);
-        //AdsManager.Instance.HideBannerAd();
+     
+        yield return new WaitForSeconds(0.5f);
+        if (GameCoreManager.Instance.IsTrueAuto)
+        {
+            OnPlayClick();
+        }
     }
 
     /// <summary>

@@ -87747,7 +87747,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IsNetworkActive: 0
-  IsTrueAuto: 1
+  IsTrueAuto: 0
   AutoLevelTalbe: {fileID: 1369706649}
 --- !u!114 &963194230
 MonoBehaviour:
@@ -88108,7 +88108,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 36.48, y: -51.64}
+  m_AnchoredPosition: {x: 36.479996, y: -51.64}
   m_SizeDelta: {x: 72.96, y: 103.28}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &965426176

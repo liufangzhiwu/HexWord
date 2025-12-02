@@ -100,6 +100,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         EnhancedVideoController.Instance.TogglePause();
         yield return new WaitForSeconds(0.3f); 
         PuzzleTitle.DOFade(1, 0.3f);
+        yield return new WaitForSeconds(1f); 
         EventDispatcher.instance.TriggerAutoPassLevel();
     }
 
