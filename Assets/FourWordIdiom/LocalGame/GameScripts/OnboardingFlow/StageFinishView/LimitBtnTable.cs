@@ -91,7 +91,7 @@ public class LimitBtnTable : MonoBehaviour
         }
     }
     
-    public void InitLimtBtnUI()
+    public void InitLimtBtnUI(bool isanim=true)
     {
         TimeObj.gameObject.SetActive(!LimitTimeManager.Instance.IsClaim());
         if (!LimitTimeManager.Instance.IsComplete())
@@ -149,9 +149,9 @@ public class LimitBtnTable : MonoBehaviour
         var BezierMidPos = (midPos + dengObj.transform.localPosition) / 2 + Vector3.left * 50;
         Vector3[] MovePoints = CustomFlyInManager.Instance.CreatTwoBezierCurve(dengObj.transform.localPosition,lantern.transform.localPosition,BezierMidPos).ToArray();
         
-        canvas.DOFade(1, 0.3f).OnComplete(() =>
+        canvas.DOFade(1, 0.2f).OnComplete(() =>
         {
-            dengObj.transform.DOLocalPath(MovePoints, 0.5f).OnComplete(() =>
+            dengObj.transform.DOLocalPath(MovePoints, 0.3f).OnComplete(() =>
             {
                 Effect.gameObject.SetActive(true);
                 AddCount.color=Color.clear;
@@ -160,7 +160,7 @@ public class LimitBtnTable : MonoBehaviour
                 Destroy(dengObj);
             });
             
-            canvas.DOFade(1, 0.4f).OnComplete(() =>
+            canvas.DOFade(1, 0.3f).OnComplete(() =>
             {
                 AudioManager.Instance.PlaySoundEffect("levelOverLimitwordAward");
                 lantern.transform.DOScale(new Vector3(1.2f,1.15f,1.15f), 0.3f).OnComplete(() =>

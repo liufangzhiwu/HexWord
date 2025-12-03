@@ -70,7 +70,6 @@ public class StageFinishView : UIWindow
         _currentProgressSegment = 0;
         
         _StageNumberText.text = MultilingualManager.Instance.GetString("Level")+" " + GameDataManager.Instance.UserData.CurrentHexStage; 
-        _progressText.text = "0/" + LimitTimeManager.Instance.CurlimitData.num;
         // CalculateProgressSegments();
         // int totalStagesInSegment = CalculateTotalStagesInSegment();
         // DetermineCurrentProgressSegment(totalStagesInSegment);
@@ -83,25 +82,38 @@ public class StageFinishView : UIWindow
         // _progressSlider.DOValue(sliderProgress, 0.6f)
         //     .OnComplete(() => UpdateProgressText(currentStageInSegment, sliderProgress));
 
-        UpdateProgress();
+        if (LimitTimeManager.Instance.IsComplete())
+        {
+            _progressSlider.transform.parent.gameObject.SetActive(false);
+        }
+        else
+        {
+            _progressSlider.transform.parent.gameObject.SetActive(true);
+            StartCoroutine(WaitTimeUpdate());
+        }
         
         
     }
-    
-    private void UpdateProgress()
+
+    IEnumerator WaitTimeUpdate()
     {
+        yield return new WaitForSeconds(1.5f);
+        UpdateProgress();
+    }
+    
+    private void UpdateProgress(bool isanim=true)
+    {
+        _progressSlider.transform.parent.gameObject.SetActive(true);
         int wordcount = LimitTimeManager.Instance.GetCurWordCount();
         LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
-        float durtime = wordcount==0?0.1f:0.5f;
+        float durtime = !isanim?0f:1f;
         sliderProgress = (float)wordcount/limitData.num;    
-        
+        int oldProgress = wordcount-StageHexController.Instance.CurStageData.Puzzles.Count;
+        _progressText.text = oldProgress + "/" + LimitTimeManager.Instance.CurlimitData.num;
+    
         _progressSlider.DOValue(sliderProgress,durtime).OnComplete(() =>
         {
-            _progressSlider.DOValue(sliderProgress, 0.35f).OnComplete(() =>
-            {
-                _progressText.text = wordcount + "/" + limitData.num;
-            });
-            
+            _progressText.text = wordcount + "/" + limitData.num;
         });
     }
     
@@ -300,7 +312,7 @@ public class StageFinishView : UIWindow
     {
         LimitTimeManager.Instance.OnDailyTimeUpdated -= UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyButterflyTaskUI -= UpdateButterflyTime;
-        LimitTimeManager.Instance.OnLimitTimeBtnUI -= InitializeUI;       
+        LimitTimeManager.Instance.OnLimitTimeBtnUI -= UpdateProgress;       
         //FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
         //EventDispatcher.OnChangeHeadIconUpdateUI -= UpdateHeadBtnUI;
         

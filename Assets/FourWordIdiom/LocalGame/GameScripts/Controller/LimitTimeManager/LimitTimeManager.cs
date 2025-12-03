@@ -25,7 +25,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     private List<LimitDataItem> limitItems;
     public event Action<string> OnLimitTimeUpdated; // 定义事件
     public event Action<string> OnDailyTimeUpdated; // 定义事件
-    public event Action OnLimitTimeBtnUI; // 定义事件
+    public event Action<bool> OnLimitTimeBtnUI; // 定义事件
     public LimitDataItem CurlimitData;
     
 
@@ -204,7 +204,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
 
     public void UpdateLimitTimeBtnUI()
     {
-        OnLimitTimeBtnUI?.Invoke();
+        OnLimitTimeBtnUI?.Invoke(false);
     }
 
     public void UpdateLimitProgress(int value)

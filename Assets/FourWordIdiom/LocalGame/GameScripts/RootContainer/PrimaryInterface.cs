@@ -268,7 +268,7 @@ public class PrimaryInterface : UIWindow
         }
     }
 
-    private void InitLimtBtnUI()
+    private void InitLimtBtnUI(bool isanim=true)
     {
         LimitTimeObj.gameObject.SetActive(!LimitTimeManager.Instance.IsClaim());
         LimitClaim.gameObject.SetActive(LimitTimeManager.Instance.IsClaim());
