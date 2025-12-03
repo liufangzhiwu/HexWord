@@ -606,9 +606,17 @@ public class HexGamePlayArea : UIWindow
             }
             else
             {
-                MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
+                //MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
                 //AdsManager.Instance.ShowRewardedPanel("item_gold");
                 //SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
+                
+#if UNITY_OPENHARMONY
+        AnalyticMgr.VideoAdClick("提示灯道具广告");
+        Game.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+#elif Unity_ShowLog
+                UpdateAdsRewardUI(true);
+#endif
+                
                 LayerBtn.enabled = true;
                 return;
             }
@@ -634,15 +642,45 @@ public class HexGamePlayArea : UIWindow
             AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
             
             CurStageData.AddPuzzleHints(Str);
-            //int index= CurStageData.GetPuzzleHintCount(Str)+1;
             List<PuzzleTile> puzzleDatas = crossPuzzleGrid.GetPuzzleTileRowCol(Str);
             ShowLetterTips(puzzleDatas[0],LayerBtn.transform);
-            //puzzleDatas[0].TileView.ShowTipPuzzle();          
         }  
         else
         {
             MessageSystem.Instance.ShowTip("TipAllWordPrompted");
         }             
+    }
+    
+    private void UpdateAdsRewardUI(bool isShow)
+    {
+        if (isShow)
+        {
+            usetoolCount++;
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, 1,"看广告获取提示灯道具");
+            
+            string Str = GetRandomTipsPuzzle();
+            if (!string.IsNullOrEmpty(Str))
+            {
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, -1, "关卡内使用");
+                InitToolUI();
+                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipAllWordTool,1);
+                AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
+            
+                CurStageData.AddPuzzleHints(Str);
+                List<PuzzleTile> puzzleDatas = crossPuzzleGrid.GetPuzzleTileRowCol(Str);
+                ShowLetterTips(puzzleDatas[0],LayerBtn.transform);
+            }  
+            else
+            {
+                MessageSystem.Instance.ShowTip("TipAllWordPrompted");
+            }   
+            
+            AnalyticMgr.VideoAdSuccess("提示灯广告");
+        }
+        else
+        {
+            AnalyticMgr.VideoAdFail("提示灯广告");
+        }
     }
     
     /// <summary>
@@ -713,8 +751,7 @@ public class HexGamePlayArea : UIWindow
             else
             {
                 MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
-                //AdsManager.Instance.ShowRewardedPanel("item_gold");
-                //SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
+                SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
                 return;
             }
         }
