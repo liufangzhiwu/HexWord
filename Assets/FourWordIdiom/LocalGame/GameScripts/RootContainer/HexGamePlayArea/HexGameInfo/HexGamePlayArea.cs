@@ -642,6 +642,7 @@ public class HexGamePlayArea : UIWindow
             AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
             
             CurStageData.AddPuzzleHints(Str);
+            CurStageData.AddCharacterHints(Str);
             List<PuzzleTile> puzzleDatas = crossPuzzleGrid.GetPuzzleTileRowCol(Str);
             ShowLetterTips(puzzleDatas[0],LayerBtn.transform);
         }  
@@ -667,6 +668,7 @@ public class HexGamePlayArea : UIWindow
                 AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
             
                 CurStageData.AddPuzzleHints(Str);
+                CurStageData.AddCharacterHints(Str);
                 List<PuzzleTile> puzzleDatas = crossPuzzleGrid.GetPuzzleTileRowCol(Str);
                 ShowLetterTips(puzzleDatas[0],LayerBtn.transform);
             }  
@@ -761,12 +763,8 @@ public class HexGamePlayArea : UIWindow
         if (!string.IsNullOrEmpty(Str))
         {
             CurStageData.AddPuzzleHints(Str);
-            //int index= CurStageData.GetPuzzleHintCount(Str)+1;
             List<PuzzleTile> puzzleDatas= crossPuzzleGrid.GetPuzzleTileRowCol(Str);
-
             StartCoroutine(ShowTipsPuzzle(puzzleDatas));
-            
-            //CurStageData.UpdateCharacterHint(Str,index);
             if (useCoins)
             {
                 GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
@@ -849,7 +847,7 @@ public class HexGamePlayArea : UIWindow
     private string GetSelectablePuzzle(bool isguide=false)
     {
         // 从关卡组合成语中找到未显示的成语进行提示
-        var availablePuzzles = selectablePuzzles.Where(Puzzle => !CurStageData.IsPuzzleFullyHinted(Puzzle)).ToList();
+        var availablePuzzles = selectablePuzzles.ToList();
         if(CurStageData.PuzzleHints !=null)
             availablePuzzles = availablePuzzles.Where(Puzzle => !CurStageData.PuzzleHints.Contains(Puzzle)).ToList();
         
@@ -862,7 +860,6 @@ public class HexGamePlayArea : UIWindow
         }
         return null; // 或者抛出异常
     }
-   
     
     // 检测无操作的协程
     private IEnumerator CheckInactivity()

@@ -13,7 +13,9 @@ public class StageProgressData
     public int StageId = 0;
     public List<string> Puzzles = new List<string>();
     public List<string> FoundTargetPuzzles = new List<string>();
-    public Dictionary<string, int> CharacterHints = new Dictionary<string, int>();
+    //字符提示列表
+    public List<string> CharacterHints = new List<string>();
+    //单词提示列表
     public List<string> PuzzleHints = new List<string>();
     public BoardGame BoardSnapshot = new BoardGame();
     
@@ -36,7 +38,7 @@ public class StageProgressData
         this.FoundTargetPuzzles = sourceData.FoundTargetPuzzles != null ? 
             new List<string>(sourceData.FoundTargetPuzzles) : new List<string>();
         this.CharacterHints = sourceData.CharacterHints != null ? 
-            new Dictionary<string, int>(sourceData.CharacterHints) : new Dictionary<string, int>();
+            new List<string>(sourceData.CharacterHints) : new List<string>();
         this.PuzzleHints = sourceData.PuzzleHints != null ? 
             new List<string>(sourceData.PuzzleHints) : new List<string>();
         this.BoardSnapshot = sourceData.BoardSnapshot;
@@ -142,10 +144,6 @@ public class StageProgressData
     #endregion
 
     #region 业务逻辑（添加立即保存）
-    public bool IsPuzzleFullyHinted(string Puzzle)
-    {
-        return GetPuzzleHintCount(Puzzle) >= 3;
-    }
     
     public void UpdateFoundTargetPuzzle(string Puzzle)
     {
@@ -153,57 +151,20 @@ public class StageProgressData
         {
             FoundTargetPuzzles.Add(Puzzle);
         }
-    }
-
-    public int GetPuzzleHintCount(string Puzzle)
-    {
-        if (CharacterHints != null && CharacterHints.ContainsKey(Puzzle))
-        {
-            return CharacterHints[Puzzle];
-        }
-
+        
         if (PuzzleHints.Contains(Puzzle))
         {
-            return 0;
+            PuzzleHints.Remove(Puzzle);
         }
-
-        return -1;
-    }
-
-    public Dictionary<string, int> GetIncompleteHintPuzzles()
-    {
-        return new Dictionary<string, int>();
+        
+           
+        if (CharacterHints.Contains(Puzzle))
+        {
+            CharacterHints.Remove(Puzzle);
+        }
     }
     
-    public List<string> GetIncompleteButterflyHints()
-    {
-        var result = new List<string>();
-        if (PuzzleHints == null) return result;
-
-        foreach (string word in PuzzleHints)
-        {
-            if (!IsPuzzleFullyHinted(word) && !FoundTargetPuzzles.Contains(word))
-            {
-                result.Add(word);
-            }
-        }
-        return result;
-    }
-
-    public void UpdateCharacterHint(string Puzzle, int hintIndex)
-    {
-        if (CharacterHints == null) return;
-
-        if (CharacterHints.ContainsKey(Puzzle))
-        {
-            CharacterHints[Puzzle] = hintIndex;
-        }
-        else
-        {
-            CharacterHints.Add(Puzzle, hintIndex);
-        }
-    }
-
+    
     public void AddPuzzleHints(string Puzzle)
     {
         if (!PuzzleHints.Contains(Puzzle))
@@ -211,10 +172,17 @@ public class StageProgressData
             PuzzleHints.Add(Puzzle);
         }
     }
+    
+    public void AddCharacterHints(string Puzzle)
+    {
+        if (!CharacterHints.Contains(Puzzle))
+        {
+            CharacterHints.Add(Puzzle);
+        }
+    }
 
     public string FindFirstHintedPuzzle(HashSet<string> availablePuzzles)
     {
-
         foreach (string puzzle in availablePuzzles)
         {
             if (!PuzzleHints.Contains(puzzle))

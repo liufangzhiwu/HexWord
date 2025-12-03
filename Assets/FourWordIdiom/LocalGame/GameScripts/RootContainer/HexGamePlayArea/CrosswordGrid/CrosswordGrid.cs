@@ -100,8 +100,31 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         EnhancedVideoController.Instance.TogglePause();
         yield return new WaitForSeconds(0.3f); 
         PuzzleTitle.DOFade(1, 0.3f);
+        InitHintPuzzles();
         yield return new WaitForSeconds(1f); 
         EventDispatcher.instance.TriggerAutoPassLevel();
+    }
+    
+    private void InitHintPuzzles()
+    {
+        if (curStageData.PuzzleHints != null)
+        {
+            foreach (string puzzle in curStageData.PuzzleHints)
+            {
+                List<PuzzleTile> puzzleDatas = GetPuzzleTileRowCol(puzzle);
+                if (curStageData.CharacterHints.Contains(puzzle))
+                {
+                    puzzleDatas[0].TileView.ShowTipPuzzle();       
+                }
+                else
+                {
+                    foreach (var item in puzzleDatas)
+                    {
+                        item.TileView.ShowTipPuzzle();
+                    }
+                }
+            }
+        }
     }
 
 	/// <summary>
