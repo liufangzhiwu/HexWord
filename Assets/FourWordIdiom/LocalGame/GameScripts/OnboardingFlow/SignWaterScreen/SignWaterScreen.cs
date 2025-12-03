@@ -1,12 +1,8 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using DG.Tweening;
 using Middleware;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
 public class SignWaterScreen : UIWindow
@@ -213,7 +209,9 @@ public class SignWaterScreen : UIWindow
         Define.AdKey key;
         var sign = GameDataManager.Instance.UserData.signid;
         AnalyticMgr.VideoAdClick("签到"+sign);
-        Game.Ads.ShowReward(GetAdKey(),success => {
+        
+#if UNITY_OPENHARMONY
+        Game.Ads?.ShowReward(GetAdKey(),success => {
             if (!success)
             {
                 AnalyticMgr.VideoAdFail("签到"+sign);
@@ -232,6 +230,18 @@ public class SignWaterScreen : UIWindow
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
             }
         });
+#elif Unity_ShowLog
+        iswater = true;
+        AdsStartBtn.enabled = false;
+        closeBtn.enabled = false;
+        HideBtn.enabled = false;
+        int value = AwardValues[sign];
+        WaterManager.instance.PlayerWater(false, value);
+        StartCoroutine(CheckIsReadyToShowAd());
+        AnalyticMgr.VideoAdSuccess("签到"+sign);
+        GameDataManager.Instance.UserData.totalSeeAds++;
+        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
+#endif
     }
 
     public void OnStartBtn()

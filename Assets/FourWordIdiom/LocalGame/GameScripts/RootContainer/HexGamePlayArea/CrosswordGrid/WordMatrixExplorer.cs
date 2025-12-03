@@ -6,6 +6,7 @@ public class WordMatrixExplorer
 {
     private BoardGame GameBoard;
     private readonly HashSet<string> LevelLexicon;
+    private int newDirections=-1;
 
     // 平顶六边形网格的六个方向定义（行为偶数时）
     private static readonly (int, int)[] HexDirectionsEven = {
@@ -42,10 +43,10 @@ public class WordMatrixExplorer
     private static readonly (int, int)[] HexJianDirectionsOdd = {
         (0, -1),    // 左
         (0, 1),   // 右
-        (-1, 1),   // 右上
+        (1, 1),   // 右上
         (1, 0),  // 左上1，0
         (-1, 0),  // 左下（-1，0）
-        (1, 1)     // 右下
+        (-1, 1)  // 右下
     };
 
     public WordMatrixExplorer(BoardGame gameBoard, List<string> levelWords)
@@ -69,6 +70,7 @@ public class WordMatrixExplorer
                     //int mxa = GameBoard.board[row][col].Count - 1;
                     if (GameBoard.board[row][col][0] != '\0' && !visited[row, col])
                     {
+                        newDirections = -1;
                         ExploreFromPosition(row, col, "", discoveredWords, visited);
                     }
                 }
@@ -104,7 +106,11 @@ public class WordMatrixExplorer
         }
 
         if (!isPrefix)
+        {
+            newDirections = -1;
             return;
+        }
+            
 
         // 标记当前单元格已访问
         visited[row, col] = true;
@@ -129,11 +135,10 @@ public class WordMatrixExplorer
             directions = (parity == 0) ? HexJianDirectionsEven : HexJianDirectionsOdd;
         }
         
-        
-        
-        // 在六边形网格的六个方向上进行搜索
-        foreach (var (dr, dc) in directions)
+        if(newDirections!=-1)
         {
+            var (dr, dc) = directions[newDirections];
+            
             int newRow = row + dr;
             int newCol = col + dc;
 
@@ -145,7 +150,26 @@ public class WordMatrixExplorer
                 ExploreFromPosition(newRow, newCol, newWord, foundWords, visited);
             }
         }
+        else
+        {
+            // 在六边形网格的六个方向上进行搜索
+            int index = 0;
+            foreach (var (dr, dc) in directions)
+            {
+                int newRow = row + dr;
+                int newCol = col + dc;
 
+                // 检查新位置是否有效
+                if (newRow >= 0 && newRow < GameBoard.rows &&
+                    newCol >= 0 && newCol < GameBoard.cols &&
+                    !visited[newRow, newCol])
+                {
+                    newDirections = index;
+                    ExploreFromPosition(newRow, newCol, newWord, foundWords, visited);
+                }
+                index++;
+            }
+        }
         // 回溯，标记当前单元格未访问
         visited[row, col] = false;
     }

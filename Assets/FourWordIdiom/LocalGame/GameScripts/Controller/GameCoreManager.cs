@@ -52,11 +52,13 @@ public sealed class GameCoreManager: MonoBehaviour
         
 #if Unity_ShowLog
         IsTrueAuto = false;
+        AutoLevelTalbe.gameObject.SetActive(true);
 #else 
         IsTrueAuto = false;
+        AutoLevelTalbe.gameObject.SetActive(false);
 #endif
         
-        AutoLevelTalbe.gameObject.SetActive(IsTrueAuto);
+        
     }
     
     private void OnAutoLevelTalbeValueChanged(bool ison)

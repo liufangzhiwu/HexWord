@@ -165,12 +165,14 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             {
                 temptileSize = sizemaxw-(cols-6)*35;
                 tileSize = Mathf.Min(temptileSize, tileSize);
+                tileSize = Mathf.Max(170, tileSize);
             }
             
             if (rows >= 6)
             {
                 temptileSize = sizemaxh-(rows-6)*10;
                 tileSize = Mathf.Min(temptileSize, tileSize);
+                tileSize = Mathf.Max(170, tileSize);
             }
             
             StageHexController.Instance.ActiveTileSize = tileSize;
@@ -388,8 +390,10 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float horizontalSpacing = hexWidth*0.9f;                   // 列间距
         float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
         
+        int offsetx =curStageData.BoardSnapshot.minRow<=0 ? 2 : curStageData.BoardSnapshot.minRow;
+        
         int cols=curStageData.BoardSnapshot.cols-curStageData.BoardSnapshot.minCol;
-        int rows=curStageData.BoardSnapshot.rows-curStageData.BoardSnapshot.minRow;
+        int rows=curStageData.BoardSnapshot.rows-offsetx;
 
         // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
         float totalGridWidth = cols * horizontalSpacing;
@@ -405,7 +409,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
         // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol) * horizontalSpacing;
-        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minRow+soffsety) * verticalSpacing;
+        float yPos = bottomLeft.y + (row-offsetx+soffsety) * verticalSpacing;
 
         // 奇数行横向偏移（蜂窝状交错）
         if (row % 2 == 1)
@@ -414,7 +418,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         }
         
         //纠正row为奇数时，xPos偏移
-        if (curStageData.BoardSnapshot.minRow % 2 == 1)
+        if (curStageData.BoardSnapshot.minRow % 2 == 1||curStageData.BoardSnapshot.minRow==0)
         {
             xPos += horizontalSpacing / 2f;
         }

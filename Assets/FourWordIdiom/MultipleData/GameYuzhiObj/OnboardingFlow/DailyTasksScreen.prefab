@@ -1,17 +1,18 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!1 &413741774483306269
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8982236480444107796}
   - component: {fileID: 6558920793295510039}
   - component: {fileID: 4336924229774307238}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -81,11 +82,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8247863806313173869}
   - component: {fileID: 7062794904942956528}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: butterflySlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -171,10 +173,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7541137570724748329}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Fill Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -207,11 +210,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 645392698739956524}
   - component: {fileID: 5736749202375274434}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: BackUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -238,6 +242,7 @@ RectTransform:
   - {fileID: 4952630412586623609}
   - {fileID: 7536145036175338489}
   - {fileID: 1543342504733424627}
+  - {fileID: 4723624729188857820}
   - {fileID: 6758687246408085037}
   m_Father: {fileID: 3348149280488444271}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -264,12 +269,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2114453866371484228}
   - component: {fileID: 1204605530498547096}
   - component: {fileID: 6825132430240565360}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: ButterflyTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -342,12 +348,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1543342504733424627}
   - component: {fileID: 8050011365980921211}
   - component: {fileID: 1040029587959473531}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: timebg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -419,12 +426,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3782349262517094576}
   - component: {fileID: 4626736276077383386}
   - component: {fileID: 8498381099665824211}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: tios
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -498,12 +506,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1806577418320674792}
   - component: {fileID: 4634779379431447518}
   - component: {fileID: 1210613822359116437}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Bg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -573,12 +582,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 544397857406761102}
   - component: {fileID: 1921346171036761778}
   - component: {fileID: 6376389046573292868}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: headImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -648,7 +658,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3348149280488444271}
   - component: {fileID: 8280429790780138894}
@@ -657,6 +667,7 @@ GameObject:
   - component: {fileID: 1666292927205201055}
   - component: {fileID: 811679994992478867}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: DailyTasksScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -677,7 +688,6 @@ RectTransform:
   m_Children:
   - {fileID: 4454236157551206563}
   - {fileID: 3782349262517094576}
-  - {fileID: 4723624729188857820}
   - {fileID: 645392698739956524}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -736,7 +746,7 @@ MonoBehaviour:
     m_Bits: 4294967295
 --- !u!95 &1666292927205201055
 Animator:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -747,6 +757,8 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 5aa0b95a48a8d744d9d0cdf89a69d2b2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
+  m_UpdateFrequencyMode: 0
+  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -788,13 +800,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3691933091869268904}
   - component: {fileID: 7807401539350945152}
   - component: {fileID: 8879174029456130216}
   - component: {fileID: 647644322589260499}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: timeText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -883,13 +896,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6758687246408085037}
   - component: {fileID: 4101914575001008508}
   - component: {fileID: 6043342328112555402}
   - component: {fileID: 4024886413001663278}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: CloseBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1004,12 +1018,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6530715061308650562}
   - component: {fileID: 2274908683292774314}
   - component: {fileID: 2953972868603041173}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1079,12 +1094,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5565860661749510559}
   - component: {fileID: 4549885504011089111}
   - component: {fileID: 5881254573088936186}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: timeicon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1154,13 +1170,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4723624729188857820}
   - component: {fileID: 6464868893651903662}
   - component: {fileID: 703757022152071739}
   - component: {fileID: 1657148566833378546}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: HideBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1179,12 +1196,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3348149280488444271}
+  m_Father: {fileID: 645392698739956524}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 5.1815186, y: 4.930908}
-  m_SizeDelta: {x: 114.603516, y: 145.78955}
+  m_SizeDelta: {x: 346.60352, y: 1322.7896}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6464868893651903662
 CanvasRenderer:
@@ -1274,12 +1291,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8704188889230420740}
   - component: {fileID: 7580248238576590460}
   - component: {fileID: 5919528645273866683}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: buttericon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1349,13 +1367,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8702517034754488916}
   - component: {fileID: 6931488916745473619}
   - component: {fileID: 2581654442907758141}
   - component: {fileID: 5236483582106575368}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: taskTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1442,12 +1461,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5450995564180735291}
   - component: {fileID: 4754057577798815378}
   - component: {fileID: 3147899256840674593}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: butterfly
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1520,12 +1540,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5391563201008312733}
   - component: {fileID: 6296155064637418527}
   - component: {fileID: 6989927491156296816}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: time
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1595,7 +1616,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4420310134267839563}
   - component: {fileID: 5241254857139940018}
@@ -1603,6 +1624,7 @@ GameObject:
   - component: {fileID: 2872292215690710448}
   - component: {fileID: 3444986318680498971}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: HeaderText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1704,12 +1726,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4454236157551206563}
   - component: {fileID: 2547702562493788601}
   - component: {fileID: 5630192877518882952}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: di
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1779,12 +1802,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1558841838775450779}
   - component: {fileID: 5204814725679168630}
   - component: {fileID: 2882381372996090345}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: butterflyTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1858,13 +1882,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3516704815156020835}
   - component: {fileID: 6570704403435383636}
   - component: {fileID: 6632823251001222310}
   - component: {fileID: 5605398681675230633}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: value
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1953,12 +1978,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2063804705349069209}
   - component: {fileID: 9065121106625726456}
   - component: {fileID: 3643811018289614266}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: butterflytime
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2032,13 +2058,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7536145036175338489}
   - component: {fileID: 1509648557489664752}
   - component: {fileID: 1303415556843166227}
   - component: {fileID: 174887720494410875}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: taskOverText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2125,7 +2152,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4952630412586623609}
   - component: {fileID: 6603564638072338236}
@@ -2133,6 +2160,7 @@ GameObject:
   - component: {fileID: 2010187109092355964}
   - component: {fileID: 5665529210540912719}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: taskbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2240,12 +2268,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4014527868174156058}
   - component: {fileID: 6842911734292706032}
   - component: {fileID: 851888652934865350}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}

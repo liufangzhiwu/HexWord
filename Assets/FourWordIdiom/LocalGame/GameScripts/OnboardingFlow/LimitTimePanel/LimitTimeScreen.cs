@@ -10,6 +10,7 @@ public class LimitTimeScreen : UIWindow
     [SerializeField] private GameObject minTimeObj; // 关闭按钮
     [SerializeField] private Button helpBtn; // 关闭按钮
     [SerializeField] private Button closeBtn; // 关闭按钮
+    [SerializeField] private Button hideBtn; // 关闭按钮
     [SerializeField] private Slider slider; 
     [SerializeField] private Image titleImage; 
     [SerializeField] private Image fantitleImage;
@@ -189,6 +190,7 @@ public class LimitTimeScreen : UIWindow
     protected override void InitializeUIComponents()
     {
         closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        hideBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
         helpBtn.AddClickAction(OnHelpBtn);
     }
     

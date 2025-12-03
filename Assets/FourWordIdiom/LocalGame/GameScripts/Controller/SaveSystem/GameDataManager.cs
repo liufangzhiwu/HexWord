@@ -234,7 +234,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
             if (dataInitialized)
                 CommitGameData();
        
-            if(Game.Ads.IsPlaying) return; //播放广告中
+            if(Game.Ads?.IsPlaying == true) return; //播放广告中
             AnalyticMgr.GameEnd();
                 
             requireFocusCheck = true;

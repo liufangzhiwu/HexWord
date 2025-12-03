@@ -27,10 +27,10 @@ namespace Middleware
 
         public void ShowReward(Define.AdKey key, Action<bool> callback)
         {
-//#if UNITY_EDITOR
+#if UNITY_EDITOR||Unity_ShowLog
             callback(true);
             return;
-//#endif
+#endif
             AdCompletedCallBackR = callback;
             // var ad = _rewardedAds[key];
             // if (ad != null)
