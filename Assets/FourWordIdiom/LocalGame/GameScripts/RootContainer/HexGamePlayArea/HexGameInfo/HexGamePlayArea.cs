@@ -176,7 +176,7 @@ public class HexGamePlayArea : UIWindow
         yield return new WaitForSeconds(0.2f);
 
         SetupGame();
-        PuzzleTipsBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=3);
+        PuzzleTipsBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=10);
         LayerBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=2);
         // 获取 RectTransform 组件
         RectTransform rectTransform = GetComponent<RectTransform>();
@@ -416,7 +416,7 @@ public class HexGamePlayArea : UIWindow
             GuideSystem.Instance.DisplayGuide();
         }
         
-        if (CurStageData.StageId == 3&&GameDataManager.Instance.UserData.GetTutorialProgress()==3)
+        if (CurStageData.StageId == 10&&GameDataManager.Instance.UserData.GetTutorialProgress()==3)
         {
             yield return new WaitForSeconds(0.2f);
             GuideSystem.Instance.activeToolObject =PuzzleTipsBtn.gameObject;
