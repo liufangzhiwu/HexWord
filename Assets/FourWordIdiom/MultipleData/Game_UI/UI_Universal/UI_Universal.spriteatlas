@@ -74,6 +74,7 @@ SpriteAtlas:
     - 53c9c9d59227e8a4693359f1993fb1c1: 21300000
     - 6b61421603460774ba285289d2c66971: 21300000
     - 0b8e35468cb38b24a9429e3c768f9002: 21300000
+    - 45270c8608e746346b22959eac6a1158: 21300000
     - 00889f86ede307d4b85dfe110ac9aaf2: 21300000
     - 5fe2a7c6d358b1f4fb0a0e6a75726f8a: 21300000
     - 82e70fc6d2f2cd440ad74bfe9280c237: 21300000
@@ -142,6 +143,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 53c9c9d59227e8a4693359f1993fb1c1, type: 3}
   - {fileID: 21300000, guid: 6b61421603460774ba285289d2c66971, type: 3}
   - {fileID: 21300000, guid: 0b8e35468cb38b24a9429e3c768f9002, type: 3}
+  - {fileID: 21300000, guid: 45270c8608e746346b22959eac6a1158, type: 3}
   - {fileID: 21300000, guid: 00889f86ede307d4b85dfe110ac9aaf2, type: 3}
   - {fileID: 21300000, guid: 5fe2a7c6d358b1f4fb0a0e6a75726f8a, type: 3}
   - {fileID: 21300000, guid: 82e70fc6d2f2cd440ad74bfe9280c237, type: 3}
@@ -209,6 +211,7 @@ SpriteAtlas:
   - UI_Icon_PingWord
   - tipicon
   - UI_Icon_gold
+  - ads
   - giftdi14
   - reseticon
   - UI_Icon_JianWord

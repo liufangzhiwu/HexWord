@@ -50,7 +50,6 @@ public class StageFinishView : UIWindow
         //EventDispatcher.OnChangeHeadIconUpdateUI += UpdateHeadBtnUI;
         //_matchFishtable.CheckFishBtn();
         AudioManager.Instance.PlaySoundEffect("StageFinish");   
-        StartCoroutine(PlayRewardSequence());
         
         //AdsManager.Instance.HideBannerAd();
         
@@ -90,6 +89,7 @@ public class StageFinishView : UIWindow
         {
             _progressSlider.transform.parent.gameObject.SetActive(true);
             StartCoroutine(WaitTimeUpdate());
+            StartCoroutine(PlayRewardSequence());
         }
         
         
@@ -119,7 +119,7 @@ public class StageFinishView : UIWindow
     
     IEnumerator ShowLimitTimeScreen()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1.8f);
         
         if (sliderProgress >=1)
         {
@@ -202,6 +202,7 @@ public class StageFinishView : UIWindow
         
         if (GameCoreManager.Instance.IsTrueAuto)
         {
+            yield return new WaitForSeconds(1.5f);
             OnNextStageButtonClicked();
         }
     }

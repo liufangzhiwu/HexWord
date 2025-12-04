@@ -50,7 +50,7 @@ public class LimitBtnTable : MonoBehaviour
                 }
                 Effect.gameObject.SetActive(false);
                 AddCount.gameObject.SetActive(false);
-                if (GameDataManager.Instance.UserData.levelMode == 1)
+                if (GameDataManager.Instance.UserData.levelMode == 3)
                 {
                     AddCount.text = "+" + StageHexController.Instance.LimitPuzzlecount ;
                 }else if (GameDataManager.Instance.UserData.levelMode == 2)

@@ -54,7 +54,7 @@ public class WordDetailTable : MonoBehaviour
         if (entry != null)
         {
             if(entry.Pinyin != null)
-                pinText.text ="("+entry.Pinyin+")";
+                pinText.text =""+entry.Pinyin+"";
             //意味
             if (!string.IsNullOrEmpty(entry.Definition))
             {

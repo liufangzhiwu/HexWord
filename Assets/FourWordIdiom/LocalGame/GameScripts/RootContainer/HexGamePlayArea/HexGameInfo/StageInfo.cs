@@ -16,6 +16,7 @@ public class BoardGame
     public int rows;
     public int cols;
     public int minRow;
+    public int maxRow;
     public int minCol;
     public List<List<List<char>>> board; // 三维列表：[行][列][字符层]
 }
@@ -256,6 +257,7 @@ public class StageInfo
             rows = size.rows,
             cols = size.cols,
             minRow = size.minRow,
+            maxRow = 0,
             minCol = size.minCol,
             board = new List<List<List<char>>>()
         };
@@ -369,6 +371,8 @@ public class StageInfo
             Debug.LogError("Pass content is empty");
             return;
         }
+        
+        int maxRow = int.MinValue;
 
         string[] cells = passContent.Split('|');
 
@@ -410,9 +414,14 @@ public class StageInfo
 
             if (HexType == 1)
             {
-                int xoffset = (_boardData.rows)%2==0 ? 0 : 1;
-                row = (_boardData.rows- int.Parse(position[0]))+xoffset;
-                col = int.Parse(position[1]);       
+                int xoffset = (_boardData.rows-2)%2==0 ? 0 : 1;
+                row = (_boardData.rows-2- int.Parse(position[0]))+xoffset;
+                col = int.Parse(position[1]); 
+                
+                if(row>maxRow)
+                {
+                    maxRow=row;
+                }
             }
           
             // 确保位置在棋盘范围内
@@ -444,7 +453,14 @@ public class StageInfo
                 // 调试输出
                 Debug.Log($"Cell ({row}, {col}) layers: {string.Join(", ", cellChars)}");
             }
+        }
+
+        if (_HexType == 1)
+        {
+            _boardData.maxRow=maxRow;
             
+            // 调试输出
+            Debug.Log($"maxRow {_boardData.maxRow},minRow {_boardData.minRow},minCol {_boardData.minCol},rows {_boardData.rows}");
         }
     }
 
@@ -485,8 +501,8 @@ public class StageInfo
 
                 if (HexType == 1)
                 {
-                    int xoffset = (_boardData.rows)%2==0 ? 0 : 1;
-                    int row = (_boardData.rows)- int.Parse(blockParts[2])+xoffset;
+                    int xoffset = (_boardData.rows-2)%2==0 ? 0 : 1;
+                    int row = (_boardData.rows-2)- int.Parse(blockParts[2])+xoffset;
                     idiomBlock.position = new Vector2Int(row, int.Parse(blockParts[3]));
                 }
 

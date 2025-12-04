@@ -18,10 +18,7 @@ public class ChoicePuzzleTable : MonoBehaviour
     [Header("UI组件")]
     [SerializeField] private CanvasGroup container;
     [SerializeField] private Text selectedLettersText;
-    //[SerializeField] private Image backgroundImage;
-    //[SerializeField] private ParticleSystem successParticles;
-    //[SerializeField] private ParticleSystem errorParticles;
-
+  
     [Header("动画设置")]
     [SerializeField] private float fadeDuration = 0.2f;
     [SerializeField] private float shakeDuration = 0.5f;
@@ -68,7 +65,6 @@ public class ChoicePuzzleTable : MonoBehaviour
         container.alpha = 1f;        
 
         // 重置位置和缩放
-        (container.transform as RectTransform).anchoredPosition = Vector2.zero;
         container.transform.localScale = originalScale * 0.9f;
         container.transform.DOScale(originalScale, 0.1f).SetEase(Ease.OutBack);
 
@@ -156,23 +152,6 @@ public class ChoicePuzzleTable : MonoBehaviour
     {
         container.alpha = 0f;
         container.transform.localScale = originalScale * 0.8f;
-    }
-
-    /// <summary>
-    /// 显示警告状态（单词存在但未完全选择）
-    /// </summary>
-    public void ShowWarning()
-    {
-        if (currentAnimation != null)
-        {
-            StopCoroutine(currentAnimation);
-        }
-
-        //backgroundImage.color = warningColor;
-        container.transform.DOShakePosition(0.3f, new Vector3(5f, 0f, 0f), 10, 90, false, true);
-
-        // 闪烁效果
-        selectedLettersText.DOColor(new Color(1f, 0.9f, 0.3f, 1f), 0.2f).SetLoops(4, LoopType.Yoyo);
     }
 
     private IEnumerator ShakeRoutine()

@@ -98,7 +98,6 @@ SpriteAtlas:
     - b1554a56136fb61458c4f37325b460ec: 21300000
     - 3bc8c5766b532194fb94596febe8212b: 21300000
     - 3501e58691a63d3499d60cac12aa8c0d: 21300000
-    - 45270c8608e746346b22959eac6a1158: 21300000
     - 67e7e4a65a66b3c439abec9a33a8e789: 21300000
     - bacf16f60517b0c48a35fa934a061ced: 21300000
     - 2f90571785b2c234ba02d441737037eb: 21300000
@@ -193,7 +192,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: b1554a56136fb61458c4f37325b460ec, type: 3}
   - {fileID: 21300000, guid: 3bc8c5766b532194fb94596febe8212b, type: 3}
   - {fileID: 21300000, guid: 3501e58691a63d3499d60cac12aa8c0d, type: 3}
-  - {fileID: 21300000, guid: 45270c8608e746346b22959eac6a1158, type: 3}
   - {fileID: 21300000, guid: 67e7e4a65a66b3c439abec9a33a8e789, type: 3}
   - {fileID: 21300000, guid: bacf16f60517b0c48a35fa934a061ced, type: 3}
   - {fileID: 21300000, guid: 2f90571785b2c234ba02d441737037eb, type: 3}
@@ -287,7 +285,6 @@ SpriteAtlas:
   - leftjian
   - timei
   - hua1
-  - ads
   - time
   - left
   - target
