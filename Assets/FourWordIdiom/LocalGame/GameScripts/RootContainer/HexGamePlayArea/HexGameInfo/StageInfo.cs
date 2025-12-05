@@ -429,7 +429,7 @@ public class StageInfo
                     {
                         mincol=new Vector2Int(row,col);
                     }
-                    else if (row <= mincol.x&&xoffset==0)
+                    else if (row%2==0)
                     {
                         mincol=new Vector2Int(row,col);
                     }
