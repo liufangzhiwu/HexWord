@@ -82,12 +82,65 @@ public class WordMatrixExplorer
         //无解时处理逻辑
         if (discoveredWords.Count <= 0)
         {
-            
+            foreach (string word in LevelLexicon)
+            {
+                IdiomData idiomData = StageHexController.Instance.CurStageInfo.idioms
+                    .FirstOrDefault(idiom => idiom.word.Equals(word));
+                
+                string currentWord = "";
+                IdiomBlock leftBlock = null;
+                
+                // 检查是否是完整的成语
+                if (idiomData != null)
+                {
+                    foreach (var idiomBlock in idiomData.blocks)
+                    {
+                        char cellChar = GameBoard.board[idiomBlock.position.x][idiomBlock.position.y][0];
+                        if (cellChar.ToString() == idiomBlock.character)
+                        {
+                            currentWord += cellChar;
+                        }
+                        else
+                        {
+                            leftBlock = idiomBlock;
+                        }
+                    }
+
+                    if (currentWord.Length > 2&&leftBlock!=null)
+                    {
+                        char targetChar = leftBlock.character.ToCharArray()[0];
+                        
+                        List<char> cellChars = StageHexController.Instance.CurStageInfo.CurBoardData.board[leftBlock.position.x][leftBlock.position.y];
+                        
+                        int findCharCount = cellChars.FindAll(x => x == targetChar).Count;
+                        
+                        if(findCharCount<=1) continue;
+                        
+                        char oldcellChar = GameBoard.board[leftBlock.position.x][leftBlock.position.y][0];
+                        
+                        GameBoard.board[leftBlock.position.x][leftBlock.position.y][0] = leftBlock.character.ToCharArray()[0];
+                        GameBoard.board[leftBlock.position.x][leftBlock.position.y][1] = oldcellChar;
+
+                        discoveredWords.Add(word);
+                        
+                        return discoveredWords;
+                    }
+                    
+                }
+            }
         }
 
         return discoveredWords;
     }
 
+    /// <summary>
+    /// 从指定位置开始探索单词矩阵
+    /// </summary>
+    /// <param name="row"></param>
+    /// <param name="col"></param>
+    /// <param name="currentWord"></param>
+    /// <param name="foundWords"></param>
+    /// <param name="visited"></param>
     private void ExploreFromPosition(int row, int col, string currentWord,
                                     HashSet<string> foundWords, bool[,] visited)
     {
