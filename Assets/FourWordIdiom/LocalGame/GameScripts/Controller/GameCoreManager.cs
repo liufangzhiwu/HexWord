@@ -57,8 +57,7 @@ public sealed class GameCoreManager: MonoBehaviour
         IsTrueAuto = false;
         AutoLevelTalbe.gameObject.SetActive(false);
 #endif
-        
-        
+
     }
     
     private void OnAutoLevelTalbeValueChanged(bool ison)
