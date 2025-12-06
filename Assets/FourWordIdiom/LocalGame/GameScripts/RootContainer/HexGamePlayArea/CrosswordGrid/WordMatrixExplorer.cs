@@ -49,6 +49,8 @@ public class WordMatrixExplorer
         (-1, 1)  // 右下
     };
 
+    public IdiomBlock leftBlock;
+
     public WordMatrixExplorer(BoardGame gameBoard, List<string> levelWords)
     {
         GameBoard = gameBoard;
@@ -88,7 +90,7 @@ public class WordMatrixExplorer
                     .FirstOrDefault(idiom => idiom.word.Equals(word));
                 
                 string currentWord = "";
-                IdiomBlock leftBlock = null;
+                leftBlock = null;
                 
                 // 检查是否是完整的成语
                 if (idiomData != null)
@@ -110,6 +112,8 @@ public class WordMatrixExplorer
                     {
                         char targetChar = leftBlock.character.ToCharArray()[0];
                         
+                        StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
+                        
                         List<char> cellChars = StageHexController.Instance.CurStageInfo.CurBoardData.board[leftBlock.position.x][leftBlock.position.y];
                         
                         int findCharCount = cellChars.FindAll(x => x == targetChar).Count;
@@ -118,14 +122,12 @@ public class WordMatrixExplorer
                         
                         char oldcellChar = GameBoard.board[leftBlock.position.x][leftBlock.position.y][0];
                         
-                        GameBoard.board[leftBlock.position.x][leftBlock.position.y][0] = leftBlock.character.ToCharArray()[0];
+                        GameBoard.board[leftBlock.position.x][leftBlock.position.y][0] = targetChar;
                         GameBoard.board[leftBlock.position.x][leftBlock.position.y][1] = oldcellChar;
 
                         discoveredWords.Add(word);
-                        
                         return discoveredWords;
                     }
-                    
                 }
             }
         }

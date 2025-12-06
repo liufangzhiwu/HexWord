@@ -956,7 +956,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 {
                     col = start.Column - i / 2;
                 }
-
                 Debug.Log($"左斜向计算位置:{row}:{col}");
             }
             else if(isRightDiagonal) // isRightDiagonal
@@ -1362,7 +1361,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// <summary>
     /// 更新剩余图块的显示（线程安全版本）
     /// </summary>
-    private void UpdateRemainingTiles(int row, int col, List<char> layers)
+    public void UpdateRemainingTiles(int row, int col, List<char> layers)
     {
         // 修复5：添加安全校验
         if (row < 0 || row >= gridList.Count) return;

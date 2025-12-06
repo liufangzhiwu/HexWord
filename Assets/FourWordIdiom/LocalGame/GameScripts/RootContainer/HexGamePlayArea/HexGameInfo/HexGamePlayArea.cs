@@ -443,6 +443,17 @@ public class HexGamePlayArea : UIWindow
     {
         selectablePuzzles.Clear();
         selectablePuzzles = boardExplorer.ExploreWordMatrix();
+        
+        if (boardExplorer.leftBlock != null&&selectablePuzzles.Count>0)
+        {
+            string str=selectablePuzzles.ElementAt(0);
+            if(str.Contains(boardExplorer.leftBlock.character))
+            {
+                //更新重置的字块
+                List<char> layers = CurStageData.BoardSnapshot.board[boardExplorer.leftBlock.position.x][boardExplorer.leftBlock.position.y];
+                crossPuzzleGrid.UpdateRemainingTiles(boardExplorer.leftBlock.position.x, boardExplorer.leftBlock.position.y, layers);
+            }
+        }
     }
 
     private void UpdateLeftPuzzles()
