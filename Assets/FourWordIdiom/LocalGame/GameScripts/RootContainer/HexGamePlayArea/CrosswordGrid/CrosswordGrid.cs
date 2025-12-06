@@ -184,11 +184,11 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
 
-            if (cols >= 6)
+            if (cols+1 >= 6)
             {
-                temptileSize = sizemaxw-(cols-6)*35;
+                temptileSize = sizemaxw-(cols+1-6)*25;
                 tileSize = Mathf.Min(temptileSize, tileSize);
-                tileSize = Mathf.Max(175, tileSize);
+                tileSize = Mathf.Max(180, tileSize);
             }
             
             if (rows >= 6)
@@ -401,7 +401,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         );
         
         float soffsetx =0.5f;
-        float soffsety =rows>=7? 0f:0.5f;
+        float soffsety =rows>=7&&curStageData.BoardSnapshot.minRow>1&&curStageData.BoardSnapshot.minRow%2!=0? 0f:0.7f;
         
         // 计算基础位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol+soffsetx) * horizontalSpacing;

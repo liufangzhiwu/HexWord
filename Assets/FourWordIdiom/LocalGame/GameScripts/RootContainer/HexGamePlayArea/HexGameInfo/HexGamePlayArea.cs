@@ -15,6 +15,7 @@ public class HexGamePlayArea : UIWindow
     [SerializeField] private GameObject ButterflyObj;
     [SerializeField] private GameObject StageOverObj;      
     [SerializeField] private GameObject ResetCostObj;      
+    [SerializeField] private GameObject ResetAdsObj;      
     [SerializeField] private GameObject ResetCounttxt;        
          
     [SerializeField] private GameObject HintCostObj;       
@@ -109,8 +110,19 @@ public class HexGamePlayArea : UIWindow
         else
         {
             ResetCostObj.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
-            ResetCostObj.gameObject.SetActive(true);
             ResetCounttxt.gameObject.SetActive(false);
+            
+            ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
+            if (!CanUseTool(toolInfo))
+            {
+                ResetAdsObj.gameObject.SetActive(true);
+                ResetCostObj.gameObject.SetActive(false);
+            }
+            else
+            {
+                ResetAdsObj.gameObject.SetActive(false);
+                ResetCostObj.gameObject.SetActive(true);
+            }
         }
 
         if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)

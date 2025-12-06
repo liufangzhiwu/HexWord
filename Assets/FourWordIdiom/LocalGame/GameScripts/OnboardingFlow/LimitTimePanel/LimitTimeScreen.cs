@@ -98,6 +98,7 @@ public class LimitTimeScreen : UIWindow
         txttips.text = string.Format(MultilingualManager.Instance.GetString("limitedRewardsDes06"), limitData.num- wordcount);
         
         float progress = (float)wordcount/limitData.num;
+        progress=Mathf.Max(progress,0.04f);
         
         slider.DOValue(progress,durtime).OnComplete(() =>
         {
@@ -213,7 +214,7 @@ public class LimitTimeScreen : UIWindow
 
     protected override void OnDisable()
     {
-         LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
+        LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
         //EventDispatcher.instance.TriggerUpdateLayerCoin(false, true);
         LimitTimeManager.Instance.OnLimitTimeUpdated -= UpdateTimeDisplay; // 订阅事件
         base.OnDisable();

@@ -90,7 +90,19 @@ namespace Middleware
         {
             Time.timeScale = 1;
             AudioListener.pause = false; 
+#if UNITY_OPENHARMONY
             Ads.IsPlaying = false;
+#endif
+        }
+        
+        public static void Ratex2Game()
+        {
+            Time.timeScale = 2;
+            AudioListener.pause = false; 
+#if UNITY_OPENHARMONY
+            Ads.IsPlaying = false;
+#endif
+            
         }
         
         public static string GetUniqueId()
