@@ -156,7 +156,7 @@ public class WordMatrixExplorer
         // 获取单元格中的字符
         if (GameBoard.board[row][col].Count > 1)
         {
-            chars = GameBoard.board[row][col].GetRange(0, GameBoard.board[row][col].Count); 
+            chars = GameBoard.board[row][col]; 
         }
           
         char cellChar = GameBoard.board[row][col][0];
@@ -168,36 +168,39 @@ public class WordMatrixExplorer
         {
             if (word.StartsWith(newWord))
             {
-                if (chars.Count > 1)
-                {
-                    List<char> tchars = chars.GetRange(1,chars.Count-1);
-                    if (tchars.Contains(cellChar))
-                    {
-                        IdiomData idiomData = StageHexController.Instance.CurStageInfo.idioms
-                            .FirstOrDefault(idiom => idiom.word.Equals(word));
-
-                        // 检查是否是完整的成语
-                        if (idiomData != null)
-                        {
-                            IdiomBlock idiomBlock = idiomData.blocks.Find(block => block.character == cellChar.ToString());
-                            if(idiomBlock!=null&&idiomBlock.index==chars.Count)
-                            {
-                                isPrefix = true;
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        isPrefix = true;
-                        break;
-                    }
-                }
-                else
-                {
+                // if (chars.Count > 1)
+                // {
+                //     List<char> tchars = chars.GetRange(1,chars.Count-1);
+                //     if (tchars.Contains(cellChar))
+                //     {
+                //         IdiomData idiomData = StageHexController.Instance.CurStageInfo.idioms
+                //             .FirstOrDefault(idiom => idiom.word.Equals(word));
+                //
+                //         
+                //         chars=StageHexController.Instance.CurStageInfo.CurBoardData.board[row][col];
+                //         
+                //         // 检查是否是完整的成语
+                //         if (idiomData != null)
+                //         {
+                //             IdiomBlock idiomBlock = idiomData.blocks.Find(block => block.character == cellChar.ToString());
+                //             if(idiomBlock!=null&&idiomBlock.index==chars.Count)
+                //             {
+                //                 isPrefix = true;
+                //                 break;
+                //             }
+                //         }
+                //     }
+                //     else
+                //     {
+                //         isPrefix = true;
+                //         break;
+                //     }
+                // }
+                // else
+                // {
                     isPrefix = true;
                     break;
-                }
+                //}
             }
         }
 

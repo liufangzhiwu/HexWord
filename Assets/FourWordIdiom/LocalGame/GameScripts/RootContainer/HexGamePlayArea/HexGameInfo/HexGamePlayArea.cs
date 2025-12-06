@@ -106,6 +106,7 @@ public class HexGamePlayArea : UIWindow
             ResetCounttxt.GetComponentInChildren<Text>().text =GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
             ResetCostObj.gameObject.SetActive(false);
             ResetCounttxt.gameObject.SetActive(true);
+            ResetAdsObj.gameObject.SetActive(false);
         }
         else
         {

@@ -142,8 +142,8 @@ public class Account_harmony : IAccounts
 
     public void InitGamePerformance() 
     {
-        string bundleName = PlayerSettings.applicationIdentifier;
-        string appVersion = PlayerSettings.bundleVersion;
+        string bundleName = Application.identifier;
+        string appVersion = Application.version;
         int messageType = 0;
         OHSDKKitManager.Instance.InitGamePerformance(bundleName, appVersion, messageType);
     }
