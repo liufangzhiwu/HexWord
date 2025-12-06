@@ -188,7 +188,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             {
                 temptileSize = sizemaxw-(cols+1-6)*25;
                 tileSize = Mathf.Min(temptileSize, tileSize);
-                tileSize = Mathf.Max(180, tileSize);
+                tileSize = Mathf.Max(170, tileSize);
             }
             
             if (rows >= 6)

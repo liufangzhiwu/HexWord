@@ -150,7 +150,7 @@ public class HexGamePlayArea : UIWindow
         EventDispatcher.instance.OnAutoPassLevel += AutoPassLevel;
         
         StartCoroutine(SetupGameData());
-        boardExplorer = new WordMatrixExplorer(CurStageData.BoardSnapshot,CurStageInfo.Puzzles);
+        boardExplorer = new WordMatrixExplorer(CurStageData.BoardSnapshot,CurStageData.GetLeftPuzzles());
         AudioManager.Instance.PlaySoundEffect("EnterStage");
         EventDispatcher.instance.TriggerChoicePuzzleSetStatus(true);
         

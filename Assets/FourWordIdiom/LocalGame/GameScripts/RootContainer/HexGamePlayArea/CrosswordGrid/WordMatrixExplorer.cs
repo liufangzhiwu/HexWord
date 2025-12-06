@@ -67,7 +67,6 @@ public class WordMatrixExplorer
             {
                 if (GameBoard.board[row][col].Count > 0)
                 {
-                    //int mxa = GameBoard.board[row][col].Count - 1;
                     if (GameBoard.board[row][col][0] != '\0' && !visited[row, col])
                     {
                         newDirections = -1;
@@ -88,9 +87,14 @@ public class WordMatrixExplorer
             visited[row, col] || GameBoard.board[row][col].Count == 0 ||
             GameBoard.board[row][col][0] == '\0')
             return;
-
+        
+        List<char> chars = new List<char>();
         // 获取单元格中的字符
-        //int mxa = GameBoard.board[row][col].Count - 1;
+        if (GameBoard.board[row][col].Count > 1)
+        {
+            chars = GameBoard.board[row][col].GetRange(0, GameBoard.board[row][col].Count); 
+        }
+          
         char cellChar = GameBoard.board[row][col][0];
         string newWord = currentWord + cellChar;
 
@@ -100,8 +104,35 @@ public class WordMatrixExplorer
         {
             if (word.StartsWith(newWord))
             {
-                isPrefix = true;
-                break;
+                if (chars.Count > 1)
+                {
+                    if (chars.GetRange(1,chars.Count-1).Contains(cellChar))
+                    {
+                        IdiomData idiomData = StageHexController.Instance.CurStageInfo.idioms
+                            .FirstOrDefault(idiom => idiom.word.Equals(word));
+
+                        // 检查是否是完整的成语
+                        if (idiomData != null)
+                        {
+                            IdiomBlock idiomBlock = idiomData.blocks.Find(block => block.character == cellChar.ToString());
+                            if(idiomBlock!=null&&idiomBlock.index==chars.Count)
+                            {
+                                isPrefix = true;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        isPrefix = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    isPrefix = true;
+                    break;
+                }
             }
         }
 
@@ -110,7 +141,6 @@ public class WordMatrixExplorer
             newDirections = -1;
             return;
         }
-            
 
         // 标记当前单元格已访问
         visited[row, col] = true;
