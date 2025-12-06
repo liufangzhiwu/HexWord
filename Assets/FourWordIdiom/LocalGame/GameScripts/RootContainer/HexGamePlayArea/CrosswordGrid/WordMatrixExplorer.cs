@@ -5,7 +5,7 @@ using UnityEngine;
 public class WordMatrixExplorer
 {
     private BoardGame GameBoard;
-    private readonly HashSet<string> LevelLexicon;
+    private HashSet<string> LevelLexicon;
     private int newDirections=-1;
 
     // 平顶六边形网格的六个方向定义（行为偶数时）
@@ -57,6 +57,9 @@ public class WordMatrixExplorer
 
     public HashSet<string> ExploreWordMatrix()
     {
+
+        LevelLexicon = new HashSet<string>(StageHexController.Instance.CurStageData.GetLeftPuzzles());
+        
         GameBoard = StageHexController.Instance.CurStageData.BoardSnapshot;
         HashSet<string> discoveredWords = new HashSet<string>();
         bool[,] visited = new bool[GameBoard.rows, GameBoard.cols];
@@ -74,6 +77,12 @@ public class WordMatrixExplorer
                     }
                 }
             }
+        }
+
+        //无解时处理逻辑
+        if (discoveredWords.Count <= 0)
+        {
+            
         }
 
         return discoveredWords;
@@ -106,7 +115,8 @@ public class WordMatrixExplorer
             {
                 if (chars.Count > 1)
                 {
-                    if (chars.GetRange(1,chars.Count-1).Contains(cellChar))
+                    List<char> tchars = chars.GetRange(1,chars.Count-1);
+                    if (tchars.Contains(cellChar))
                     {
                         IdiomData idiomData = StageHexController.Instance.CurStageInfo.idioms
                             .FirstOrDefault(idiom => idiom.word.Equals(word));
