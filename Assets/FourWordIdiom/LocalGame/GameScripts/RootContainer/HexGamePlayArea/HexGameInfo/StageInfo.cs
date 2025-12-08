@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 #region 数据结构
@@ -21,6 +22,7 @@ public class BoardGame
     /// </summary>
     public Vector2Int minColIndex;
     public int minirnidex;
+    public int minicnidex;
     public int minCol;
     public List<List<List<char>>> board; // 三维列表：[行][列][字符层]
 }
@@ -377,6 +379,7 @@ public class StageInfo
         
         Vector2Int mincol = new Vector2Int(int.MaxValue,int.MaxValue);
         int minrow = int.MaxValue;
+        int mincow = int.MaxValue;
 
         string[] cells = passContent.Split('|');
 
@@ -440,6 +443,29 @@ public class StageInfo
                     minrow=row;
                 }
             }
+            else
+            {
+                int yoffset = _boardData.cols%2==1 ? 0 : 1;
+                row = int.Parse(position[1])-_boardData.minRow+1; 
+                col = int.Parse(position[0])-_boardData.minCol+yoffset; 
+                
+                if(row<=mincol.x)
+                {
+                    if (row < mincol.y)
+                    {
+                        mincol=new Vector2Int(row,col);
+                    }
+                    else if (col%2==0)
+                    {
+                        mincol=new Vector2Int(row,col);
+                    }
+                }
+                
+                if(col<mincow)
+                {
+                    mincow=col;
+                }
+            }
           
             // 确保位置在棋盘范围内
             if (row >= 0 && row < _boardData.rows &&
@@ -472,13 +498,17 @@ public class StageInfo
             }
         }
 
+        _boardData.minColIndex=mincol;
+        
         if (_HexType == 1)
         {
             _boardData.minirnidex=minrow;
-            _boardData.minColIndex=mincol;
-            
             // 调试输出
             Debug.Log($" minindex {_boardData.minirnidex},minCol {_boardData.minColIndex},rows {_boardData.rows}");
+        }
+        else
+        {
+            _boardData.minicnidex=mincow;
         }
     }
 
@@ -525,6 +555,14 @@ public class StageInfo
                     int col = int.Parse(blockParts[3])-_boardData.minCol+1; 
                     //row=row-_boardData.minRow+xoffset;
                    
+                    idiomBlock.position = new Vector2Int(row, col);
+                }
+                else
+                {
+                    int yoffset = _boardData.cols%2==1 ? 0 : 1;
+                    int row = int.Parse(blockParts[3])-_boardData.minRow+1; 
+                    int col = int.Parse(blockParts[2])-_boardData.minCol+yoffset; 
+                    
                     idiomBlock.position = new Vector2Int(row, col);
                 }
 

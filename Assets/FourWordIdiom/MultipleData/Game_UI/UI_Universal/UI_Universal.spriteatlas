@@ -86,6 +86,7 @@ SpriteAtlas:
     - 1acd99e7e86078343868dbb64a184a3a: 21300000
     - 50691ce7b590eeb468e744b8217912f6: 21300000
     - 69178c1874146ef4b8ca42635a94133a: 21300000
+    - 41004f48839c05e4cb6c021d0611d66c: 21300000
     - 58a29598c84c90c4c88209e07f1c6563: 21300000
     - b17c8ea85ebcc034192922b881cb5a81: 21300000
     - 7a7a40c867e4d594ba4102bc7621cc42: 21300000
@@ -155,6 +156,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 1acd99e7e86078343868dbb64a184a3a, type: 3}
   - {fileID: 21300000, guid: 50691ce7b590eeb468e744b8217912f6, type: 3}
   - {fileID: 21300000, guid: 69178c1874146ef4b8ca42635a94133a, type: 3}
+  - {fileID: 21300000, guid: 41004f48839c05e4cb6c021d0611d66c, type: 3}
   - {fileID: 21300000, guid: 58a29598c84c90c4c88209e07f1c6563, type: 3}
   - {fileID: 21300000, guid: b17c8ea85ebcc034192922b881cb5a81, type: 3}
   - {fileID: 21300000, guid: 7a7a40c867e4d594ba4102bc7621cc42, type: 3}
@@ -223,6 +225,7 @@ SpriteAtlas:
   - UI_Icon_JianTipWord
   - shop_tip
   - shopgift2
+  - btnAds
   - jian
   - gold2
   - icon_layer

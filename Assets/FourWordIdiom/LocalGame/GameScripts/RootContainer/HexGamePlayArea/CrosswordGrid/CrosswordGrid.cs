@@ -212,12 +212,30 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             float hexWidth = activeTileSize;  // 六边形宽度（水平方向）
             float horizontalSpacing = hexWidth*0.9f;                   // 列间距
             float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
-
             
             // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
             float totalGridWidth = cols * horizontalSpacing;
             float totalGridHeight = rows * verticalSpacing;
         
+            RectTransform rectTransform = transform as RectTransform;
+            // 设置容器大小
+            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
+            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
+        }
+        else
+        {
+            float activeTileSize = StageHexController.Instance.ActiveTileSize;
+
+            // 平顶六边形参数（行对齐）
+            float hexWidth = activeTileSize * Mathf.Sqrt(3) / 2.3f;                  // 六边形宽度（水平方向）
+            float hexHeight = activeTileSize * Mathf.Sqrt(3) / 1.75f;  // 六边形高度（垂直方向）
+            float horizontalSpacing = hexWidth;                  // 列间距（水平方向，无重叠）
+            float verticalSpacing = hexHeight * 0.85f;           // 行间距（垂直方向，考虑重叠）
+
+            // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
+            float totalGridWidth = cols * horizontalSpacing;
+            float totalGridHeight = rows * verticalSpacing;
+            
             RectTransform rectTransform = transform as RectTransform;
             // 设置容器大小
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
@@ -386,37 +404,44 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float hexHeight = activeTileSize * Mathf.Sqrt(3) / 1.75f;  // 六边形高度（垂直方向）
         float horizontalSpacing = hexWidth;                  // 列间距（水平方向，无重叠）
         float verticalSpacing = hexHeight * 0.85f;           // 行间距（垂直方向，考虑重叠）
-
-        int cols=curStageData.BoardSnapshot.cols-curStageData.BoardSnapshot.minCol;
-        int rows=curStageData.BoardSnapshot.rows-curStageData.BoardSnapshot.minRow;
-
-        // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
-        float totalGridWidth = cols * horizontalSpacing;
-        float totalGridHeight = rows * verticalSpacing;
-
-        // 动态计算起始点（居中）
+        
+       RectTransform rectTransform = transform as RectTransform;
+       
         Vector2 bottomLeft = new Vector2(
-            -totalGridWidth / 2f,
-            -totalGridHeight / 2f
+            -rectTransform.rect.width/2,
+            -rectTransform.rect.height/2
         );
+
+        float minposy = bottomLeft.y +
+            (curStageData.BoardSnapshot.minColIndex.x - curStageData.BoardSnapshot.minirnidex + 0.5f) *
+            verticalSpacing - bottomLeft.y;
+
+        float yoffset = minposy>=verticalSpacing ? verticalSpacing/4 : 0;
         
-        float soffsetx =0.5f;
-        float soffsety =rows>=7&&curStageData.BoardSnapshot.minRow>1&&curStageData.BoardSnapshot.minRow%2!=0? 0f:0.7f;
+        bottomLeft.y -= yoffset;
+
+        Debug.Log($"起始坐标 bottomLeft.x={bottomLeft.x} bottomLeft.y={bottomLeft.y} 最小列字符索引 {curStageData.BoardSnapshot.minColIndex}");
         
-        // 计算基础位置（列控制X轴，行控制Y轴）
-        float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol+soffsetx) * horizontalSpacing;
-        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minRow+soffsety) * verticalSpacing;        
+        // 计算当前格子位置（列控制X轴，行控制Y轴）
+        float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minicnidex+0.5f) * horizontalSpacing;
+        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex+0.5f) * verticalSpacing;
         
         // 为奇数列添加垂直偏移（六边形网格特性）
         if ((col & 1) == 1)  // 位运算判断奇数列（比取模运算更快）
         {
             yPos += hexHeight * 0.42f;  // 下移半个垂直间距
         }
+        
         // 取消注释启用层级偏移
         if (layer>=0)
         {
             float layerOffset =layer * LAYER_OFFSET;
             yPos -= layerOffset; // 向下偏移
+        }
+        
+        if (curStageData.BoardSnapshot.minColIndex.x % 2 == 1)
+        {
+            yPos -= horizontalSpacing / 2f;
         }
 
         return new Vector2(xPos, yPos);
@@ -434,6 +459,8 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float hexWidth = activeTileSize;  // 六边形宽度（水平方向）
         float horizontalSpacing = hexWidth*0.9f;                   // 列间距
         float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
+        
+        int cols = curStageData.BoardSnapshot.cols - curStageData.BoardSnapshot.minCol;
         
         RectTransform rectTransform = transform as RectTransform;
        
@@ -458,7 +485,14 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
         if (curStageData.BoardSnapshot.minColIndex.x % 2 == 1)
         {
-            xPos -= horizontalSpacing / 2f;
+            float yrate = 2;
+            List<char> letter = curStageData.BoardSnapshot.board[curStageData.BoardSnapshot.minColIndex.x][cols];
+            if (letter.Count > 0)
+            {
+                yrate= letter[0]!='\0' ? 2: 4;
+            }
+            
+            xPos -= horizontalSpacing / yrate;
         }
         
         // 计算偏移量：层级越低（值越小），偏移越大
