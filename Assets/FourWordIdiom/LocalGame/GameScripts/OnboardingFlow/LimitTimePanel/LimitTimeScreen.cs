@@ -98,7 +98,9 @@ public class LimitTimeScreen : UIWindow
         txttips.text = string.Format(MultilingualManager.Instance.GetString("limitedRewardsDes06"), limitData.num- wordcount);
         
         float progress = (float)wordcount/limitData.num;
-        progress=Mathf.Max(progress,0.04f);
+        
+        if(progress>0&&progress <=0.04f)
+            progress=Mathf.Max(progress,0.04f);
         
         slider.DOValue(progress,durtime).OnComplete(() =>
         {
@@ -121,15 +123,15 @@ public class LimitTimeScreen : UIWindow
                         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedLightLimit,1);
                     });
 
-                    slider.transform.DOScaleZ(1, 0.3f).OnComplete(() =>
-                    {
-                        if (GameDataManager.Instance.UserData.isNeedShowHelp)
-                        {
-                            SystemManager.Instance.ShowPanel(PanelType.LimitHelpScreen);
-                            GameDataManager.Instance.UserData.isNeedShowHelp = false;
-                        }
-                        //closeBtn.enabled = true;
-                    });
+                    // slider.transform.DOScaleZ(1, 0.3f).OnComplete(() =>
+                    // {
+                    //     if (GameDataManager.Instance.UserData.isNeedShowHelp)
+                    //     {
+                    //         SystemManager.Instance.ShowPanel(PanelType.LimitHelpScreen);
+                    //         GameDataManager.Instance.UserData.isNeedShowHelp = false;
+                    //     }
+                    //     //closeBtn.enabled = true;
+                    // });
                 }
                 else
                 {
@@ -146,7 +148,7 @@ public class LimitTimeScreen : UIWindow
     {
         int wordcount = LimitTimeManager.Instance.GetCurWordCount();
         limitData = LimitTimeManager.Instance.CurlimitData;
-        // slider.DOValue((float)wordcount / limitData.num, 0);
+         slider.DOValue((float)wordcount / limitData.num, 0);
         
         if (wordcount >= limitData.num)
         {

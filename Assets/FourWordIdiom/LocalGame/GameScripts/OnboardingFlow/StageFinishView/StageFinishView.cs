@@ -100,6 +100,11 @@ public class StageFinishView : UIWindow
     {
         if (_progressSlider.value>=1)
         {
+            if (LimitTimeManager.Instance.IsClaim())
+            {
+                SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
+                yield break;
+            }
             LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
             _progressSlider.value = 0;
             _progressText.text = 0 + "/" + limitData.num;
@@ -164,6 +169,7 @@ public class StageFinishView : UIWindow
         if (!string.IsNullOrEmpty(time))
         {
             _tasktable.taskTime.text = time; // 更新文本
+            _limitBtnTable.txtwordprogress.text = time; // 更新文本
         }
     }
     

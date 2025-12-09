@@ -445,7 +445,8 @@ public class StageInfo
             }
             else
             {
-                int yoffset = _boardData.cols%2==1 ? 0 : 1;
+                int yoffset = _boardData.minCol%2==0 ? 0 : 1;
+                int xoffset = _boardData.rows%2==0 ? 0 : 1;
                 row = int.Parse(position[1])-_boardData.minRow+1; 
                 col = int.Parse(position[0])-_boardData.minCol+yoffset; 
                 
@@ -559,7 +560,8 @@ public class StageInfo
                 }
                 else
                 {
-                    int yoffset = _boardData.cols%2==1 ? 0 : 1;
+                    int yoffset =  _boardData.minCol%2==0 ? 0 : 1;
+                    int xoffset = _boardData.rows%2==0 ? 0 : 1;
                     int row = int.Parse(blockParts[3])-_boardData.minRow+1; 
                     int col = int.Parse(blockParts[2])-_boardData.minCol+yoffset; 
                     

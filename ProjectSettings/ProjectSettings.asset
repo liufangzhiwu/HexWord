@@ -1082,7 +1082,7 @@ PlayerSettings:
   scriptingDefineSymbols:
     Android: UNITY_UOS_SECURITY;Unity_ShowLog
     HMIAndroid: UNITY_UOS_SECURITY
-    OpenHarmony: UNITY_UOS_SECURITY
+    OpenHarmony: UNITY_UOS_SECURITY;Unity_ShowLog
     Server: UNITY_UOS_SECURITY
     Standalone: UNITY_UOS_SECURITY
     WebGL: UNITY_UOS_SECURITY
@@ -1227,7 +1227,7 @@ PlayerSettings:
   forceOpenHarmonySDCardPermission: 0
   openHarmonyUseLowAccuracyLocation: 0
   openHarmonyPredefinedPermissions: []
-  openHarmonyUseTuanjieLogo: 1
+  openHarmonyUseTuanjieLogo: 0
   openHarmonyLaunchImage: {fileID: 0}
   openHarmonyLaunchBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
   OpenHarmonyKeystoreName: 

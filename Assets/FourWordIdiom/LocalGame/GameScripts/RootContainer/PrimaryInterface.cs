@@ -198,9 +198,9 @@ public class PrimaryInterface : UIWindow
             }
             else
             {
-                TaskClaim.gameObject.SetActive(true);
-                TaskClaim.GetComponent<CanvasGroup>().DOFade(1,0.2f);
-                tasktimetxt.gameObject.SetActive(false);
+                // TaskClaim.gameObject.SetActive(true);
+                // TaskClaim.GetComponent<CanvasGroup>().DOFade(1,0.2f);
+                // tasktimetxt.gameObject.SetActive(false);
             }
             taskOver.gameObject.SetActive(false);
         }
