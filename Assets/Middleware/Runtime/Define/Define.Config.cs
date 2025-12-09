@@ -8,6 +8,9 @@ namespace Middleware
             public const string TestBannerAdId = "ca-app-pub-3940256099942544/6300978111";
             public const string TestInterstitialAdId = "ca-app-pub-3940256099942544/1033173712";
             public const string TestRewardAdId = "ca-app-pub-3940256099942544/5224354917";
+
+            public const string HUAWEIRewardAdId = "u2k89ub7vq";
+            public const string HUAWEIInterstitialAdId = "teste9ih9j0rc3";
         }
         #endif
         

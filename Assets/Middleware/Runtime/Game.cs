@@ -22,7 +22,7 @@ namespace Middleware
             CreateAccounts();
 #endif
             CreateAnalytic();
-            //CreateShop();
+            CreateShop();
             InitManagers();
         }
 
@@ -46,7 +46,8 @@ namespace Middleware
         private void CreateAd()
         {
     #if UNITY_ANDROID
-            Ads = new Ads_android();
+            // Ads = new Ads_android();
+            Ads = new Ads_huawei();
     #elif UNITY_IOS
             Ads = new Ads_ios();
     #elif UNITY_OPENHARMONY
@@ -70,7 +71,7 @@ namespace Middleware
         private void CreateShop()
         {
     #if UNITY_ANDROID
-            //Shop = new Shop_android();
+            Shop = new Shop_huawei();
     #elif UNITY_IOS
             Shop = new Shop_ios();
     #elif UNITY_OPENHARMONY
@@ -90,7 +91,19 @@ namespace Middleware
         {
             Time.timeScale = 1;
             AudioListener.pause = false; 
+#if UNITY_OPENHARMONY
             Ads.IsPlaying = false;
+#endif
+        }
+        
+        public static void Ratex2Game()
+        {
+            Time.timeScale = 2;
+            AudioListener.pause = false; 
+#if UNITY_OPENHARMONY
+            Ads.IsPlaying = false;
+#endif
+            
         }
         
         public static string GetUniqueId()

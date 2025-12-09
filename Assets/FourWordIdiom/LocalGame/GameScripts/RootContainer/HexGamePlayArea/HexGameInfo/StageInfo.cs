@@ -16,7 +16,11 @@ public class BoardGame
     public int rows;
     public int cols;
     public int minRow;
-    public int maxRow;
+    /// <summary>
+    /// 最小列字符索引
+    /// </summary>
+    public Vector2Int minColIndex;
+    public int minirnidex;
     public int minCol;
     public List<List<List<char>>> board; // 三维列表：[行][列][字符层]
 }
@@ -257,7 +261,6 @@ public class StageInfo
             rows = size.rows,
             cols = size.cols,
             minRow = size.minRow,
-            maxRow = 0,
             minCol = size.minCol,
             board = new List<List<List<char>>>()
         };
@@ -372,7 +375,8 @@ public class StageInfo
             return;
         }
         
-        int maxRow = int.MinValue;
+        Vector2Int mincol = new Vector2Int(int.MaxValue,int.MaxValue);
+        int minrow = int.MaxValue;
 
         string[] cells = passContent.Split('|');
 
@@ -416,11 +420,24 @@ public class StageInfo
             {
                 int xoffset = (_boardData.rows-2)%2==0 ? 0 : 1;
                 row = (_boardData.rows-2- int.Parse(position[0]))+xoffset;
-                col = int.Parse(position[1]); 
+                col = int.Parse(position[1])-_boardData.minCol+1; 
+                //row=row-_boardData.minRow+xoffset;
                 
-                if(row>maxRow)
+                if(col<=mincol.y)
                 {
-                    maxRow=row;
+                    if (col < mincol.y)
+                    {
+                        mincol=new Vector2Int(row,col);
+                    }
+                    else if (row%2==0)
+                    {
+                        mincol=new Vector2Int(row,col);
+                    }
+                }
+                
+                if(row<minrow)
+                {
+                    minrow=row;
                 }
             }
           
@@ -457,10 +474,11 @@ public class StageInfo
 
         if (_HexType == 1)
         {
-            _boardData.maxRow=maxRow;
+            _boardData.minirnidex=minrow;
+            _boardData.minColIndex=mincol;
             
             // 调试输出
-            Debug.Log($"maxRow {_boardData.maxRow},minRow {_boardData.minRow},minCol {_boardData.minCol},rows {_boardData.rows}");
+            Debug.Log($" minindex {_boardData.minirnidex},minCol {_boardData.minColIndex},rows {_boardData.rows}");
         }
     }
 
@@ -501,9 +519,13 @@ public class StageInfo
 
                 if (HexType == 1)
                 {
+                    
                     int xoffset = (_boardData.rows-2)%2==0 ? 0 : 1;
-                    int row = (_boardData.rows-2)- int.Parse(blockParts[2])+xoffset;
-                    idiomBlock.position = new Vector2Int(row, int.Parse(blockParts[3]));
+                    int row = (_boardData.rows-2- int.Parse(blockParts[2]))+xoffset;
+                    int col = int.Parse(blockParts[3])-_boardData.minCol+1; 
+                    //row=row-_boardData.minRow+xoffset;
+                   
+                    idiomBlock.position = new Vector2Int(row, col);
                 }
 
                 idiom.blocks.Add(idiomBlock);

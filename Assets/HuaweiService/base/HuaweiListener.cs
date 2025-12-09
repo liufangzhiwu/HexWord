@@ -21,8 +21,7 @@ namespace HuaweiService
         }
         
         public override void onSuccess(AndroidJavaObject arg0){
-            if(CallBack !=null)
-            {
+         
                 if(CallBack !=null)
                 {
                     Type type = typeof(T);
@@ -30,7 +29,6 @@ namespace HuaweiService
                     ret.obj = arg0;
                     CallBack.Invoke((T)ret);
                 }
-            }
         }
         
     }

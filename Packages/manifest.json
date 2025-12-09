@@ -1,7 +1,5 @@
 {
   "dependencies": {
-    "com.unity.purchasing": "4.13.0",
-    "com.liufangzhiwu.google-ext": "file:local_packages/com.liufangzhiwu.google-ext",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "1.1.6",
     "com.unity.collab-proxy": "2.8.2",

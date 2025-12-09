@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using DG.Tweening;
 using Spine.Unity;
@@ -97,6 +98,12 @@ public class StageFinishView : UIWindow
 
     IEnumerator WaitTimeUpdate()
     {
+        if (_progressSlider.value>=1)
+        {
+            LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
+            _progressSlider.value = 0;
+            _progressText.text = 0 + "/" + limitData.num;
+        }
         yield return new WaitForSeconds(1.5f);
         UpdateProgress();
     }
@@ -106,15 +113,24 @@ public class StageFinishView : UIWindow
         _progressSlider.transform.parent.gameObject.SetActive(true);
         int wordcount = LimitTimeManager.Instance.GetCurWordCount();
         LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
-        float durtime = !isanim?0f:1f;
+        float durtime = !isanim?0f:0.8f;
         sliderProgress = (float)wordcount/limitData.num;    
         int oldProgress = wordcount-StageHexController.Instance.CurStageData.Puzzles.Count;
-        _progressText.text = oldProgress + "/" + LimitTimeManager.Instance.CurlimitData.num;
-    
-        _progressSlider.DOValue(sliderProgress,durtime).OnComplete(() =>
+        oldProgress=Math.Max(oldProgress,0);
+        _progressText.text = oldProgress + "/" + limitData.num;
+
+        if (isanim)
         {
+            _progressSlider.DOValue(sliderProgress,durtime).OnComplete(() =>
+            {
+                _progressText.text = wordcount + "/" + limitData.num;
+            });
+        }
+        else
+        {
+            _progressSlider.value = sliderProgress;
             _progressText.text = wordcount + "/" + limitData.num;
-        });
+        }
     }
     
     IEnumerator ShowLimitTimeScreen()
@@ -202,7 +218,7 @@ public class StageFinishView : UIWindow
         
         if (GameCoreManager.Instance.IsTrueAuto)
         {
-            yield return new WaitForSeconds(1.5f);
+            yield return new WaitForSeconds(1.2f);
             OnNextStageButtonClicked();
         }
     }
@@ -316,6 +332,7 @@ public class StageFinishView : UIWindow
         LimitTimeManager.Instance.OnLimitTimeBtnUI -= UpdateProgress;       
         //FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
         //EventDispatcher.OnChangeHeadIconUpdateUI -= UpdateHeadBtnUI;
+        UpdateProgress(false);
         
         GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
         base.OnDisable();

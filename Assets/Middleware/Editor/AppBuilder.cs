@@ -117,7 +117,7 @@ namespace Middleware
 		{
 			BuildAndroid(new BuildParam()
 			{
-				BuildVersion = "1.5.0",
+				BuildVersion = "1.0.0",
 				BuildType = BuildType.EditorBuild,
 				IsBuildRelease = false,
 				IsBuildShowLog = true
@@ -129,7 +129,7 @@ namespace Middleware
 		{
 			BuildAndroid(new BuildParam()
 			{
-				BuildVersion = "1.5.0",
+				BuildVersion = "1.0.0",
 				BuildType = BuildType.EditorBuild,
 				IsBuildRelease = true,
 				IsBuildShowLog = false
@@ -331,19 +331,19 @@ namespace Middleware
 			PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
 			PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARMv7 | AndroidArchitecture.ARM64;
 			PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
-			PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel35;
+			PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel33;
 
 			//账户设置
 			SetDefaultIcon(2);
-			PlayerSettings.companyName = "NeoPlay";
-			PlayerSettings.productName = "熟語の消しクイズ";
-			PlayerSettings.applicationIdentifier = "com.neoplay.zen.idiom.flow";
+			PlayerSettings.companyName = "六方之物";
+			PlayerSettings.productName = "禅意之境";
+			PlayerSettings.applicationIdentifier = "chengyu.idiom.hexa.zen.andriod.huawei";
 			PlayerSettings.Android.useCustomKeystore = true;
 			PlayerSettings.Android.keystoreName =
-				Path.GetFullPath($"{Application.dataPath}/../platform/Android/puzzle.keystore");
-			PlayerSettings.Android.keystorePass = "neo654321";
-			PlayerSettings.Android.keyaliasName = "neo";
-			PlayerSettings.Android.keyaliasPass = "neo654321";
+				Path.GetFullPath($"{Application.dataPath}/../platform/Android/user.keystore");
+			PlayerSettings.Android.keystorePass = "hex123456";
+			PlayerSettings.Android.keyaliasName = "liu";
+			PlayerSettings.Android.keyaliasPass = "hex123456";
 			//打资源包
 			AssetBundleBuilder.BuildAssetBundles(false);
 			//打版本包

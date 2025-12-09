@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 #if UNITY_IOS
@@ -63,6 +64,14 @@ public sealed class GameCoreManager: MonoBehaviour
     private void OnAutoLevelTalbeValueChanged(bool ison)
     {
         IsTrueAuto = ison;
+        if (ison)
+        {
+            Game.Ratex2Game();
+        }
+        else
+        {
+            Game.ResumeGame();
+        }
         
         EventDispatcher.instance.TriggerAutoPassLevel();
     }
