@@ -1,18 +1,17 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &1445383544737861517
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5148248868803360060}
   - component: {fileID: 7655785542306503540}
   - component: {fileID: 8388149518056956996}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: rstImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -66,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 6a498016d4d15b648b9487e4f7a1a3d9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 988e1e47fab2d904baf5e16d831559c9, type: 3}
   m_Type: 2
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -82,12 +81,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2703453268486606275}
   - component: {fileID: -264340919059113538}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WordLevelBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,13 +133,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2496248625838903229}
   - component: {fileID: 3294540222218917451}
   - component: {fileID: 3194823459098176936}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -215,13 +212,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3109291349384634968}
   - component: {fileID: 5878872753711973172}
   - component: {fileID: 8356399978160783125}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: pinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -296,13 +292,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6332633650897428220}
   - component: {fileID: 598039001802379797}
   - component: {fileID: 5428956664771407917}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: LetterBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
