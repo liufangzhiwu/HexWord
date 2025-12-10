@@ -54,14 +54,14 @@ public class WaterManager : MonoBehaviour
             float curscreenRatio = Screen.width / (float)Screen.height;
 
             float scale = curscreenRatio / baseRatio;
-            float scaleFactor = 4.6f;
+            float scaleFactor = 4.3f;
             waterCamera.orthographicSize = scaleFactor;
             waterqundCamera.orthographicSize = scaleFactor;
         }
         else
         {
-            waterCamera.orthographicSize = 4.6f;
-            waterqundCamera.orthographicSize = 4.6f;
+            waterCamera.orthographicSize = 4.3f;
+            waterqundCamera.orthographicSize = 4.3f;
         }
         
         // 比较当前比例与基准比例
