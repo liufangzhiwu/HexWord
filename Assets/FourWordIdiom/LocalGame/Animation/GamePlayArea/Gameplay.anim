@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!74 &7400000
 AnimationClip:
   m_ObjectHideFlags: 0
@@ -7,7 +7,7 @@ AnimationClip:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Gameplay
-  serializedVersion: 11
+  serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
   m_UseHighQualityCurve: 1
@@ -39,7 +39,7 @@ AnimationClip:
         outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
       - serializedVersion: 3
         time: 1.3333334
-        value: {x: 1, y: 1, z: 1}
+        value: {x: 1.12, y: 1.12, z: 1}
         inSlope: {x: 0, y: 0, z: 0}
         outSlope: {x: 0, y: 0, z: 0}
         tangentMode: 0
@@ -1173,7 +1173,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 1.3333334
-        value: 1
+        value: 1.12
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -1212,7 +1212,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 1.3333334
-        value: 1
+        value: 1.12
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -1270,13 +1270,3 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events: []
-  m_ACLContext:
-    ACLCompressionLevel: 0
-    ACLCurvePrecision: 0.01
-    UseACLCurve: 0
-    UseACLFastSampleMode: 1
-  m_MuscleEncodeContext:
-    type: 0
-    rotationError: 0
-    positionError: 0
-    scaleError: 0
