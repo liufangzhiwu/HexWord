@@ -1,16 +1,15 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &163978806402313667
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2895048821449836412}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Sliding Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -43,14 +42,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6421702071420216872}
   - component: {fileID: 3220626464904428832}
   - component: {fileID: 4960753503660123649}
   - component: {fileID: 6605171128951293295}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CloseBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -165,14 +163,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4946017488860678735}
   - component: {fileID: 733933440968321062}
   - component: {fileID: 3426905561290607807}
   - component: {fileID: 7130317175891844753}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WordBookBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -287,14 +284,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8266894487557356313}
   - component: {fileID: 2382018437887875238}
   - component: {fileID: 3133712340583448000}
   - component: {fileID: 2893773284554944102}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: BackUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -352,7 +348,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: bc48ce270a043cd42956d488ede997e9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 41dc9eb91bc9036408bd76d2e3ccf151, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -380,13 +376,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5265440907170239389}
   - component: {fileID: 6997905024787334837}
   - component: {fileID: 8918612322179342329}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: di
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -456,13 +451,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2785355951955886637}
   - component: {fileID: 2031766124059304352}
   - component: {fileID: 8148228845129678419}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -532,13 +526,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1441532425181542977}
   - component: {fileID: 6246596278119341127}
   - component: {fileID: 782435863986443117}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Handle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -608,7 +601,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1939585977216027433}
   - component: {fileID: 2516175401581475297}
@@ -616,7 +609,6 @@ GameObject:
   - component: {fileID: 3219598375304897127}
   - component: {fileID: 8160192904231109913}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: HeaderText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -718,7 +710,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8732677782925178857}
   - component: {fileID: 6706679526455584508}
@@ -728,7 +720,6 @@ GameObject:
   - component: {fileID: 3658180886736000135}
   - component: {fileID: 2231471747923121479}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: LevelWordScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -838,7 +829,7 @@ MonoBehaviour:
   wordsVocabularyParent: {fileID: 5167766362088589079}
 --- !u!95 &2231471747923121479
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -849,8 +840,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 5aa0b95a48a8d744d9d0cdf89a69d2b2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -865,13 +854,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7471749097452021843}
   - component: {fileID: 4393305521442798331}
   - component: {fileID: 3741688526304688253}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -941,14 +929,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6009009318636639716}
   - component: {fileID: 4079453478872700169}
   - component: {fileID: 5491072971926253521}
   - component: {fileID: 3940524151538241047}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Scroll View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1050,14 +1037,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4451958774147167257}
   - component: {fileID: 6095674067157760582}
   - component: {fileID: 8505607115463366463}
   - component: {fileID: 5282003229613379350}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Scrollbar Vertical
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1177,14 +1163,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 290915002569643847}
   - component: {fileID: 6149892261009403606}
   - component: {fileID: 4679040782141155705}
   - component: {fileID: 7975447302983548173}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Viewport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1268,7 +1253,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5167766362088589079}
   - component: {fileID: 1937261337615682333}
@@ -1276,7 +1261,6 @@ GameObject:
   - component: {fileID: 7306981957594922240}
   - component: {fileID: 6154000185084283243}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: wordLists
   m_TagString: Untagged
   m_Icon: {fileID: 0}

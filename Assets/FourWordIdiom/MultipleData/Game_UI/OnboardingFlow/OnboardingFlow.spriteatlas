@@ -83,6 +83,7 @@ SpriteAtlas:
     - 367ef9d471110d540876d791caffb3b7: 21300000
     - 534fcad4023235349908b7f5a3a69b7a: 21300000
     - cb95eb058ab0e6a46be8fcaeb7de9759: 21300000
+    - 3b07cd0555c92494bb02616814104bc5: 21300000
     - 4b9a69152f70bba49a3dc2f24a8ec3dd: 21300000
     - 96a93b957d23cef4896278837b1bcb81: 21300000
     - fd6f2f957f7c19c45bfb0d04df1f0d0c: 21300000
@@ -176,6 +177,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 367ef9d471110d540876d791caffb3b7, type: 3}
   - {fileID: 21300000, guid: 534fcad4023235349908b7f5a3a69b7a, type: 3}
   - {fileID: 21300000, guid: cb95eb058ab0e6a46be8fcaeb7de9759, type: 3}
+  - {fileID: 21300000, guid: 3b07cd0555c92494bb02616814104bc5, type: 3}
   - {fileID: 21300000, guid: 4b9a69152f70bba49a3dc2f24a8ec3dd, type: 3}
   - {fileID: 21300000, guid: 96a93b957d23cef4896278837b1bcb81, type: 3}
   - {fileID: 21300000, guid: fd6f2f957f7c19c45bfb0d04df1f0d0c, type: 3}
@@ -268,6 +270,7 @@ SpriteAtlas:
   - butterflyjd
   - UI_Icon_circle
   - butterflydi
+  - jd
   - levelshen
   - tiao
   - itembg
