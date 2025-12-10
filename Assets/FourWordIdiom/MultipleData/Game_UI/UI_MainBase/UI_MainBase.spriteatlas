@@ -63,22 +63,21 @@ SpriteAtlas:
     - 171fbcc3043387749981b9b6bb9399dd: 21300000
     - 7593ecf3e1f282b40b82accb535335a3: 21300000
     - ea68cd2586b8ced4498c124dadc36a94: 21300000
-    - 52b1be06c04520e4fb7feb81ae13b596: 21300000
     - 99a49d1684abd8a4cabb308963a8f584: 21300000
     - 7ce8fc568e91ebf47b50e8110e3d47f5: 21300000
     - 8fe7cf0744d216649a976ca050de7ef4: 21300000
+    - 902a69178c65ccd48ad0c72d5593e589: 21300000
     - 9288506739970c04685942bd25c65727: 21300000
     - cec2ba67322d5aa48a1b97bc9f90cae7: 21300000
     - a61b06879b47b20418a47323e3232b57: 21300000
     - 247feaf73b76ae246b828413cf9f984f: 21300000
-    - 96cbe508a4f0efc4bba0fed402621416: 21300000
     - c4d712387910c72459b77a20e8975ee5: 21300000
     - 7f142c6849048424ab92ba65de748ffe: -8974891950757417909
     - eaac0398f2ddd8648a1a014c8a83446b: 21300000
     - 8ea8cfa8d33ab784695012c5bccc547e: 21300000
     - 5a8d88f8803371043aa43f0e62654c1e: 21300000
+    - 25e2b28964a9ff842a1e2c19a161ce73: 21300000
     - 63a58ea936a10c44bbb562327f267120: 21300000
-    - 00885cc9770f73b40949ab1cfbf903f4: 21300000
     - 7b7965e9bed9f5946a9d35729763e0f6: 21300000
     - 09f2b4f9dc2fa554cafc996dd79fdff8: 21300000
     - 84192f5a5cf60af4aa4c5d05845d10a7: 21300000
@@ -86,6 +85,7 @@ SpriteAtlas:
     - 5f76b4ca87bda6045b248f707f9801b3: 21300000
     - bb5bbaca466965547be24eb7c95f4854: 21300000
     - ea397c1b470896945adedafe6b7206e5: 21300000
+    - b81b896cda745d6429f0762da1b2a79b: 21300000
     - 273db88c8cde3044793a8c7037a54374: 21300000
     - a0eac19cc0e29de47a5bf67e0e362fab: 21300000
     - 5db46b0e5925cf84eb214f4acc9af589: 21300000
@@ -117,22 +117,21 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 171fbcc3043387749981b9b6bb9399dd, type: 3}
   - {fileID: 21300000, guid: 7593ecf3e1f282b40b82accb535335a3, type: 3}
   - {fileID: 21300000, guid: ea68cd2586b8ced4498c124dadc36a94, type: 3}
-  - {fileID: 21300000, guid: 52b1be06c04520e4fb7feb81ae13b596, type: 3}
   - {fileID: 21300000, guid: 99a49d1684abd8a4cabb308963a8f584, type: 3}
   - {fileID: 21300000, guid: 7ce8fc568e91ebf47b50e8110e3d47f5, type: 3}
   - {fileID: 21300000, guid: 8fe7cf0744d216649a976ca050de7ef4, type: 3}
+  - {fileID: 21300000, guid: 902a69178c65ccd48ad0c72d5593e589, type: 3}
   - {fileID: 21300000, guid: 9288506739970c04685942bd25c65727, type: 3}
   - {fileID: 21300000, guid: cec2ba67322d5aa48a1b97bc9f90cae7, type: 3}
   - {fileID: 21300000, guid: a61b06879b47b20418a47323e3232b57, type: 3}
   - {fileID: 21300000, guid: 247feaf73b76ae246b828413cf9f984f, type: 3}
-  - {fileID: 21300000, guid: 96cbe508a4f0efc4bba0fed402621416, type: 3}
   - {fileID: 21300000, guid: c4d712387910c72459b77a20e8975ee5, type: 3}
   - {fileID: -8974891950757417909, guid: 7f142c6849048424ab92ba65de748ffe, type: 3}
   - {fileID: 21300000, guid: eaac0398f2ddd8648a1a014c8a83446b, type: 3}
   - {fileID: 21300000, guid: 8ea8cfa8d33ab784695012c5bccc547e, type: 3}
   - {fileID: 21300000, guid: 5a8d88f8803371043aa43f0e62654c1e, type: 3}
+  - {fileID: 21300000, guid: 25e2b28964a9ff842a1e2c19a161ce73, type: 3}
   - {fileID: 21300000, guid: 63a58ea936a10c44bbb562327f267120, type: 3}
-  - {fileID: 21300000, guid: 00885cc9770f73b40949ab1cfbf903f4, type: 3}
   - {fileID: 21300000, guid: 7b7965e9bed9f5946a9d35729763e0f6, type: 3}
   - {fileID: 21300000, guid: 09f2b4f9dc2fa554cafc996dd79fdff8, type: 3}
   - {fileID: 21300000, guid: 84192f5a5cf60af4aa4c5d05845d10a7, type: 3}
@@ -140,6 +139,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 5f76b4ca87bda6045b248f707f9801b3, type: 3}
   - {fileID: 21300000, guid: bb5bbaca466965547be24eb7c95f4854, type: 3}
   - {fileID: 21300000, guid: ea397c1b470896945adedafe6b7206e5, type: 3}
+  - {fileID: 21300000, guid: b81b896cda745d6429f0762da1b2a79b, type: 3}
   - {fileID: 21300000, guid: 273db88c8cde3044793a8c7037a54374, type: 3}
   - {fileID: 21300000, guid: a0eac19cc0e29de47a5bf67e0e362fab, type: 3}
   - {fileID: 21300000, guid: 5db46b0e5925cf84eb214f4acc9af589, type: 3}
@@ -170,22 +170,21 @@ SpriteAtlas:
   - signicon
   - UI_Icon_dengbg
   - headicon
-  - UI_Icon_selebg
   - UI_Icon_level
   - Triangle
   - redpoint
+  - UI_Icon_DownLine
   - UI_Icon_set
   - chess_bg
   - zen_layer
   - UI_Icon_tips
-  - di
   - wifi
   - countbg_0
   - bowl_bg
   - UI_Icon_level
   - puzzlielie
+  - di
   - zen_xiao
-  - UI_Icon_DownLine
   - levelPuzzle
   - soace_bg
   - UI_Icon_claim
@@ -193,6 +192,7 @@ SpriteAtlas:
   - UI_Icon_toolvaluebg
   - zen_select
   - worddouble
+  - UI_Icon_selebg
   - UI_Icon_tips
   - UI_Icon_circle
   - UI_Icon_goldbg

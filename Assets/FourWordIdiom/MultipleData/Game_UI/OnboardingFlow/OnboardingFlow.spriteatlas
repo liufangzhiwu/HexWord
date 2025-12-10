@@ -66,6 +66,7 @@ SpriteAtlas:
     - e5d713627edbe874bb6e4f118859e5c0: 21300000
     - 29218972f8eb76246b4f43510a783c95: 21300000
     - e563ac922d7d95c4d8f2e7815ef2678c: 21300000
+    - eaed85b2be9280240b0c1340f0ae08a1: 21300000
     - c0fcfbb2ab8d6df4cb3dfc4828fb000f: 21300000
     - fa09f6d2ff43d9048ada00317fb6761d: 21300000
     - 2ba19d03c3401cb4caa46dffbfdcc9c5: 21300000
@@ -83,11 +84,10 @@ SpriteAtlas:
     - 367ef9d471110d540876d791caffb3b7: 21300000
     - 534fcad4023235349908b7f5a3a69b7a: 21300000
     - cb95eb058ab0e6a46be8fcaeb7de9759: 21300000
-    - 3b07cd0555c92494bb02616814104bc5: 21300000
-    - 4b9a69152f70bba49a3dc2f24a8ec3dd: 21300000
     - 96a93b957d23cef4896278837b1bcb81: 21300000
     - fd6f2f957f7c19c45bfb0d04df1f0d0c: 21300000
     - ea68fbd576d4f634b8ac69af9f1af833: 21300000
+    - 23a43e065d07473428a6c8d2a099a45e: 21300000
     - 4029af36bce673d4e8189aadfc25682f: 21300000
     - da47e4460e139124b9142ac2939b137f: 21300000
     - 23bb1b4640fd2864dad0e2337fa3b0ad: 21300000
@@ -95,10 +95,10 @@ SpriteAtlas:
     - 3bc8c5766b532194fb94596febe8212b: 21300000
     - 3501e58691a63d3499d60cac12aa8c0d: 21300000
     - 67e7e4a65a66b3c439abec9a33a8e789: 21300000
-    - 9bd61db65d2a9b9418f1204f0c543084: 21300000
     - bacf16f60517b0c48a35fa934a061ced: 21300000
     - 2f90571785b2c234ba02d441737037eb: 21300000
     - 3562971714cca6749982d6546f50e23c: 21300000
+    - 988e1e47fab2d904baf5e16d831559c9: 21300000
     - 05eefc6703b78f44e8d92981edd35d26: 21300000
     - a6d95287ca7ec624c805793f052b72d4: 21300000
     - 8e0eb1c76604267438669799ebf8abaf: 21300000
@@ -160,6 +160,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: e5d713627edbe874bb6e4f118859e5c0, type: 3}
   - {fileID: 21300000, guid: 29218972f8eb76246b4f43510a783c95, type: 3}
   - {fileID: 21300000, guid: e563ac922d7d95c4d8f2e7815ef2678c, type: 3}
+  - {fileID: 21300000, guid: eaed85b2be9280240b0c1340f0ae08a1, type: 3}
   - {fileID: 21300000, guid: c0fcfbb2ab8d6df4cb3dfc4828fb000f, type: 3}
   - {fileID: 21300000, guid: fa09f6d2ff43d9048ada00317fb6761d, type: 3}
   - {fileID: 21300000, guid: 2ba19d03c3401cb4caa46dffbfdcc9c5, type: 3}
@@ -177,11 +178,10 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 367ef9d471110d540876d791caffb3b7, type: 3}
   - {fileID: 21300000, guid: 534fcad4023235349908b7f5a3a69b7a, type: 3}
   - {fileID: 21300000, guid: cb95eb058ab0e6a46be8fcaeb7de9759, type: 3}
-  - {fileID: 21300000, guid: 3b07cd0555c92494bb02616814104bc5, type: 3}
-  - {fileID: 21300000, guid: 4b9a69152f70bba49a3dc2f24a8ec3dd, type: 3}
   - {fileID: 21300000, guid: 96a93b957d23cef4896278837b1bcb81, type: 3}
   - {fileID: 21300000, guid: fd6f2f957f7c19c45bfb0d04df1f0d0c, type: 3}
   - {fileID: 21300000, guid: ea68fbd576d4f634b8ac69af9f1af833, type: 3}
+  - {fileID: 21300000, guid: 23a43e065d07473428a6c8d2a099a45e, type: 3}
   - {fileID: 21300000, guid: 4029af36bce673d4e8189aadfc25682f, type: 3}
   - {fileID: 21300000, guid: da47e4460e139124b9142ac2939b137f, type: 3}
   - {fileID: 21300000, guid: 23bb1b4640fd2864dad0e2337fa3b0ad, type: 3}
@@ -189,10 +189,10 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 3bc8c5766b532194fb94596febe8212b, type: 3}
   - {fileID: 21300000, guid: 3501e58691a63d3499d60cac12aa8c0d, type: 3}
   - {fileID: 21300000, guid: 67e7e4a65a66b3c439abec9a33a8e789, type: 3}
-  - {fileID: 21300000, guid: 9bd61db65d2a9b9418f1204f0c543084, type: 3}
   - {fileID: 21300000, guid: bacf16f60517b0c48a35fa934a061ced, type: 3}
   - {fileID: 21300000, guid: 2f90571785b2c234ba02d441737037eb, type: 3}
   - {fileID: 21300000, guid: 3562971714cca6749982d6546f50e23c, type: 3}
+  - {fileID: 21300000, guid: 988e1e47fab2d904baf5e16d831559c9, type: 3}
   - {fileID: 21300000, guid: 05eefc6703b78f44e8d92981edd35d26, type: 3}
   - {fileID: 21300000, guid: a6d95287ca7ec624c805793f052b72d4, type: 3}
   - {fileID: 21300000, guid: 8e0eb1c76604267438669799ebf8abaf, type: 3}
@@ -253,6 +253,7 @@ SpriteAtlas:
   - enablebtn
   - tiptool
   - ldengicon
+  - rewardbg
   - itembg
   - UI_Icon_huiStar
   - timebg
@@ -270,11 +271,10 @@ SpriteAtlas:
   - butterflyjd
   - UI_Icon_circle
   - butterflydi
-  - jd
-  - levelshen
   - tiao
   - itembg
   - ldeng
+  - jd
   - up
   - bookbtn
   - discount
@@ -282,10 +282,10 @@ SpriteAtlas:
   - timei
   - hua1
   - time
-  - rewardbg
   - left
   - target
   - hua0
+  - levelshen
   - tiptable
   - golds
   - goldbg

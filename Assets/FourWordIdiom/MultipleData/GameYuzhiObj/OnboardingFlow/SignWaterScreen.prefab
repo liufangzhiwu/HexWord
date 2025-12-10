@@ -1,18 +1,17 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &1076237982762103412
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4325219320283762369}
   - component: {fileID: 4301937351207848682}
   - component: {fileID: 9120517978630799954}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: gold (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -82,14 +81,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 645392698739956524}
   - component: {fileID: 5736749202375274434}
   - component: {fileID: 7389802302079987350}
   - component: {fileID: 554480250378078603}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: UIBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -117,7 +115,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1010, y: 1743}
+  m_SizeDelta: {x: 1104, y: 1796}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &5736749202375274434
 CanvasGroup:
@@ -175,13 +173,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3056968705844672742}
   - component: {fileID: 4754167188906884992}
   - component: {fileID: 8032364913464076309}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: tios
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -255,13 +252,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7100135456115108168}
   - component: {fileID: 2243646891736183106}
   - component: {fileID: 5227350004440434834}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: gold (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -331,7 +327,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4243432021851123755}
   - component: {fileID: 6880221047829118979}
@@ -339,13 +335,12 @@ GameObject:
   - component: {fileID: 8983277443767357939}
   - component: {fileID: 4719695358736528756}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AdsStartBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &4243432021851123755
 RectTransform:
   m_ObjectHideFlags: 0
@@ -365,8 +360,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -668.44116}
-  m_SizeDelta: {x: 550, y: 166.6177}
+  m_AnchoredPosition: {x: 0, y: -667.57}
+  m_SizeDelta: {x: 655, y: 199.1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6880221047829118979
 CanvasRenderer:
@@ -469,13 +464,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5346543586534127299}
   - component: {fileID: 8502082994221133448}
   - component: {fileID: 3347678155463788776}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: SignFinishText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -498,8 +492,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 174.0426}
-  m_SizeDelta: {x: 1006.4081, y: 197.9149}
+  m_AnchoredPosition: {x: 0, y: 203.23901}
+  m_SizeDelta: {x: 1006.4081, y: 256.3078}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8502082994221133448
 CanvasRenderer:
@@ -533,9 +527,9 @@ MonoBehaviour:
     m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
     m_FontSize: 65
     m_FontStyle: 1
-    m_BestFit: 0
-    m_MinSize: 6
-    m_MaxSize: 95
+    m_BestFit: 1
+    m_MinSize: 65
+    m_MaxSize: 120
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -549,14 +543,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4109833314409409183}
   - component: {fileID: 3458205760081954066}
   - component: {fileID: 8097902342191525703}
   - component: {fileID: 9161077979789335915}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AdsAnniuDes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -579,8 +572,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 51.8, y: 0}
-  m_SizeDelta: {x: -152.751, y: 0}
+  m_AnchoredPosition: {x: 80.512, y: 0}
+  m_SizeDelta: {x: -210.18, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3458205760081954066
 CanvasRenderer:
@@ -643,7 +636,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3348149280488444271}
   - component: {fileID: 8280429790780138894}
@@ -652,7 +645,6 @@ GameObject:
   - component: {fileID: 1666292927205201055}
   - component: {fileID: 6014138271385812060}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: SignWaterScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -735,7 +727,7 @@ MonoBehaviour:
     m_Bits: 4294967295
 --- !u!95 &1666292927205201055
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -746,8 +738,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 2485fee73acb01d468765646a593748b, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -793,13 +783,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2935394968137592284}
   - component: {fileID: 2392631975421224822}
   - component: {fileID: 1276971965456652634}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: gold
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -869,13 +858,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3110931060780733194}
   - component: {fileID: 5583369815868947708}
   - component: {fileID: 3935515549704851344}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: titleImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -891,7 +879,7 @@ RectTransform:
   m_GameObject: {fileID: 2912560732030321908}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 645392698739956524}
@@ -945,13 +933,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 32161869214500281}
   - component: {fileID: 7613375877746210027}
   - component: {fileID: 7849600526036404287}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: gold (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1021,14 +1008,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1121575672796058332}
   - component: {fileID: 2919733808466441437}
   - component: {fileID: 7409560335039941033}
   - component: {fileID: 8086656964905250988}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: HideBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1142,14 +1128,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4000506467098099221}
   - component: {fileID: 1053659046773014441}
   - component: {fileID: 2262318499801588511}
   - component: {fileID: 96388868540969950}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CloseBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1173,8 +1158,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 405, y: 736.5}
-  m_SizeDelta: {x: 110, y: 110}
+  m_AnchoredPosition: {x: 442.81, y: 761.1}
+  m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1053659046773014441
 CanvasRenderer:
@@ -1264,14 +1249,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 9164645319403122801}
   - component: {fileID: 3593337722285226570}
   - component: {fileID: 4294776463778076874}
   - component: {fileID: 3151266676948616158}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WaiTimeText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1331,7 +1315,7 @@ MonoBehaviour:
     m_FontStyle: 1
     m_BestFit: 1
     m_MinSize: 7
-    m_MaxSize: 75
+    m_MaxSize: 100
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -1360,11 +1344,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3095988875270723896}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Golds
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1400,13 +1383,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5013052288645386184}
   - component: {fileID: 6484856251643403339}
   - component: {fileID: 6374005698904114208}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ads
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1429,8 +1411,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -201.9, y: 1}
-  m_SizeDelta: {x: 80, y: 80}
+  m_AnchoredPosition: {x: -201.9, y: 0}
+  m_SizeDelta: {x: 120, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6484856251643403339
 CanvasRenderer:
@@ -1460,7 +1442,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 45270c8608e746346b22959eac6a1158, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5fa340a0ca35ece4cbd3a4d226c487ff, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1476,13 +1458,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4454236157551206563}
   - component: {fileID: 2547702562493788601}
   - component: {fileID: 5630192877518882952}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1552,13 +1533,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8997442396622490184}
   - component: {fileID: 736823249237110181}
   - component: {fileID: 8609857071844619406}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1632,14 +1612,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6420944418437120995}
   - component: {fileID: 992798337168277672}
   - component: {fileID: 6568528073971904038}
   - component: {fileID: 7364472829870704555}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1705,7 +1684,7 @@ MonoBehaviour:
   m_PixelsPerUnitMultiplier: 1
 --- !u!95 &7364472829870704555
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1716,8 +1695,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 458f03ed8f827f04a98dd971d4ea0fe2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -1732,7 +1709,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2853514792564343681}
   - component: {fileID: 7697435599747432952}
@@ -1740,13 +1717,12 @@ GameObject:
   - component: {fileID: 1736896296129611904}
   - component: {fileID: 8261365382645854036}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: StartBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2853514792564343681
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1765,7 +1741,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -667.57}
-  m_SizeDelta: {x: 550, y: 164.87}
+  m_SizeDelta: {x: 655, y: 199.1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7697435599747432952
 CanvasRenderer:
@@ -1868,13 +1844,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 18691004844672459}
   - component: {fileID: 2289769361761578733}
   - component: {fileID: 4806689969381958607}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
