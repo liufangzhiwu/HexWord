@@ -16,13 +16,14 @@ namespace Middleware
         {
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
-    
-#if UNITY_OPENHARMONY
+            
             CreateAd();
             CreateAccounts();
-#endif
+
             CreateAnalytic();
-            CreateShop();
+
+            // CreateShop();
+
             InitManagers();
         }
 
@@ -65,7 +66,7 @@ namespace Middleware
     #elif UNITY_OPENHARMONY
             Analytics = new Analytics_harmony();
     #endif
-            Analytics.Init(1f);
+            Analytics.Init(1.5f);
         }
         
         private void CreateShop()

@@ -257,7 +257,7 @@ public class StageHexController
         
         if (StageNumber >= 1)
         {        
-#if UNITY_OPENHARMONY
+#if UNITY_OPENHARMONY || UNITY_ANDROID
             
             AnalyticMgr.InsetAdStart("关卡插屏");
             // 显示插屏广告

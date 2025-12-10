@@ -172,8 +172,8 @@ public class HeaderSection : UIWindow
 
     private void OnShopClick()
     {
-        SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
-        //SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
+        // SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
+        SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
     }
 
     private void OnBackClick()

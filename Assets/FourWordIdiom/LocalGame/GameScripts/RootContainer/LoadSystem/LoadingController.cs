@@ -8,6 +8,7 @@ using UnityEngine.HuaweiAppGallery.Listener;
 using UnityEngine.HuaweiAppGallery.Model;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Game = Middleware.Game;
 using Random = UnityEngine.Random;
 
 
@@ -71,7 +72,7 @@ public class LoadingController : MonoBehaviour
 
     private void Start()
     {
-        HuaweiGameService.AppInit();
+        // HuaweiGameService.AppInit();
         StartCoroutine(InitializeLoadingProcess());
     }
 
@@ -86,6 +87,7 @@ public class LoadingController : MonoBehaviour
         //SetupRandomLoadingHint();
         LoadWordVocabulary();
         StartCoroutine(LoadingSequence());
+        
     }
 
     /// <summary>
@@ -100,7 +102,7 @@ public class LoadingController : MonoBehaviour
     
     public async void LoadWordVocabulary()
     {
-        Debug.Log("开始加载词库资源");
+        // Debug.Log("开始加载词库资源");
         await WordVocabularyManager.Instance.LoadEntriesAsync();
         Debug.Log("完成加载词库资源");
     }
@@ -120,14 +122,16 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator LoadingSequence()
     {
-        yield return InitializeGameService();
-        yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
+        // yield return InitializeGameService();
+        // yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
+       
         // 并行执行模拟加载和实际加载
         yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
         //AudioManager.Instance.Initialize();
         GameDataManager.Instance.LoadPlayerProfile();
         sceneLoadOperation.allowSceneActivation = true;
+        
     }
 
     private IEnumerator InitializeGameService()
@@ -209,11 +213,12 @@ public class LoadingController : MonoBehaviour
             "Circle");
         
         // 登录开始
-        yield return LoadHuaweiGameLogin();
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
+        // yield return LoadHuaweiGameLogin();
+        // yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
         
         //预加载关卡文件
         StageHexController.Instance.LoadPackInfos();
+     
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }

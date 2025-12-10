@@ -13,15 +13,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     
     <application>
-<!--        <activity android:name="com.unity3d.player.UnityPlayerActivity"-->
-<!--                  android:theme="@style/UnityThemeSelector">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-<!--            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />-->
-<!--        </activity>-->
-        <activity android:name="com.hms.hms_analytic_activity.HmsAnalyticActivity"
+        <activity android:name="com.unity3d.player.UnityPlayerActivity"
                   android:theme="@style/UnityThemeSelector">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,26 +21,34 @@
             </intent-filter>
             <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
         </activity>
-        <service
-                android:name="com.unity.hms.push.MyPushService"
-                android:exported="false">
-            <intent-filter>
-                <action android:name="com.huawei.push.action.MESSAGING_EVENT"/>
-            </intent-filter>
-        </service>
-        <receiver
-                android:name="com.unity.hms.location.LocationBroadcastReceiver"
-                android:exported="true">
-            <intent-filter>
-                <action android:name="com.huawei.hmssample.location.LocationBroadcastReceiver.ACTION_PROCESS_LOCATION" />
-            </intent-filter>
-        </receiver>
-        <receiver
-                android:name="com.unity.hms.location.GeoFenceBroadcastReceiver"
-                android:exported="true">
-            <intent-filter>
-                <action android:name="com.huawei.hmssample.geofence.GeoFenceBroadcastReceiver.ACTION_PROCESS_LOCATION" />
-            </intent-filter>
-        </receiver>
+<!--        <activity android:name="com.hms.hms_analytic_activity.HmsAnalyticActivity"-->
+<!--                  android:theme="@style/UnityThemeSelector">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+<!--            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />-->
+<!--        </activity>-->
+<!--        <service-->
+<!--                android:name="com.unity.hms.push.MyPushService"-->
+<!--                android:exported="false">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="com.huawei.push.action.MESSAGING_EVENT"/>-->
+<!--            </intent-filter>-->
+<!--        </service>-->
+<!--        <receiver-->
+<!--                android:name="com.unity.hms.location.LocationBroadcastReceiver"-->
+<!--                android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="com.huawei.hmssample.location.LocationBroadcastReceiver.ACTION_PROCESS_LOCATION" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+<!--        <receiver-->
+<!--                android:name="com.unity.hms.location.GeoFenceBroadcastReceiver"-->
+<!--                android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="com.huawei.hmssample.geofence.GeoFenceBroadcastReceiver.ACTION_PROCESS_LOCATION" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
     </application>
 </manifest>

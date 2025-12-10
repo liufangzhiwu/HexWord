@@ -189,7 +189,7 @@ namespace Middleware
 		{
 			if (EditorUserBuildSettings.activeBuildTarget == targetPlatform)
 				return;
-			ManagerPackage(targetPlatform);
+			// ManagerPackage(targetPlatform);
 			EditorUserBuildSettings.SwitchActiveBuildTarget(BuildPipeline.GetBuildTargetGroup(targetPlatform),
 				targetPlatform);
 			Debug.Log("切换平台成功");

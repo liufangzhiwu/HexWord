@@ -1,18 +1,17 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &444700510510343409
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6900818095702592396}
   - component: {fileID: 3216744431953089933}
   - component: {fileID: 8462855625891447763}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Value
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -86,13 +85,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2840240769970358668}
   - component: {fileID: 5919298509365229227}
   - component: {fileID: 1860059200214699363}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Icons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -162,13 +160,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3599789565990547902}
   - component: {fileID: 3768533581784727499}
   - component: {fileID: 7145000676743541336}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: adsDes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -242,12 +239,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 645392698739956524}
   - component: {fileID: 5736749202375274434}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: UIBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -298,14 +294,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1592811840992224041}
   - component: {fileID: 271702363293096977}
   - component: {fileID: 6957446064154168966}
   - component: {fileID: 7244914413087738706}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ClaimBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -420,13 +415,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1806577418320674792}
   - component: {fileID: 4634779379431447518}
   - component: {fileID: 1210613822359116437}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Bg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -496,7 +490,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3348149280488444271}
   - component: {fileID: 8280429790780138894}
@@ -505,7 +499,6 @@ GameObject:
   - component: {fileID: 1666292927205201055}
   - component: {fileID: 4295046434642863834}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: RewardAdsScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -583,7 +576,7 @@ MonoBehaviour:
     m_Bits: 4294967295
 --- !u!95 &1666292927205201055
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -594,8 +587,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: db91225133a5abe42863d7d24b7902ad, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -632,14 +623,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6758687246408085037}
   - component: {fileID: 4101914575001008508}
   - component: {fileID: 6043342328112555402}
   - component: {fileID: 4024886413001663278}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CloseBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -754,13 +744,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6530715061308650562}
   - component: {fileID: 2274908683292774314}
   - component: {fileID: 2953972868603041173}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -830,13 +819,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1852880913674911114}
   - component: {fileID: 2223714879790585075}
   - component: {fileID: 7798134353704657920}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ads
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -890,7 +878,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 45270c8608e746346b22959eac6a1158, type: 3}
+  m_Sprite: {fileID: 21300000, guid: d2daf1968541f9c4fa37bb5779b96834, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -906,14 +894,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5896986949956978149}
   - component: {fileID: 7059412312996547667}
   - component: {fileID: 4930152427728137478}
   - component: {fileID: 3317558791981893794}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ClaimAdsBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1030,14 +1017,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2566086025135985156}
   - component: {fileID: 7991062989337304822}
   - component: {fileID: 1075858679989983023}
   - component: {fileID: 4222384635200873926}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1103,7 +1089,7 @@ MonoBehaviour:
   m_PixelsPerUnitMultiplier: 1
 --- !u!95 &4222384635200873926
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1114,8 +1100,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 458f03ed8f827f04a98dd971d4ea0fe2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -1130,13 +1114,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3829425372721165030}
   - component: {fileID: 3854273333622772433}
   - component: {fileID: 486122774878151333}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: awardbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1208,7 +1191,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4420310134267839563}
   - component: {fileID: 5241254857139940018}
@@ -1216,7 +1199,6 @@ GameObject:
   - component: {fileID: 258507927710467835}
   - component: {fileID: 7959845959273442748}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: HeaderText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1318,13 +1300,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4454236157551206563}
   - component: {fileID: 2547702562493788601}
   - component: {fileID: 5630192877518882952}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1394,13 +1375,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1162102393149009669}
   - component: {fileID: 5950281880290875928}
   - component: {fileID: 645645563005760036}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1470,13 +1450,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1610715733661362204}
   - component: {fileID: 5471242254922045215}
   - component: {fileID: 713924877228852109}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: adsDes
   m_TagString: Untagged
   m_Icon: {fileID: 0}

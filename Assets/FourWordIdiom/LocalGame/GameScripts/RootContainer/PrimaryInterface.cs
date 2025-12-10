@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using DG.Tweening;
+using Middleware;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -77,6 +79,16 @@ public class PrimaryInterface : UIWindow
         UpdateGameLobbyUI();
         //UpdateHeadBtnUI();
         //StartCoroutine(UpdateFishRankUI());
+    }
+
+    private IEnumerator Start()
+    {
+        yield return new WaitForSeconds(3f);
+        Debug.Log("准备进入插屏广告");
+        Game.Ads.ShowInterstitial(res =>
+        {
+            MessageSystem.Instance.ShowTip("结果是" +res);
+        });
     }
 
     private void UpdateGameLobbyUI()

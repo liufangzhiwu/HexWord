@@ -29,10 +29,10 @@ namespace Middleware
 
         public void ShowReward(Define.AdKey key, Action<bool> callback)
         {
-// #if UNITY_EDITOR 
-//             callback(true);
-//             return;
-// #endif
+#if UNITY_EDITOR 
+            callback(true);
+            return;
+#endif
             _currentAdKey = key;
             _completeCallback = callback;
             
@@ -45,13 +45,14 @@ namespace Middleware
 
         public void ShowInterstitial(Action<bool> callback)
         {
+#if UNITY_EDITOR 
+            callback(true);
+            return;
+#endif
             _completeCallback = callback;
-            
             InterstitialAd ad = new InterstitialAd(new Context());
             ad.setAdId(GetAdId(Define.AdKey.InterstitialAdId));
             ad.setAdListener(new MAdListener(ad, _completeCallback));
-            RewardAd rewardAd = new RewardAd(new Context(), GetAdId(_currentAdKey));
-            ad.setRewardAdListener(rewardAd.getRewardAdListener());
             ad.loadAd(new AdParam.Builder().build());
         }
 
@@ -135,33 +136,34 @@ namespace Middleware
             }
             public override void onRewardAdOpened()
             {
-                base.onRewardAdOpened();
-                Debug.Log($"[激励广告被打开]RewardAdOpened show");
+                // base.onRewardAdOpened();
+                MessageSystem.Instance.ShowTip($"[激励广告被打开]RewardAdOpened show");
             }
             public override void onRewardAdClosed()
             {
-                base.onRewardAdClosed();
-                Debug.Log($"[激励广告被关闭]RewardAdClosed");
+                // base.onRewardAdClosed();
+                MessageSystem.Instance.ShowTip($"[激励广告被关闭]RewardAdClosed");
                 _callback?.Invoke(false);
             }
             public override void onRewardAdFailedToShow(int arg0)
             {
-                base.onRewardAdFailedToShow(arg0);
+                // base.onRewardAdFailedToShow(arg0);
                 _callback?.Invoke(false);
-                Debug.Log($"[激励广告展示失败] RewardAdFailedToShow errorCode:{arg0}");
+                MessageSystem.Instance.ShowTip($"[激励广告展示失败] RewardAdFailedToShow errorCode:{arg0}");
             }
             public override void onRewarded(Reward arg0)
             {
-                base.onRewarded(arg0);
+                // base.onRewarded(arg0);
+                MessageSystem.Instance.ShowTip($"[激励广告完成] RewardAdFailedToShow errorCode:{arg0}");
                 _callback?.Invoke(true);
             }
         }
         
         private class MAdListener : AdListener
         {
-            private InterstitialAd _ad;
-            private Action<bool> _callback;
-            public MAdListener(InterstitialAd ad, Action<bool> callback): base()
+            private readonly InterstitialAd _ad;
+            private readonly Action<bool> _callback;
+            public MAdListener(InterstitialAd ad, Action<bool> callback = null): base()
             {
                 this._ad = ad;
                 this._callback = callback;
@@ -169,39 +171,47 @@ namespace Middleware
 
             public override void onAdClicked()
             {
-                base.onAdClicked();
+                // base.onAdClicked();
+                MessageSystem.Instance.ShowTip("AdListener Ad Clicked");
             }
 
             public override void onAdClosed()
             {
-                base.onAdClosed();
+                // base.onAdClosed();
+                MessageSystem.Instance.ShowTip("AdListener Ad Closed");
             }
 
             public override void onAdFailed(int arg0)
             {
-                base.onAdFailed(arg0);
+                MessageSystem.Instance.ShowTip("AdListener Ad failed to load with error code "+ arg0);
+                // base.onAdFailed(arg0);
                 _callback?.Invoke(false);
+                
             }
 
             public override void onAdImpression()
             {
-                base.onAdImpression();
+                // base.onAdImpression();
+                MessageSystem.Instance.ShowTip("AdListener onAdImpression");
             }
 
             public override void onAdLeave()
             {
-                base.onAdLeave();
+                // base.onAdLeave();
+                MessageSystem.Instance.ShowTip("AdListener Ad Leave");
             }
 
             public override void onAdLoaded()
             {
-                base.onAdLoaded();
-                _ad.show();
+                // base.onAdLoaded();
+                 MessageSystem.Instance.ShowTip("AdListener onAdLoaded");
+                _ad.show(new Context());
             }
 
             public override void onAdOpened()
             {
-                base.onAdOpened();
+                // base.onAdOpened();
+                MessageSystem.Instance.ShowTip("AdListener Ad Opened");
                 _callback?.Invoke(true);
             }
         }
