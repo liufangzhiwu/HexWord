@@ -72,7 +72,7 @@ public class LoadingController : MonoBehaviour
 
     private void Start()
     {
-        HuaweiGameService.AppInit();
+        // HuaweiGameService.AppInit();
         StartCoroutine(InitializeLoadingProcess());
     }
 

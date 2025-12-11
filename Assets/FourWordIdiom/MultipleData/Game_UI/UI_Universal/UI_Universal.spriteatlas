@@ -95,6 +95,7 @@ SpriteAtlas:
     - 1eb5e0a90449b42428cd0583d209f635: 21300000
     - 60e95dc977f8b994883caf063989dc2a: 21300000
     - 2640faf9b568b4a4590e9cded9f04c54: 21300000
+    - c90dc58a1eb0bdd409df3060f961f094: 21300000
     - 756095ba4a22ed147aa0531769d962aa: 21300000
     - f3fdbabab2adbe94788bb0d25b9820a2: 21300000
     - 5224fa7baed3a184c906bbfd255695ce: 21300000
@@ -165,6 +166,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 1eb5e0a90449b42428cd0583d209f635, type: 3}
   - {fileID: 21300000, guid: 60e95dc977f8b994883caf063989dc2a, type: 3}
   - {fileID: 21300000, guid: 2640faf9b568b4a4590e9cded9f04c54, type: 3}
+  - {fileID: 21300000, guid: c90dc58a1eb0bdd409df3060f961f094, type: 3}
   - {fileID: 21300000, guid: 756095ba4a22ed147aa0531769d962aa, type: 3}
   - {fileID: 21300000, guid: f3fdbabab2adbe94788bb0d25b9820a2, type: 3}
   - {fileID: 21300000, guid: 5224fa7baed3a184c906bbfd255695ce, type: 3}
@@ -234,6 +236,7 @@ SpriteAtlas:
   - bookicon
   - UI_Icon_titlewordbg
   - UI_Icon_Home
+  - UI_Icon_claim
   - adsicon
   - UI_Icon_PingSeleWord
   - giftdi7

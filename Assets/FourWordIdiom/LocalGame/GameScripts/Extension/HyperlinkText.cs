@@ -272,7 +272,7 @@ public class HyperlinkText : Text, IPointerClickHandler
 
 
 
-#if UNITY_EDITOR
+
     //需延迟调用该方法
     public void AddVisibleBound()
     {
@@ -298,6 +298,6 @@ public class HyperlinkText : Text, IPointerClickHandler
             }
         }
     }
-#endif
+
 }
 
