@@ -12,8 +12,8 @@ public static class UIUtilities
     public static string HourSymbol = "时";
     public static string MinuteSymbol = "分";
     
-    public static float REFERENCE_WIDTH = 1242;
-    public static float REFERENCE_HEIGHT = 2208;
+    public static float REFERENCE_WIDTH = 1316;
+    public static float REFERENCE_HEIGHT = 2832;
 
     public static void AddClickAction(this Button targetButton, UnityAction onClickAction, string soundName = "Button", bool includeAnimation = true)
     {

@@ -165,28 +165,28 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float screenRatio = UIUtilities.GetScreenRatio();
         bool isipad = UIUtilities.IsiPad();
         
-        float sizeoffsetw =isipad? 500*(1+screenRatio-1) : 800*(1+1-screenRatio);
-        float sizemaxh =isipad? 175*(1+screenRatio-1)  :200*(1+1-screenRatio);
-        float sizemaxw =isipad? 175*(1+screenRatio-1) : 200*(1+1-screenRatio);
+        //float sizeoffsetw =isipad? 500*(1+screenRatio-1) : 800*(1+1-screenRatio);
+        float sizemaxh =isipad? 500*(1+screenRatio-1)  :800*(1+1-screenRatio);
+        float sizemaxw =isipad? 500*(1+screenRatio-1) : 500*(1+1-screenRatio);
         //float sizeoffseth = rows >= 6 ? 5-(rows-6)*0.5f : 0;
         float sizeoffseth = 0;
 
         //if (StageController.Instance.ActiveTileSize<=0||GameDataManager.MainInstance.UserData.CurrentStage!=curStageData.StageId||StageController.Instance.IsGMEnterStage)
         {
-            float height= (RectT.rect.height+sizeoffsetw ) /(rows+1);
-            float width= (RectT.rect.width+sizeoffsetw)/(cols+1);
+            float height= (RectT.rect.height+sizemaxh ) /rows;
+            float width= (RectT.rect.width+sizemaxw)/cols;
             float tileSize = Mathf.Min(width, height);
             float temptileSize = 0;
             
-            if(tileSize>=220)
+            if(tileSize>=250)
             {
-                temptileSize = isipad ? 185 : 220;
+                temptileSize = isipad ? 185 : 250;
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
 
-            if (cols+1 >= 6)
+            if (cols >= 6)
             {
-                temptileSize = sizemaxw-(cols+1-6)*25;
+                temptileSize = sizemaxw-(cols-6)*30;
                 tileSize = Mathf.Min(temptileSize, tileSize);
                 tileSize = Mathf.Max(170, tileSize);
             }
@@ -195,7 +195,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             {
                 temptileSize = sizemaxh-(rows-6)*10;
                 tileSize = Mathf.Min(temptileSize, tileSize);
-                tileSize = Mathf.Max(165, tileSize);
+                tileSize = Mathf.Max(175, tileSize);
             }
             
             StageHexController.Instance.ActiveTileSize = tileSize;

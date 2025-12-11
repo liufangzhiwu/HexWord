@@ -207,7 +207,7 @@ public class StageFinishView : UIWindow
     private IEnumerator PlayRewardSequence()
     {
         _tasktable.taskEffect.gameObject.SetActive(false);
-        _matchFishtable.matchEffect.gameObject.SetActive(false);
+        //_matchFishtable.matchEffect.gameObject.SetActive(false);
         
          if (!LimitTimeManager.Instance.IsComplete()&&_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
          {

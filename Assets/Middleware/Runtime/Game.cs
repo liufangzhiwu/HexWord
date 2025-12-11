@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
@@ -12,6 +13,9 @@ namespace Middleware
         public static IAccounts Accounts { private set; get; }
         public static IAnalytics Analytics { private set; get; }
         public static IShop Shop { private set; get; }
+        
+        public GameObject LoadingScreen;
+        
         private void Awake()
         {
             DontDestroyOnLoad(gameObject);
@@ -24,6 +28,13 @@ namespace Middleware
             CreateAnalytic();
             //CreateShop();
             InitManagers();
+            StartCoroutine(ShowLoadingScreen());
+        }
+        
+        IEnumerator  ShowLoadingScreen()
+        {
+            yield return new WaitForSeconds(2f);
+            LoadingScreen.gameObject.SetActive(true);
         }
 
         private void InitManagers()

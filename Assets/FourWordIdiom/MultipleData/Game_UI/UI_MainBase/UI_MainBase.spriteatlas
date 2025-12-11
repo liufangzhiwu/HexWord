@@ -77,6 +77,7 @@ SpriteAtlas:
     - 8ea8cfa8d33ab784695012c5bccc547e: 21300000
     - 5a8d88f8803371043aa43f0e62654c1e: 21300000
     - 63a58ea936a10c44bbb562327f267120: 21300000
+    - eda66bb933869d44387704ca297137c6: 21300000
     - 7b7965e9bed9f5946a9d35729763e0f6: 21300000
     - 09f2b4f9dc2fa554cafc996dd79fdff8: 21300000
     - 84192f5a5cf60af4aa4c5d05845d10a7: 21300000
@@ -87,6 +88,7 @@ SpriteAtlas:
     - b81b896cda745d6429f0762da1b2a79b: 21300000
     - 273db88c8cde3044793a8c7037a54374: 21300000
     - a0eac19cc0e29de47a5bf67e0e362fab: 21300000
+    - 5cf53c4d049a76a47beafb87dd1415ae: 21300000
     - 5db46b0e5925cf84eb214f4acc9af589: 21300000
     - 81c3cc1ec36dd2748823b3ffae61b185: 21300000
     - 400471be92fa74449aa9a5af9c4c7dd6: 21300000
@@ -130,6 +132,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 8ea8cfa8d33ab784695012c5bccc547e, type: 3}
   - {fileID: 21300000, guid: 5a8d88f8803371043aa43f0e62654c1e, type: 3}
   - {fileID: 21300000, guid: 63a58ea936a10c44bbb562327f267120, type: 3}
+  - {fileID: 21300000, guid: eda66bb933869d44387704ca297137c6, type: 3}
   - {fileID: 21300000, guid: 7b7965e9bed9f5946a9d35729763e0f6, type: 3}
   - {fileID: 21300000, guid: 09f2b4f9dc2fa554cafc996dd79fdff8, type: 3}
   - {fileID: 21300000, guid: 84192f5a5cf60af4aa4c5d05845d10a7, type: 3}
@@ -140,6 +143,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: b81b896cda745d6429f0762da1b2a79b, type: 3}
   - {fileID: 21300000, guid: 273db88c8cde3044793a8c7037a54374, type: 3}
   - {fileID: 21300000, guid: a0eac19cc0e29de47a5bf67e0e362fab, type: 3}
+  - {fileID: 21300000, guid: 5cf53c4d049a76a47beafb87dd1415ae, type: 3}
   - {fileID: 21300000, guid: 5db46b0e5925cf84eb214f4acc9af589, type: 3}
   - {fileID: 21300000, guid: 81c3cc1ec36dd2748823b3ffae61b185, type: 3}
   - {fileID: 21300000, guid: 400471be92fa74449aa9a5af9c4c7dd6, type: 3}
@@ -182,6 +186,7 @@ SpriteAtlas:
   - UI_Icon_level
   - puzzlielie
   - zen_xiao
+  - di
   - levelPuzzle
   - soace_bg
   - UI_Icon_claim
@@ -192,6 +197,7 @@ SpriteAtlas:
   - UI_Icon_selebg
   - UI_Icon_tips
   - UI_Icon_circle
+  - adsimage
   - UI_Icon_goldbg
   - puzzle_bg
   - deng
