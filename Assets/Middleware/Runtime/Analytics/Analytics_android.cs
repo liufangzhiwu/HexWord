@@ -112,7 +112,7 @@ namespace Middleware
 #endif
             // TDAnalytics.Init(config);
             // TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppInstall | TDAutoTrackEventType.AppEnd);
-            // OnSdkInit?.Invoke(this,null);
+            OnSdkInit?.Invoke(this,null);
         }
 
         private bool _isFirebaseInit;

@@ -76,7 +76,6 @@ SpriteAtlas:
     - eaac0398f2ddd8648a1a014c8a83446b: 21300000
     - 8ea8cfa8d33ab784695012c5bccc547e: 21300000
     - 5a8d88f8803371043aa43f0e62654c1e: 21300000
-    - 25e2b28964a9ff842a1e2c19a161ce73: 21300000
     - 63a58ea936a10c44bbb562327f267120: 21300000
     - eda66bb933869d44387704ca297137c6: 21300000
     - 7b7965e9bed9f5946a9d35729763e0f6: 21300000
@@ -132,7 +131,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: eaac0398f2ddd8648a1a014c8a83446b, type: 3}
   - {fileID: 21300000, guid: 8ea8cfa8d33ab784695012c5bccc547e, type: 3}
   - {fileID: 21300000, guid: 5a8d88f8803371043aa43f0e62654c1e, type: 3}
-  - {fileID: 21300000, guid: 25e2b28964a9ff842a1e2c19a161ce73, type: 3}
   - {fileID: 21300000, guid: 63a58ea936a10c44bbb562327f267120, type: 3}
   - {fileID: 21300000, guid: eda66bb933869d44387704ca297137c6, type: 3}
   - {fileID: 21300000, guid: 7b7965e9bed9f5946a9d35729763e0f6, type: 3}
@@ -187,7 +185,6 @@ SpriteAtlas:
   - bowl_bg
   - UI_Icon_level
   - puzzlielie
-  - di
   - zen_xiao
   - di
   - levelPuzzle
