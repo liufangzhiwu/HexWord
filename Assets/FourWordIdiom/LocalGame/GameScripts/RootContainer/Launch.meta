@@ -1,10 +1,6 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Plugins/Android/baseProjectTemplate.gradle.meta
-guid: e4497ec95d9001d468e22773174555d2
-========
 guid: b09b49f59d47d834286e6af05b5515fc
 folderAsset: yes
->>>>>>>> origin/main:Assets/FourWordIdiom/LocalGame/GameScripts/RootContainer/Launch.meta
 DefaultImporter:
   externalObjects: {}
   userData: 

@@ -31,7 +31,7 @@ namespace Middleware
             callback(true);
             return;
 #endif
-            AdCompletedCallBackR = callback;
+            // AdCompletedCallBackR = callback;
             // var ad = _rewardedAds[key];
             // if (ad != null)
             // {

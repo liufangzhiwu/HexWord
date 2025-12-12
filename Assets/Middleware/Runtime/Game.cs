@@ -29,7 +29,7 @@ namespace Middleware
             // CreateShop();
 
             InitManagers();
-            StartCoroutine(ShowLoadingScreen());
+            // StartCoroutine(ShowLoadingScreen());
         }
         
         IEnumerator  ShowLoadingScreen()

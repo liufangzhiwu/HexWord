@@ -56,7 +56,7 @@ public class UserData
     public bool IsSoundOn = true;        // 音效开关
     //public bool IsVibrationOn ;    // 震动反馈开关
     public string LanguageCode;          // 当前语言代码
-
+    public bool IsAgreePrivacy;    // 同意用户隐私协议
     #endregion
 
     #region 游戏进度数据
@@ -231,6 +231,7 @@ public class UserData
         LanguageCode = GetLanguage();
         IsMusicOn = true;
         IsSoundOn = true;
+        IsAgreePrivacy = false;
         // 评价界面显示次数
         showRateusCount = 0;
         // 评价界面显示时间
@@ -316,6 +317,7 @@ public class UserData
         LanguageCode = GetLanguage();
         IsMusicOn = user.IsMusicOn;
         IsSoundOn = user.IsSoundOn;
+        IsAgreePrivacy = user.IsAgreePrivacy;
         Rigister = user.Rigister;
         firstLoginStamp = user.firstLoginStamp;
         lastLoginDay = user.lastLoginDay;
@@ -493,9 +495,6 @@ public class UserData
             // 更新在线时长
             UpdateOnlineStageTime();
             
-            // 标记非首次进入
-            IsFirstLaunch = false;
-
             // 序列化并加密数据
             string json = JsonConvert.SerializeObject(this, Formatting.Indented);
             string encryptedJson = SecurityProvider.ProtectData(json);
