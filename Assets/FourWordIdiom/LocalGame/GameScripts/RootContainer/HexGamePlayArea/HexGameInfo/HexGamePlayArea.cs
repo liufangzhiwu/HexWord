@@ -198,7 +198,9 @@ public class HexGamePlayArea : UIWindow
         int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
         if (CurStageInfo.StageNumber > 1&&rows<7)
         {
-#if UNITY_OPENHARMONY
+            
+#if UNITY_EDITOR
+#elif UNITY_OPENHARMONY || UNITY_ANDROID
             Game.Ads.ShowBanner();
             rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom
             Debug.LogError("底部位置" + rectTransform.offsetMin);

@@ -1,8 +1,9 @@
 using DG.Tweening;
+using Middleware;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
+
 
 public class OptionsView : UIWindow
 {
@@ -15,6 +16,7 @@ public class OptionsView : UIWindow
     [SerializeField] private Button privacyBtn; // 隐私条款按钮
     [SerializeField] private Button termsBtn; // 服务协议按钮
     [SerializeField] private Button restoreBuyBtn; // 服务协议按钮
+    [SerializeField] private Button changeAccountBtn; // 服务协议按钮
 
     [SerializeField] private GameObject muHandle; // 音乐开关的视觉手柄
     [SerializeField] private GameObject soHandle; // 音效开关的视觉手柄
@@ -83,6 +85,8 @@ public class OptionsView : UIWindow
         soundsToggle.onValueChanged.AddListener(ToggleSounds); // 绑定音效开关变更事件
         vibrateToggle.onValueChanged.AddListener(ToggleVibrate); // 绑定音效开关变更事件
         
+        changeAccountBtn.onClick.AddListener(ChangeAccount);
+
         AccountQuitBtn.onClick.AddListener(AccountQuit);
 
         // 添加无用的点击监听器
@@ -96,6 +100,12 @@ public class OptionsView : UIWindow
                 }
             });
         }
+    }
+    
+    private void ChangeAccount()
+    {
+       Game.Accounts.Logout();
+       Game.Accounts.Login();
     }
     
     private void AccountQuit()

@@ -12,7 +12,7 @@ namespace Middleware
     
 public class Account_harmony : IAccounts
 {
-    private bool IsLogin = false;
+    public bool IsLogin { get; set; } = false;
     string teamPlayerId = string.Empty;
     string thirdOpenId="";
     
@@ -69,7 +69,13 @@ public class Account_harmony : IAccounts
     {
         OHThirdAccountInfo info = new OHThirdAccountInfo();
         info.accountName = "Tuanjie";
-        OHSDKKitManager.Instance.Login(info,true, LoginPanelType.ICON);
+        
+        if(GameDataManager.Instance.UserData.IsFirstLaunch)
+            OHSDKKitManager.Instance.Login(info,true, LoginPanelType.ICON);
+        else
+        {
+            OHSDKKitManager.Instance.Login(null,true, LoginPanelType.ICON);
+        }
     }
 
     public void Logout()
@@ -167,7 +173,6 @@ public class Account_harmony : IAccounts
         {
             GamePlayerInitSignal targetSignal = (GamePlayerInitSignal)signal;
             Debug.Log("[GamePlayerInit Success] " + "\n " + targetSignal.successMessage + "\n");
-            IsLogin=true;
             Login();
         }
         else
@@ -182,7 +187,7 @@ public class Account_harmony : IAccounts
         {
             LoginSignal targetSignal = (LoginSignal)signal;
             teamPlayerId = targetSignal.localPlayer.teamPlayerId;
-            isLoginedIn = true;
+            IsLogin = true;
             Debug.Log("Login Success" + "\n "
                 + "authorizationCode :" + targetSignal.authorizationCode + "\n "
                 + "idToken : " + targetSignal.idToken + "\n"
@@ -206,7 +211,7 @@ public class Account_harmony : IAccounts
             Debug.Log("Logout Success" + "\n "
                + "message" + targetSignal.state + "\n");
             teamPlayerId = string.Empty;
-            isLoginedIn = false;
+            IsLogin = false;
         }
         else
         {
