@@ -65,12 +65,12 @@ public class Account_harmony : IAccounts
         }
     }
 
-    public void Login()
+    public void Login(bool isShowLoginPanel = false)
     {
         OHThirdAccountInfo info = new OHThirdAccountInfo();
         info.accountName = "Tuanjie";
         
-        if(GameDataManager.Instance.UserData.IsFirstLaunch)
+        if(GameDataManager.Instance.UserData.IsFirstLaunch||isShowLoginPanel)
             OHSDKKitManager.Instance.Login(info,true, LoginPanelType.ICON);
         else
         {
@@ -199,6 +199,8 @@ public class Account_harmony : IAccounts
         {
             Debug.Log("Login Error" + "\n "
                 +"Code : " + signal.code + " \n Message : " + signal.message + "\n");
+            
+            Application.Quit();
         }
 
     }

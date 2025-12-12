@@ -9,7 +9,7 @@ namespace Middleware
     {
         public bool IsLogin { get; set; }
         void Init(float delay);
-        void Login();
+        void Login(bool isShowLoginPanel = false);
         void Logout();
         
         void VerifyPlayer();

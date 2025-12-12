@@ -27,7 +27,7 @@ namespace Middleware
 
         public static void InitGame()
         {
-#if UNITY_UNITY_OPENHARMONY
+#if UNITY_OPENHARMONY
             CreateAd();
             CreateAccounts();
             

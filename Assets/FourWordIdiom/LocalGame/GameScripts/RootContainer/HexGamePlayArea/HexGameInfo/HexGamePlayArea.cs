@@ -178,8 +178,6 @@ public class HexGamePlayArea : UIWindow
             StartCoroutine(CheckInactivity());
             StageHexController.Instance.tipPuzzle = "";
         }
-        
-       
     }
 
     IEnumerator SetupGameData()
@@ -198,8 +196,8 @@ public class HexGamePlayArea : UIWindow
         int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
         if (CurStageInfo.StageNumber > 1&&rows<7)
         {
-            
 #if UNITY_EDITOR
+            
 #elif UNITY_OPENHARMONY || UNITY_ANDROID
             Game.Ads.ShowBanner();
             rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom

@@ -34,7 +34,7 @@ public class HyperlinkText : Text, IPointerClickHandler
     protected StringBuilder s_TextBuilder = new StringBuilder();
 
     [Tooltip("超链接文本颜色")]
-    [SerializeField] private Color32 innerTextColor = new Color32(225, 129, 41, 128);
+    private Color32 innerTextColor = new Color32(25, 26, 215, 255);
 
     /// 超链接正则
     private static readonly Regex s_HrefRegex = new Regex(@"<href=([^>\n\s]+)>(.*?)(</href>)", RegexOptions.Singleline);
