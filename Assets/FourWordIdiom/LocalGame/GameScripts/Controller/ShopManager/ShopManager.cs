@@ -147,35 +147,35 @@ public class ShopManager : MonoBehaviour
         for (int i = 2; i < lines.Length; i++) // 从第一行开始，跳过标题行
         {
             string[] fields = lines[i].Split(',');
-
+            Debug.Log($"查看列数 {fields.Length} : " + lines[i]);
             if (fields.Length >= 11) // 确保有足够的字段
             {
                 int id = int.Parse(fields[0].Trim());
                 string nameID = fields[1].Trim();
-                string nameID_tw = fields[2].Trim();
-                int purchaseType = int.Parse(fields[3].Trim());
+                string nameID_tw = fields[3].Trim();
+                int purchaseType = int.Parse(fields[2].Trim());
               
-                int type = int.Parse(fields[5].Trim());
+                int type = int.Parse(fields[4].Trim());
                 
                 // Parse productContent
-                List<List<string>> productContent = fields[6].Split('#')
+                List<List<string>> productContent = fields[5].Split('#')
                     .Select(group => group.Split(';').ToList())
                     .ToList();
 
-                float price = float.Parse(fields[7].Trim().Trim('"')); // 去掉引号
-                string showIcon = fields[8].Trim();
-                string name = fields[9].Trim();
-                string des = fields[10].Trim();
-                string pointdes = fields[11].Trim();
-                string isHomeDisplay = fields[12].Trim();
-                int sort = int.Parse(fields[13].Trim());
-                string homeSort = fields[14].Trim();
+                float price = float.Parse(fields[6].Trim().Trim('"')); // 去掉引号
+                string showIcon = fields[7].Trim();
+                string name = fields[8].Trim();
+                string des = fields[9].Trim();
+                string pointdes = fields[10].Trim();
+                string isHomeDisplay = fields[11].Trim();
+                int sort = int.Parse(fields[12].Trim());
+                string homeSort = fields[13].Trim();
                 List<string> unlocks = new List<string>(
-                    fields[15].Trim().Split('#') // 假设用分号分隔
+                    fields[14].Trim().Split('#') // 假设用分号分隔
                 );
                 //int unlocks = int.Parse(fields[15].Trim());
-                string limittime = fields[16].Trim();
-                string discount = fields[17].Trim();
+                string limittime = fields[15].Trim();
+                string discount = fields[16].Trim();
 
                 ShopDataItem item = new ShopDataItem
                 {

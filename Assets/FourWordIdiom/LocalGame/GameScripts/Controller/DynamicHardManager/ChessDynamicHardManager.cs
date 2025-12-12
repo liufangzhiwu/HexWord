@@ -226,7 +226,7 @@ public class ChessDynamicHardManager : MonoBehaviour
                     float.TryParse(values[0], out dayEValue);
                     int.TryParse(values[1], out dayDecrLevel);
                     GameDataManager.Instance.ChessDynamicHardSave.ReduceWord = dayDecrLevel;
-                    Debug.Log("是否进行了初始化？ " + GameDataManager.Instance.ChessDynamicHardSave.ReduceWord);
+                    // Debug.Log("是否进行了初始化？ " + GameDataManager.Instance.ChessDynamicHardSave.ReduceWord);
                 }else if (paramId == "cypz_cv_a")
                 {
                     string[] values = valueStr.Split('_');

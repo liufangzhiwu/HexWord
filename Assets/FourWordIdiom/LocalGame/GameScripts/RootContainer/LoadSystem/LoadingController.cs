@@ -1,9 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 
 /// <summary>
@@ -33,7 +35,7 @@ public class LoadingController : MonoBehaviour
     private AsyncOperation sceneLoadOperation;        // 场景加载操作
     private float loadStartTime;                      // 加载开始时间
 
-    private void Start()
+    private void OnEnable()
     {
         StartCoroutine(InitializeLoadingProcess());
     }
@@ -46,7 +48,7 @@ public class LoadingController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.05f);
         loadStartTime = Time.time;
-        InitializeLocalization();
+        // InitializeLocalization();
         //SetupRandomLoadingHint();
         LoadWordVocabulary();
         StartCoroutine(LoadingSequence());
@@ -88,7 +90,7 @@ public class LoadingController : MonoBehaviour
         yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
         //AudioManager.Instance.Initialize();
-        GameDataManager.Instance.LoadPlayerProfile();
+        // GameDataManager.Instance.LoadPlayerProfile();
         sceneLoadOperation.allowSceneActivation = true;
     }
 
@@ -141,7 +143,8 @@ public class LoadingController : MonoBehaviour
         
         //预加载关卡文件
          StageHexController.Instance.LoadPackInfos();
-
+         // 标记非首次进入
+         GameDataManager.Instance.UserData.IsFirstLaunch = false;
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }
