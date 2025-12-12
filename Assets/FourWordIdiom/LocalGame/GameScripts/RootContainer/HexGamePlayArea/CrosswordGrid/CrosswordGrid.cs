@@ -7,14 +7,6 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
 
-public enum TileDirection
-{
-    Null,
-    Horizontal,
-    Vertical,
-    LeftDiagonal,
-    RightDiagonal,
-}
 
 /// <summary>
 /// 字块矩阵面板
@@ -32,7 +24,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     List<List<List<PuzzleTile>>> gridList = new List<List<List<PuzzleTile>>>();
     //选中字块列表
     private List<PuzzleTile> selectedPuzzleGrids = new List<PuzzleTile>();      
-    private TileDirection LastSelectDirection = TileDirection.Null;      
     private string selectedPuzzle;
     private int	activePointerId;
 	/// <summary>
@@ -156,7 +147,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 		selectState	= TileSelectionState.None;
 		selectedPuzzle = "";
 		selectedPuzzleGrids.Clear();
-        LastSelectDirection = TileDirection.Null;
 	}
 
 	/// <summary>
@@ -184,16 +174,16 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             float tileSize = Mathf.Min(width, height);
             float temptileSize = 0;
             
-            if(tileSize>=260)
+            if(tileSize>=250)
             {
-                temptileSize = isipad ? 185 : 260;
+                temptileSize = isipad ? 185 : 250;
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
 
             if (cols >= 6)
             {
-                float xrate = cols > 6 ? 7 : 22;
-                float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 3.5f;
+                float xrate = cols > 6 ? 22 : 70;
+                float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 5;
                 temptileSize = width - (cols- xoffset) * xrate;
                 tileSize = Mathf.Min(temptileSize, tileSize);
                 tileSize = Mathf.Max(200, tileSize);
@@ -202,7 +192,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             if (rows >= 7)
             {
                 float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
-                float offsety = (rows - 7) * 10 * yrate ;
+                float offsety = (rows - 7) * 45 * yrate ;
                 temptileSize = height - offsety;
                 tileSize = Mathf.Min(temptileSize, tileSize);
                 tileSize = Mathf.Max(200, tileSize);
@@ -741,7 +731,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         {
             List<int[]> positions = GetPuzzleGridRowCol(selectedPuzzleGrids);
             HideChoicePuzzle(positions);
-            ClearBoardPuzzles(selectedPuzzleGrids);
             EventDispatcher.instance.TriggerPlayChoicePuzzle(positions, false);
         }
         ClearSelectData();
@@ -767,18 +756,8 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     {
         foreach (PuzzleTile grid in PuzzleGrids)
         {
-            ClaerPuzzles(grid);
+            grid.TileView.SetSelectionState(false, true);
         }           
-    }
-
-    private void ClaerPuzzles(PuzzleTile grid)
-    {
-        grid.TileView.SetSelectionState(false, false);
-        List<PuzzleTile> puzzleTiles=gridList[grid.Row][grid.Column];
-        for (int i = 1; i < puzzleTiles.Count; i++)
-        {
-            puzzleTiles[i].TileView.PlayResetPosAnimation();
-        }
     }
 
     /// <summary>
@@ -787,6 +766,9 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     private void UpdateSelectedBoard()
     {
         if (selectStart == null) return;
+
+        //清除棋盘字块
+        ClearBoardPuzzles(selectedPuzzleGrids);
         
         if((HexType)StageHexController.Instance.CurStageInfo.HexType==HexType.PingHexagon)
         {
@@ -797,6 +779,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         {
             //设置棋盘选中字块
             SetJianSelectedBoard(selectStart, selectEnd);
+           
         }
     }
 
@@ -818,9 +801,9 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             end = start;
         }
 
-        HashSet<PuzzleTile> newSelectedPuzzleGrids = new HashSet<PuzzleTile>();
-         selectedPuzzle = "";
-        // selectedPuzzleGrids.Clear();
+        HashSet<PuzzleTile> lastSelectedPuzzleGrids = new HashSet<PuzzleTile>(selectedPuzzleGrids);
+        selectedPuzzle = "";
+        selectedPuzzleGrids.Clear();
 
         // 计算步数和方向
         int steps = isVertical ? Math.Abs(end.Row - start.Row) :
@@ -926,7 +909,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             // 获取该位置的最大层级
             int maxLayer = GetMaxLayerAtPosition(row, col);
 
-            List<PuzzleTile> puzzleGrids = gridList[row][col];
             PuzzleTile puzzleGrid = gridList[row][col][0];
 
             //Debug.Log("选中字块信息：" + puzzleGrid.Letter + "层级:" + maxLayer);
@@ -937,43 +919,26 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 break;
             }
 
-            bool justSelected = !selectedPuzzleGrids.Contains(puzzleGrid);
-            
-            newSelectedPuzzleGrids.Add(puzzleGrid);
-            selectedPuzzle += puzzleGrid.Letter;
+            bool justSelected = !lastSelectedPuzzleGrids.Contains(puzzleGrid);
 
-            //刚选中
-            if (justSelected && selectedPuzzleGrids.Count < 4)
+            puzzleGrid.TileView.SetSelectionState(true, justSelected);
+            selectedPuzzle += puzzleGrid.Letter;
+            selectedPuzzleGrids.Add(puzzleGrid);
+
+            // 刚选中
+            if (justSelected)
             {
-                for (int j = 1; j < puzzleGrids.Count; j++)
-                {
-                    puzzleGrids[j].TileView.PlaySelectAnimation();
-                }
-                
-                puzzleGrid.TileView.SetSelectionState(true, justSelected);
-                
-                selectedPuzzleGrids.Add(puzzleGrid);
-                
                 if (selectedPuzzle.Length > 0)
                 {
                     AudioManager.Instance.PlaySoundEffect("Puzzle" + selectedPuzzle.Length);
                 }
             }
         }
-        
-        if (newSelectedPuzzleGrids.Count < selectedPuzzleGrids.Count)
+
+        if (selectedPuzzleGrids.Count < lastSelectedPuzzleGrids.Count)
         {
             AudioManager.Instance.TriggerVibration(1, 10);
-            AudioManager.Instance.PlaySoundEffect("Puzzle" + newSelectedPuzzleGrids.Count);
-        }
-
-        foreach (var puzzle in selectedPuzzleGrids)
-        {
-            if(!newSelectedPuzzleGrids.Contains(puzzle))
-            {
-                selectedPuzzleGrids.Remove(puzzle);
-                ClaerPuzzles(puzzle);
-            }
+            AudioManager.Instance.PlaySoundEffect("Puzzle" + lastSelectedPuzzleGrids.Count);
         }
 
         EventDispatcher.instance.TriggerShowSelectedPuzzle(selectedPuzzle);
@@ -984,7 +949,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// </summary>
     private void SetJianSelectedBoard(PuzzleTile start, PuzzleTile end)
     {
-        
         // 判断选择方向：横向或斜向
         bool isHorizontal = start.Row == end.Row;
         bool isLeftDiagonal = IsLeftJianDirection(start, end);
@@ -998,9 +962,9 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             end = start;
         }
 
-        HashSet<PuzzleTile> newSelectedPuzzleGrids = new HashSet<PuzzleTile>();
+        HashSet<PuzzleTile> lastSelectedPuzzleGrids = new HashSet<PuzzleTile>(selectedPuzzleGrids);
         selectedPuzzle = "";
-        // selectedPuzzleGrids.Clear();
+        selectedPuzzleGrids.Clear();
 
         // 计算步数和方向
         int steps = isHorizontal ? Math.Abs(end.Column - start.Column) :
@@ -1062,7 +1026,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             // 获取该位置的最大层级
             int maxLayer = GetMaxLayerAtPosition(row, col);            
 
-            List<PuzzleTile> puzzleGrids = gridList[row][col];
             PuzzleTile puzzleGrid = gridList[row][col][0];
 
             Debug.Log("选中字块信息：" + puzzleGrid.Letter+"层级:"+maxLayer);
@@ -1073,42 +1036,26 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 break;
             }
 
-            bool justSelected = !selectedPuzzleGrids.Contains(puzzleGrid);
-            
-            newSelectedPuzzleGrids.Add(puzzleGrid);
+            bool justSelected = !lastSelectedPuzzleGrids.Contains(puzzleGrid);
+
+            puzzleGrid.TileView.SetSelectionState(true, justSelected);
             selectedPuzzle += puzzleGrid.Letter;
+            selectedPuzzleGrids.Add(puzzleGrid);
 
             // 刚选中
-            if (justSelected&& selectedPuzzleGrids.Count < 4)
+            if (justSelected)
             {
-                for (int j = 1; j < puzzleGrids.Count; j++)
-                {
-                    puzzleGrids[j].TileView.PlaySelectAnimation();
-                }
-                
-                puzzleGrid.TileView.SetSelectionState(true, justSelected);
-                selectedPuzzleGrids.Add(puzzleGrid);
-                
                 if (selectedPuzzle.Length > 0)
                 {
                     AudioManager.Instance.PlaySoundEffect("Puzzle" + selectedPuzzle.Length);
                 }
             }
         }
-        
-        if (newSelectedPuzzleGrids.Count < selectedPuzzleGrids.Count)
+
+        if (selectedPuzzleGrids.Count < lastSelectedPuzzleGrids.Count)
         {
             AudioManager.Instance.TriggerVibration(1, 10);
-            AudioManager.Instance.PlaySoundEffect("Puzzle" + newSelectedPuzzleGrids.Count);
-        }
-
-        foreach (var puzzle in selectedPuzzleGrids)
-        {
-            if(!newSelectedPuzzleGrids.Contains(puzzle))
-            {
-                selectedPuzzleGrids.Remove(puzzle);
-                ClaerPuzzles(puzzle);
-            }
+            AudioManager.Instance.PlaySoundEffect("Puzzle" + lastSelectedPuzzleGrids.Count);
         }
 
         EventDispatcher.instance.TriggerShowSelectedPuzzle(selectedPuzzle);

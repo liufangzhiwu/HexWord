@@ -2,13 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Middleware;
 using UnityEngine;
-using UnityEngine.HuaweiAppGallery;
-using UnityEngine.HuaweiAppGallery.Listener;
-using UnityEngine.HuaweiAppGallery.Model;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Game = Middleware.Game;
 using Random = UnityEngine.Random;
 
 
@@ -25,37 +22,6 @@ using Random = UnityEngine.Random;
 /// </summary>
 public class LoadingController : MonoBehaviour
 {
-    private enum GameFlowStatus 
-    {
-        NotStarted,
-    
-        // --- 1. 初始化阶段 ---
-        Initializing,
-        InitFailed,
-    
-        // --- 2. 更新检查阶段 ---
-        CheckingUpdate,
-        UpdateRequired, // 需要更新，等待用户操作
-    
-        // --- 3. 登录阶段 ---
-        LoggingIn,
-        SilentFailed,
-        LoginFailed,
-        
-        // 获取用户信息
-        GetGamePlayer,
-        GetGamePlayerFailed,
-        // 上传角色信息
-        GamePlayerSave,
-        GamePlayerSaveFailed,
-        // --- 4. 完成状态 ---
-        Ready // 所有流程完成，游戏可以启动
-    }
-    private GameFlowStatus _flowStatus = GameFlowStatus.NotStarted;
-    private int _retryAttempt = 0;
-    private const int MAX_RETRIES = 3; // 设置最大重试次数
-    private const float RETRY_DELAY = 1.0f; // 重试间隔（秒）
-    
     [Header("UI组件引用")]
     [SerializeField] private Text loadingHintText;    // 加载提示文本
     [SerializeField] private Slider progressSlider;   // 进度条组件
@@ -70,11 +36,11 @@ public class LoadingController : MonoBehaviour
     private AsyncOperation sceneLoadOperation;        // 场景加载操作
     private float loadStartTime;                      // 加载开始时间
 
-    private void Start()
+    private void OnEnable()
     {
-        // HuaweiGameService.AppInit();
         StartCoroutine(InitializeLoadingProcess());
     }
+
 
     /// <summary>
     /// 初始化加载流程
@@ -83,11 +49,10 @@ public class LoadingController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.05f);
         loadStartTime = Time.time;
-        InitializeLocalization();
+        // InitializeLocalization();
         //SetupRandomLoadingHint();
         LoadWordVocabulary();
         StartCoroutine(LoadingSequence());
-        
     }
 
     /// <summary>
@@ -102,7 +67,7 @@ public class LoadingController : MonoBehaviour
     
     public async void LoadWordVocabulary()
     {
-        // Debug.Log("开始加载词库资源");
+        Debug.Log("开始加载词库资源");
         await WordVocabularyManager.Instance.LoadEntriesAsync();
         Debug.Log("完成加载词库资源");
     }
@@ -122,49 +87,20 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator LoadingSequence()
     {
-        // yield return InitializeGameService();
-        // yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
-       
+        Game.InitGame();
+#if UNITY_EDITOR
+#else
+        yield return new WaitUntil(()=>Game.Accounts.IsLogin);
+#endif
+
         // 并行执行模拟加载和实际加载
         yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
         //AudioManager.Instance.Initialize();
-        GameDataManager.Instance.LoadPlayerProfile();
+        // GameDataManager.Instance.LoadPlayerProfile();
         sceneLoadOperation.allowSceneActivation = true;
-        
     }
 
-    private IEnumerator InitializeGameService()
-    {
-        Action<GameFlowStatus> statusSetter = (status) => { _flowStatus = status; };
-        if (_retryAttempt >= MAX_RETRIES)
-        {
-            _flowStatus = GameFlowStatus.InitFailed;
-            Application.Quit();
-            yield break;
-        }
-
-        _retryAttempt++;
-        _flowStatus = GameFlowStatus.Initializing;
-        HuaweiGameService.Init(new AntiAddictionHandler(), new InitHandler(statusSetter, () =>
-        {
-            _flowStatus = GameFlowStatus.InitFailed;
-            StartCoroutine(RetryAfterDelay(RETRY_DELAY));
-        }));
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.CheckingUpdate);
-        HuaweiGameService.CheckUpdate(new CheckUpdateListener(statusSetter));
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.LoggingIn);
-    }
-    
-    // 助手协程：用于在重试前等待一段时间
-    private IEnumerator RetryAfterDelay(float delay)
-    {
-        Debug.Log($"等待 {delay} 秒后重试...");
-        yield return new WaitForSeconds(delay);
-    
-        // 🔑 关键：重新启动初始化流程
-        StartCoroutine(InitializeGameService());
-    }
     /// <summary>
     /// 模拟加载进度（确保最小加载时间）
     /// </summary>
@@ -210,43 +146,16 @@ public class LoadingController : MonoBehaviour
 
         yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
             "effectsitemmats",
-            "Circle");
-        
-        // 登录开始
-        // yield return LoadHuaweiGameLogin();
-        // yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
+            "Circle");       
         
         //预加载关卡文件
-        StageHexController.Instance.LoadPackInfos();
-     
+         StageHexController.Instance.LoadPackInfos();
+         // 标记非首次进入
+         GameDataManager.Instance.UserData.IsFirstLaunch = false;
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }
 
-    private IEnumerator LoadHuaweiGameLogin()
-    {
-        Action<GameFlowStatus> statusSetter = (status) => { _flowStatus = status; };
-        
-        HuaweiGameService.SilentSignIn(new SilentLoginListener(statusSetter));
-        if (_flowStatus == GameFlowStatus.SilentFailed)
-        {
-            HuaweiGameService.Login(new SilentLoginListener(statusSetter));
-        }
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GetGamePlayer);
-        Player _player = null;
-        HuaweiGameService.GetGamePlayer(new GetGamePlayerListener(statusSetter, player=> _player = player));
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GamePlayerSave);
-        AppPlayerInfo appPlayerInfo = new AppPlayerInfo();
-        appPlayerInfo.Rank = "test rank";
-        appPlayerInfo.Area = "test area";
-        appPlayerInfo.Role = GameDataManager.Instance.UserData.UserName;
-        appPlayerInfo.Sociaty = "sociaty";
-        appPlayerInfo.PlayerId = _player.PlayerId;
-        appPlayerInfo.OpenId = _player.OpenId;
-        HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));
-        
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
-    }
     private void LoadFont()
     {
         // 加载TMP字体资源
@@ -305,207 +214,4 @@ public class LoadingController : MonoBehaviour
         // 更新百分比文本
         // loadingHintText.text = $"{Mathf.FloorToInt(progress * 100)}%";
     }
-    
-    // 🔑 1. 定义局部实现类 IAntiAddictionListener
-    private class AntiAddictionHandler : IAntiAddictionListener
-    {
-        public void OnExit()
-        {
-            Debug.Log("防沉迷退出回调：退出应用。");
-            GameDataManager.Instance.CommitGameData();
-            Application.Quit();
-        }
-    }
-    
-    // 🔑 2. 定义局部实现类 IInitListener
-    private class InitHandler : IInitListener
-    {
-        private readonly Action<GameFlowStatus> _onCompletedCallback;
-        private readonly Action  _onRetryAction;
-
-        public InitHandler(Action<GameFlowStatus> onCompletedCallback, Action onRetryAction = null)
-        {
-            _onCompletedCallback = onCompletedCallback;
-            _onRetryAction = onRetryAction;
-        }
-        public void OnSuccess()
-        {
-            HuaweiGameService.ShowFloatWindow();
-            _onCompletedCallback?.Invoke(GameFlowStatus.CheckingUpdate);
-        }
-
-        public void OnFailure(int code, string message)
-        {
-            string msg = $"JosAppsClient init failed, code:{code} message:{message}";
-            switch (code)
-            {
-                case 7002:
-                    MessageSystem.Instance.ShowTip("请检查网络");
-                    _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
-                    break;
-                case 7401:
-                    _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
-                    Application.Quit();
-                    break;
-                case 907135003:
-                    _onRetryAction?.Invoke();
-                    break;
-                default:
-                    MessageSystem.Instance.ShowTip(msg);
-                    _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
-                    break;
-            }
-        }
-    }
-    
-    private class CheckUpdateListener : ICheckUpdateListener
-    {
-        private readonly Action<GameFlowStatus> _onCompletedCallback;
-
-        public CheckUpdateListener(Action<GameFlowStatus> onCompletedCallback)
-        {
-            _onCompletedCallback = onCompletedCallback;
-        }
-        public  void OnUpdateInfo(AndroidJavaObject intent)
-        {
-            if (intent !=null)
-            {
-                int status = intent.Call<int>("getIntExtra", "status", 0);
-                if (status==0)
-                {
-                    // 无需更新，直接进入下一阶段：登录
-                    _onCompletedCallback?.Invoke(GameFlowStatus.LoggingIn);
-                }
-                else if (status == 7)
-                {
-                    // 发现更新，等待用户操作或退出
-                    _onCompletedCallback.Invoke(GameFlowStatus.UpdateRequired);
-                    AndroidJavaObject apkUpgradeInfo = intent.Call<AndroidJavaObject>("getSerializableExtra", "updatesdk_update_info");
-                    HuaweiGameService.ShowUpdateDialog(apkUpgradeInfo, true);
-                    // bool isExit = intent.Call<bool>("getBooleanExtra", ",", false);
-                    // TODO
-                }
-                else
-                {
-                    _onCompletedCallback?.Invoke(GameFlowStatus.LoggingIn);
-                }
-            }
-            else
-            {
-                _onCompletedCallback?.Invoke(GameFlowStatus.LoggingIn);
-            }
-        }
-
-        public void OnMarketInstallInfo(AndroidJavaObject intent)
-        {
-           
-        }
-
-        public void OnMarketStoreError(int responseCode)
-        {
-           
-        }
-
-        public void OnUpdateStoreError(int responseCode)
-        {
-           
-        }
-    }
-    
-    private class SilentLoginListener : ILoginListener
-    {
-        private readonly Action<GameFlowStatus> _onLoginCompleted;
-
-        public SilentLoginListener(Action<GameFlowStatus> onLoginCompleted)
-        {
-            _onLoginCompleted = onLoginCompleted;
-        }
-        public void OnSuccess(SignInAccountProxy signInAccountProxy)
-        {
-            if (signInAccountProxy == null)
-            {
-                MessageSystem.Instance.ShowTip("signInAccountProxy == null");
-                _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
-                return;
-            }
-            string msg = "get login success with signInAccountProxy info: \n";
-            msg += String.Format("displayName:{0}, email:{1}, uid:{2}, openId:{3}, unionId:{4}, accessToken:{5}, serverAuthCode:{6}, idToken:{7}",
-                signInAccountProxy.DisplayName, signInAccountProxy.Email, signInAccountProxy.Uid, signInAccountProxy.OpenId, signInAccountProxy.UnionId,
-                signInAccountProxy.AccessToken, signInAccountProxy.ServerAuthCode, signInAccountProxy.IdToken);
-            MessageSystem.Instance.ShowTip(msg);
-           _onLoginCompleted.Invoke(GameFlowStatus.GetGamePlayer);
-        }
-
-        public void OnSignOut()
-        {
-            string msg = "sign out success.";
-           MessageSystem.Instance.ShowTip(msg);
-        }
-
-        public void OnFailure(int code, string message)
-        {
-            string msg = "account method failed, code:" + code + " message:" + message;
-            MessageSystem.Instance.ShowTip(msg);
-            _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
-        }
-    }
-    private class GetGamePlayerListener : IGetPlayerListener
-    {
-        private readonly Action<GameFlowStatus> _onGetPlayerCompleted;
-        private readonly Action<Player> _owner;
-
-        public GetGamePlayerListener(Action<GameFlowStatus> onGetPlayerCompleted, Action<Player> owner)
-        {
-            _onGetPlayerCompleted = onGetPlayerCompleted;
-            _owner = owner;
-        }
-        public void OnSuccess(Player player)
-        {
-            if (player == null)
-            {
-                MessageSystem.Instance.ShowTip("player == null");
-                _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
-                return;
-            }
-            var msg = "getGamePlayer succeed. \n";
-            msg += string.Format(
-                "displayName:{0}, playerId:{1}, playerSign:{2}, openId:{3}, unionId:{4}, openIdSign:{5}, accessToken:{6}",
-                player.DisplayName, player.PlayerId, player.PlayerSign, player.OpenId, player.UnionId, player.OpenIdSign, player.AccessToken
-            );
-            MessageSystem.Instance.ShowTip(msg);
-            _owner?.Invoke(player);
-            _onGetPlayerCompleted?.Invoke(GameFlowStatus.GamePlayerSave);
-        }
-
-        public void OnFailure(int code, string message)
-        {
-            var msg = "getCurrentPlayer failed, code:" + code + " message:" + message;
-            MessageSystem.Instance.ShowTip(msg);
-            _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
-        }
-    }
-    
-    private class SavePlayerInfoListener : ISavePlayerInfoListener
-    {
-        private readonly Action<GameFlowStatus> _onSavePlayerInfoCompleted;
-
-        public SavePlayerInfoListener(Action<GameFlowStatus> onSavePlayerInfoCompleted)
-        {
-            _onSavePlayerInfoCompleted = onSavePlayerInfoCompleted;
-        }
-        public void OnSuccess()
-        {
-            var msg = "SavePlayerInfo succeed.";
-            MessageSystem.Instance.ShowTip(msg);
-            _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
-        }
-        
-        public void OnFailure(int code, string message)
-        {
-            var msg = "SavePlayerInfo failed, code:" + code + " message:" + message;
-            MessageSystem.Instance.ShowTip(msg);
-            _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.GamePlayerSaveFailed);
-        }
-    }
-
 }

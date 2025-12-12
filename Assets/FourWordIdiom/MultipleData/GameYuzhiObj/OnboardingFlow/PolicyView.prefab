@@ -1,16 +1,17 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!1 &1098769895241669504
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 645392698739956524}
   - component: {fileID: 5736749202375274434}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: BackUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -58,12 +59,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1806577418320674792}
   - component: {fileID: 4634779379431447518}
   - component: {fileID: 1210613822359116437}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Bg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,7 +135,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3348149280488444271}
   - component: {fileID: 8280429790780138894}
@@ -142,6 +144,7 @@ GameObject:
   - component: {fileID: 1666292927205201055}
   - component: {fileID: 7998909761262382104}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: PolicyView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -219,7 +222,7 @@ MonoBehaviour:
     m_Bits: 4294967295
 --- !u!95 &1666292927205201055
 Animator:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -230,6 +233,8 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 5aa0b95a48a8d744d9d0cdf89a69d2b2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
+  m_UpdateFrequencyMode: 0
+  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -261,13 +266,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 812192769237666198}
   - component: {fileID: 7483043395396321543}
   - component: {fileID: 2117746234183882041}
   - component: {fileID: 7162759123976464491}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text_tips
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -356,13 +362,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6758687246408085037}
   - component: {fileID: 4101914575001008508}
   - component: {fileID: 6043342328112555402}
   - component: {fileID: 4024886413001663278}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: NextBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -461,8 +468,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: c90dc58a1eb0bdd409df3060f961f094, type: 3}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: d07f6c338d21a36418a835b3d0a945cf, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -477,13 +484,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6965681445527954602}
   - component: {fileID: 9004757456458070652}
   - component: {fileID: 2831256038802552658}
   - component: {fileID: 4525800598679066443}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text_Des
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -575,12 +583,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4454236157551206563}
   - component: {fileID: 2547702562493788601}
   - component: {fileID: 5630192877518882952}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: di
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -650,7 +659,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2804690617285980769}
   - component: {fileID: 4046908570571758991}
@@ -658,6 +667,7 @@ GameObject:
   - component: {fileID: 4994090630100897729}
   - component: {fileID: 9217736918412319056}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}

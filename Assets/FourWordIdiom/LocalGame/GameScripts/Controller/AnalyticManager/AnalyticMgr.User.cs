@@ -67,7 +67,6 @@ public partial class AnalyticMgr
         {
             levelId = GameDataManager.Instance.UserData.CurrentChessStage;
         }
-        Debug.Log("SetCommonProperties 时间： " + Time.deltaTime);
             var properties = new Dictionary<string, object>
         {
             {"gold", GameDataManager.Instance.UserData.Gold },

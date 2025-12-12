@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "cn.tuanjie.openharmony.sdkkit": {
+      "version": "1.0.3",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.tuanjie.cn"
+    },
     "com.unity.2d.animation": {
       "version": "9.2.0",
       "depth": 1,
@@ -293,6 +300,12 @@
       "dependencies": {}
     },
     "com.unity.modules.imgui": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {}
+    },
+    "com.unity.modules.infinity": {
       "version": "1.0.0",
       "depth": 0,
       "source": "builtin",

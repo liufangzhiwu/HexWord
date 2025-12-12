@@ -2,13 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.HuaweiAppGallery.Model;
 //using UnityEngine.Purchasing;
 using UnityEngine.UI;
-using Game = Middleware.Game;
 
 public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 {
@@ -412,20 +409,21 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         //bool isPayable = await UIController.Instance.CheckPayable((int)data.price);
         
         //if (isPayable)
-        Game.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
-        
+        {
+            OnPurchaseSuccess(data);
+        }
         //string area = "";
       
-        // FirebaseManager.Instance.PayStart(shopDataItem.GetProduceName(),area,SaveSystem.Instance.UserData.CurrentStage);
+        //FirebaseManager.Instance.PayStart(shopDataItem.GetProduceName(),area,SaveSystem.Instance.UserData.CurrentStage);
     }
 
-    private void OnPurchaseSuccess(ProductItem product)
+    private void OnPurchaseSuccess(ShopDataItem product)
     {
-        Debug.Log("购买成功: " + product.ProductId);
+        Debug.Log("购买成功: " + product.id);
        
-        if (shopDataItem.GetProduceName() == product.ProductId)
-        {
-            foreach (var dataitem in shopDataItem.productContent)
+        // if (shopDataItem.GetProduceName() == product.definition.id)
+        // {
+            foreach (var dataitem in product.productContent)
             {
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
@@ -456,7 +454,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                         break;
                 }
             }
-        }
+        //}
         // 获取商品价格和货币代码
         //string currencyCode = product.metadata.isoCurrencyCode;
         //float localizedPrice = (float)product.metadata.localizedPrice;
@@ -471,7 +469,6 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         //AdjustManager.Instance.SendPurchaseEvent();
         // 处理购买成功后的逻辑，例如增加游戏内货币
-        product?.OnShipmentCompleted(true);
     }
 
     private void BuyRemoveAdsEvent(int type)

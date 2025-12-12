@@ -42,7 +42,7 @@ namespace Middleware
             
             var lines = csvFile.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             var headers = lines[0].Split(',');
-            var rawId = 0;
+            var rawId = -1;
             for (var i = 0; i < headers.Length; i++)
             {
                 var langCode = headers[i].ToLower().Trim();
@@ -51,7 +51,7 @@ namespace Middleware
                     rawId = i;
             }
 
-            if (rawId == 0)
+            if (rawId == -1)
             {
                 rawId = 1;
                 Debug.LogError($"{name}: 没找到{GetLanguageBundle()}的词组，用{headers[rawId].ToLower()}代替.");
@@ -59,14 +59,182 @@ namespace Middleware
 
             for (int i = 1; i < lines.Length; i++)
             {
-                var values = lines[i].Split(',');
+                var values = ParseLine(lines[i]);
+                if(values.Count <= rawId) continue;
                 var key = values[0];
                 dic[key] = values[rawId];        
             }
 
             return dic;
         }
-        
+        /// <summary>
+        /// 先把完整 CSV 记录（可含引号内换行）切出来，再按字段拆
+        /// </summary>
+        public static Dictionary<string,string> ReadCvsLanguage(TextAsset csvFile, string name)
+        {
+            var dic = new Dictionary<string, string>();
+            if (csvFile == null)
+            {
+                Debug.LogError(name + ": 找不到对应的词典.");
+                return dic;
+            }
+            var table = new List<List<string>>();
+
+            // 1. 状态机：按「引号对」切分记录（可含换行）
+            var records = SplitRecords(csvFile.text);
+
+            // 2. 逐记录拆字段
+            foreach (var rec in records)
+                table.Add(SplitFields(rec));
+
+            var headers = table[0];
+            var rawId = -1;
+            for (var i = 0; i < headers.Count; i++)
+            {
+                var langCode = headers[i].ToLower().Trim();
+                // Debug.Log(langCode + " , " + GetLanguageBundle());
+                if (langCode.Equals(GetLanguageBundle()))
+                    rawId = i;
+            }
+            if (rawId == -1)
+            {
+                rawId = 1;
+                Debug.LogError($"{name}: 没找到{GetLanguageBundle()}的词组，用{headers[rawId].ToLower()}代替.");
+            }
+
+            for (int i = 1; i < table.Count; i++)
+            {
+                var values = table[i];
+                if(values.Count <= rawId) continue;
+                var key = values[0];
+                dic[key] = values[rawId];        
+            }
+            return dic;
+        }
+        /*========== 第 1 步：按记录切分（可含引号内换行）==========*/
+        private static List<string> SplitRecords(string text)
+        {
+            var records = new List<string>();
+            var sb      = new StringBuilder();
+            bool inQuotes = false;
+            int i = 0, len = text.Length;
+
+            while (i < len)
+            {
+                char ch = text[i];
+
+                if (ch == '"')
+                {
+                    inQuotes = !inQuotes;   // 进入/退出引号区
+                    sb.Append(ch);
+                    i++;
+                }
+                else if (ch == '\n' || ch == '\r')
+                {
+                    if (!inQuotes)          // 只有在「非引号区」的换行才是「记录分隔符」
+                    {
+                        // 跳过连续换行
+                        while (i < len && (text[i] == '\n' || text[i] == '\r')) i++;
+                        records.Add(sb.ToString());
+                        sb.Clear();
+                    }
+                    else                    // 引号内换行 → 原样保留
+                    {
+                        sb.Append(ch);
+                        i++;
+                    }
+                }
+                else
+                {
+                    sb.Append(ch);
+                    i++;
+                }
+            }
+            // 最后一行
+            if (sb.Length > 0) records.Add(sb.ToString());
+            return records;
+        }
+        /*========== 第 2 步：按字段拆（逗号 + 引号）==========*/
+        private static List<string> SplitFields(string record)
+        {
+            var fields = new List<string>();
+            var sb     = new StringBuilder();
+            bool inQuotes = false;
+            int i = 0, len = record.Length;
+
+            while (i < len)
+            {
+                char ch = record[i];
+
+                if (ch == '"')
+                {
+                    if (inQuotes && i + 1 < len && record[i + 1] == '"') // 转义引号 ""
+                    {
+                        sb.Append('"');
+                        i += 2;
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;   // 进入/退出引号区
+                        i++;
+                    }
+                }
+                else if (ch == ',' && !inQuotes) // 分隔符（非引号内）
+                {
+                    fields.Add(sb.ToString());
+                    sb.Clear();
+                    i++;
+                }
+                else                                // 普通字符（含引号内换行）
+                {
+                    sb.Append(ch);
+                    i++;
+                }
+            }
+            // 最后一列
+            fields.Add(sb.ToString());
+            return fields;
+        }
+        /// <summary>
+        /// 解析一行 CSV，支持双引号包裹、引号内逗号、转义引号
+        /// </summary>
+        public static List<string> ParseLine(string line)
+        {
+            var result  = new List<string>();
+            var current = new StringBuilder();
+            bool inQuotes = false;
+
+            for (int i = 0; i < line.Length; i++)
+            {
+                char ch = line[i];
+                char next = i + 1 < line.Length ? line[i + 1] : '\0';
+
+                if (ch == '"')
+                {
+                    if (inQuotes && next == '"')   // 转义引号 ""
+                    {
+                        current.Append('"');
+                        i++;                       // 跳过下一个引号
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;    // 进入/退出引号区
+                    }
+                }
+                else if (ch == ',' && !inQuotes) // 分隔符（非引号内）
+                {
+                    result.Add(current.ToString());
+                    current.Clear();
+                }
+                else
+                {
+                    current.Append(ch);
+                }
+            }
+            // 最后一列
+            result.Add(current.ToString());
+            return result;
+        }
         //获取字符串的md5
         public static string GetMD5FromString(string buf)
         {
