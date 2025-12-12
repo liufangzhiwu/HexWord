@@ -21,24 +21,29 @@ namespace Middleware
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
             
-            CreateAd();
-            CreateAccounts();
-
-            CreateAnalytic();
-
-            // CreateShop();
-
-            InitManagers();
+         
             // StartCoroutine(ShowLoadingScreen());
         }
-        
+
+        public static void InitGame()
+        {
+#if UNITY_UNITY_OPENHARMONY
+            CreateAd();
+            CreateAccounts();
+            
+#endif
+            CreateAnalytic();
+            // CreateShop();
+            InitManagers();
+        }
+
         IEnumerator  ShowLoadingScreen()
         {
             yield return new WaitForSeconds(2f);
             LoadingScreen.gameObject.SetActive(true);
         }
 
-        private void InitManagers()
+        private static void InitManagers()
         {
 	        GameDataManager.Instance.Init();
 	        //AudioManager.Instance.Init();
@@ -47,7 +52,7 @@ namespace Middleware
             ChessStageController.Instance.Init();
         }
         
-        private void CreateAccounts()
+        private static void CreateAccounts()
         {
 #if UNITY_OPENHARMONY
             Accounts = new Account_harmony();
@@ -55,40 +60,40 @@ namespace Middleware
 #endif
         }
     
-        private void CreateAd()
+        private static void CreateAd()
         {
-    #if UNITY_ANDROID
+#if UNITY_ANDROID
             // Ads = new Ads_android();
             Ads = new Ads_huawei();
-    #elif UNITY_IOS
+#elif UNITY_IOS
             Ads = new Ads_ios();
-    #elif UNITY_OPENHARMONY
+#elif UNITY_OPENHARMONY
             Ads = new Ads_harmony();
-    #endif
+#endif
             Ads.Init(0.2f);
         }
     
-        private void CreateAnalytic()
+        private static void CreateAnalytic()
         {
-    #if UNITY_ANDROID
+#if UNITY_ANDROID
             Analytics = new Analytics_android();
-    #elif UNITY_IOS
+#elif UNITY_IOS
             Analytics = new Analytics_ios();
-    #elif UNITY_OPENHARMONY
+#elif UNITY_OPENHARMONY
             Analytics = new Analytics_harmony();
-    #endif
+#endif
             Analytics.Init(1.5f);
         }
         
-        private void CreateShop()
+        private static void CreateShop()
         {
-    #if UNITY_ANDROID
+#if UNITY_ANDROID
             Shop = new Shop_huawei();
-    #elif UNITY_IOS
+#elif UNITY_IOS
             Shop = new Shop_ios();
-    #elif UNITY_OPENHARMONY
+#elif UNITY_OPENHARMONY
             Shop = new Shop_harmony();
-    #endif
+#endif
             Shop.Init(1.5f);
         }
         
