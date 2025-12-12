@@ -125,17 +125,34 @@ public class TileView : MonoBehaviour
 
         if (!isSelected&&!isInstant&&isselection)
         {
-            // 向上移动效果（相对移动）
-            TileTransform.DOAnchorPosY(_startPosition.y, 0.2f).OnComplete(()=>
-                selectionPuzzle.SetActive(false));     
+            PlayResetPosAnimation();
         }
+
+        if (!isSelected)
+        {
+            isselection = false;
+        }
+    }
+
+    /// <summary>
+    /// 播放重置位置动画
+    /// </summary>
+    public void PlayResetPosAnimation()
+    {
+        // 向上移动效果（相对移动）
+        TileTransform.DOAnchorPosY(_startPosition.y, 0.2f).OnComplete(()=>
+            selectionPuzzle.SetActive(false));
+
+        isselection = false;
     }
 
     /// <summary>
     /// 播放选中动画
     /// </summary>
-    private void PlaySelectAnimation()
+    public void PlaySelectAnimation()
     {
+        if(isselection) return;
+        
         TileTransform.GetComponent<RectTransform>().anchoredPosition = _startPosition;
         // 缩放效果
         //transform.DOScale(_baseScale * 0.96f, 0.2f)
@@ -145,7 +162,7 @@ public class TileView : MonoBehaviour
         //    }));
 
         selectionPuzzle.GetComponent<CanvasGroup>().DOFade(1, 0.01f);
-            TileTransform.DOAnchorPosY(_startPosition.y+5, 0.2f);
+        TileTransform.DOAnchorPosY(_startPosition.y+18, 0.2f);
 
         // 向上移动效果（相对移动）
         isselection = true;

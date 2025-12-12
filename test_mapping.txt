@@ -1,0 +1,597 @@
+# compiler: R8
+# compiler_version: 4.0.52
+# min_api: 23
+# common_typos_disable
+# {"id":"com.android.tools.r8.mapping","version":"2.1"}
+# pg_map_id: 2db79e6
+# pg_map_hash: SHA-256 2db79e6c5888f45bab4f420a094e5eed0d3bd2f0728173f2a14170bb5b04d91c
+bitter.jnibridge.a -> bitter.jnibridge.a:
+    java.lang.Object[] -$$Nest$fgeta(bitter.jnibridge.a) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputb(bitter.jnibridge.a,long) -> b
+      # {"id":"com.android.tools.r8.synthesized"}
+bitter.jnibridge.a$$ExternalSyntheticApiModelOutline0 -> bitter.jnibridge.b:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    java.lang.invoke.MethodHandles$Lookup bitter.jnibridge.a$$InternalSyntheticApiModelOutline$1$42752ee8f7320f7f78c1c4403441487ecd104dd939a1f270d5ebeb391275367a$0.m(java.lang.invoke.MethodHandles$Lookup,java.lang.Class) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+bitter.jnibridge.a$$ExternalSyntheticApiModelOutline1 -> bitter.jnibridge.c:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    java.lang.invoke.MethodHandle bitter.jnibridge.a$$InternalSyntheticApiModelOutline$1$42752ee8f7320f7f78c1c4403441487ecd104dd939a1f270d5ebeb391275367a$1.m(java.lang.invoke.MethodHandles$Lookup,java.lang.reflect.Method,java.lang.Class) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+bitter.jnibridge.a$$ExternalSyntheticApiModelOutline2 -> bitter.jnibridge.d:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    java.lang.invoke.MethodHandle bitter.jnibridge.a$$InternalSyntheticApiModelOutline$1$42752ee8f7320f7f78c1c4403441487ecd104dd939a1f270d5ebeb391275367a$2.m(java.lang.invoke.MethodHandle,java.lang.Object) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+bitter.jnibridge.a$$ExternalSyntheticApiModelOutline3 -> bitter.jnibridge.e:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    java.lang.Object bitter.jnibridge.a$$InternalSyntheticApiModelOutline$1$42752ee8f7320f7f78c1c4403441487ecd104dd939a1f270d5ebeb391275367a$3.m(java.lang.invoke.MethodHandle,java.lang.Object[]) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+cn.thinkingdata.analytics.ThinkingAnalyticsProxy$1 -> cn.thinkingdata.analytics.ThinkingAnalyticsProxy$a:
+    cn.thinkingdata.analytics.ThinkingAnalyticsProxy$DynamicSuperPropertiesTrackerListener val$listener -> a
+cn.thinkingdata.analytics.ThinkingAnalyticsProxy$2 -> cn.thinkingdata.analytics.ThinkingAnalyticsProxy$b:
+    java.lang.String val$appId -> a
+    cn.thinkingdata.analytics.ThinkingAnalyticsProxy$AutoTrackEventTrackerListener val$listener -> b
+cn.thinkingdata.analytics.b -> cn.thinkingdata.analytics.b:
+    boolean a(cn.thinkingdata.analytics.b,boolean) -> b
+cn.thinkingdata.analytics.c -> cn.thinkingdata.analytics.c:
+    android.content.Intent a() -> b
+    org.json.JSONObject a(java.lang.String,org.json.JSONObject) -> c
+cn.thinkingdata.analytics.d.a -> a.a:
+    java.lang.String a(java.io.File) -> b
+    void a() -> c
+    void a(cn.thinkingdata.analytics.d.a,android.content.Context) -> d
+    void a(android.content.Context) -> e
+    cn.thinkingdata.analytics.d.a b(android.content.Context) -> f
+cn.thinkingdata.analytics.d.a$a -> a.a$a:
+cn.thinkingdata.analytics.d.a$a$a -> a.a$a$a:
+cn.thinkingdata.analytics.d.a$b -> a.a$b:
+cn.thinkingdata.analytics.d.a$c -> a.a$c:
+cn.thinkingdata.analytics.d.a$c$a -> a.a$c$a:
+cn.thinkingdata.analytics.d.a$d -> a.a$d:
+    void a(java.lang.Throwable) -> b
+cn.thinkingdata.analytics.d.a$d$a -> a.a$d$a:
+cn.thinkingdata.analytics.d.b -> a.b:
+    java.lang.Boolean a(cn.thinkingdata.analytics.d.b,java.lang.Boolean) -> b
+    java.lang.String a() -> c
+    org.json.JSONArray a(java.lang.Object) -> d
+    void a(android.app.Activity,cn.thinkingdata.analytics.h.e) -> e
+    void a(org.json.JSONObject) -> f
+    void a(boolean) -> g
+    boolean a(cn.thinkingdata.analytics.d.b,boolean) -> h
+    boolean a(android.app.Activity,boolean) -> i
+    boolean a(android.content.Context) -> j
+    java.lang.Boolean b(cn.thinkingdata.analytics.d.b) -> k
+    java.lang.Object b(java.lang.Object) -> l
+    void b() -> m
+    boolean c(cn.thinkingdata.analytics.d.b) -> n
+cn.thinkingdata.analytics.d.b$a -> a.b$a:
+cn.thinkingdata.analytics.d.b$b -> a.b$b:
+cn.thinkingdata.analytics.e.a -> b.a:
+    org.json.JSONObject a(cn.thinkingdata.analytics.e.a) -> b
+    void a(android.content.Context,cn.thinkingdata.core.router.provider.callback.ISensitivePropertiesCallBack) -> c
+    void a(java.util.Map) -> d
+    void b() -> e
+cn.thinkingdata.analytics.e.a$a -> b.a$a:
+cn.thinkingdata.analytics.e.b -> b.b:
+    cn.thinkingdata.analytics.e.c a(android.content.Context) -> b
+    cn.thinkingdata.analytics.h.h a() -> c
+    void a(cn.thinkingdata.analytics.e.a) -> d
+    void a(java.lang.String) -> e
+    void a(java.lang.String,boolean) -> f
+    cn.thinkingdata.analytics.e.b b(android.content.Context) -> g
+    cn.thinkingdata.analytics.e.c b(cn.thinkingdata.analytics.e.b) -> h
+    void b(cn.thinkingdata.analytics.e.a) -> i
+    void b(java.lang.String) -> j
+    android.content.Context c(cn.thinkingdata.analytics.e.b) -> k
+    void c(cn.thinkingdata.analytics.e.a) -> l
+    void c(java.lang.String) -> m
+    cn.thinkingdata.analytics.TDConfig d(java.lang.String) -> n
+    java.util.Map d(cn.thinkingdata.analytics.e.b) -> o
+    int e(java.lang.String) -> p
+    int f(java.lang.String) -> q
+cn.thinkingdata.analytics.e.b$a -> b.b$a:
+    void a(cn.thinkingdata.analytics.e.a) -> b
+    void a(cn.thinkingdata.analytics.e.b$a,java.lang.String,int) -> c
+    void a(java.lang.String) -> d
+    void a(java.lang.String,int) -> e
+    void b(java.lang.String) -> f
+cn.thinkingdata.analytics.e.b$a$a -> b.b$a$a:
+cn.thinkingdata.analytics.e.b$b -> b.b$b:
+    java.util.Map a(org.json.JSONArray) -> b
+    void a() -> c
+    void a(cn.thinkingdata.analytics.e.a) -> d
+    void a(cn.thinkingdata.analytics.e.b$b,cn.thinkingdata.analytics.TDConfig) -> e
+    void a(cn.thinkingdata.analytics.e.b$b,cn.thinkingdata.analytics.TDConfig,org.json.JSONObject) -> f
+    void a(cn.thinkingdata.analytics.e.b$b,cn.thinkingdata.analytics.TDConfig,org.json.JSONObject,int) -> g
+    void a(cn.thinkingdata.analytics.e.b$b,java.lang.String,cn.thinkingdata.analytics.TDConfig) -> h
+    void a(cn.thinkingdata.analytics.TDConfig) -> i
+    void a(cn.thinkingdata.analytics.TDConfig,org.json.JSONObject) -> j
+    void a(cn.thinkingdata.analytics.TDConfig,org.json.JSONObject,int) -> k
+    void a(java.lang.String) -> l
+    void a(java.lang.String,long) -> m
+    void a(java.lang.String,cn.thinkingdata.analytics.TDConfig) -> n
+    android.os.Handler b(cn.thinkingdata.analytics.e.b$b) -> o
+    void b(cn.thinkingdata.analytics.e.a) -> p
+    void b(java.lang.String) -> q
+    void c(java.lang.String) -> r
+    java.util.Map d(java.lang.String) -> s
+cn.thinkingdata.analytics.e.b$b$a -> b.b$b$a:
+cn.thinkingdata.analytics.e.c -> b.c:
+    int a(org.json.JSONObject,cn.thinkingdata.analytics.e.c$c,java.lang.String) -> b
+    cn.thinkingdata.analytics.e.c a(android.content.Context) -> c
+    java.lang.String a() -> d
+    void a(long,cn.thinkingdata.analytics.e.c$c) -> e
+    void a(cn.thinkingdata.analytics.e.c$c,java.lang.String) -> f
+    java.lang.String[] a(cn.thinkingdata.analytics.e.c$c,java.lang.String,int) -> g
+    java.lang.String b() -> h
+    boolean c() -> i
+cn.thinkingdata.analytics.e.c$a -> b.c$a:
+cn.thinkingdata.analytics.e.c$b -> b.c$b:
+cn.thinkingdata.analytics.e.c$c -> b.c$c:
+cn.thinkingdata.analytics.e.d -> b.d:
+    java.lang.String a(long) -> b
+    long b() -> c
+    java.lang.String b(long) -> d
+    long c() -> e
+    void c(long) -> f
+    long d() -> g
+    void d(long) -> h
+    void e(long) -> i
+cn.thinkingdata.analytics.e.e -> b.e:
+    java.lang.String a(android.content.Context) -> b
+    java.lang.String a(android.content.Context,boolean) -> c
+    org.json.JSONObject a() -> d
+    void a(java.lang.String,java.lang.String) -> e
+    boolean a(android.content.Context,java.lang.String) -> f
+    cn.thinkingdata.analytics.e.e b(android.content.Context) -> g
+    java.lang.String b() -> h
+    java.lang.String b(android.content.Context,boolean) -> i
+    java.lang.String c() -> j
+    java.util.Map c(android.content.Context) -> k
+    java.lang.String d() -> l
+    java.util.Map e() -> m
+    boolean f() -> n
+    java.lang.String g() -> o
+    java.lang.String h() -> p
+cn.thinkingdata.analytics.e.f -> b.f:
+    cn.thinkingdata.analytics.e.f a(android.content.Context) -> b
+    java.lang.String b() -> c
+    int c() -> d
+cn.thinkingdata.analytics.e.g -> b.g:
+    void a(cn.thinkingdata.analytics.h.k,org.json.JSONObject,java.util.Date) -> b
+    void a(java.lang.String,java.lang.Number) -> c
+    void a(java.util.Date) -> d
+    void a(org.json.JSONObject,java.util.Date) -> e
+    void a(java.lang.String[]) -> f
+    cn.thinkingdata.analytics.ThinkingAnalyticsSDK b(cn.thinkingdata.analytics.e.g) -> g
+    void b(org.json.JSONObject,java.util.Date) -> h
+    void c(org.json.JSONObject,java.util.Date) -> i
+    void d(org.json.JSONObject,java.util.Date) -> j
+    void e(org.json.JSONObject,java.util.Date) -> k
+    void f(org.json.JSONObject,java.util.Date) -> l
+cn.thinkingdata.analytics.e.g$a -> b.g$a:
+cn.thinkingdata.analytics.encrypt.a -> c.a:
+    java.lang.String a(java.lang.String) -> c
+    java.lang.String b(java.lang.String) -> d
+cn.thinkingdata.analytics.encrypt.b -> c.b:
+    byte[] a(char[]) -> b
+cn.thinkingdata.analytics.encrypt.c -> c.c:
+    java.lang.String a(byte[],java.lang.String) -> b
+    boolean a(org.json.JSONArray) -> c
+    boolean a(org.json.JSONObject) -> d
+    byte[] a() -> e
+cn.thinkingdata.analytics.encrypt.d -> c.d:
+    java.lang.String a(java.lang.String) -> c
+    java.lang.String b(java.lang.String) -> d
+cn.thinkingdata.analytics.encrypt.e -> c.e:
+    cn.thinkingdata.analytics.encrypt.e a(java.lang.String) -> b
+    cn.thinkingdata.analytics.encrypt.e a(java.lang.String,cn.thinkingdata.analytics.TDConfig) -> c
+    org.json.JSONObject a(org.json.JSONObject) -> d
+    boolean a(cn.thinkingdata.analytics.encrypt.a) -> e
+    boolean a(cn.thinkingdata.analytics.encrypt.a,cn.thinkingdata.analytics.encrypt.TDSecreteKey) -> f
+    boolean b(cn.thinkingdata.analytics.encrypt.TDSecreteKey) -> g
+cn.thinkingdata.analytics.f.a -> d.a:
+    void a() -> b
+    void a(java.lang.String) -> c
+    void a(java.lang.String,boolean) -> d
+    void a(org.json.JSONObject,java.util.TimeZone,boolean) -> e
+    void a(boolean) -> f
+    void b() -> g
+    void b(java.lang.String,boolean) -> h
+    void b(boolean) -> i
+    void b(boolean,android.content.Context) -> j
+    void c() -> k
+    void c(boolean) -> l
+    boolean d() -> m
+    java.lang.String e() -> n
+    boolean f() -> o
+    boolean g() -> p
+    org.json.JSONObject h() -> q
+cn.thinkingdata.analytics.f.b -> d.b:
+cn.thinkingdata.analytics.f.c -> d.c:
+cn.thinkingdata.analytics.f.d -> d.d:
+    void a() -> b
+    void a(java.lang.Long) -> c
+    java.lang.Long b() -> d
+    java.lang.String c() -> e
+    java.lang.String d() -> f
+cn.thinkingdata.analytics.f.e -> d.e:
+cn.thinkingdata.analytics.f.f -> d.f:
+cn.thinkingdata.analytics.f.g -> d.g:
+cn.thinkingdata.analytics.f.h -> d.h:
+cn.thinkingdata.analytics.f.i -> d.i:
+cn.thinkingdata.analytics.f.j -> d.j:
+    java.lang.Long create() -> b
+cn.thinkingdata.analytics.f.k -> d.k:
+cn.thinkingdata.analytics.f.l -> d.l:
+cn.thinkingdata.analytics.f.m -> d.m:
+cn.thinkingdata.analytics.f.n -> d.n:
+cn.thinkingdata.analytics.f.o -> d.o:
+cn.thinkingdata.analytics.f.p -> d.p:
+    org.json.JSONObject create() -> b
+cn.thinkingdata.analytics.g.a -> e.a:
+    void a(java.lang.Runnable) -> b
+cn.thinkingdata.analytics.g.a$a -> e.a$a:
+cn.thinkingdata.analytics.h.a -> f.a:
+    cn.thinkingdata.analytics.h.e a(java.util.Date,java.util.TimeZone) -> b
+    void a(long) -> c
+    void a(cn.thinkingdata.analytics.h.d) -> d
+    void a(java.lang.String[]) -> e
+    cn.thinkingdata.analytics.h.d b() -> f
+cn.thinkingdata.analytics.h.b -> f.b:
+    java.lang.String a(cn.thinkingdata.analytics.TDConfig$TDDNSService) -> b
+    java.lang.String a(cn.thinkingdata.analytics.h.b,java.lang.String) -> c
+    void a(int) -> d
+    void a(cn.thinkingdata.analytics.h.b,int) -> e
+    void a(java.util.List) -> f
+    java.lang.String b() -> g
+cn.thinkingdata.analytics.h.b$a -> f.b$a:
+cn.thinkingdata.analytics.h.b$b -> f.b$b:
+cn.thinkingdata.analytics.h.c -> f.c:
+    java.lang.String a(cn.thinkingdata.analytics.TDConfig) -> b
+    java.lang.String a(java.lang.String) -> c
+cn.thinkingdata.analytics.h.c$a -> f.c$a:
+cn.thinkingdata.analytics.h.d -> f.d:
+cn.thinkingdata.analytics.h.e -> f.e:
+cn.thinkingdata.analytics.h.f -> f.f:
+cn.thinkingdata.analytics.h.g -> f.g:
+    boolean a(org.json.JSONObject) -> b
+    byte[] a(java.lang.String,int) -> c
+cn.thinkingdata.analytics.h.g$a -> f.g$a:
+cn.thinkingdata.analytics.h.h -> f.h:
+cn.thinkingdata.analytics.h.h$a -> f.h$a:
+cn.thinkingdata.analytics.h.i -> f.i:
+cn.thinkingdata.analytics.h.j -> f.j:
+    long a(cn.thinkingdata.analytics.h.j,long) -> b
+    java.lang.String[] a(cn.thinkingdata.analytics.h.j) -> c
+    long b(cn.thinkingdata.analytics.h.j,long) -> d
+cn.thinkingdata.analytics.h.j$a -> f.j$a:
+cn.thinkingdata.analytics.h.k -> f.k:
+    java.lang.String a() -> b
+    boolean b() -> c
+cn.thinkingdata.analytics.h.l -> f.l:
+cn.thinkingdata.analytics.h.m -> f.m:
+    long a(byte[],int) -> b
+    void a(byte[],int,long) -> c
+    boolean a(java.lang.String,int) -> d
+    long b(byte[],int) -> e
+cn.thinkingdata.analytics.h.n -> f.n:
+    void a(boolean) -> c
+    void c() -> d
+cn.thinkingdata.analytics.h.o -> f.o:
+cn.thinkingdata.analytics.h.p -> f.p:
+cn.thinkingdata.analytics.h.q -> f.q:
+    boolean b(java.lang.String) -> A
+    android.util.Pair c(android.content.Context) -> B
+    void c() -> C
+    java.lang.String d(android.content.Context) -> D
+    boolean e(android.content.Context) -> E
+    boolean f(android.content.Context) -> F
+    double a(long,java.util.TimeZone) -> b
+    float a(float,int) -> c
+    int a() -> d
+    int a(android.view.ViewParent,android.view.View) -> e
+    int a(java.lang.String) -> f
+    android.app.Activity a(android.content.Context) -> g
+    java.lang.Object a(java.lang.String,android.view.View,int) -> h
+    java.lang.String a(android.app.Activity) -> i
+    java.lang.String a(android.view.View) -> j
+    java.lang.String a(android.view.View,java.lang.String) -> k
+    java.lang.String a(java.lang.Object,java.lang.String) -> l
+    java.lang.String a(java.lang.String,int) -> m
+    java.lang.String a(java.lang.StringBuilder,android.view.ViewGroup) -> n
+    java.lang.String a(java.util.Date,java.util.TimeZone) -> o
+    org.json.JSONArray a(org.json.JSONArray,java.util.TimeZone) -> p
+    org.json.JSONObject a(org.json.JSONObject,java.util.TimeZone) -> q
+    void a(android.app.Activity,android.view.View,org.json.JSONObject) -> r
+    void a(android.view.View,org.json.JSONObject) -> s
+    void a(java.lang.String,android.view.View,int,java.lang.Object) -> t
+    void a(org.json.JSONObject,android.app.Activity) -> u
+    void a(org.json.JSONObject,org.json.JSONObject,java.util.TimeZone) -> v
+    java.lang.String b(android.app.Activity) -> w
+    java.lang.String b(android.content.Context) -> x
+    void b(org.json.JSONObject,org.json.JSONObject,java.util.TimeZone) -> y
+    boolean b() -> z
+cn.thinkingdata.analytics.h.q$a -> f.q$a:
+cn.thinkingdata.analytics.h.q$b -> f.q$b:
+cn.thinkingdata.analytics.h.q$c -> f.q$c:
+cn.thinkingdata.analytics.h.r.a -> g.a:
+cn.thinkingdata.analytics.h.r.b -> g.b:
+    void a(cn.thinkingdata.analytics.h.r.a) -> b
+    void a(cn.thinkingdata.analytics.h.r.a,cn.thinkingdata.analytics.ThinkingAnalyticsSDK) -> c
+    void b(cn.thinkingdata.analytics.h.r.a,cn.thinkingdata.analytics.ThinkingAnalyticsSDK) -> d
+cn.thinkingdata.analytics.h.r.b$a -> g.b$a:
+cn.thinkingdata.analytics.utils.broadcast.TDReceiver -> cn.thinkingdata.analytics.utils.broadcast.TDReceiver:
+    void a(android.content.Context) -> b
+cn.thinkingdata.analytics.utils.broadcast.TDReceiver$$ExternalSyntheticApiModelOutline0 -> h.a:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    android.content.Intent cn.thinkingdata.analytics.utils.broadcast.TDReceiver$$InternalSyntheticApiModelOutline$1$841b3d0c25383aa880c0980d7e3506152d27d9e876c6f67e2ed44a379ea961f8$0.m(android.content.Context,android.content.BroadcastReceiver,android.content.IntentFilter,int) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+cn.thinkingdata.core.preset.TDPresetModel$$ExternalSyntheticApiModelOutline0 -> cn.thinkingdata.core.preset.a:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    android.os.LocaleList cn.thinkingdata.core.preset.TDPresetModel$$InternalSyntheticApiModelOutline$1$279e0f412c6a3fc16354f37c72c640161115b20646d88eec8ffa4a56ad63b2c1$0.m() -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+cn.thinkingdata.core.preset.TDPresetModel$$ExternalSyntheticApiModelOutline1 -> cn.thinkingdata.core.preset.b:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    java.util.Locale cn.thinkingdata.core.preset.TDPresetModel$$InternalSyntheticApiModelOutline$1$279e0f412c6a3fc16354f37c72c640161115b20646d88eec8ffa4a56ad63b2c1$1.m(android.os.LocaleList,int) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+cn.thinkingdata.core.preset.TDPresetModel$$ExternalSyntheticApiModelOutline2 -> cn.thinkingdata.core.preset.c:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    int cn.thinkingdata.core.preset.TDPresetModel$$InternalSyntheticApiModelOutline$1$3aa223bb28005cdfd816989da03b5849396d398c3e6121b13fb9dd29c80c0ba5$0.m(android.telephony.TelephonyManager) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+cn.thinkingdata.core.receiver.TDNetWorkObservable$$ExternalSyntheticApiModelOutline0 -> cn.thinkingdata.core.receiver.a:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    void cn.thinkingdata.core.receiver.TDNetWorkObservable$$InternalSyntheticApiModelOutline$1$6b0c024112a81f9328af6c17db2e3ba7e117d6520e8e6241fbac298d4c61bc5e$0.m(android.net.ConnectivityManager,android.net.ConnectivityManager$NetworkCallback) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+cn.thinkingdata.core.utils.ProcessUtil$$ExternalSyntheticApiModelOutline0 -> cn.thinkingdata.core.utils.a:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    java.lang.String cn.thinkingdata.core.utils.ProcessUtil$$InternalSyntheticApiModelOutline$1$dbc2f41cad694c80386dc13a34a07fb8cba4b3a99b66586703fcbd659bb49327$0.m() -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.google.androidgamesdk.SwappyDisplayManager -> com.google.androidgamesdk.SwappyDisplayManager:
+    android.app.Activity -$$Nest$fgetmActivity(com.google.androidgamesdk.SwappyDisplayManager) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.google.androidgamesdk.b -> com.google.androidgamesdk.b:
+    void <init>(com.google.androidgamesdk.b-IA) -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+com.google.androidgamesdk.b-IA -> i.a:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+com.google.androidgamesdk.d -> com.google.androidgamesdk.d:
+    void <init>(com.google.androidgamesdk.d-IA) -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+com.google.androidgamesdk.d-IA -> i.b:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.A -> com.unity3d.player.A:
+    int -$$Nest$fgetd(com.unity3d.player.A) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.B -> com.unity3d.player.B:
+    long -$$Nest$fgeta(com.unity3d.player.B) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    boolean -$$Nest$fgetb(com.unity3d.player.B) -> b
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputa(com.unity3d.player.B,long) -> c
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.C0 -> com.unity3d.player.C0:
+    void <init>(com.unity3d.player.UnityPlayer,com.unity3d.player.C0-IA) -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$ma(com.unity3d.player.C0,com.unity3d.player.A0) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.C0-IA -> com.unity3d.player.a1:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.D0 -> com.unity3d.player.D0:
+    void <init>(com.unity3d.player.UnityPlayer,com.unity3d.player.D0-IA) -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.D0-IA -> com.unity3d.player.b1:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.G0 -> com.unity3d.player.G0:
+    void -$$Nest$fputb(com.unity3d.player.G0,boolean) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.HFPStatus -> com.unity3d.player.HFPStatus:
+    boolean -$$Nest$fgetc(com.unity3d.player.HFPStatus) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    android.media.AudioManager -$$Nest$fgetd(com.unity3d.player.HFPStatus) -> b
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputf(com.unity3d.player.HFPStatus,int) -> c
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$ma(com.unity3d.player.HFPStatus) -> d
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.MultiWindowSupport$$ExternalSyntheticApiModelOutline0 -> com.unity3d.player.c1:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    boolean com.unity3d.player.MultiWindowSupport$$InternalSyntheticApiModelOutline$1$9a81a94f341d90d3e5b43c52ebb178f91bb2a5fab6ce82488de68f35b94c27cb$0.m(android.app.Activity) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.NetworkConnectivityNougat -> com.unity3d.player.NetworkConnectivityNougat:
+    void -$$Nest$fputb(com.unity3d.player.NetworkConnectivityNougat,int) -> c
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.P0 -> com.unity3d.player.P0:
+    com.unity3d.player.UnityPlayer -$$Nest$fgeta(com.unity3d.player.P0) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    android.content.Context -$$Nest$fgetb(com.unity3d.player.P0) -> b
+      # {"id":"com.android.tools.r8.synthesized"}
+    com.unity3d.player.O0 -$$Nest$fgetc(com.unity3d.player.P0) -> c
+      # {"id":"com.android.tools.r8.synthesized"}
+    java.util.concurrent.Semaphore -$$Nest$fgetd(com.unity3d.player.P0) -> d
+      # {"id":"com.android.tools.r8.synthesized"}
+    java.util.concurrent.locks.ReentrantLock -$$Nest$fgete(com.unity3d.player.P0) -> e
+      # {"id":"com.android.tools.r8.synthesized"}
+    com.unity3d.player.H0 -$$Nest$fgetf(com.unity3d.player.P0) -> f
+      # {"id":"com.android.tools.r8.synthesized"}
+    boolean -$$Nest$fgeti(com.unity3d.player.P0) -> g
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputf(com.unity3d.player.P0,com.unity3d.player.H0) -> h
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputg(com.unity3d.player.P0,int) -> i
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputi(com.unity3d.player.P0,boolean) -> j
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.PermissionFragment -> com.unity3d.player.PermissionFragment:
+    void -$$Nest$mreportAllDenied(com.unity3d.player.PermissionFragment,java.lang.String[]) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.ReflectionHelper -> com.unity3d.player.ReflectionHelper:
+    long -$$Nest$sfgetb() -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$smnativeProxyFinalize(long) -> b
+      # {"id":"com.android.tools.r8.synthesized"}
+    java.lang.Object -$$Nest$smnativeProxyInvoke(long,java.lang.String,java.lang.Object[]) -> c
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$smnativeProxyJNIFreeGCHandle(long) -> d
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$smnativeProxyLogJNIInvokeException(long) -> e
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.UnityPlayer -> com.unity3d.player.UnityPlayer:
+    void -$$Nest$mnativeSendSurfaceChangedEvent(com.unity3d.player.UnityPlayer) -> A
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeSetInputArea(com.unity3d.player.UnityPlayer,int,int,int,int) -> B
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeSetInputSelection(com.unity3d.player.UnityPlayer,int,int) -> C
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeSetInputString(com.unity3d.player.UnityPlayer,java.lang.String) -> D
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeSetKeyboardIsVisible(com.unity3d.player.UnityPlayer,boolean) -> E
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeSetLaunchURL(com.unity3d.player.UnityPlayer,java.lang.String) -> F
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeSoftInputCanceled(com.unity3d.player.UnityPlayer) -> G
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeSoftInputClosed(com.unity3d.player.UnityPlayer) -> H
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeSoftInputLostFocus(com.unity3d.player.UnityPlayer) -> I
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mqueueDestroy(com.unity3d.player.UnityPlayer) -> J
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mshutdown(com.unity3d.player.UnityPlayer) -> K
+      # {"id":"com.android.tools.r8.synthesized"}
+    android.app.Activity -$$Nest$fgetmActivity(com.unity3d.player.UnityPlayer) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    android.content.Context -$$Nest$fgetmContext(com.unity3d.player.UnityPlayer) -> b
+      # {"id":"com.android.tools.r8.synthesized"}
+    com.unity3d.player.V -$$Nest$fgetmGlView(com.unity3d.player.UnityPlayer) -> c
+      # {"id":"com.android.tools.r8.synthesized"}
+    int -$$Nest$fgetmInitialScreenOrientation(com.unity3d.player.UnityPlayer) -> d
+      # {"id":"com.android.tools.r8.synthesized"}
+    boolean -$$Nest$fgetmMainDisplayOverride(com.unity3d.player.UnityPlayer) -> e
+      # {"id":"com.android.tools.r8.synthesized"}
+    int -$$Nest$fgetmNaturalOrientation(com.unity3d.player.UnityPlayer) -> f
+      # {"id":"com.android.tools.r8.synthesized"}
+    com.unity3d.player.a.e -$$Nest$fgetm_SplashScreen(com.unity3d.player.UnityPlayer) -> g
+      # {"id":"com.android.tools.r8.synthesized"}
+    com.unity3d.player.IUnityPlayerLifecycleEvents -$$Nest$fgetm_UnityPlayerLifecycleEvents(com.unity3d.player.UnityPlayer) -> h
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputmQuitting(com.unity3d.player.UnityPlayer,boolean) -> i
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputmVideoPlayerProxy(com.unity3d.player.UnityPlayer,com.unity3d.player.P0) -> j
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputm_SplashScreen(com.unity3d.player.UnityPlayer,com.unity3d.player.a.e) -> k
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mDisableStaticSplashScreen(com.unity3d.player.UnityPlayer) -> l
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mfinish(com.unity3d.player.UnityPlayer) -> m
+      # {"id":"com.android.tools.r8.synthesized"}
+    boolean -$$Nest$mgetAutoReportFullyDrawnEnabled(com.unity3d.player.UnityPlayer) -> n
+      # {"id":"com.android.tools.r8.synthesized"}
+    boolean -$$Nest$mgetHaveAndroidWindowSupport(com.unity3d.player.UnityPlayer) -> o
+      # {"id":"com.android.tools.r8.synthesized"}
+    boolean -$$Nest$mgetSplashEnabled(com.unity3d.player.UnityPlayer) -> p
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeFocusChanged(com.unity3d.player.UnityPlayer,boolean) -> q
+      # {"id":"com.android.tools.r8.synthesized"}
+    boolean -$$Nest$mnativeIsAutorotationOn(com.unity3d.player.UnityPlayer) -> r
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeLowMemory(com.unity3d.player.UnityPlayer) -> s
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeMuteMasterAudio(com.unity3d.player.UnityPlayer,boolean) -> t
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeOrientationChanged(com.unity3d.player.UnityPlayer,int,int) -> u
+      # {"id":"com.android.tools.r8.synthesized"}
+    boolean -$$Nest$mnativePause(com.unity3d.player.UnityPlayer) -> v
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeRecreateGfxState(com.unity3d.player.UnityPlayer,int,android.view.Surface) -> w
+      # {"id":"com.android.tools.r8.synthesized"}
+    boolean -$$Nest$mnativeRender(com.unity3d.player.UnityPlayer) -> x
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeReportKeyboardConfigChanged(com.unity3d.player.UnityPlayer) -> y
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mnativeResume(com.unity3d.player.UnityPlayer) -> z
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.V -> com.unity3d.player.V:
+    com.unity3d.player.a -$$Nest$fgeta(com.unity3d.player.V) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    com.unity3d.player.UnityPlayer -$$Nest$fgetb(com.unity3d.player.V) -> b
+      # {"id":"com.android.tools.r8.synthesized"}
+    com.unity3d.player.y -$$Nest$fgetc(com.unity3d.player.V) -> c
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.a.a -> j.a:
+com.unity3d.player.a.b -> j.b:
+com.unity3d.player.a.c -> j.c:
+com.unity3d.player.a.d -> j.d:
+com.unity3d.player.i -> com.unity3d.player.i:
+    com.google.android.play.core.assetpacks.AssetPackManager -$$Nest$fgeta(com.unity3d.player.i) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    java.util.HashSet -$$Nest$fgetb(com.unity3d.player.i) -> b
+      # {"id":"com.android.tools.r8.synthesized"}
+    java.lang.Object -$$Nest$fgetc(com.unity3d.player.i) -> c
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputc(com.unity3d.player.i,java.lang.Object) -> d
+      # {"id":"com.android.tools.r8.synthesized"}
+    com.unity3d.player.i -$$Nest$sfgetd() -> e
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.r -> com.unity3d.player.r:
+    com.unity3d.player.a.b -$$Nest$fgeta(com.unity3d.player.r) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    android.hardware.camera2.CameraDevice -$$Nest$fgetb(com.unity3d.player.r) -> b
+      # {"id":"com.android.tools.r8.synthesized"}
+    android.util.Range -$$Nest$fgetn(com.unity3d.player.r) -> c
+      # {"id":"com.android.tools.r8.synthesized"}
+    android.media.Image -$$Nest$fgetp(com.unity3d.player.r) -> d
+      # {"id":"com.android.tools.r8.synthesized"}
+    android.hardware.camera2.CaptureRequest$Builder -$$Nest$fgetq(com.unity3d.player.r) -> e
+      # {"id":"com.android.tools.r8.synthesized"}
+    java.lang.Object -$$Nest$fgets(com.unity3d.player.r) -> f
+      # {"id":"com.android.tools.r8.synthesized"}
+    android.view.Surface -$$Nest$fgetv(com.unity3d.player.r) -> g
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputb(com.unity3d.player.r,android.hardware.camera2.CameraDevice) -> h
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputp(com.unity3d.player.r,android.media.Image) -> i
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputq(com.unity3d.player.r,android.hardware.camera2.CaptureRequest$Builder) -> j
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$fputr(com.unity3d.player.r,android.hardware.camera2.CameraCaptureSession) -> k
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$ma(com.unity3d.player.r,android.hardware.camera2.CameraDevice) -> l
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$ma(com.unity3d.player.r,java.lang.Object) -> m
+      # {"id":"com.android.tools.r8.synthesized"}
+    void -$$Nest$mg(com.unity3d.player.r) -> n
+      # {"id":"com.android.tools.r8.synthesized"}
+    java.util.concurrent.Semaphore -$$Nest$sfgetD() -> o
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.s$$ExternalSyntheticApiModelOutline0 -> com.unity3d.player.d1:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    void com.unity3d.player.s$$InternalSyntheticApiModelOutline$1$982e5034819aa6ecc448a510735d94e7bef8ab00b4e6a4a02007674377ed52cf$0.m(android.view.WindowManager$LayoutParams,int) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.x$$ExternalSyntheticApiModelOutline0 -> com.unity3d.player.e1:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    void com.unity3d.player.x$$InternalSyntheticApiModelOutline$1$54b7fcd94a18ba36157f315fe15f679064f9ab54892a8f4113955f1e33347869$0.m(android.view.SurfaceView,android.graphics.Bitmap,android.view.PixelCopy$OnPixelCopyFinishedListener,android.os.Handler) -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.z0 -> com.unity3d.player.z0:
+    void <init>(com.unity3d.player.UnityPlayer,com.unity3d.player.z0-IA) -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+com.unity3d.player.z0-IA -> com.unity3d.player.f1:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
