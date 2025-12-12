@@ -72,7 +72,6 @@ public class LoadingController : MonoBehaviour
 
     private void OnEnable()
     {
-        // HuaweiGameService.AppInit();
         StartCoroutine(InitializeLoadingProcess());
     }
 
@@ -122,8 +121,8 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator LoadingSequence()
     {
-        // yield return InitializeGameService();
-        // yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
+        yield return InitializeGameService();
+        yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
        
         // 并行执行模拟加载和实际加载
         yield return StartCoroutine(SimulateLoadingProgress());
@@ -190,7 +189,9 @@ public class LoadingController : MonoBehaviour
     private IEnumerator LoadEssentialResources()
     {
         Debug.Log("开始预加载游戏资源");
-
+        // 标记非首次进入
+        GameDataManager.Instance.UserData.IsFirstLaunch = false;
+        
         yield return AssetBundleLoader.SharedInstance.LoadAtlas(
            "ui_universal",
            "UI_Universal");
@@ -212,13 +213,12 @@ public class LoadingController : MonoBehaviour
             "Circle");       
         
         // 登录开始
-        // yield return LoadHuaweiGameLogin();
-        // yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
+        yield return LoadHuaweiGameLogin();
+        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
         
         //预加载关卡文件
          StageHexController.Instance.LoadPackInfos();
-         // 标记非首次进入
-         GameDataManager.Instance.UserData.IsFirstLaunch = false;
+   
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }

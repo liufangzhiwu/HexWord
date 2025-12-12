@@ -21,6 +21,7 @@ namespace Middleware
                 var callback = new IapCallback();
                 callback.setCallback(OnActivityResultCallback);
                 IapActivity.setCallback(callback);
+               
             });
         }
 
