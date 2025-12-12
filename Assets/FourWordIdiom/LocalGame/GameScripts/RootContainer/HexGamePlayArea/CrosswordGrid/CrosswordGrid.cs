@@ -165,16 +165,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float screenRatio = UIUtilities.GetScreenRatio();
         bool isipad = UIUtilities.IsiPad();
         
-        //float sizeoffsetw =isipad? 500*(1+screenRatio-1) : 800*(1+1-screenRatio);
-        float sizemaxh =isipad? 500*(1+screenRatio-1)  :800*(1+1-screenRatio);
-        float sizemaxw =isipad? 500*(1+screenRatio-1) : 500*(1+1-screenRatio);
-        //float sizeoffseth = rows >= 6 ? 5-(rows-6)*0.5f : 0;
         float sizeoffseth = 0;
 
         //if (StageController.Instance.ActiveTileSize<=0||GameDataManager.MainInstance.UserData.CurrentStage!=curStageData.StageId||StageController.Instance.IsGMEnterStage)
         {
-            float height= (RectT.rect.height+sizemaxh ) /rows;
-            float width= (RectT.rect.width+sizemaxw)/cols;
+            float height= (Screen.height) /rows;
+            float width= (Screen.width) /(cols-1.5f);
             float tileSize = Mathf.Min(width, height);
             float temptileSize = 0;
             
@@ -186,16 +182,20 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
             if (cols >= 6)
             {
-                temptileSize = sizemaxw-(cols-6)*30;
+                float xrate = cols > 6 ? 22 : 70;
+                float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 5;
+                temptileSize = width - (cols- xoffset) * xrate;
                 tileSize = Mathf.Min(temptileSize, tileSize);
-                tileSize = Mathf.Max(170, tileSize);
+                tileSize = Mathf.Max(200, tileSize);
             }
             
-            if (rows >= 6)
+            if (rows >= 7)
             {
-                temptileSize = sizemaxh-(rows-6)*10;
+                float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
+                float offsety = (rows - 7) * 45 * yrate ;
+                temptileSize = height - offsety;
                 tileSize = Mathf.Min(temptileSize, tileSize);
-                tileSize = Mathf.Max(175, tileSize);
+                tileSize = Mathf.Max(200, tileSize);
             }
             
             StageHexController.Instance.ActiveTileSize = tileSize;
@@ -424,7 +424,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minicnidex+0.5f) * horizontalSpacing;
-        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex+0.5f) * verticalSpacing;
+        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex+0.2f) * verticalSpacing;
         
         // 为奇数列添加垂直偏移（六边形网格特性）
         if ((col & 1) == 1)  // 位运算判断奇数列（比取模运算更快）
