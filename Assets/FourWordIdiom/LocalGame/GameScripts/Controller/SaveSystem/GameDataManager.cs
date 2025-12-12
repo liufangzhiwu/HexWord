@@ -57,7 +57,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         HandlePauseState(pauseState);
     }
 
-    private void OnApplicationQuit()
+    private new void OnApplicationQuit()
     {
         HandleQuitEvent();
     }

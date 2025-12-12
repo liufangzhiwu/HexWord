@@ -26,10 +26,10 @@ namespace Middleware
 
             CreateAnalytic();
 
-            // CreateShop();
+            CreateShop();
 
             InitManagers();
-            StartCoroutine(ShowLoadingScreen());
+            // StartCoroutine(ShowLoadingScreen());
         }
         
         IEnumerator  ShowLoadingScreen()

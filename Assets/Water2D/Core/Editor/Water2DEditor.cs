@@ -1291,7 +1291,7 @@ namespace Water2D
                 bool dirtyRotation = false;
                 Vector3 dirLookAt = Vector3.zero;
                 Vector3 direction = (lTransform.localRotation * Vector2.down).normalized;
-                var fmh_1296_25_639005292149572506 = Quaternion.identity; newHandlePoint = (lTransform.position - Handles.FreeMoveHandle(
+                var fmh_1296_25_639010485106469879 = Quaternion.identity; newHandlePoint = (lTransform.position - Handles.FreeMoveHandle(
                         lTransform.position + direction * (-r),
                         size * 0.035f, Vector3.zero, Handles.CircleHandleCap));
 
@@ -1331,7 +1331,7 @@ namespace Water2D
                 bool dirtyFreeMove = false;
                 Vector3 dif = Vector3.zero;
                 Handles.color = Color.black;
-                var fmh_1335_91_639005292149606538 = Quaternion.identity; Vector3 newFreeHandlePoint = (Handles.FreeMoveHandle(lTransform.position,
+                var fmh_1335_91_639010485106494812 = Quaternion.identity; Vector3 newFreeHandlePoint = (Handles.FreeMoveHandle(lTransform.position,
                     size * 0.25f, Vector3.zero, Handles.CircleHandleCap));
 
                 if (GUIUtility.hotControl == GetLastControlId() && !dirtyRotation)
