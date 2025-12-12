@@ -80,9 +80,8 @@ public class RewardAdsScreen : UIWindow
     {
         //FirebaseManager.Instance.VideoAdClick("商店弹窗",SaveSystem.Instance.UserData.CurrentStage.ToString());
         
-      
-#if UNITY_OPENHARMONY || UNITY_ANDROID || UNITY_EDITOR
-        Debug.Log("广告弹窗进入打印了吗");
+        
+#if UNITY_OPENHARMONY
         AnalyticMgr.VideoAdClick("金币弹窗广告");
         Game.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
 #elif Unity_ShowLog

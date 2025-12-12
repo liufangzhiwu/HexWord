@@ -14,8 +14,8 @@ public class PrivacyScreen : UIWindow
     {       
         //设置点击回调
         linkText.onHyperlinkClick = OnClickText;
-        StartCoroutine(AddVisibleBound());
-        InitLanguage();
+        //StartCoroutine(AddVisibleBound());
+        //InitLanguage();
     }
 
     protected override void OnEnable()
@@ -24,12 +24,12 @@ public class PrivacyScreen : UIWindow
         AudioManager.Instance.PlaySoundEffect("ShowUI");
     }
 
-    private void InitLanguage()
-    {
-        tip_Text.text = MultilingualManager.Instance.GetString("PrivacyAgreement02");
-        linkText.text = MultilingualManager.Instance.GetString("PrivacyAgreement01");
-        nextBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("PrivacyAgreement03");
-    }
+    //private void InitLanguage()
+    //{
+    //    tip_Text.text = LanguageManager.Instance.GetString("PrivacyAgreement02");
+    //    linkText.text = LanguageManager.Instance.GetString("PrivacyAgreement01");
+    //    nextBtn.GetComponentInChildren<Text>().text = LanguageManager.Instance.GetString("PrivacyAgreement03");
+    //}
 
    
 
@@ -41,7 +41,7 @@ public class PrivacyScreen : UIWindow
     IEnumerator AddVisibleBound()
     {
         yield return null;
-        linkText.AddVisibleBound();
+        //linkText.AddVisibleBound();
     }
 
     void OnClickText(string url)
@@ -60,7 +60,7 @@ public class PrivacyScreen : UIWindow
     public void ShowGamePanel()
     {
         StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
-        SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
     }
 
     public override void OnHideAnimationEnd()

@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/FourWordIdiom/LocalGame/GameScripts/RootContainer/Launch.meta
 guid: b09b49f59d47d834286e6af05b5515fc
+========
+guid: 9e3513d71f7284e4796053b308546295
+>>>>>>>> 109b88577a0d1d98e0c5d7e7a9e86f72bdad313b:Assets/Resources/Privacy.meta
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}
