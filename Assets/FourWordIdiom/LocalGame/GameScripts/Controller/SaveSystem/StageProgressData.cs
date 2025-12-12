@@ -145,6 +145,19 @@ public class StageProgressData
 
     #region 业务逻辑（添加立即保存）
     
+    public List<string> GetLeftPuzzles()
+    {
+        List<string> puzzles = new List<string>();
+        foreach (string puzzle in Puzzles)
+        {
+            if (!FoundTargetPuzzles.Contains(puzzle))
+            {
+                puzzles.Add(puzzle);
+            }
+        }
+        return puzzles;
+    }
+    
     public void UpdateFoundTargetPuzzle(string Puzzle)
     {
         if (!FoundTargetPuzzles.Contains(Puzzle))

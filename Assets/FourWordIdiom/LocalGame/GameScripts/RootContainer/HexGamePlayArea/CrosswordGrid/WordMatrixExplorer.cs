@@ -5,7 +5,7 @@ using UnityEngine;
 public class WordMatrixExplorer
 {
     private BoardGame GameBoard;
-    private readonly HashSet<string> LevelLexicon;
+    private HashSet<string> LevelLexicon;
     private int newDirections=-1;
 
     // 平顶六边形网格的六个方向定义（行为偶数时）
@@ -49,6 +49,8 @@ public class WordMatrixExplorer
         (-1, 1)  // 右下
     };
 
+    public IdiomBlock leftBlock;
+
     public WordMatrixExplorer(BoardGame gameBoard, List<string> levelWords)
     {
         GameBoard = gameBoard;
@@ -57,6 +59,9 @@ public class WordMatrixExplorer
 
     public HashSet<string> ExploreWordMatrix()
     {
+
+        LevelLexicon = new HashSet<string>(StageHexController.Instance.CurStageData.GetLeftPuzzles());
+        
         GameBoard = StageHexController.Instance.CurStageData.BoardSnapshot;
         HashSet<string> discoveredWords = new HashSet<string>();
         bool[,] visited = new bool[GameBoard.rows, GameBoard.cols];
@@ -67,7 +72,6 @@ public class WordMatrixExplorer
             {
                 if (GameBoard.board[row][col].Count > 0)
                 {
-                    //int mxa = GameBoard.board[row][col].Count - 1;
                     if (GameBoard.board[row][col][0] != '\0' && !visited[row, col])
                     {
                         newDirections = -1;
@@ -77,9 +81,68 @@ public class WordMatrixExplorer
             }
         }
 
+        //无解时处理逻辑
+        if (discoveredWords.Count <= 0)
+        {
+            foreach (string word in LevelLexicon)
+            {
+                IdiomData idiomData = StageHexController.Instance.CurStageInfo.idioms
+                    .FirstOrDefault(idiom => idiom.word.Equals(word));
+                
+                string currentWord = "";
+                leftBlock = null;
+                
+                // 检查是否是完整的成语
+                if (idiomData != null)
+                {
+                    foreach (var idiomBlock in idiomData.blocks)
+                    {
+                        char cellChar = GameBoard.board[idiomBlock.position.x][idiomBlock.position.y][0];
+                        if (cellChar.ToString() == idiomBlock.character)
+                        {
+                            currentWord += cellChar;
+                        }
+                        else
+                        {
+                            leftBlock = idiomBlock;
+                        }
+                    }
+
+                    if (currentWord.Length > 2&&leftBlock!=null)
+                    {
+                        char targetChar = leftBlock.character.ToCharArray()[0];
+                        
+                        StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
+                        
+                        List<char> cellChars = StageHexController.Instance.CurStageInfo.CurBoardData.board[leftBlock.position.x][leftBlock.position.y];
+                        
+                        int findCharCount = cellChars.FindAll(x => x == targetChar).Count;
+                        
+                        if(findCharCount<=1) continue;
+                        
+                        char oldcellChar = GameBoard.board[leftBlock.position.x][leftBlock.position.y][0];
+                        
+                        GameBoard.board[leftBlock.position.x][leftBlock.position.y][0] = targetChar;
+                        GameBoard.board[leftBlock.position.x][leftBlock.position.y][1] = oldcellChar;
+
+                        discoveredWords.Add(word);
+                        return discoveredWords;
+                    }
+                }
+            }
+        }
+
         return discoveredWords;
     }
 
+    /// <summary>
+    /// 从指定位置开始探索单词矩阵
+    /// </summary>
+    /// <param name="row"></param>
+    /// <param name="col"></param>
+    /// <param name="currentWord"></param>
+    /// <param name="foundWords"></param>
+    /// <param name="visited"></param>
     private void ExploreFromPosition(int row, int col, string currentWord,
                                     HashSet<string> foundWords, bool[,] visited)
     {
@@ -88,9 +151,14 @@ public class WordMatrixExplorer
             visited[row, col] || GameBoard.board[row][col].Count == 0 ||
             GameBoard.board[row][col][0] == '\0')
             return;
-
+        
+        List<char> chars = new List<char>();
         // 获取单元格中的字符
-        //int mxa = GameBoard.board[row][col].Count - 1;
+        if (GameBoard.board[row][col].Count > 1)
+        {
+            chars = GameBoard.board[row][col]; 
+        }
+          
         char cellChar = GameBoard.board[row][col][0];
         string newWord = currentWord + cellChar;
 
@@ -100,8 +168,39 @@ public class WordMatrixExplorer
         {
             if (word.StartsWith(newWord))
             {
-                isPrefix = true;
-                break;
+                // if (chars.Count > 1)
+                // {
+                //     List<char> tchars = chars.GetRange(1,chars.Count-1);
+                //     if (tchars.Contains(cellChar))
+                //     {
+                //         IdiomData idiomData = StageHexController.Instance.CurStageInfo.idioms
+                //             .FirstOrDefault(idiom => idiom.word.Equals(word));
+                //
+                //         
+                //         chars=StageHexController.Instance.CurStageInfo.CurBoardData.board[row][col];
+                //         
+                //         // 检查是否是完整的成语
+                //         if (idiomData != null)
+                //         {
+                //             IdiomBlock idiomBlock = idiomData.blocks.Find(block => block.character == cellChar.ToString());
+                //             if(idiomBlock!=null&&idiomBlock.index==chars.Count)
+                //             {
+                //                 isPrefix = true;
+                //                 break;
+                //             }
+                //         }
+                //     }
+                //     else
+                //     {
+                //         isPrefix = true;
+                //         break;
+                //     }
+                // }
+                // else
+                // {
+                    isPrefix = true;
+                    break;
+                //}
             }
         }
 
@@ -110,7 +209,6 @@ public class WordMatrixExplorer
             newDirections = -1;
             return;
         }
-            
 
         // 标记当前单元格已访问
         visited[row, col] = true;

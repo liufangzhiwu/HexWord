@@ -100,9 +100,23 @@ public class StageFinishView : UIWindow
     {
         if (_progressSlider.value>=1)
         {
+            if (LimitTimeManager.Instance.IsClaim())
+            {
+                SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
+                yield break;
+            }
             LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
             _progressSlider.value = 0;
             _progressText.text = 0 + "/" + limitData.num;
+        }
+
+        if (_progressSlider.value <=0)
+        {
+            LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
+            int wordcount = LimitTimeManager.Instance.GetCurWordCount();
+            int oldProgress = wordcount-StageHexController.Instance.CurStageData.Puzzles.Count;
+            oldProgress=Math.Max(oldProgress,0);
+            _progressText.text = oldProgress + "/" + limitData.num;
         }
         yield return new WaitForSeconds(1.5f);
         UpdateProgress();
@@ -155,6 +169,7 @@ public class StageFinishView : UIWindow
         if (!string.IsNullOrEmpty(time))
         {
             _tasktable.taskTime.text = time; // 更新文本
+            _limitBtnTable.txtwordprogress.text = time; // 更新文本
         }
     }
     
@@ -192,7 +207,7 @@ public class StageFinishView : UIWindow
     private IEnumerator PlayRewardSequence()
     {
         _tasktable.taskEffect.gameObject.SetActive(false);
-        _matchFishtable.matchEffect.gameObject.SetActive(false);
+        //_matchFishtable.matchEffect.gameObject.SetActive(false);
         
          if (!LimitTimeManager.Instance.IsComplete()&&_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
          {

@@ -106,14 +106,14 @@ public class WordDetailScreen : UIWindow
     
     public void PageChange(bool isLeftMove)
     {
-        width = wordProfab.GetComponent<RectTransform>().rect.width;
+        width = scrollRect.GetComponent<RectTransform>().rect.width;
         wordsParent.DOLocalMoveX( width* -(curPage-1), 0.2f);
         PageCount.text= curPage+"/"+ words.Count;
     }
 
     private void UpdateVisibleWords()
     {
-        width = wordProfab.GetComponent<RectTransform>().rect.width;
+        width = scrollRect.GetComponent<RectTransform>().rect.width;
         curPage = StageHexController.Instance.PuzzleData.PageIndex;
         viewList.InitList(words);
         ParentMovePos(width * -(curPage-1),false);

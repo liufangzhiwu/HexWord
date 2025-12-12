@@ -24,6 +24,18 @@ public class ViewListMove : UICyclicScrollList<WordDetailTable, string>, IEndDra
     
     protected override void ResetCellData(WordDetailTable cell, string data, int dataIndex)
     {
+        RectTransform cellRectTransform = cell.GetComponent<RectTransform>();
+        RectTransform myRectTransform = GetComponent<RectTransform>();
+
+        // // 如果锚点相同或使用拉伸布局
+        // cellRectTransform.sizeDelta = myRectTransform.sizeDelta;
+
+        // 或者分别设置宽高
+        cellRectTransform.sizeDelta = new Vector2(
+            myRectTransform.rect.width, 
+            myRectTransform.rect.height
+        );
+        
         cell.gameObject.SetActive(true);
         cell.SetText(data);
         //if (LevelManager.Instance.IsEnterVocabulary)

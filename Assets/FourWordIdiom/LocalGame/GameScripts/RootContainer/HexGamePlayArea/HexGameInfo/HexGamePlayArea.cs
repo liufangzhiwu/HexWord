@@ -106,6 +106,7 @@ public class HexGamePlayArea : UIWindow
             ResetCounttxt.GetComponentInChildren<Text>().text =GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
             ResetCostObj.gameObject.SetActive(false);
             ResetCounttxt.gameObject.SetActive(true);
+            ResetAdsObj.gameObject.SetActive(false);
         }
         else
         {
@@ -150,7 +151,7 @@ public class HexGamePlayArea : UIWindow
         EventDispatcher.instance.OnAutoPassLevel += AutoPassLevel;
         
         StartCoroutine(SetupGameData());
-        boardExplorer = new WordMatrixExplorer(CurStageData.BoardSnapshot,CurStageInfo.Puzzles);
+        boardExplorer = new WordMatrixExplorer(CurStageData.BoardSnapshot,CurStageData.GetLeftPuzzles());
         AudioManager.Instance.PlaySoundEffect("EnterStage");
         EventDispatcher.instance.TriggerChoicePuzzleSetStatus(true);
         
@@ -443,6 +444,17 @@ public class HexGamePlayArea : UIWindow
     {
         selectablePuzzles.Clear();
         selectablePuzzles = boardExplorer.ExploreWordMatrix();
+        
+        if (boardExplorer.leftBlock != null&&selectablePuzzles.Count>0)
+        {
+            string str=selectablePuzzles.ElementAt(0);
+            if(str.Contains(boardExplorer.leftBlock.character))
+            {
+                //更新重置的字块
+                List<char> layers = CurStageData.BoardSnapshot.board[boardExplorer.leftBlock.position.x][boardExplorer.leftBlock.position.y];
+                crossPuzzleGrid.UpdateRemainingTiles(boardExplorer.leftBlock.position.x, boardExplorer.leftBlock.position.y, layers);
+            }
+        }
     }
 
     private void UpdateLeftPuzzles()

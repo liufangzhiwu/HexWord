@@ -1,18 +1,17 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &134454430684937964
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3569250396758870}
   - component: {fileID: 3665609127572721725}
   - component: {fileID: 7781836261955888419}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -86,13 +85,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5347788392818484058}
   - component: {fileID: 5443352198643191814}
   - component: {fileID: 8680106493509300090}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -162,13 +160,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5801620521967580579}
   - component: {fileID: 8105876781162673755}
   - component: {fileID: 2159680312307946684}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -238,13 +235,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6719438419882627890}
   - component: {fileID: 4264190268657704867}
   - component: {fileID: 3959986073184749941}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: age
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -314,7 +310,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7773588668873466590}
   - component: {fileID: 2793092131173478801}
@@ -322,7 +318,6 @@ GameObject:
   - component: {fileID: 1579909548087625801}
   - component: {fileID: 1866758349908948709}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: LevelPuzzleBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -449,13 +444,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1806920227219264877}
   - component: {fileID: 3192565339165691544}
   - component: {fileID: 5900072997618128461}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -525,7 +519,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8376866762686680680}
   - component: {fileID: -355956859974786508}
@@ -535,7 +529,6 @@ GameObject:
   - component: {fileID: 1140997477425575076}
   - component: {fileID: 4938259999930138055}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: HeaderSection
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -636,7 +629,7 @@ MonoBehaviour:
     m_Bits: 4294967295
 --- !u!95 &1140997477425575076
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -647,8 +640,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 2c4f1050876bd304c8b975d1b7e34249, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -675,7 +666,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4917123014269334453}
   - component: {fileID: 8170329828407908642}
@@ -683,7 +674,6 @@ GameObject:
   - component: {fileID: 3096475399072548934}
   - component: {fileID: 1672135179364520840}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: homeButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -810,7 +800,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2386522571079063164}
   - component: {fileID: 7118530758184056456}
@@ -818,7 +808,6 @@ GameObject:
   - component: {fileID: 4927206535414759359}
   - component: {fileID: 8006985000488756137}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Coinstable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -845,7 +834,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 310, y: -180}
-  m_SizeDelta: {x: 396.3, y: 105.9}
+  m_SizeDelta: {x: 375.6, y: 95.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7118530758184056456
 CanvasRenderer:
@@ -877,7 +866,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: 5db46b0e5925cf84eb214f4acc9af589, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -947,13 +936,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4727513832124781058}
   - component: {fileID: 176832865076089887}
   - component: {fileID: 6267269574116299687}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1027,13 +1015,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7285591450401893002}
   - component: {fileID: 3837717206814063965}
   - component: {fileID: 6186418737240454299}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1103,13 +1090,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5058187209952751540}
   - component: {fileID: 4845236352661089388}
   - component: {fileID: 1403143967626836493}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: HeadBtns
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1184,14 +1170,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8714892691680924344}
   - component: {fileID: 8369039864370634720}
   - component: {fileID: 5673532709782126288}
   - component: {fileID: 6105819173516958875}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: systemButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1306,14 +1291,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2392269058798808669}
   - component: {fileID: 2812519569131325}
   - component: {fileID: 341587217236408207}
   - component: {fileID: 7537188135427826925}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: gmBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1428,13 +1412,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3300433921927202891}
   - component: {fileID: 4858709399332280020}
   - component: {fileID: 35840849647798724}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CoinIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1458,7 +1441,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -179.4, y: -2}
-  m_SizeDelta: {x: 141.5, y: 136.6}
+  m_SizeDelta: {x: 135.36, y: 126.6}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4858709399332280020
 CanvasRenderer:
@@ -1504,7 +1487,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5684909429913784094}
   - component: {fileID: 5708914142428388463}
@@ -1512,7 +1495,6 @@ GameObject:
   - component: {fileID: 4350823331898969987}
   - component: {fileID: 8348567670017751283}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: PuzzleBookBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1639,13 +1621,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 430268234540201000}
   - component: {fileID: 1123823626890820175}
   - component: {fileID: 2794569280799796081}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: add
   m_TagString: Untagged
   m_Icon: {fileID: 0}

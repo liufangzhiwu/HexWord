@@ -11,7 +11,7 @@ public class LimitBtnTable : MonoBehaviour
     public Button _limitTimeEventButton;
     [SerializeField] private Image limitOver;
     [SerializeField] private Image lantern;
-    [SerializeField] private Text txtwordprogress;
+    [SerializeField] public Text txtwordprogress;
     [SerializeField] private GameObject LimitClaim;
     [SerializeField] private GameObject Worddouble;
     [SerializeField] private GameObject TimeObj;
@@ -40,7 +40,7 @@ public class LimitBtnTable : MonoBehaviour
             if (!LimitTimeManager.Instance.IsComplete())
             {
                 int wordcount = LimitTimeManager.Instance.GetCurWordCount();
-                txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
+                //txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
                 if (GameDataManager.Instance.UserData.levelMode == 3)
                 {
                     LimitTimeManager.Instance.UpdateLimitProgress(StageHexController.Instance.LimitPuzzlecount);
@@ -100,7 +100,7 @@ public class LimitBtnTable : MonoBehaviour
             {
                 Worddouble.gameObject.SetActive(LimitTimeManager.Instance.LimitTimeCanShow());
                 int wordcount = LimitTimeManager.Instance.GetCurWordCount();
-                txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
+                //txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
                 if (LimitClaim.activeSelf)
                 {
                     LimitClaim.gameObject.SetActive(false);
@@ -109,9 +109,9 @@ public class LimitBtnTable : MonoBehaviour
             }
             else
             {
-                LimitClaim.gameObject.SetActive(true);
+                //LimitClaim.gameObject.SetActive(true);
                 Worddouble.gameObject.SetActive(false);
-                LimitClaim.GetComponent<CanvasGroup>().DOFade(1,0.2f);
+                //LimitClaim.GetComponent<CanvasGroup>().DOFade(1,0.2f);
             }
             limitOver.gameObject.SetActive(false);
         }

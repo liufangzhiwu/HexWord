@@ -165,37 +165,37 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float screenRatio = UIUtilities.GetScreenRatio();
         bool isipad = UIUtilities.IsiPad();
         
-        float sizeoffsetw =isipad? 500*(1+screenRatio-1) : 800*(1+1-screenRatio);
-        float sizemaxh =isipad? 175*(1+screenRatio-1)  :200*(1+1-screenRatio);
-        float sizemaxw =isipad? 175*(1+screenRatio-1) : 200*(1+1-screenRatio);
-        //float sizeoffseth = rows >= 6 ? 5-(rows-6)*0.5f : 0;
         float sizeoffseth = 0;
 
         //if (StageController.Instance.ActiveTileSize<=0||GameDataManager.MainInstance.UserData.CurrentStage!=curStageData.StageId||StageController.Instance.IsGMEnterStage)
         {
-            float height= (RectT.rect.height+sizeoffsetw ) /(rows+1);
-            float width= (RectT.rect.width+sizeoffsetw)/(cols+1);
+            float height= (Screen.height) /rows;
+            float width= (Screen.width) /(cols-1.5f);
             float tileSize = Mathf.Min(width, height);
             float temptileSize = 0;
             
-            if(tileSize>=220)
+            if(tileSize>=250)
             {
-                temptileSize = isipad ? 185 : 220;
+                temptileSize = isipad ? 185 : 250;
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
 
-            if (cols+1 >= 6)
+            if (cols >= 6)
             {
-                temptileSize = sizemaxw-(cols+1-6)*25;
+                float xrate = cols > 6 ? 22 : 70;
+                float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 5;
+                temptileSize = width - (cols- xoffset) * xrate;
                 tileSize = Mathf.Min(temptileSize, tileSize);
-                tileSize = Mathf.Max(180, tileSize);
+                tileSize = Mathf.Max(200, tileSize);
             }
             
-            if (rows >= 6)
+            if (rows >= 7)
             {
-                temptileSize = sizemaxh-(rows-6)*10;
+                float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
+                float offsety = (rows - 7) * 45 * yrate ;
+                temptileSize = height - offsety;
                 tileSize = Mathf.Min(temptileSize, tileSize);
-                tileSize = Mathf.Max(165, tileSize);
+                tileSize = Mathf.Max(200, tileSize);
             }
             
             StageHexController.Instance.ActiveTileSize = tileSize;
@@ -212,12 +212,30 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             float hexWidth = activeTileSize;  // 六边形宽度（水平方向）
             float horizontalSpacing = hexWidth*0.9f;                   // 列间距
             float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
-
             
             // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
             float totalGridWidth = cols * horizontalSpacing;
             float totalGridHeight = rows * verticalSpacing;
         
+            RectTransform rectTransform = transform as RectTransform;
+            // 设置容器大小
+            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
+            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
+        }
+        else
+        {
+            float activeTileSize = StageHexController.Instance.ActiveTileSize;
+
+            // 平顶六边形参数（行对齐）
+            float hexWidth = activeTileSize * Mathf.Sqrt(3) / 2.3f;                  // 六边形宽度（水平方向）
+            float hexHeight = activeTileSize * Mathf.Sqrt(3) / 1.75f;  // 六边形高度（垂直方向）
+            float horizontalSpacing = hexWidth;                  // 列间距（水平方向，无重叠）
+            float verticalSpacing = hexHeight * 0.85f;           // 行间距（垂直方向，考虑重叠）
+
+            // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
+            float totalGridWidth = cols * horizontalSpacing;
+            float totalGridHeight = rows * verticalSpacing;
+            
             RectTransform rectTransform = transform as RectTransform;
             // 设置容器大小
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
@@ -386,37 +404,44 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float hexHeight = activeTileSize * Mathf.Sqrt(3) / 1.75f;  // 六边形高度（垂直方向）
         float horizontalSpacing = hexWidth;                  // 列间距（水平方向，无重叠）
         float verticalSpacing = hexHeight * 0.85f;           // 行间距（垂直方向，考虑重叠）
-
-        int cols=curStageData.BoardSnapshot.cols-curStageData.BoardSnapshot.minCol;
-        int rows=curStageData.BoardSnapshot.rows-curStageData.BoardSnapshot.minRow;
-
-        // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
-        float totalGridWidth = cols * horizontalSpacing;
-        float totalGridHeight = rows * verticalSpacing;
-
-        // 动态计算起始点（居中）
+        
+       RectTransform rectTransform = transform as RectTransform;
+       
         Vector2 bottomLeft = new Vector2(
-            -totalGridWidth / 2f,
-            -totalGridHeight / 2f
+            -rectTransform.rect.width/2,
+            -rectTransform.rect.height/2
         );
+
+        float minposy = bottomLeft.y +
+            (curStageData.BoardSnapshot.minColIndex.x - curStageData.BoardSnapshot.minirnidex + 0.5f) *
+            verticalSpacing - bottomLeft.y;
+
+        float yoffset = minposy>=verticalSpacing ? verticalSpacing/4 : 0;
         
-        float soffsetx =0.5f;
-        float soffsety =rows>=7&&curStageData.BoardSnapshot.minRow>1&&curStageData.BoardSnapshot.minRow%2!=0? 0f:0.7f;
+        bottomLeft.y -= yoffset;
+
+        Debug.Log($"起始坐标 bottomLeft.x={bottomLeft.x} bottomLeft.y={bottomLeft.y} 最小列字符索引 {curStageData.BoardSnapshot.minColIndex}");
         
-        // 计算基础位置（列控制X轴，行控制Y轴）
-        float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minCol+soffsetx) * horizontalSpacing;
-        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minRow+soffsety) * verticalSpacing;        
+        // 计算当前格子位置（列控制X轴，行控制Y轴）
+        float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minicnidex+0.5f) * horizontalSpacing;
+        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex+0.2f) * verticalSpacing;
         
         // 为奇数列添加垂直偏移（六边形网格特性）
         if ((col & 1) == 1)  // 位运算判断奇数列（比取模运算更快）
         {
             yPos += hexHeight * 0.42f;  // 下移半个垂直间距
         }
+        
         // 取消注释启用层级偏移
         if (layer>=0)
         {
             float layerOffset =layer * LAYER_OFFSET;
             yPos -= layerOffset; // 向下偏移
+        }
+        
+        if (curStageData.BoardSnapshot.minColIndex.x % 2 == 1)
+        {
+            yPos -= horizontalSpacing / 2f;
         }
 
         return new Vector2(xPos, yPos);
@@ -434,6 +459,8 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float hexWidth = activeTileSize;  // 六边形宽度（水平方向）
         float horizontalSpacing = hexWidth*0.9f;                   // 列间距
         float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
+        
+        int cols = curStageData.BoardSnapshot.cols - curStageData.BoardSnapshot.minCol;
         
         RectTransform rectTransform = transform as RectTransform;
        
@@ -458,7 +485,14 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
         if (curStageData.BoardSnapshot.minColIndex.x % 2 == 1)
         {
-            xPos -= horizontalSpacing / 2f;
+            float yrate = 2;
+            List<char> letter = curStageData.BoardSnapshot.board[curStageData.BoardSnapshot.minColIndex.x][cols];
+            if (letter.Count > 0)
+            {
+                yrate= letter[0]!='\0' ? 2: 4;
+            }
+            
+            xPos -= horizontalSpacing / yrate;
         }
         
         // 计算偏移量：层级越低（值越小），偏移越大
@@ -956,7 +990,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 {
                     col = start.Column - i / 2;
                 }
-
                 Debug.Log($"左斜向计算位置:{row}:{col}");
             }
             else if(isRightDiagonal) // isRightDiagonal
@@ -1362,7 +1395,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// <summary>
     /// 更新剩余图块的显示（线程安全版本）
     /// </summary>
-    private void UpdateRemainingTiles(int row, int col, List<char> layers)
+    public void UpdateRemainingTiles(int row, int col, List<char> layers)
     {
         // 修复5：添加安全校验
         if (row < 0 || row >= gridList.Count) return;

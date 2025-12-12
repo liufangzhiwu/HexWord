@@ -28,8 +28,6 @@ public class Account_harmony : IAccounts
             InitGameService();
             InitGamePerformance();  
             Register();
-
-            Login();
         });
     }
     
@@ -142,8 +140,8 @@ public class Account_harmony : IAccounts
 
     public void InitGamePerformance() 
     {
-        string bundleName = PlayerSettings.applicationIdentifier;
-        string appVersion = PlayerSettings.bundleVersion;
+        string bundleName = Application.identifier;
+        string appVersion = Application.version;
         int messageType = 0;
         OHSDKKitManager.Instance.InitGamePerformance(bundleName, appVersion, messageType);
     }
@@ -169,6 +167,8 @@ public class Account_harmony : IAccounts
         {
             GamePlayerInitSignal targetSignal = (GamePlayerInitSignal)signal;
             Debug.Log("[GamePlayerInit Success] " + "\n " + targetSignal.successMessage + "\n");
+
+            Login();
         }
         else
         {
@@ -188,6 +188,7 @@ public class Account_harmony : IAccounts
                 + "idToken : " + targetSignal.idToken + "\n"
                 + "teamPlayerId : " + targetSignal.localPlayer.teamPlayerId + "\n"
                 + "gamePlayerId : " + targetSignal.localPlayer.gamePlayerId + "\n");
+            LoginBind();
         }
         else
         {
@@ -224,6 +225,8 @@ public class Account_harmony : IAccounts
             Debug.Log("LoginBind Success" + "\n "
                 + "thirdOpenId :" + targetSignal.thirdOpenId + "\n "
                 + "teamPlayerId :" + targetSignal.teamPlayerId + "\n ");
+            
+            VerifyPlayer();
         }
         else
         {
@@ -257,6 +260,7 @@ public class Account_harmony : IAccounts
             Debug.Log("LoginVerify Success" + "\n "
                 + "thirdOpenId: " + targetSignal.thirdOpenId + "\n "
                 + "isRealName : " + targetSignal.isRealName + "\n ");
+            SavePlayer();
         }
         else
         {
@@ -274,6 +278,8 @@ public class Account_harmony : IAccounts
             Debug.Log("SavePlayer Success" + "\n "
                 + "roleId : " + targetSignal.roleId + "\n "
                 + "roleName : " + targetSignal.roleName + "\n ");
+            
+            PlayerOn();
         }
         else
         {

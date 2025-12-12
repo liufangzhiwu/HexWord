@@ -158,8 +158,7 @@ public class ChoicePuzzleTable : MonoBehaviour
     {
         isWordValid = false;
        
-        float initialPosition = container.transform.localPosition.x;      
-
+        float initialPosition = container.transform.localPosition.x;
         for (int i = 0; i < shakeCount; i++)
         {
             float amplitude = initialShakeAmplitude * Mathf.Pow(amplitudeDecayFactor, i); // 计算当前抖动幅度
@@ -171,8 +170,7 @@ public class ChoicePuzzleTable : MonoBehaviour
             container.transform.DOLocalMoveX(targetX, duration).SetEase(Ease.Linear); // 使用线性缓动函数（可选）
             yield return new WaitForSeconds(duration);
         }
-        
+        container.transform.DOLocalMoveX(0, 0); // 使用线性缓动函数（可选）
         FadeOut(fadeDuration);     
-
     }
 }
