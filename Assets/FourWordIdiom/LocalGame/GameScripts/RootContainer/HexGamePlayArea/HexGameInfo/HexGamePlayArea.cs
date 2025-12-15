@@ -15,6 +15,8 @@ public class HexGamePlayArea : UIWindow
     [SerializeField] private GameObject ButterflyObj;
     [SerializeField] private GameObject StageOverObj;      
     [SerializeField] private GameObject ResetCostObj;      
+    [SerializeField] private GameObject SingleTipLight;      
+    [SerializeField] private GameObject WordTipLight;      
     [SerializeField] private GameObject ResetAdsObj;      
     [SerializeField] private GameObject ResetCounttxt;        
          
@@ -22,7 +24,7 @@ public class HexGamePlayArea : UIWindow
     [SerializeField] private GameObject HintCounttxt;        
 
     [SerializeField] private Button PuzzleTipsBtn;
-    [SerializeField] private Button LayerBtn;
+    [SerializeField] private Button SingleHingBtn;
     [SerializeField] private Button LevelPuzzleBtn;
     [SerializeField] private Text Stagetxt;
     
@@ -41,22 +43,19 @@ public class HexGamePlayArea : UIWindow
     private DateTime StartTime;
 
     List<GameObject> Effect_Butterflys=new List<GameObject>(); 
+    //连词错误次数
     private int wordErrorCount;
     private int usetoolCount;
     
     private int useButterflyCount;
     private bool IsUseButterfly;
+    /// <summary>
+    /// 是否显示错误次数提示
+    /// </summary>
+    private bool IsShowTipLight;
     private bool firstenter;
     
-    [Header("Detection Settings")]
-    public float inactivityThreshold = 5f; // 无操作判定阈值（秒）
-    public bool checkKeyboard = true;
-    public bool checkMouseMovement = true;
-    public bool checkMouseClicks = true;
-    public bool checkTouch = true;
-    
-    private Coroutine inactivityCheckCoroutine;
-   
+    private float inactivityThreshold = 5f; // 无操作判定阈值（秒）
 
     private StageInfo CurStageInfo
     {
@@ -75,11 +74,12 @@ public class HexGamePlayArea : UIWindow
         Initialize();
         firstenter = true;
         IsUseButterfly=false;
+        IsShowTipLight=false;
     }
 
     protected  void InitializeButtons()
     {
-        LayerBtn.AddClickAction(ToolItemFirstLetter,"");
+        SingleHingBtn.AddClickAction(ToolItemFirstLetter,"");
         PuzzleTipsBtn.AddClickAction(UseTips,"");
         LevelPuzzleBtn.AddClickAction(OnClickWordVocabulary);
     }
@@ -188,7 +188,7 @@ public class HexGamePlayArea : UIWindow
 
         SetupGame();
         PuzzleTipsBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=10);
-        LayerBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=2);
+        SingleHingBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=2);
         // 获取 RectTransform 组件
         RectTransform rectTransform = GetComponent<RectTransform>();
         rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
@@ -204,12 +204,6 @@ public class HexGamePlayArea : UIWindow
             Debug.LogError("底部位置" + rectTransform.offsetMin);
 #endif
         }
-        // else
-        // {
-        //     //AdsManager.Instance.HideBannerAd();
-        //     // 设置偏移值
-        //     //rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
-        // }
 
         yield return new WaitForSeconds(0.4f);
         
@@ -240,6 +234,9 @@ public class HexGamePlayArea : UIWindow
             usetoolCount = 0;
             //ShopManager.shopManager.ShowLimitAdsPanel();
         }
+        
+        SingleTipLight.gameObject.SetActive(false);
+        WordTipLight.gameObject.SetActive(false);
            
     }
 
@@ -275,12 +272,68 @@ public class HexGamePlayArea : UIWindow
             {
                 GuideSystem.Instance.CloseGuide();
             }
+            
+            SingleTipLight.gameObject.SetActive(false);
+            WordTipLight.gameObject.SetActive(false);
         }
         else
         {
              EventDispatcher.instance.TriggerPlayChoicePuzzle(gridCellPositions, true);
              EventDispatcher.instance.TriggerUpdateRewardPuzzle(false);
              wordErrorCount++;
+             
+             if(wordErrorCount>=3&&!IsShowTipLight)
+             {
+                 ShowToolTipLight();
+             }
+        }
+    }
+
+    private void ShowToolTipLight()
+    {
+        IsShowTipLight=true;
+        
+        ToolInfo SingletoolInfo = GameDataManager.Instance.UserData.toolInfo[101];
+        ToolInfo WordtoolInfo = GameDataManager.Instance.UserData.toolInfo[102];
+
+        if (CurStageInfo.StageNumber >= 10)
+        {
+            if (SingletoolInfo.count>0&&WordtoolInfo.count>0)
+            {
+                if (SingletoolInfo.count >= WordtoolInfo.count)
+                {
+                    SingleTipLight.gameObject.SetActive(true);
+                    WordTipLight.gameObject.SetActive(false);
+                }
+                else
+                {
+                    WordTipLight.gameObject.SetActive(true);
+                    SingleTipLight.gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                if (SingletoolInfo.count > 0)
+                {
+                    SingleTipLight.gameObject.SetActive(true);
+                    WordTipLight.gameObject.SetActive(false);
+                }
+                else if (WordtoolInfo.count > 0)
+                {
+                    WordTipLight.gameObject.SetActive(true);
+                    SingleTipLight.gameObject.SetActive(false);
+                }
+                else
+                {
+                    SingleTipLight.gameObject.SetActive(true);
+                    WordTipLight.gameObject.SetActive(false);
+                }
+            }
+        }
+        else
+        {
+            SingleTipLight.gameObject.SetActive(true);
+            WordTipLight.gameObject.SetActive(false);
         }
     }
 
@@ -425,7 +478,7 @@ public class HexGamePlayArea : UIWindow
         {
             yield return new WaitForSeconds(0.2f);
             //提示首字
-            GuideSystem.Instance.activeToolObject= LayerBtn.gameObject;
+            GuideSystem.Instance.activeToolObject= SingleHingBtn.gameObject;
             GuideSystem.Instance.DisplayGuide();
         }
         
@@ -615,7 +668,7 @@ public class HexGamePlayArea : UIWindow
         if (toolInfo == null)
         {
             Debug.LogError("[GameManager] There is no hint with the given hint id: ");
-            LayerBtn.enabled = true;
+            SingleHingBtn.enabled = true;
             return;
         }
 
@@ -641,7 +694,7 @@ public class HexGamePlayArea : UIWindow
                 UpdateAdsRewardUI(true);
 #endif
                 
-                LayerBtn.enabled = true;
+                SingleHingBtn.enabled = true;
                 return;
             }
         }
@@ -668,12 +721,15 @@ public class HexGamePlayArea : UIWindow
             CurStageData.AddPuzzleHints(Str);
             CurStageData.AddCharacterHints(Str);
             List<PuzzleTile> puzzleDatas = crossPuzzleGrid.GetPuzzleTileRowCol(Str);
-            ShowLetterTips(puzzleDatas[0],LayerBtn.transform);
+            ShowLetterTips(puzzleDatas[0],SingleHingBtn.transform);
         }  
         else
         {
             MessageSystem.Instance.ShowTip("TipAllWordPrompted");
-        }             
+        }   
+        
+        SingleTipLight.gameObject.SetActive(false);
+        WordTipLight.gameObject.SetActive(false);
     }
     
     private void UpdateAdsRewardUI(bool isShow)
@@ -694,7 +750,7 @@ public class HexGamePlayArea : UIWindow
                 CurStageData.AddPuzzleHints(Str);
                 CurStageData.AddCharacterHints(Str);
                 List<PuzzleTile> puzzleDatas = crossPuzzleGrid.GetPuzzleTileRowCol(Str);
-                ShowLetterTips(puzzleDatas[0],LayerBtn.transform);
+                ShowLetterTips(puzzleDatas[0],SingleHingBtn.transform);
             }  
             else
             {
@@ -744,7 +800,7 @@ public class HexGamePlayArea : UIWindow
             UpdateSelectablePuzzles(); 
         });
         //yield return new WaitForSeconds(0.8f);
-        LayerBtn.enabled = true;
+        SingleHingBtn.enabled = true;
     }
 
     private void OnClickPuzzleVocabulary()
@@ -808,7 +864,10 @@ public class HexGamePlayArea : UIWindow
         else
         {
             MessageSystem.Instance.ShowTip("TipAllWordPrompted");
-        }         
+        }    
+        
+        SingleTipLight.gameObject.SetActive(false);
+        WordTipLight.gameObject.SetActive(false);
     }
 
     private IEnumerator ShowTipsPuzzle(List<PuzzleTile> puzzleDatas)

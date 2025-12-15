@@ -89,8 +89,9 @@ public class LoadingController : MonoBehaviour
     private IEnumerator LoadingSequence()
     {
         Game.InitGame();
-#if UNITY_EDITOR
-#else
+#if UNITY_EDITOR||UNITY_ANDROID
+        
+#elif UNITY_OPENHARMONY||UNITY_huawei
         yield return new WaitUntil(()=>Game.Accounts.IsLogin);
 #endif
 
