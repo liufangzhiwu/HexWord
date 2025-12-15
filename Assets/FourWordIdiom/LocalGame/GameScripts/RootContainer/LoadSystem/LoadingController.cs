@@ -176,7 +176,7 @@ public class LoadingController : MonoBehaviour
          // 标记非首次进入
          GameDataManager.Instance.UserData.IsFirstLaunch = false;
         // 开始场景加载
-        yield return LoadMainSceneAsync();
+        // yield return LoadMainSceneAsync();
     }
 
     private void LoadFont()
