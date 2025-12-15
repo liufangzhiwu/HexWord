@@ -79,7 +79,7 @@ public class ShopManager : MonoBehaviour
         TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "shop");
         if (data != null)
         {
-            ParseShopItems(data.text);
+            //ParseShopItems(data.text);
         }
         else
         {
@@ -132,7 +132,7 @@ public class ShopManager : MonoBehaviour
     void ParseShopItems(string data)
     {
         // 将 CSV 数据转换为 JSON 格式
-        ConvertCSVToJSON(data);
+        //ConvertCSVToJSON(data);
 
         // 现在shopItems列表中包含所有商品
         Debug.Log("Shop items loaded: " + shopItems.Count);

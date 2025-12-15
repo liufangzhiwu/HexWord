@@ -89,11 +89,11 @@ public class StageFinishView : UIWindow
         else
         {
             _progressSlider.transform.parent.gameObject.SetActive(true);
-            StartCoroutine(WaitTimeUpdate());
-            StartCoroutine(PlayRewardSequence());
+           
         }
-        
-        
+
+        StartCoroutine(WaitTimeUpdate());
+        StartCoroutine(PlayRewardSequence());
     }
 
     IEnumerator WaitTimeUpdate()
@@ -127,6 +127,8 @@ public class StageFinishView : UIWindow
         _progressSlider.transform.parent.gameObject.SetActive(true);
         int wordcount = LimitTimeManager.Instance.GetCurWordCount();
         LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
+        if (limitData == null) return;
+
         float durtime = !isanim?0f:0.8f;
         sliderProgress = (float)wordcount/limitData.num;    
         int oldProgress = wordcount-StageHexController.Instance.CurStageData.Puzzles.Count;
