@@ -260,7 +260,7 @@ public class StageHexController
 
 #if UNITY_EDITOR
 
-#elif UNITY_OPENHARMONY || UNITY_ANDROID
+#elif UNITY_OPENHARMONY || UNITY_huawei
 
             AnalyticMgr.InsetAdStart("关卡插屏");
             // 显示插屏广告
