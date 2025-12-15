@@ -50,7 +50,7 @@ public class LoadingController : MonoBehaviour
         yield return new WaitForSeconds(0.05f);
         loadStartTime = Time.time;
         // InitializeLocalization();
-        //SetupRandomLoadingHint();
+        SetupRandomLoadingHint();
         LoadWordVocabulary();
         StartCoroutine(LoadingSequence());
     }
@@ -77,9 +77,10 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private void SetupRandomLoadingHint()
     {
-        int id=Random.Range(1,21);
+        int id=Random.Range(1,12);
         string sid = id < 10 ? "0" + id : id.ToString();
-        loadingHintText.text =MultilingualManager.Instance.GetString("Haiku"+ sid);    
+        loadingHintText.text =MultilingualManager.Instance.GetString("loadText"+ sid);
+        loadingHintText.transform.GetChild(0).GetComponent<Text>().text = MultilingualManager.Instance.GetString("loadText101");
     }
 
     /// <summary>
