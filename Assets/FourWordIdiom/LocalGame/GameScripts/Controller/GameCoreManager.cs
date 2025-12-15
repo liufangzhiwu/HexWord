@@ -95,15 +95,15 @@ public sealed class GameCoreManager: MonoBehaviour
         
         StageHexController.Instance.CreateStageInfo(1);
         
-        if (GameDataManager.Instance.UserData.IsFirstLaunch)
-        {
-            // ShowGamePanel();
-            ShowPrivacyScreen();
-        }
-        else
-        {
+        // if (GameDataManager.instance.UserData.IsFirstLaunch)
+        // {
+        //     ShowGamePanel();
+        //     //ShowPrivacyScreen();
+        // }
+        // else
+        // {
             SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
-        }
+        //}
     }
 
     /// <summary>

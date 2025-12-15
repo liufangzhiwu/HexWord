@@ -256,9 +256,12 @@ public class StageHexController
         AnalyticMgr.LevelCompleted(duration);
         
         if (StageNumber >= 1)
-        {        
-#if UNITY_OPENHARMONY || UNITY_ANDROID
-            
+        {
+
+#if UNITY_EDITOR
+
+#elif UNITY_OPENHARMONY || UNITY_ANDROID
+
             AnalyticMgr.InsetAdStart("关卡插屏");
             // 显示插屏广告
             Game.Ads.ShowInterstitial((bool issuccess) => 

@@ -82,7 +82,6 @@ public class RewardAdsScreen : UIWindow
         
       
 #if UNITY_OPENHARMONY || UNITY_ANDROID || UNITY_EDITOR
-        Debug.Log("广告弹窗进入打印了吗");
         AnalyticMgr.VideoAdClick("金币弹窗广告");
         Game.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
 #elif Unity_ShowLog

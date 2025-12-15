@@ -89,7 +89,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
         dynamicHard.LoadData();
         chessDynamicHard.LoadData();
         dataInitialized = true;
-        Debug.Log("LoadPlayerProfile 时间： " + Time.deltaTime);
     }
     #endregion
 

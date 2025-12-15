@@ -336,7 +336,7 @@ namespace Middleware
 			//账户设置
 			SetDefaultIcon(2);
 			PlayerSettings.companyName = "六方之物";
-			PlayerSettings.productName = "禅意之境";
+			PlayerSettings.productName = "成语消:禅意之境";
 			PlayerSettings.applicationIdentifier = "chengyu.idiom.hexa.zen.andriod.huawei";
 			PlayerSettings.Android.useCustomKeystore = true;
 			PlayerSettings.Android.keystoreName =

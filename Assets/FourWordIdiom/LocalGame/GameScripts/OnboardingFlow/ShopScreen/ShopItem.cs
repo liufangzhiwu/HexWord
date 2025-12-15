@@ -5,7 +5,6 @@ using System.Globalization;
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.HuaweiAppGallery.Model;
 //using UnityEngine.Purchasing;
 using UnityEngine.UI;
 using Game = Middleware.Game;

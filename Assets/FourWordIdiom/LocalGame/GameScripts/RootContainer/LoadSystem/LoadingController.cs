@@ -123,7 +123,13 @@ public class LoadingController : MonoBehaviour
     {
         yield return InitializeGameService();
         yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
-       
+
+        Game.InitGame();
+
+#if UNITY_OPENHARMONY
+        yield return new WaitUntil(()=>Game.Accounts.IsLogin);
+#endif
+
         // 并行执行模拟加载和实际加载
         yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
@@ -157,7 +163,7 @@ public class LoadingController : MonoBehaviour
     // 助手协程：用于在重试前等待一段时间
     private IEnumerator RetryAfterDelay(float delay)
     {
-        Debug.Log($"等待 {delay} 秒后重试...");
+        MessageSystem.Instance.ShowTip($"等待 {delay} 秒后重试...");
         yield return new WaitForSeconds(delay);
     
         // 🔑 关键：重新启动初始化流程
@@ -232,9 +238,11 @@ public class LoadingController : MonoBehaviour
         {
             HuaweiGameService.Login(new SilentLoginListener(statusSetter));
         }
+        MessageSystem.Instance.ShowTip("登录完成, 当前状态" + _flowStatus );
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GetGamePlayer);
         Player _player = null;
         HuaweiGameService.GetGamePlayer(new GetGamePlayerListener(statusSetter, player=> _player = player));
+        MessageSystem.Instance.ShowTip("获取用户信息, 当前状态" + _flowStatus );
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GamePlayerSave);
         AppPlayerInfo appPlayerInfo = new AppPlayerInfo();
         appPlayerInfo.Rank = "test rank";
@@ -244,7 +252,7 @@ public class LoadingController : MonoBehaviour
         appPlayerInfo.PlayerId = _player.PlayerId;
         appPlayerInfo.OpenId = _player.OpenId;
         HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));
-        
+        MessageSystem.Instance.ShowTip("数据上报完成, 当前状态" + _flowStatus );
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
     }
     private void LoadFont()
@@ -283,8 +291,7 @@ public class LoadingController : MonoBehaviour
     {
         sceneLoadOperation = SceneManager.LoadSceneAsync("GameLobby");
         sceneLoadOperation.allowSceneActivation = false;
-
-        Debug.Log("开始加载主场景");
+        
         yield return new WaitUntil(() => sceneLoadOperation.progress >= 0.9f);
         Debug.Log("主场景加载完成");
     }

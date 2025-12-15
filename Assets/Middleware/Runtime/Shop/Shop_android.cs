@@ -210,11 +210,6 @@
 //         }
 //
 //         #endregion
-//
-//         public T GetExtension<T>() where T : IStoreExtension
-//         {
-//             throw new NotImplementedException();
-//         }
 //     }
 // }
 // #endif
