@@ -1,4 +1,4 @@
-﻿#if UNITY_ANDROID
+﻿#if UNITY_huawei
 using UnityEngine;
 using System;
 using HuaweiService;
@@ -130,10 +130,10 @@ namespace Middleware
             switch (key)
             {
                 case Define.AdKey.InterstitialAdId:
-                    adId = Define.ConfigAndroid.HUAWEIInterstitialAdId;
+                    adId = Define.ConfigAndroid.TestInterstitialAdId;
                     break;
                 default:
-                    adId = Define.ConfigAndroid.HUAWEIRewardAdId;
+                    adId = Define.ConfigAndroid.TestRewardAdId;
                     break;
             }
             return adId;

@@ -62,7 +62,7 @@ namespace Middleware
     
         private static void CreateAd()
         {
-#if UNITY_ANDROID
+#if UNITY_huawei
             // Ads = new Ads_android();
             Ads = new Ads_huawei();
 #elif UNITY_IOS
@@ -88,6 +88,8 @@ namespace Middleware
         private static void CreateShop()
         {
 #if UNITY_ANDROID
+            Shop = new Shop_android();
+#elif UNITY_huawei
             Shop = new Shop_huawei();
 #elif UNITY_IOS
             Shop = new Shop_ios();
