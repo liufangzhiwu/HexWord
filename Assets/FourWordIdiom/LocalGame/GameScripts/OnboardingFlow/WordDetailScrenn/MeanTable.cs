@@ -11,12 +11,12 @@ public class MeanTable : MonoBehaviour
        meanNameText.text = meanName;
        meanContentText.text = meanContent;
        
-       StartCoroutine(SetLayoutHorizontal());
+       //StartCoroutine(SetLayoutHorizontal());
     }
    
    public void SetTextLayer()
    {
-       StartCoroutine(SetLayoutHorizontal());
+       //StartCoroutine(SetLayoutHorizontal());
    }
    
    private IEnumerator SetLayoutHorizontal()

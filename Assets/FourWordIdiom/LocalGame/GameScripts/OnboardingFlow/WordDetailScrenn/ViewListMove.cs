@@ -12,7 +12,19 @@ public class ViewListMove : UICyclicScrollList<WordDetailTable, string>, IEndDra
     private string[] datas;
 
     public void InitList(List<string> wordData)
-    {      
+    {
+        RectTransform cellRectTransform = _cellObject.GetComponent<RectTransform>();
+        RectTransform myRectTransform = GetComponent<RectTransform>();
+
+        // // 如果锚点相同或使用拉伸布局
+        // cellRectTransform.sizeDelta = myRectTransform.sizeDelta;
+
+        // 或者分别设置宽高
+        cellRectTransform.sizeDelta = new Vector2(
+            myRectTransform.rect.width,
+            myRectTransform.rect.height
+        );
+
         datas = new string[wordData.Count];
         for (int i = 0; i < datas.Length; i++)
         {
@@ -24,17 +36,17 @@ public class ViewListMove : UICyclicScrollList<WordDetailTable, string>, IEndDra
     
     protected override void ResetCellData(WordDetailTable cell, string data, int dataIndex)
     {
-        RectTransform cellRectTransform = cell.GetComponent<RectTransform>();
-        RectTransform myRectTransform = GetComponent<RectTransform>();
+        //RectTransform cellRectTransform = cell.GetComponent<RectTransform>();
+        //RectTransform myRectTransform = GetComponent<RectTransform>();
 
-        // // 如果锚点相同或使用拉伸布局
-        // cellRectTransform.sizeDelta = myRectTransform.sizeDelta;
+        //// // 如果锚点相同或使用拉伸布局
+        //// cellRectTransform.sizeDelta = myRectTransform.sizeDelta;
 
-        // 或者分别设置宽高
-        cellRectTransform.sizeDelta = new Vector2(
-            myRectTransform.rect.width, 
-            myRectTransform.rect.height
-        );
+        //// 或者分别设置宽高
+        //cellRectTransform.sizeDelta = new Vector2(
+        //    myRectTransform.rect.width, 
+        //    myRectTransform.rect.height
+        //);
         
         cell.gameObject.SetActive(true);
         cell.SetText(data);
@@ -79,6 +91,12 @@ public class ViewListMove : UICyclicScrollList<WordDetailTable, string>, IEndDra
 
     public void OnDrag(PointerEventData eventData)
     {
+
+        if(WordPanel.width< GetComponent<RectTransform>().rect.width)
+        {
+            WordPanel.width = GetComponent<RectTransform>().rect.width;
+        }
+
         var pos = eventData.position;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(transform as RectTransform, pos, Camera.main, out EndPos);
         if (Mathf.Abs(EndPos.x - BeginPos.x) < 10) return;

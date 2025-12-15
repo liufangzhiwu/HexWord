@@ -229,7 +229,9 @@ public class StageHexController
         {
             GameDataManager.Instance.UserData.UpdateHexStage();
         }
-
+        
+        UpdateLimitPuzzleCount();
+        
         // 播放效果
         yield return PlayCompletionEffects(StageNumber);
 
@@ -320,10 +322,10 @@ public class StageHexController
         GameDataManager.Instance.UserData.AddStagePuzzle(Puzzle);
 
         // 限时活动计数
-        if (CurStageInfo.StageNumber >= CurrentStage)
-        {
-            UpdateLimitPuzzleCount(1);
-        }
+        // if (CurStageInfo.StageNumber >= CurrentStage)
+        // {
+        //     UpdateLimitPuzzleCount(1);
+        // }
     }
     
     /// <summary>
@@ -344,9 +346,9 @@ public class StageHexController
     /// <summary>
     /// 更新限时活动计数
     /// </summary>
-    public void UpdateLimitPuzzleCount(int increment)
+    public void UpdateLimitPuzzleCount(int increment=0)
     {
-        _limitPuzzleCount += increment;
+        _limitPuzzleCount = CurStageInfo.Puzzles.Count;
     }
 
     /// <summary>

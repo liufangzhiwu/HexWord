@@ -96,6 +96,9 @@ public class RewardAdsScreen : UIWindow
             UpdateCliamBtn(true);
             AnalyticMgr.VideoAdSuccess("金币弹窗广告");
             GameDataManager.Instance.UserData.totalSeeAds++;
+            int coins=30;
+            GameDataManager.Instance.UserData.UpdateGold(coins,false,false,"金币广告弹窗获得");
+           
             //DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
         }
         else
@@ -119,8 +122,8 @@ public class RewardAdsScreen : UIWindow
         {
             CustomFlyInManager.Instance.FlyInGold(AwardIcon.transform, () =>
             {
-                int coins=50;
-                GameDataManager.Instance.UserData.UpdateGold(coins,true,true,"金币广告弹窗获得");
+                int coins=30;
+                EventDispatcher.instance.TriggerChangeGoldUI(coins, true);
             });
             isCanClaim = false;
             yield return new WaitForSeconds(0.8f);
