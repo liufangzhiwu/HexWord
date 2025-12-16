@@ -38,6 +38,12 @@ public class LoadingController : MonoBehaviour
     private AsyncOperation sceneLoadOperation;        // 场景加载操作
     private float loadStartTime;                      // 加载开始时间
 
+    private void Awake()
+    {
+        loadingHintText.text = "";
+        loadingHintText.transform.GetChild(0).GetComponent<Text>().text = "";
+    }
+
     private void OnEnable()
     {
         StartCoroutine(InitializeLoadingProcess());
@@ -138,7 +144,7 @@ public class LoadingController : MonoBehaviour
             Vector3 currentPos = Vector3.Lerp(worldStart, worldEnd, progress);
             currentPos.y = startY;
             rollingObject.position = currentPos;
-            rollingObject.localEulerAngles = new Vector3(0, 0, -progress * 360f * 5f);
+            rollingObject.localEulerAngles = new Vector3(0, 0, -progress * 360f);
             yield return null;
         }
         Loading.GetComponent<CanvasGroup>().DOFade(0, 0.1f);
