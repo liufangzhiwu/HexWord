@@ -21,19 +21,15 @@ namespace Middleware
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
             
-         
+            CreateAccounts();
             // StartCoroutine(ShowLoadingScreen());
         }
 
         public static void InitGame()
         {
-#if UNITY_OPENHARMONY
             CreateAd();
-            CreateAccounts();
-            
-#endif
             CreateAnalytic();
-            // CreateShop();
+            CreateShop();
             InitManagers();
         }
 
@@ -54,16 +50,14 @@ namespace Middleware
         
         private static void CreateAccounts()
         {
-#if UNITY_OPENHARMONY
-            Accounts = new Account_harmony();
+            Accounts = new Account_honor();
             Accounts.Init(0.2f);
-#endif
         }
-    
         private static void CreateAd()
         {
-#if UNITY_huawei
-            // Ads = new Ads_android();
+       #if UNITY_Hornor
+       
+#elif UNITY_huawei
             Ads = new Ads_huawei();
 #elif UNITY_IOS
             Ads = new Ads_ios();
@@ -87,8 +81,8 @@ namespace Middleware
         
         private static void CreateShop()
         {
-#if UNITY_ANDROID
-            Shop = new Shop_android();
+#if UNITY_Hornor || UNITY_ANDROID
+            Shop = new Shop_honor();
 #elif UNITY_huawei
             Shop = new Shop_huawei();
 #elif UNITY_IOS

@@ -60,6 +60,8 @@ public class ShopManager : MonoBehaviour
 
     //public IAPManager iapManager; // 引用 IAPManager
     [HideInInspector] public bool paysuccess; //支付成功
+    // 🔥 核心标记位：是否正在恭候支付结果
+    [HideInInspector] public bool IsPurchasing { get; set; } = false;
 
     private void Awake()
     {
@@ -402,5 +404,48 @@ public class ShopManager : MonoBehaviour
         // }
         
         return false;
+    }
+
+    /// <summary>
+    /// 发货通知
+    /// </summary>
+    /// <param name="productId">商品id</param>
+    public void DeliverItem(string productId)
+    {
+        ShopDataItem shopDataItem =  NameGetShopItem(productId);
+        foreach (var dataitem in shopDataItem.productContent)
+        {
+            int count = int.Parse(dataitem[1]);
+            int type = int.Parse(dataitem[0]);
+                
+            switch (type)
+            {
+                case (int)LimitRewordType.Coins:
+                    GameDataManager.Instance.UserData.UpdateGold(count,true,true);
+                    break;
+                case (int)LimitRewordType.Butterfly:
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count);
+                    //GameDataManager.Instance.UserData.toolInfo[103].count += count;
+                    //EventManager.OnChangGoldUI?.Invoke(0, false);
+                    break;
+                case (int)LimitRewordType.Tipstool:
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count);
+                    //GameDataManager.Instance.UserData.toolInfo[102].count += count;
+                    //EventManager.OnChangGoldUI?.Invoke(0, false);
+                    break;
+                case (int)LimitRewordType.Resettool:
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, count);
+                    //GameDataManager.Instance.UserData.toolInfo[101].count += count;
+                    //EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+                    break;
+                case (int)LimitRewordType.RemoveAds:
+                case (int)LimitRewordType.Remove7DayAds:
+                    //BuyRemoveAdsEvent(type);
+                    break;
+            }
+        }
+        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
+        GameDataManager.Instance.CommitGameData();
     }
 }

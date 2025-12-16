@@ -94,9 +94,10 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator LoadingSequence()
     {
+        Game.Accounts.Login();
         Game.InitGame();
-#if UNITY_EDITOR||UNITY_ANDROID
-        
+#if UNITY_ANDROID
+        yield return new WaitUntil(()=>Game.Accounts.IsLogin);
 #elif UNITY_OPENHARMONY||UNITY_huawei
         yield return new WaitUntil(()=>Game.Accounts.IsLogin);
 #endif
@@ -176,7 +177,7 @@ public class LoadingController : MonoBehaviour
          // 标记非首次进入
          GameDataManager.Instance.UserData.IsFirstLaunch = false;
         // 开始场景加载
-        // yield return LoadMainSceneAsync();
+        yield return LoadMainSceneAsync();
     }
 
     private void LoadFont()
