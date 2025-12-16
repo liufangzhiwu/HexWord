@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
 //using UnityEngine.Purchasing;
@@ -405,25 +406,32 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         //    OnPurchaseFailed);
         //// 处理购买逻辑
         Debug.Log($"Buying: {data.name}, Price: {data.GetProduceName()}");
-        
-        //bool isPayable = await UIController.Instance.CheckPayable((int)data.price);
-        
-        //if (isPayable)
+        ShopManager.shopManager.IsPurchasing = true;
+        if (Application.platform == RuntimePlatform.Android)
         {
-            OnPurchaseSuccess(data);
+            Game.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
         }
-        //string area = "";
-      
+        else
+        {
+            Debug.LogWarning("请在安卓真机上测试支付！PC 上无法调用 Java 代码。");
+            // PC 测试逻辑：模拟发货（方便开发调试）
+#if UNITY_EDITOR
+            Debug.Log("【模拟】编辑器发货成功");
+            // 模拟收到通知
+            GameObject.Find("HonorManager").SendMessage("OnDeliverProduct", data.GetProduceName());
+#endif
+        }
+       
         //FirebaseManager.Instance.PayStart(shopDataItem.GetProduceName(),area,SaveSystem.Instance.UserData.CurrentStage);
     }
 
-    private void OnPurchaseSuccess(ShopDataItem product)
+    private void OnPurchaseSuccess(ProductItem product)
     {
-        Debug.Log("购买成功: " + product.id);
+        Debug.Log("购买成功: " + product.ProductId);
        
-        // if (shopDataItem.GetProduceName() == product.definition.id)
-        // {
-            foreach (var dataitem in product.productContent)
+        if (shopDataItem.GetProduceName() == product.ProductId)
+        {
+            foreach (var dataitem in shopDataItem.productContent)
             {
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
@@ -454,7 +462,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                         break;
                 }
             }
-        //}
+        }
         // 获取商品价格和货币代码
         //string currencyCode = product.metadata.isoCurrencyCode;
         //float localizedPrice = (float)product.metadata.localizedPrice;

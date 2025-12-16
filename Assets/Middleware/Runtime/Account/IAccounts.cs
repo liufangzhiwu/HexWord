@@ -13,7 +13,8 @@ namespace Middleware
         void Logout();
         
         void VerifyPlayer();
-        
+
+        void ReportRole(string roleId, string roleName, string chapter);
         // void ShowBanner();
         // void HideBanner();
     }
