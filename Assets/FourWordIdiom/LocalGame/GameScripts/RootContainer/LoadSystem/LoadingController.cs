@@ -26,6 +26,8 @@ public class LoadingController : MonoBehaviour
     [SerializeField] private Text loadingHintText;    // 加载提示文本
     [SerializeField] private Slider progressSlider;   // 进度条组件
      [SerializeField] private GameObject Loading;   // 进度条组件
+     [SerializeField] private RectTransform rollingObject;   // 滚动的方块 (Image)
+     private float _objectRadius;    // 方块半径
     // [SerializeField] private Button AccountQuitBtn;   // 进度条组件
     //[SerializeField] private RectTransform indicatorIcon; // 进度指示图标
 
@@ -41,6 +43,10 @@ public class LoadingController : MonoBehaviour
         StartCoroutine(InitializeLoadingProcess());
     }
 
+    private void Start()
+    {
+        _objectRadius = (rollingObject.rect.width * rollingObject.lossyScale.x) / 2f;
+    }
 
     /// <summary>
     /// 初始化加载流程
@@ -109,20 +115,35 @@ public class LoadingController : MonoBehaviour
     private IEnumerator SimulateLoadingProgress()
     {
         Loading.GetComponent<CanvasGroup>().DOFade(1, 0.1f);
+
+        float width = progressSlider.GetComponent<RectTransform>().rect.width;
+        RectTransform sliderBackground = progressSlider.transform.GetChild(0).GetComponent<RectTransform>();
+        Vector3 localStart = new Vector3(sliderBackground.rect.xMin, 0, 0);
+        Vector3 localEnd = new Vector3(sliderBackground.rect.xMax, 0, 0);
+        
+        Vector3 worldStart = sliderBackground.TransformPoint(localStart);
+        Vector3 worldEnd = sliderBackground.TransformPoint(localEnd);
+
+        float startY = rollingObject.position.y;
         
         float elapsedTime = 0;
         float progress = 0;
-
+        
         while (progress < 1f)
         {
             elapsedTime = Time.time - loadStartTime;
             progress = Mathf.Clamp01(elapsedTime / 2f);
-            UpdateProgressDisplay(progress);
+            
+            progressSlider.value = progress;
+            Vector3 currentPos = Vector3.Lerp(worldStart, worldEnd, progress);
+            currentPos.y = startY;
+            rollingObject.position = currentPos;
+            rollingObject.localEulerAngles = new Vector3(0, 0, -progress * 360f * 5f);
             yield return null;
         }
         Loading.GetComponent<CanvasGroup>().DOFade(0, 0.1f);
     }
-
+    
     /// <summary>
     /// 加载核心游戏资源
     /// </summary>

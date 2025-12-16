@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 927731356353017882}
   - component: {fileID: 1091114507452230339}
   m_Layer: 5
-  m_Name: zen
+  m_Name: ZneSquare
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30,11 +30,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1763250562576917828}
+  m_Father: {fileID: 3439512303032176979}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 37.500153, y: 44.000034}
+  m_AnchoredPosition: {x: 2.000122, y: 87}
   m_SizeDelta: {x: 146, y: 149}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &927731356353017882
@@ -129,6 +129,7 @@ MonoBehaviour:
   loadingHintText: {fileID: 767655824609746832}
   progressSlider: {fileID: 7683878617377399446}
   Loading: {fileID: 3707190277560874106}
+  rollingObject: {fileID: 5364469776006130918}
   randomHintCount: 20
 --- !u!222 &4954703453921227436
 CanvasRenderer:
@@ -418,8 +419,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 5364469776006130918}
+  m_Children: []
   m_Father: {fileID: 1297307076883204826}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -497,6 +497,7 @@ RectTransform:
   - {fileID: 7080800375991544801}
   - {fileID: 5756260720815510099}
   - {fileID: 1297307076883204826}
+  - {fileID: 5364469776006130918}
   m_Father: {fileID: 8364315687426063080}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
