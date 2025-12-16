@@ -1,10 +1,22 @@
 package com.mygame.honor;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import com.unity3d.player.UnityPlayer;
 import com.unity3d.player.UnityPlayerActivity;
 import com.hihonor.gamecenter.gcjointsdk.sdk.GCJointSdk;
+// 补充缺失的 Import
+import com.hihonor.mcs.game.AppParams;
+import com.hihonor.mcs.game.APICallback;
+import com.hihonor.mcs.game.ErrorCode;
+import com.hihonor.mcs.game.model.UserGameInfoParam;
+import com.hihonor.iap.sdk.bean.*;
+import com.hihonor.mcs.game.Task; // 或者是 SDK 具体的 Task 类
+import org.json.JSONException;
+import java.util.HashMap;
+import java.util.List;
 
 public class MyGameActivity extends UnityPlayerActivity{
 
@@ -16,7 +28,7 @@ public class MyGameActivity extends UnityPlayerActivity{
         super.onCreate(savedInstanceState);
 
         Log.d(TAG, "MyGameActivity 启动了， 准备初始化荣耀 SDK");
-        GCJointSdk.setApplication(this);
+        GCJointSdk.setApplication(this.getApplication());
     }
 
         /**
@@ -50,23 +62,13 @@ public class MyGameActivity extends UnityPlayerActivity{
                     // String displayName = json.getString("displayName");//用户名称
                     // String headPictureURL = json.getString("headPictureURL");//用户头像地址，没有头像时为"null"
                 UnityPlayer.UnitySendMessage("HonorManager", "OnLoginSuccess", result);
-        
-                // 2. 进入游戏逻辑， 如果有
-                // runOnUiThread(() -> {
-                //     // hideLoading(); // 隐藏 Loading
-                //     enterGame();     // 处理原生 UI 隐藏
-                // });
             }
 
             @Override
             public void onFailure(int code, String message) {
                 // 初始化失败，获取失败code
-                initFailure(code);
                 // 必须在主线程处理 UI
-                runOnUiThread(() -> {
-                    // hideLoading(); // 隐藏 Loading
-                    initFailure(code, message);
-                });
+                runOnUiThread(() -> initFailure(code));
             }
         });
     }
@@ -160,19 +162,15 @@ public class MyGameActivity extends UnityPlayerActivity{
         //退出管控
         GCJointSdk.exit(this, code -> {
             switch (code) {
-                case 0://弹框消失，用户在挽留弹框上选择了取消退出
-                case 2://弹框消失，用户在挽留弹框上选择了跳转
-                    break;
                 case 1://弹框消失，用户在挽留弹框上选择了退出游戏
                 case 3://未配置或者未登录，未弹出挽留弹框
                 {
                     // 此处如何退出可以执行unity的退出应用生命周期？
                     // android.os.Process.killProcess(android.os.Process.myPid());//杀进程
-                     UnityPlayer.UnitySendMessage("HonorManager", "OnExitControl", code);
+                     UnityPlayer.UnitySendMessage("HonorManager", "OnExitControl", String.valueOf(code));
                 }
                 break;
-                default:
-                    break;
+                default: break;
             }
         });
     }
@@ -186,8 +184,6 @@ public class MyGameActivity extends UnityPlayerActivity{
         productOrderIntentReq.setProductType(ProductType.CONSUME);
         productOrderIntentReq.setProductId(product_id);
         productOrderIntentReq.setNeedSandboxTest(1);//传1为沙盒测试
-        //防止掉单
-        obtainOwnedPurchases();
         //创建订单前，需要调用obtainOwnedPurchases 查询已购买，未消耗的商品，进行消耗
         GCJointSdk.launchPayFlow(this, productOrderIntentReq, new IapClient.QuickPayCallback() {
             @Override
@@ -242,7 +238,7 @@ public class MyGameActivity extends UnityPlayerActivity{
             if(ownedPurchasesResult == null) return;
             //ContinueToken用于获取下一个列表的数据，第一次为空，如果有更多数据ContinueToken有值，为空则没有更多数据
             mContinueToken = ownedPurchasesResult.getContinueToken();
-            if(mContinueToken != null && !nextToken.isEmpty()){
+            if(mContinueToken != null && !mContinueToken.isEmpty()){
                 Log.d(TAG, "还有更多订单，继续查询下一页...");
                 obtainOwnedPurchases(); // 递归调用自己
             }
@@ -258,33 +254,42 @@ public class MyGameActivity extends UnityPlayerActivity{
         // purchaseList 和 sigList 一一对应
         List<String> sigList = ownedPurchasesResult.getSigList();
         List<String> purchaseList = ownedPurchasesResult.getPurchaseList();
+        
+        if (purchaseList == null) return;
         //签名算法
-        String sigAlgorithm = ownedPurchasesResult.getSigAlgorithm();
+//         String sigAlgorithm = ownedPurchasesResult.getSigAlgorithm();
         //公钥验签
-        if ("RSA_V2".equals(sigAlgorithm)) {
-            try {
-                PublicKey publicKey = RSAUtil.getPublicKey(IAP_PUBLIC_KEY);
-                Log.i(TAG, " publicKey :" + publicKey);
+//         if ("RSA_V2".equals(sigAlgorithm)) {
+//             try {
+//                 PublicKey publicKey = RSAUtil.getPublicKey(IAP_PUBLIC_KEY);
+//                 Log.i(TAG, " publicKey :" + publicKey);
                 for (int i = 0; i < purchaseList.size(); i++) {
                     try {
                         String PurchaseProductInfoStr = purchaseList.get(i);
-                        boolean verify = RSAUtil.verify(PurchaseProductInfoStr, publicKey, sigList.get(i));
-                        Log.i(TAG, " PurchaseProductInfoStr verify " + verify + "  , " + PurchaseProductInfoStr);
-                        if(verify){
-                            PurchaseProductInfo info = new PurchaseProductInfo(json, sigList.get(i));
-                            if(info.getPurchaseState() == 0){
-                                Log.i(TAG, "正在补单: " + info.getProductId());
+                        String signature = (sigList != null && i < sigList.size()) ? sigList.get(i) : null;
+//                         boolean verify = RSAUtil.verify(PurchaseProductInfoStr, publicKey, sigList.get(i));
+//                         Log.i(TAG, " PurchaseProductInfoStr verify " + verify + "  , " + PurchaseProductInfoStr);
+//                         if(verify){
+                            JSONObject json = new JSONObject(jsonString);
+                            String productId = json.optString("productId");
+                            int purchaseState = json.optInt("purchaseState", -1);
+                            String purchaseToken = json.optString("purchaseToken");
+                            if(purchaseState == 0){
+                                Log.i(TAG, "发现漏单，正在补单: " + productId);
+                                PurchaseProductInfo info = new PurchaseProductInfo();
+                                info.setProductId(productId);
+                                info.setPurchaseToken(purchaseToken);
                                 consume(info);
                             }
-                        }
+//                         }
                     } catch (JSONException e) {
                         Log.e(TAG, "补单解析 JSON 失败: " + e.getMessage());
                     }
                 }
-            } catch (Exception e) {
-                Log.e(TAG, "dealPurchasesResult error: " + e.getMessage());
-            }
-        }
+//             } catch (Exception e) {
+//                 Log.e(TAG, "dealPurchasesResult error: " + e.getMessage());
+//             }
+//         }
     }
 
     /**
@@ -335,4 +340,9 @@ public class MyGameActivity extends UnityPlayerActivity{
                 })
                 .show();
     }
+    
+    public void checkLostOrders() {
+            mContinueToken = null; // 重置
+            obtainOwnedPurchases();
+        }
 }

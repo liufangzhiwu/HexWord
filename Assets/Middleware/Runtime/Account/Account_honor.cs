@@ -14,8 +14,10 @@ public class Account_honor : IAccounts
 
         UnityTimer.Delay(delay, () =>
         {
-            AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-            _currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+            using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            {
+                _currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+            }
         });
     }
 
