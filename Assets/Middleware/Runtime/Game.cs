@@ -27,7 +27,7 @@ namespace Middleware
 
         public static void InitGame()
         {
-            CreateAd();
+            // CreateAd();
             CreateAnalytic();
             CreateShop();
             InitManagers();

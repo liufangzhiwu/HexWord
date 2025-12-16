@@ -10,9 +10,11 @@ namespace Middleware
         {
             UnityTimer.Delay(delay + 1f, () =>
             {
-                AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-                _currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-                _currentActivity.Call("obtainOwnedPurchases");
+                using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                {
+                    _currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                    _currentActivity.Call("obtainOwnedPurchases");
+                }
             });
         }
         public bool IsProductOk(string productId)

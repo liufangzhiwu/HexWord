@@ -6,6 +6,9 @@ dependencies {
     
     //    // 远程Maven引入联运SDK
     implementation 'com.hihonor.mcs:game:2.0.21.301'
+    implementation 'com.hihonor.mcs:iap:2.0.21.301'
+    implementation 'com.google.code.gson:gson:2.8.9' // 补单解析可能需要 Json 库
+    
 **DEPS**}
 
 android {

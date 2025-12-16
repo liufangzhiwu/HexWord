@@ -1,0 +1,22 @@
+# ---------------------------------------------------------
+# 1. 保护你写的 Java Activity 不被混淆
+# ---------------------------------------------------------
+# 必须保留，因为 Manifest 和 Unity C# 都是通过字符串名字来找它的
+-keep class com.mygame.honor.MyGameActivity { *; }
+
+# ---------------------------------------------------------
+# 2. 保护荣耀 SDK 不被混淆 (参考荣耀官方文档)
+# ---------------------------------------------------------
+# 保留荣耀 SDK 的核心包
+-keep class com.hihonor.** { *; }
+-keep interface com.hihonor.** { *; }
+
+# 忽略荣耀 SDK 可能产生的警告 (防止打包中断)
+-dontwarn com.hihonor.**
+
+# ---------------------------------------------------------
+# 3. 保护 Android 常用组件 (通常 Unity 默认有，但加一层保险)
+# ---------------------------------------------------------
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes SourceFile,LineNumberTable

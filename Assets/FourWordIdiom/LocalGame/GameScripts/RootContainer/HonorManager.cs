@@ -26,9 +26,9 @@ namespace FourWordIdiom.LocalGame.GameScripts.RootContainer
         /// <summary>
         /// 退游挽留
         /// </summary>
-        public void OnExitControl()
+        public void OnExitControl(string code)
         {
-            Debug.Log("[HonorManager] 收到退出回调，保存数据并退出");
+            Debug.Log("[HonorManager] 收到退出回调，保存数据并退出 " + code);
             GameDataManager.Instance.CommitGameData();
             QuitGame();
         }
