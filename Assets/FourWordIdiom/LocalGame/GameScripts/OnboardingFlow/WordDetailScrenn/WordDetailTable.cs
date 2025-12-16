@@ -121,6 +121,7 @@ public class WordDetailTable : MonoBehaviour
         else
         {
             GameDataManager.Instance.UserData.RemoveNoteBook(word);
+            EventDispatcher.instance.TriggerRemoveNotePuzzle(word);
         }
     }
 }

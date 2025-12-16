@@ -134,9 +134,12 @@ public class StageFinishView : UIWindow
         int oldProgress = wordcount-StageHexController.Instance.CurStageData.Puzzles.Count;
         oldProgress=Math.Max(oldProgress,0);
         _progressText.text = oldProgress + "/" + limitData.num;
+        
+        sliderProgress=Math.Max(sliderProgress,0.08f);
 
         if (isanim)
         {
+            
             _progressSlider.DOValue(sliderProgress,durtime).OnComplete(() =>
             {
                 _progressText.text = wordcount + "/" + limitData.num;

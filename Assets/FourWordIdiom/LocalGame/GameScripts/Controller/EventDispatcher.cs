@@ -33,6 +33,11 @@ public class EventDispatcher:MonoBehaviour
     /// 更新词库按钮状态
     /// </summary>
     public Action OnWordVocabularyStatus;
+    
+    /// <summary>
+    /// 更新词库
+    /// </summary>
+    public Action OnWordVocabularyUpdate;
     #endregion
 
     private void Awake()
