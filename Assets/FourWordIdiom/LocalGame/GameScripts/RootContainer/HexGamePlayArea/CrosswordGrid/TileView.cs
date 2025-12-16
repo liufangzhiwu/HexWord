@@ -140,9 +140,8 @@ public class TileView : MonoBehaviour
     public void PlayResetPosAnimation()
     {
         // 向上移动效果（相对移动）
-        TileTransform.DOAnchorPosY(_startPosition.y, 0.2f).OnComplete(()=>
-            selectionPuzzle.SetActive(false));
-
+        TileTransform.DOAnchorPosY(_startPosition.y, 0.2f);
+        selectionPuzzle.SetActive(false);
         isselection = false;
     }
 
