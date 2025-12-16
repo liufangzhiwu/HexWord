@@ -31,6 +31,7 @@ public class MyGameActivity extends UnityPlayerActivity{
                 .setAppId("104534282") // 必填，荣耀开发者服务平台申请的应用AppId
                 .setCpId("110000134609") // 必填，开发者ID，在荣耀开发者服务平台申请开发者帐号后生成，在开发者资料中查看。
                 .setEnableLog(true) // 开发调试时打开日志，正式发布时关闭
+                .setSanBoxToken("3EA1D7ABBCA2B03D2EF5B295244EEEBB")
                 .setAntiAddictionCallback(() -> { // 防沉迷回调
 //                     Log.w(TAG, "【防沉迷触发】时间已到，通知 Unity 进行下线处理");
                     // 防沉迷时间到，处理退出逻辑
