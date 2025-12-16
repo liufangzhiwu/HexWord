@@ -47,14 +47,19 @@ public class WaterManager : MonoBehaviour
     
     void UpdateOrthographicSize()
     {
+        float baseRatio = UIUtilities.REFERENCE_WIDTH /  UIUtilities.REFERENCE_HEIGHT;
+        float curscreenRatio = Screen.width / (float)Screen.height;
+        float scale = curscreenRatio / baseRatio;
+        
         if (!UIUtilities.IsiPad())
         {
-            float baseRatio = UIUtilities.REFERENCE_WIDTH /  UIUtilities.REFERENCE_HEIGHT;
-
-            float curscreenRatio = Screen.width / (float)Screen.height;
-
-            float scale = curscreenRatio / baseRatio;
             float scaleFactor = 4.3f;
+            
+            if(scale <1.0f)
+            {
+                scaleFactor = 4.3f * (1.0f - scale+1);
+            }
+            
             waterCamera.orthographicSize = scaleFactor;
             waterqundCamera.orthographicSize = scaleFactor;
         }
