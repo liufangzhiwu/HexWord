@@ -179,8 +179,8 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
         //if (StageController.Instance.ActiveTileSize<=0||GameDataManager.MainInstance.UserData.CurrentStage!=curStageData.StageId||StageController.Instance.IsGMEnterStage)
         {
-            float height= (Screen.height) /rows;
-            float width= (Screen.width) /(cols-1.5f);
+            float height=screenRatio<=1.2f&&screenRatio>1.0f ? (Screen.height) /(float)rows : (Screen.height) /(float)rows*screenRatio;
+            float width=screenRatio<=1.2f&&screenRatio>1.0f ? (Screen.width) /(cols-1.5f) : (Screen.width) /(cols-screenRatio)*screenRatio;
             float tileSize = Mathf.Min(width, height);
             float temptileSize = 0;
             
@@ -192,15 +192,18 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
             if (cols >= 9||rows > 9)
             {
+                
+                float maxsize = screenRatio>1.2f ? 215f : 185f;
+                
                 float xrate = cols > 6 ? 11 : 22;
                 float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 3.5f;
                 temptileSize = width - (cols- xoffset) * xrate;
                 tileSize = Mathf.Min(temptileSize, tileSize);
-                tileSize = Mathf.Max(185, tileSize);
+                tileSize = Mathf.Max(maxsize, tileSize);
             }
             else
             {
-                float maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 230f : 205f;
+                float maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 230f : 205f;
                 
                 if (cols >= 6)
                 {
