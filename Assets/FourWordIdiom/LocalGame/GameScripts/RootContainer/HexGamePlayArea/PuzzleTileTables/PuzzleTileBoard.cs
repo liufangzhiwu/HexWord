@@ -239,8 +239,10 @@ public class PuzzleTileBoard : UIWindow
             SingleWordImageWidth *=2;
         else if(totalPages<=4)
             SingleWordImageWidth =200;
-        else if(totalPages<=6)
+        else if(totalPages<=7)
             SingleWordImageWidth =125f;
+        else 
+            SingleWordImageWidth =110f;
         
         for (int i = 0; i < totalPages; i++)
         {

@@ -192,8 +192,18 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
             if (cols >= 9||rows > 9)
             {
+                temptileSize = isipad ? 165f : 155f;
+                tileSize = Mathf.Min(temptileSize, tileSize);
+                float maxsize = screenRatio>1.2f ? 210f : 195;
+                if (cols > 9)
+                {
+                    maxsize-=(cols-9)*9f;
+                }
                 
-                float maxsize = screenRatio>1.2f ? 215f : 185f;
+                if (rows > 9)
+                {
+                    maxsize-=(rows-9)*9f;
+                }
                 
                 float xrate = cols > 6 ? 11 : 22;
                 float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 3.5f;
