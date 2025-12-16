@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Middleware;
 using UnityEngine;
@@ -6,7 +7,11 @@ namespace FourWordIdiom.LocalGame.GameScripts.RootContainer
 {
     public class HonorManager: MonoBehaviour
     {
-        
+        private void Awake()
+        {
+            DontDestroyOnLoad(gameObject);
+        }
+
         /// <summary>
         /// 登录成功
         /// </summary>
