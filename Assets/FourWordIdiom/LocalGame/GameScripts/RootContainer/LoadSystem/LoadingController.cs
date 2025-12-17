@@ -179,8 +179,6 @@ public class LoadingController : MonoBehaviour
         
         //预加载关卡文件
          StageHexController.Instance.LoadPackInfos();
-         // 标记非首次进入
-         GameDataManager.Instance.UserData.IsFirstLaunch = false;
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }

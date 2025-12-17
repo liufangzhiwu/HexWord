@@ -76,6 +76,13 @@ public class LimitTimeScreen : UIWindow
         UpdateMinTimeDisplay();
         yield return new WaitForSeconds(1.2f);
         UpdateProgress();
+        
+        yield return new WaitForSeconds(0.5f);
+        
+        if (GameCoreManager.Instance.IsTrueAuto)
+        {
+            OnCloseBtn();
+        }
     }
 
     private void InitLightItems()

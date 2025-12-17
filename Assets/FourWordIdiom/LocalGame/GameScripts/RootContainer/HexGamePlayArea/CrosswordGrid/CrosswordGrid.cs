@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
+using Middleware;
 
 public enum TileDirection
 {
@@ -110,8 +112,24 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         yield return new WaitForSeconds(0.3f); 
         PuzzleTitle.DOFade(1, 0.3f);
         InitHintPuzzles();
+        CaptureUIElementAsync();
         yield return new WaitForSeconds(0.5f); 
         EventDispatcher.instance.TriggerAutoPassLevel();
+     
+        //ToolUtil.CaptureTexture(SystemManager.Instance._uiRoot.GetComponent<RectTransform>(),Path.Combine(Application.persistentDataPath, "leveljietu"));
+    }
+
+    private void CaptureUIElementAsync()
+    {
+        string path=Application.persistentDataPath + "/Screenshots/" + "UI_Async" + curStageData.StageId + ".png";
+        
+        StartCoroutine(UIUtilities.CaptureUIElementAsync(
+            SystemManager.Instance._uiRoot.GetComponent<RectTransform>(),
+            path,
+            (sprite) => {
+                Debug.Log("截图完成");
+            }
+        ));
     }
     
     private void InitHintPuzzles()
@@ -190,11 +208,11 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
 
-            if (cols >= 9||rows > 9)
+            if (cols >= 9||rows > 12)
             {
                 temptileSize = isipad ? 165f : 155f;
                 tileSize = Mathf.Min(temptileSize, tileSize);
-                float maxsize = screenRatio>1.2f ? 210f : 195;
+                float maxsize = screenRatio>1.2f ? 210f : 185;
                 if (cols > 9)
                 {
                     maxsize-=(cols-9)*9f;
@@ -213,23 +231,35 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             }
             else
             {
-                float maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 230f : 205f;
+                float maxsize = screenRatio>1.2f ? 230f : 205f;
                 
                 if (cols >= 6)
                 {
-                    float xrate = cols > 6 ? 8 : 22;
+                    int minrow = boardData.minColIndex.x;
+                    if (boardData.board[minrow][cols][0] != '\0')
+                    {
+                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*24 : 240-(cols-6)*35;
+                    }
+                    else
+                    {
+                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*24 : 240-(cols-6)*20;
+                    }
+                    
+                    float xrate = cols > 6 ? 25 : 30;
                     float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 3.5f;
                     temptileSize = width - (cols- xoffset) * xrate;
                     tileSize = Mathf.Min(temptileSize, tileSize);
                     tileSize = Mathf.Max(maxsize, tileSize);
                 }
-            
+                
                 if (rows >= 7)
                 {
+                    float rmaxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 230f  : 240-(rows-6)*7;
                     float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
-                    float offsety = (rows - 6) * 25 * yrate;
+                    float offsety = (rows - 6) * 35 * yrate;
                     temptileSize = height - offsety;
                     tileSize = Mathf.Min(temptileSize, tileSize);
+                    maxsize = Mathf.Min(maxsize, rmaxsize);
                     tileSize = Mathf.Max(maxsize, tileSize);
                 }
             }
@@ -252,11 +282,10 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
             float totalGridWidth = cols * horizontalSpacing;
             float totalGridHeight = rows * verticalSpacing;
-        
-            RectTransform rectTransform = transform as RectTransform;
+
             // 设置容器大小
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
+            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
+            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
         }
         else
         {
@@ -271,11 +300,10 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
             float totalGridWidth = cols * horizontalSpacing;
             float totalGridHeight = rows * verticalSpacing;
-            
-            RectTransform rectTransform = transform as RectTransform;
+
             // 设置容器大小
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
+            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
+            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
         }
         
         tempscale = SetPuzzleItemScale(PuzzleItemObj.GetComponent<TileView>().TileTransform);
@@ -439,13 +467,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float hexWidth = activeTileSize * Mathf.Sqrt(3) / 2.3f;                  // 六边形宽度（水平方向）
         float hexHeight = activeTileSize * Mathf.Sqrt(3) / 1.75f;  // 六边形高度（垂直方向）
         float horizontalSpacing = hexWidth;                  // 列间距（水平方向，无重叠）
-        float verticalSpacing = hexHeight * 0.85f;           // 行间距（垂直方向，考虑重叠）
-        
-       RectTransform rectTransform = transform as RectTransform;
+        float verticalSpacing = hexHeight * 0.85f;           // 行间距（垂直方向，考虑重叠）       
+       
        
         Vector2 bottomLeft = new Vector2(
-            -rectTransform.rect.width/2,
-            -rectTransform.rect.height/2
+            -RectT.rect.width/2,
+            -RectT.rect.height/2
         );
 
         float minposy = bottomLeft.y +
@@ -496,13 +523,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float horizontalSpacing = hexWidth*0.9f;                   // 列间距
         float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
         
-        int cols = curStageData.BoardSnapshot.cols - curStageData.BoardSnapshot.minCol;
-        
-        RectTransform rectTransform = transform as RectTransform;
+        int cols = curStageData.BoardSnapshot.cols - curStageData.BoardSnapshot.minCol;        
+    
        
         Vector2 bottomLeft = new Vector2(
-            -rectTransform.rect.width/2+horizontalSpacing/2,
-            -rectTransform.rect.height/2
+            -RectT.rect.width/2+horizontalSpacing/2,
+            -RectT.rect.height/2
         );
 
         Debug.Log($"起始坐标 bottomLeft.x={bottomLeft.x} bottomLeft.y={bottomLeft.y} 最小列字符索引 {curStageData.BoardSnapshot.minColIndex}");

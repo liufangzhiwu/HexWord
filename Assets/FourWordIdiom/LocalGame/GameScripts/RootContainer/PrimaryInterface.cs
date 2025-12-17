@@ -361,11 +361,11 @@ public class PrimaryInterface : UIWindow
             //     break;
             case 2:
                 Stage = GameDataManager.Instance.UserData.CurrentChessStage;
-                sprite = LoadheadIcon("icon_pinzi");
+                //sprite = LoadheadIcon("icon_pinzi");
                 break;
             case 3:
                 Stage = GameDataManager.Instance.UserData.CurrentHexStage;
-                sprite = LoadheadIcon("icon_layer");
+                //sprite = LoadheadIcon("icon_layer");
                 break;
         }
         

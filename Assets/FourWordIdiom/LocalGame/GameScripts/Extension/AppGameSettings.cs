@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public static class AppGameSettings
 {
     // ===== 经济系统配置 =====
-    public static int StartingGold { get; } = 800;
+    public static int StartingGold { get; } = 200;
     public static int FirstLevel { get; } = 1;
     public static string SystemLanguage { get; } = "ChineseSimplified";  
 
@@ -17,7 +17,7 @@ public static class AppGameSettings
     public static class ShopItems 
     {
         public static int SingleHintCost { get; } = 80;        
-        public static int StartingHints { get; } = 1;    
+        public static int StartingHints { get; } = 3;    
         
         public static int WordHintCost { get; } = 150;       
         public static int StartingResets { get; } = 1;   

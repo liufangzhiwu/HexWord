@@ -145,7 +145,7 @@ public class RewardPuzzleManager : MonoBehaviour
     /// </summary>
     private void DisplayEncouragement()
     {
-        if (correctPuzzleCount < 2) return;
+        if (correctPuzzleCount < 3||correctPuzzleCount%2==0) return;
 
         // 获取对应的奖励词文本
         //currentRewardText = GetRewardTextByComboCount();

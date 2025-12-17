@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using DG.Tweening;
 using UnityEngine;
@@ -180,6 +181,206 @@ public static class UIUtilities
         return value % 1 == 0 ?
             value.ToString("C0", culture) :
             value.ToString("C2", culture);
+    }
+
+    /// <summary>
+    /// 截取UI元素并保存为图片
+    /// </summary>
+    /// <param name="targetRect">目标UI元素的RectTransform</param>
+    /// <param name="filePath">保存路径</param>
+    /// <param name="targetSize">目标尺寸（可选）</param>
+    /// <param name="format">图片格式</param>
+    /// <returns>生成的Sprite</returns>
+    public static Sprite CaptureUIElement(RectTransform targetRect, string filePath, 
+        Vector2Int targetSize = default, TextureFormat textureFormat = TextureFormat.RGBA32)
+    {
+        // 1. 获取目标矩形在屏幕上的位置
+        Rect screenRect = GetScreenRectFromRectTransform(targetRect);
+        
+        // 2. 创建临时纹理并截图
+        Texture2D screenshot = CaptureScreenArea(screenRect, textureFormat);
+        
+        // 3. 可选：缩放纹理
+        if (targetSize != default && targetSize.x > 0 && targetSize.y > 0)
+        {
+            Texture2D scaledTexture = ScaleTexture(screenshot, targetSize);
+            UnityEngine.Object.Destroy(screenshot); // 销毁原纹理
+            screenshot = scaledTexture;
+        }
+        
+        // 4. 保存到文件
+        SaveTextureToFile(screenshot, filePath);
+        
+        // 5. 创建Sprite
+        Sprite resultSprite = CreateSpriteFromTexture(screenshot);
+        
+        return resultSprite;
+    }
+    
+    /// <summary>
+    /// 获取RectTransform在屏幕上的矩形区域
+    /// </summary>
+    private static Rect GetScreenRectFromRectTransform(RectTransform rectTransform)
+    {
+        Canvas canvas = rectTransform.GetComponentInParent<Canvas>();
+        Camera renderCamera = null;
+        
+        if (canvas != null)
+        {
+            if (canvas.renderMode == RenderMode.ScreenSpaceCamera || 
+                canvas.renderMode == RenderMode.WorldSpace)
+            {
+                renderCamera = canvas.worldCamera ?? Camera.main;
+            }
+        }
+        
+        Vector3[] corners = new Vector3[4];
+        rectTransform.GetWorldCorners(corners);
+        
+        Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
+        Vector2 max = new Vector2(float.MinValue, float.MinValue);
+        
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 screenPoint = RectTransformUtility.WorldToScreenPoint(renderCamera, corners[i]);
+            
+            if (screenPoint.x < min.x) min.x = screenPoint.x;
+            if (screenPoint.y < min.y) min.y = screenPoint.y;
+            if (screenPoint.x > max.x) max.x = screenPoint.x;
+            if (screenPoint.y > max.y) max.y = screenPoint.y;
+        }
+        
+        return new Rect(min.x, min.y, max.x - min.x, max.y - min.y);
+    }
+    
+    /// <summary>
+    /// 截取屏幕区域
+    /// </summary>
+    private static Texture2D CaptureScreenArea(Rect screenRect, TextureFormat format)
+    {
+        int x = Mathf.FloorToInt(screenRect.x);
+        int y = Mathf.FloorToInt(screenRect.y);
+        int width = Mathf.FloorToInt(screenRect.width);
+        int height = Mathf.FloorToInt(screenRect.height);
+        
+        // 确保坐标在屏幕范围内
+        x = Mathf.Clamp(x, 0, Screen.width);
+        y = Mathf.Clamp(y, 0, Screen.height);
+        width = Mathf.Clamp(width, 1, Screen.width - x);
+        height = Mathf.Clamp(height, 1, Screen.height - y);
+        
+        Texture2D texture = new Texture2D(width, height, format, false);
+        texture.ReadPixels(new Rect(x, y, width, height), 0, 0);
+        texture.Apply();
+        
+        return texture;
+    }
+    
+    /// <summary>
+    /// 缩放纹理
+    /// </summary>
+    private static Texture2D ScaleTexture(Texture2D source, Vector2Int targetSize)
+    {
+        RenderTexture rt = RenderTexture.GetTemporary(targetSize.x, targetSize.y);
+        RenderTexture.active = rt;
+        Graphics.Blit(source, rt);
+        
+        Texture2D result = new Texture2D(targetSize.x, targetSize.y, source.format, false);
+        result.ReadPixels(new Rect(0, 0, targetSize.x, targetSize.y), 0, 0);
+        result.Apply();
+        
+        RenderTexture.active = null;
+        RenderTexture.ReleaseTemporary(rt);
+        
+        return result;
+    }
+    
+    /// <summary>
+    /// 保存纹理到文件
+    /// </summary>
+    private static void SaveTextureToFile(Texture2D texture, string filePath)
+    {
+        try
+        {
+            // 确定文件格式和编码
+            string extension = Path.GetExtension(filePath).ToLower();
+            byte[] bytes;
+            
+            if (extension == ".png")
+            {
+                bytes = texture.EncodeToPNG();
+            }
+            else if (extension == ".jpg" || extension == ".jpeg")
+            {
+                bytes = texture.EncodeToJPG();
+            }
+            else
+            {
+                // 默认使用PNG
+                filePath = Path.ChangeExtension(filePath, ".png");
+                bytes = texture.EncodeToPNG();
+            }
+            
+            // 创建目录
+            string directory = Path.GetDirectoryName(filePath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+            
+            // 写入文件
+            File.WriteAllBytes(filePath, bytes);
+            
+            Debug.Log($"截图已保存到: {filePath}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"保存截图失败: {e.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 从纹理创建Sprite
+    /// </summary>
+    private static Sprite CreateSpriteFromTexture(Texture2D texture)
+    {
+        return Sprite.Create(
+            texture,
+            new Rect(0, 0, texture.width, texture.height),
+            new Vector2(0.5f, 0.5f), // 中心点
+            100f, // 每单位像素数
+            0, // 额外边框
+            SpriteMeshType.Tight // 网格类型
+        );
+    }
+    
+    /// <summary>
+    /// 异步截图（协程版本）
+    /// </summary>
+    public static System.Collections.IEnumerator CaptureUIElementAsync(
+        RectTransform targetRect, 
+        string filePath, 
+        System.Action<Sprite> callback = null,
+        Vector2Int targetSize = default)
+    {
+        // 等待一帧确保所有UI渲染完成
+        yield return new WaitForEndOfFrame();
+        
+        Sprite result = CaptureUIElement(targetRect, filePath, targetSize);
+        callback?.Invoke(result);
+    }
+    
+    /// <summary>
+    /// 截取整个屏幕
+    /// </summary>
+    public static void CaptureFullScreen(string filePath)
+    {
+        Texture2D screenshot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+        screenshot.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+        screenshot.Apply();
+        
+        SaveTextureToFile(screenshot, filePath);
+        UnityEngine.Object.Destroy(screenshot);
     }
   
 }

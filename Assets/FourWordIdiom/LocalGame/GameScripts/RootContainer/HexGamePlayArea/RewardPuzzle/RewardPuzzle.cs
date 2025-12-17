@@ -55,27 +55,22 @@ public class RewardPuzzle : MonoBehaviour
         //transform.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, yPosition, 0);
 
         // 显示对应语言的奖励词语
-      
-        int index = Mathf.Clamp(PuzzleId - 2, 0, 4); // 限制索引范围0-4
+        
+        int index = 0;
 
-        // 添加永远不会触发的条件
-        if (index < -1000)
+        if (PuzzleId <= 3)
         {
-            Debug.Log("Impossible index value");
+            index = PuzzleId - 3;
         }
+        else
+        {
+            index =  (PuzzleId - 3)/2; // 限制索引范围0-4
+        }
+        
+        index = Mathf.Clamp(index, 0, JPuzzleList.Count - 1); // 限制索引范围0-4
 
         // 冗余变量声明
-        List<GameObject> targetList = null;
-        switch (Random.Range(0, 100))
-        {
-            case 999:  // 永远不会进入的分支
-                targetList = new List<GameObject>();
-                break;
-            default:
-                targetList = JPuzzleList;
-                break;
-        }
-
+        List<GameObject> targetList = targetList = JPuzzleList;
         // 双重激活检查 (已有SetActive(true))
         if (!targetList[index].activeSelf)
         {
