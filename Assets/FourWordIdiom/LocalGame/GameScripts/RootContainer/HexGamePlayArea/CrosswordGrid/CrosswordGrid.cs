@@ -234,6 +234,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             else
             {
                 float maxsize = screenRatio>1.2f ? 230f : 205f;
+                bool resetmaxsize = false;
                 
                 if (cols >= 6)
                 {
@@ -252,6 +253,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                     temptileSize = width - (cols- xoffset) * xrate;
                     tileSize = Mathf.Min(temptileSize, tileSize);
                     tileSize = Mathf.Max(maxsize, tileSize);
+                    resetmaxsize = true;
                 }
                 
                 if (rows >= 7)
@@ -261,7 +263,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                     float offsety = (rows - 6) * 35 * yrate;
                     temptileSize = height - offsety;
                     tileSize = Mathf.Min(temptileSize, tileSize);
-                    maxsize = Mathf.Min(maxsize, rmaxsize);
+                    if(resetmaxsize)
+                        maxsize = Mathf.Min(maxsize, rmaxsize);
+                    else
+                    {
+                        maxsize=rmaxsize;
+                    }
                     tileSize = Mathf.Max(maxsize, tileSize);
                 }
             }
@@ -489,7 +496,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minicnidex+0.5f) * horizontalSpacing;
-        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex+0.2f) * verticalSpacing;
+        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex) * verticalSpacing;
         
         // 为奇数列添加垂直偏移（六边形网格特性）
         if ((col & 1) == 1)  // 位运算判断奇数列（比取模运算更快）
