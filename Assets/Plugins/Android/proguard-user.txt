@@ -10,6 +10,16 @@
 # 保留荣耀 SDK 的核心包
 -keep class com.hihonor.** { *; }
 -keep interface com.hihonor.** { *; }
+-keep class com.hihonor.adsdk.** {*;}
+-keep class com.hihonor.ads.identifier.**{*;}
+-keep class com.hihonor.cloudservice.oaid.**{*;}
+
+-keep,allowshrinking class com.hihonor.hianalytics.**{*;}
+-keep,allowshrinking class com.hihonor.updater.**{*;}
+-keep,allowshrinking class com.hihonor.secure.android.common.encrypt.**{*;}
+-keep,allowshrinking class com.hihonor.secure.android.common.ssl.**{*;}
+-keep,allowshrinking class com.hihonor.dlinstall.**{*;}
+-keep,allowshrinking class com.hihonor.id.**{ *; }
 
 # 忽略荣耀 SDK 可能产生的警告 (防止打包中断)
 -dontwarn com.hihonor.**

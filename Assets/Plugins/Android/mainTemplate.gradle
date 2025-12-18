@@ -6,7 +6,13 @@ dependencies {
     
     //    // 远程Maven引入联运SDK
     implementation 'com.hihonor.mcs:game:2.0.21.301'
-    implementation 'com.hihonor.mcs:iap:2.0.21.301'
+    // banner广告依赖库
+    implementation 'com.hihonor.mcs.lite:ads-banner:16.0.5.300'
+    // 激励视频依赖库
+    implementation 'com.hihonor.mcs.lite:ads-reward:16.0.5.300'
+    // 插屏广告依赖库
+    implementation 'com.hihonor.mcs.lite:ads-interstitial:16.0.5.300'
+    implementation "com.tencent:mmkv:1.2.13"
     implementation 'com.google.code.gson:gson:2.8.9' // 补单解析可能需要 Json 库
     
 **DEPS**}

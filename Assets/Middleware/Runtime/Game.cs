@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Middleware.Runtime.Ads;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -27,7 +28,7 @@ namespace Middleware
 
         public static void InitGame()
         {
-            // CreateAd();
+            CreateAd();
             CreateAnalytic();
             CreateShop();
             InitManagers();
@@ -55,8 +56,8 @@ namespace Middleware
         }
         private static void CreateAd()
         {
-       #if UNITY_Hornor
-       
+#if UNITY_ANDROID
+        Ads = new Ads_honor();
 #elif UNITY_huawei
             Ads = new Ads_huawei();
 #elif UNITY_IOS
