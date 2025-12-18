@@ -10,6 +10,7 @@ namespace Middleware
 {
     public class Ads_harmony : IAds
     {
+        public bool isLoadReady;
         public bool IsPlaying { get; set; }
         private string _uniqueId;
         Define.AdKey _currentAdKey;
@@ -32,15 +33,15 @@ namespace Middleware
 
         public bool IsReady(Define.AdKey key)
         {
-            return true;
+            return isLoadReady;
         }
 
         public void ShowReward(Define.AdKey key, Action<bool> callback)
         {
-#if UNITY_EDITOR
-            callback(true);
-            return;
-#endif
+// #if UNITY_EDITOR
+//             callback(true);
+//             return;
+// #endif
             _currentAdKey = key;
             _completeCallback = callback;
             _adType = AdType.Reward;
@@ -48,7 +49,7 @@ namespace Middleware
             var adRequestParams = new AdRequestParams()
             {
                 adType = (int)_adType,
-                adId = GetAdId(key),
+                adId = "s1emwq0ad9",
                 oaid = _uniqueId,
                 isPreload = true
             };
@@ -88,7 +89,7 @@ namespace Middleware
             BanneradRequestParams = new AdRequestParams()
             {
                 adType = (int)_adType,
-                adId = GetAdId(Define.AdKey.BannerAdUnitId),
+                adId = "n56633mwpp",
                 oaid = _uniqueId,
                 isPreload = true
             };
@@ -138,10 +139,7 @@ namespace Middleware
         private void DisplayAd(Advertisement ad)
         {
             Debug.Log("[AD]展示广告: " + (AdType)ad.adType);
-            var adDisplayOptions = new AdDisplayOptions()
-            {
-                refreshTime = 30000
-            };
+            var adDisplayOptions = new AdDisplayOptions();
             ad.isFullScreen = true;
             OHSDKKitManager.Instance.ShowAds(ad, adDisplayOptions);
 

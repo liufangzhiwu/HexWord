@@ -215,6 +215,7 @@ public class SignWaterScreen : UIWindow
         Game.Ads?.ShowReward(GetAdKey(),success => {
             if (!success)
             {
+                MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
                 AnalyticMgr.VideoAdFail("签到"+sign);
             }
             else

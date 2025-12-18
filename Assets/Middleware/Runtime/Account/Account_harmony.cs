@@ -70,12 +70,12 @@ public class Account_harmony : IAccounts
         OHThirdAccountInfo info = new OHThirdAccountInfo();
         info.accountName = "Tuanjie";
         
-        if(GameDataManager.Instance.UserData.IsFirstLaunch||isShowLoginPanel)
-            OHSDKKitManager.Instance.Login(info,true, LoginPanelType.ICON);
-        else
-        {
+        // if(GameDataManager.Instance.UserData.IsFirstLaunch||isShowLoginPanel)
+        //     OHSDKKitManager.Instance.Login(info,true, LoginPanelType.ICON);
+        // else
+        // {
             OHSDKKitManager.Instance.Login(null,true, LoginPanelType.ICON);
-        }
+        //}
     }
 
     public void Logout()
@@ -193,14 +193,15 @@ public class Account_harmony : IAccounts
                 + "idToken : " + targetSignal.idToken + "\n"
                 + "teamPlayerId : " + targetSignal.localPlayer.teamPlayerId + "\n"
                 + "gamePlayerId : " + targetSignal.localPlayer.gamePlayerId + "\n");
-            LoginBind();
+            VerifyPlayer();
+            
         }
         else
         {
             Debug.Log("Login Error" + "\n "
                 +"Code : " + signal.code + " \n Message : " + signal.message + "\n");
-            
-            Application.Quit();
+
+            Login();
         }
 
     }
@@ -233,7 +234,7 @@ public class Account_harmony : IAccounts
                 + "thirdOpenId :" + targetSignal.thirdOpenId + "\n "
                 + "teamPlayerId :" + targetSignal.teamPlayerId + "\n ");
             
-            VerifyPlayer();
+            
         }
         else
         {

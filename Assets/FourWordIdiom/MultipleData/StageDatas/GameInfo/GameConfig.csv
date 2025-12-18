@@ -1,11 +1,11 @@
 key,ChineseSimplified,des
 PrivacyUrl,https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008,设置界面隐私链接
 TermsUrl,https://mindwordplay.cn/yhxyb,设置界面服务条款链接
-BanneradUnitId,n56633mwpp,横幅广告id
+BannerAdUnitId,n56633mwpp,横幅广告id
 InterstitialAdId,i0tgl4g0bw,插屏广告id
-RewardAdId_StoreGold,s1emwq0ad9,激励广告id_商店金币弹窗
-RewardAdId_Itemgold,s1emwq0ad9,激励广告id_道具金币弹窗（暂未用到）
-RewardAdId_Checkingold1,s1emwq0ad9,激励广告id_签到1金币弹窗
-RewardAdId_Checkingold2,s1emwq0ad9,激励广告id_签到2金币弹窗
-RewardAdId_Checkingold3,s1emwq0ad9,激励广告id_签到3金币弹窗
+RewardAdIdStoreGold,s1emwq0ad9,激励广告id_商店金币弹窗
+RewardAdIdItemGold,s1emwq0ad9,激励广告id_道具金币弹窗（暂未用到）
+RewardAdIdCheckinGold1,s1emwq0ad9,激励广告id_签到1金币弹窗
+RewardAdIdCheckinGold2,s1emwq0ad9,激励广告id_签到2金币弹窗
+RewardAdIdCheckinGold3,s1emwq0ad9,激励广告id_签到3金币弹窗
 OpinionUrl,store://appgallery.huawei.com/app/detail?id=6917574075102471091,反馈链接

@@ -194,7 +194,7 @@ public class HexGamePlayArea : UIWindow
         rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
         //在第7关且词语少于9个的时候可以显示横幅广告
         int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
-        if (CurStageInfo.StageNumber > 1&&rows<7)
+        if (CurStageInfo.StageNumber > 1)
         {
 #if UNITY_EDITOR 
             
@@ -761,6 +761,7 @@ public class HexGamePlayArea : UIWindow
         }
         else
         {
+            MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
             AnalyticMgr.VideoAdFail("提示灯广告");
         }
     }
