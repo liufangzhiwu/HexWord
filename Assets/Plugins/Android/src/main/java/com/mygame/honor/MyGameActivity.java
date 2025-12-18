@@ -4,17 +4,48 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.FrameLayout;
+
+import com.hihonor.adsdk.banner.api.BannerAdLoad;
+import com.hihonor.adsdk.base.api.banner.BannerAdLoadListener;
+import com.hihonor.adsdk.base.api.banner.BannerExpressAd;
+import com.hihonor.adsdk.base.api.interstitial.InterstitialAdLoadListener;
+import com.hihonor.adsdk.base.api.interstitial.InterstitialExpressAd;
+import com.hihonor.adsdk.base.api.reward.RewardAdLoadListener;
+import com.hihonor.adsdk.base.api.reward.RewardExpressAd;
+import com.hihonor.adsdk.base.bean.DislikeInfo;
+import com.hihonor.adsdk.base.callback.AdListener;
+import com.hihonor.adsdk.base.callback.DislikeItemClickListener;
+import com.hihonor.adsdk.base.init.HnAdConfig;
+import com.hihonor.adsdk.interstitial.InterstitialAdLoad;
+import com.hihonor.adsdk.reward.RewardAdLoad;
+import com.hihonor.mms.ads.ipc.bean.AdSlot;
+import com.hihonor.mms.ads.ipc.bean.RewardItem;
 import com.unity3d.player.UnityPlayer;
 import com.unity3d.player.UnityPlayerActivity;
-import com.hihonor.gamecenter.gcjointsdk.sdk.GCJointSdk;
 // 补充缺失的 Import
-import com.hihonor.mcs.game.AppParams;
-import com.hihonor.mcs.game.APICallback;
-import com.hihonor.mcs.game.ErrorCode;
-import com.hihonor.mcs.game.model.UserGameInfoParam;
-import com.hihonor.iap.sdk.bean.*;
-import com.hihonor.mcs.game.Task; // 或者是 SDK 具体的 Task 类
+import com.hihonor.gamecenter.gcjointsdk.APICallback;
+import com.hihonor.gamecenter.gcjointsdk.model.UserGameInfoParam;
+import com.hihonor.gamecenter.gcjointsdk.sdk.AppParams;
+import com.hihonor.gamecenter.gcjointsdk.sdk.GCJointSdk;
+import com.hihonor.iap.framework.data.ApiException;
+import com.hihonor.iap.sdk.IapClient;
+import com.hihonor.iap.sdk.bean.ConsumeReq;
+import com.hihonor.iap.sdk.bean.ConsumeResult;
+import com.hihonor.iap.sdk.bean.OwnedPurchasesReq;
+import com.hihonor.iap.sdk.bean.OwnedPurchasesResult;
+import com.hihonor.iap.sdk.bean.ProductOrderIntentReq;
+import com.hihonor.iap.sdk.bean.ProductType;
+import com.hihonor.iap.sdk.bean.PurchaseProductInfo;
+import com.hihonor.iap.sdk.bean.PurchaseResultInfo;
+import com.hihonor.iap.sdk.tasks.Task;
+
+import com.hihonor.adsdk.base.HnAds;
 import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -22,6 +53,20 @@ public class MyGameActivity extends UnityPlayerActivity{
 
     private static final String TAG = "HonorBridge";
     private String mContinueToken;
+    
+    private static final String ID_BANNER = "testw6vs28auh3";       // 横幅测试ID
+    private static final String ID_INTERSTITIAL = "testb4znbj8796"; // 插屏测试ID
+    private static final String ID_REWARD = "testx9dtjwj8hp";       // 激励测试ID
+    
+    // 广告对象
+    private BannerExpressAd mBannerExpressAd;
+    private InterstitialExpressAd mInterstitialExpressAd;
+    private RewardExpressAd mRewardExpressAd;
+ 
+    // 我们的广告容器（用来放广告 View）
+    private FrameLayout mAdContainer;
+    // 定义一个成员变量，用来记录当前这次广告是否拿到了奖励
+    private boolean mIsEarnedReward = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -29,9 +74,22 @@ public class MyGameActivity extends UnityPlayerActivity{
 
         Log.d(TAG, "MyGameActivity 启动了， 准备初始化荣耀 SDK");
         GCJointSdk.setApplication(this.getApplication());
+        HnAds.get().initActivityLifecycle(this.getApplication());
     }
 
-        /**
+    /***
+     * 广告初始化
+     */
+    public void adsInit(){
+        HnAdConfig buildConfig = new HnAdConfig.Builder()
+            .setAppId("2001482629148442624")
+            .setAppKey("pk/u2UXIAL1UtRaUBL2GzH7ZN0zpkEX/W3CtaR8qWfE=")
+            .setDebug(true)
+            .build();
+        HnAds.get().init(this.getApplication(), buildConfig);
+        initAdContainer();
+    }
+    /**
      * 开始游戏初始化
      */
     public void init() {
@@ -45,7 +103,7 @@ public class MyGameActivity extends UnityPlayerActivity{
                 .setEnableLog(true) // 开发调试时打开日志，正式发布时关闭
                 .setSanBoxToken("3EA1D7ABBCA2B03D2EF5B295244EEEBB")
                 .setAntiAddictionCallback(() -> { // 防沉迷回调
-//                     Log.w(TAG, "【防沉迷触发】时间已到，通知 Unity 进行下线处理");
+                    Log.w(TAG, "【防沉迷触发】时间已到，通知 Unity 进行下线处理");
                     // 防沉迷时间到，处理退出逻辑
                     UnityPlayer.UnitySendMessage("HonorManager", "OnAntiAddictionTimeOut", "");
                 })
@@ -61,12 +119,14 @@ public class MyGameActivity extends UnityPlayerActivity{
                     // String isAdult = json.getString("isAdult");//用户是否成年，"true"为成年，"false"为非成年
                     // String displayName = json.getString("displayName");//用户名称
                     // String headPictureURL = json.getString("headPictureURL");//用户头像地址，没有头像时为"null"
+                Log.i(TAG, "游戏登录成功！ ,resultMessage:" + result);
                 UnityPlayer.UnitySendMessage("HonorManager", "OnLoginSuccess", result);
             }
 
             @Override
             public void onFailure(int code, String message) {
                 // 初始化失败，获取失败code
+                Log.e(TAG, "游戏登录失败！ ,resultMessage: " + code + " " + message);
                 // 必须在主线程处理 UI
                 runOnUiThread(() -> initFailure(code));
             }
@@ -266,11 +326,11 @@ public class MyGameActivity extends UnityPlayerActivity{
                 for (int i = 0; i < purchaseList.size(); i++) {
                     try {
                         String PurchaseProductInfoStr = purchaseList.get(i);
-                        String signature = (sigList != null && i < sigList.size()) ? sigList.get(i) : null;
+//                         String signature = (sigList != null && i < sigList.size()) ? sigList.get(i) : null;
 //                         boolean verify = RSAUtil.verify(PurchaseProductInfoStr, publicKey, sigList.get(i));
 //                         Log.i(TAG, " PurchaseProductInfoStr verify " + verify + "  , " + PurchaseProductInfoStr);
 //                         if(verify){
-                            JSONObject json = new JSONObject(jsonString);
+                            JSONObject json = new JSONObject(PurchaseProductInfoStr);
                             String productId = json.optString("productId");
                             int purchaseState = json.optInt("purchaseState", -1);
                             String purchaseToken = json.optString("purchaseToken");
@@ -344,5 +404,324 @@ public class MyGameActivity extends UnityPlayerActivity{
     public void checkLostOrders() {
             mContinueToken = null; // 重置
             obtainOwnedPurchases();
-        }
+    }
+    
+    private void initAdContainer(){
+        mAdContainer = new FrameLayout(this);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        
+        addContentView(mAdContainer, params);
+        mAdContainer.setVisibility(View.GONE);
+    }
+    // 展示banner广告
+    public void showBannerAd(){
+        runOnUiThread(() -> {
+                   // 如果容器里有旧广告，先清理掉
+                   if (mAdContainer.getChildCount() > 0) {
+                       mAdContainer.removeAllViews();
+                   }
+                   if (mBannerExpressAd != null) {
+                       mBannerExpressAd.release();
+                   }
+                    // Step 1: 创建广告请求参数 (AdSlot)
+                    AdSlot adSlot = new AdSlot.Builder()
+                            .setSlotId(ID_BANNER) 
+                            .setWidth(360)  // 设置宽度 (单位 dp)，360 是标准手机宽度
+                            .setHeight(60)  // 设置高度 (单位 dp)，60 是标准横幅高度
+                            .build();   
+                                    
+                    // Step 2: 构建加载器
+                    BannerAdLoad load = new BannerAdLoad.Builder()
+                            .setAdSlot(adSlot)
+                            .setBannerAdLoadListener(new BannerAdLoadListener() {
+                                
+                                // 加载失败
+                                @Override
+                                public void onFailed(String code, String errorMsg) {
+                                    Log.e(TAG, "Banner加载失败 code: " + code + ", msg: " + errorMsg);
+                                    // 通知 Unity (可选)
+                                    // UnityPlayer.UnitySendMessage("HonorManager", "OnBannerLoadFailed", errorMsg);
+                                }
+        
+                                // 加载成功
+                                @Override
+                                public void onLoadSuccess(BannerExpressAd bannerExpressAd) {
+                                    Log.i(TAG, "Banner加载成功");
+                                    mBannerExpressAd = bannerExpressAd;
+                                    
+                                    // 显示容器
+                                    mAdContainer.setVisibility(View.VISIBLE);
+        
+                                    // 设置广告基本回调 (点击、关闭等)
+                                    mBannerExpressAd.setAdListener(new AdListener() {
+                                        @Override
+                                        public void onAdClosed() {
+                                            Log.i(TAG, "Banner被关闭");
+                                            // 隐藏容器
+                                            mAdContainer.setVisibility(View.GONE);
+                                            mAdContainer.removeAllViews();
+                                            if (mBannerExpressAd != null) mBannerExpressAd.release();
+                                        }
+                                        @Override
+                                        public void onAdClicked() {
+                                            Log.i(TAG, "Banner被点击");
+                                        }
+                                    });
+        
+                                    // 设置负反馈回调 (处理那个小小的 'x' 关闭按钮)
+                                    mBannerExpressAd.setDislikeClickListener(new DislikeItemClickListener() {
+                                        @Override
+                                        public void onFeedItemClick(int i, DislikeInfo dislikeInfo, View view) {
+                                            // 用户点击了不喜欢，移除广告
+                                            mAdContainer.removeAllViews();
+                                            mAdContainer.setVisibility(View.GONE);
+                                        }
+                                        @Override
+                                        public void onCancel() {}
+                                        @Override
+                                        public void onShow() {}
+                                    });
+        
+                                    // Step 3: 渲染广告
+                                    View bannerView = mBannerExpressAd.getExpressAdView();
+                                    if (bannerView != null) {
+                                        mAdContainer.removeAllViews();
+                                        mAdContainer.addView(bannerView);
+                                    }
+                                }
+                            })
+                            .build();
+        
+                    // Step 4: 开始加载
+                    load.loadAd();
+        });
+    }
+    // ==========================================
+    // 供 Unity 调用：隐藏广告
+    // ==========================================
+    public void releaseBanner() {
+        runOnUiThread(() -> {
+            if (mAdContainer != null) {
+                mAdContainer.removeAllViews();
+                mAdContainer.setVisibility(View.GONE);
+            }
+            if (mBannerExpressAd != null) {
+                mBannerExpressAd.release();
+                mBannerExpressAd = null;
+            }
+        });
+    }
+    // 加载插屏
+    public void loadInterstitialAd(){
+        runOnUiThread(() -> {
+            // 如果之前有没展示的，先释放
+            releaseInterstitial();
+
+            // Step 1: 创建参数 (AdSlot)
+            AdSlot adSlot = new AdSlot.Builder()
+                    .setSlotId(ID_INTERSTITIAL) 
+                    .build();
+
+            // Step 2: 构建加载器 (InterstitialAdLoad)
+            InterstitialAdLoad load = new InterstitialAdLoad.Builder()
+                    .setAdSlot(adSlot)
+                    .setInterstitialAdLoadListener(new InterstitialAdLoadListener() {
+                        
+                        // 加载失败
+                        @Override
+                        public void onFailed(String code, String errorMsg) {
+                            Log.e(TAG, "插屏加载失败: " + code + ", msg: " + errorMsg);
+                            // 通知 Unity 加载失败
+                            UnityPlayer.UnitySendMessage("HonorManager", "OnInterstitialLoadFailed", errorMsg);
+                        }
+
+                        // 加载成功
+                        @Override
+                        public void onAdLoaded(InterstitialExpressAd interstitialExpressAd) {
+                            Log.i(TAG, "插屏加载成功，等待展示");
+                            mInterstitialExpressAd = interstitialExpressAd;
+                            // 通知 Unity 加载成功
+                            UnityPlayer.UnitySendMessage("HonorManager", "OnInterstitialLoaded", "");
+                        }
+                    })
+                    .build();
+
+            // Step 3: 开始加载
+            load.loadAd();
+        });    
+    }
+    /**
+     * 2. 展示插屏广告
+     */
+    public void showInterstitialAd() {
+        runOnUiThread(() -> {
+            if (mInterstitialExpressAd != null) {
+                // 设置监听器 (监听广告关闭、点击等)
+                mInterstitialExpressAd.setAdListener(new AdListener() {
+                    @Override
+                    public void onAdClosed() {
+                        Log.i(TAG, "插屏广告被关闭");
+                        // 释放资源
+                        releaseInterstitial();
+                        // 通知 Unity 恢复游戏 (因为插屏通常会暂停游戏)
+                        UnityPlayer.UnitySendMessage("HonorManager", "OnInterstitialClosed", "");
+                        
+                        // 可选：关闭后自动加载下一条，保证下次有点
+                        loadInterstitialAd();
+                    }
+
+                    @Override
+                    public void onAdClicked() {
+                        Log.i(TAG, "插屏广告被点击");
+                    }
+
+                    @Override
+                    public void onAdImpression() {
+                        Log.i(TAG, "插屏广告展示成功");
+                    }
+                });
+
+                // 正式展示
+                mInterstitialExpressAd.show(MyGameActivity.this);
+            } else {
+                Log.e(TAG, "插屏广告尚未加载完成，尝试重新加载...");
+                loadInterstitialAd(); // 没加载好就重新加载
+            }
+        });
+    }    
+    private void releaseInterstitial() {
+         if (mInterstitialExpressAd != null) {
+             mInterstitialExpressAd.release();
+             mInterstitialExpressAd = null;
+         }
+    }   
+/**
+     * 1. 加载激励视频
+     */
+    public void loadRewardAd() {
+        runOnUiThread(() -> {
+            releaseReward();
+
+            // Step 1: 创建 AdSlot
+            AdSlot adSlot = new AdSlot.Builder()
+                    .setSlotId(ID_REWARD)
+                    .setRewardAmount(100)       // 奖励数量 (可选)
+                    .setRewardName("GoldCoin")  // 奖励名称 (可选)
+                    .build();
+
+            // Step 2: 构建加载器
+            RewardAdLoad load = new RewardAdLoad.Builder()
+                    .setAdSlot(adSlot)
+                    .setRewardAdLoadListener(new RewardAdLoadListener() {
+                        @Override
+                        public void onFailed(String code, String errorMsg) {
+                            Log.e(TAG, "激励视频加载失败: " + errorMsg);
+                            mRewardExpressAd = null;
+                           // 建议把错误码传过去，Unity 可以据此决定是否重试（例如网络错误可重试，无填充则不重试）
+                           UnityPlayer.UnitySendMessage("HonorManager", "OnRewardAdLoadFailed", code + ":" + errorMsg);
+                        }
+
+                        @Override
+                        public void onLoadSuccess(RewardExpressAd rewardExpressAd) {
+                            if (rewardExpressAd == null) {
+                                Log.e(TAG, "加载成功但对象为空");
+                                return;
+                            }
+                            Log.i(TAG, "激励视频加载成功 (Loaded)");
+                            mRewardExpressAd = rewardExpressAd;
+                            
+                            // 设置基础监听
+                            mRewardExpressAd.setAdListener(new AdListener() {
+                                @Override
+                                public void onAdClosed() {
+                                    Log.i(TAG, "激励视频页面关闭");
+                                    loadRewardAd(); // 自动预加载下一条
+                                }
+                                @Override
+                                public void onAdClicked() {
+                                    Log.i(TAG, "激励视频被点击");
+                                }
+                                @Override
+                                public void onAdImpression() {
+                                     Log.i(TAG, "广告展示曝光成功");
+                                }
+                            });
+                            // 通知 Unity 按钮可以点击了
+                            UnityPlayer.UnitySendMessage("HonorManager", "OnRewardAdLoaded", "");                  
+                        }
+                    }).build();
+
+            // Step 3: 开始加载
+            load.loadAd();
+        });
+    }    
+    /**
+     * 2. 展示激励视频
+     */
+    public void showRewardAd() {
+        runOnUiThread(() -> {
+            if (mRewardExpressAd != null) {
+                // 🔥 每次播放前，先重置奖励状态
+                mIsEarnedReward = false;
+                // 展示并设置播放状态监听 (包括是否看完拿到奖励)
+                mRewardExpressAd.show(MyGameActivity.this, new RewardExpressAd.RewardAdStatusListener() {
+                    @Override
+                    public void onRewardAdOpened() {
+                        Log.i(TAG, "视频开始播放");
+                    }
+
+                    @Override
+                    public void onVideoError(int errorCode) {
+                        Log.e(TAG, "视频播放出错: " + errorCode);
+                        UnityPlayer.UnitySendMessage("HonorManager", "OnRewardAdShowFailed", "VideoError:" + errorCode);
+                    }
+                    
+                    @Override
+                    public void onRewarded(RewardItem rewardItem) {
+                        // 🔥 玩家完整看完了视频，发放奖励！
+                        mIsEarnedReward = true;
+                        String rewardMsg = "Amount:" + rewardItem.getAmount() + ",Type:" + rewardItem.getType();
+                        Log.i(TAG, "发放奖励: " + rewardMsg);
+                        
+                        // 通知 Unity 发奖励
+                        UnityPlayer.UnitySendMessage("HonorManager", "OnAdRewarded", rewardMsg);
+                    }
+                    // 🏁 广告页面关闭 (无论是中途关的，还是看完关的，都会走这里)
+                    @Override
+                    public void onRewardAdClosed(boolean isVideoEnd) {
+                        Log.i(TAG, "视频关闭, 是否播完: " + isVideoEnd);
+                        // 注意：这里是关闭回调，奖励回调在 onRewarded
+                        // 🔥 关键检查：如果没有拿到奖励，说明是中途关闭/跳过
+                        if (!mIsEarnedReward) {
+                            Log.i(TAG, "用户未看完视频，提前关闭");
+                            // 通知 Unity: 这是一个无效的观看
+                            UnityPlayer.UnitySendMessage("HonorManager", "OnRewardAdShowFailed", "UserSkipped");
+                        }                        
+                        releaseReward();
+                        loadRewardAd();
+                    }                    
+                });
+            } else {
+                Log.e(TAG, "激励视频未加载完成，尝试重新加载");
+                loadRewardAd();
+            }
+        });
+    }    
+    private void releaseReward() {
+            if (mRewardExpressAd != null) {
+                mRewardExpressAd.release();
+                mRewardExpressAd = null;
+            }
+    }
+    @Override
+    protected void onDestroy() {
+            super.onDestroy();
+            releaseBanner();
+            releaseInterstitial();
+            releaseReward();
+    }
 }

@@ -7,9 +7,27 @@ namespace FourWordIdiom.LocalGame.GameScripts.RootContainer
 {
     public class HonorManager: MonoBehaviour
     {
+        public static HonorManager Instance;
+        // --- 激励视频事件 ---
+        public event Action OnRewardAdReady;              // 视频加载成功，按钮可点击
+        public event Action<string> OnRewardAdLoadFail;   // 视频加载失败 (带错误信息)
+        public event Action<bool> OnUserEarnedReward;   // 玩家看完视频，获得奖励 (带奖励信息)
+    
+        // --- 插屏广告事件 ---
+        // public event Action OnInterstitialReady;          // 插屏加载成功
+        // public event Action OnInterstitialClosed;         // 插屏关闭 (恢复游戏)
+        
         private void Awake()
         {
-            DontDestroyOnLoad(gameObject);
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
 
         /// <summary>
@@ -129,7 +147,48 @@ namespace FourWordIdiom.LocalGame.GameScripts.RootContainer
             }
         }
         
+        // ============ 插屏广告 ============
+        // 插屏加载成功
+        public void OnInterstitialLoaded(string msg) {
+            Debug.Log("插屏广告准备就绪");
+        }
         
+        // 插屏加载失败
+        public void OnInterstitialLoadFailed(string msg) {
+            Debug.Log("插屏加载失败: " + msg);
+        }
 
+        // 插屏关闭 (恢复游戏逻辑)
+        public void OnInterstitialClosed(string msg) {
+            Debug.Log("玩家关闭了插屏，继续游戏");
+            // 如果之前暂停了游戏，在这里 Time.timeScale = 1;
+        }
+        
+        public void OnRewardAdLoaded(string msg) {
+            Debug.Log("视频准备好了，可以显示按钮了");
+            // videoButton.interactable = true;
+            OnRewardAdReady?.Invoke();
+        }
+
+        public void OnRewardAdLoadFailed(string msg) {
+            Debug.Log("视频加载失败: " + msg);
+            OnRewardAdLoadFail?.Invoke(msg);
+        }
+        // 🔥 玩家看完了，发钱！
+        public void OnAdRewarded(string msg) {
+            Debug.Log("获得奖励: " + msg);
+            // GameManager.Instance.AddCoins(100);
+            // Game.Ads?.Init();
+            OnUserEarnedReward?.Invoke(true);
+        }
+        public void OnRewardAdShowFailed(string msg) {
+            Debug.LogWarning("HonorManager: 观看失败/取消 - " + msg);
+        
+            // 触发失败事件
+            OnUserEarnedReward?.Invoke(false);
+
+            // 如果你有通用的 Toast 提示，可以在这里弹
+            // ShowToast("请完整观看视频才能获得奖励");
+        }
     }
 }
