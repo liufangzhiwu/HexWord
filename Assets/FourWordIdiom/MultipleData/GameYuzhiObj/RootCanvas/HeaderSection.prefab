@@ -1417,6 +1417,7 @@ GameObject:
   - component: {fileID: 3300433921927202891}
   - component: {fileID: 4858709399332280020}
   - component: {fileID: 35840849647798724}
+  - component: {fileID: 134561088765118980}
   m_Layer: 5
   m_Name: CoinIcon
   m_TagString: Untagged
@@ -1463,7 +1464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: bea8262c22323004798b10195789aa60, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -1481,6 +1482,32 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &134561088765118980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7992085125228282348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f19b7e2285c104f6ca47d583f3e5444f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectFactor: 1
+  m_Width: 0.161
+  m_Rotation: 149.6
+  m_Softness: 1
+  m_Brightness: 0.116
+  m_Gloss: 1
+  m_EffectArea: 0
+  m_Player:
+    play: 1
+    initialPlayDelay: 3
+    duration: 2
+    loop: 1
+    loopDelay: 0
+    updateMode: 0
 --- !u!1 &8571174560919887580
 GameObject:
   m_ObjectHideFlags: 0
