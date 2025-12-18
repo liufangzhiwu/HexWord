@@ -204,9 +204,11 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             float tileSize = Mathf.Min(width, height);
             float temptileSize = 0;
             
-            if(tileSize>=260)
+            float maxtileSize =screenRatio<=1.3f&&screenRatio>1.0f ? 260*screenRatio : 260;
+            
+            if(tileSize>=maxtileSize)
             {
-                temptileSize = isipad ? 240f : 260;
+                temptileSize = isipad ? 240f : maxtileSize;
                 tileSize = Mathf.Min(temptileSize, tileSize);
             }
 
@@ -241,7 +243,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                     int minrow = boardData.minColIndex.x;
                     if (boardData.board[minrow][cols][0] != '\0')
                     {
-                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*24 : 240-(cols-6)*35;
+                         maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*24 : 240-(cols-6)*35;
                     }
                     else
                     {
@@ -258,7 +260,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 
                 if (rows >= 7)
                 {
-                    float rmaxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 230f  : 240-(rows-6)*7;
+                    float rmaxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 230f: 240-(rows-6)*7;
+                    if (screenRatio <= 1.3f && screenRatio > 1.0f)
+                    {
+                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 230f : 240*screenRatio-(rows-6)*7;
+                    }
+                    
                     float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
                     float offsety = (rows - 6) * 35 * yrate;
                     temptileSize = height - offsety;

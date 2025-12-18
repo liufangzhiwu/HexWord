@@ -39,6 +39,11 @@ public class LearningGuide : UIWindow
     {
         int id = GameDataManager.Instance.UserData.GetTutorialProgress()+1;
         string tips = MultilingualManager.Instance.GetString("GuidingTips0"+id);
+        if (tips.Contains("\\n"))
+        {
+            tips = tips.Replace("\\n", "\n");
+        }
+        
         switch (id)
         {
             case 1:
