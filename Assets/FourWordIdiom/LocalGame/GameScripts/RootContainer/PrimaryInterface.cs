@@ -44,7 +44,8 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private Image headicon;
     [Header("UI Butterfly")]
     [SerializeField] private GameObject ButterflyTime;
-    
+    [Header("蝶园")]
+    [SerializeField] private Button ButterflyBtn;
     [Header("配置参数")]
     [SerializeField] private float topPanelDelay = 0.01f; // 顶部面板显示延迟时间
        
@@ -61,6 +62,7 @@ public class PrimaryInterface : UIWindow
         TasksBtn.AddClickAction(OnTaskClick);
         HeadBtn.AddClickAction(OnHeadClick);
         FishBtn.AddClickAction(OnFishClick);
+        ButterflyBtn.AddClickAction(OnButterflyClick);
     }
 
     /// <summary>
@@ -223,6 +225,8 @@ public class PrimaryInterface : UIWindow
         
         SignInBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.SignInRewards
         ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.signOpenTime));
+        
+        // ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
     }
     
     private void UpdateTimeDisplay(string time)
@@ -408,7 +412,16 @@ public class PrimaryInterface : UIWindow
             OnPlayClick();
         }
     }
-
+    
+    private void OnButterflyClick()
+    {
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface, false, () =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
+        });
+        
+    }
     /// <summary>
     /// 点击开始游戏按钮
     /// </summary>
@@ -428,7 +441,7 @@ public class PrimaryInterface : UIWindow
     /// <summary>
     /// 进入关卡回调
     /// </summary>
-    private void OnEnterStageClick()
+    public void OnEnterStageClick()
     {
         
         switch (GameDataManager.Instance.UserData.levelMode)

@@ -192,3 +192,21 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 4236006176551709113, guid: 777a3d5cdafc06e42b51a49c8d71e479,
       type: 3}
+  - panelName: ButterflyHome
+    panelLayer: BasePanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 7834268690713381915, guid: 16c366d5236b52348a96b7e11bdb6c3f,
+      type: 3}
+  - panelName: ButterflyManual
+    panelLayer: BasePanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 6605392508642925096, guid: 88ad866d3f9c49a4a8a00609c375f7f8,
+      type: 3}
+  - panelName: ButterflyGardenHelp
+    panelLayer: BasePanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: eece4436aba43d14faeabe1a886207bc,
+      type: 3}

@@ -25,6 +25,7 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button LightLimtBtn; //蝴蝶道具
     [SerializeField] private Button UseButterflyBtn; //蝴蝶道具
     [SerializeField] private Button ShopBuyBtn;
+    [SerializeField] private Button AddPupaBtn;
 
     //public InputField EmailText; 
     public Text FPSText; 
@@ -69,6 +70,7 @@ public class DebugMenu : UIWindow
         LightLimtBtn.AddClickAction(OnLightLimitClick);
         UseButterflyBtn.AddClickAction(OnUserButterflyClick);
         ShopBuyBtn.AddClickAction(OnShopBuyClick);
+        AddPupaBtn.AddClickAction(OnAddPupaClick);
     }
 
     private void InitUIData()
@@ -84,6 +86,7 @@ public class DebugMenu : UIWindow
         InitBtnData(LightLimtBtn, "10");
         InitBtnData(UseButterflyBtn, "10");
         InitBtnData(ShopBuyBtn, "10");
+        InitBtnData(AddPupaBtn, "10");
     }
 
     private void InitBtnData(Button button, string count)
@@ -95,7 +98,13 @@ public class DebugMenu : UIWindow
             Stagenumtxt.text = count;
         }
     }
-    
+    private void OnAddPupaClick()
+    {
+        InputField Stagenumtxt = ShopBuyBtn.GetComponentInChildren<InputField>();
+        int value = int.Parse(Stagenumtxt.text);
+        GameDataManager.Instance.ButterflyData.AddPupa(value);
+        MessageSystem.Instance.ShowTip($"添加成功 {value} 个");
+    }
     private void OnShopBuyClick()
     {
         InputField Stagenumtxt = ShopBuyBtn.GetComponentInChildren<InputField>();

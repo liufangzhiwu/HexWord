@@ -151,7 +151,13 @@ public class SystemManager : MonoBehaviour
         return _loadedPanels.ContainsKey(panelName) && 
                _loadedPanels[panelName].IsWindowVisible;
     }
-
+    /// <summary>
+    /// 获取指定的面板
+    /// </summary>
+    public UIWindow GetPanel(string panelName)
+    {
+        return _loadedPanels.ContainsKey(panelName) ?  _loadedPanels[panelName] : null;
+    }
     #endregion
 
     #region 私有方法

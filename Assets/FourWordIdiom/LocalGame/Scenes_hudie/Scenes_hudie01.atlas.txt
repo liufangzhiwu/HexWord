@@ -1,0 +1,11 @@
+Scenes_hudie01.png
+size:32,16
+filter:Linear,Linear
+pma:true
+scale:0.2
+chibang
+bounds:1,1,12,20
+rotate:90
+shengti
+bounds:22,10,3,9
+rotate:90

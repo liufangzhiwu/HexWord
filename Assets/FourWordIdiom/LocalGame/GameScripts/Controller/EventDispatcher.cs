@@ -38,6 +38,9 @@ public class EventDispatcher:MonoBehaviour
     /// 更新词库
     /// </summary>
     public Action OnWordVocabularyUpdate;
+    
+    /// <summary>蝶园改变</summary>
+    private Action _onButterflyGardenChange;
     #endregion
 
     private void Awake()
@@ -145,7 +148,12 @@ public class EventDispatcher:MonoBehaviour
         add => _onAutoPassLevel += value;
         remove => _onAutoPassLevel -= value;
     }
-    
+    /// <summary>蝶园改变事件</summary>
+    public event Action OnButterflyGardenChange
+    {
+        add => _onButterflyGardenChange += value;
+        remove => _onButterflyGardenChange -= value;
+    } 
     #endregion
 
     #region 事件触发方法
@@ -199,6 +207,10 @@ public class EventDispatcher:MonoBehaviour
     /// </summary>
     public void TriggerAutoPassLevel()
         => _onAutoPassLevel?.Invoke();
-    
+    /// <summary>
+    /// 蝶园改变事件
+    /// </summary>
+    public void TriggerChangeButterflyGarden()
+        => _onButterflyGardenChange?.Invoke();
     #endregion
 }
