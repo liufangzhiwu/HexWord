@@ -200,8 +200,7 @@ public class Account_harmony : IAccounts
         {
             Debug.Log("Login Error" + "\n "
                 +"Code : " + signal.code + " \n Message : " + signal.message + "\n");
-
-            Login();
+            Game.self.ShowLoginErrorPanel();
         }
 
     }

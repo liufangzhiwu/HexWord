@@ -218,7 +218,6 @@ public class HexGamePlayArea : UIWindow
                     Effect_Butterflys.Add(Effect_Butt);
                 }
             }
-            
             //ToolInfo toolInfo =  GameDataManager.Instance.UserData.toolInfo[103];
 
             crossPuzzleGrid.SetPuzzleBoardState(true);

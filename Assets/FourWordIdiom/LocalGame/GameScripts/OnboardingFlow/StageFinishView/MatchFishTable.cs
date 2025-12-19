@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,7 +25,7 @@ public class MatchFishTable : MonoBehaviour
     
     public void OnFishClick()
     {
-        if (GameCoreManager.Instance.IsNetworkActive)
+        if (Game.IsNetworkActive)
         {
             // if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
             // {
@@ -95,7 +96,7 @@ public class MatchFishTable : MonoBehaviour
     
     public void UpdateFishRank()
     {
-         if (GameCoreManager.Instance.IsNetworkActive)
+         if (Game.IsNetworkActive)
          {
              fishwifiimage.gameObject.SetActive(false);
          }

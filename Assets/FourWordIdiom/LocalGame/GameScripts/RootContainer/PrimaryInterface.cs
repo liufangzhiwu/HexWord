@@ -1,5 +1,6 @@
 using System.Collections;
 using DG.Tweening;
+using Middleware;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -123,7 +124,7 @@ public class PrimaryInterface : UIWindow
     
     private void OnFishClick()
     {
-        if (GameCoreManager.Instance.IsNetworkActive)
+        if (Game.IsNetworkActive)
         {
             if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
             {

@@ -204,7 +204,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             float tileSize = Mathf.Min(width, height);
             float temptileSize = 0;
             
-            float maxtileSize =screenRatio<=1.2f&&screenRatio>1.0f ? 260*screenRatio : 260;
+            float maxtileSize =screenRatio<=1.2f&&screenRatio>1.0f ? 265*screenRatio : 265;
             
             if(tileSize>=maxtileSize)
             {
@@ -250,12 +250,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                         }
                         else
                         {
-                            maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*30 : 240-(cols-6)*20;
+                            maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*18 : 240-(cols-6)*20;
                         }
                     }
                     else
                     {
-                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*30 : 240-(cols-6)*20;
+                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*18 : 240-(cols-6)*20;
                     }
                     
                     float xrate = cols > 6 ? 25 : 30;
@@ -268,10 +268,10 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 
                 if (rows >= 7)
                 {
-                    float rmaxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 230f: 240-(rows-6)*4;
+                    float rmaxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 240-(rows-6)*2: 240-(rows-6)*4;
                     if (screenRatio <= 1.2f && screenRatio > 1.0f)
                     {
-                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 230*screenRatio-(rows-6)*2 : 240*screenRatio-(rows-6)*4;
+                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 240*screenRatio-(rows-6)*2 : 240*screenRatio-(rows-6)*4;
                     }
                     
                     float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
