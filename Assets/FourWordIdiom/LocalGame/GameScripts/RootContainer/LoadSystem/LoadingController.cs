@@ -100,14 +100,7 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator LoadingSequence()
     {
-        Game.Accounts.Login();
         Game.InitGame();
-#if UNITY_ANDROID
-        yield return new WaitUntil(()=>Game.Accounts.IsLogin);
-#elif UNITY_OPENHARMONY||UNITY_huawei
-        yield return new WaitUntil(()=>Game.Accounts.IsLogin);
-#endif
-
         // 并行执行模拟加载和实际加载
         yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
@@ -182,6 +175,16 @@ public class LoadingController : MonoBehaviour
          StageHexController.Instance.LoadPackInfos();
          // 标记非首次进入
          GameDataManager.Instance.UserData.IsFirstLaunch = false;
+         // Game.Accounts.Login();
+    
+// #if UNITY_ANDROID
+//          yield return new WaitUntil(()=>Game.Accounts.IsLogin);
+//
+// #elif UNITY_OPENHARMONY||UNITY_huawei
+//         yield return new WaitUntil(()=>Game.Accounts.IsLogin);
+// #endif
+        Game.Ads.IsReady(Middleware.Define.AdKey.RewardAdIdCheckinGold1);
+        Game.Ads.LoadBannerAD();
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }

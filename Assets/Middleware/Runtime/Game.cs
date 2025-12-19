@@ -22,7 +22,7 @@ namespace Middleware
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
             
-            CreateAccounts();
+            // CreateAccounts();
             // StartCoroutine(ShowLoadingScreen());
         }
 
@@ -45,7 +45,6 @@ namespace Middleware
 	        GameDataManager.Instance.Init();
 	        //AudioManager.Instance.Init();
 	        LimitTimeManager.Instance.Init();
-            
             ChessStageController.Instance.Init();
         }
         
@@ -57,7 +56,7 @@ namespace Middleware
         private static void CreateAd()
         {
 #if UNITY_ANDROID
-        Ads = new Ads_honor();
+            Ads = new Ads_honor();
 #elif UNITY_huawei
             Ads = new Ads_huawei();
 #elif UNITY_IOS

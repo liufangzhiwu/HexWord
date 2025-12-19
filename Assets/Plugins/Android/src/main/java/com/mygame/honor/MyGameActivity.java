@@ -589,6 +589,7 @@ public class MyGameActivity extends UnityPlayerActivity{
                 mInterstitialExpressAd.show(MyGameActivity.this);
             } else {
                 Log.e(TAG, "插屏广告尚未加载完成，尝试重新加载...");
+                UnityPlayer.UnitySendMessage("HonorManager", "OnInterstitialClosed", "");
                 loadInterstitialAd(); // 没加载好就重新加载
             }
         });
@@ -707,6 +708,7 @@ public class MyGameActivity extends UnityPlayerActivity{
                 });
             } else {
                 Log.e(TAG, "激励视频未加载完成，尝试重新加载");
+                UnityPlayer.UnitySendMessage("HonorManager", "OnRewardAdShowFailed", "NotReady");
                 loadRewardAd();
             }
         });

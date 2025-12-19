@@ -198,7 +198,7 @@ public class HexGamePlayArea : UIWindow
         {
 #if UNITY_EDITOR 
             
-#elif UNITY_OPENHARMONY || UNITY_huawei
+#elif UNITY_OPENHARMONY || UNITY_ANDROID
             Game.Ads.ShowBanner();
             rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom
             Debug.LogError("底部位置" + rectTransform.offsetMin);
@@ -687,7 +687,7 @@ public class HexGamePlayArea : UIWindow
                 //AdsManager.Instance.ShowRewardedPanel("item_gold");
                 //SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
                 
-#if UNITY_OPENHARMONY
+#if UNITY_OPENHARMONY || UNITY_ANDROID
         AnalyticMgr.VideoAdClick("提示灯道具广告");
         Game.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
 #elif Unity_ShowLog
@@ -987,6 +987,10 @@ public class HexGamePlayArea : UIWindow
         Effect_Butterflys.Clear();
         StageOverObj.gameObject.SetActive(false);
         //StopCoroutine(CheckInactivity());
+        #if UNITY_EDITOR
+        #elif UNITY_OPENHARMONY || UNITY_ANDROID
+                Game.Ads?.HideBanner();
+        #endif
     }
 
 }
