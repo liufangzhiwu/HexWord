@@ -59,15 +59,22 @@ public partial class AnalyticMgr
     
     public static void SetCommonProperties()
     {
-        int levelId = 0;
-        if (GameDataManager.Instance.UserData.levelMode == 1)
+        int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+        
+        switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
         {
-            levelId = GameDataManager.Instance.UserData.CurrentHexStage;
-        }else if (GameDataManager.Instance.UserData.levelMode == 2)
-        {
-            levelId = GameDataManager.Instance.UserData.CurrentChessStage;
+            case LevelType.BlockWord:
+                levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+                break;
+            case LevelType.ChessWord:
+                levelId = GameDataManager.Instance.UserData.CurrentChessStage;
+                break;
+            case LevelType.HexWord:
+                levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+                break;
         }
-            var properties = new Dictionary<string, object>
+     
+        var properties = new Dictionary<string, object>
         {
             {"gold", GameDataManager.Instance.UserData.Gold },
             {"tipItem",GameDataManager.Instance.UserData.toolInfo[102].count},
@@ -109,11 +116,21 @@ public partial class AnalyticMgr
     public static void GuideBegin()
     {
         int mode = GameDataManager.Instance.UserData.levelMode;
-        int id = 0;
-        if (mode == 1)
-            id = GameDataManager.Instance.UserData.TutorialProgress + 1;
-        else if (mode == 2)
-            id = ChessGuideSystem.Instance.currentTutorial;
+        int id = GameDataManager.Instance.UserData.TutorialProgress+1;
+        
+        switch ((LevelType)mode)
+        {
+            case LevelType.BlockWord:
+                id = GameDataManager.Instance.UserData.TutorialProgress+1;
+                break;
+            case LevelType.ChessWord:
+                id = ChessGuideSystem.Instance.currentTutorial;
+                break;
+            case LevelType.HexWord:
+                id = GameDataManager.Instance.UserData.TutorialProgress+1;
+                break;
+        }
+     
         var properties = new Dictionary<string, object>(){{"guide_step", id}};
         Game.Analytics.LogEvent("guide_begin", properties, Define.DataTarget.Think);
     }
@@ -121,11 +138,21 @@ public partial class AnalyticMgr
     public static void GuideComplete()
     {
         int mode = GameDataManager.Instance.UserData.levelMode;
-        int id = 0;
-        if (mode == 1)
-            id = GameDataManager.Instance.UserData.TutorialProgress + 1;
-        else if(mode == 2)
-            id = ChessGuideSystem.Instance.currentTutorial;
+        
+        int id = GameDataManager.Instance.UserData.TutorialProgress+1;
+        
+        switch ((LevelType)mode)
+        {
+            case LevelType.BlockWord:
+                id = GameDataManager.Instance.UserData.TutorialProgress+1;
+                break;
+            case LevelType.ChessWord:
+                id = ChessGuideSystem.Instance.currentTutorial;
+                break;
+            case LevelType.HexWord:
+                id = GameDataManager.Instance.UserData.TutorialProgress+1;
+                break;
+        }
         var properties = new Dictionary<string, object>{{"guide_step", id}};
         Game.Analytics.LogEvent("guide_complete", properties, Define.DataTarget.Think);
     }
