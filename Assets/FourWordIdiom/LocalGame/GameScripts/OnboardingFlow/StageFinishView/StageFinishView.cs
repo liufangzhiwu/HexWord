@@ -133,7 +133,7 @@ public class StageFinishView : UIWindow
         sliderProgress = (float)wordcount/limitData.num;    
         int oldProgress = wordcount-StageHexController.Instance.CurStageData.Puzzles.Count;
         oldProgress=Math.Max(oldProgress,0);
-        wordcount=Math.Min(wordcount,0);
+        wordcount=Math.Max(wordcount,0);
         _progressText.text = oldProgress + "/" + limitData.num;
         
         sliderProgress=Math.Max(sliderProgress,0.08f);
@@ -353,8 +353,8 @@ public class StageFinishView : UIWindow
         LimitTimeManager.Instance.OnLimitTimeBtnUI -= UpdateProgress;       
         //FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
         //EventDispatcher.OnChangeHeadIconUpdateUI -= UpdateHeadBtnUI;
-        UpdateProgress(false);
         
+        UpdateProgress(false);
         GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
         base.OnDisable();
         EventDispatcher.instance.TriggerChangeGoldUI(AppGameSettings.LevelCompleteBonus, false);

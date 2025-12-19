@@ -41,6 +41,10 @@ public class TaskTable : MonoBehaviour
                 if(DailyTaskManager.Instance.UpdatetaskItem.Count > 0)
                     StartCoroutine(ShowTaskWordAnim());
             }
+            else
+            {
+                DailyTaskManager.Instance.GetTaskSaveData();
+            }
         }
     }
     

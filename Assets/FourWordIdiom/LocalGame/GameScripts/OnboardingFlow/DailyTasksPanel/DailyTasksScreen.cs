@@ -69,8 +69,6 @@ public class DailyTasksScreen : UIWindow
             if(!taskItems.ContainsKey(type))
                 taskItems.Add(type, taskItem);
             
-          
-            
             yield return new WaitForSeconds(0.01f);
         }
     }
