@@ -9,6 +9,7 @@ public class MultilingualManager:MonoBehaviour
     private Dictionary<string, string> localizedStrings = new Dictionary<string, string>();
     private Dictionary<string, string> localizedNames = new Dictionary<string, string>();
     private Dictionary<string, string> pinziLocalized = new Dictionary<string, string>();
+    private Dictionary<string, string> butterfliesLocalized = new Dictionary<string, string>();
 
     // 屏蔽词存储集合（哈希集合提升查询性能）
     private HashSet<string> forbiddenWords = new HashSet<string>();
@@ -34,7 +35,8 @@ public class MultilingualManager:MonoBehaviour
         localizedStrings = ToolUtil.ReadCvsLanguage(defCsvFile,"multilingual");
         //TextAsset pinCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "pingzi_lang");
         //pinziLocalized = ToolUtil.ReadCvsLanguage(pinCsvFile,"pingzi_lang");
-        
+        TextAsset hudieCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "conifg_butterfly_lang");
+        butterfliesLocalized = ToolUtil.ParseCvsLanguage(hudieCsvFile,"conifg_butterfly_lang");
     }
 
     public string GetString(string key, string filename = "multilingual")
@@ -52,7 +54,13 @@ public class MultilingualManager:MonoBehaviour
                 return value;
             }
         }
-       
+        else if (filename.Equals("hudie"))
+        {
+            if (butterfliesLocalized.TryGetValue(key, out string value))
+            {
+                return value;
+            }
+        }
         return key;
     }
     

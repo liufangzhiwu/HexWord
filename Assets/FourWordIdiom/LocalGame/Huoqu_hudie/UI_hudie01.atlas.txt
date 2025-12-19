@@ -1,0 +1,9 @@
+UI_hudie01.png
+size:1024,256
+filter:Linear,Linear
+pma:true
+xingxing
+bounds:430,26,140,134
+xingxing_di
+bounds:1,1,428,159
+offsets:18,23,464,188

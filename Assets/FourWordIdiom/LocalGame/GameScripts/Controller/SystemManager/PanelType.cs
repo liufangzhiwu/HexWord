@@ -29,6 +29,10 @@ public class PanelType  // Renamed class
     public const string CompetitionHelp="CompetitionHelp";
     public const string DailyTasksScreen="DailyTasksScreen";
     public const string CompetitionStart="CompetitionStart";
+    
+    public const string ButterflyHome = "ButterflyHome";
+    public const string ButterflyManual = "ButterflyManual";
+    public const string ButterflyGardenHelp = "ButterflyGardenHelp";
 
     // 已注释的旧界面常量 (Legacy commented constants)
     public const string RewardAdsScreen = "RewardAdsScreen"; 

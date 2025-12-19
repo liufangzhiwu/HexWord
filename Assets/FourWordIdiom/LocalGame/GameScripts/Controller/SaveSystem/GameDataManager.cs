@@ -22,6 +22,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     private FishUserSaveData fishUserSave = new FishUserSaveData(); 
     private DynamicHardSave dynamicHard = new DynamicHardSave();
     private ChessDynamicHardSave chessDynamicHard = new ChessDynamicHardSave();
+    private ButterflyData butterfly = new ButterflyData();
     
     private bool dataInitialized = false;
     private bool requireFocusCheck = false;
@@ -36,6 +37,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     
     public DynamicHardSave DynamicHardSave { get { return dynamicHard; } }
     public ChessDynamicHardSave ChessDynamicHardSave { get { return chessDynamicHard; } }
+    public ButterflyData ButterflyData { get { return butterfly; } }
     #endregion
     
 
@@ -88,6 +90,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         fishUserSave.LoadData();
         dynamicHard.LoadData();
         chessDynamicHard.LoadData();
+        butterfly.LoadData();
         dataInitialized = true;
     }
     #endregion
@@ -208,7 +211,8 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public void CommitGameData()
     {
         playerProfile.SaveData();
-        //fishUserSave.SaveData();
+        butterfly.SaveData();
+        fishUserSave.SaveData();
         //leaderboardCache.SaveData();
          string currentLevelId = CreateLevelIdentifier(playerProfile.CurrentHexStage);
          if (LevelProgressDict.ContainsKey(currentLevelId))
@@ -274,12 +278,14 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public void WipeAllGameData()
     {
         PurgePersistentFiles();
+        
         dynamicHard.InitData();
         chessDynamicHard.InitData();
         playerProfile.InitData();
         fishUserSave.InitData();
         LevelProgressDict.Clear();
         ChessLevelProgressDict.Clear();
+        butterfly.InitData();
     }
 
     public void PurgePersistentFiles()
