@@ -17,10 +17,10 @@ public static class AppGameSettings
     public static class ShopItems 
     {
         public static int SingleHintCost { get; } = 80;        
-        public static int StartingHints { get; } = 3;    
+        public static int StartingHints { get; } = 1;    
         
         public static int WordHintCost { get; } = 150;       
-        public static int StartingResets { get; } = 1;   
+        public static int StartingResets { get; } = 3;   
         
         public static int ButterflyCost { get; } = 50;   
         public static int StartingButterflies { get; } = 0; 
