@@ -11,11 +11,11 @@ public class NetErrorView : MonoBehaviour
     [SerializeField] private Button quitBtn;
     [SerializeField] private Button CancleButton;
     
-    [SerializeField] private Button trayAgainBtn;
+    [SerializeField] private Button tryAgainBtn;
     // Start is called before the first frame update
     void Start()
     {
-        trayAgainBtn.AddClickAction(OnTrayAgainClick);
+        tryAgainBtn.AddClickAction(OnTryAgainClick);
         quitBtn.AddClickAction(OnQuitGameClick);
         CancleButton.AddClickAction(OnCancleClick);
     }
@@ -38,7 +38,7 @@ public class NetErrorView : MonoBehaviour
         _descriptionText.text = MultilingualManager.Instance.GetString("ExitPopup");
         quitBtn.gameObject.SetActive(true);
         CancleButton.gameObject.SetActive(true);
-        trayAgainBtn.gameObject.SetActive(false);
+        tryAgainBtn.gameObject.SetActive(false);
     }
     
     public void ShowLoginErrorPanel()
@@ -47,10 +47,10 @@ public class NetErrorView : MonoBehaviour
         
         quitBtn.gameObject.SetActive(false);
         CancleButton.gameObject.SetActive(false);
-        trayAgainBtn.gameObject.SetActive(true);
+        tryAgainBtn.gameObject.SetActive(true);
     }
 
-    private void OnTrayAgainClick()
+    private void OnTryAgainClick()
     {
         Game.Accounts.Login(true);
         transform.gameObject.SetActive(false);

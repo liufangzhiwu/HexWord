@@ -986,6 +986,8 @@ public class HexGamePlayArea : UIWindow
         EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
         Effect_Butterflys.Clear();
         StageOverObj.gameObject.SetActive(false);
+        
+        Game.Ads?.HideBanner();
         //StopCoroutine(CheckInactivity());
     }
 
