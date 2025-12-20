@@ -1,0 +1,7 @@
+UI_hudie_new.png
+size:16,16
+filter:Linear,Linear
+pma:true
+scale:0.01
+guang
+bounds:1,1,11,11

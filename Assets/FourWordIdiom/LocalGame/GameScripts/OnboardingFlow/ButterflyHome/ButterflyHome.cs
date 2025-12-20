@@ -2,13 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using DG.Tweening;
-using Middleware;
 using Spine.Unity;
 using UnityEngine;
 using UnityEngine.UI;
-using Random = System.Random;
-using Sequence = DG.Tweening.Sequence;
+
 
 public class ButterflyHome : UIWindow
 {
@@ -23,10 +20,16 @@ public class ButterflyHome : UIWindow
     [SerializeField] private Button collectBtn;
 
     [Header("蝴蝶参数")] 
+    // 设定标准：飞越屏幕高度需要多少秒？(数值越大，飞得越慢)
+    // 比如设为 6.0，意味着从屏幕最底飞到最顶大概要6秒
+    public float timeToCrossScreen = 6.0f;
+    public float shortDistThreshold = 300f; // 低于此距离视为短途
     [SerializeField] private float  flyInDuration = 10f;
     [SerializeField] private float circleRadiusMin = 1.5f, circleRadiusMax = 3f;
     [SerializeField] private float circleDurationMin = 0.8f, circleDurationMax = 1.2f;
     [SerializeField] private float nextFlyMin = 4f, nextFlyMax = 8f; // 落地后多久飞下一次
+    // 内部计算出的实际速度
+    private float _worldFlySpeed;
     
     private List<ButterflyLandPoint> allPoints = new List<ButterflyLandPoint>();
     private List<ButterflyLandPoint> vacantPoints => allPoints.FindAll(p=>!p.Occupied);
@@ -36,7 +39,6 @@ public class ButterflyHome : UIWindow
     private bool firstInter = true;
 
     #region  生命周期 及初始化方法
-
     protected override void InitializeUIComponents()
     {
         backhome.AddClickAction(OnBackHomeClick);
@@ -50,12 +52,23 @@ public class ButterflyHome : UIWindow
     {
         if (butterflyPrefab == null)
         {
-            butterflyPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("scenehudie","Scenes_hudie01");
+            butterflyPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("scenehudie","Scenes_hudie03");
         }
         butterflyPool = new ObjectPool(butterflyPrefab.gameObject,ObjectPool.CreatePoolContainer(transform, "hudie_pool"), 3, PoolBehaviour.GameObject);
         
         // 标题
         // title.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("chinesesimplified","ui_garden_title");
+        Canvas rootCanvas = GetComponentInParent<Canvas>();
+        float worldScreenHeight = 10.0f; // 默认保底值
+        if (rootCanvas != null)
+        {
+            RectTransform canvasRect = rootCanvas.GetComponent<RectTransform>();
+            worldScreenHeight = canvasRect.rect.height * rootCanvas.transform.lossyScale.y;
+        }
+        // 速度 = 距离 / 时间
+        _worldFlySpeed = worldScreenHeight / timeToCrossScreen;
+        
+        Debug.Log($"屏幕高度: {worldScreenHeight}, 计算出飞行速度: {_worldFlySpeed} 像素/秒");
     }
 
     protected override void OnEnable()
@@ -66,6 +79,7 @@ public class ButterflyHome : UIWindow
         UpdateUI();
         StopAllCoroutines();
         StartCoroutine(BackgroundInit());
+        SetButtonsState();
     }
 
     private void ChangeGardenNotify()
@@ -88,6 +102,15 @@ public class ButterflyHome : UIWindow
         // 进度条
         ButterfliesManager.Instance.ShowButterflyProcess(title.transform.GetChild(0).transform , firstInter);
         firstInter = false;
+    }
+
+    private void SetButtonsState(bool state = true)
+    {
+        backhome.interactable = state;
+        helpBtn.interactable = state;
+        sceneBtn.interactable = state;
+        manualBtn.interactable = state;
+        collectBtn.interactable = state;
     }
     /// <summary>
     /// 背景及蝴蝶飞行初始化
@@ -150,6 +173,7 @@ public class ButterflyHome : UIWindow
     {
         if (ButterfliesManager.Instance.CanMakeButterfly())
         {
+            SetButtonsState(false);
             // 🔑 启动主流程协程，处理后续的时序和场景切换
             StartCoroutine(ProcessCollectFlow());
         }
@@ -197,6 +221,7 @@ public class ButterflyHome : UIWindow
         }
 
         yield return null;
+        SetButtonsState(true);
     }
 
     private IEnumerator CollectAndFly(ButterflyInfo butterflyInfo, Transform startPoint)
@@ -246,6 +271,13 @@ public class ButterflyHome : UIWindow
                 
                 GameObject butterfly = butterflyPool.GetObject(startPoint);
                 butterfly.transform.position = startPoint.position;
+                
+                SpineSpriteReplacer replacer = butterfly.GetComponent<SpineSpriteReplacer>();
+                Sprite body = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts","hudie04_body");
+                Sprite wing = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts","hudie04_chi");
+                replacer.InitializeButterfly(body, wing);
+                yield return new WaitUntil(() => replacer.IsReady());
+                
                 StartCoroutine(ButterflyLife(butterfly.transform));
                 yield return wait;
             }
@@ -258,6 +290,10 @@ public class ButterflyHome : UIWindow
     /// <param name="butterfly"></param>
     private IEnumerator ButterflyLife(Transform butterfly)
     {
+        SkeletonGraphic skeletonGraphic = butterfly.GetComponent<SkeletonGraphic>();
+        skeletonGraphic.AnimationState.SetAnimation(0, "run01", true);
+        
+        string[] anims = new[] { "idle01", "idle02", "run01" };
         // 进入场景只飞一次
         ButterflyLandPoint currentPt = PickVacantNotSameObject(butterfly);
         // 占用
@@ -267,10 +303,13 @@ public class ButterflyHome : UIWindow
             currentPt.OccupiedBy = butterfly;
             Vector3 land = currentPt.transform.TransformPoint(currentPt.GetComponent<RectTransform>().rect.center);
             yield return FlyEntry(butterfly, land);
+            string idleAnim = anims[UnityEngine.Random.Range(0, 2)]; // 随机选 idle01 或 idle02
+            skeletonGraphic.AnimationState.SetAnimation(0, idleAnim, true);
+            // butterfly.rotation = Quaternion.identity;
+            
             yield return new WaitForSeconds(UnityEngine.Random.Range(nextFlyMin, nextFlyMax));
         }
-        SkeletonGraphic skeletonGraphic = butterfly.GetComponent<SkeletonGraphic>();
-        string[] anims = new[] { "idle01", "idle02", "run01" };
+        
         // 场景内无限飞
         while (true)
         {
@@ -290,12 +329,13 @@ public class ButterflyHome : UIWindow
                 currentPt.Occupied = false;
                 currentPt.OccupiedBy = null;
             }
-            skeletonGraphic.AnimationState.SetAnimation(0, anims[2], false);
+            skeletonGraphic.AnimationState.SetAnimation(0, anims[2], true);
             // 飞过去
             Vector3 land = nextPt.transform.TransformPoint(nextPt.GetComponent<RectTransform>().rect.center);
             yield return FlyRandomArc(butterfly, land);
-            string anim = anims[UnityEngine.Random.Range(0,2)];
-            skeletonGraphic.AnimationState.SetAnimation(0, anim, false);
+            string animName = anims[UnityEngine.Random.Range(0,2)];
+            skeletonGraphic.AnimationState.SetAnimation(0, animName, true);
+            // butterfly.rotation = Quaternion.identity;
             currentPt = nextPt;
             // 随机间隔再飞
             yield return new WaitForSeconds(UnityEngine.Random.Range(nextFlyMin, nextFlyMax));
@@ -313,19 +353,21 @@ public class ButterflyHome : UIWindow
     }
 
     /// <summary>
-    /// 水平进入场景: 弧形飞到落点，z轴设在135
+    /// 水平进入场景: 弧形飞到落点，落点调整为正45至负45之间随机
     /// </summary>
     private IEnumerator FlyEntry(Transform bf, Vector3 landPoint)
     {
         Vector3 p0 = bf.position;
         Vector3 p2 = landPoint;
         float currentDuration = GetFlexibleDuration(p0, p2);
+        
         Vector3 totalVec = p2 - p0;
         Vector3 arcDir = new Vector3(-totalVec.y, totalVec.x, 0);
-
         float controlHeight = -.5f;
         Vector3 p1 = p0 + totalVec * 0.5f;
         p1 += arcDir * controlHeight;
+
+        Vector3 lastPos = p0;
         
         float timer = 0;
         while (timer < currentDuration) // 🔑 5 秒飞行时间
@@ -342,24 +384,30 @@ public class ButterflyHome : UIWindow
             Vector3 pos = u2 * p0;
             pos += 2f * u * easeT * p1;
             pos += t2 * p2;
-
             pos.z = 0;
+            
             bf.position = pos;
             
             // 目标方向向量 (落点 - 当前位置)
-            Vector3 lookDir = p2 - bf.position;
-            // 0度=水平朝向，所以无需修正
-            float angle = Mathf.Atan2(lookDir.y, lookDir.x) * Mathf.Rad2Deg;
-        
-            Quaternion targetRot = Quaternion.Euler(0, 0, angle);
-            // 使用 Slerp 平滑地跟随目标角度，消除抖动和生硬感
-            bf.rotation = Quaternion.Slerp(bf.rotation, targetRot, Time.deltaTime * 10f);
+            Vector3 lookDir = pos - lastPos;
+            if (lookDir.sqrMagnitude > 0.0001f)
+            {
+                // 0度=水平朝向，所以无需修正
+                float angle = Mathf.Atan2(lookDir.y, lookDir.x) * Mathf.Rad2Deg;
+                Quaternion targetRot = Quaternion.Euler(0, 0, angle - 90f);
+                // 使用 Slerp 平滑地跟随目标角度，消除抖动和生硬感
+                bf.rotation = Quaternion.Slerp(bf.rotation, targetRot, Time.deltaTime * 20f);
+            }
+
+            lastPos = pos;
+            
             yield return null;
         }
         
         // 强制位置归位
         bf.position = p2;
     }
+    
     /// <summary>
     /// 蝴蝶左右摇摆的飞：场景循环
     /// </summary>
@@ -405,7 +453,7 @@ public class ButterflyHome : UIWindow
         float landDuration = 0.5f;
         Quaternion startRot = bf.rotation;
         float finalAngleZ = UnityEngine.Random.Range(45f,135f);
-        Quaternion targetRot = Quaternion.Euler(0,0,finalAngleZ);
+        Quaternion targetRot = Quaternion.Euler(0,0,finalAngleZ - 120f);
         while (timer < landDuration)
         {
             timer += Time.deltaTime;
@@ -417,7 +465,7 @@ public class ButterflyHome : UIWindow
         bf.position = landPoint;
         bf.rotation = targetRot;
     }
-    public float shortDistThreshold = 300f;
+    
     /// <summary>
     /// 计算本次飞行的动态时长
     /// 逻辑：远距离用原时间，近距离时间缩短至90%
@@ -425,15 +473,22 @@ public class ButterflyHome : UIWindow
     private float GetFlexibleDuration(Vector3 start, Vector3 end)
     {
         float dist = Vector3.Distance(start, end);
-    
-        // 计算比例因子：
-        // 当距离 >= shortDistThreshold 时，factor = 1
-        // 当距离 = 0 时，factor = 0
-        float factor = Mathf.Clamp01(dist / shortDistThreshold);
-    
+        
+      
+        if (dist <= 0.001f) return 0.65f;
+
+        float duration = dist / _worldFlySpeed;
+        
+        if (dist < shortDistThreshold)
+        {
+            duration *= 0.9f;
+        }
+        
+        float randomFactor = UnityEngine.Random.Range(1.0f, 1.2f);
+        duration *= randomFactor;
         // 在 0.9倍时间 和 1.0倍时间 之间插值
         // 距离越近，时间越趋向于 90%；距离越远，时间趋向于 100%
-        return Mathf.Lerp(flyInDuration * 0.9f, flyInDuration, factor);
+        return Mathf.Max(duration, 0.8f);
     }
     #endregion
 }
