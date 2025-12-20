@@ -20,6 +20,7 @@ public class HexGamePlayArea : UIWindow
     [SerializeField] private GameObject ResetAdsObj;      
     [SerializeField] private GameObject ResetCounttxt;        
          
+    [SerializeField] private GameObject PupaProgress;       
     [SerializeField] private GameObject HintCostObj;       
     [SerializeField] private GameObject HintCounttxt;        
 
@@ -356,7 +357,9 @@ public class HexGamePlayArea : UIWindow
 
         // 禁用网格单元
         crossPuzzleGrid.RemovePuzzleFound(gridCellPositions);
-
+        
+        FlyPupaToPuzzle();
+        
         // 差异化点3：根据游戏模式调整反馈
         PlaySelectionFeedback();
 
@@ -389,6 +392,18 @@ public class HexGamePlayArea : UIWindow
         usetoolCount = 0;
     }
     
+    private void FlyPupaToPuzzle()
+    {
+        if(CurStageData.PupaDatas==null) return;
+        
+        if(CurStageData.PupaDatas.breakProgress>=4)
+        {
+            ButterfliesManager.Instance.AddObtainedPupa(crossPuzzleGrid.PupatileView.transform,1,PupaProgress.gameObject.transform);
+            
+            crossPuzzleGrid.PupatileView.HideElement();
+        }
+    }
+    
     // 数据分析封装
     private void RecordPuzzleAnalytics(string puzzle)
     {   
@@ -415,7 +430,9 @@ public class HexGamePlayArea : UIWindow
         {
             LettersToMovePuzzleTileAnim(puzzle, positions);
         }
+        
     }
+  
 
     // 差异化点3：反馈调整
     private void PlaySelectionFeedback()

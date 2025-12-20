@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using DG.Tweening;
+using Spine.Unity;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -35,6 +36,8 @@ public class TileView : MonoBehaviour
     private RectTransform _rectTrans;
 
     public RectTransform TileTransform => _rectTrans ??= transform as RectTransform;
+    
+    private GameObject pupaTileObject;
     
     // 存储tween引用以便管理
     private Sequence fadeTween;
@@ -80,6 +83,47 @@ public class TileView : MonoBehaviour
         
         StopPulseAnimation();
     }
+    
+    /// <summary>
+    /// 初始化蚕蛹字块显示
+    /// </summary>
+    public void SetupPupaCharacter()
+    {
+        ShowElement();
+        // 设置显示内容
+        starttile.SetActive(false);
+        tipPuzzle.SetActive(false);
+        // 记录初始状态
+        _baseScale = transform.localScale;
+        _startPosition = TileTransform.anchoredPosition;
+
+        showTipObj.SetActive(false);
+        selectionPuzzle.GetComponent<CanvasGroup>().DOFade(0, 0);
+        SetSelectionState(false);
+        
+        string tileName = StageHexController.Instance.CurStageInfo.HexType==(int)HexType.PingHexagon?"bingkuai1":"bingkuai2";
+        
+        var pupaObject = AssetBundleLoader.SharedInstance.LoadGameObject(
+            "project", 
+            tileName);
+        
+        if(pupaObject!=null)
+        {
+            pupaTileObject = Instantiate(pupaObject, transform);
+            pupaTileObject.transform.SetParent(transform);
+            pupaTileObject.transform.localPosition = Vector3.zero;
+        }
+        
+        StopPulseAnimation();
+    }
+
+    public void ShowPupaBreak()
+    {
+        int tileIndex = StageHexController.Instance.CurStageData.PupaDatas.breakProgress+1;
+        string animationName = "idle0"+tileIndex;
+        pupaTileObject.GetComponent<SkeletonGraphic>().AnimationState.SetAnimation(0, animationName, false);
+    }
+    
     
     /// <summary>
     /// 底层字块显示
@@ -283,6 +327,11 @@ public class TileView : MonoBehaviour
         StopPulseAnimation();
         _textDisplay.gameObject.SetActive(false);
         transform.gameObject.SetActive(false);
+        
+        if(pupaTileObject!=null)
+        {
+            pupaTileObject.SetActive(false);
+        }
     }
     
     /// <summary>

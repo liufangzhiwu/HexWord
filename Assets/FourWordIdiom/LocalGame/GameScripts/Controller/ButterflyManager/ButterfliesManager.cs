@@ -326,6 +326,8 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// <returns></returns>
     public bool CanObtainedPupa()
     {
+        return true;
+        
         ButterflyGrow butterflyGrow = GetCurrentGrow();
         if (butterflyGrow == null || GameDataManager.Instance.ButterflyData.currPupa >= butterflyGrow.Count)
             return false;
