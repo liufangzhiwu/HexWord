@@ -112,7 +112,9 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         yield return new WaitForSeconds(0.3f); 
         PuzzleTitle.DOFade(1, 0.3f);
         InitHintPuzzles();
+#if UNITY_EDITOR
         CaptureUIElementAsync();
+#endif
         yield return new WaitForSeconds(0.5f); 
         EventDispatcher.instance.TriggerAutoPassLevel();
      
@@ -531,10 +533,8 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             -RectT.rect.height/2
         );
 
-        Debug.Log($"起始坐标 bottomLeft.x={bottomLeft.x} bottomLeft.y={bottomLeft.y} 最小列字符索引 {curStageData.BoardSnapshot.minColIndex}");
-        // float offestx = curStageData.BoardSnapshot.minicnidex % 2 == 0 &&curStageData.BoardSnapshot.minicnidex!=0
-        //     && curStageData.BoardSnapshot.cols % 2 == 0? 0.5f : 0;
-        
+        //Debug.Log($"起始坐标 bottomLeft.x={bottomLeft.x} bottomLeft.y={bottomLeft.y} 最小列字符索引 {curStageData.BoardSnapshot.minColIndex}");
+       
         // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-1) * horizontalSpacing;
         float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex+1) * verticalSpacing;
@@ -992,8 +992,11 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             bool justSelected = !selectedPuzzleGrids.Contains(puzzleGrid);
             
             newSelectedPuzzleGrids.Add(puzzleGrid);
-            selectedPuzzle += puzzleGrid.Letter;
-
+            if (selectedPuzzle.Length < 4)
+            {
+                selectedPuzzle += puzzleGrid.Letter;
+            }
+            
             //刚选中
             if (justSelected && selectedPuzzleGrids.Count < 4)
             {
@@ -1128,7 +1131,11 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             bool justSelected = !selectedPuzzleGrids.Contains(puzzleGrid);
             
             newSelectedPuzzleGrids.Add(puzzleGrid);
-            selectedPuzzle += puzzleGrid.Letter;
+
+            if (selectedPuzzle.Length < 4)
+            {
+                selectedPuzzle += puzzleGrid.Letter;
+            }
 
             // 刚选中
             if (justSelected&& selectedPuzzleGrids.Count < 4)

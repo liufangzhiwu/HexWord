@@ -88,7 +88,7 @@ public class ShopManager : MonoBehaviour
 
         paysuccess = false;
 
-        Initialize();
+        //Initialize();
     }
 
     public void Initialize()

@@ -110,10 +110,6 @@ public class OptionsView : UIWindow
     
     private void AccountQuit()
     {
-        //SystemManager.Instance.ShowPanel(PanelType.AppRating);
-        //OnHideButton();
-        //WaterManager.instance.ClearWater();
-
         Application.Quit();
     }
 

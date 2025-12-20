@@ -113,38 +113,17 @@ public class LimitTimeScreen : UIWindow
         {
             if (wordcount >= limitData.num)
             {
-                GameDataManager.Instance.UserData.UpdateLImitid();
-                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedLightLimit,1);
-            }
-            
-            slider.DOValue(progress, 0.35f).OnComplete(() =>
-            {
-                if (wordcount >= limitData.num)
+                LightItems[GameDataManager.Instance.UserData.timerePuzzleid-1].ShowReward(true,() =>
                 {
-                    LightItems[GameDataManager.Instance.UserData.timerePuzzleid-1].ShowReward(true,() =>
+                    slider.transform.DOScaleZ(1, 0.2f).OnComplete(() =>
                     {
-                        slider.transform.DOScaleZ(1, 0.2f).OnComplete(() =>
-                        {
-                            UpdateProgress(true);
-                        });
-                        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedLightLimit,1);
+                        UpdateProgress(true);
                     });
-
-                    // slider.transform.DOScaleZ(1, 0.3f).OnComplete(() =>
-                    // {
-                    //     if (GameDataManager.Instance.UserData.isNeedShowHelp)
-                    //     {
-                    //         SystemManager.Instance.ShowPanel(PanelType.LimitHelpScreen);
-                    //         GameDataManager.Instance.UserData.isNeedShowHelp = false;
-                    //     }
-                    //     //closeBtn.enabled = true;
-                    // });
-                }
-                else
-                {
-                    //closeBtn.enabled = true;
-                }
-            });
+                    GameDataManager.Instance.UserData.UpdateLImitid();
+                    DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedLightLimit,1);
+                });
+            }
+          
             txtprogress.text = wordcount + "/" + limitData.num;
         });
 
@@ -155,22 +134,16 @@ public class LimitTimeScreen : UIWindow
     {
         int wordcount = LimitTimeManager.Instance.GetCurWordCount();
         limitData = LimitTimeManager.Instance.CurlimitData;
-         slider.DOValue((float)wordcount / limitData.num, 0);
+        slider.DOValue((float)wordcount / limitData.num, 0);
         
         if (wordcount >= limitData.num)
         {
+            LightItems[GameDataManager.Instance.UserData.timerePuzzleid].UpdateRewardValue();
             GameDataManager.Instance.UserData.UpdateLImitid();
-            DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedLightLimit,1);
-        }
-         
-        if (wordcount >= limitData.num)
-        {
-            LightItems[GameDataManager.Instance.UserData.timerePuzzleid-1].UpdateRewardValue();
             DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedLightLimit,1);
             
             QuickComplete();
         }
-        //txtprogress.text = wordcount + "/" + limitData.num;
     }
 
     private void UpdateMinTimeDisplay()

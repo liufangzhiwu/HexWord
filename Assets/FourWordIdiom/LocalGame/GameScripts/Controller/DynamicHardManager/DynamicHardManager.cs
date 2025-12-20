@@ -416,8 +416,8 @@ public class DynamicHardManager : MonoBehaviour
 
     private bool IsOpenDynamicHard()
     {
-        return DynamicHardIsOpen == 1;
-        //return false;
+        //return DynamicHardIsOpen == 1;
+        return false;
     }
   
     /// <summary>

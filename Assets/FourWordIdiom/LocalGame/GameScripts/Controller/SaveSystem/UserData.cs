@@ -345,7 +345,7 @@ public class UserData
         IsFirstLaunch = user.IsFirstLaunch;
         isShowVocabulary = user.isShowVocabulary;
         // 时间数据
-        logoutTime = DateTime.Now.ToString();
+        logoutTime = user.logoutTime;
         curIsEnter = user.curIsEnter;
         // 初始化道具数据
         toolInfo = user.toolInfo;

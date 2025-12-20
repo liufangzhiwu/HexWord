@@ -168,6 +168,8 @@ public class StageHexController
             GameDataManager.Instance.UserData.curIsEnter = true;
             GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
         }
+        
+        CheckRateUsConditions(StageIndex);
     }
 
     /// <summary>
@@ -282,7 +284,7 @@ public class StageHexController
         }
 
         // 更新每日计数
-        //GameDataManager.Instance.UserData.dayPassStageCount++;
+        GameDataManager.Instance.UserData.dayPassStageCount++;
 
         yield return new WaitForSeconds(1f);
 
@@ -299,6 +301,34 @@ public class StageHexController
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
       
     }
+    
+    /// <summary>
+    /// 检查评分弹窗条件
+    /// </summary>
+    private void CheckRateUsConditions(int StageIndex)
+    {
+        var userData = GameDataManager.Instance.UserData;
+
+        // 第9关首次触发
+        if (StageIndex == 9 && userData.showRateusCount <= 0)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
+            return;
+        }
+
+        // 每日通关条件
+        if (userData.dayPassStageCount == 9 && 
+            userData.showRateusCount < 3 &&
+            !string.IsNullOrEmpty(userData.showRateusTime))
+        {
+            DateTime lastTime = DateTime.Parse(userData.showRateusTime).Date;
+            if ((DateTime.Now.Date - lastTime).TotalDays >= 1)
+            {
+                SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
+            }
+        }
+    }
+    
     #endregion
 
     #region 游戏逻辑

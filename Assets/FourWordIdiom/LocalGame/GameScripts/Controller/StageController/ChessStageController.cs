@@ -63,7 +63,7 @@ public class ChessStageController
         
         if (StagePackInfo == null)
         {
-            StagePackInfo = AssetBundleLoader.SharedInstance.LoadScriptableObject(ToolUtil.GetLanguageBundle(), "ChessPackInfo") as ChessPackInfo;
+            //StagePackInfo = AssetBundleLoader.SharedInstance.LoadScriptableObject(ToolUtil.GetLanguageBundle(), "ChessPackInfo") as ChessPackInfo;
         }
     }
     #endregion

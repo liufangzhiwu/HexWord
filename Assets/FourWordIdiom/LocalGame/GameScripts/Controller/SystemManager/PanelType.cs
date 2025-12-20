@@ -10,7 +10,7 @@ public class PanelType  // Renamed class
     public const string PrimaryInterface = "PrimaryInterface";  // Changed from MainInterface
    
     /* 系统功能界面 (System Function Screens) */
-    public const string AppRating = "AppRating";  // Changed from RateUsScreen
+    public const string RateUsScreen = "RateUsScreen";  // Changed from RateUsScreen
     public const string PolicyView = "PolicyView";  // Changed from PrivacyScreen
 
 

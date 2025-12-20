@@ -608,8 +608,9 @@ GameObject:
   - component: {fileID: 7358129262942564822}
   - component: {fileID: 5780311666598182103}
   - component: {fileID: 1132438764700657910}
+  - component: {fileID: 5287855332255099539}
   m_Layer: 5
-  m_Name: AppRating
+  m_Name: RateUsScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -665,7 +666,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: -1698276591
-  m_SortingOrder: 0
+  m_SortingOrder: -652
   m_TargetDisplay: 0
 --- !u!114 &5780311666598182103
 MonoBehaviour:
@@ -708,6 +709,27 @@ MonoBehaviour:
   - {fileID: 6276366494055297835}
   - {fileID: 8160283028108931994}
   des_Text: {fileID: 3511242928378613278}
+--- !u!95 &5287855332255099539
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2508230401924753788}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: db91225133a5abe42863d7d24b7902ad, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &2554097205096765967
 GameObject:
   m_ObjectHideFlags: 0

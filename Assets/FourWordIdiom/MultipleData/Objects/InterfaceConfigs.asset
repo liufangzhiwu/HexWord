@@ -30,7 +30,7 @@ MonoBehaviour:
     bundleName: RootCanvas
     spriteAtlasName: UI_MainBase
     prefab: {fileID: 592529793067197676, guid: 829bf00ec3a94154ca8ff0bf5ed7592a, type: 3}
-  - panelName: AppRating
+  - panelName: RateUsScreen
     panelLayer: UpPopPanel
     bundleName: OnboardingFlow
     spriteAtlasName: OnboardingFlow
