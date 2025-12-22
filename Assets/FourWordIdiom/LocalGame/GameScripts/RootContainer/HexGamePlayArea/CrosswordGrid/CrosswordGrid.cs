@@ -305,6 +305,8 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// </summary>
     private void CreatePupaGrid()
     {
+        if(!StageHexController.Instance.IsFirstEnterStage) return;
+        
         if(!ButterfliesManager.Instance.CanObtainedPupa()) return;
         if(curStageData.PupaDatas==null) return;
         if (PupatileView != null)
@@ -453,7 +455,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             screenRatio -= 0.06f;
             tileSize *= screenRatio;
             float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
-            if (yrate < 1.0f&&rows >= 7&&(HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon)
+            if (yrate < 1.0f&&rows >= 7)
             {
                 tileSize *= 0.93f;
             }
@@ -1557,6 +1559,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     public void CheckPupaleTileAnim(List<int[]> positions)
     {
         if(curStageData.PupaDatas==null) return;
+        if(PupatileView==null) return;
         
         List<PuzzleTile> gridCells = GetPuzzleGridsAtPos(positions);
 
