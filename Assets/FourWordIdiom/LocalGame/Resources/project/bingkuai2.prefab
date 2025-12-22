@@ -34,7 +34,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 3.46}
   m_SizeDelta: {x: 324.5583, y: 336.91873}
   m_Pivot: {x: 0.50435334, y: 0.49794963}
 --- !u!222 &3464042564818979545
@@ -73,7 +73,7 @@ MonoBehaviour:
   initialSkinName: default
   initialFlipX: 0
   initialFlipY: 0
-  startingAnimation: idle01
+  startingAnimation: 
   startingLoop: 1
   timeScale: 1
   freeze: 0

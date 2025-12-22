@@ -105,25 +105,27 @@ public class TileView : MonoBehaviour
         
         string tileName = StageHexController.Instance.CurStageInfo.HexType==(int)HexType.PingHexagon?"bingkuai1":"bingkuai2";
         
-        var pupaObject = AssetBundleLoader.SharedInstance.LoadGameObject(
-            "project", 
-            tileName);
+        // var pupaObject = AssetBundleLoader.SharedInstance.LoadGameObject(
+        //     "project", 
+        //     tileName);
+        var pupaObject = Resources.Load<GameObject>("project/" + tileName);
         
         if(pupaObject!=null)
         {
             pupaTileObject = Instantiate(pupaObject, transform);
-            pupaTileObject.transform.SetParent(transform);
-            pupaTileObject.transform.localPosition = Vector3.zero;
+            transform.name = tileName;
+            //pupaTileObject.transform.localPosition = Vector3.zero;
         }
 
-        ShowPupaBreak();
+        ShowPupaBreak(true);
         StopPulseAnimation();
     }
+    
 
-    public void ShowPupaBreak()
+    public void ShowPupaBreak(bool isidle = false)
     {
-        int tileIndex = StageHexController.Instance.CurStageData.PupaDatas.breakProgress+1;
-        string animationName = "idle0"+tileIndex;
+        int tileIndex =isidle?StageHexController.Instance.CurStageData.PupaDatas.breakProgress+1:StageHexController.Instance.CurStageData.PupaDatas.breakProgress;
+        string animationName = isidle?"idle0"+tileIndex:"break0"+tileIndex;
         pupaTileObject.GetComponent<SkeletonGraphic>().AnimationState.SetAnimation(0, animationName, false);
     }
     

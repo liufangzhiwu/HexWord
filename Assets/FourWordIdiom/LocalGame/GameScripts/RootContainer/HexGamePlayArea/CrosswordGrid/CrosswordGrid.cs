@@ -210,14 +210,14 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 List<char> layerChars = boardData.board[row][col];
                 int layerCount = layerChars.Count;
 
-                if (curStageData.PupaDatas != null)
-                {
-                    if (curStageData.PupaDatas.position.x == row && curStageData.PupaDatas.position.y == col)
-                    {
-                        CreatePupaGrid();
-                        continue;
-                    }
-                }
+                // if (curStageData.PupaDatas != null)
+                // {
+                //     if (curStageData.PupaDatas.position.x == row && curStageData.PupaDatas.position.y == col)
+                //     {
+                //         CreatePupaGrid();
+                //         continue;
+                //     }
+                // }
 
                 // 从顶层到底层遍历（索引0为最上层）
                 for (int layer = 0; layer < layerCount; layer++)
@@ -293,6 +293,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         if (isanim)
         { 
+            CreatePupaGrid();
             EventDispatcher.instance.TriggerCheckShowTutorial();
             yield return new WaitForSeconds(0.01f);
             call?.Invoke();
@@ -349,7 +350,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         PupatileView.TileTransform.GetComponent<CanvasGroup>().alpha = 0;
         
         PupatileView.TileTransform.localScale = Vector3.zero;
-        PupatileView.TileTransform.SetAsFirstSibling();
+        PupatileView.TileTransform.SetAsLastSibling();
           
         PupatileView.TileTransform.DOScale(tempscale.x + 0.1f, 0.2f).OnComplete(() =>
         {
