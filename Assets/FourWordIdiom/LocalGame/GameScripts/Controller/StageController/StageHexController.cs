@@ -145,7 +145,7 @@ public class StageHexController
     public void SetStageData(int StageIndex)
     {
         // 初始化关卡配置
-        IsFirstEnterStage = GameDataManager.Instance.IsNewLevelEntry(StageIndex);
+        IsFirstEnterStage = GetIsFirstEnterStage();
         
         CurStageInfo = CreateStageInfo(StageIndex);
         CurStageData = GameDataManager.Instance.RetrieveLevelProgress(CurStageInfo);
@@ -170,6 +170,11 @@ public class StageHexController
         }
         
         CheckRateUsConditions(StageIndex);
+    }
+    
+    public bool GetIsFirstEnterStage()
+    {
+        return GameDataManager.Instance.IsNewLevelEntry(CurrentStage);
     }
 
     /// <summary>

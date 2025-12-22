@@ -305,15 +305,16 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// </summary>
     private void CreatePupaGrid()
     {
-        if(!StageHexController.Instance.IsFirstEnterStage) return;
-        
-        if(!ButterfliesManager.Instance.CanObtainedPupa()) return;
-        if(curStageData.PupaDatas==null) return;
         if (PupatileView != null)
         {
             PupatileView.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
             PupatileView.gameObject.SetActive(true);
             return;
+        }
+        
+        if(StageHexController.Instance.GetIsFirstEnterStage())
+        {
+            if(!ButterfliesManager.Instance.CanObtainedPupa()) return;
         }
 
         Vector3 tempscale = GetGridSize();
@@ -1074,15 +1075,18 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             AudioManager.Instance.PlaySoundEffect("Puzzle" + newSelectedPuzzleGrids.Count);
         }
 
-        foreach (var puzzle in selectedPuzzleGrids)
+        if (selectedPuzzleGrids.Count > 0)
         {
-            if(!newSelectedPuzzleGrids.Contains(puzzle))
+            foreach (var puzzle in selectedPuzzleGrids.ToList())
             {
-                selectedPuzzleGrids.Remove(puzzle);
-                ClaerPuzzles(puzzle);
+                if(!newSelectedPuzzleGrids.Contains(puzzle))
+                {
+                    selectedPuzzleGrids.Remove(puzzle);
+                    ClaerPuzzles(puzzle);
+                }
             }
         }
-
+        
         EventDispatcher.instance.TriggerShowSelectedPuzzle(selectedPuzzle);
     }
 
@@ -1213,12 +1217,15 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             AudioManager.Instance.PlaySoundEffect("Puzzle" + newSelectedPuzzleGrids.Count);
         }
 
-        foreach (var puzzle in selectedPuzzleGrids)
+        if (selectedPuzzleGrids.Count > 0)
         {
-            if(!newSelectedPuzzleGrids.Contains(puzzle))
+            foreach (var puzzle in selectedPuzzleGrids)
             {
-                selectedPuzzleGrids.Remove(puzzle);
-                ClaerPuzzles(puzzle);
+                if(!newSelectedPuzzleGrids.Contains(puzzle))
+                {
+                    selectedPuzzleGrids.Remove(puzzle);
+                    ClaerPuzzles(puzzle);
+                }
             }
         }
 

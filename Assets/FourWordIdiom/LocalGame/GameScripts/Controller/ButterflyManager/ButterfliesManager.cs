@@ -343,6 +343,14 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
             else
                 GameDataManager.Instance.ButterflyData.intervalLv++;
         }
+        
+        //检查是否有可放置的蚕蛹数据
+        if (StageHexController.Instance.CurStageData.PupaDatas == null)
+        {
+            GameDataManager.Instance.ButterflyData.intervalLv++;
+            return false;
+        } 
+        
         return able;
     }
     /// <summary>
