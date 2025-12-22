@@ -210,6 +210,15 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 List<char> layerChars = boardData.board[row][col];
                 int layerCount = layerChars.Count;
 
+                if (curStageData.PupaDatas != null)
+                {
+                    if (curStageData.PupaDatas.position.x == row && curStageData.PupaDatas.position.y == col)
+                    {
+                        CreatePupaGrid();
+                        continue;
+                    }
+                }
+
                 // 从顶层到底层遍历（索引0为最上层）
                 for (int layer = 0; layer < layerCount; layer++)
                 {
@@ -281,8 +290,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             item.TileView.TileTransform.SetAsFirstSibling();
             item.TileView.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
         }
-
-        CreatePupaGrid();
         
         if (isanim)
         { 
@@ -299,7 +306,13 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     {
         if(!ButterfliesManager.Instance.CanObtainedPupa()) return;
         if(curStageData.PupaDatas==null) return;
-        
+        if (PupatileView != null)
+        {
+            PupatileView.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
+            PupatileView.gameObject.SetActive(true);
+            return;
+        }
+
         Vector3 tempscale = GetGridSize();
         int row=curStageData.PupaDatas.position.x;
         int col=curStageData.PupaDatas.position.y;
@@ -336,7 +349,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         PupatileView.TileTransform.GetComponent<CanvasGroup>().alpha = 0;
         
         PupatileView.TileTransform.localScale = Vector3.zero;
-        PupatileView.TileTransform.SetAsLastSibling();
+        PupatileView.TileTransform.SetAsFirstSibling();
           
         PupatileView.TileTransform.DOScale(tempscale.x + 0.1f, 0.2f).OnComplete(() =>
         {
@@ -1512,8 +1525,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     public void RemovePuzzleFound(List<int[]> gridCellPositions)
     {
         
-        CheckPupaleTileAnim(gridCellPositions);
-        
         List<PuzzleTile> gridCells = GetPuzzleGridsAtPos(gridCellPositions);
 
         // 修复1：按行列分组处理，避免交叉修改
@@ -1542,7 +1553,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
      
     }
     
-    private void CheckPupaleTileAnim(List<int[]> positions)
+    public void CheckPupaleTileAnim(List<int[]> positions)
     {
         if(curStageData.PupaDatas==null) return;
         

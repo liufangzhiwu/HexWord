@@ -89,6 +89,8 @@ public class TileView : MonoBehaviour
     /// </summary>
     public void SetupPupaCharacter()
     {
+        if (pupaTileObject != null) return;
+        
         ShowElement();
         // 设置显示内容
         starttile.SetActive(false);
@@ -113,7 +115,8 @@ public class TileView : MonoBehaviour
             pupaTileObject.transform.SetParent(transform);
             pupaTileObject.transform.localPosition = Vector3.zero;
         }
-        
+
+        ShowPupaBreak();
         StopPulseAnimation();
     }
 

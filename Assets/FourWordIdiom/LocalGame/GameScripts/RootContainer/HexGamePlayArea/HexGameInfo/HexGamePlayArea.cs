@@ -354,11 +354,11 @@ public class HexGamePlayArea : UIWindow
 
         // 差异化点2：根据词语类型选择动画
         PlayPuzzleAnimation(puzzle, gridCellPositions);
+        
+        StartCoroutine(FlyPupaToPuzzle(gridCellPositions));
 
         // 禁用网格单元
         crossPuzzleGrid.RemovePuzzleFound(gridCellPositions);
-        
-        FlyPupaToPuzzle();
         
         // 差异化点3：根据游戏模式调整反馈
         PlaySelectionFeedback();
@@ -375,8 +375,7 @@ public class HexGamePlayArea : UIWindow
         if (CheckStageComplete())
         {
             EventDispatcher.instance.TriggerChangeTopRaycast(false);
-            yield return new WaitForSeconds(0.2f);
-            HandleStageCompletion();
+            StartCoroutine(HandleStageCompletion());
         }
         else
         {
@@ -392,15 +391,20 @@ public class HexGamePlayArea : UIWindow
         usetoolCount = 0;
     }
     
-    private void FlyPupaToPuzzle()
+    private IEnumerator FlyPupaToPuzzle(List<int[]> gridCellPositions)
     {
-        if(CurStageData.PupaDatas==null) return;
+        if(CurStageData.PupaDatas==null) yield break;
+        
+        crossPuzzleGrid.CheckPupaleTileAnim(gridCellPositions);
         
         if(CurStageData.PupaDatas.breakProgress>=4)
         {
             ButterfliesManager.Instance.AddObtainedPupa(crossPuzzleGrid.PupatileView.transform,1,PupaProgress.gameObject.transform);
-            
+
+            CurStageData.PupaDatas = null;
+            yield return new WaitForSeconds(0.5f);
             crossPuzzleGrid.PupatileView.HideElement();
+            crossPuzzleGrid.PupatileView = null;
         }
     }
     
@@ -444,12 +448,14 @@ public class HexGamePlayArea : UIWindow
 
 
     // 差异化点6：完成处理
-    private void HandleStageCompletion()
+    private IEnumerator HandleStageCompletion()
     {       
-        _windowAnimator.Play("StageOver");
-        StageOverObj.gameObject.SetActive(true);
         StageHexController.Instance.CompleteStage(CurStageInfo.StageNumber);
 
+        yield return new WaitForSeconds(1.2f);
+        
+        _windowAnimator.Play("StageOver");
+        StageOverObj.gameObject.SetActive(true);
         StageHexController.Instance.ActiveTileSize = 0;
         //EventDispatcher.instance.TriggerChangeTopRaycast(false);
     }
@@ -987,8 +993,18 @@ public class HexGamePlayArea : UIWindow
             yield return wait;
         }
     }
-   
-    
+
+    public override void Close(CloseMethod method = CloseMethod.Default)
+    {
+        base.Close(method);
+        if (crossPuzzleGrid.PupatileView != null)
+        {
+            crossPuzzleGrid.PupatileView.TileTransform.GetComponent<CanvasGroup>().DOFade(0, 0.3f);
+            crossPuzzleGrid.PupatileView.gameObject.SetActive(false);
+        }
+    }
+
+
     protected override void OnDisable()
     {
         base.OnDisable();

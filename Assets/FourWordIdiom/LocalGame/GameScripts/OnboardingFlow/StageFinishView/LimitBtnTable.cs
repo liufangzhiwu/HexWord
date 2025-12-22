@@ -51,6 +51,7 @@ public class LimitBtnTable : MonoBehaviour
                         break;
                     case LevelType.HexWord:
                         wordcount=StageHexController.Instance.LimitPuzzlecount;
+                        LimitTimeManager.Instance.UpdateLimitProgress(wordcount);
                         break;
                 }
              

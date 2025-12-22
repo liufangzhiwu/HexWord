@@ -210,13 +210,13 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
             // yield return SetSliderProgress(0,targetValue,0.5f,0.3f);
         
         Transform target = processBar.transform.Find("Icon");
-        yield return  FlyPupaCoroutine(sTransform, target, call ,1.5f);
+        yield return  FlyPupaCoroutine(sTransform, target, call ,0.6f);
         
         float ratio = GameDataManager.Instance.ButterflyData.currPupa / (float)butterflyGrow.Count;
         float targetValue = Mathf.Clamp01(ratio);
         StartCoroutine( SetSliderProgress(0,targetValue,0.5f,0.3f));
         text.text = $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow.Count}"; 
-        yield return Fade(1, 0, 2.5f);
+        yield return Fade(1, 0, 0.4f);
     }
 
     /// <summary>
@@ -350,7 +350,6 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// </summary>
     public void AddObtainedPupa(Transform startPoint, int pupa = 1, Transform parent  = null)
     {
-
         if (parent != null)
         {
             Debug.Log("看看调用几次");
