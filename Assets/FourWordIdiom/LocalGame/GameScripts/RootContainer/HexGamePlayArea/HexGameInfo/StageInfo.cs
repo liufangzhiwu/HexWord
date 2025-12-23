@@ -642,13 +642,17 @@ public class StageInfo
                 {
                     // 根据网格类型和行奇偶性选择方向数组
                     (int, int)[] directions;
+
+                    int parity = col % 2;
+                    
                     if (HexType == (int)GridType.FlatTop) // 假设有GridType枚举
                     {
-                        directions = row % 2 == 0 ? HexDirectionsEven : HexDirectionsOdd;
+                        directions = parity == 0 ? HexDirectionsEven : HexDirectionsOdd;
                     }
                     else // 尖顶网格
                     {
-                        directions = row % 2 == 0 ? HexJianDirectionsEven : HexJianDirectionsOdd;
+                        parity = row % 2;
+                        directions = parity == 0 ? HexJianDirectionsEven : HexJianDirectionsOdd;
                     }
                     
                     // 检查六个方向是否都存在字符

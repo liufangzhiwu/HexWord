@@ -330,26 +330,36 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         
         ButterflyGrow butterflyGrow = GetCurrentGrow();
         if (butterflyGrow == null || GameDataManager.Instance.ButterflyData.currPupa >= butterflyGrow.Count)
+        {
+            Debug.LogError("没有更多的蚕蛹了");
             return false;
+        }
         
         bool able = UnityEngine.Random.Range(0, 100) < butterflyGrow.Prob * 100;
         if (!able)
         {
             if (GameDataManager.Instance.ButterflyData.intervalLv >= butterflyGrow.Interval)
             {
+                Debug.LogError("距离上次展示蚕蛹已过" + butterflyGrow.Interval + "级，现在可以展的蚕蛹了");
                 able = true;
                 GameDataManager.Instance.ButterflyData.intervalLv = 0;
             }
             else
+            {
                 GameDataManager.Instance.ButterflyData.intervalLv++;
-        }
-        
-        //检查是否有可放置的蚕蛹数据
-        if (StageHexController.Instance.CurStageData.PupaDatas == null)
+                StageHexController.Instance.CurStageData.PupaDatas = null;
+                Debug.LogError("限时概率为不显示蚕蛹");
+            }
+        }else
         {
-            GameDataManager.Instance.ButterflyData.intervalLv++;
-            return false;
-        } 
+            //检查是否有可放置的蚕蛹数据
+            if (StageHexController.Instance.CurStageData.PupaDatas == null)
+            {
+                GameDataManager.Instance.ButterflyData.intervalLv++;
+                Debug.LogError("限时概率为显示蚕蛹但没有可以放置的蚕蛹位置");
+                return false;
+            } 
+        }
         
         return able;
     }

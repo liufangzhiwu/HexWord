@@ -89,8 +89,6 @@ public class TileView : MonoBehaviour
     /// </summary>
     public void SetupPupaCharacter()
     {
-        if (pupaTileObject != null) return;
-        
         ShowElement();
         // 设置显示内容
         starttile.SetActive(false);
@@ -270,6 +268,13 @@ public class TileView : MonoBehaviour
     /// </summary>
     public void ShowElement()
     {
+        
+        if(pupaTileObject!=null)
+        {
+            pupaTileObject.SetActive(false);
+            Destroy(pupaTileObject);
+        }
+        
         _textDisplay.gameObject.SetActive(true);
         transform.gameObject.SetActive(true);
     }
@@ -336,6 +341,7 @@ public class TileView : MonoBehaviour
         if(pupaTileObject!=null)
         {
             pupaTileObject.SetActive(false);
+            Destroy(pupaTileObject);
         }
     }
     

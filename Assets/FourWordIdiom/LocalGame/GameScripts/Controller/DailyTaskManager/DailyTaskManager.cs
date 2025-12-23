@@ -72,6 +72,7 @@ public class DailyTaskManager : MonoBehaviour
     IEnumerator CheckSaveTaskOnline()
     {
         yield return new WaitForEndOfFrame();
+        if(taskItems==null) yield break;
         
         // 从用户数据中读取
         foreach (TaskSaveData taskSave in GameDataManager.Instance.UserData.taskSaveDatas)
@@ -383,6 +384,9 @@ public class DailyTaskManager : MonoBehaviour
     {
         bool isallover = false;
         int count = 0;
+        
+        if(taskItems==null||GameDataManager.Instance.UserData==null) return false;
+        
         foreach (TaskDataItem dataItem in taskItems)
         {
             if(GameDataManager.Instance.UserData.CurrentHexStage >= dataItem.unlocklv)

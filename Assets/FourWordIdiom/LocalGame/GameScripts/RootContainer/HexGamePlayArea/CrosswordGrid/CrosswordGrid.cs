@@ -305,17 +305,27 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     /// </summary>
     private void CreatePupaGrid()
     {
-        if (PupatileView != null)
-        {
-            PupatileView.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
-            PupatileView.gameObject.SetActive(true);
-            return;
-        }
-        
         if(StageHexController.Instance.GetIsFirstEnterStage())
         {
             if(!ButterfliesManager.Instance.CanObtainedPupa()) return;
         }
+        else
+        {
+            if (PupatileView != null&&curStageData.PupaDatas!=null)
+            {
+                PupatileView.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
+                PupatileView.gameObject.SetActive(true);
+                return;
+            }
+        }
+        
+        //检查是否有可放置的蚕蛹数据
+        if (StageHexController.Instance.CurStageData.PupaDatas == null)
+        {
+            Debug.LogError("没有可以放置蚕蛹2222");
+            return;
+        } 
+        
 
         Vector3 tempscale = GetGridSize();
         int row=curStageData.PupaDatas.position.x;
@@ -376,7 +386,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         float width=screenRatio<=1.3f&&screenRatio>1.0f ? (Screen.width) /(cols-1.5f) : (Screen.width) /(cols-screenRatio)*screenRatio;
         float tileSize = Mathf.Min(width, height);
         float temptileSize = 0;
-        float maxtileSize =screenRatio<=1.2f&&screenRatio>1.0f ? 265*screenRatio : 265;
+        float maxtileSize =screenRatio<=1.2f&&screenRatio>1.0f ? 255*screenRatio : 255;
         
         if(tileSize>=maxtileSize)
         {
@@ -458,7 +468,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
             if (yrate < 1.0f&&rows >= 7)
             {
-                tileSize *= 0.93f;
+                tileSize *= 0.88f;
             }
             else if (yrate < 1.0f&&cols >= 7)
             {
