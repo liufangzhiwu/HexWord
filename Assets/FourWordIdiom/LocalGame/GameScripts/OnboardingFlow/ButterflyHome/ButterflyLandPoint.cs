@@ -2,9 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+public enum LandArea
+{
+    TOP,
+    BOTTOM,
+}
 public class ButterflyLandPoint : MonoBehaviour
 {
+    [SerializeField] public LandArea area;
     /// <summary>
     /// 是否被占用
     /// </summary>

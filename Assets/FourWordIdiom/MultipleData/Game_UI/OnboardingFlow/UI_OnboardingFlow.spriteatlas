@@ -99,6 +99,7 @@ SpriteAtlas:
     - da47e4460e139124b9142ac2939b137f: 21300000
     - 23bb1b4640fd2864dad0e2337fa3b0ad: 21300000
     - b1554a56136fb61458c4f37325b460ec: 21300000
+    - 00509276605abad45b0d6f1fa6237e50: 21300000
     - 3bc8c5766b532194fb94596febe8212b: 21300000
     - 3501e58691a63d3499d60cac12aa8c0d: 21300000
     - 67e7e4a65a66b3c439abec9a33a8e789: 21300000
@@ -111,6 +112,7 @@ SpriteAtlas:
     - 05eefc6703b78f44e8d92981edd35d26: 21300000
     - c10def7701ed88a4ab1d748ca4353e88: 21300000
     - a6d95287ca7ec624c805793f052b72d4: 21300000
+    - 8f7b6e8776f2a8d4da944ec559b630fb: 21300000
     - ca5d44973d2f3c84fbcb22bd87aae902: 21300000
     - 9422c0a7aa2b54d4982a2121ffe60692: 21300000
     - 8e0eb1c76604267438669799ebf8abaf: 21300000
@@ -160,6 +162,7 @@ SpriteAtlas:
     - a3dfa47ffaf81804e89d2fc45a3ff5f1: 21300000
     - ab90ca8f803443a428e0c475d4095adc: 21300000
     - 02c8f6bf41d4436408a090d3d5d62cd0: 21300000
+    - 9a97fdcf453bc89478aef892ad0fb033: 21300000
     - f6a17eff005c6294f9cb4ceed357927b: 21300000
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
@@ -212,6 +215,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: da47e4460e139124b9142ac2939b137f, type: 3}
   - {fileID: 21300000, guid: 23bb1b4640fd2864dad0e2337fa3b0ad, type: 3}
   - {fileID: 21300000, guid: b1554a56136fb61458c4f37325b460ec, type: 3}
+  - {fileID: 21300000, guid: 00509276605abad45b0d6f1fa6237e50, type: 3}
   - {fileID: 21300000, guid: 3bc8c5766b532194fb94596febe8212b, type: 3}
   - {fileID: 21300000, guid: 3501e58691a63d3499d60cac12aa8c0d, type: 3}
   - {fileID: 21300000, guid: 67e7e4a65a66b3c439abec9a33a8e789, type: 3}
@@ -224,6 +228,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 05eefc6703b78f44e8d92981edd35d26, type: 3}
   - {fileID: 21300000, guid: c10def7701ed88a4ab1d748ca4353e88, type: 3}
   - {fileID: 21300000, guid: a6d95287ca7ec624c805793f052b72d4, type: 3}
+  - {fileID: 21300000, guid: 8f7b6e8776f2a8d4da944ec559b630fb, type: 3}
   - {fileID: 21300000, guid: ca5d44973d2f3c84fbcb22bd87aae902, type: 3}
   - {fileID: 21300000, guid: 9422c0a7aa2b54d4982a2121ffe60692, type: 3}
   - {fileID: 21300000, guid: 8e0eb1c76604267438669799ebf8abaf, type: 3}
@@ -273,6 +278,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: a3dfa47ffaf81804e89d2fc45a3ff5f1, type: 3}
   - {fileID: 21300000, guid: ab90ca8f803443a428e0c475d4095adc, type: 3}
   - {fileID: 21300000, guid: 02c8f6bf41d4436408a090d3d5d62cd0, type: 3}
+  - {fileID: 21300000, guid: 9a97fdcf453bc89478aef892ad0fb033, type: 3}
   - {fileID: 21300000, guid: f6a17eff005c6294f9cb4ceed357927b, type: 3}
   m_PackedSpriteNamesToIndex:
   - timebg
@@ -324,6 +330,7 @@ SpriteAtlas:
   - bookbtn
   - discount
   - leftjian
+  - 20251222-183113
   - timei
   - hua1
   - time
@@ -336,11 +343,12 @@ SpriteAtlas:
   - tiptable
   - Manual
   - golds
+  - garden_item_5
   - garden_item_1
   - garden_item_mask
   - goldbg
   - itembg2
-  - garden_item_3
+  - garden_itemss
   - word
   - rewardicon
   - endadeng
@@ -385,6 +393,7 @@ SpriteAtlas:
   - taskjdti
   - jddi
   - ainamebg
+  - garden_item_3
   - ui_garden_title
   m_RenderDataMap: {}
   m_Tag: UI_OnboardingFlow

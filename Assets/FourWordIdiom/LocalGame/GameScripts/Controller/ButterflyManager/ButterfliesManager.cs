@@ -57,6 +57,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     {
         if (processBar == null)
         {
+            AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterfly_icon");
             GameObject go =  AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyProcessBar");
             processBar = Instantiate(go);
             processBar.SetActive(false);
@@ -237,7 +238,6 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
            var bezierMidPos = (midPos + start.position) / 2f + Vector3.right * 2;
            Vector3[] movePoints = CreateTwoCurve(start.position, endPosition, bezierMidPos).ToArray();
            bool flyover = false;
-           Debug.Log("飞了吗" + string.Join(",", movePoints));
            effect.transform.DOPath(movePoints, duration).SetEase(Ease.Linear).OnComplete(() =>
            {
                 call?.Invoke();
@@ -349,17 +349,13 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         
         ButterflyGrow butterflyGrow = GetCurrentGrow();
         if (butterflyGrow == null || GameDataManager.Instance.ButterflyData.currPupa >= butterflyGrow.Count)
-        {
-            Debug.LogError("没有更多的蚕蛹了");
             return false;
-        }
         
         bool able = UnityEngine.Random.Range(0, 100) < butterflyGrow.Prob * 100;
         if (!able)
         {
             if (GameDataManager.Instance.ButterflyData.intervalLv >= butterflyGrow.Interval)
             {
-                Debug.LogError("距离上次展示蚕蛹已过" + butterflyGrow.Interval + "级，现在可以展的蚕蛹了");
                 able = true;
                 GameDataManager.Instance.ButterflyData.intervalLv = 0;
             }

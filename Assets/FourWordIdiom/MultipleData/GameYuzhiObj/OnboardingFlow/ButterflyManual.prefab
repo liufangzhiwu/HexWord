@@ -1166,6 +1166,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _openDuration: 0.3
   _closeDuration: 0.3
+  title: {fileID: 5958466448790855122}
   backhome: {fileID: 289285546944482050}
   help: {fileID: 4483735873118262688}
   content: {fileID: 5096551404496975419}

@@ -15,6 +15,11 @@ public class ButterflyGarden : MonoBehaviour
     private void Start()
     {
         closeBtn.AddClickAction(()=>Destroy(gameObject));
+        if (title is null)
+        {
+            title = GetComponentInChildren<Text>();
+        }
+        title.text = MultilingualManager.Instance.GetString("ButterflyUI03", "hudie");
     }
 
     protected  void OnEnable()
