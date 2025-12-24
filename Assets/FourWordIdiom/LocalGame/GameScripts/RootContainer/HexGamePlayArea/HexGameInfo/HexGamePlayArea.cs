@@ -172,12 +172,26 @@ public class HexGamePlayArea : UIWindow
             StageHexController.Instance.tipPuzzle = "";
         }
     }
+    
+    LevelModes GetLevelDifficulty(int levelNumber) {
+        if (levelNumber % 5 == 0) {
+            if ((levelNumber / 5) % 2 == 1) {
+                return LevelModes.Hard;
+            } else {
+                return LevelModes.ExtraHard;
+            }
+        }
+        return LevelModes.Normal;
+    }
 
     IEnumerator SetupGameData()
     {
         IsUseButterfly=false;
         // 等待当前帧的所有渲染操作完成
         yield return new WaitForSeconds(0.2f);
+        
+        StageHexController.Instance.CurLevelMode=GetLevelDifficulty(CurStageData.StageId);
+        
         switch (StageHexController.Instance.CurLevelMode)
         {
             case LevelModes.Normal:

@@ -14,12 +14,13 @@ public partial class AnalyticMgr
 
     public static void GameEnd()
     {
-        if(GameDataManager.Instance == null) return;
+        if(GameDataManager.Instance.UserData == null) return;
         SetLogoutProperties();
     }
 
     private static void SetLoginProperties()
     {
+        
         var span = new TimeSpan(DateTime.Now.Ticks - GameDataManager.Instance.UserData.firstLoginStamp);
         var firstLoginTime = new DateTime(GameDataManager.Instance.UserData.firstLoginStamp);
         var properties = new Dictionary<string, object>
@@ -43,7 +44,7 @@ public partial class AnalyticMgr
 
     private static void SetLogoutProperties()
     {
-        if(GameDataManager.Instance.UserData == null) return;
+        if(GameDataManager.Instance.UserData == null||Game.Analytics == null) return;
         
         var properties = new Dictionary<string, object>
         {

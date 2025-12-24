@@ -385,7 +385,7 @@ public class DailyTaskManager : MonoBehaviour
         bool isallover = false;
         int count = 0;
         
-        if(taskItems==null||GameDataManager.Instance.UserData==null) return false;
+        if(taskItems==null||GameDataManager.Instance ==null) return false;
         
         foreach (TaskDataItem dataItem in taskItems)
         {
