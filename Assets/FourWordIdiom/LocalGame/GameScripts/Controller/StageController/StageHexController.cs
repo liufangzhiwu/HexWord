@@ -78,6 +78,8 @@ public class StageHexController
     
     public string tipPuzzle = "";
     
+    public LevelModes CurLevelMode;
+    
     #endregion
 
     #region 属性封装

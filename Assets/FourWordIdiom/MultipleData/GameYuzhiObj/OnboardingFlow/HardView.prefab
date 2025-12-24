@@ -36,7 +36,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 968, y: 1031}
+  m_SizeDelta: {x: 1316, y: 2832}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &5736749202375274434
 CanvasGroup:
@@ -86,7 +86,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 32.2}
-  m_SizeDelta: {x: 348.83997, y: 1478}
+  m_SizeDelta: {x: 0, y: 1478}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4634779379431447518
 CanvasRenderer:
@@ -138,8 +138,8 @@ GameObject:
   - component: {fileID: 8280429790780138894}
   - component: {fileID: 7358129262942564822}
   - component: {fileID: 5780311666598182103}
-  - component: {fileID: 1132438764700657910}
   - component: {fileID: 5287855332255099539}
+  - component: {fileID: 5592724101817867750}
   m_Layer: 5
   m_Name: HardView
   m_TagString: Untagged
@@ -216,30 +216,6 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &1132438764700657910
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2508230401924753788}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80b699928050d4948bf8de1077b3dded, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _openDuration: 0.3
-  _closeDuration: 0.3
-  opinionBtn: {fileID: 0}
-  closeBtn: {fileID: 0}
-  nextBtn: {fileID: 0}
-  starToggles:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  des_Text: {fileID: 0}
 --- !u!95 &5287855332255099539
 Animator:
   serializedVersion: 5
@@ -250,7 +226,7 @@ Animator:
   m_GameObject: {fileID: 2508230401924753788}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: db91225133a5abe42863d7d24b7902ad, type: 2}
+  m_Controller: {fileID: 9100000, guid: bff23211aa82ffe4282125bcc757f447, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -261,6 +237,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5592724101817867750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2508230401924753788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a2ba9fd71adcd74099c1dab6ec40095, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _openDuration: 0.3
+  _closeDuration: 0.3
+  hardStageTable: {fileID: 2314786027410993374}
+  extrahardStageTable: {fileID: 9191727869564988750}
 --- !u!1 &6363293836337160520
 GameObject:
   m_ObjectHideFlags: 0
@@ -522,7 +514,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 320.8}
-  m_SizeDelta: {x: 348.83997, y: 1478}
+  m_SizeDelta: {x: 0, y: 1478}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1463231815461547663
 CanvasRenderer:

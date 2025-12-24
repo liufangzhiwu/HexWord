@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: UI_Butterflyscene
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: Android
+      m_MaxTextureSize: 4096
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 65
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 2
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 0
+      enableAlphaDilation: 1
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: ba9a368b2027ab9409882f5ef0f5c88a, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - e5812570883a2834e8c56382d45a5943: 21300000
+    - 139314a1f886f454cb13f045b4e730ae: 21300000
+    - f41e2747aa3a36d4faa5f9f6f7a4a0c2: 21300000
+    - 018c3bfb30dd81e4197d159bdc85107d: 21300000
+    - a17424ecd2797c34ea21d1ded83101c0: 21300000
+    - ed72217dd74ef0549ae77070f24f347e: 21300000
+    - d715280e86bd3e9409c2bbda51c2f3ad: 21300000
+    - 1974888f9241bc042b87729a4d3d1c24: 21300000
+    - ddd432bf94c56c54b85da2ba795e42ea: 21300000
+    - 66cd20df5159624488e6d4d2c61617e2: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: e5812570883a2834e8c56382d45a5943, type: 3}
+  - {fileID: 21300000, guid: 139314a1f886f454cb13f045b4e730ae, type: 3}
+  - {fileID: 21300000, guid: f41e2747aa3a36d4faa5f9f6f7a4a0c2, type: 3}
+  - {fileID: 21300000, guid: 018c3bfb30dd81e4197d159bdc85107d, type: 3}
+  - {fileID: 21300000, guid: a17424ecd2797c34ea21d1ded83101c0, type: 3}
+  - {fileID: 21300000, guid: ed72217dd74ef0549ae77070f24f347e, type: 3}
+  - {fileID: 21300000, guid: d715280e86bd3e9409c2bbda51c2f3ad, type: 3}
+  - {fileID: 21300000, guid: 1974888f9241bc042b87729a4d3d1c24, type: 3}
+  - {fileID: 21300000, guid: ddd432bf94c56c54b85da2ba795e42ea, type: 3}
+  - {fileID: 21300000, guid: 66cd20df5159624488e6d4d2c61617e2, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - scenery3
+  - scenery5
+  - scenery4
+  - scenery1
+  - scenery8
+  - scenery9
+  - scenery10
+  - scenery7
+  - scenery6
+  - scenery2
+  m_RenderDataMap: {}
+  m_Tag: UI_Butterflyscene
+  m_IsVariant: 0

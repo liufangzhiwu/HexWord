@@ -327,6 +327,25 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     public bool CanObtainedPupa()
     {
         //return true;
+        int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+        switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
+        {
+            case LevelType.BlockWord:
+                levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+                break;
+            case LevelType.ChessWord:
+                levelId = GameDataManager.Instance.UserData.CurrentChessStage;
+                break;
+            case LevelType.HexWord:
+                levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+                break;
+        }
+        
+        if(levelId<3)
+        {
+            Debug.LogError("当前等级未到，不能展示蚕蛹");
+            return false;
+        }
         
         ButterflyGrow butterflyGrow = GetCurrentGrow();
         if (butterflyGrow == null || GameDataManager.Instance.ButterflyData.currPupa >= butterflyGrow.Count)

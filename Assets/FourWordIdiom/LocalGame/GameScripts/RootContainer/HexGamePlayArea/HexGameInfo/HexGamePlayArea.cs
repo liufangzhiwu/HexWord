@@ -8,6 +8,13 @@ using DG.Tweening;
 using Middleware;
 using Random = System.Random;
 
+public enum LevelModes
+{
+    Normal,
+    Hard,
+    ExtraHard,
+}
+
 public class HexGamePlayArea : UIWindow
 {
     [SerializeField] private GameObject GameBase;   
@@ -145,7 +152,6 @@ public class HexGamePlayArea : UIWindow
     {
         InitUI();
         EventDispatcher.instance.OnLetterSelected += OnLetterSelected;
-        //EventManager.OnChangeLanguageUpdateUI += InitUI;
         //EventManager.OnComboTriggerButterfly +=UseButterfly;
         EventDispatcher.instance.OnChoicePuzzleSetStatus += ChoicePuzzleSetStatus;
         EventDispatcher.instance.OnCheckShowTutorial += CheackShowTotrialEvent;
@@ -155,25 +161,11 @@ public class HexGamePlayArea : UIWindow
         boardExplorer = new WordMatrixExplorer(CurStageData.BoardSnapshot,CurStageData.GetLeftPuzzles());
         AudioManager.Instance.PlaySoundEffect("EnterStage");
         EventDispatcher.instance.TriggerChoicePuzzleSetStatus(true);
-        
         LevelPuzzleBtn.gameObject.SetActive(false);
-        //LevelPuzzleBtn.gameObject.SetActive(GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Count > 0);
         
         StartTime = DateTime.Now;
         EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
-        
-        // ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[103];
-        // if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
-        // {
-        //     useButterflyCount =AppGameSettings.MaxButterfliesPerLevel;
-        // }
-        // else
-        // {
-        //     useButterflyCount = toolInfo.count>=2? AppGameSettings.MaxButterfliesPerLevel: toolInfo.count;
-        // }
-        
         // 开始检测协程
-
         if (CurStageInfo.StageNumber <= 1)
         {
             StartCoroutine(CheckInactivity());
@@ -186,10 +178,25 @@ public class HexGamePlayArea : UIWindow
         IsUseButterfly=false;
         // 等待当前帧的所有渲染操作完成
         yield return new WaitForSeconds(0.2f);
+        switch (StageHexController.Instance.CurLevelMode)
+        {
+            case LevelModes.Normal:
+                break;
+            case LevelModes.Hard:
+                SystemManager.Instance.ShowPanel(PanelType.HardView);
+                yield return new WaitForSeconds(0.8f);
+                SystemManager.Instance.HidePanel(PanelType.HardView);
+                break;
+            case LevelModes.ExtraHard:
+                SystemManager.Instance.ShowPanel(PanelType.HardView);
+                yield return new WaitForSeconds(0.8f);
+                SystemManager.Instance.HidePanel(PanelType.HardView);
+                break;
+        }
 
         SetupGame();
-        PuzzleTipsBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=10);
-        SingleHingBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=2);
+        PuzzleTipsBtn.gameObject.SetActive(CurStageData.StageId >=10);
+        SingleHingBtn.gameObject.SetActive(CurStageData.StageId >=2);
         // 获取 RectTransform 组件
         RectTransform rectTransform = GetComponent<RectTransform>();
         rectTransform.offsetMin = new Vector2(0, -5); // Left 和 Bottom

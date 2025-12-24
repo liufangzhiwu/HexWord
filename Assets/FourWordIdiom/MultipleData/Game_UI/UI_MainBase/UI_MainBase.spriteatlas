@@ -71,12 +71,14 @@ SpriteAtlas:
     - 7f142c6849048424ab92ba65de748ffe: -8974891950757417909
     - 8ea8cfa8d33ab784695012c5bccc547e: 21300000
     - 5a8d88f8803371043aa43f0e62654c1e: 21300000
+    - 6390971926d49ee498ea87bf93ddee4d: 21300000
     - eda66bb933869d44387704ca297137c6: 21300000
     - 7b7965e9bed9f5946a9d35729763e0f6: 21300000
     - 84192f5a5cf60af4aa4c5d05845d10a7: 21300000
     - 96df089ae2fe41d478dfec3fbd44074c: 21300000
     - 5f76b4ca87bda6045b248f707f9801b3: 21300000
     - ea397c1b470896945adedafe6b7206e5: 21300000
+    - 72a6022b0f6b89846bfbf317393c373b: 21300000
     - 615a3d3cfa7b95a46a287ebca8d4c516: 21300000
     - 6216fc5cf13965044b712f58a9f3b220: 21300000
     - b81b896cda745d6429f0762da1b2a79b: 21300000
@@ -113,12 +115,14 @@ SpriteAtlas:
   - {fileID: -8974891950757417909, guid: 7f142c6849048424ab92ba65de748ffe, type: 3}
   - {fileID: 21300000, guid: 8ea8cfa8d33ab784695012c5bccc547e, type: 3}
   - {fileID: 21300000, guid: 5a8d88f8803371043aa43f0e62654c1e, type: 3}
+  - {fileID: 21300000, guid: 6390971926d49ee498ea87bf93ddee4d, type: 3}
   - {fileID: 21300000, guid: eda66bb933869d44387704ca297137c6, type: 3}
   - {fileID: 21300000, guid: 7b7965e9bed9f5946a9d35729763e0f6, type: 3}
   - {fileID: 21300000, guid: 84192f5a5cf60af4aa4c5d05845d10a7, type: 3}
   - {fileID: 21300000, guid: 96df089ae2fe41d478dfec3fbd44074c, type: 3}
   - {fileID: 21300000, guid: 5f76b4ca87bda6045b248f707f9801b3, type: 3}
   - {fileID: 21300000, guid: ea397c1b470896945adedafe6b7206e5, type: 3}
+  - {fileID: 21300000, guid: 72a6022b0f6b89846bfbf317393c373b, type: 3}
   - {fileID: 21300000, guid: 615a3d3cfa7b95a46a287ebca8d4c516, type: 3}
   - {fileID: 21300000, guid: 6216fc5cf13965044b712f58a9f3b220, type: 3}
   - {fileID: 21300000, guid: b81b896cda745d6429f0762da1b2a79b, type: 3}
@@ -154,12 +158,14 @@ SpriteAtlas:
   - countbg_0
   - UI_Icon_level
   - puzzlielie
+  - tehardanniu
   - di
   - levelPuzzle
   - UI_Icon_claim
   - ye
   - UI_Icon_toolvaluebg
   - worddouble
+  - hardanniu
   - dieyuan
   - title
   - UI_Icon_selebg
