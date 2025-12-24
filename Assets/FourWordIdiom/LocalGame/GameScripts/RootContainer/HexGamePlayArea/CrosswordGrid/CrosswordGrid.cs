@@ -187,167 +187,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 		BoardGame boardData = curStageData.BoardSnapshot;
 
         List<PuzzleTile> LayerpuzzleTiles = new List<PuzzleTile>();
-        Vector3 tempscale = Vector3.one;
-
-        int rows = boardData.rows - boardData.minRow;
-        int cols = boardData.cols - boardData.minCol;
-        
-        float screenRatio = UIUtilities.GetScreenRatio();
-        bool isipad = UIUtilities.IsiPad();
-        
-        float sizeoffseth = 0;
-
-        //if (StageController.Instance.ActiveTileSize<=0||GameDataManager.MainInstance.UserData.CurrentStage!=curStageData.StageId||StageController.Instance.IsGMEnterStage)
-        {
-            float height=screenRatio<=1.3f&&screenRatio>1.0f ? (Screen.height) /(float)rows : (Screen.height) /(float)rows*screenRatio;
-            float width=screenRatio<=1.3f&&screenRatio>1.0f ? (Screen.width) /(cols-1.5f) : (Screen.width) /(cols-screenRatio)*screenRatio;
-            float tileSize = Mathf.Min(width, height);
-            float temptileSize = 0;
-            
-            float maxtileSize =screenRatio<=1.2f&&screenRatio>1.0f ? 265*screenRatio : 265;
-            
-            if(tileSize>=maxtileSize)
-            {
-                temptileSize = isipad ? 240f : maxtileSize;
-                tileSize = Mathf.Min(temptileSize, tileSize);
-            }
-            
-            float maxsize = maxtileSize;
-
-            if (cols >= 9||rows > 12)
-            {
-                temptileSize = isipad ? 165f : 155f;
-                tileSize = Mathf.Min(temptileSize, tileSize);
-                maxsize = screenRatio>1.3f ? 210f : 185;
-                if (cols > 9)
-                {
-                    maxsize-=(cols-9)*9f;
-                }
-                
-                if (rows > 9)
-                {
-                    maxsize-=(rows-9)*9f;
-                }
-                
-                float xrate = cols > 6 ? 11 : 22;
-                float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 3.5f;
-                temptileSize = width - (cols- xoffset) * xrate;
-                tileSize = Mathf.Min(temptileSize, tileSize);
-                tileSize = Mathf.Max(maxsize, tileSize);
-            }
-            else
-            {
-                bool resetmaxsize = false;
-                
-                if (cols >= 6)
-                {
-                    int minrow = boardData.minColIndex.x;
-                    if (boardData.board[minrow][cols].Count > 0)
-                    {
-                        if (boardData.board[minrow][cols][0] != '\0')
-                        {
-                            maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*24 : 240-(cols-6)*35;
-                        }
-                        else
-                        {
-                            maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*18 : 240-(cols-6)*20;
-                        }
-                    }
-                    else
-                    {
-                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*18 : 240-(cols-6)*20;
-                    }
-                    
-                    float xrate = cols > 6 ? 25 : 30;
-                    float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 3.5f;
-                    temptileSize = width - (cols- xoffset) * xrate;
-                    tileSize = Mathf.Min(temptileSize, tileSize);
-                    
-                    resetmaxsize = true;
-                }
-                
-                if (rows >= 7)
-                {
-                    float rmaxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 240-(rows-6)*2: 240-(rows-6)*4;
-                    if (screenRatio <= 1.2f && screenRatio > 1.0f)
-                    {
-                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 240*screenRatio-(rows-6)*2 : 240*screenRatio-(rows-6)*4;
-                    }
-                    
-                    float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
-                    float offsety = (rows - 6) * 27 * yrate;
-                    temptileSize = height - offsety;
-                    tileSize = Mathf.Min(temptileSize, tileSize);
-                    if(resetmaxsize)
-                        maxsize = Mathf.Min(maxsize, rmaxsize);
-                    else
-                    {
-                        maxsize=rmaxsize;
-                    }
-                }
-            }
-            
-            tileSize = Mathf.Max(maxsize, tileSize);
-
-            if (screenRatio > 1.0f&&!isipad)
-            {
-                screenRatio -= 0.06f;
-                tileSize *= screenRatio;
-                float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
-                
-                if (yrate < 1.0f&&rows >= 7&&(HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon)
-                {
-                    tileSize *= 0.93f;
-                }
-                else if (yrate < 1.0f&&cols >= 7)
-                {
-                    tileSize *= 0.93f;
-                }
-            }
-            
-            StageHexController.Instance.ActiveTileSize = tileSize;
-        }			
-
-        yield return new WaitForSeconds(1f);
-        
-        if((HexType)StageHexController.Instance.CurStageInfo.HexType==HexType.JianHexagon)
-        {
-            float activeTileSize = StageHexController.Instance.ActiveTileSize;
-            
-            // 六边形几何参数计算
-            float hexHeight = activeTileSize;                    // 六边形高度（垂直方向）
-            float hexWidth = activeTileSize;  // 六边形宽度（水平方向）
-            float horizontalSpacing = hexWidth*0.9f;                   // 列间距
-            float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
-            
-            // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
-            float totalGridWidth = cols * horizontalSpacing;
-            float totalGridHeight = rows * verticalSpacing;
-
-            // 设置容器大小
-            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
-            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
-        }
-        else
-        {
-            float activeTileSize = StageHexController.Instance.ActiveTileSize;
-
-            // 平顶六边形参数（行对齐）
-            float hexWidth = activeTileSize * Mathf.Sqrt(3) / 2.3f;                  // 六边形宽度（水平方向）
-            float hexHeight = activeTileSize * Mathf.Sqrt(3) / 1.75f;  // 六边形高度（垂直方向）
-            float horizontalSpacing = hexWidth;                  // 列间距（水平方向，无重叠）
-            float verticalSpacing = hexHeight * 0.85f;           // 行间距（垂直方向，考虑重叠）
-
-            // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
-            float totalGridWidth = cols * horizontalSpacing;
-            float totalGridHeight = rows * verticalSpacing;
-
-            // 设置容器大小
-            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
-            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
-        }
-        
-        tempscale = SetPuzzleItemScale(PuzzleItemObj.GetComponent<TileView>().TileTransform);
+        Vector3 tempscale = GetGridSize();
         
 		for (int row = 0; row < boardData.rows; row++)
 		{
@@ -406,7 +246,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                         }
                         else
                         {
-                            Debug.Log($"cellPos:{cellPos},row:{row},col:{col},rows:{rows},cols:{cols},minRow:{boardData.minRow},minCol:{boardData.minCol},minirnidex:{boardData.minirnidex},letter:{letter}");
+                            //Debug.Log($"cellPos:{cellPos},row:{row},col:{col},rows:{rows},cols:{cols},minRow:{boardData.minRow},minCol:{boardData.minCol},minirnidex:{boardData.minirnidex},letter:{letter}");
                             tileView.TileTransform.localScale = Vector3.zero;
                             tileView.TileTransform.SetAsFirstSibling();
 
@@ -442,60 +282,163 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             yield return new WaitForSeconds(0.01f);
             call?.Invoke();
         }
-    }       
-
-    private Vector2 GetOffsetVector(int row, int col)
+    }    
+    
+     private Vector3 GetGridSize()
     {
-        float offsetx = 80 * (col <= 1&&row <= 2 ? -1 : 1);
-        float offsety = 80 * (row <= 2 ? -1 : 1);
-        Vector2 vector2 = new Vector2(offsetx,offsety);
-        return vector2;
-    }
-
-    private void ResetPuzzleAnim(PuzzleTile PuzzleGrid,Vector2 vector)
-    {
-        // Vector3 startPosition = PuzzleGrid.TileView.TileTransform.anchoredPosition;
-        // Vector3 oldOffset = GetOffsetVector(PuzzleGrid.Row, PuzzleGrid.Column);
-        // Vector3 controlPoint = new Vector3(startPosition.x + oldOffset.x, startPosition.y + oldOffset.y, 0);
-        //
-        // // 创建路径
-        // Vector3[] path = { startPosition, controlPoint,vector };
-        // char letter = PuzzleGrid.Letter;
-        // // 沿路径移动
-        // PuzzleGrid.TileView.TileTransform.DOLocalPath(path, 0.5f, PathType.CatmullRom).SetEase(Ease.InQuad).OnComplete(() =>
-        // {
-        //     PuzzleGrid.TileView.SetupCharacter(letter);
-        // });
-    }
-
-
-    private PuzzleTile GetPuzzleGrid(char letter)
-    {
-        // 按行优先顺序搜索
-        for (int row = 0; row < gridList.Count; row++)
+        BoardGame boardData = curStageData.BoardSnapshot;
+        Vector3 tempscale = Vector3.one;
+        int rows = boardData.rows - boardData.minRow;
+        int cols = boardData.cols - boardData.minCol;
+        
+        float screenRatio = UIUtilities.GetScreenRatio();
+        bool isipad = UIUtilities.IsiPad();
+        
+        float height=screenRatio<=1.3f&&screenRatio>1.0f ? (Screen.height) /(float)rows : (Screen.height) /(float)rows*screenRatio;
+        float width=screenRatio<=1.3f&&screenRatio>1.0f ? (Screen.width) /(cols-1.5f) : (Screen.width) /(cols-screenRatio)*screenRatio;
+        float tileSize = Mathf.Min(width, height);
+        float temptileSize = 0;
+        float maxtileSize =screenRatio<=1.2f&&screenRatio>1.0f ? 265*screenRatio : 265;
+        
+        if(tileSize>=maxtileSize)
         {
-            // 按列顺序搜索
-            for (int col = 0; col < gridList[row].Count; col++)
+            temptileSize = isipad ? 240f : maxtileSize;
+            tileSize = Mathf.Min(temptileSize, tileSize);
+        }
+        
+        float maxsize = maxtileSize;
+        if (cols >= 9||rows > 12)
+        {
+            temptileSize = isipad ? 165f : 155f;
+            tileSize = Mathf.Min(temptileSize, tileSize);
+            maxsize = screenRatio>1.3f ? 210f : 185;
+            if (cols > 9)
             {
-                // 按层顺序搜索（从顶层到底层）
-                List<PuzzleTile> puzzleTiles = gridList[row][col];
-                for (int layer = 0; layer < puzzleTiles.Count; layer++)
+                maxsize-=(cols-9)*7f;
+            }
+            if (rows > 9)
+            {
+                maxsize-=(rows-9)*10f;
+            }
+            float xrate = cols > 6 ? 8 : 5;
+            float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 4 : 3.5f;
+            temptileSize = width - (cols- xoffset) * xrate;
+            tileSize = Mathf.Min(temptileSize, tileSize);
+            tileSize = Mathf.Max(maxsize, tileSize);
+        }
+        else
+        {
+            bool resetmaxsize = false;
+            
+            if (cols >= 6)
+            {
+                int minrow = boardData.minColIndex.x;
+                if (boardData.board[minrow][cols].Count > 0)
                 {
-                    PuzzleTile puzzleTile = puzzleTiles[layer];
-
-                    // 检查是否匹配且未被移除
-                    if (puzzleTile != null && puzzleTile.Letter == letter)
+                    if (boardData.board[minrow][cols][0] != '\0')
                     {
-                        // 从层列表中移除
-                        puzzleTiles.RemoveAt(layer);
-                  
-                        return puzzleTile;
+                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*24 : 240-(cols-6)*35;
+                    }
+                    else
+                    {
+                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*18 : 240-(cols-6)*20;
                     }
                 }
+                else
+                {
+                    maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*18 : 240-(cols-6)*20;
+                }
+                float xrate = cols > 6 ? 25 : 30;
+                float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 3.5f;
+                temptileSize = width - (cols- xoffset) * xrate;
+                tileSize = Mathf.Min(temptileSize, tileSize);
+                resetmaxsize = true;
+            }
+            
+            if (rows >= 7)
+            {
+                float rmaxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 240-(rows-6)*6f: 240-(rows-6)*4;
+                if (screenRatio <= 1.2f && screenRatio > 1.0f)
+                {
+                    maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 240*screenRatio-(rows-6)*2 : 240*screenRatio-(rows-6)*4;
+                }
+                float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
+                float offsety = (rows - 6) * 27 * yrate;
+                temptileSize = height - offsety;
+                tileSize = Mathf.Min(temptileSize, tileSize);
+                if(resetmaxsize)
+                    maxsize = Mathf.Min(maxsize, rmaxsize);
+                else
+                    maxsize=rmaxsize;
             }
         }
-        return null;
+        tileSize = Mathf.Max(maxsize, tileSize);
+        if (screenRatio > 1.08f&&!isipad)
+        {
+            screenRatio -= 0.08f;
+            tileSize *= screenRatio;
+            float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
+            if (yrate < 1.0f&&rows >= 7)
+            {
+                if (rows > 9)
+                {
+                    tileSize *= 0.8f;
+                }
+                else
+                {
+                    tileSize *= 0.9f;
+                }
+            }
+            else if (yrate < 1.0f&&cols >= 7)
+            {
+                tileSize *= 0.9f;
+            }
+        }
+        StageHexController.Instance.ActiveTileSize = tileSize;
+        
+        
+        if((HexType)StageHexController.Instance.CurStageInfo.HexType==HexType.JianHexagon)
+        {
+            float activeTileSize = StageHexController.Instance.ActiveTileSize;
+            
+            // 六边形几何参数计算
+            float hexHeight = activeTileSize;                    // 六边形高度（垂直方向）
+            float hexWidth = activeTileSize;  // 六边形宽度（水平方向）
+            float horizontalSpacing = hexWidth*0.9f;                   // 列间距
+            float verticalSpacing = hexHeight * 0.75f;            // 行间距（考虑重叠）
+            
+            // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
+            float totalGridWidth = cols * horizontalSpacing;
+            float totalGridHeight = rows * verticalSpacing;
+
+            // 设置容器大小
+            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
+            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
+        }
+        else
+        {
+            float activeTileSize = StageHexController.Instance.ActiveTileSize;
+
+            // 平顶六边形参数（行对齐）
+            float hexWidth = activeTileSize * Mathf.Sqrt(3) / 2.3f;                  // 六边形宽度（水平方向）
+            float hexHeight = activeTileSize * Mathf.Sqrt(3) / 1.75f;  // 六边形高度（垂直方向）
+            float horizontalSpacing = hexWidth;                  // 列间距（水平方向，无重叠）
+            float verticalSpacing = hexHeight * 0.85f;           // 行间距（垂直方向，考虑重叠）
+
+            // 计算网格尺寸（列控制水平尺寸，行控制垂直尺寸）
+            float totalGridWidth = cols * horizontalSpacing;
+            float totalGridHeight = rows * verticalSpacing;
+
+            // 设置容器大小
+            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalGridWidth);
+            RectT.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalGridHeight);
+        }
+        
+        tempscale = SetPuzzleItemScale(PuzzleItemObj.GetComponent<TileView>().TileTransform);
+     
+        return tempscale;
     }
+
 
     /// <summary>
     /// 获取六边形字块位置（平顶六边形，行对齐）
@@ -547,7 +490,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         if (curStageData.BoardSnapshot.minColIndex.x % 2 == 1&&rows>=7)
         {
-            yPos -= horizontalSpacing / 2f;
+            yPos -= horizontalSpacing / 5f;
         }
 
         return new Vector2(xPos, yPos);
@@ -1202,7 +1145,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             AudioManager.Instance.PlaySoundEffect("Puzzle" + newSelectedPuzzleGrids.Count);
         }
 
-        foreach (var puzzle in selectedPuzzleGrids)
+        foreach (var puzzle in selectedPuzzleGrids.ToList())
         {
             if(!newSelectedPuzzleGrids.Contains(puzzle))
             {

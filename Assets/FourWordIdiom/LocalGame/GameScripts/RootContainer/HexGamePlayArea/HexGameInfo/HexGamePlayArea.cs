@@ -194,7 +194,7 @@ public class HexGamePlayArea : UIWindow
         rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
         //在第7关且词语少于9个的时候可以显示横幅广告
         int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
-        if (CurStageInfo.StageNumber > 1)
+        if (CurStageInfo.StageNumber >= 10)
         {
 #if UNITY_EDITOR 
             
@@ -533,13 +533,14 @@ public class HexGamePlayArea : UIWindow
     /// <summary>
     /// 字符串移动到组合词面板动画
     /// </summary>
-    private void LettersToMovePuzzleTileAnim(string Puzzle, List<int[]> gridPositions)
+    private void LettersToMovePuzzleTileAnim(string tempPuzzle, List<int[]> gridPositions)
     {
-        List<PuzzleTile> gridLetterTiles = crossPuzzleGrid.GetPuzzleGridsAtPos(gridPositions);
-        PuzzleTileItem puzzleTile = PuzzleTileBoard.GetPuzzleTile(Puzzle);
+        string puzzle = tempPuzzle;
+        List<PuzzleTile> gridLetterTiles = crossPuzzleGrid.GetPuzzleGridsAtPos(gridPositions.ToList());
+        PuzzleTileItem puzzleTile = PuzzleTileBoard.GetPuzzleTile(puzzle);
 
         // Sanity check
-        if (Puzzle.Length == 0 || Puzzle.Length != gridLetterTiles.Count || Puzzle.Length != puzzleTile.currentPuzzle.Length)
+        if (puzzle.Length == 0 || puzzle.Length != gridLetterTiles.Count || puzzle.Length != puzzleTile.currentPuzzle.Length)
         {
             Debug.LogError("[GridController] AnimateLettersToPuzzleList: The Puzzle length does not match!!");
             return;
@@ -597,7 +598,7 @@ public class HexGamePlayArea : UIWindow
             letterText.transform.DOScale(toScale, 0.5f).OnComplete(() =>
             {
                 //显示到组成词面板
-                PuzzleTileBoard.ShowPuzzleFound(Puzzle, leid,() => {
+                PuzzleTileBoard.ShowPuzzleFound(puzzle, leid,() => {
                     tileLetterTextPool.ReturnObjectToPool(letterText.GetComponent<PoolObject>()); 
                 });
             });
