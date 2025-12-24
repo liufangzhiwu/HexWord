@@ -10,7 +10,6 @@ public class ShopDataItem
 {
     public int id;
     public string produceNameId;
-    public string produceNameId_tw;
     public int purchaseType;
     public int type;
     public List<List<string>> productContent;
@@ -49,6 +48,9 @@ public class ShopManager : MonoBehaviour
     /// </summary>
     public ShopDataItem curshopAdsItem;
     public static ShopManager shopManager;
+    /// <summary>
+    /// 当前限时商店物品
+    /// </summary>
     //private List<ShopLimitData> limitDatas;
     
     //private Dictionary<int, ShopLimitData> shoplimitDatas;
@@ -79,7 +81,7 @@ public class ShopManager : MonoBehaviour
         TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "shop");
         if (data != null)
         {
-            //ParseShopItems(data.text);
+            ParseShopItems(data.text);
         }
         else
         {
@@ -88,7 +90,7 @@ public class ShopManager : MonoBehaviour
 
         paysuccess = false;
 
-        //Initialize();
+        Initialize();
     }
 
     public void Initialize()
@@ -132,7 +134,7 @@ public class ShopManager : MonoBehaviour
     void ParseShopItems(string data)
     {
         // 将 CSV 数据转换为 JSON 格式
-        //ConvertCSVToJSON(data);
+        ConvertCSVToJSON(data);
 
         // 现在shopItems列表中包含所有商品
         Debug.Log("Shop items loaded: " + shopItems.Count);
@@ -152,7 +154,6 @@ public class ShopManager : MonoBehaviour
             {
                 int id = int.Parse(fields[0].Trim());
                 string nameID = fields[1].Trim();
-                string nameID_tw = fields[3].Trim();
                 int purchaseType = int.Parse(fields[2].Trim());
               
                 int type = int.Parse(fields[4].Trim());
@@ -181,7 +182,6 @@ public class ShopManager : MonoBehaviour
                 {
                     id = id,
                     produceNameId = nameID,
-                    produceNameId_tw = nameID_tw,
                     purchaseType = purchaseType,
                     type = type,
                     productContent = productContent,
@@ -212,7 +212,7 @@ public class ShopManager : MonoBehaviour
     {
         var type2Count = 0;
         var maxType2 = 3; // 最多允许的type2商品数量
-        // shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
+         //shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
         //     .ToDictionary(x => x.id, x => x);
 
         // 检查限购状态(永久去广告)
@@ -284,6 +284,7 @@ public class ShopManager : MonoBehaviour
         // shopItems = shopItems.OrderBy(item => item.sort).ToList();
         // return shopItems;
         return shopItems
+            .Where(item => item.isHomeDisplay == "1" && string.IsNullOrEmpty(item.unlocked[0]))
             .OrderBy(item => item.sort)
             .ToList();
     }

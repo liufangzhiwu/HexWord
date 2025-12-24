@@ -44,7 +44,7 @@ namespace Middleware
             
 #endif
             CreateAnalytic();
-            // CreateShop();
+            CreateShop();
             InitManagers();
         }
 

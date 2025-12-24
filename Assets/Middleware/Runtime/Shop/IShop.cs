@@ -10,6 +10,9 @@ namespace Middleware
         void Restore(Action<bool, ProductItem[]> restoreCallback);
     }
 
+    /// <summary>
+    /// 通用商品项
+    /// </summary>
     public class ProductItem
     {
         public string ProductId;

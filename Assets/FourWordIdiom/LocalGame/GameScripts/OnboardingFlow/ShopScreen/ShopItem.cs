@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
 //using UnityEngine.Purchasing;
@@ -397,80 +398,62 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    private async void OnBuyButtonClicked(ShopDataItem data)
+    private void OnBuyButtonClicked(ShopDataItem data)
     {
-        //ShopManager.shopManager.OnBuyGoldTestButtonClicked(data.GetProduceName()
-        //    ,
-        //    OnPurchaseSuccess,
-        //    OnPurchaseFailed);
-        //// 处理购买逻辑
-        Debug.Log($"Buying: {data.name}, Price: {data.GetProduceName()}");
-        
-        //bool isPayable = await UIController.Instance.CheckPayable((int)data.price);
-        
-        //if (isPayable)
-        {
-            OnPurchaseSuccess(data);
-        }
-        //string area = "";
-      
-        //FirebaseManager.Instance.PayStart(shopDataItem.GetProduceName(),area,SaveSystem.Instance.UserData.CurrentStage);
+        //todo 打开loading界面
+        Game.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
     }
 
-    private void OnPurchaseSuccess(ShopDataItem product)
+    private void OnPurchaseSuccess(ProductItem item)
     {
-        Debug.Log("购买成功: " + product.id);
-       
-        // if (shopDataItem.GetProduceName() == product.definition.id)
-        // {
-            foreach (var dataitem in product.productContent)
+        //todo 关闭loading界面
+        Debug.Log("购买成功: " + item.ProductId);
+        var items = new List<AnalyticMgr.Item>();
+        if (shopDataItem.GetProduceName() == item.ProductId)
+        {
+            foreach (var dataitem in shopDataItem.productContent)
             {
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
-                
+                items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count,true,true);
+                        GameDataManager.Instance.UserData.UpdateGold(count);
+                        EventDispatcher.instance.TriggerChangeGoldUI(count,true);
                         break;
                     case (int)LimitRewordType.Butterfly:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count);
-                        //GameDataManager.Instance.UserData.toolInfo[103].count += count;
-                        //EventManager.OnChangGoldUI?.Invoke(0, false);
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count);
                         break;
                     case (int)LimitRewordType.Tipstool:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count);
-                        //GameDataManager.Instance.UserData.toolInfo[102].count += count;
-                        //EventManager.OnChangGoldUI?.Invoke(0, false);
+                        GameDataManager.Instance.UserData.toolInfo[102].count += count;
                         break;
                     case (int)LimitRewordType.Resettool:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, count);
-                        //GameDataManager.Instance.UserData.toolInfo[101].count += count;
-                        //EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+                        GameDataManager.Instance.UserData.toolInfo[101].count += count;
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:
-                        //BuyRemoveAdsEvent(type);
+                        BuyRemoveAdsEvent(type);
                         break;
                 }
             }
-        //}
-        // 获取商品价格和货币代码
-        //string currencyCode = product.metadata.isoCurrencyCode;
-        //float localizedPrice = (float)product.metadata.localizedPrice;
-        //string area = "";
-        //FirebaseManager.Instance.PaySuccess(product,1);
-        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+        }
         ShopManager.shopManager.paysuccess = true;
+        if (GameDataManager.Instance.UserData.TotalPayTimes == 0)
+            GameDataManager.Instance.UserData.firstPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        GameDataManager.Instance.UserData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        GameDataManager.Instance.UserData.TotalPayTimes++;
+        GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
-        MessageSystem.Instance.ShowTip("购买成功！");
-
-        //UIController.Instance.SubmitPayment((int)product.price);
-
-        //AdjustManager.Instance.SendPurchaseEvent();
-        // 处理购买成功后的逻辑，例如增加游戏内货币
+        
+        AnalyticMgr.Purchase(shopDataItem.GetProduceName(), item.IsoCurrencyCode, item.LocalizedPrice, items);
     }
-
+    private void OnPurchaseFailed(string error)
+    {
+        //todo 关闭loading界面
+        Debug.Log("购买失败: " + error);
+        AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(),error);
+    }
     private void BuyRemoveAdsEvent(int type)
     {
         // ShopLimitData reshopLimitData= GameDataManager.Instance.UserData.limitShopItems.Find(item =>item.id == shopDataItem.id);
@@ -509,13 +492,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    private void OnPurchaseFailed(string error)
-    {
-        Debug.Log("购买失败: " + error);
-        string area = "";
-        //FirebaseManager.Instance.PayFailed(shopDataItem.GetProduceName(),area,SaveSystem.Instance.UserData.CurrentStage,error);
-        // 处理购买失败后的逻辑，例如显示错误提示
-    }
+
 
     private Sprite LoadShopIcon(string showIcon)
     {

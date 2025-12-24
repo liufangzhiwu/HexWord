@@ -39,7 +39,7 @@ public partial class AnalyticMgr
             { "active_day", GameDataManager.Instance.UserData.activeDayCnt},
             { "life_day", span.Days + 1},
         };
-        Game.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
+        Game.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
     }
 
     private static void SetLogoutProperties()

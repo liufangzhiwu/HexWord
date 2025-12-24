@@ -18,13 +18,18 @@ namespace Middleware
         
         private string purchaseResult = "";
         
-        ProductData productData;
+        ProductData productData=new ProductData();
         //consumable products lists
         string[] m_storeIDList = { };
         //nonconsumable products lists
         string[] m_storeNonconsumeIDList = { };
         //AutoRenewable produccts List
         string[] m_storeAutoRenewableIDList = { };
+
+        private Action<ProductItem> buySuccessAction;
+        Action<string> buyFailedAction;
+        
+        bool InitSucceed = false;
         
         public void Init(float delay)
         {
@@ -79,12 +84,22 @@ namespace Middleware
         
         private void LoadProductData()
         {
-            productData = Resources.Load<ProductData>("ProductData");
-            if (productData != null)
+            foreach (var shopDataItem in ShopManager.shopManager.GetBuyShopItems())
+            {
+                productData.products.Add(new Product()
+                {
+                    id = shopDataItem.GetProduceName(),
+                    type = (ProductType)shopDataItem.purchaseType,
+                });
+            }
+          
+            if (productData.products.Count > 0)
             {
                 List<string> consumableList = new List<string>();
                 List<string> nonConsumableList = new List<string>();
                 List<string> autoRenewableList = new List<string>();
+                
+                
                 foreach (var product in productData.products)
                 {
                     switch (product.type)
@@ -112,19 +127,36 @@ namespace Middleware
 
         public bool IsProductOk(string productId)
         {
+            Product product= productData.products.Find(x => x.id == productId);
+            if (product != null &&InitSucceed)
+            {
+                return true;
+            }
+            
             return false;
+        }
+        
+        /// <summary>
+        /// 开始购买商品
+        /// </summary>
+        /// <param name="selectedId"></param>
+        /// <param name="selectedProductType"></param>
+        public void Purchase(string productId, Action<ProductItem> successAction,Action<string> failedAction)
+        {
+            buyFailedAction = failedAction;
+            buySuccessAction = successAction;
+            
+            PurchaseParameter purchaseParameter = new PurchaseParameter();
+            Product product= productData.products.Find(x => x.id == productId);
+            purchaseParameter.productId = product.id;
+            purchaseParameter.productType = product.type;
+            OHSDKKitManager.Instance.StartPurchase(purchaseParameter);
         }
 
         void IShop.Restore(Action<bool, ProductItem[]> restoreCallback)
         {
             Restore(restoreCallback);
         }
-
-        public void Purchase(string productId, Action<ProductItem> successAction, Action<string> failedAction)
-        {
-            failedAction?.Invoke("暂不支持鸿蒙平台支付");
-        }
-        
 
         public void Restore(Action<bool, ProductItem[]> restoreCallback)
         {
@@ -141,6 +173,7 @@ namespace Middleware
                 QuerySubscription();
                 QueryConsumable();
                 QueryUnconsumable();
+                InitSucceed=true;
             }
             else
             {
@@ -281,115 +314,24 @@ namespace Middleware
             purchaseParam = null;
         }
     }
+    
 
-    public void ShowProductSelection()
-    {
-        string[] itemList = { };
-        // if (consumableToggle.isOn)
-        // {
-        //     itemList = m_storeIDList;
-        // }
-        // else if (UnconsumableToggle.isOn)
-        // {
-        //     itemList = m_storeNonconsumeIDList;
-        // }
-        // // Clear existing toggles
-        // foreach (Transform child in createPurchaseScrollView.content)
-        // {
-        //     Destroy(child.gameObject);
-        // }
-        //
-        // // Add new toggles
-        // foreach (string id in itemList)
-        // {
-        //     GameObject toggleObject = Instantiate(togglePrefab, createPurchaseScrollView.content);
-        //     Toggle toggle = toggleObject.GetComponent<Toggle>();
-        //     if (toggle != null)
-        //     {
-        //         toggle.group = createPurchaseToggleGroup;
-        //         toggle.GetComponentInChildren<Text>().text = id;
-        //     }
-        // }
-    }
-
-    public void ShowSubscriptionSelection()
-    {
-        // Clear existing toggles
-        // foreach (Transform child in createPurchaseScrollView.content)
-        // {
-        //     Destroy(child.gameObject);
-        // }
-        //
-        // // Add new toggles
-        // foreach (string id in m_storeAutoRenewableIDList)
-        // {
-        //     GameObject toggleObject = Instantiate(toggleLargePrefab, createSubscriptionScrollView.content);
-        //     Toggle toggle = toggleObject.GetComponent<Toggle>();
-        //     if (toggle != null)
-        //     {
-        //         toggle.group = createSubscriptionToggleGroup;
-        //         toggle.GetComponentInChildren<Text>().text = id;
-        //     }
-        // }
-    }
-
-    public void ShowFinishSelection()
-    {
-        // Clear existing toggles
-        // foreach (Transform child in FinishScrollView.content)
-        // {
-        //     Destroy(child.gameObject);
-        // }
-        // // Add new toggles
-        // foreach (var purchaseData in purchaseDataList)
-        // {
-        //     GameObject toggleObject = Instantiate(toggleLargePrefab, FinishScrollView.content);
-        //     Toggle toggle = toggleObject.GetComponent<Toggle>();
-        //     if (toggle != null)
-        //     {
-        //         toggle.GetComponentInChildren<Text>().text = purchaseData.purchaseOrderId;
-        //     }
-        // }
-    }
-
-    private void ConfirmSelection()
-    {
-        // ProductType selectedProductType;
-        // if (consumableToggle.isOn)
-        // {
-        //     selectedProductType = ProductType.CONSUMABLE;
-        // }
-        // else if (UnconsumableToggle.isOn)
-        // {
-        //     selectedProductType = ProductType.NONCONSUMABLE;
-        // }
-        // else
-        // {
-        //     selectedProductType = ProductType.AUTORENEWABLE;
-        // }
-        // // get the only selected Toggle
-        // Toggle selectedToggle = createPurchaseToggleGroup.ActiveToggles().FirstOrDefault();
-        // string selectedId = selectedToggle.GetComponentInChildren<Text>().text;
-        // PurchaseParameter purchaseParameter = new PurchaseParameter();
-        // purchaseParameter.productId = selectedId;
-        // purchaseParameter.productType = selectedProductType;
-        // OHSDKKitManager.Instance.StartPurchase(purchaseParameter);
-        // selectionPanel.SetActive(false);
-    }
-
+    /// <summary>
+    /// 开始购买订阅商品
+    /// </summary>
     private void ConfirmSubscriptionSelection()
     {
-        // // get the only selected Toggle
-        // Toggle selectedToggle = createSubscriptionToggleGroup.ActiveToggles().FirstOrDefault();
-        // if (selectedToggle)
-        // {
-        //     string selectedSubscriptionId = selectedToggle.GetComponentInChildren<Text>().text;
-        //     PurchaseParameter purchaseParameter = new PurchaseParameter();
-        //     purchaseParameter.productId = selectedSubscriptionId;
-        //     purchaseParameter.productType = ProductType.AUTORENEWABLE;
-        //     OHSDKKitManager.Instance.StartPurchase(purchaseParameter);
-        // }
-        // subscriptionPanel.SetActive(false);
+    // // get the only selected Toggle
+    // Toggle selectedToggle = createSubscriptionToggleGroup.ActiveToggles().FirstOrDefault();
+    // if (selectedToggle)
+    // {
+    //     string selectedSubscriptionId = selectedToggle.GetComponentInChildren<Text>().text;
+    //     PurchaseParameter purchaseParameter = new PurchaseParameter();
+    //     purchaseParameter.productId = selectedSubscriptionId;
+    //     purchaseParameter.productType = ProductType.AUTORENEWABLE;
+    //     OHSDKKitManager.Instance.StartPurchase(purchaseParameter);
+    // }
+    // subscriptionPanel.SetActive(false);
     }
 
 
@@ -449,7 +391,6 @@ namespace Middleware
                 purchaseDataList.Remove(selectedPurchaseData);
             }
         }
-        //finishPanel.SetActive(false);
     }
         
     }

@@ -134,8 +134,10 @@ public class UserData
     public bool isAllCompleteTask;      // 每日任务活动是否全部完成
     /// 任务数据
     public List<TaskSaveData> taskSaveDatas=new List<TaskSaveData>();
-    
+   
+    /// <summary>
     /// 商店限时商品数据
+    /// </summary>
     //public List<ShopLimitData> limitShopItems=new List<ShopLimitData>();
 
     #endregion

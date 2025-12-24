@@ -10,6 +10,3 @@ id,nameID,purchaseType,,type,productContent,,showIcon,name,des,pointDes,isHomeDi
 7,Box1,0,中级宝箱,2,0;4200#2;6#3;3,30,shopgift2,ShopBoxName02,,,1,5,2,,,60%
 8,Box2,0,上级宝箱,2,0;10000#2;15#3;10,68,shopgift3,ShopBoxName03,,,1,6,3,,,70%
 9,Box3,0,超级宝箱,2,0;15000#2;35#3;20,98,shopgift4,ShopBoxName04,,,1,7,4,,,80%
-,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-,,,游戏中通用货币,,,,,,,,,,,,,
