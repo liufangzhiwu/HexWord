@@ -2,16 +2,20 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.U2D;
 using UnityEngine.UI;
 
 public class BUtterflyManual : UIWindow
 {
+    [SerializeField] private Text title;
     [SerializeField] private Button backhome;
     [SerializeField] private Button help;
     [SerializeField] private Transform content;
 
+    private SpriteAtlas manualAtlas;
     private void Start()
     {
+        title.text = MultilingualManager.Instance.GetString("ButterflyUI04", "hudie");
         backhome.AddClickAction(() =>
         {
             SystemManager.Instance.HidePanel(PanelType.ButterflyManual);
@@ -27,12 +31,17 @@ public class BUtterflyManual : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+        if (manualAtlas == null)
+        {
+            manualAtlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflymaunal");
+        }
 
-        UpdateUI();
+        StartCoroutine(UpdateUI());
     }
 
-    private void UpdateUI()
+    private IEnumerator UpdateUI()
     {
+        yield return new WaitUntil(() => manualAtlas != null);
         List<ButterflyInfo> butterflyInfos = ButterfliesManager.Instance.GetCurrentGardenButterflies();
         if (content.childCount < butterflyInfos.Count)
         {
@@ -64,8 +73,8 @@ public class BUtterflyManual : UIWindow
             if (isOwn)
             {
                 starParent.GetComponent<Image>().sprite =
-                    AssetBundleLoader.SharedInstance.GetSpriteFromAtlas($"star_show_"+ butterflyInfo.Rarity);
-                butterfly.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(butterflyInfo.ButterflyIcon);
+                    AssetBundleLoader.SharedInstance.GetSpriteFromAtlas($"star_show_"+ butterflyInfo.Rarity, "butterfly_ui");
+                butterfly.GetComponent<Image>().sprite = manualAtlas.GetSprite(butterflyInfo.ButterflyIcon);
            
                 nameParent.GetChild(0).gameObject.SetActive(true);
                 nameParent.GetChild(0).GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString(butterflyInfo.Name,"hudie");
@@ -74,8 +83,8 @@ public class BUtterflyManual : UIWindow
             else
             {
                 starParent.GetComponent<Image>().sprite =
-                    AssetBundleLoader.SharedInstance.GetSpriteFromAtlas($"star_hide_"+ butterflyInfo.Rarity);
-                butterfly.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("butterfly_ghost");
+                    AssetBundleLoader.SharedInstance.GetSpriteFromAtlas($"star_hide_"+ butterflyInfo.Rarity, "butterfly_ui");
+                butterfly.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("butterfly_ghost", "butterfly_ui");
                 nameParent.GetChild(0).gameObject.SetActive(false);
                 nameParent.GetChild(1).gameObject.SetActive(true);
             }

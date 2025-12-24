@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Spine.Unity;
 using UnityEngine;
+using UnityEngine.U2D;
 using UnityEngine.UI;
 
 
@@ -35,6 +36,7 @@ public class ButterflyHome : UIWindow
     private List<ButterflyLandPoint> topPoints = new List<ButterflyLandPoint>();
     private List<ButterflyLandPoint> bottomPoints = new List<ButterflyLandPoint>();
     
+    private SpriteAtlas butterflyParts;
     private GameObject butterflyPrefab;  // 蝴蝶预制件
     private ObjectPool butterflyPool;
     private bool firstInter = true;
@@ -47,6 +49,12 @@ public class ButterflyHome : UIWindow
         sceneBtn.AddClickAction(OnSceneClick);
         manualBtn.AddClickAction(OnManualClick);
         collectBtn.AddClickAction(OnCollectClick);
+        
+    }
+
+    protected override void Awake()
+    {
+        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflyscene");
     }
 
     private void Start()
@@ -68,13 +76,79 @@ public class ButterflyHome : UIWindow
         }
         // 速度 = 距离 / 时间
         _worldFlySpeed = worldScreenHeight / timeToCrossScreen;
-        
         Debug.Log($"屏幕高度: {worldScreenHeight}, 计算出飞行速度: {_worldFlySpeed} 像素/秒");
     }
 
     protected override void OnEnable()
     {
         base.OnEnable();
+        Debug.Log("【Step 0】开始执行测试代码...");
+
+// 1. 尝试加载
+        var atlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflyparts");
+
+        if (atlas == null)
+        {
+            Debug.LogError("【Step 1 失败】LoadAtlas 返回了 null！原因：AB包没加载，或名字写错了。");
+            return; // 中断执行
+        }
+        Debug.Log($"【Step 1 成功】获取到图集对象: {atlas.name}, InstanceID: {atlas.GetInstanceID()}");
+
+// 2. 检查 Sprite Count
+        Debug.Log($"【Step 2】图集记录的 Sprite 数量: {atlas.spriteCount}");
+        if (atlas.spriteCount == 0)
+        {
+            Debug.LogError("【Step 2 警告】图集是空的！请检查 Sprite Packer Mode 设置。");
+        }
+
+// 3. 反射检查底层纹理
+        var type = typeof(UnityEngine.U2D.SpriteAtlas);
+        var method = type.GetMethod("GetTextures", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        if (method == null)
+        {
+            Debug.LogError("【Step 3 失败】无法获取 GetTextures 方法，Unity API 可能有变动。");
+        }
+        else
+        {
+            Debug.Log("【Step 3】成功反射获取到方法，准备调用 Invoke...");
+            try
+            {
+                var result = method.Invoke(atlas, null);
+                if (result == null)
+                {
+                    Debug.LogError("【Step 4 致命】Invoke 返回了 null。图集底层没有任何纹理数据！");
+                }
+                else
+                {
+                    Texture2D[] textures = (Texture2D[])result;
+                    Debug.Log($"【Step 4 最终结果】底层纹理数量: {textures.Length}");
+                    foreach(var tex in textures)
+                    {
+                        Debug.Log($"  --> 发现纹理: {tex.name} (尺寸: {tex.width}x{tex.height})");
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"【Step 4 异常】调用 Invoke 时崩溃: {e.Message}");
+            }
+        }
+        if (butterflyParts is null)
+        {
+           
+            butterflyParts = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflyparts");
+            Debug.Log("蝴蝶身体图集加载成功" + butterflyParts);
+            
+            Debug.LogWarning("图集内数量: " + butterflyParts.spriteCount);
+            Sprite[] sprites = new Sprite[butterflyParts.spriteCount];
+            
+            butterflyParts.GetSprites(sprites);   // 零 GC、零反射
+            
+            // ② 打印名称
+            foreach (var sp in sprites)
+                Debug.Log($"Atlas Sprite: {sp.name}");
+        }
         EventDispatcher.instance.OnButterflyGardenChange += ChangeGardenNotify;
         // 先展示ui
         UpdateUI();
@@ -96,9 +170,9 @@ public class ButterflyHome : UIWindow
     {
         // 判断是否可以合成蝴蝶
         if(ButterfliesManager.Instance.CanMakeButterfly())
-            collectBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("合成");
+            collectBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ButterflyUI01", "hudie");
         else
-            collectBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("收集");
+            collectBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ButterflyUI02", "hudie");
         
         // 进度条
         ButterfliesManager.Instance.ShowButterflyProcess(title.transform.GetChild(0).transform , firstInter);
@@ -235,7 +309,8 @@ public class ButterflyHome : UIWindow
         GameObject gradePab = AssetBundleLoader.SharedInstance.LoadGameObject("scenehudie","UI_hudie0" + butterflyInfo.Rarity);
         GameObject gradeGo = Instantiate(gradePab, transform.parent);
         gradeGo.GetComponentInChildren<Text>(true).text = MultilingualManager.Instance.GetString(butterflyInfo.Name,"hudie");
-        gradeGo.GetComponentInChildren<Image>(true).sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(butterflyInfo.ButterflyIcon);
+        SpriteAtlas atlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflymaunal");
+        gradeGo.GetComponentInChildren<Image>(true).sprite = atlas.GetSprite(butterflyInfo.ButterflyIcon);
         gradeGo.GetComponentInChildren<Canvas>(true).sortingLayerName = "BaseEffect";
         
         // 🔑 模拟特效播放时间，等待特效结束 (假设 1.5 秒)
@@ -261,8 +336,11 @@ public class ButterflyHome : UIWindow
     {
         butterfly.SetActive(false);
         SpineSpriteReplacer replacer = butterfly.GetComponent<SpineSpriteReplacer>();
-        Sprite body = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts","hudie04_body");
-        Sprite wing = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts","hudie04_chi");
+        string bName = $"{butterflyInfo.ButterflyIcon}_body";
+        string wName = $"{butterflyInfo.ButterflyIcon}_wing";
+        Sprite body = butterflyParts.GetSprite(bName);
+        Sprite wing = butterflyParts.GetSprite(wName);
+        Debug.LogWarning("加载的蝴蝶块 " + bName + ":" + body +" ==== " + wName+":" + wing);
         yield return null;
         replacer.InitializeButterfly(body, wing);
         butterfly.SetActive(true);

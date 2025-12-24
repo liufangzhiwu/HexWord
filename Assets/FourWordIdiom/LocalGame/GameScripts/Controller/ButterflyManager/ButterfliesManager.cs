@@ -57,6 +57,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     {
         if (processBar == null)
         {
+            AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterfly_icon");
             GameObject go =  AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyProcessBar");
             processBar = Instantiate(go);
             processBar.SetActive(false);

@@ -51,36 +51,21 @@ SpriteAtlas:
     cachedData: {fileID: 0}
     packedSpriteRenderDataKeys:
     - c3cb84708b7ae9a4299e9f1ff9338a72: 21300000
-    - 99232076ec8ddc544b611ad0e2f6fa6c: 21300000
-    - 2c467c96af6610847807dfeab72dd221: 21300000
     - 5fab8eb7f1a27e34f9a253a009779bd2: 21300000
     - 05e36638f010c6347a054bf15fc191b4: 21300000
-    - 426ef28c1dddb274f9e04aef57cede59: 21300000
-    - 48b308fc0f9019d4e88c2f5d4964ec39: 21300000
-    - d5af50eedce1bbc468e3a075327c3a04: 21300000
     - cb57181fe1c6ab34d914bd500cc0771a: 21300000
     - 2e8f9eff731d8534d839fff0afc6b124: 21300000
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
   - {fileID: 21300000, guid: c3cb84708b7ae9a4299e9f1ff9338a72, type: 3}
-  - {fileID: 21300000, guid: 99232076ec8ddc544b611ad0e2f6fa6c, type: 3}
-  - {fileID: 21300000, guid: 2c467c96af6610847807dfeab72dd221, type: 3}
   - {fileID: 21300000, guid: 5fab8eb7f1a27e34f9a253a009779bd2, type: 3}
   - {fileID: 21300000, guid: 05e36638f010c6347a054bf15fc191b4, type: 3}
-  - {fileID: 21300000, guid: 426ef28c1dddb274f9e04aef57cede59, type: 3}
-  - {fileID: 21300000, guid: 48b308fc0f9019d4e88c2f5d4964ec39, type: 3}
-  - {fileID: 21300000, guid: d5af50eedce1bbc468e3a075327c3a04, type: 3}
   - {fileID: 21300000, guid: cb57181fe1c6ab34d914bd500cc0771a, type: 3}
   - {fileID: 21300000, guid: 2e8f9eff731d8534d839fff0afc6b124, type: 3}
   m_PackedSpriteNamesToIndex:
   - scenery1
-  - scenery7
-  - scenery8
   - scenery9
   - scenery3
-  - scenery6
-  - scenery4
-  - scenery10
   - scenery5
   - scenery2
   m_RenderDataMap: {}

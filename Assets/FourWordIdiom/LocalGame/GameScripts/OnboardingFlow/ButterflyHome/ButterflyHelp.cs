@@ -28,11 +28,11 @@ public class ButterflyHelp : UIWindow
     
     private void InitUI()
     {
-        // wordtips.text = MultilingualManager.Instance.GetString("limitedRewardsDes01");
-        // slidertips.text = MultilingualManager.Instance.GetString("CarpMatchDes02");
-        // rewardtips.text = MultilingualManager.Instance.GetString("limitedRewardsDes03");
+        wordtips.text = MultilingualManager.Instance.GetString("ButterflyUI05", "hudie");
+        slidertips.text = MultilingualManager.Instance.GetString("ButterflyUI06", "hudie");
+        rewardtips.text = MultilingualManager.Instance.GetString("ButterflyUI07", "hudie");
         // //mintips.text = MultilingualManager.Instance.GetString("limitedRewardsDes04");
-        closetips.text = MultilingualManager.Instance.GetString("limitedRewardsDes05");
+        closetips.text = MultilingualManager.Instance.GetString("ButterflyUI05", "hudie");
     }
     
     private void OnCloseBtn()

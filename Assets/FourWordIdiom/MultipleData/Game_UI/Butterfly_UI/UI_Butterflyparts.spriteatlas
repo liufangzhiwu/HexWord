@@ -23,27 +23,14 @@ SpriteAtlas:
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
-      m_MaxTextureSize: 1024
+      m_MaxTextureSize: 2048
       m_ResizeAlgorithm: 0
-      m_TextureFormat: 65
+      m_TextureFormat: 50
       m_TextureCompression: 1
       m_CompressionQuality: 50
       m_CrunchedCompression: 0
       m_AllowsAlphaSplitting: 0
       m_Overridden: 1
-      m_IgnorePlatformSupport: 0
-      m_AndroidETC2FallbackOverride: 0
-      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
-    - serializedVersion: 3
-      m_BuildTarget: DefaultTexturePlatform
-      m_MaxTextureSize: 1024
-      m_ResizeAlgorithm: 0
-      m_TextureFormat: -1
-      m_TextureCompression: 1
-      m_CompressionQuality: 50
-      m_CrunchedCompression: 0
-      m_AllowsAlphaSplitting: 0
-      m_Overridden: 0
       m_IgnorePlatformSupport: 0
       m_AndroidETC2FallbackOverride: 0
       m_ForceMaximumCompressionQuality_BC6H_BC7: 0
@@ -322,7 +309,7 @@ SpriteAtlas:
   - BF302-wing
   - BF124-wing
   - BF301-wing
-  - BF101-wing
+  - BF101_wing
   - BF123-body
   - BF224-wing
   - BF307-wing
@@ -431,7 +418,7 @@ SpriteAtlas:
   - BF207-wing
   - BF221-wing
   - BF119-wing
-  - BF101-body
+  - BF101_body
   m_RenderDataMap: {}
   m_Tag: UI_Butterflyparts
   m_IsVariant: 0
