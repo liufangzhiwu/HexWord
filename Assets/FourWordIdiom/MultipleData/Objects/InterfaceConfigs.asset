@@ -210,3 +210,9 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 2508230401924753788, guid: eece4436aba43d14faeabe1a886207bc,
       type: 3}
+  - panelName: HardView
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: b5471a4703b43b9419889d9a9193c011,
+      type: 3}

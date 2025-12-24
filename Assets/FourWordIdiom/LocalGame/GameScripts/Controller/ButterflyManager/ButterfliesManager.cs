@@ -210,13 +210,13 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
             // yield return SetSliderProgress(0,targetValue,0.5f,0.3f);
         
         Transform target = processBar.transform.Find("Icon");
-        yield return  FlyPupaCoroutine(sTransform, target, call ,0.8f);
+        yield return  FlyPupaCoroutine(sTransform, target, call ,0.6f);
         
         float ratio = GameDataManager.Instance.ButterflyData.currPupa / (float)butterflyGrow.Count;
         float targetValue = Mathf.Clamp01(ratio);
         StartCoroutine( SetSliderProgress(0,targetValue,0.5f,0.3f));
         text.text = $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow.Count}"; 
-        yield return Fade(1, 0, 2.5f);
+        yield return Fade(1, 0, 0.4f);
     }
 
     /// <summary>
@@ -325,6 +325,27 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// <returns></returns>
     public bool CanObtainedPupa()
     {
+        //return true;
+        int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+        switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
+        {
+            case LevelType.BlockWord:
+                levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+                break;
+            case LevelType.ChessWord:
+                levelId = GameDataManager.Instance.UserData.CurrentChessStage;
+                break;
+            case LevelType.HexWord:
+                levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+                break;
+        }
+        
+        if(levelId<3)
+        {
+            Debug.LogError("当前等级未到，不能展示蚕蛹");
+            return false;
+        }
+        
         ButterflyGrow butterflyGrow = GetCurrentGrow();
         if (butterflyGrow == null || GameDataManager.Instance.ButterflyData.currPupa >= butterflyGrow.Count)
             return false;
@@ -338,8 +359,22 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
                 GameDataManager.Instance.ButterflyData.intervalLv = 0;
             }
             else
+            {
                 GameDataManager.Instance.ButterflyData.intervalLv++;
+                StageHexController.Instance.CurStageData.PupaDatas = null;
+                Debug.LogError("限时概率为不显示蚕蛹");
+            }
+        }else
+        {
+            //检查是否有可放置的蚕蛹数据
+            if (StageHexController.Instance.CurStageData.PupaDatas == null)
+            {
+                GameDataManager.Instance.ButterflyData.intervalLv++;
+                Debug.LogError("限时概率为显示蚕蛹但没有可以放置的蚕蛹位置");
+                return false;
+            } 
         }
+        
         return able;
     }
     /// <summary>
@@ -347,7 +382,6 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// </summary>
     public void AddObtainedPupa(Transform startPoint, int pupa = 1, Transform parent  = null)
     {
-
         if (parent != null)
         {
             Debug.Log("看看调用几次");

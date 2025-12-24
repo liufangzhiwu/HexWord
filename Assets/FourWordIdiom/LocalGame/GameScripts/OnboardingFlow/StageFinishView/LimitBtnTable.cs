@@ -39,25 +39,26 @@ public class LimitBtnTable : MonoBehaviour
             _limitTimeEventButton.gameObject.SetActive(true);
             if (!LimitTimeManager.Instance.IsComplete())
             {
-                int wordcount = LimitTimeManager.Instance.GetCurWordCount();
+                int wordcount = 0;
                 //txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
-                if (GameDataManager.Instance.UserData.levelMode == 3)
+                switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
                 {
-                    LimitTimeManager.Instance.UpdateLimitProgress(StageHexController.Instance.LimitPuzzlecount);
-                }else if (GameDataManager.Instance.UserData.levelMode == 2)
-                {
-                    LimitTimeManager.Instance.UpdateLimitProgress(ChessStageController.Instance.LimitPuzzleCount);
+                    case LevelType.BlockWord:
+                        wordcount=StageHexController.Instance.LimitPuzzlecount;
+                        break;
+                    case LevelType.ChessWord:
+                        wordcount=ChessStageController.Instance.LimitPuzzleCount;
+                        break;
+                    case LevelType.HexWord:
+                        wordcount=StageHexController.Instance.LimitPuzzlecount;
+                        LimitTimeManager.Instance.UpdateLimitProgress(wordcount);
+                        break;
                 }
+             
                 Effect.gameObject.SetActive(false);
                 AddCount.gameObject.SetActive(false);
-                if (GameDataManager.Instance.UserData.levelMode == 3)
-                {
-                    AddCount.text = "+" + StageHexController.Instance.LimitPuzzlecount ;
-                }else if (GameDataManager.Instance.UserData.levelMode == 2)
-                {
-                    AddCount.text = "+" + ChessStageController.Instance.LimitPuzzleCount;
-                }
-              
+                AddCount.text = "+" + wordcount;
+                
                 StartCoroutine(ShowLimitWordAnim(parent));
             }
             

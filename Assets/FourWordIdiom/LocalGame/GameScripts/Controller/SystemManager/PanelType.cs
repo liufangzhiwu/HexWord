@@ -47,6 +47,7 @@ public class PanelType  // Renamed class
     public const string ChessFinishView = "ChessFinishView";
      public const string ChessPlayArea = "ChessPlayArea";
      public const string ChessLearningGuide = "ChessLearningGuide";
+     public const string HardView = "HardView";
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 #region 数据结构
 
@@ -56,10 +57,13 @@ public class IdiomBlock
     public Vector2Int position;
 }
 
-public class LevelData
+/// <summary>
+/// 蚕蛹数据结构
+/// </summary>
+public class PupaData
 {
-    public string pass; // 对应"1_pass"的内容
-    public string russ; // 对应"1_russ"的内容
+    public Vector2Int position; // 位置
+    public int breakProgress; // 碎裂进度
 }
 
 #endregion
@@ -81,8 +85,50 @@ public class StageInfo
     private string _hint;               // 关卡提示
     private List<string> _Puzzles=new List<string>();        // 单词列表
     private BoardGame _boardData=new BoardGame();       // 棋盘数据
+    public PupaData _pupaData=null;       // 蚕蛹数据
 
     public List<IdiomData> idioms = new List<IdiomData>();
+    
+    // 平顶六边形网格的六个方向定义（行为偶数时）
+    public readonly (int, int)[] HexDirectionsEven = {
+        (1, 0),    // 上
+        (0, 1),   // 右上
+        (0, -1),   // 左上
+        (-1, 0),   // 下
+        (-1, -1),  // 左下
+        (-1, 1)     // 右下
+    };
+
+    //平顶六边形网格的六个方向定义（行为奇数时）
+    public readonly (int, int)[] HexDirectionsOdd = {
+        (1, 0),    // 上
+        (1, 1),   // 右上
+        (1, -1),  // 左上
+        (-1, 0),   // 下
+        (0, -1),   // 左下
+        (0, 1)     // 右下
+    };
+    
+    
+    // 尖顶六边形网格的六个方向定义（行为偶数时）
+    public readonly (int, int)[] HexJianDirectionsEven = {
+        (0, -1),    // 左
+        (0, 1),   // 右
+        (1, 0),   // 右上1，0
+        (1, -1),   // 左上
+        (-1, -1),   // 左下(-1, -1),
+        (-1, 0)     // 右下（-1，0）
+    };
+
+    //尖顶六边形网格的六个方向定义（行为奇数时）
+    public readonly (int, int)[] HexJianDirectionsOdd = {
+        (0, -1),    // 左
+        (0, 1),   // 右
+        (1, 1),   // 右上
+        (1, 0),  // 左上1，0
+        (-1, 0),  // 左下（-1，0）
+        (-1, 1)  // 右下
+    };
 
     #endregion
 
@@ -99,6 +145,9 @@ public class StageInfo
 
     /// <summary> 六边形类型 0:平顶六边形 1:尖顶六边形 </summary>
     public int HexType => _HexType;
+
+    /// <summary> 蚕蛹邻居列表 </summary>
+    public List<Vector2Int> PupaNeighbors;
 
     #endregion
 
@@ -175,6 +224,8 @@ public class StageInfo
         // 5. 解析russ数据（成语列表）
         ParseRussData(russContent);
     
+        ProcessPupaData();
+        
         _isStageFileLoaded = true;
     }
 
@@ -419,7 +470,7 @@ public class StageInfo
             int row = int.Parse(position[1]);
             int col = int.Parse(position[0]);       
 
-            if (HexType == 1)
+            if (HexType == (int)GridType.PointyTop)
             {
                 int xoffset = (_boardData.rows-2)%2==0 ? 0 : 1;
                 row = (_boardData.rows-2- int.Parse(position[0]))+xoffset;
@@ -501,7 +552,7 @@ public class StageInfo
 
         _boardData.minColIndex=mincol;
         
-        if (_HexType == 1)
+        if (HexType == (int)GridType.PointyTop)
         {
             _boardData.minirnidex=minrow;
             // 调试输出
@@ -575,6 +626,128 @@ public class StageInfo
             _Puzzles.Add(idiom.word);
         }
     }
+    
+    private List<(int row, int col, List<Vector2Int> neighbors)> FindEmptyCellsWithAllNeighbors()
+    {
+        var result = new List<(int row, int col, List<Vector2Int> neighbors)>();
+        
+        for (int row = 0; row < _boardData.rows; row++)
+        {
+            for (int col = 0; col < _boardData.cols; col++)
+            {
+                List<char> layerChars = _boardData.board[row][col];
+                
+                // 检查当前位置是否为空字符
+                if (IsEmptyCell(layerChars))
+                {
+                    // 根据网格类型和行奇偶性选择方向数组
+                    (int, int)[] directions;
+
+                    int parity = col % 2;
+                    
+                    if (HexType == (int)GridType.FlatTop) // 假设有GridType枚举
+                    {
+                        directions = parity == 0 ? HexDirectionsEven : HexDirectionsOdd;
+                    }
+                    else // 尖顶网格
+                    {
+                        parity = row % 2;
+                        directions = parity == 0 ? HexJianDirectionsEven : HexJianDirectionsOdd;
+                    }
+                    
+                    // 检查六个方向是否都存在字符
+                    List<Vector2Int> validNeighbors = new List<Vector2Int>();
+                    bool allNeighborsHaveChars = true;
+                    
+                    foreach (var (dr, dc) in directions)
+                    {
+                        int newRow = row + dr;
+                        int newCol = col + dc;
+                        
+                        // 检查是否在边界内
+                        if (newRow >= 0 && newRow < _boardData.rows && 
+                            newCol >= 0 && newCol < _boardData.cols)
+                        {
+                            List<char> neighborChars = _boardData.board[newRow][newCol];
+                            if (HasCharacter(neighborChars))
+                            {
+                                validNeighbors.Add(new Vector2Int(newRow, newCol));
+                            }
+                            else
+                            {
+                                allNeighborsHaveChars = false;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            allNeighborsHaveChars = false;
+                            break;
+                        }
+                    }
+                    
+                    // 如果六个方向都有字符，则添加到结果中
+                    if (allNeighborsHaveChars && validNeighbors.Count == 6)
+                    {
+                        result.Add((row, col, validNeighbors));
+                    }
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    // 辅助方法：检查单元格是否为空
+    private bool IsEmptyCell(List<char> layerChars)
+    {
+        // 根据你的具体实现调整空字符的判断逻辑
+        return layerChars == null || layerChars.Count == 0 || 
+               layerChars.All(c => c == '\0' || c == ' ' || c == default(char));
+    }
+
+    // 辅助方法：检查单元格是否有字符
+    private bool HasCharacter(List<char> layerChars)
+    {
+        return layerChars != null && layerChars.Count > 0 && 
+               layerChars.Any(c => c != '\0' && c != ' ' && c != default(char));
+    }
+
+    // 使用方法示例
+    private void ProcessPupaData()
+    {
+        var emptyCellsWithAllNeighbors = FindEmptyCellsWithAllNeighbors();
+        
+        Debug.Log($"找到 {emptyCellsWithAllNeighbors.Count} 个符合条件的空单元格:");
+        
+        foreach (var (row, col, neighbors) in emptyCellsWithAllNeighbors)
+        {
+            Debug.Log($"空单元格位置: ({row}, {col})");
+            Debug.Log("六个方向的邻居:");
+            foreach (var neighbor in neighbors)
+            {
+                var chars = _boardData.board[neighbor.x][neighbor.y];
+                Debug.Log($"  ({neighbor.x}, {neighbor.y}): {string.Join(", ", chars)}");
+                if (chars.Count > 1&&_pupaData==null)
+                {
+                    _pupaData = new PupaData()
+                    {
+                        position = new Vector2Int(row, col),
+                        breakProgress = 0,
+                    };
+                    
+                    PupaNeighbors = neighbors;
+                }
+            }
+        }
+    }
+
+// 如果需要，可以定义网格类型枚举
+public enum GridType
+{
+    FlatTop,    // 平顶
+    PointyTop   // 尖顶
+}
 
     #endregion
 }

@@ -8,6 +8,13 @@ using DG.Tweening;
 using Middleware;
 using Random = System.Random;
 
+public enum LevelModes
+{
+    Normal,
+    Hard,
+    ExtraHard,
+}
+
 public class HexGamePlayArea : UIWindow
 {
     [SerializeField] private GameObject GameBase;   
@@ -20,6 +27,7 @@ public class HexGamePlayArea : UIWindow
     [SerializeField] private GameObject ResetAdsObj;      
     [SerializeField] private GameObject ResetCounttxt;        
          
+    [SerializeField] private GameObject PupaProgress;       
     [SerializeField] private GameObject HintCostObj;       
     [SerializeField] private GameObject HintCounttxt;        
 
@@ -144,7 +152,6 @@ public class HexGamePlayArea : UIWindow
     {
         InitUI();
         EventDispatcher.instance.OnLetterSelected += OnLetterSelected;
-        //EventManager.OnChangeLanguageUpdateUI += InitUI;
         //EventManager.OnComboTriggerButterfly +=UseButterfly;
         EventDispatcher.instance.OnChoicePuzzleSetStatus += ChoicePuzzleSetStatus;
         EventDispatcher.instance.OnCheckShowTutorial += CheackShowTotrialEvent;
@@ -154,25 +161,11 @@ public class HexGamePlayArea : UIWindow
         boardExplorer = new WordMatrixExplorer(CurStageData.BoardSnapshot,CurStageData.GetLeftPuzzles());
         AudioManager.Instance.PlaySoundEffect("EnterStage");
         EventDispatcher.instance.TriggerChoicePuzzleSetStatus(true);
-        
         LevelPuzzleBtn.gameObject.SetActive(false);
-        //LevelPuzzleBtn.gameObject.SetActive(GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Count > 0);
         
         StartTime = DateTime.Now;
         EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
-        
-        // ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[103];
-        // if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
-        // {
-        //     useButterflyCount =AppGameSettings.MaxButterfliesPerLevel;
-        // }
-        // else
-        // {
-        //     useButterflyCount = toolInfo.count>=2? AppGameSettings.MaxButterfliesPerLevel: toolInfo.count;
-        // }
-        
         // 开始检测协程
-
         if (CurStageInfo.StageNumber <= 1)
         {
             StartCoroutine(CheckInactivity());
@@ -185,16 +178,31 @@ public class HexGamePlayArea : UIWindow
         IsUseButterfly=false;
         // 等待当前帧的所有渲染操作完成
         yield return new WaitForSeconds(0.2f);
+        switch (StageHexController.Instance.CurLevelMode)
+        {
+            case LevelModes.Normal:
+                break;
+            case LevelModes.Hard:
+                SystemManager.Instance.ShowPanel(PanelType.HardView);
+                yield return new WaitForSeconds(0.8f);
+                SystemManager.Instance.HidePanel(PanelType.HardView);
+                break;
+            case LevelModes.ExtraHard:
+                SystemManager.Instance.ShowPanel(PanelType.HardView);
+                yield return new WaitForSeconds(0.8f);
+                SystemManager.Instance.HidePanel(PanelType.HardView);
+                break;
+        }
 
         SetupGame();
-        PuzzleTipsBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=10);
-        SingleHingBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=2);
+        PuzzleTipsBtn.gameObject.SetActive(CurStageData.StageId >=10);
+        SingleHingBtn.gameObject.SetActive(CurStageData.StageId >=2);
         // 获取 RectTransform 组件
         RectTransform rectTransform = GetComponent<RectTransform>();
-        rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
+        rectTransform.offsetMin = new Vector2(0, -5); // Left 和 Bottom
         //在第7关且词语少于9个的时候可以显示横幅广告
         int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
-        if (CurStageInfo.StageNumber > 1)
+        if (CurStageInfo.StageNumber > 1&&rows<9)
         {
 #if UNITY_EDITOR 
             
@@ -218,7 +226,6 @@ public class HexGamePlayArea : UIWindow
                     Effect_Butterflys.Add(Effect_Butt);
                 }
             }
-            
             //ToolInfo toolInfo =  GameDataManager.Instance.UserData.toolInfo[103];
 
             crossPuzzleGrid.SetPuzzleBoardState(true);
@@ -354,10 +361,12 @@ public class HexGamePlayArea : UIWindow
 
         // 差异化点2：根据词语类型选择动画
         PlayPuzzleAnimation(puzzle, gridCellPositions);
+        
+        StartCoroutine(FlyPupaToPuzzle(gridCellPositions));
 
         // 禁用网格单元
         crossPuzzleGrid.RemovePuzzleFound(gridCellPositions);
-
+        
         // 差异化点3：根据游戏模式调整反馈
         PlaySelectionFeedback();
 
@@ -373,8 +382,7 @@ public class HexGamePlayArea : UIWindow
         if (CheckStageComplete())
         {
             EventDispatcher.instance.TriggerChangeTopRaycast(false);
-            yield return new WaitForSeconds(0.2f);
-            HandleStageCompletion();
+            StartCoroutine(HandleStageCompletion());
         }
         else
         {
@@ -388,6 +396,23 @@ public class HexGamePlayArea : UIWindow
         RecordPuzzleAnalytics(puzzle);
         wordErrorCount = 0;
         usetoolCount = 0;
+    }
+    
+    private IEnumerator FlyPupaToPuzzle(List<int[]> gridCellPositions)
+    {
+        if(CurStageData.PupaDatas==null) yield break;
+        
+        crossPuzzleGrid.CheckPupaleTileAnim(gridCellPositions);
+        
+        if(CurStageData.PupaDatas.breakProgress>=4)
+        {
+            ButterfliesManager.Instance.AddObtainedPupa(crossPuzzleGrid.PupatileView.transform,1,PupaProgress.gameObject.transform);
+
+            CurStageData.PupaDatas = null;
+            yield return new WaitForSeconds(0.5f);
+            crossPuzzleGrid.PupatileView.HideElement();
+            crossPuzzleGrid.PupatileView = null;
+        }
     }
     
     // 数据分析封装
@@ -416,7 +441,9 @@ public class HexGamePlayArea : UIWindow
         {
             LettersToMovePuzzleTileAnim(puzzle, positions);
         }
+        
     }
+  
 
     // 差异化点3：反馈调整
     private void PlaySelectionFeedback()
@@ -428,12 +455,14 @@ public class HexGamePlayArea : UIWindow
 
 
     // 差异化点6：完成处理
-    private void HandleStageCompletion()
+    private IEnumerator HandleStageCompletion()
     {       
-        _windowAnimator.Play("StageOver");
-        StageOverObj.gameObject.SetActive(true);
         StageHexController.Instance.CompleteStage(CurStageInfo.StageNumber);
 
+        yield return new WaitForSeconds(1.2f);
+        
+        _windowAnimator.Play("StageOver");
+        StageOverObj.gameObject.SetActive(true);
         StageHexController.Instance.ActiveTileSize = 0;
         //EventDispatcher.instance.TriggerChangeTopRaycast(false);
     }
@@ -971,8 +1000,18 @@ public class HexGamePlayArea : UIWindow
             yield return wait;
         }
     }
-   
-    
+
+    public override void Close(CloseMethod method = CloseMethod.Default)
+    {
+        base.Close(method);
+        if (crossPuzzleGrid.PupatileView != null)
+        {
+            crossPuzzleGrid.PupatileView.TileTransform.GetComponent<CanvasGroup>().DOFade(0, 0.3f);
+            crossPuzzleGrid.PupatileView.gameObject.SetActive(false);
+        }
+    }
+
+
     protected override void OnDisable()
     {
         base.OnDisable();
@@ -987,6 +1026,8 @@ public class HexGamePlayArea : UIWindow
         EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
         Effect_Butterflys.Clear();
         StageOverObj.gameObject.SetActive(false);
+        
+        Game.Ads?.HideBanner();
         //StopCoroutine(CheckInactivity());
     }
 

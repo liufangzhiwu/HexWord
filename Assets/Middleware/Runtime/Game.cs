@@ -7,22 +7,33 @@ using UnityEngine;
 
 namespace Middleware
 {
+    public enum CommonErrorType
+    {
+        LoginFail,
+        ExitPopup,
+    }
+    
     public class Game : MonoBehaviour
     {
+        public static Game self;
         public static IAds Ads { private set; get; }
         public static IAccounts Accounts { private set; get; }
         public static IAnalytics Analytics { private set; get; }
         public static IShop Shop { private set; get; }
         
-        public GameObject LoadingScreen;
-        
+        public Transform _uiRoot;
+        public CommonErrorType CurrentErrorType { private set; get; }
+
+        public static bool IsNetworkActive { private set; get; }
+
         private void Awake()
         {
+            self = this;
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
-            
          
             // StartCoroutine(ShowLoadingScreen());
+            StartCoroutine(CheckNetworkConnection());
         }
 
         public static void InitGame()
@@ -37,11 +48,11 @@ namespace Middleware
             InitManagers();
         }
 
-        IEnumerator  ShowLoadingScreen()
-        {
-            yield return new WaitForSeconds(2f);
-            LoadingScreen.gameObject.SetActive(true);
-        }
+        // IEnumerator  ShowLoadingScreen()
+        // {
+        //     yield return new WaitForSeconds(2f);
+        //     LoadingScreen.gameObject.SetActive(true);
+        // }
 
         private static void InitManagers()
         {
@@ -134,6 +145,62 @@ namespace Middleware
 #else
             return SystemInfo.deviceUniqueIdentifier;
 #endif
+        }
+        
+        private IEnumerator CheckNetworkConnection()
+        {
+            while (true)
+            {
+                bool isSuccess = false;
+                Ping ping = new Ping("8.8.8.8");
+                float timeout = 3.0f;
+                float startTime = Time.time;
+
+                // 等待Ping完成或超时
+                while (!ping.isDone && Time.time - startTime < timeout)
+                {
+                    yield return null;
+                }
+
+                // 关键修改：明确超时和成功的条件
+                if (ping.isDone && ping.time > 0 && ping.time < 2000)
+                {
+                    isSuccess = true;
+                }
+                else
+                {
+                    isSuccess = false;
+                }
+
+                // 释放Ping资源（Unity需手动销毁）
+                ping.DestroyPing();
+                ping = null;
+
+                IsNetworkActive = isSuccess;
+                Debug.Log("网络状态: " + (IsNetworkActive ? "已连接" : "未连接"));
+
+                yield return new WaitForSeconds(5);
+            }
+        }
+
+        public void ShowLoginErrorPanel()
+        {
+            if(_uiRoot == null) return;
+            
+            CurrentErrorType = CommonErrorType.LoginFail;
+            GameObject pg = Resources.Load<GameObject>("Privacy/NetErrorView");
+            GameObject ps = Instantiate(pg, _uiRoot.transform);
+            ps.SetActive(true);
+        }
+        
+        public void ShowQuitGamePanel()
+        {
+            if(_uiRoot == null) return;
+            
+            CurrentErrorType = CommonErrorType.ExitPopup;
+            GameObject pg = Resources.Load<GameObject>("Privacy/NetErrorView");
+            GameObject ps = Instantiate(pg, _uiRoot.transform);
+            ps.SetActive(true);
         }
     }
 

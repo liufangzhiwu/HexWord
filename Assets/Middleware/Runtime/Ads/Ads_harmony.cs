@@ -15,12 +15,12 @@ namespace Middleware
         private string _uniqueId;
         Define.AdKey _currentAdKey;
         
+        SignalHandler SignalHandlerObj;
+        AdsStatusSignalHandle SignalReceiveObj;
+        
         public void Init(float delay)
         {
-            var go = new GameObject("SignalHandler").AddComponent<SignalHandler>();
-            var go2 = new GameObject("SignalReceive").AddComponent<AdsStatusSignalHandle>();
-            Object.DontDestroyOnLoad(go);
-            Object.DontDestroyOnLoad(go2);
+            CreateAdsObj();
             
             UnityTimer.Delay(delay, () =>
             {
@@ -35,6 +35,24 @@ namespace Middleware
         {
             return isLoadReady;
         }
+        
+        public void DestoryAdsObj()
+        {
+            _isBannerShow = false;
+            Object.Destroy(SignalHandlerObj);
+            Object.Destroy(SignalReceiveObj);
+        }
+        
+        public void CreateAdsObj()
+        {
+            if(SignalHandlerObj!=null) return;
+            if(SignalReceiveObj!=null) return;
+            
+            SignalHandlerObj = new GameObject("SignalHandler").AddComponent<SignalHandler>();
+            SignalReceiveObj = new GameObject("SignalReceive").AddComponent<AdsStatusSignalHandle>();
+            Object.DontDestroyOnLoad(SignalHandlerObj);
+            Object.DontDestroyOnLoad(SignalReceiveObj);
+        }
 
         public void ShowReward(Define.AdKey key, Action<bool> callback)
         {
@@ -42,6 +60,9 @@ namespace Middleware
 //             callback(true);
 //             return;
 // #endif
+
+            CreateAdsObj();
+            
             _currentAdKey = key;
             _completeCallback = callback;
             _adType = AdType.Reward;
@@ -59,6 +80,9 @@ namespace Middleware
 
         public void ShowInterstitial(Action<bool> callback)
         {
+
+            CreateAdsObj();
+            
             _completeCallback = callback;
             _adType = AdType.Interstitial;
 
@@ -82,6 +106,9 @@ namespace Middleware
         
         public void ShowBanner()
         {
+
+            CreateAdsObj();
+            
             if(_isBannerShow) return;
             _isBannerShow = true;
             _adType = AdType.Banner;
@@ -105,8 +132,8 @@ namespace Middleware
 
         public void HideBanner()
         {
-            if(!_isBannerShow) return;
-            _isBannerShow = false;
+            // if(!_isBannerShow) return;
+            // DestoryAdsObj();
         }
         
         #region 通用逻辑

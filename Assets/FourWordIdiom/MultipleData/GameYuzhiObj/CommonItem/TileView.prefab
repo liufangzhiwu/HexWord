@@ -1,19 +1,18 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &1317528187833940
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 224372315449712404}
   - component: {fileID: 222740938287826892}
   - component: {fileID: 114935164267649668}
   - component: {fileID: 2722948953924820897}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: StartTile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -96,13 +95,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 224015810562823610}
   - component: {fileID: 114529545251900298}
   - component: {fileID: 6032285434932172577}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: TileView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -170,7 +168,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5249511288008018924}
   - component: {fileID: 9027127608014268952}
@@ -180,7 +178,6 @@ GameObject:
   - component: {fileID: 6708356556742075178}
   - component: {fileID: 8412465699943380706}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ChoicePuzzle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -318,13 +315,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3645249628960275242}
   - component: {fileID: 8729153282712439394}
   - component: {fileID: 6353279266023867792}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Choictext
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -398,14 +394,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2725974368741430837}
   - component: {fileID: 6698736838372465783}
   - component: {fileID: 4508083173216371352}
   - component: {fileID: 3776509523366971833}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ShowTip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -488,13 +483,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7575588475891695119}
   - component: {fileID: 1440242232986039921}
   - component: {fileID: 8777160892639876388}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -568,14 +562,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1979722902718370964}
   - component: {fileID: 1761922913740868631}
   - component: {fileID: 4834516915481494535}
   - component: {fileID: 3156748042434224388}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: TipPuzzle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -658,13 +651,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3146795758473320476}
   - component: {fileID: 7691088100739903662}
   - component: {fileID: 1357893595699252664}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -738,14 +730,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3647837571593770023}
   - component: {fileID: 7037868436358034509}
   - component: {fileID: 3610342281987601381}
   - component: {fileID: 7937509021502315635}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Choictext
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -78,9 +78,9 @@ public class RateUsScreen : UIWindow
 
     private void ShowBtnsStatic(bool isshownext)
     {
-        //closeBtn.gameObject.SetActive(!isshownext);
-        //opinionBtn.gameObject.SetActive(!isshownext);
-        //nextBtn.gameObject.SetActive(isshownext);
+        closeBtn.gameObject.SetActive(true);
+        opinionBtn.gameObject.SetActive(!isshownext);
+        nextBtn.gameObject.SetActive(isshownext);
     }
 
     protected override void InitializeUIComponents()

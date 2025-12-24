@@ -8,48 +8,23 @@ public class WordMatrixExplorer
     private HashSet<string> LevelLexicon;
     private int newDirections=-1;
 
-    // 平顶六边形网格的六个方向定义（行为偶数时）
-    private static readonly (int, int)[] HexDirectionsEven = {
-        (1, 0),    // 上
-        (0, 1),   // 右上
-        (0, -1),   // 左上
-        (-1, 0),   // 下
-        (-1, -1),  // 左下
-        (-1, 1)     // 右下
-    };
-
-    //平顶六边形网格的六个方向定义（行为奇数时）
-    private static readonly (int, int)[] HexDirectionsOdd = {
-        (1, 0),    // 上
-        (1, 1),   // 右上
-        (1, -1),  // 左上
-        (-1, 0),   // 下
-        (0, -1),   // 左下
-        (0, 1)     // 右下
-    };
-    
-    
-    // 尖顶六边形网格的六个方向定义（行为偶数时）
-    private static readonly (int, int)[] HexJianDirectionsEven = {
-        (0, -1),    // 左
-        (0, 1),   // 右
-        (1, 0),   // 右上1，0
-        (1, -1),   // 左上
-        (-1, -1),   // 左下(-1, -1),
-        (-1, 0)     // 右下（-1，0）
-    };
-
-    //尖顶六边形网格的六个方向定义（行为奇数时）
-    private static readonly (int, int)[] HexJianDirectionsOdd = {
-        (0, -1),    // 左
-        (0, 1),   // 右
-        (1, 1),   // 右上
-        (1, 0),  // 左上1，0
-        (-1, 0),  // 左下（-1，0）
-        (-1, 1)  // 右下
-    };
-
     public IdiomBlock leftBlock;
+
+    private StageInfo CurStageInfo
+    {
+        get
+        {
+            return StageHexController.Instance.CurStageInfo;
+        }
+    }
+    
+    private StageProgressData CurStageData
+    {
+        get
+        {
+            return StageHexController.Instance.CurStageData;
+        }
+    }
 
     public WordMatrixExplorer(BoardGame gameBoard, List<string> levelWords)
     {
@@ -60,9 +35,9 @@ public class WordMatrixExplorer
     public HashSet<string> ExploreWordMatrix()
     {
 
-        LevelLexicon = new HashSet<string>(StageHexController.Instance.CurStageData.GetLeftPuzzles());
+        LevelLexicon = new HashSet<string>(CurStageData.GetLeftPuzzles());
         
-        GameBoard = StageHexController.Instance.CurStageData.BoardSnapshot;
+        GameBoard = CurStageData.BoardSnapshot;
         HashSet<string> discoveredWords = new HashSet<string>();
         bool[,] visited = new bool[GameBoard.rows, GameBoard.cols];
 
@@ -86,7 +61,7 @@ public class WordMatrixExplorer
         {
             foreach (string word in LevelLexicon)
             {
-                IdiomData idiomData = StageHexController.Instance.CurStageInfo.idioms
+                IdiomData idiomData = CurStageInfo.idioms
                     .FirstOrDefault(idiom => idiom.word.Equals(word));
                 
                 string currentWord = "";
@@ -114,7 +89,7 @@ public class WordMatrixExplorer
                         
                         StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
                         
-                        List<char> cellChars = StageHexController.Instance.CurStageInfo.CurBoardData.board[leftBlock.position.x][leftBlock.position.y];
+                        List<char> cellChars = CurStageInfo.CurBoardData.board[leftBlock.position.x][leftBlock.position.y];
                         
                         int findCharCount = cellChars.FindAll(x => x == targetChar).Count;
                         
@@ -223,14 +198,14 @@ public class WordMatrixExplorer
         int parity = col % 2;
         var directions=new (int, int)[6];
             
-        if ((HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon)
+        if ((HexType)CurStageInfo.HexType == HexType.PingHexagon)
         {
-            directions = (parity == 0) ? HexDirectionsEven : HexDirectionsOdd;
+            directions = (parity == 0) ?  CurStageInfo.HexDirectionsEven : CurStageInfo.HexDirectionsOdd;
         }
         else
         {
             parity = row % 2;
-            directions = (parity == 0) ? HexJianDirectionsEven : HexJianDirectionsOdd;
+            directions = (parity == 0) ? CurStageInfo.HexJianDirectionsEven : CurStageInfo.HexJianDirectionsOdd;
         }
         
         if(newDirections!=-1)

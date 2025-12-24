@@ -28,7 +28,7 @@ public class ButterflyData
     public void InitData()
     {
         this.pupa = 0;
-        this.currPupa = 100;
+        this.currPupa = 0;
         this.currGarden = 1;
         this.intervalLv = 0;
         this.butterflies = new HashSet<int>();

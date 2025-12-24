@@ -21,8 +21,7 @@ public sealed class GameCoreManager: MonoBehaviour
     public static GameCoreManager Instance;
     
     #endregion
-     
-    [HideInInspector] public bool IsNetworkActive;
+    
     public bool IsTrueAuto;
     public GameObject AutoLevelTalbe;
 
@@ -47,6 +46,7 @@ public sealed class GameCoreManager: MonoBehaviour
 
     private void Start()
     {
+        Game.self._uiRoot=SystemManager.Instance._uiRoot;
         StartCoroutine(InitializeGameRoutine());
         //StartCoroutine(CheckNetworkConnection());
         AutoLevelTalbe.GetComponent<Toggle>().onValueChanged.AddListener(OnAutoLevelTalbeValueChanged);
@@ -115,42 +115,6 @@ public sealed class GameCoreManager: MonoBehaviour
     private void ShowPrivacyScreen()
     {
         SystemManager.Instance.ShowPanel(PanelType.PolicyView);
-    }
-    
-    private IEnumerator CheckNetworkConnection()
-    {
-        while (true)
-        {
-            bool isSuccess = false;
-            Ping ping = new Ping("8.8.8.8");
-            float timeout = 3.0f;
-            float startTime = Time.time;
-
-            // 等待Ping完成或超时
-            while (!ping.isDone && Time.time - startTime < timeout)
-            {
-                yield return null;
-            }
-
-            // 关键修改：明确超时和成功的条件
-            if (ping.isDone && ping.time > 0 && ping.time < 2000)
-            {
-                isSuccess = true;
-            }
-            else
-            {
-                isSuccess = false;
-            }
-
-            // 释放Ping资源（Unity需手动销毁）
-            ping.DestroyPing();
-            ping = null;
-
-            IsNetworkActive = isSuccess;
-            Debug.Log("网络状态: " + (IsNetworkActive ? "已连接" : "未连接"));
-
-            yield return new WaitForSeconds(5);
-        }
     }
     
     #endregion

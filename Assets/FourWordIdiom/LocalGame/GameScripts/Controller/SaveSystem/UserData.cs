@@ -390,8 +390,10 @@ public class UserData
                 return "方块消";
             case 2:
                 return "禅意拼字";
+            case 3:
+                return "六边形";
         }
-        return "方块消";
+        return "六边形";
     }
     
     /// <summary>

@@ -1,5 +1,6 @@
 using System.Collections;
 using DG.Tweening;
+using Middleware;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -14,6 +15,8 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private Button GameStageBtn;          // 开始游戏按钮
     [SerializeField] private Button ModeBtn;          // 模式选择按钮
     [SerializeField] private Animator ModeIndicator;
+    [SerializeField] private GameObject hardStageTable;          // 困难模式
+    [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
     [SerializeField] private Image logo;       // 文字类型组件
     [SerializeField] private Text Stagetxt;           // 关卡文本
     [Header("UI LimitTime")]
@@ -125,7 +128,7 @@ public class PrimaryInterface : UIWindow
     
     private void OnFishClick()
     {
-        if (GameCoreManager.Instance.IsNetworkActive)
+        if (Game.IsNetworkActive)
         {
             if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
             {
@@ -375,9 +378,38 @@ public class PrimaryInterface : UIWindow
         
         Stage=Stage==0?1:Stage;
         
+        StageHexController.Instance.CurLevelMode = GetLevelDifficulty(Stage);
+        
+        switch (StageHexController.Instance.CurLevelMode)
+        {
+            case LevelModes.Normal:
+                hardStageTable.gameObject.SetActive(false);
+                extrahardStageTable.gameObject.SetActive(false);
+                break;
+            case LevelModes.Hard:
+                hardStageTable.gameObject.SetActive(true);
+                extrahardStageTable.gameObject.SetActive(false);
+                break;
+            case LevelModes.ExtraHard:
+                hardStageTable.gameObject.SetActive(false);
+                extrahardStageTable.gameObject.SetActive(true);
+                break;
+        }
+        
         Stagetxt.text = MultilingualManager.Instance.GetString("Level")+" " + Stage;
         if(sprite != null)
             ModeBtn.GetComponent<Image>().sprite = sprite;
+    }
+    
+    LevelModes GetLevelDifficulty(int levelNumber) {
+        if (levelNumber % 5 == 0) {
+            if ((levelNumber / 5) % 2 == 1) {
+                return LevelModes.Hard;
+            } else {
+                return LevelModes.ExtraHard;
+            }
+        }
+        return LevelModes.Normal;
     }
 
     

@@ -124,6 +124,12 @@ RestorePurchasesTips01,操作超时，请检查网络链接！
 RestorePurchasesTips02,当前账号没有可恢复购买的产品
 RestorePurchasesTips03,恢复成功！
 RestorePurchasesTips04,恢复失败！
+RestorePurchasesTips05,登录游戏失败，请检查网络链接！
+ExitPopup,确定退出游戏吗？
+ExitGame,退出游戏
+LoginFail,登录失败
+RetryButton,重试
+CancelButton,取消
 UIConfirm,确定
 CarpMatchStart,开始
 CarpMatchTitle,鲤跃龙门
@@ -303,7 +309,7 @@ loadText09,脑子越转越亮，成语越消越舒畅。
 loadText10,每次连消都是木鱼轻叩，杂念顿消。
 loadText11,每天动脑30分钟，你会睡的更香。
 loadText101,——《成语消：禅意之境》
-EvaluateDes,您已解开很多个成语之谜，真是文字高手！✍️若觉得这字海探秘有趣，诚邀用★5为游戏添点墨香
+EvaluateDes,您已解开很多个成语之谜，真是文字高手！✍️若觉得这字海探秘有趣，诚邀用5★为游戏添点墨香
 EvaluateButton01,下次再说
 EvaluateButton02,关闭
 EvaluateButton03,反 馈

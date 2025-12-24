@@ -18,6 +18,7 @@ public class StageProgressData
     //单词提示列表
     public List<string> PuzzleHints = new List<string>();
     public BoardGame BoardSnapshot = new BoardGame();
+    public PupaData PupaDatas = new PupaData();
     
     public string SaveFileName;
     
@@ -29,12 +30,14 @@ public class StageProgressData
         StageId = stageInfo.StageNumber;
         Puzzles = stageInfo.Puzzles;
         BoardSnapshot = stageInfo.CurBoardData;
+        PupaDatas = stageInfo._pupaData;
     }
 
     public void InitializeFromExisting(StageProgressData sourceData)
     {
         this.StageId = sourceData.StageId;
-        Puzzles = sourceData.Puzzles;
+        this.Puzzles = sourceData.Puzzles;
+        this.PupaDatas=sourceData.PupaDatas;
         this.FoundTargetPuzzles = sourceData.FoundTargetPuzzles != null ? 
             new List<string>(sourceData.FoundTargetPuzzles) : new List<string>();
         this.CharacterHints = sourceData.CharacterHints != null ? 
@@ -206,5 +209,19 @@ public class StageProgressData
         
         return null;
     }
+    
+    /// <summary>
+    /// 更新蚕蛹碎裂进度
+    /// </summary>
+    /// <param name="progress"></param>
+    public void UpdatePupaBreakProgress(int progress)
+    {
+        if (PupaDatas == null) return;
+      
+        PupaDatas.breakProgress += progress;
+        
+        PupaDatas.breakProgress=Mathf.Clamp(PupaDatas.breakProgress,0,4);
+    }
+    
     #endregion
 }
