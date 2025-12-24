@@ -414,12 +414,11 @@ public class PrimaryInterface : UIWindow
     
     private void OnButterflyClick()
     {
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
-        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface, false, () =>
+        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
         {
             SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
         });
-        
     }
     /// <summary>
     /// 点击开始游戏按钮

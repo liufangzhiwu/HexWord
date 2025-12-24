@@ -100,7 +100,7 @@ public class DebugMenu : UIWindow
     }
     private void OnAddPupaClick()
     {
-        InputField Stagenumtxt = ShopBuyBtn.GetComponentInChildren<InputField>();
+        InputField Stagenumtxt = AddPupaBtn.GetComponentInChildren<InputField>();
         int value = int.Parse(Stagenumtxt.text);
         GameDataManager.Instance.ButterflyData.AddPupa(value);
         MessageSystem.Instance.ShowTip($"添加成功 {value} 个");

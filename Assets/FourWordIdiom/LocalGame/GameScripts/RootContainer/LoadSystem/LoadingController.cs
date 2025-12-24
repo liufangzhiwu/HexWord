@@ -27,7 +27,7 @@ public class LoadingController : MonoBehaviour
     [SerializeField] private Slider progressSlider;   // 进度条组件
      [SerializeField] private GameObject Loading;   // 进度条组件
      [SerializeField] private RectTransform rollingObject;   // 滚动的方块 (Image)
-     private float _objectRadius;    // 方块半径
+     // private float _objectRadius;    // 方块半径
     // [SerializeField] private Button AccountQuitBtn;   // 进度条组件
     //[SerializeField] private RectTransform indicatorIcon; // 进度指示图标
 
@@ -51,7 +51,7 @@ public class LoadingController : MonoBehaviour
 
     private void Start()
     {
-        _objectRadius = (rollingObject.rect.width * rollingObject.lossyScale.x) / 2f;
+        // _objectRadius = (rollingObject.rect.width * rollingObject.lossyScale.x) / 2f;
     }
 
     /// <summary>
@@ -122,7 +122,7 @@ public class LoadingController : MonoBehaviour
     {
         Loading.GetComponent<CanvasGroup>().DOFade(1, 0.1f);
 
-        float width = progressSlider.GetComponent<RectTransform>().rect.width;
+        // float width = progressSlider.GetComponent<RectTransform>().rect.width;
         RectTransform sliderBackground = progressSlider.transform.GetChild(0).GetComponent<RectTransform>();
         Vector3 localStart = new Vector3(sliderBackground.rect.xMin, 0, 0);
         Vector3 localEnd = new Vector3(sliderBackground.rect.xMax, 0, 0);

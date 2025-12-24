@@ -210,7 +210,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
             // yield return SetSliderProgress(0,targetValue,0.5f,0.3f);
         
         Transform target = processBar.transform.Find("Icon");
-        yield return  FlyPupaCoroutine(sTransform, target, call ,1.5f);
+        yield return  FlyPupaCoroutine(sTransform, target, call ,0.8f);
         
         float ratio = GameDataManager.Instance.ButterflyData.currPupa / (float)butterflyGrow.Count;
         float targetValue = Mathf.Clamp01(ratio);
@@ -237,7 +237,6 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
            var bezierMidPos = (midPos + start.position) / 2f + Vector3.right * 2;
            Vector3[] movePoints = CreateTwoCurve(start.position, endPosition, bezierMidPos).ToArray();
            bool flyover = false;
-           Debug.Log("飞了吗" + string.Join(",", movePoints));
            effect.transform.DOPath(movePoints, duration).SetEase(Ease.Linear).OnComplete(() =>
            {
                 call?.Invoke();
