@@ -16,6 +16,8 @@ public class AudioManager : MonoBehaviour
     public float normalVolume = 0.35f; // 正常音量
     public float reducedVolume = 0.1f; // 外部音频播放时的音量
     
+    private bool wasPlayingBeforePause = false;
+    
     // 声明 iOS 原生方法
 #if UNITY_IOS
     [DllImport("__Internal")]
@@ -66,8 +68,8 @@ public class AudioManager : MonoBehaviour
     
     private void Update()
     {
-        bool isExternalAudioPlaying = CheckExternalAudio();
-        musicSource.volume = isExternalAudioPlaying ? reducedVolume : normalVolume;
+        // bool isExternalAudioPlaying = CheckExternalAudio();
+        // musicSource.volume = isExternalAudioPlaying ? reducedVolume : normalVolume;
     }
     
     // 检测外部音频是否播放
@@ -201,6 +203,46 @@ public class AudioManager : MonoBehaviour
         //    audioSource.mute = volume; // 根据用户设置决定音量
         //}
     }
+    
+    
+    void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+        {
+            // 进入后台
+            wasPlayingBeforePause = musicSource.isPlaying;
+            if (wasPlayingBeforePause)
+            {
+                // 暂停但不停止，保持资源
+                PauseMusic();
+            }
+        }
+        else
+        {
+            // 回到前台
+            StartCoroutine(RestoreAudioAfterResume());
+        }
+    }
+    
+    
+    // 恢复背景音乐
+    IEnumerator RestoreAudioAfterResume()
+    {
+        // 等待一帧确保Unity系统已恢复
+        yield return null;
+        
+        // 重新初始化音频系统
+        PauseMusic();
+        
+        if (wasPlayingBeforePause && !musicSource.isPlaying)
+        {
+            // 先停止再重新播放，确保状态正确
+            musicSource.Stop();
+            yield return null;
+            PlayMusic("music");
+        }
+    }
+    
 
     // 暂停背景音乐
     public void PauseMusic()
