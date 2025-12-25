@@ -69362,8 +69362,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioSPrefab: {fileID: 97656343}
-  normalVolume: 0.35
-  reducedVolume: 0.1
 --- !u!114 &752339127
 MonoBehaviour:
   m_ObjectHideFlags: 0

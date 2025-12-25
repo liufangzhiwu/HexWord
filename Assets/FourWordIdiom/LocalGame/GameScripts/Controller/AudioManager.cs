@@ -1,33 +1,21 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance; // 单例实例
-    private Dictionary<string,AudioSource> musicClips=new Dictionary<string, AudioSource>(); // 音乐片段   
+    // 分离管理：音乐（流式）和音效（短片段）
+    private AudioSource musicSource;
+    private Dictionary<string, AudioClip> soundClipCache = new Dictionary<string, AudioClip>();
+    private List<AudioSource> activeSoundSources = new List<AudioSource>();
+    
     public AudioSource audioSPrefab; 
-    private ObjectPool audioSourcePool; 
-
-    private AudioSource musicSource; // 背景音乐音频源
+    private ObjectPool audioSourcePool;
     
-    public float normalVolume = 0.35f; // 正常音量
-    public float reducedVolume = 0.1f; // 外部音频播放时的音量
+    float normalVolume = 0.25f; // 正常音量
     
-    // 声明 iOS 原生方法
-#if UNITY_IOS
-    [DllImport("__Internal")]
-    private static extern void TriggerVibrationWithStyle(int style);
-    
-    [System.Runtime.InteropServices.DllImport("__Internal")]
-    private static extern void ConfigureAudioSession();
-
-    [System.Runtime.InteropServices.DllImport("__Internal")]
-    private static extern bool IsExternalAudioPlaying();
-#endif
-
     private void Awake()
     {
         // 确保只有一个 AudioManager 实例
@@ -36,144 +24,296 @@ public class AudioManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject); // 在场景切换时不销毁
         }
-        else
-        {
-            Destroy(gameObject); // 销毁重复的实例
-        }
 
         // 动态创建 AudioSource 组件
         musicSource = gameObject.AddComponent<AudioSource>();
         // 初始化对象池
         audioSourcePool = new ObjectPool(audioSPrefab.gameObject, ObjectPool.CreatePoolContainer(transform, "audio_pool"));
     }
-    
-    private void Start()
-    {            
-        ToggleMusic(); // 初始化音乐开关
-        //ToggleSounds(); // 初始化音效开关
 
-        Debug.Log("判断音乐开关是否开启"+GameDataManager.Instance.UserData.IsMusicOn);
-        // 如果用户设置允许音乐播放，播放默认音乐
-        if (GameDataManager.Instance.UserData.IsMusicOn) 
+    // 预加载音效
+    public IEnumerator PreloadCommonSounds(string[] soundNames)
+    {
+        foreach (var name in soundNames)
         {
-            PlayMusic("music");
-        }       
-        
-#if UNITY_IOS && !UNITY_EDITOR
-    ConfigureAudioSession();
-#endif
-    }
-    
-    private void Update()
-    {
-        bool isExternalAudioPlaying = CheckExternalAudio();
-        musicSource.volume = isExternalAudioPlaying ? reducedVolume : normalVolume;
-    }
-    
-    // 检测外部音频是否播放
-    public bool CheckExternalAudio()
-    {
-#if UNITY_IOS && !UNITY_EDITOR
-        return IsExternalAudioPlaying();
-#else
-        return false; // 非 iOS 平台直接返回 false
-#endif
-    }
-
-    private AudioSource LoadAudioClip(string clipName)
-    {
-        AudioClip clip;
-        if (!musicClips.ContainsKey(clipName))
-        {
-            clip = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", clipName);
-            AudioSource sfxSource = audioSourcePool.GetObject<AudioSource>(); // 获取 AudioSource
-            sfxSource.volume = GameDataManager.Instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
-            sfxSource.clip = clip; // 设置要播放的音效
-            musicClips.Add(clipName, sfxSource);
+            if (!soundClipCache.ContainsKey(name))
+            {
+                AudioClip clip = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", name);
+                if (clip != null)
+                {
+                    soundClipCache[name] = clip;
+                    Debug.Log($"预加载音效: {name}, 长度: {clip.length:F2}s");
+                }
+                yield return null; // 每帧加载一个，避免卡顿
+            }
         }
-        return musicClips[clipName];
     }
-
-    // 播放背景音乐
-    public void PlayMusic(string name)
+    
+    // 播放音效（支持并发）
+    public void PlaySoundEffect(string soundName)
     {
-        AudioSource clipsSource = LoadAudioClip(name); // 根据名称查找音效片段
-        if (clipsSource == null)
+        if (!soundClipCache.TryGetValue(soundName, out AudioClip clip))
         {
-            Debug.LogWarning($"音效 '{name}' 未找到。");
+            Debug.LogWarning($"音效未预加载: {soundName}");
+            clip = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", soundName);
+            soundClipCache.Add(soundName, clip);
+            //return;
+        }
+        
+        // 获取可用的AudioSource
+        AudioSource source = GetAvailableAudioSource();
+        if (source == null)
+        {
+            Debug.LogWarning("没有可用的AudioSource播放音效");
             return;
         }
-        musicSource.clip=clipsSource.clip;
-        musicSource.volume = 0.35f; // 设置要播放的音乐片段
-        musicSource.loop=true; // 播放音乐
-        musicSource.Play(); // 播放音乐
+        
+        // 设置并播放
+        source.clip = clip;
+        source.volume = GameDataManager.Instance.UserData.IsSoundOn ? normalVolume : 0;
+        source.pitch = 1;
+        source.loop = false;
+        source.Play();
+        
+        // 自动回收
+        StartCoroutine(ReleaseAudioSourceAfterPlay(source));
+    }
+    
+    private AudioSource GetAvailableAudioSource()
+    {
+        // 1. 从对象池获取
+        PoolObject poolObj = audioSourcePool.GetObject<PoolObject>();
+        if (poolObj != null)
+        {
+            AudioSource source = poolObj.GetComponent<AudioSource>();
+            activeSoundSources.Add(source);
+            return source;
+        }
+        
+        // 2. 对象池为空，检查是否有播放完毕的
+        for (int i = activeSoundSources.Count - 1; i >= 0; i--)
+        {
+            AudioSource src = activeSoundSources[i];
+            if (src != null && !src.isPlaying)
+            {
+                // 重置并重用
+                src.Stop();
+                src.clip = null;
+                return src;
+            }
+        }
+        
+        // 3. 创建新的（最后手段）
+        Debug.LogWarning("创建新的AudioSource，考虑增大对象池");
+        GameObject newObj = Instantiate(audioSPrefab.gameObject, transform);
+        AudioSource newSource = newObj.GetComponent<AudioSource>();
+        activeSoundSources.Add(newSource);
+        return newSource;
     }
 
-    // 根据名称播放音效
-    public void PlaySoundEffect(string clipName,float time=0)
+    private void OnEnable()
     {
-        AudioSource sfxSource = LoadAudioClip(clipName); // 根据名称查找音效片段
-        if (time > 0)
+        // 预加载背景音乐
+        string[] musicNames =
         {
-            AudioClip clips = sfxSource.clip;
-            sfxSource = audioSourcePool.GetObject<AudioSource>(); // 获取 AudioSource
-            sfxSource.volume = GameDataManager.Instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
-            sfxSource.clip = clips; // 设置要播放的音效
+            "music", "Button","ShowUI","Puzzle1","Puzzle2","Puzzle3" ,"Puzzle4","lianci",
+            "chongzhidaoju","EnterStage","PassStage","SignWater","ciright","xuanzhecuowu"
+        }; // 替换为实际的音乐名称
+        StartCoroutine(PreloadCommonSounds(musicNames));
+        
+        StartCoroutine(PlayMusic(1.5f)); // 初始化音乐开关
+
+        ApplyCriticalFixes();
+    }
+    
+    private void ApplyCriticalFixes()
+    {
+        
+        //修复1：确保使用正确的音频配置
+        FixAudioConfiguration();
+        
+        
+        // 修复4：监控和自动恢复
+        StartCoroutine(AudioHealthMonitor());
+    }
+    
+    private void FixAudioConfiguration()
+    {
+        // 这是最关键的一步！修正音频配置
+        AudioConfiguration config = AudioSettings.GetConfiguration();
+        
+        // 针对华为设备的特定配置
+        if (SystemInfo.deviceModel.Contains("HUAWEI"))
+        {
+            // 华为设备需要更大的缓冲区和特定的采样率
+            config.dspBufferSize = 2048;  // 非常重要！
+            config.sampleRate = 48000;    // 使用48kHz
+            config.numVirtualVoices = 16; // 减少虚拟声音
+            config.numRealVoices = 8;     // 减少真实声音
         }
         else
         {
-           
-            if (sfxSource == null)
-            {
-                Debug.LogWarning($"音效 '{clipName}' 未找到。");
-                return;
-            }
-            sfxSource.gameObject.SetActive(true);
+            config.dspBufferSize = 1024;
+            config.sampleRate = 44100;
         }
-       
-        // 从对象池中获取 AudioSource
-        sfxSource.volume = GameDataManager.Instance.UserData.IsSoundOn?0.25f:0; // 根据用户设置决定音量
-        sfxSource.Play(); // 播放音效
-        if (time > 0)
+        
+        // 应用配置
+        if (!AudioSettings.Reset(config))
         {
-            StartCoroutine(ReturnToPoolAfterPlayback(sfxSource,time));
+            Debug.Log("音频配置重置失败！");
+        }
+        else
+        {
+            Debug.Log($"音频配置: 缓冲区={config.dspBufferSize}, " +
+                      $"采样率={config.sampleRate / 1000}kHz");
         }
     }
-
-    IEnumerator ReturnToPoolAfterPlayback(AudioSource source,float time)
+    
+    
+    private IEnumerator AudioHealthMonitor()
     {
-        //int time = (int)(source.time * 1000);
-        //Debug.LogWarning("音效时长"+time);
-        yield return new WaitForSeconds(10); 
-        audioSourcePool.ReturnObjectToPool(source.GetComponent<PoolObject>()); // 将对象返回到池中
-    }      
-
-    // 切换背景音乐的播放状态
-    public void ToggleMusic()
-    {                
+        float lastCountTime = Time.time;
+        int lastFrameCount = Time.frameCount;
+        
+        while (true)
+        {
+            yield return new WaitForSeconds(0.5f); // 每500ms检查一次
+            
+            // 检查处理速度是否正常
+            float timeDelta = Time.time - lastCountTime;
+            int frameDelta = Time.frameCount - lastFrameCount;
+            
+            // 正常情况下，500ms应该处理约22帧（45FPS）
+            if (frameDelta < 10) // 如果帧数太少
+            {
+                Debug.Log($"音频处理可能被阻塞: {timeDelta:F1}s内只处理了{frameDelta}帧");
+                
+                // 应急措施：降低音质
+                StartCoroutine(EmergencyAudioRecovery());
+            }
+            
+            lastCountTime = Time.time;
+            lastFrameCount = Time.frameCount;
+        }
+    }
+    
+    private IEnumerator EmergencyAudioRecovery()
+    {
+        // 临时降低音频质量
+        QualitySettings.SetQualityLevel(0, true);
+        
+        yield return new WaitForSeconds(1.0f);
+        
+        // 恢复
+        QualitySettings.SetQualityLevel(2, true);
+    }
+    
+    private IEnumerator PlayMusic(float transitionTime = 0.1f)
+    {             
+        yield return new WaitForSeconds(transitionTime);
+        
         if (!GameDataManager.Instance.UserData.IsMusicOn)
         {
             musicSource.Stop(); // 如果音乐关闭，停止播放
         }
         else
         {
-            PlayMusic("music"); // 播放默认音乐
+            PlayBackgroundMusic("music"); // 播放默认音乐
         }
     }
     
-    /*public void Vibrate()
-    {
-#if UNITY_ANDROID
-        // Android 震动逻辑
-        Handheld.Vibrate();
-#elif UNITY_IOS
-    // iOS 震动逻辑
-    // iOS 不支持直接震动，需使用震动插件或自定义 API
-    // 使用震动插件示例
-    Vibration.Vibrate();
-#endif
-    }*/
+    public void ToggleMusic()
+    {   
+        if (!GameDataManager.Instance.UserData.IsMusicOn)
+        {
+            musicSource.Stop(); // 如果音乐关闭，停止播放
+        }
+        else
+        {
+            PlayBackgroundMusic("music"); // 播放默认音乐
+        }
+    }
 
+    private IEnumerator ReleaseAudioSourceAfterPlay(AudioSource source)
+    {
+        // 等待音频播放完成 + 额外缓冲时间
+        float waitTime = source.clip.length + 0.1f;
+        yield return new WaitForSeconds(waitTime);
+        
+        // 停止并回收
+        if (source != null && source.isPlaying)
+        {
+            source.Stop();
+        }
+        
+        // 返回对象池
+        PoolObject poolObj = source.GetComponent<PoolObject>();
+        if (poolObj != null)
+        {
+            audioSourcePool.ReturnObjectToPool(poolObj);
+            activeSoundSources.Remove(source);
+        }
+    }
+    
+    // 播放背景音乐（确保连续）
+    public void PlayBackgroundMusic(string musicName)
+    {
+        if (musicSource == null)
+        {
+            musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource.loop = true;
+            musicSource.priority = 0; // 最高优先级
+            musicSource.bypassEffects = true;
+        }
+        
+        // 异步加载但不阻塞播放
+        StartCoroutine(LoadAndPlayMusic(musicName));
+    }
+    
+    private IEnumerator LoadAndPlayMusic(string musicName)
+    {
+        // 如果当前有音乐，淡出
+        if (musicSource.isPlaying)
+        {
+            yield return StartCoroutine(FadeOut(musicSource, 0.5f));
+        }
+        
+        // 加载新音乐
+        AudioClip newMusic = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", musicName);
+        if (newMusic != null)
+        {
+            musicSource.clip = newMusic;
+            musicSource.loop = true;
+            musicSource.volume = 0; // 从0开始
+            musicSource.Play();
+            
+            // 淡入
+            yield return StartCoroutine(FadeIn(musicSource, 1.0f, normalVolume));
+        }
+    }
+    
+    private IEnumerator FadeOut(AudioSource source, float duration)
+    {
+        float startVolume = source.volume;
+        for (float t = 0; t < duration; t += Time.deltaTime)
+        {
+            source.volume = Mathf.Lerp(startVolume, 0, t / duration);
+            yield return null;
+        }
+        source.volume = 0;
+    }
+    
+    private IEnumerator FadeIn(AudioSource source, float duration, float targetVolume)
+    {
+        source.volume = 0;
+        for (float t = 0; t < duration; t += Time.deltaTime)
+        {
+            source.volume = Mathf.Lerp(0, targetVolume, t / duration);
+            yield return null;
+        }
+        source.volume = targetVolume;
+    }
+    
     public void TriggerVibration(long milliseconds = 5,int intensity=50,int iointensity=1)
     {
         //if (!GameDataManager.instance.UserData.IsVibrationOn) return;
@@ -188,62 +328,4 @@ public class AudioManager : MonoBehaviour
 //       AndroidVibration.Vibrate(milliseconds,intensity);
 // #endif
     }
-
-    // 切换音效的播放状态
-    public void ToggleSounds()
-    {
-        // 设置全局音量
-        //bool volume = SaveSystem.Instance.UserData.isSoundsOn;
-
-        //// 遍历对象池中的所有 AudioSource
-        //foreach (var audioSource in audioSourcePool)
-        //{
-        //    audioSource.mute = volume; // 根据用户设置决定音量
-        //}
-    }
-
-    // 暂停背景音乐
-    public void PauseMusic()
-    {
-        if (musicSource.isPlaying)
-        {
-            musicSource.Pause(); // 如果正在播放，暂停音乐
-        }
-    }
-
-    // 恢复背景音乐
-    public void ResumeMusic()
-    {
-        if (!musicSource.isPlaying)
-        {
-            musicSource.UnPause(); // 如果未播放，恢复音乐
-        }
-    }
-
-    // 停止背景音乐
-    public void StopMusic()
-    {
-        musicSource.Stop(); // 停止播放音乐
-    }
-    
-    private AudioSource CreateAudioSource()
-    {
-        return gameObject.AddComponent<AudioSource>(); // 创建新的 AudioSource
-    }
-
-    private void OnGetAudioSource(AudioSource source)
-    {
-        source.mute = false; // 获取时设置为不静音
-    }
-
-    private void OnReleaseAudioSource(AudioSource source)
-    {
-        source.Stop(); // 释放时停止播放
-    }
-
-    private void OnDestroyAudioSource(AudioSource source)
-    {
-        Destroy(source); // 销毁 AudioSource
-    }
-    
 }

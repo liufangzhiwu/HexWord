@@ -1006,7 +1006,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             AudioManager.Instance.PlaySoundEffect("Puzzle" + newSelectedPuzzleGrids.Count);
         }
 
-        foreach (var puzzle in selectedPuzzleGrids)
+        foreach (var puzzle in selectedPuzzleGrids.ToList())
         {
             if(!newSelectedPuzzleGrids.Contains(puzzle))
             {

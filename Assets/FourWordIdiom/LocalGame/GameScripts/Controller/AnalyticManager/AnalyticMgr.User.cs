@@ -14,7 +14,7 @@ public partial class AnalyticMgr
 
     public static void GameEnd()
     {
-        if(GameDataManager.Instance == null) return;
+        if(GameDataManager.Instance.UserData == null||Game.Analytics == null) return;
         SetLogoutProperties();
     }
 
@@ -38,13 +38,11 @@ public partial class AnalyticMgr
             { "active_day", GameDataManager.Instance.UserData.activeDayCnt},
             { "life_day", span.Days + 1},
         };
-        Game.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
+        Game.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
     }
 
     private static void SetLogoutProperties()
     {
-        if(GameDataManager.Instance.UserData == null) return;
-        
         var properties = new Dictionary<string, object>
         {
             //资源类
@@ -54,7 +52,7 @@ public partial class AnalyticMgr
             { "current_flyItem", GameDataManager.Instance.UserData.toolInfo[103].count },
             { "current_level", GameDataManager.Instance.UserData.CurrentHexStage },
         };
-        Game.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
+        Game.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
     }
     
     public static void SetCommonProperties()

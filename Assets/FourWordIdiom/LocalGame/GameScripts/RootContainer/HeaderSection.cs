@@ -56,10 +56,9 @@ public class HeaderSection : UIWindow
         SetBtn.AddClickAction(OnSetClick);
         BackBtn.AddClickAction(OnBackClick);
         ShopBtn.AddClickAction(OnShopClick);
-        if (ConfigManager.Instance.isLog)
-        {
-            GmBtn.AddClickAction(OnGmClick, "", false);
-        }
+#if Unity_ShowLog || UNITY_EDITOR
+        GmBtn.AddClickAction(OnGmClick, "", false);
+#endif
         PuzzlebookBtn.AddClickAction(OnClickPuzzleVocabulary);
         LevelPuzzleBtn.AddClickAction(OnClickStagePuzzleScreen);
     }
