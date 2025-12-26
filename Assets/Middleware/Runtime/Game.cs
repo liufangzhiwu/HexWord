@@ -34,18 +34,19 @@ namespace Middleware
          
             // StartCoroutine(ShowLoadingScreen());
             StartCoroutine(CheckNetworkConnection());
+            
+            CreateAnalytic();
+            InitManagers();
         }
+        
 
         public static void InitGame()
         {
 #if UNITY_OPENHARMONY
             CreateAd();
             CreateAccounts();
-            
 #endif
-            CreateAnalytic();
             // CreateShop();
-            InitManagers();
         }
 
         // IEnumerator  ShowLoadingScreen()
@@ -93,7 +94,7 @@ namespace Middleware
 #elif UNITY_OPENHARMONY
             Analytics = new Analytics_harmony();
 #endif
-            Analytics.Init(1.5f);
+            Analytics.Init(1f);
         }
         
         private static void CreateShop()

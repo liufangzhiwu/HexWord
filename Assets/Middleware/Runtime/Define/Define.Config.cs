@@ -41,7 +41,7 @@ namespace Middleware
         public struct Config
         {
             public const string ThinkAppId = "2c3fcbfea2ff4842b9e526a7f2e4ee64";
-            public const string ThinkServerUrl = "https://receiver.ta.thinkingdata.cn";
+            public const string ThinkServerUrl = "https://global-receiver-ta.thinkingdata.cn";
             public const string SingleObjName = "SingleObj";
         }
         

@@ -263,8 +263,8 @@ public class GameDataManager : SingletonMono<GameDataManager>
     {
         if (dataInitialized)
         {
-            //ThinkManager.instance.SetUserProperties();
             CommitGameData();
+            AnalyticMgr.GameEnd();
             Debug.Log("应用关闭，数据已保存");
         }
     }

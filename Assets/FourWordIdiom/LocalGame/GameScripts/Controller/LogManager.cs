@@ -38,8 +38,7 @@ public class LogManager : MonoBehaviour
         CreateLogFile();
         // 注册日志回调
         Application.logMessageReceived += HandleLog;   
-        
-        //Debug.unityLogger.logEnabled = !isRelease;
+
     }
 
     public void CreateLogFile()
