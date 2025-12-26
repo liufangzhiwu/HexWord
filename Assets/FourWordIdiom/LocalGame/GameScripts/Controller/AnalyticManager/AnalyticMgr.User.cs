@@ -14,13 +14,13 @@ public partial class AnalyticMgr
 
     public static void GameEnd()
     {
-        if(GameDataManager.Instance.UserData == null) return;
+        if(GameDataManager.Instance.UserData == null||Game.Analytics == null) return;
         SetLogoutProperties();
     }
 
     private static void SetLoginProperties()
     {
-        
+        _startTime = DateTime.Now;
         var span = new TimeSpan(DateTime.Now.Ticks - GameDataManager.Instance.UserData.firstLoginStamp);
         var firstLoginTime = new DateTime(GameDataManager.Instance.UserData.firstLoginStamp);
         var properties = new Dictionary<string, object>
@@ -40,12 +40,12 @@ public partial class AnalyticMgr
             { "life_day", span.Days + 1},
         };
         Game.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
+        
+        Game.Analytics?.LogEvent("ta_app_start", Define.DataTarget.Think);
     }
 
     private static void SetLogoutProperties()
     {
-        if(GameDataManager.Instance.UserData == null||Game.Analytics == null) return;
-        
         var properties = new Dictionary<string, object>
         {
             //资源类
@@ -55,7 +55,11 @@ public partial class AnalyticMgr
             { "current_flyItem", GameDataManager.Instance.UserData.toolInfo[103].count },
             { "current_level", GameDataManager.Instance.UserData.CurrentHexStage },
         };
-        Game.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
+        Game.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
+        
+        TimeSpan span = new TimeSpan(DateTime.Now.Ticks - _startTime.Ticks);
+        var outproperties = new Dictionary<string, object>(){{"#duration", span.TotalSeconds}};
+        Game.Analytics.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
     }
     
     public static void SetCommonProperties()
@@ -99,6 +103,7 @@ public partial class AnalyticMgr
         
         if (!GameDataManager.Instance.UserData.Rigister)
         {      
+            Game.Analytics.LogEvent("ta_app_install", Define.DataTarget.Think);
             Game.Analytics.LogEvent("ta_app_startFirst", Define.DataTarget.Think);
             Game.Analytics.LogEvent("register", Define.DataTarget.Think);
             GameDataManager.Instance.UserData.Rigister = true;

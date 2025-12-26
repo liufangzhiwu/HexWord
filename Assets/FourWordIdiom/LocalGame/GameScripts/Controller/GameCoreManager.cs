@@ -51,12 +51,14 @@ public sealed class GameCoreManager: MonoBehaviour
         //StartCoroutine(CheckNetworkConnection());
         AutoLevelTalbe.GetComponent<Toggle>().onValueChanged.AddListener(OnAutoLevelTalbeValueChanged);
         
-#if Unity_ShowLog
+#if Unity_ShowLog || UNITY_EDITOR
         IsTrueAuto = false;
-        AutoLevelTalbe.gameObject.SetActive(true);
+        AutoLevelTalbe.gameObject.SetActive(false);
+        Debug.unityLogger.logEnabled = true;
 #else 
         IsTrueAuto = false;
         AutoLevelTalbe.gameObject.SetActive(false);
+        Debug.unityLogger.logEnabled = false;
 #endif
         
         
