@@ -18,7 +18,7 @@ public class StageProgressData
     //单词提示列表
     public List<string> PuzzleHints = new List<string>();
     public BoardGame BoardSnapshot = new BoardGame();
-    public PupaData PupaDatas = new PupaData();
+    public PupaData PupaDatas = null;
     
     public string SaveFileName;
     
