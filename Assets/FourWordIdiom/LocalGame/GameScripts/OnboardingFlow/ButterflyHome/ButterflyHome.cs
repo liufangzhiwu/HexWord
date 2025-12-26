@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using Spine.Unity;
 using UnityEngine;
 using UnityEngine.U2D;
@@ -28,14 +29,14 @@ public class ButterflyHome : UIWindow
     [SerializeField] private float  flyInDuration = 10f;
     [SerializeField] private float circleRadiusMin = 1.5f, circleRadiusMax = 3f;
     [SerializeField] private float circleDurationMin = 0.8f, circleDurationMax = 1.2f;
-    [SerializeField] private float nextFlyMin = 4f, nextFlyMax = 8f; // 落地后多久飞下一次
+    [SerializeField] private float nextFlyMin = 2f, nextFlyMax = 8f; // 落地后多久飞下一次
     // 内部计算出的实际速度
     private float _worldFlySpeed;
     
 
     private List<ButterflyLandPoint> topPoints = new List<ButterflyLandPoint>();
     private List<ButterflyLandPoint> bottomPoints = new List<ButterflyLandPoint>();
-    
+    public Dictionary<GameObject, Coroutine> _butterflyCoroutines = new Dictionary<GameObject, Coroutine>();  // 飞行状态的协程
     private SpriteAtlas butterflyParts;
     private GameObject butterflyPrefab;  // 蝴蝶预制件
     private ObjectPool butterflyPool;
@@ -50,23 +51,20 @@ public class ButterflyHome : UIWindow
         manualBtn.AddClickAction(OnManualClick);
         collectBtn.AddClickAction(OnCollectClick);
         
-    }
-
-    protected override void Awake()
-    {
-        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflyscene");
-    }
-
-    private void Start()
-    {
-        if (butterflyPrefab == null)
+                
+        if (butterflyPrefab is null)
         {
             butterflyPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("scenehudie","Scenes_hudie03");
         }
         butterflyPool = new ObjectPool(butterflyPrefab.gameObject,ObjectPool.CreatePoolContainer(transform, "hudie_pool"), 3, PoolBehaviour.GameObject);
-        
+
+    }
+    
+    private void Start()
+    {
         // 标题
         // title.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("chinesesimplified","ui_garden_title");
+
         Canvas rootCanvas = GetComponentInParent<Canvas>();
         float worldScreenHeight = 10.0f; // 默认保底值
         if (rootCanvas != null)
@@ -82,73 +80,7 @@ public class ButterflyHome : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
-        Debug.Log("【Step 0】开始执行测试代码...");
 
-// 1. 尝试加载
-        var atlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflyparts");
-
-        if (atlas == null)
-        {
-            Debug.LogError("【Step 1 失败】LoadAtlas 返回了 null！原因：AB包没加载，或名字写错了。");
-            return; // 中断执行
-        }
-        Debug.Log($"【Step 1 成功】获取到图集对象: {atlas.name}, InstanceID: {atlas.GetInstanceID()}");
-
-// 2. 检查 Sprite Count
-        Debug.Log($"【Step 2】图集记录的 Sprite 数量: {atlas.spriteCount}");
-        if (atlas.spriteCount == 0)
-        {
-            Debug.LogError("【Step 2 警告】图集是空的！请检查 Sprite Packer Mode 设置。");
-        }
-
-// 3. 反射检查底层纹理
-        var type = typeof(UnityEngine.U2D.SpriteAtlas);
-        var method = type.GetMethod("GetTextures", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-
-        if (method == null)
-        {
-            Debug.LogError("【Step 3 失败】无法获取 GetTextures 方法，Unity API 可能有变动。");
-        }
-        else
-        {
-            Debug.Log("【Step 3】成功反射获取到方法，准备调用 Invoke...");
-            try
-            {
-                var result = method.Invoke(atlas, null);
-                if (result == null)
-                {
-                    Debug.LogError("【Step 4 致命】Invoke 返回了 null。图集底层没有任何纹理数据！");
-                }
-                else
-                {
-                    Texture2D[] textures = (Texture2D[])result;
-                    Debug.Log($"【Step 4 最终结果】底层纹理数量: {textures.Length}");
-                    foreach(var tex in textures)
-                    {
-                        Debug.Log($"  --> 发现纹理: {tex.name} (尺寸: {tex.width}x{tex.height})");
-                    }
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"【Step 4 异常】调用 Invoke 时崩溃: {e.Message}");
-            }
-        }
-        if (butterflyParts is null)
-        {
-           
-            butterflyParts = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflyparts");
-            Debug.Log("蝴蝶身体图集加载成功" + butterflyParts);
-            
-            Debug.LogWarning("图集内数量: " + butterflyParts.spriteCount);
-            Sprite[] sprites = new Sprite[butterflyParts.spriteCount];
-            
-            butterflyParts.GetSprites(sprites);   // 零 GC、零反射
-            
-            // ② 打印名称
-            foreach (var sp in sprites)
-                Debug.Log($"Atlas Sprite: {sp.name}");
-        }
         EventDispatcher.instance.OnButterflyGardenChange += ChangeGardenNotify;
         // 先展示ui
         UpdateUI();
@@ -178,7 +110,6 @@ public class ButterflyHome : UIWindow
         ButterfliesManager.Instance.ShowButterflyProcess(title.transform.GetChild(0).transform , firstInter);
         firstInter = false;
     }
-
     private void SetButtonsState(bool state = true)
     {
         backhome.interactable = state;
@@ -194,29 +125,42 @@ public class ButterflyHome : UIWindow
     {
         // 背景先删除再创建
         Destroy(transform.GetChild(0).gameObject);
-      
         GameObject go = AssetBundleLoader.SharedInstance.LoadGameObject("butterflybg", "ButterflyBg"+ GameDataManager.Instance.ButterflyData.currGarden);
         if(go == null)
             yield break;
-        
         GameObject bg = Instantiate(go, transform);
         bg.transform.SetSiblingIndex(0);
+   
         topPoints = bg.transform.Find("top")?.GetComponentsInChildren<ButterflyLandPoint>().ToList();
         bottomPoints = bg.transform.Find("bottom")?.GetComponentsInChildren<ButterflyLandPoint>().ToList();
-        // allPoints = bg.GetComponentsInChildren<ButterflyLandPoint>(includeInactive: true).ToList();
         yield return new WaitUntil(() => butterflyPool != null);
-        butterflyPool.ReturnAllObjectsToPool();
-        // bgImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("scenery"+ GameDataManager.Instance.ButterflyData.currGarden, "OnboardingFlow");
+        CleanButterfly();
+  
         // 再飞蝴蝶
         yield return FlaySelectButterfly();
     }
+
     protected override void OnDisable()
     {
         base.OnDisable();
-        butterflyPool.ReturnAllObjectsToPool();
+        CleanButterfly();
         topPoints.Clear();
         bottomPoints.Clear();
         EventDispatcher.instance.OnButterflyGardenChange -= ChangeGardenNotify;
+    }
+    
+    private void CleanButterfly()
+    {
+        foreach (var kvp in _butterflyCoroutines)
+        {
+            if (kvp.Value != null)
+            {
+                StopCoroutine(kvp.Value);
+            }
+        }
+        _butterflyCoroutines.Clear();
+        butterflyPool.ReturnAllObjectsToPool();
+        ResetAllLandPoints();
     }
     #endregion
     
@@ -273,101 +217,167 @@ public class ButterflyHome : UIWindow
         // 🔑 1. 调用 UnlockButterfly 签名
         bool allover = ButterfliesManager.Instance.UnlockButterfly(out nextGardenId,
             info => { unlockedButterfly = info; });
-        if(unlockedButterfly != null)
+        if (unlockedButterfly != null)
+        {
             UpdateUI();
-        
-        // 🔑 2. 将播放特效和飞入场景的逻辑放入协程中处理时序
-        if(unlockedButterfly != null)
+            // 🔑 2. 将播放特效和飞入场景的逻辑放入协程中处理时序
             yield return CollectAndFly(unlockedButterfly, transform.Find("FlyStartPoint"));
-        
+        }
         if (allover)
         {
             // 🔑 3. 切换场景：必须等待特效和所有逻辑完成后再进行
             if (nextGardenId is not -1)
             {
-                MessageSystem.Instance.ShowTip("当前蝶园已收集完, 即将解锁下一个场景!");
+                // MessageSystem.Instance.ShowTip("当前蝶园已收集完, 即将解锁下一个场景!");
                 GameObject GO = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyGarden");
-                GameObject scene =  Instantiate(GO, transform.parent);
+                yield return new WaitForSeconds(0.5f);
+                GameObject scene = Instantiate(GO, transform.parent);
                 ButterflyGarden garden = scene.GetComponent<ButterflyGarden>();
-                yield return new WaitForSeconds(1.5f);
-                garden.UnlockGarden(nextGardenId);
+                garden.UnlockGarden(nextGardenId, (isDone) =>
+                {
+                    SetButtonsState(true);
+                });
             }
             else
             {
                 MessageSystem.Instance.ShowTip("所有场景已解锁, 新场景正在制作中");
+                SetButtonsState(true);
             }
         }
-
+        else
+        {
+            SetButtonsState(true);
+        }
         yield return null;
-        SetButtonsState(true);
     }
 
     private IEnumerator CollectAndFly(ButterflyInfo butterflyInfo, Transform startPoint)
     {
         // 播放提示信息 (通常是同步的，但我们可以假设特效播放需要时间)
-        // MessageSystem.Instance.ShowTip("获得 " + MultilingualManager.Instance.GetString(butterflyInfo.Name,"hudie"));
+        // 🔑 模拟特效播放时间，等待特效结束 (假设 1.5 秒)
+        yield return PlayUnlockEffect(butterflyInfo);
+        
+        // 🔑 蝴蝶数量限制检查 (需要你在 ButterfliesManager 中实现 GetCurrentSceneButterflyCount 方法)
+        const int maxButterflies = 6;
+        while (_butterflyCoroutines.Count >= maxButterflies)
+        {
+            GameObject victim = _butterflyCoroutines.Keys.ElementAt(0);
+            if (_butterflyCoroutines[victim] != null)
+            {
+                StopCoroutine(_butterflyCoroutines[victim]);
+            }
+            ObjectPool.ReturnObjectToPool(victim);
+            _butterflyCoroutines.Remove(victim);
+        }
+        // 启动新协程并记录
+        GameObject butterfly = butterflyPool.GetObject(startPoint);
+        if (_butterflyCoroutines.ContainsKey(butterfly))
+        {
+            // 如果它身上还有旧协程在跑，立刻杀掉！防止旧逻辑干扰新逻辑（解决乱飞问题）
+            if (_butterflyCoroutines[butterfly] is not null)
+            {
+                StopCoroutine(_butterflyCoroutines[butterfly]);
+            }
+            // 从字典里移除这个脏数据
+            _butterflyCoroutines.Remove(butterfly);
+        }
+        butterfly.transform.position = startPoint.position;
+        butterfly.transform.rotation = Quaternion.identity;
+        butterfly.transform.localScale = Vector3.one;
+        yield return ReplacementSkin(butterfly, butterflyInfo);
+        Coroutine newRoutine = StartCoroutine(ButterflyLife(butterfly.transform, null, true));
+        _butterflyCoroutines.Add(butterfly, newRoutine);
+    }
+
+    private IEnumerator PlayUnlockEffect(ButterflyInfo butterflyInfo)
+    {
+        // 1. 加载并实例化
         GameObject gradePab = AssetBundleLoader.SharedInstance.LoadGameObject("scenehudie","UI_hudie0" + butterflyInfo.Rarity);
         GameObject gradeGo = Instantiate(gradePab, transform.parent);
-        gradeGo.GetComponentInChildren<Text>(true).text = MultilingualManager.Instance.GetString(butterflyInfo.Name,"hudie");
+        CanvasGroup nameCG = gradeGo.GetComponentInChildren<CanvasGroup>(true);
+        nameCG.alpha = 0;
+        // 设置 Canvas 排序
+        Canvas cvs = gradeGo.GetComponentInChildren<Canvas>(true);
+        if(cvs != null) cvs.sortingLayerName = "BaseEffect";
+        nameCG.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString(butterflyInfo.Name,"hudie");
         SpriteAtlas atlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflymaunal");
         gradeGo.GetComponentInChildren<Image>(true).sprite = atlas.GetSprite(butterflyInfo.ButterflyIcon);
-        gradeGo.GetComponentInChildren<Canvas>(true).sortingLayerName = "BaseEffect";
         
-        // 🔑 模拟特效播放时间，等待特效结束 (假设 1.5 秒)
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(0.8f);
+        nameCG.DOFade(1, 1.2f);
+        
+        yield return new WaitForSeconds(2.8f);
         Destroy(gradeGo);
-        // 🔑 蝴蝶数量限制检查 (需要你在 ButterfliesManager 中实现 GetCurrentSceneButterflyCount 方法)
-        const int maxButterflies = 5;
-        if (startPoint.childCount > maxButterflies)
-        {
-            ObjectPool.ReturnObjectToPool(startPoint.GetChild(0).gameObject);
-        }
-        GameObject butterfly = butterflyPool.GetObject(startPoint);
-        butterfly.transform.position = startPoint.position;
-        yield return ReplacementSkin(butterfly, butterflyInfo);
-        
-        StartCoroutine(ButterflyLife(butterfly.transform));
     }
     #endregion
     
     #region 蝴蝶飞行
 
-    private IEnumerator ReplacementSkin(GameObject butterfly, ButterflyInfo butterflyInfo)
-    {
-        butterfly.SetActive(false);
-        SpineSpriteReplacer replacer = butterfly.GetComponent<SpineSpriteReplacer>();
-        string bName = $"{butterflyInfo.ButterflyIcon}_body";
-        string wName = $"{butterflyInfo.ButterflyIcon}_wing";
-        Sprite body = butterflyParts.GetSprite(bName);
-        Sprite wing = butterflyParts.GetSprite(wName);
-        Debug.LogWarning("加载的蝴蝶块 " + bName + ":" + body +" ==== " + wName+":" + wing);
-        yield return null;
-        replacer.InitializeButterfly(body, wing);
-        butterfly.SetActive(true);
-    }
     /// <summary>
     /// 根据当前场景飞蝴蝶
     /// </summary>
     private IEnumerator FlaySelectButterfly()
     {
-        // 等待 start 方法完成
-        yield return new WaitForEndOfFrame();
-        // 获取要飞的蝴蝶, 先取当前园子内有多少种蝴蝶, 再查询拥有的蝴蝶
-        List<ButterflyInfo> currGardenButterflyInfos = ButterfliesManager.Instance.GetCurrentGardenButterflies();
-        List<ButterflyInfo> flyInfos = currGardenButterflyInfos.FindAll(p=> GameDataManager.Instance.ButterflyData.butterflies.Contains(p.Id));
-        
         Transform startPoint = transform.Find("FlyStartPoint");
-        WaitForSeconds wait = new WaitForSeconds(0.5f);
-        // 调用飞行方法
-        for (int i = 0; i < flyInfos.Count; i++)
+        // 等待 start 方法完成
+        // yield return new WaitForEndOfFrame();
+        // 获取要飞的蝴蝶, 先取当前园子内有多少种蝴蝶, 再查询拥有的蝴蝶
+        List<ButterflyInfo> allInfos = ButterfliesManager.Instance.GetCurrentGardenButterflies();
+        // 这里改成乱序，并始终有最近获得的蝴蝶存在
+        List<ButterflyInfo> ownedInfos = allInfos.FindAll(p=> GameDataManager.Instance.ButterflyData.butterflies.Contains(p.Id));
+        if (ownedInfos.Count == 0) yield break;
+        // 排序逻辑：最新获得的放在第一位，其余的乱序, 假设 ID 最大的就是最新的（或者你可以根据获得时间排序）
+        ownedInfos.Sort((a, b) => b.Id.CompareTo(a.Id));
+        List<ButterflyInfo> flyInfos = new List<ButterflyInfo>();
+        if (ownedInfos.Count > 0)
         {
-            if (i > 5) break;
-            if (i > topPoints.Count + bottomPoints.Count -2) break;
+            flyInfos.Add(ownedInfos[0]); // 把最新的先加进去
+            ownedInfos.RemoveAt(0); // 移除最新的
+        }
+        //剩下的打乱顺序 (Fisher-Yates 洗牌算法简化版)
+        System.Random rng = new System.Random();
+        int n = ownedInfos.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            (ownedInfos[k], ownedInfos[n]) = (ownedInfos[n], ownedInfos[k]);
+        }
+        flyInfos.AddRange(ownedInfos); // 合并
+        int maxSpawnCount = 6;
+        int maxPointsCount = (topPoints?.Count ?? 0) + (bottomPoints?.Count ?? 0) - 2;
+        int finalCount = Mathf.Min(flyInfos.Count, maxSpawnCount, maxPointsCount);
+        // 调用飞行方法， 最多飞6个
+        for (int i = 0; i < finalCount; i++)
+        {
             GameObject butterfly = butterflyPool.GetObject(startPoint);
-            butterfly.transform.position = startPoint.position;
             yield return ReplacementSkin(butterfly, flyInfos[i]);
-            StartCoroutine(ButterflyLife(butterfly.transform));
-            yield return wait;
+            ButterflyLandPoint point = PickRandomPointForInit(butterfly.transform);
+            // 如果没有空位，回收蝴蝶并跳过
+            if (point == null)
+            {
+                ObjectPool.ReturnObjectToPool(butterfly);
+                continue;
+            }
+            
+            point.Occupied = true;
+            point.OccupiedBy = butterfly.transform;
+            
+            butterfly.transform.localRotation = Quaternion.identity;
+            Vector3 landPos = point.transform.TransformPoint(point.GetComponent<RectTransform>().rect.center);
+            butterfly.transform.position = landPos;
+            Vector3 targetScale = GetTargetScale(point);
+            butterfly.transform.localScale = new Vector3(targetScale.x, Mathf.Abs(targetScale.y), Mathf.Abs(targetScale.z));
+            
+            // 清理旧协程记录 (防御性编程)
+            if (_butterflyCoroutines.ContainsKey(butterfly))
+            {
+                if (_butterflyCoroutines[butterfly] != null) StopCoroutine(_butterflyCoroutines[butterfly]);
+                _butterflyCoroutines.Remove(butterfly);
+            }
+            Coroutine newRoutine = StartCoroutine(ButterflyLife(butterfly.transform, point));
+            _butterflyCoroutines.Add(butterfly, newRoutine);
+            yield return null;
         }
     }
     
@@ -375,30 +385,49 @@ public class ButterflyHome : UIWindow
     /// <summary>
     /// 让蝴蝶不间断飞
     /// </summary>
-    /// <param name="butterfly"></param>
-    private IEnumerator ButterflyLife(Transform butterfly)
+    /// <param name="butterfly">蝴蝶实体</param>
+    /// <param name="isFlying">飞入场景</param>
+    private IEnumerator ButterflyLife(Transform butterfly, ButterflyLandPoint startPoint = null, bool isFlying = false)
     {
-        ButterflyLandPoint currentPt = null;
+        ButterflyLandPoint currentPt = startPoint;
         SkeletonGraphic skeletonGraphic = butterfly.GetComponent<SkeletonGraphic>();
+        if (!skeletonGraphic.IsValid)
+        {
+            skeletonGraphic.Initialize(false); 
+        }
         // 确保 Spine 混合时间，保证动作切换不卡顿
         skeletonGraphic.AnimationState.Data.DefaultMix = 0.2f;
         
         string[] anims = new[] { "idle01", "idle02", "run01" };
-        // 进入场景只飞一次
-        currentPt = PickVacantNotSameObject(butterfly, null);
-        // 占用
-        if (currentPt != null)
+        if (isFlying)
         {
-            currentPt.Occupied = true;
-            currentPt.OccupiedBy = butterfly;
-            Vector3 landPos = currentPt.transform.TransformPoint(currentPt.GetComponent<RectTransform>().rect.center);
-            skeletonGraphic.AnimationState.SetAnimation(0, anims[2], true);
-            yield return FlyEntry(butterfly, landPos, GetTargetScale(currentPt));
+            // 进入场景只飞一次
+            ButterflyLandPoint entryPt = PickVacantNotSameObject(butterfly, null);
+            if (entryPt is not null)
+            {
+                // 占用
+                entryPt.Occupied = true;
+                entryPt.OccupiedBy = butterfly;
+                Vector3 landPos = entryPt.transform.TransformPoint(entryPt.GetComponent<RectTransform>().rect.center);
+                
+                skeletonGraphic.AnimationState.SetAnimation(0, anims[2], true);
+                yield return FlyEntry(butterfly, landPos, GetTargetScale(entryPt));
+                currentPt = entryPt;
+            }
             string idleAnim = anims[UnityEngine.Random.Range(0, 2)]; // 随机选 idle01 或 idle02
             skeletonGraphic.AnimationState.SetAnimation(0, idleAnim, true);
-            
-            yield return new WaitForSeconds(UnityEngine.Random.Range(nextFlyMin, nextFlyMax));
         }
+        else
+        {
+            float finalAngleZ = UnityEngine.Random.Range(-30f, 30f); 
+            Quaternion finalRot = Quaternion.Euler(0, 0, finalAngleZ);
+            butterfly.rotation = finalRot;
+            string idleAnim = anims[UnityEngine.Random.Range(0, 2)];
+            skeletonGraphic.AnimationState.SetAnimation(0, idleAnim, true);
+        }
+        
+        float stayTime = UnityEngine.Random.Range(nextFlyMin, nextFlyMax) * 1.5f;
+        yield return new WaitForSeconds(stayTime);
         
         // 场景内无限飞
         while (true)
@@ -407,7 +436,7 @@ public class ButterflyHome : UIWindow
             ButterflyLandPoint nextPt = PickVacantNotSameObject(butterfly, currentPt);
             if (nextPt is null)
             {
-                yield return new WaitForSeconds(1.0f);
+                yield return new WaitForSeconds(1.5f);
                 continue;
             }
         
@@ -419,8 +448,8 @@ public class ButterflyHome : UIWindow
                 currentPt.Occupied = false;
                 currentPt.OccupiedBy = null;
             }
-            skeletonGraphic.AnimationState.SetAnimation(0, anims[2], true);
             // 飞过去
+            skeletonGraphic.AnimationState.SetAnimation(0, anims[2], true);
             Vector3 landPos = nextPt.transform.TransformPoint(nextPt.GetComponent<RectTransform>().rect.center);
             yield return FlyRandomArc(butterfly, landPos, GetTargetScale(nextPt));
             string animName = anims[UnityEngine.Random.Range(0,2)];
@@ -428,7 +457,10 @@ public class ButterflyHome : UIWindow
 
             currentPt = nextPt;
             // 随机间隔再飞
-            yield return new WaitForSeconds(UnityEngine.Random.Range(nextFlyMin, nextFlyMax));
+            float rawWait = UnityEngine.Random.Range(nextFlyMin, nextFlyMax) * 1.5f;
+            // 强制限制：如果计算出的时间太短，强制设为 2秒以上，解决“落地秒起飞”
+            if (rawWait < 2.0f) rawWait = 2.0f;
+            yield return new WaitForSeconds(rawWait);
         }
         yield return null;
     }
@@ -529,15 +561,18 @@ public class ButterflyHome : UIWindow
         
         // 🔑 左右摇摆：先慢→后快→先慢
         Vector3 startPos = bf.position;
-        // 记录起始缩放
-        Vector3 startScale = bf.localScale;
+        Vector3 startScale = bf.localScale;  // 记录起始缩放
         
         // 🔥 计算动态时间
         float currentDuration = GetFlexibleDuration(startPos, landPoint);
         // 计算从起点到终点的总向量
         Vector3 totalVector = landPoint - startPos;
-        // 计算垂直于飞行方向的“右”向量，用于施加摇摆偏移 (假设在XY平面飞行)
-        Vector3 rightDir = new Vector3(-totalVector.y, totalVector.x, 0).normalized;
+        Vector3 rightDir = Vector3.zero;
+        if (totalVector.sqrMagnitude > 0.001f)
+        {
+            // 计算垂直于飞行方向的“右”向量，用于施加摇摆偏移 (假设在XY平面飞行)
+            rightDir = new Vector3(-totalVector.y, totalVector.x, 0).normalized;
+        }
         
         float timer = 0;
         while (timer < currentDuration)
@@ -554,7 +589,8 @@ public class ButterflyHome : UIWindow
             if (moveDir.sqrMagnitude > 0.001f)
             {
                 float angleZ = Mathf.Atan2(moveDir.y, moveDir.x) * Mathf.Rad2Deg;
-                bf.rotation = Quaternion.Euler(0, 0, angleZ - 90f);
+                Quaternion targetRot = Quaternion.Euler(0, 0, angleZ - 90f);
+                bf.rotation = Quaternion.Slerp(bf.rotation, targetRot, Time.deltaTime * 10f);
             }
             bf.position = nextPos;
             bf.localScale = Vector3.Lerp(startScale, targetScale, easeT);
@@ -563,23 +599,23 @@ public class ButterflyHome : UIWindow
 
         // z轴在45到-135之间 精准落地
         timer = 0;
-        float landDuration = 0.5f;
+        float landDuration = 0.5f * 1.5f;
         Quaternion startRot = bf.rotation;
         float finalAngleZ = UnityEngine.Random.Range( -45f, 45f);
-        Quaternion targetRot = Quaternion.Euler(0,0,finalAngleZ);
+        Quaternion targetRotFinal = Quaternion.Euler(0,0,finalAngleZ);
         while (timer < landDuration)
         {
             timer += Time.deltaTime;
             float t = timer / landDuration;
             float smoothT = Mathf.SmoothStep(0, 1, t);
             
-            bf.rotation = Quaternion.Lerp(startRot, targetRot, smoothT);
+            bf.rotation = Quaternion.Lerp(startRot, targetRotFinal, smoothT);
             bf.position = Vector3.Lerp(bf.position, landPoint, smoothT);
             bf.localScale = Vector3.Lerp(bf.localScale, targetScale, smoothT);
             yield return null;
         }
         bf.position = landPoint;
-        bf.rotation = targetRot;
+        bf.rotation = targetRotFinal;
         bf.localScale = targetScale;
     }
     
@@ -592,7 +628,7 @@ public class ButterflyHome : UIWindow
         float dist = Vector3.Distance(start, end);
         
       
-        if (dist <= 0.001f) return 0.65f;
+        if (dist <= 0.001f) return 1f;
 
         float duration = dist / _worldFlySpeed;
         
@@ -603,9 +639,31 @@ public class ButterflyHome : UIWindow
         
         float randomFactor = UnityEngine.Random.Range(1.0f, 1.2f);
         duration *= randomFactor;
+        duration *= 1.5f;
         // 在 0.9倍时间 和 1.0倍时间 之间插值
         // 距离越近，时间越趋向于 90%；距离越远，时间趋向于 100%
-        return Mathf.Max(duration, 0.8f);
+        return Mathf.Max(duration, 1.2f);
+    }
+    // 场景初始化专用：在所有落点中随机找一个空位
+    private ButterflyLandPoint PickRandomPointForInit(Transform butterfly)
+    {
+        // 1. 创建一个临时的大列表，包含所有点
+        List<ButterflyLandPoint> allCandidates = new List<ButterflyLandPoint>();
+    
+        if (topPoints != null) allCandidates.AddRange(topPoints);
+        if (bottomPoints != null) allCandidates.AddRange(bottomPoints);
+
+        // 2. 筛选出所有“未被占用”的点
+        // 注意：这里不需要判断 currentPt，因为是刚生成，还没有当前位置
+        List<ButterflyLandPoint> vacantPoints = allCandidates.FindAll(p => !p.Occupied);
+
+        // 3. 随机取一个
+        if (vacantPoints.Count > 0)
+        {
+            return vacantPoints[UnityEngine.Random.Range(0, vacantPoints.Count)];
+        }
+
+        return null; // 没有空位了
     }
     /// <summary>
     /// 选空落点，且不与当前占用物体相同 此处先判断当前蝴蝶身上有没有落点，有落点就选对面的落点，无落点就先选top的落点
@@ -619,6 +677,10 @@ public class ButterflyHome : UIWindow
         if (currentPt is null)
         {
             candidates = GetVacantPoints(topPoints, butterfly);
+            if (hasBottom)
+            {
+                candidates.AddRange(GetVacantPoints(bottomPoints, butterfly));
+            }
         }else if (!hasBottom)
         {
             candidates = GetVacantPoints(topPoints, butterfly);
@@ -677,6 +739,32 @@ public class ButterflyHome : UIWindow
 
         // 2. 如果有 Bottom 落点，启用透视效果 (Top变小，Bottom变大)
         return (pt.area == LandArea.TOP) ? SCALE_TOP : SCALE_BOTTOM;
+    }
+    
+    private IEnumerator ReplacementSkin(GameObject butterfly, ButterflyInfo butterflyInfo)
+    {
+        butterfly.SetActive(false);
+        
+        SpineSpriteReplacer replacer = butterfly.GetComponent<SpineSpriteReplacer>();
+        Sprite body = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts", $"{butterflyInfo.ButterflyIcon}-body");
+        Sprite wing = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts", $"{butterflyInfo.ButterflyIcon}-wing");
+        
+        yield return null;
+        
+        replacer.InitializeButterfly(body, wing);
+        butterfly.SetActive(true);
+    }
+    // 强制重置所有落点状态
+    private void ResetAllLandPoints()
+    {
+        if (topPoints != null)
+        {
+            foreach (var pt in topPoints) { pt.Occupied = false; pt.OccupiedBy = null; }
+        }
+        if (bottomPoints != null)
+        {
+            foreach (var pt in bottomPoints) { pt.Occupied = false; pt.OccupiedBy = null; }
+        }
     }
     #endregion
 }

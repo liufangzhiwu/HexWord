@@ -67,6 +67,11 @@ public class PrimaryInterface : UIWindow
         ButterflyBtn.AddClickAction(OnButterflyClick);
     }
 
+    private void Start()
+    {
+        StartCoroutine(DelayLoadRoutine());
+    }
+
     /// <summary>
     /// 当对象启用时调用
     /// </summary>
@@ -452,6 +457,7 @@ public class PrimaryInterface : UIWindow
             SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
         });
     }
+    
     /// <summary>
     /// 点击开始游戏按钮
     /// </summary>
@@ -505,5 +511,20 @@ public class PrimaryInterface : UIWindow
     {
         base.OnHideAnimationEnd();
     }
+    private IEnumerator DelayLoadRoutine()
+    {
+        Debug.Log("场景启动，开始等待...");
+        
+        // 1. 延迟 3 秒 (挂起协程，不卡主线程)
+        yield return new WaitForSeconds(1.0f); 
 
+        // 2. 延迟结束，执行加载
+        Debug.Log("1秒已到，开始加载 Bundle！");
+        
+        // 调用你写的加载器
+        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflymaunal");
+        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflyscene");
+        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","Butterfly_UI");
+        AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts", "BF101-body");
+    }
 }

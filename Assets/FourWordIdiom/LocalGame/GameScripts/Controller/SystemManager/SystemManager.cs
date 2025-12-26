@@ -156,7 +156,16 @@ public class SystemManager : MonoBehaviour
     /// </summary>
     public UIWindow GetPanel(string panelName)
     {
-        return _loadedPanels.ContainsKey(panelName) ?  _loadedPanels[panelName] : null;
+        UIWindow panel;
+        if (!_loadedPanels.TryGetValue(panelName, out panel))
+        {
+            panel = LoadAndInstantiatePanel(panelName);
+            if (panel == null) return null;
+            
+            _loadedPanels.Add(panelName, panel);
+            InitializePanelInfo(panel, panelName);
+        }
+        return panel;
     }
     #endregion
 

@@ -76,7 +76,7 @@ MonoBehaviour:
   initialFlipY: 0
   startingAnimation: idle01
   startingLoop: 0
-  timeScale: 1
+  timeScale: 3
   freeze: 0
   layoutScaleMode: 0
   referenceSize: {x: 476.01593, y: 175.53937}
@@ -136,6 +136,7 @@ GameObject:
   - component: {fileID: 8792427301880074472}
   - component: {fileID: 837532586280325023}
   - component: {fileID: 8684344808923932479}
+  - component: {fileID: 8139171485622741504}
   m_Layer: 0
   m_Name: NameBg
   m_TagString: Untagged
@@ -201,6 +202,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 1
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &8139171485622741504
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1778139256094834990}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &2596972955108074662
 GameObject:
   m_ObjectHideFlags: 0
@@ -5127,7 +5140,7 @@ RectTransform:
   m_GameObject: {fileID: 3572656408575542167}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.39700854, y: 0.39700854, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4875035453705411886}
@@ -10226,7 +10239,7 @@ MonoBehaviour:
   initialFlipY: 0
   startingAnimation: idle01
   startingLoop: 0
-  timeScale: 1
+  timeScale: 2
   freeze: 0
   layoutScaleMode: 0
   referenceSize: {x: 50, y: 50}
