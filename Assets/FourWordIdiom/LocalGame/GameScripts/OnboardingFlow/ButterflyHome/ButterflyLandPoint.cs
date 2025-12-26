@@ -13,11 +13,11 @@ public class ButterflyLandPoint : MonoBehaviour
     /// <summary>
     /// 是否被占用
     /// </summary>
-    [NonSerialized] public bool Occupied = false;  // 是否被占用
+    public bool Occupied = false;  // 是否被占用
     /// <summary>
     /// 占用者
     /// </summary>
-    [NonSerialized] public Transform OccupiedBy = null;  // 占用者
+    public Transform OccupiedBy = null;  // 占用者
     /// <summary>
     /// 所属物体
     /// </summary>

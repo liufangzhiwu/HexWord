@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: -20.4, y: -0.00004078625}
-  m_SizeDelta: {x: 60, y: 100}
+  m_SizeDelta: {x: 81, y: 127}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2699094191233910344
 CanvasRenderer:
@@ -67,13 +67,13 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: e2ffff799140a4a40bac47e475027a42, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  m_UseSpriteMesh: 0
+  m_UseSpriteMesh: 1
   m_PixelsPerUnitMultiplier: 1
 --- !u!1 &518197455864599854
 GameObject:
@@ -429,7 +429,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 16, y: 46}
+  m_SizeDelta: {x: 27, y: 79}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4144202397597731414
 CanvasRenderer:
@@ -461,13 +461,13 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: 8796040d7cdb7104bb86659d0535dc65, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  m_UseSpriteMesh: 0
+  m_UseSpriteMesh: 1
   m_PixelsPerUnitMultiplier: 1
 --- !u!1 &6995346877873847504
 GameObject:
@@ -598,7 +598,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: -20.400063, y: 0.00003811717}
-  m_SizeDelta: {x: 60, y: 100}
+  m_SizeDelta: {x: 81, y: 127}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5461116190910530710
 CanvasRenderer:
@@ -630,11 +630,11 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: e2ffff799140a4a40bac47e475027a42, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  m_UseSpriteMesh: 0
+  m_UseSpriteMesh: 1
   m_PixelsPerUnitMultiplier: 1

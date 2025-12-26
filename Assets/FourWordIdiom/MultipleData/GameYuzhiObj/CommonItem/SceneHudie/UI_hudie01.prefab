@@ -76,7 +76,7 @@ MonoBehaviour:
   initialFlipY: 0
   startingAnimation: idle01
   startingLoop: 0
-  timeScale: 1
+  timeScale: 2
   freeze: 0
   layoutScaleMode: 0
   referenceSize: {x: 465.89508, y: 175.22797}
@@ -10038,7 +10038,7 @@ MonoBehaviour:
   initialFlipY: 0
   startingAnimation: idle01
   startingLoop: 0
-  timeScale: 1
+  timeScale: 2
   freeze: 0
   layoutScaleMode: 0
   referenceSize: {x: 50, y: 50}
@@ -10160,7 +10160,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  m_UseSpriteMesh: 0
+  m_UseSpriteMesh: 1
   m_PixelsPerUnitMultiplier: 1
 --- !u!1 &6721867436772329676
 GameObject:
@@ -10385,6 +10385,7 @@ GameObject:
   - component: {fileID: 2382046758799532152}
   - component: {fileID: 6036228226328110615}
   - component: {fileID: 8787649505309077964}
+  - component: {fileID: 3489229768809554251}
   m_Layer: 0
   m_Name: NameBg
   m_TagString: Untagged
@@ -10450,3 +10451,15 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 1
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &3489229768809554251
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7887436795444740842}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
