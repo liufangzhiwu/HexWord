@@ -8,7 +8,7 @@ using System.Collections.Generic;
 [Serializable]
 public class LoginRequest
 {
-    public string deviceId;
+    public string openId;
     public string platform;
     public string idfa;
     public string version;

@@ -5,6 +5,7 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 using Middleware;
+using Newtonsoft.Json;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
 using UnityEngine.Android;
@@ -70,16 +71,17 @@ public class GameDataManager : SingletonMono<GameDataManager>
     bool logoutCompleted = false;
     private bool OnWantsToQuit()
     {
-        // if (dataInitialized)
-        // {
-        //     Debug.Log("应用请求关闭，保存数据中...");
-        //     CommitGameData();
-        //     StartCoroutine(APIGateway.Instance.LoginApi.Logout(playerProfile,(res) =>
-        //     {
-        //         logoutCompleted = res;
-        //         Application.Quit();
-        //     }));
-        // }
+        if (dataInitialized)
+        {
+            Debug.Log("应用请求关闭，保存数据中...");
+            CommitGameData();
+            AnalyticMgr.GameEnd();
+            StartCoroutine(APIGateway.Instance.LoginApi.Logout(playerProfile,(res) =>
+            {
+                logoutCompleted = res;
+                Application.Quit();
+            }));
+        }
         return true;
     }
 
@@ -176,6 +178,11 @@ public class GameDataManager : SingletonMono<GameDataManager>
         }
         return false;
     }
+    
+    public void SetInitailized(bool init)
+    {
+        dataInitialized = init;
+    }
 
     // public StageProgressData RetrieveLevelProgress(StageInfo levelDetails)
     // {
@@ -213,7 +220,10 @@ public class GameDataManager : SingletonMono<GameDataManager>
         playerProfile.SaveData();
         butterfly.SaveData();
         fishUserSave.SaveData();
+        Debug.LogFormat("保存用户时的数据: {0}", JsonConvert.SerializeObject(playerProfile));
+        StartCoroutine(APIGateway.Instance.LoginApi.UpdateUserData(playerProfile));
         //leaderboardCache.SaveData();
+        
          string currentLevelId = CreateLevelIdentifier(playerProfile.CurrentHexStage);
          if (LevelProgressDict.ContainsKey(currentLevelId))
          {
@@ -226,6 +236,14 @@ public class GameDataManager : SingletonMono<GameDataManager>
              ChessLevelProgressDict[chessCurrentLevelId].SaveToFile();
          }
     }
+    
+    public void SetNewUser(UserData user)
+    {
+        if(user == null) return;
+
+        playerProfile = user;
+    }
+    
     #endregion
 
     #region 应用程序状态处理
@@ -268,8 +286,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         if (dataInitialized)
         {
             //ThinkManager.instance.SetUserProperties();
-            CommitGameData();
-            AnalyticMgr.GameEnd();
+            //CommitGameData();
             Debug.Log("应用关闭，数据已保存");
         }
     }

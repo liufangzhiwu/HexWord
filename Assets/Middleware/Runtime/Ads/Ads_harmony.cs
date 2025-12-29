@@ -27,7 +27,7 @@ namespace Middleware
                 SignalHandler.Instance.RegisterSignalDelegate<AdsLoadSignal>(OnLoadAdsTrigger);
                 SignalHandler.Instance.RegisterSignalDelegate<AdsShowSignal>(OnShowAdsTrigger);
                 SignalHandler.Instance.RegisterSignalDelegate<AdsStatusSignal>(OnAdsStatusTrigger);
-                _uniqueId = Game.GetUniqueId();
+                _uniqueId = Game.GetOAID();
             });
         }
 

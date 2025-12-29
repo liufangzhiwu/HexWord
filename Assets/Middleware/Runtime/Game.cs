@@ -137,7 +137,7 @@ namespace Middleware
             
         }
         
-        public static string GetUniqueId()
+        public static string GetOAID()
         {
 #if UNITY_OPENHARMONY
             var filePath = Path.Combine(Application.persistentDataPath, "files", "oaid.txt");
@@ -146,6 +146,11 @@ namespace Middleware
 #else
             return SystemInfo.deviceUniqueIdentifier;
 #endif
+        }
+        
+        public static string GetUniqueId()
+        {
+            return SystemInfo.deviceUniqueIdentifier;
         }
         
         private IEnumerator CheckNetworkConnection()

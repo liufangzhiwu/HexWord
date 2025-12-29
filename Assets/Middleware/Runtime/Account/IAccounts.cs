@@ -7,6 +7,10 @@ namespace Middleware
 {
     public interface IAccounts
     {
+        /// <summary>
+        /// 平台端用户唯一值
+        /// </summary>
+        public string UserId { get; set; }
         public bool IsLogin { get; set; }
         void Init(float delay);
         void Login(bool isShowLoginPanel = false);

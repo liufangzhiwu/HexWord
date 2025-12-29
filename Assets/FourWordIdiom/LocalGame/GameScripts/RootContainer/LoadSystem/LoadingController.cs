@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using DG.Tweening;
 using Middleware;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -37,6 +39,11 @@ public class LoadingController : MonoBehaviour
 
     private AsyncOperation sceneLoadOperation;        // 场景加载操作
     private float loadStartTime;                      // 加载开始时间
+    
+    
+    private LoginResponse loginResponse;       // 登录响应数据
+    private bool isLogined = false;
+    private UserData serverData;               // 服务器数据
 
     private void Awake()
     {
@@ -59,13 +66,137 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     IEnumerator InitializeLoadingProcess()
     {
+        
+        Game.InitGame();
+#if UNITY_EDITOR||UNITY_ANDROID
+        
+#elif UNITY_OPENHARMONY||UNITY_huawei
+        yield return new WaitUntil(()=>Game.Accounts.IsLogin);
+#endif
+        
+        AnalyticMgr.SetLoginUser(Game.Accounts.UserId);
+        
+        yield return new WaitForSeconds(0.05f);
+        yield return APIGateway.Instance.LoginApi.Login((res)=> 
+        {
+            if (res != null)
+            {
+                loginResponse = res as LoginResponse;
+            }
+            isLogined = true;
+        });
         yield return new WaitForSeconds(0.05f);
         loadStartTime = Time.time;
-        // InitializeLocalization();
+        
+        InitializeLocalization();
         SetupRandomLoadingHint();
         LoadWordVocabulary();
-        StartCoroutine(LoadingSequence());
+
+        yield return new WaitUntil(() => isLogined);
+        
+        
+        yield return APIGateway.Instance.LoginApi.GetUserData(LoadUserData);
+        yield return APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
+        {
+            if (res != null)
+            {
+                Debug.Log("获取用户信息成功！"+ res.uid);
+                //GameDataManager.Instance.UserData.Zenlevel = res.zen_level;
+            }
+        });
     }
+    
+    
+    // 加载数据
+    private void LoadUserData(GetGameDataResponse response)
+    {
+        
+        if (response == null)
+        {
+            Debug.Log("获取数据接口错误！，使用默认数据");
+            StartCoroutine(LoadingSequence());
+            return;
+        } 
+        if (string.IsNullOrEmpty(response.gameData))
+        {
+            Debug.Log("服务端数据不存在，初始化数据！");
+            ModifyUserWithABtest();
+            StartCoroutine(LoadingSequence());
+            return;
+        }
+        
+        serverData = JsonConvert.DeserializeObject<UserData>(response.gameData);
+        if (serverData.CurrentHexStage != GameDataManager.Instance.UserData.CurrentHexStage)
+        {
+            if (serverData.CurrentHexStage > GameDataManager.Instance.UserData.CurrentHexStage)
+            {
+                // 弹窗提示
+                Debug.Log("服务器关卡进度大于本地，默认使用服务器数据");
+                GameDataManager.Instance.UserData.InitData(serverData);
+                GameDataManager.Instance.SetInitailized(true);
+                ModifyUserWithABtest();
+                StartCoroutine(LoadingSequence());
+                Debug.Log("服务器数据同步完成！");
+            }
+            else
+            {
+                // 弹窗提示
+                Debug.Log("服务器关卡进度小于本地，默认使用本地数据");
+                ModifyUserWithABtest();
+                StartCoroutine(LoadingSequence());
+            }
+        }
+        else
+        {
+            GameDataManager.Instance.UserData.InitData(serverData);
+            GameDataManager.Instance.SetInitailized(true);
+            ModifyUserWithABtest();
+            StartCoroutine(LoadingSequence());
+            Debug.Log("服务器数据同步完成！");
+        }
+    }
+    
+    
+    // 处理ABtest数据
+    public void ModifyUserWithABtest()
+    {
+        UserData user = GameDataManager.Instance.UserData;
+        user.PlayerId = loginResponse.uid;
+        user.ABName = (string)loginResponse.abtest.GetValueOrDefault("pack_name", null);
+        try
+        {
+            Dictionary<string, object> parameterValues = new Dictionary<string, object>();
+            if (loginResponse.abtest.TryGetValue("parameter_value", out object value))
+            {
+                parameterValues = JsonConvert.DeserializeObject<Dictionary<string, object>>(value.ToString());
+            }
+            //Dictionary<string, object> parameterValues = (Dictionary<string, object>)loginResponse.abtest.GetValueOrDefault("parameter_value", new Dictionary<string, object>());
+            Type userType = typeof(UserData);
+            foreach (var kvp in parameterValues)
+            {
+                PropertyInfo prop = userType.GetProperty(kvp.Key, BindingFlags.Public | BindingFlags.Instance);
+                if (prop == null)
+                {
+                    FieldInfo field = userType.GetField(kvp.Key, BindingFlags.Public | BindingFlags.Instance);
+
+                    if (field != null)
+                    {
+                        field.SetValue(user, Convert.ChangeType(kvp.Value, field.FieldType));
+                    }
+                }
+                else
+                {
+                    object convertedValue = Convert.ChangeType(kvp.Value, prop.PropertyType);
+                    prop.SetValue(user, convertedValue, null);
+                }
+            }
+        }catch(Exception ex)
+        {
+            Debug.LogError("ABtest参数解析失败！"+ ex.Message);
+        }
+        GameDataManager.Instance.SetNewUser(user);
+    }
+
 
     /// <summary>
     /// 初始化本地化系统
@@ -100,13 +231,6 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator LoadingSequence()
     {
-        Game.InitGame();
-#if UNITY_EDITOR||UNITY_ANDROID
-        
-#elif UNITY_OPENHARMONY||UNITY_huawei
-        yield return new WaitUntil(()=>Game.Accounts.IsLogin);
-#endif
-
         // 并行执行模拟加载和实际加载
         yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());

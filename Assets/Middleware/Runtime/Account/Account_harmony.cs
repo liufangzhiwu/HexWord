@@ -5,13 +5,16 @@ using UnityEngine.UI;
 using OpenHarmonyKits.Param;
 using UnityEditor;
 using System;
+using System.Collections.Generic;
 using Middleware;
+using Newtonsoft.Json;
 
 namespace Middleware
 {
     
 public class Account_harmony : IAccounts
 {
+    public string UserId { get; set; }
     public bool IsLogin { get; set; } = false;
     string teamPlayerId = string.Empty;
     string thirdOpenId="";
@@ -85,11 +88,19 @@ public class Account_harmony : IAccounts
 
     public void SavePlayer()
     {
+        
+        if (!IsLogin)
+        {
+            Debug.LogError("请先登录再保存玩家信息");
+            return;
+        }
+        
         var gSKPlayerRole = new GSKPlayerRole();
-        // gSKPlayerRole.roleId = roleId;
+        //gSKPlayerRole.roleId = roleId;
         // gSKPlayerRole.roleName = roleName;
         OHSDKKitManager.Instance.SavePlayerInfo(gSKPlayerRole);
     }
+
 
     public void LoginBind()
     {
@@ -115,7 +126,7 @@ public class Account_harmony : IAccounts
     {
         var thirdUserInfo = new ThirdUserInfo();
         thirdUserInfo.thirdOpenId = thirdOpenId;
-        thirdUserInfo.isRealName = false;
+        thirdUserInfo.isRealName = true;
         OHSDKKitManager.Instance.VerifyCheck(thirdUserInfo);
     }
 
@@ -153,6 +164,7 @@ public class Account_harmony : IAccounts
     }
 
     /// <summary>
+    /// 更新游戏玩家信息
     /// messageType
     /// 0:GamePackageInfo
     /// 1:GameConfigInfo
@@ -163,7 +175,33 @@ public class Account_harmony : IAccounts
     public void UpdateGameInfo()
     {
         OHGameConfigInfoParam gameConfigInfo = new OHGameConfigInfoParam();
-
+        gameConfigInfo.messageType = 4;
+        
+        // // 其他自定义游戏数据（可扩展）
+        // // 可以通过extra字段保存JSON格式的自定义数据
+        // Dictionary<string, object> extraData = new Dictionary<string, object>
+        // {
+        //     { "achievements", GetAchievementCount() },
+        //     { "rank", GetPlayerRank() },
+        //     { "playTime", GetTotalPlayTime() },
+        //     { "equipmentLevel", GetEquipmentLevel() },
+        //     // ... 其他自定义数据
+        // };
+        //
+        // // 如果有额外数据，序列化为JSON
+        // if (extraData.Count > 0)
+        // {
+        //     string extraJson = JsonConvert.SerializeObject(extraData);
+        //     // 如果GSKPlayerRole有extra字段
+        //     gameConfigInfo.extra = extraJson;
+        // }
+        //
+        // Debug.Log($"上传角色信息: ID={gSKPlayerRole.roleId}, 名称={gSKPlayerRole.roleName}, 等级={gSKPlayerRole.roleLevel}");
+        // OHSDKKitManager.Instance.SavePlayerInfo(gSKPlayerRole);
+        
+       
+       
+       
         OHSDKKitManager.Instance.UpdateGameInfo(gameConfigInfo);
     }
 
@@ -187,6 +225,7 @@ public class Account_harmony : IAccounts
         {
             LoginSignal targetSignal = (LoginSignal)signal;
             teamPlayerId = targetSignal.localPlayer.teamPlayerId;
+            UserId=targetSignal.localPlayer.gamePlayerId;
             IsLogin = true;
             Debug.Log("Login Success" + "\n "
                 + "authorizationCode :" + targetSignal.authorizationCode + "\n "
@@ -282,6 +321,7 @@ public class Account_harmony : IAccounts
         if (!signal.hasError())
         {
             SavePlayerRoleSignal targetSignal = (SavePlayerRoleSignal)signal;
+            targetSignal.roleId= teamPlayerId;
             Debug.Log("SavePlayer Success" + "\n "
                 + "roleId : " + targetSignal.roleId + "\n "
                 + "roleName : " + targetSignal.roleName + "\n ");
