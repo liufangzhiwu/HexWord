@@ -78,7 +78,7 @@ namespace Middleware
             _isLoadingReward = true;
             _currentAdKey = key;
                  
-            RewardAd ad = new RewardAd(new Context(), GetAdId(key));
+            RewardAd ad = new RewardAd(new Context(), "g76o3ir936");
             ad.setMobileDataAlertSwitch(false);
             AdParam adParam = new AdParam.Builder().build();
             
@@ -94,7 +94,7 @@ namespace Middleware
 #endif
             _completeCallback = callback;
             InterstitialAd ad = new InterstitialAd(new Context());
-            ad.setAdId(GetAdId(Define.AdKey.InterstitialAdId));
+            ad.setAdId("v8iv8ucy62");
             ad.setAdListener(new MAdListener(ad, _completeCallback));
             ad.loadAd(new AdParam.Builder().build());
         }
@@ -130,10 +130,10 @@ namespace Middleware
             switch (key)
             {
                 case Define.AdKey.InterstitialAdId:
-                    adId = Define.ConfigAndroid.TestInterstitialAdId;
+                    adId = Define.ConfigHuaweiAndroid.TestInterstitialAdId;
                     break;
                 default:
-                    adId = Define.ConfigAndroid.TestRewardAdId;
+                    adId = Define.ConfigHuaweiAndroid.TestRewardAdId;
                     break;
             }
             return adId;
