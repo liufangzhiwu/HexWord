@@ -6,7 +6,7 @@ using UnityEngine;
 public partial class AnalyticMgr
 {
     #region 进度相关
-    private static DateTime _startTime;
+    private static DateTime? _startTime;
     public static void GameStart()
     {
         SetLoginProperties();
@@ -21,7 +21,7 @@ public partial class AnalyticMgr
     private static void SetLoginProperties()
     {
         _startTime = DateTime.Now;
-        var span = new TimeSpan(DateTime.Now.Ticks - GameDataManager.Instance.UserData.firstLoginStamp);
+        var span = new TimeSpan(_startTime.Value.Ticks - GameDataManager.Instance.UserData.firstLoginStamp);
         var firstLoginTime = new DateTime(GameDataManager.Instance.UserData.firstLoginStamp);
         var properties = new Dictionary<string, object>
         {
@@ -57,9 +57,16 @@ public partial class AnalyticMgr
         };
         Game.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
         
-        TimeSpan span = new TimeSpan(DateTime.Now.Ticks - _startTime.Ticks);
-        var outproperties = new Dictionary<string, object>(){{"#duration", span.TotalSeconds}};
-        Game.Analytics.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
+        //处理异常，确保_startTime有值
+        if (!_startTime.HasValue)
+        {
+            _startTime = DateTime.Now;
+        }
+        TimeSpan span = new TimeSpan(DateTime.Now.Ticks - _startTime.Value.Ticks);
+        float durationSeconds = Math.Max(0, (float)span.TotalSeconds); // 确保非负
+        
+        var outproperties = new Dictionary<string, object>(){{"#duration", durationSeconds.ToString("0.00")}};
+        Game.Analytics?.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
     }
     
     public static void SetCommonProperties()
