@@ -60,8 +60,7 @@ public sealed class GameCoreManager: MonoBehaviour
         AutoLevelTalbe.gameObject.SetActive(false);
         Debug.unityLogger.logEnabled = false;
 #endif
-        
-        
+
     }
     
     private void OnAutoLevelTalbeValueChanged(bool ison)

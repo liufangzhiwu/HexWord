@@ -398,7 +398,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    private void OnBuyButtonClicked(ShopDataItem data)
+    private async void OnBuyButtonClicked(ShopDataItem data)
     {
         //todo 打开loading界面
         Game.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
@@ -447,6 +447,13 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
         
         AnalyticMgr.Purchase(shopDataItem.GetProduceName(), item.IsoCurrencyCode, item.LocalizedPrice, items);
+        MessageSystem.Instance.ShowTip("购买成功！");
+
+        //UIController.Instance.SubmitPayment((int)product.price);
+
+        //AdjustManager.Instance.SendPurchaseEvent();
+        // 处理购买成功后的逻辑，例如增加游戏内货币
+        item?.OnShipmentCompleted(true);
     }
     private void OnPurchaseFailed(string error)
     {
@@ -491,8 +498,6 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             ShopManager.shopManager.UpdateAdsBtnUIEvent(null,true);
         }
     }
-
-
 
     private Sprite LoadShopIcon(string showIcon)
     {

@@ -60,7 +60,7 @@ public class PrivacyScreen : UIWindow
     public void ShowGamePanel()
     {
         StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
-        SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
+        SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
     }
 
     public override void OnHideAnimationEnd()

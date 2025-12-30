@@ -1,5 +1,4 @@
-﻿#if ANDROID_huawei
-using System;
+﻿using System;
 using HuaweiService;
 using HuaweiService.IAP;
 using UnityEngine;
@@ -22,6 +21,7 @@ namespace Middleware
                 var callback = new IapCallback();
                 callback.setCallback(OnActivityResultCallback);
                 IapActivity.setCallback(callback);
+               
             });
         }
 
@@ -224,4 +224,3 @@ namespace Middleware
         }
     }
 }
-#endif

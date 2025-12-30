@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.HuaweiAppGallery;
 
 namespace Middleware
 {
@@ -32,6 +33,8 @@ namespace Middleware
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
          
+            
+            HuaweiGameService.AppInit();
             // StartCoroutine(ShowLoadingScreen());
             StartCoroutine(CheckNetworkConnection());
             
