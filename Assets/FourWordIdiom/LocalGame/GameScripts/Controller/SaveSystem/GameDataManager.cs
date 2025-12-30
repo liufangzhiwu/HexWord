@@ -276,6 +276,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         if (isPaused && dataInitialized)
         {
             CommitGameData();
+            AnalyticMgr.GameEnd();
             Debug.Log("应用暂停，数据已保存");
           
         }

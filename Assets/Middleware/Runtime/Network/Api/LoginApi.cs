@@ -27,8 +27,15 @@ public class LoginApi
         // }
         
         string openId = GameDataManager.Instance.UserData.UserId;
+        string factory = "huawei";
+        
+#if UNITY_huawei
+        factory = "huawei";
+#endif
+        
         var data = new LoginRequest
         {
+            factory = factory,
             openId = openId,
             platform = Application.platform.ToString(),
             version = Application.version ?? "1.0.0",

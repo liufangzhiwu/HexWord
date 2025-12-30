@@ -64,7 +64,7 @@ public class LoadingController : MonoBehaviour
     [SerializeField] private Slider progressSlider;   // 进度条组件
      [SerializeField] private GameObject Loading;   // 进度条组件
      [SerializeField] private RectTransform rollingObject;   // 滚动的方块 (Image)
-     // private float _objectRadius;    // 方块半径
+     private float _objectRadius;    // 方块半径
     // [SerializeField] private Button AccountQuitBtn;   // 进度条组件
     //[SerializeField] private RectTransform indicatorIcon; // 进度指示图标
 
@@ -91,6 +91,11 @@ public class LoadingController : MonoBehaviour
         StartCoroutine(InitializeLoadingProcess());
     }
 
+    private void Start()
+    {
+        _objectRadius = (rollingObject.rect.width * rollingObject.lossyScale.x) / 2f;
+    }
+
 
     /// <summary>
     /// 初始化加载流程
@@ -98,14 +103,33 @@ public class LoadingController : MonoBehaviour
     IEnumerator InitializeLoadingProcess()
     {
         
+#if UNITY_OPENHARMONY
+        if (!UIUtilities.isEditMode)
+        {
+            //初始化商店、广告、登录
+            Game.InitGame();
+            yield return new WaitUntil(()=>Game.Accounts.IsLogin);
+            //设置登录用户ID
+            AnalyticMgr.SetLoginUser(Game.Accounts.UserId);
+        }
+#elif UNITY_huawei
+
+        if (!UIUtilities.isEditMode)
+        {
+             Debug.Log($"进入初始化游戏服务流程");
+        //初始化游戏服务 
+        yield return InitializeGameService();
+        // 初始化商店(需要等待游戏服务完成后)
         Game.InitGame();
-#if UNITY_EDITOR||UNITY_ANDROID
-        
-#elif UNITY_OPENHARMONY||UNITY_huawei
-        yield return new WaitUntil(()=>Game.Accounts.IsLogin);
-#endif
-        
+        yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
+        // 登录开始
+        yield return LoadHuaweiGameLogin();
+        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
+        //设置登录用户ID（需要等待游戏数据获取后）
         AnalyticMgr.SetLoginUser(Game.Accounts.UserId);
+        }
+       
+#endif
         
         yield return new WaitForSeconds(0.05f);
         yield return APIGateway.Instance.LoginApi.Login((res)=> 
@@ -261,15 +285,6 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator LoadingSequence()
     {
-        yield return InitializeGameService();
-        yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
-
-        Game.InitGame();
-
-#if UNITY_OPENHARMONY
-        yield return new WaitUntil(()=>Game.Accounts.IsLogin);
-#endif
-
         // 并行执行模拟加载和实际加载
         yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
@@ -284,6 +299,7 @@ public class LoadingController : MonoBehaviour
         if (_retryAttempt >= MAX_RETRIES)
         {
             _flowStatus = GameFlowStatus.InitFailed;
+            Debug.LogError($"初始化游戏服务失败,并退出游戏");
             Application.Quit();
             yield break;
         }
@@ -294,10 +310,14 @@ public class LoadingController : MonoBehaviour
         {
             _flowStatus = GameFlowStatus.InitFailed;
             StartCoroutine(RetryAfterDelay(RETRY_DELAY));
+            Debug.LogError($"初始化游戏服务失败，重试次数：{_retryAttempt}");
         }));
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.CheckingUpdate);
+        Debug.LogError($"进入检查更新流程");
         HuaweiGameService.CheckUpdate(new CheckUpdateListener(statusSetter));
+        Debug.LogError($"检查更新流程完成");
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.LoggingIn);
+        Debug.LogError($"进入登录流程");
     }
     
     // 助手协程：用于在重试前等待一段时间
@@ -309,6 +329,7 @@ public class LoadingController : MonoBehaviour
         // 🔑 关键：重新启动初始化流程
         StartCoroutine(InitializeGameService());
     }
+    
     /// <summary>
     /// 模拟加载进度（确保最小加载时间）
     /// </summary>
@@ -316,19 +337,29 @@ public class LoadingController : MonoBehaviour
     {
         Loading.GetComponent<CanvasGroup>().DOFade(1, 0.1f);
 
-        // float width = progressSlider.GetComponent<RectTransform>().rect.width;
+        float width = progressSlider.GetComponent<RectTransform>().rect.width;
         RectTransform sliderBackground = progressSlider.transform.GetChild(0).GetComponent<RectTransform>();
         Vector3 localStart = new Vector3(sliderBackground.rect.xMin, 0, 0);
         Vector3 localEnd = new Vector3(sliderBackground.rect.xMax, 0, 0);
         
+        Vector3 worldStart = sliderBackground.TransformPoint(localStart);
+        Vector3 worldEnd = sliderBackground.TransformPoint(localEnd);
+
+        float startY = rollingObject.position.y;
+        
         float elapsedTime = 0;
         float progress = 0;
-
+        
         while (progress < 1f)
         {
             elapsedTime = Time.time - loadStartTime;
             progress = Mathf.Clamp01(elapsedTime / 2f);
-            UpdateProgressDisplay(progress);
+            
+            progressSlider.value = progress;
+            Vector3 currentPos = Vector3.Lerp(worldStart, worldEnd, progress);
+            currentPos.y = startY;
+            rollingObject.position = currentPos;
+            rollingObject.localEulerAngles = new Vector3(0, 0, -progress * 360f);
             yield return null;
         }
         Loading.GetComponent<CanvasGroup>().DOFade(0, 0.1f);
@@ -359,11 +390,7 @@ public class LoadingController : MonoBehaviour
 
         yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
             "effectsitemmats",
-            "Circle");         
-        
-        // 登录开始
-        yield return LoadHuaweiGameLogin();
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
+            "Circle");       
         
         //预加载关卡文件
          StageHexController.Instance.LoadPackInfos();
@@ -380,11 +407,11 @@ public class LoadingController : MonoBehaviour
         {
             HuaweiGameService.Login(new SilentLoginListener(statusSetter));
         }
-        MessageSystem.Instance.ShowTip("登录完成, 当前状态" + _flowStatus );
+        Debug.Log("登录完成, 当前状态" + _flowStatus );
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GetGamePlayer);
         Player _player = null;
         HuaweiGameService.GetGamePlayer(new GetGamePlayerListener(statusSetter, player=> _player = player));
-        MessageSystem.Instance.ShowTip("获取用户信息, 当前状态" + _flowStatus );
+        Debug.Log("获取用户信息, 当前状态" + _flowStatus );
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GamePlayerSave);
         AppPlayerInfo appPlayerInfo = new AppPlayerInfo();
         appPlayerInfo.Rank = "test rank";
@@ -393,8 +420,11 @@ public class LoadingController : MonoBehaviour
         appPlayerInfo.Sociaty = "sociaty";
         appPlayerInfo.PlayerId = _player.PlayerId;
         appPlayerInfo.OpenId = _player.OpenId;
+        Game.Accounts.UserId = _player.OpenId;
+        
+        Debug.LogFormat("登录华为安卓用户时的数据: {0}", JsonConvert.SerializeObject(appPlayerInfo));
         HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));
-        MessageSystem.Instance.ShowTip("数据上报完成, 当前状态" + _flowStatus );
+        Debug.Log("数据上报完成, 当前状态" + _flowStatus );
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
     }
     private void LoadFont()

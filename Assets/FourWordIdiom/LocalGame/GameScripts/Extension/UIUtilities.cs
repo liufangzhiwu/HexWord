@@ -382,5 +382,7 @@ public static class UIUtilities
         SaveTextureToFile(screenshot, filePath);
         UnityEngine.Object.Destroy(screenshot);
     }
+    
+    public static bool isEditMode => Application.isEditor;
   
 }

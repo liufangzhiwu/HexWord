@@ -34,7 +34,9 @@ namespace Middleware
             gameObject.AddComponent<UnityTimer>();
          
             
+#if UNITY_huawei&&!UNITY_EDITOR
             HuaweiGameService.AppInit();
+#endif
             // StartCoroutine(ShowLoadingScreen());
             StartCoroutine(CheckNetworkConnection());
             
@@ -45,10 +47,13 @@ namespace Middleware
 
         public static void InitGame()
         {
-#if UNITY_OPENHARMONY
+#if UNITY_EDITOR
+            
+#elif UNITY_OPENHARMONY||UNITY_huawei
             CreateAd();
             CreateAccounts();
 #endif
+           
             CreateShop();
         }
 
@@ -69,10 +74,17 @@ namespace Middleware
         
         private static void CreateAccounts()
         {
-#if UNITY_OPENHARMONY
-            Accounts = new Account_harmony();
+            
+#if UNITY_ANDROID
+            Accounts = new Account_android();
+#elif UNITY_huawei
+            Accounts = new Account_huaweiandroid();
             Accounts.Init(0.2f);
+#elif UNITY_OPENHARMONY
+            Accounts = new Account_harmony();
+           
 #endif
+            Accounts.Init(0.2f);
         }
     
         private static void CreateAd()

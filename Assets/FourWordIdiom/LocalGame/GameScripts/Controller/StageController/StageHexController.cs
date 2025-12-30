@@ -246,6 +246,9 @@ public class StageHexController
 
         // 更新任务
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedPassLevel, 1);
+        
+        //提交游戏数据
+        GameDataManager.Instance.CommitGameData();
     }
 
     /// <summary>

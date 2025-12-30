@@ -130,10 +130,10 @@ namespace Middleware
             switch (key)
             {
                 case Define.AdKey.InterstitialAdId:
-                    adId = Define.ConfigAndroid.TestInterstitialAdId;
+                    adId = Define.ConfigHuaweiAndroid.TestInterstitialAdId;
                     break;
                 default:
-                    adId = Define.ConfigAndroid.TestRewardAdId;
+                    adId = Define.ConfigHuaweiAndroid.TestRewardAdId;
                     break;
             }
             return adId;

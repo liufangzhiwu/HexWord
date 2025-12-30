@@ -1236,7 +1236,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
         if (selectedPuzzleGrids.Count > 0)
         {
-            foreach (var puzzle in selectedPuzzleGrids)
+            foreach (var puzzle in selectedPuzzleGrids.ToList())
             {
                 if(!newSelectedPuzzleGrids.Contains(puzzle))
                 {
