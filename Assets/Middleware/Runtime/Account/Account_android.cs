@@ -1,4 +1,4 @@
-#if UNITY_huawei
+#if UNITY_ANDROID
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;

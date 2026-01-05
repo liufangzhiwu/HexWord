@@ -225,9 +225,9 @@ public class PrimaryInterface : UIWindow
     private void CheckButtonsIsOpen()
     {
         //HeadBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
-        TasksBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage>= AppGameSettings.UnlockRequirements.DailyMissions);
+        TasksBtn.transform.parent.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage>= AppGameSettings.UnlockRequirements.DailyMissions);
         
-        LimitTimeBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
+        LimitTimeBtn.transform.parent.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
         ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime));
         
         SignInBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.SignInRewards
