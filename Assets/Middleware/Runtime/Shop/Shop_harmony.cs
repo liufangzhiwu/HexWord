@@ -26,7 +26,11 @@ namespace Middleware
         //AutoRenewable produccts List
         string[] m_storeAutoRenewableIDList = { };
 
-        private Action<ProductItem> buySuccessAction;
+        public Action<ProductItem> buySuccessAction;
+        /// <summary>
+        /// 恢复购买成功事件
+        /// </summary>
+        //public Action<ProductItem> RestoreSuccessAction;
         Action<string> buyFailedAction;
         
         bool InitSucceed = false;
@@ -170,9 +174,10 @@ namespace Middleware
             {
                 IAP_InitSignal targetSignal = (IAP_InitSignal)signal;
                 Debug.Log("[IAPInit Success]" + "\n" + targetSignal.successMessage);
-                QuerySubscription();
+                //QuerySubscription();
                 QueryConsumable();
-                QueryUnconsumable();
+                //QueryUnconsumable();
+                ConfirmCheckPurchase();
                 InitSucceed=true;
             }
             else
@@ -224,11 +229,22 @@ namespace Middleware
 
             Debug.Log("the purchaseResult" + purchaseResult);
             Debug.Log("[StartPurchase Success]" + "\n" + purchaseResult);
+            
+            ProductItem productItem = new ProductItem
+            {
+                IsoCurrencyCode = targetSignal.purchaseOrderPayload.currency,
+                ProductId = targetSignal.purchaseOrderPayload.productId,
+                LocalizedPrice = targetSignal.purchaseOrderPayload.price,
+            };
+            
+            buySuccessAction?.Invoke(productItem);
         }
         else
         {
             Debug.Log("[StartPurchase Error ] " + "\n "
               + "Code : " + signal.code + " \n Message : " + signal.message + "\n");
+            
+            buyFailedAction?.Invoke(purchaseResult);
         }
 
     }
@@ -291,12 +307,25 @@ namespace Middleware
                     // }
 
                     Debug.Log("purchaseToken: " + purchaseData.purchaseToken + "\n purchaseOrderId: " + purchaseData.purchaseOrderId + "\n");
+                    
+                    ProductItem productItem = new ProductItem
+                    {
+                        IsoCurrencyCode = purchaseData.currency,
+                        ProductId = purchaseData.productId,
+                        LocalizedPrice = purchaseData.price,
+                    };
+            
+                    //buySuccessAction?.Invoke(productItem);
+
+                    ShopManager.shopManager.OnPurchaseSuccess(productItem);
                 }
             }
             else
             {
                 Debug.Log("No purchase data available.\n");
             }
+            
+            ConfirmFinishPurchase();
         }
         else
         {
@@ -350,10 +379,10 @@ namespace Middleware
         // {
         //     queryPurchasesParameter.productType = ProductType.AUTORENEWABLE;
         // }
-
+        
+        queryPurchasesParameter.productType = ProductType.CONSUMABLE;
         queryPurchasesParameter.queryType = PurchaseQueryType.ALL;
         OHSDKKitManager.Instance.CheckPurchase(queryPurchasesParameter);
-        
     }
 
     private void ConfirmFinishPurchase()

@@ -13,7 +13,7 @@ public partial class AnalyticMgr
         {
             {"pop_name",popName},
         }; 
-        Game.Analytics.LogEvent("Pop_up", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("Pop_up", properties, Define.DataTarget.Think);
 
     }
     
@@ -27,7 +27,7 @@ public partial class AnalyticMgr
         {
             {"pop_name",popName},
         }; 
-        Game.Analytics.LogEvent("Pop_accept", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("Pop_accept", properties, Define.DataTarget.Think);
 
     }
     
@@ -41,7 +41,7 @@ public partial class AnalyticMgr
         {
             {"pop_name",popName},
         }; 
-        Game.Analytics.LogEvent("Pop_refuse", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("Pop_refuse", properties, Define.DataTarget.Think);
 
     }
     
@@ -54,7 +54,7 @@ public partial class AnalyticMgr
             {"bugType",popName},
             {"bugContent",bugContent},
         }; 
-        Game.Analytics.LogEvent("Bug_record", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("Bug_record", properties, Define.DataTarget.Think);
 
     }
     
@@ -68,7 +68,7 @@ public partial class AnalyticMgr
             {"task_id",taskId},
             {"task_reward",value},
         }; 
-        Game.Analytics.LogEvent("task_completed", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("task_completed", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -80,7 +80,7 @@ public partial class AnalyticMgr
         {
             {"activity_id",activityId}
         }; 
-        Game.Analytics.LogEvent("activity_begin", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("activity_begin", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -94,7 +94,7 @@ public partial class AnalyticMgr
             {"progress_id",progressId},
             {"activity_duration",duration},
         }; 
-        Game.Analytics.LogEvent("activity_progress", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("activity_progress", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -107,7 +107,7 @@ public partial class AnalyticMgr
             {"activity_id",activityId},
             {"activity_duration",duration},
         }; 
-        Game.Analytics.LogEvent("activity_complete", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("activity_complete", properties, Define.DataTarget.Think);
     }
     
 }

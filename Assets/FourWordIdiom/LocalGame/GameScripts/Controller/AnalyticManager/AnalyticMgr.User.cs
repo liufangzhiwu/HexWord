@@ -14,7 +14,7 @@ public partial class AnalyticMgr
 
     public static void GameEnd()
     {
-        if(GameDataManager.Instance.UserData == null||Game.Analytics == null) return;
+        if(GameDataManager.Instance.UserData == null||Game.self == null) return;
         SetLogoutProperties();
     }
 
@@ -39,9 +39,9 @@ public partial class AnalyticMgr
             { "active_day", GameDataManager.Instance.UserData.activeDayCnt},
             { "life_day", span.Days + 1},
         };
-        Game.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
+        Game.self?.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
         
-        Game.Analytics?.LogEvent("ta_app_start", Define.DataTarget.Think);
+        Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
     }
 
     private static void SetLogoutProperties()
@@ -55,7 +55,7 @@ public partial class AnalyticMgr
             { "current_flyItem", GameDataManager.Instance.UserData.toolInfo[103].count },
             { "current_level", GameDataManager.Instance.UserData.CurrentHexStage },
         };
-        Game.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
+        Game.self.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
         
         //处理异常，确保_startTime有值
         if (!_startTime.HasValue)
@@ -66,7 +66,7 @@ public partial class AnalyticMgr
         float durationSeconds = Math.Max(0, (float)span.TotalSeconds); // 确保非负
         
         var outproperties = new Dictionary<string, object>(){{"#duration", durationSeconds.ToString("0.00")}};
-        Game.Analytics?.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
+        Game.self.Analytics?.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
     }
     
     public static void SetCommonProperties()
@@ -95,16 +95,16 @@ public partial class AnalyticMgr
             {"level_id",levelId},
             {"level_type",GameDataManager.Instance.UserData.GetLevelMode()}
         };
-            Game.Analytics.SetCommonProperties(properties);
+            Game.self.Analytics.SetCommonProperties(properties);
     }
 
     public static void OnAnalyticsSdkInit(object sender, EventArgs e)
     {
         if (!GameDataManager.Instance.UserData.Rigister)
         {      
-            Game.Analytics.LogEvent("ta_app_install", Define.DataTarget.Think);
-            Game.Analytics.LogEvent("ta_app_startFirst", Define.DataTarget.Think);
-            Game.Analytics.LogEvent("register", Define.DataTarget.Think);
+            Game.self.Analytics.LogEvent("ta_app_install", Define.DataTarget.Think);
+            Game.self.Analytics.LogEvent("ta_app_startFirst", Define.DataTarget.Think);
+            Game.self.Analytics.LogEvent("register", Define.DataTarget.Think);
             GameDataManager.Instance.UserData.Rigister = true;
             GameDataManager.Instance.UserData.firstLoginStamp = DateTime.Now.Ticks;
         }
@@ -115,7 +115,7 @@ public partial class AnalyticMgr
         
         SetCommonProperties();
         SetLoginProperties();
-        Game.Analytics.LogEvent("login", Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("login", Define.DataTarget.Think);
     }
     
     public static void SetLoginUser(string tuid)
@@ -124,7 +124,7 @@ public partial class AnalyticMgr
         if (string.IsNullOrEmpty(uid))
         {
 #if UNITY_EDITOR
-            uid =Game.GetUniqueId();
+            uid =Game.self.GetUniqueId();
 #else
             Debug.LogError("uid is empty");
 #endif
@@ -139,7 +139,7 @@ public partial class AnalyticMgr
         {
             Debug.Log("赋值中用户唯一id为："+uid);
             GameDataManager.Instance.UserData.UserId = uid;
-            Game.Analytics.Login(GameDataManager.Instance.UserData.UserId);
+            Game.self.Analytics.Login(GameDataManager.Instance.UserData.UserId);
         }
         
         Debug.Log("赋值后用户唯一id为："+ GameDataManager.Instance.UserData.UserId);
@@ -164,7 +164,7 @@ public partial class AnalyticMgr
         }
      
         var properties = new Dictionary<string, object>(){{"guide_step", id}};
-        Game.Analytics.LogEvent("guide_begin", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("guide_begin", properties, Define.DataTarget.Think);
     }
     
     public static void GuideComplete()
@@ -186,12 +186,12 @@ public partial class AnalyticMgr
                 break;
         }
         var properties = new Dictionary<string, object>{{"guide_step", id}};
-        Game.Analytics.LogEvent("guide_complete", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("guide_complete", properties, Define.DataTarget.Think);
     }
     
     public static void LevelStart()
     {
-        Game.Analytics.LogEvent("level_start",Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("level_start",Define.DataTarget.Think);
     }
     
     public static void LevelProgress(int wordIndex,string word,float duration,int errorCount,int combo,int userToolCount)
@@ -215,7 +215,7 @@ public partial class AnalyticMgr
         {
             {"lv_content", contentArray}
         };
-        Game.Analytics.LogEvent("level_progress", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("level_progress", properties, Define.DataTarget.Think);
     }
     
     public static void LevelCompleted(float duration)
@@ -224,7 +224,7 @@ public partial class AnalyticMgr
         {
             {"lv_duration", duration}
         };
-        Game.Analytics.LogEvent("level_completed",thproperties,Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("level_completed",thproperties,Define.DataTarget.Think);
     }
     #endregion
 
@@ -242,7 +242,7 @@ public partial class AnalyticMgr
     public static void HeadChange()
     {
         var properties = new Dictionary<string, object>{{"after_id", GameDataManager.Instance.UserData.UserHeadId.ToString()}};
-        Game.Analytics.LogEvent("change_role_head", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("change_role_head", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -257,7 +257,7 @@ public partial class AnalyticMgr
             {"change_num",changeNum},
             {"change_reason",reason},
         }; 
-        Game.Analytics.LogEvent("resource_change", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("resource_change", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -272,7 +272,7 @@ public partial class AnalyticMgr
             {"change_num",changeNum},
             {"change_reason",reason},
         }; 
-        Game.Analytics.LogEvent("resource_change", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("resource_change", properties, Define.DataTarget.Think);
     }
     #endregion
     

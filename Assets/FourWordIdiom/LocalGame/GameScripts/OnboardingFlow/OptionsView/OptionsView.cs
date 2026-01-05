@@ -104,8 +104,8 @@ public class OptionsView : UIWindow
     
     private void ChangeAccount()
     {
-       Game.Accounts.Logout();
-       Game.Accounts.Login(true);
+       Game.self.Accounts.Logout();
+       Game.self.Accounts.Login(true);
     }
     
     private void AccountQuit()

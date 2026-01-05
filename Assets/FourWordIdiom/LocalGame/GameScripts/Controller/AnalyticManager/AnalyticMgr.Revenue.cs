@@ -31,7 +31,7 @@ public partial class AnalyticMgr
             {"failed_reason", reason},
         }; 
 
-        Game.Analytics.LogEvent("purchase_failed", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("purchase_failed", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -43,7 +43,7 @@ public partial class AnalyticMgr
         {
             {"adName",adName},
         }; 
-        Game.Analytics.LogEvent("insertAd_start", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("insertAd_start", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -56,7 +56,7 @@ public partial class AnalyticMgr
             {"adName",adName},
         }; 
 
-        Game.Analytics.LogEvent("insertAd_fail", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("insertAd_fail", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -69,7 +69,7 @@ public partial class AnalyticMgr
             {"adName",adName},
         }; 
 
-        Game.Analytics.LogEvent("insertAd_success", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("insertAd_success", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -81,7 +81,7 @@ public partial class AnalyticMgr
         {
             {"adName",adName},
         }; 
-        Game.Analytics.LogEvent("videoAd_start", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("videoAd_start", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -93,7 +93,7 @@ public partial class AnalyticMgr
         {
             {"adName",adName},
         }; 
-        Game.Analytics.LogEvent("videoAd_fail", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("videoAd_fail", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -105,7 +105,7 @@ public partial class AnalyticMgr
         {
             {"adName",adName}
         }; 
-        Game.Analytics.LogEvent("videoAd_success", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("videoAd_success", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -117,7 +117,7 @@ public partial class AnalyticMgr
         {
             {"adName",adName},
         }; 
-        Game.Analytics.LogEvent("videoAd_click", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("videoAd_click", properties, Define.DataTarget.Think);
     }
     
     /// <summary>
@@ -129,6 +129,6 @@ public partial class AnalyticMgr
         {
             {"adName",adName},
         }; 
-        Game.Analytics.LogEvent("videoAd_show", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("videoAd_show", properties, Define.DataTarget.Think);
     }
 }

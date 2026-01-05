@@ -25,7 +25,7 @@ namespace Middleware
            
             UnityTimer.Delay(delay, () =>
             {
-                _uniqueId = Game.GetUniqueId();
+                _uniqueId = Game.self.GetUniqueId();
                 
             });
         }

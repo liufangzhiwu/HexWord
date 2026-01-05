@@ -401,7 +401,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     private async void OnBuyButtonClicked(ShopDataItem data)
     {
         //todo 打开loading界面
-        Game.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
+        Game.self.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
     }
 
     private void OnPurchaseSuccess(ProductItem item)
@@ -455,12 +455,14 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         // 处理购买成功后的逻辑，例如增加游戏内货币
         item?.OnShipmentCompleted(true);
     }
+    
     private void OnPurchaseFailed(string error)
     {
         //todo 关闭loading界面
         Debug.Log("购买失败: " + error);
         AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(),error);
     }
+    
     private void BuyRemoveAdsEvent(int type)
     {
         // ShopLimitData reshopLimitData= GameDataManager.Instance.UserData.limitShopItems.Find(item =>item.id == shopDataItem.id);

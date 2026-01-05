@@ -68,11 +68,11 @@ public sealed class GameCoreManager: MonoBehaviour
         IsTrueAuto = ison;
         if (ison)
         {
-            Game.Ratex2Game();
+            Game.self.Ratex2Game();
         }
         else
         {
-            Game.ResumeGame();
+            Game.self.ResumeGame();
         }
         
         EventDispatcher.instance.TriggerAutoPassLevel();

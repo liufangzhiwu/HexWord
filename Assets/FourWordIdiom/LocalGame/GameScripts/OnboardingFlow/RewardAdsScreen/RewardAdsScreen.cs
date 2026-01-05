@@ -83,7 +83,7 @@ public class RewardAdsScreen : UIWindow
       
 #if UNITY_OPENHARMONY || UNITY_ANDROID || UNITY_EDITOR
         AnalyticMgr.VideoAdClick("金币弹窗广告");
-        Game.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+        Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
 #elif Unity_ShowLog
         UpdateAdsRewardUI(true);
 #endif

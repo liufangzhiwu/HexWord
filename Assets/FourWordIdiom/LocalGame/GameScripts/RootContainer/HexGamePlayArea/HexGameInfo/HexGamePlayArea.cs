@@ -213,13 +213,13 @@ public class HexGamePlayArea : UIWindow
         SingleHingBtn.gameObject.SetActive(CurStageData.StageId >=2);
         // 获取 RectTransform 组件
         RectTransform rectTransform = GetComponent<RectTransform>();
-        rectTransform.offsetMin = new Vector2(0, -5); // Left 和 Bottom
+        rectTransform.offsetMin = new Vector2(0,180); // Left 和 Bottom
         //在第7关且词语少于9个的时候可以显示横幅广告
         int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
-        if (CurStageInfo.StageNumber > 1&&rows<9)
+        if (CurStageInfo.StageNumber >= 10&&rows<9)
         {
 #if UNITY_OPENHARMONY || UNITY_huawei
-            Game.Ads?.ShowBanner();
+            Game.self?.Ads.ShowBanner();
             rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom
             Debug.LogError("底部位置" + rectTransform.offsetMin);
 #endif
@@ -730,7 +730,7 @@ public class HexGamePlayArea : UIWindow
                 
 #if UNITY_OPENHARMONY
         AnalyticMgr.VideoAdClick("提示灯道具广告");
-        Game.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+        Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
 #elif Unity_ShowLog
                 UpdateAdsRewardUI(true);
 #endif
@@ -1039,7 +1039,7 @@ public class HexGamePlayArea : UIWindow
         Effect_Butterflys.Clear();
         StageOverObj.gameObject.SetActive(false);
         
-        Game.Ads?.HideBanner();
+        Game.self?.Ads?.HideBanner();
         //StopCoroutine(CheckInactivity());
     }
 

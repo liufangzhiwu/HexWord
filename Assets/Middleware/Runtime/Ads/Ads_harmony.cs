@@ -27,7 +27,7 @@ namespace Middleware
                 SignalHandler.Instance.RegisterSignalDelegate<AdsLoadSignal>(OnLoadAdsTrigger);
                 SignalHandler.Instance.RegisterSignalDelegate<AdsShowSignal>(OnShowAdsTrigger);
                 SignalHandler.Instance.RegisterSignalDelegate<AdsStatusSignal>(OnAdsStatusTrigger);
-                _uniqueId = Game.GetOAID();
+                _uniqueId = Game.self.GetOAID();
             });
         }
 
@@ -89,7 +89,7 @@ namespace Middleware
             var adRequestParams = new AdRequestParams()
             {
                 adType = (int)_adType,
-                adId = GetAdId(Define.AdKey.InterstitialAdId),
+                adId = "i0tgl4g0bw",
                 oaid = _uniqueId,
                 isPreload = true
             };
@@ -232,7 +232,7 @@ namespace Middleware
             {
                 var targetSignal = (AdsShowSignal)signal;
                 Debug.Log($"[OnShowAdsTrigger] type:{(AdType)targetSignal.adType},uniqueId：{targetSignal.uniqueId}");
-                Game.PauseGame();
+                Game.self.PauseGame();
             }
 
             if (_adType == AdType.Interstitial)
@@ -256,13 +256,13 @@ namespace Middleware
                
                 if (targetSignal.AdStatus == "onAdClose" || targetSignal.AdStatus == "onAdFail")
                 {
-                    Game.ResumeGame();
+                    Game.self.ResumeGame();
                 }
             }
             else
             {
                 CallbackAd(false);
-                Game.ResumeGame();
+                Game.self.ResumeGame();
             }
         }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Middleware;
 using UnityEngine;
 //using UnityEngine.Purchasing;
 
@@ -35,7 +36,7 @@ public class ShopDataItem
         //     return produceNameId.ToLower();
         // if(GameDataManager.Instance.UserData.LanguageCode=="CT")
         //     return produceNameId_tw;
-        return produceNameId.ToLower();
+        return produceNameId;
     }
 }
 
@@ -113,18 +114,19 @@ public class ShopManager : MonoBehaviour
     //    }
     //}
 
-    //// 获取商品
-    //public Product GetProduct(string _productId)
-    //{
-    //    if (iapManager != null)
-    //    {
-    //        // 现在shopItems列表中包含所有商品
-    //        Debug.Log("获取购买商品: " + _productId);
-    //        return iapManager.GetProduct(_productId); // 调用 IAPManager 的购买方法
-    //    }
+    // 获取商品
+    public ShopDataItem GetProduct(string _productId)
+    {
+        if (shopItems.Count>0)
+        {
+            // 现在shopItems列表中包含所有商品
+            Debug.Log("获取购买商品: " + _productId);
+            ShopDataItem dataItem=shopItems.Find((item)=>item.produceNameId==_productId);
+            return dataItem; // 调用 IAPManager 的购买方法
+        }
 
-    //    return null;
-    //}
+        return null;
+    }
 
     public void UpdateAdsBtnUIEvent(string gettime,bool updateui)
     {
@@ -404,4 +406,96 @@ public class ShopManager : MonoBehaviour
         
         return false;
     }
+    
+    public void OnPurchaseSuccess(ProductItem item)
+    {
+        //todo 关闭loading界面
+        Debug.Log("购买成功: " + item.ProductId);
+        var items = new List<AnalyticMgr.Item>();
+        ShopDataItem shopDataItem=GetProduct(item.ProductId);
+        if (shopDataItem!=null)
+        {
+            foreach (var dataitem in shopDataItem.productContent)
+            {
+                int count = int.Parse(dataitem[1]);
+                int type = int.Parse(dataitem[0]);
+                items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
+                switch (type)
+                {
+                    case (int)LimitRewordType.Coins:
+                        GameDataManager.Instance.UserData.UpdateGold(count);
+                        EventDispatcher.instance.TriggerChangeGoldUI(count,true);
+                        break;
+                    case (int)LimitRewordType.Butterfly:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count);
+                        break;
+                    case (int)LimitRewordType.Tipstool:
+                        GameDataManager.Instance.UserData.toolInfo[102].count += count;
+                        break;
+                    case (int)LimitRewordType.Resettool:
+                        GameDataManager.Instance.UserData.toolInfo[101].count += count;
+                        break;
+                    case (int)LimitRewordType.RemoveAds:
+                    case (int)LimitRewordType.Remove7DayAds:
+                        BuyRemoveAdsEvent(type);
+                        break;
+                }
+            }
+        }
+        shopManager.paysuccess = true;
+        if (GameDataManager.Instance.UserData.TotalPayTimes == 0)
+            GameDataManager.Instance.UserData.firstPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        GameDataManager.Instance.UserData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        GameDataManager.Instance.UserData.TotalPayTimes++;
+        GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
+        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
+        
+        AnalyticMgr.Purchase(shopDataItem.GetProduceName(), item.IsoCurrencyCode, item.LocalizedPrice, items);
+        MessageSystem.Instance.ShowTip("购买成功！");
+
+        //UIController.Instance.SubmitPayment((int)product.price);
+
+        //AdjustManager.Instance.SendPurchaseEvent();
+        // 处理购买成功后的逻辑，例如增加游戏内货币
+        item?.OnShipmentCompleted(true);
+    }
+    
+    private void BuyRemoveAdsEvent(int type)
+    {
+        // ShopLimitData reshopLimitData= GameDataManager.Instance.UserData.limitShopItems.Find(item =>item.id == shopDataItem.id);
+        // if (reshopLimitData != null)
+        // {
+        //     reshopLimitData.isoverdate = false;
+        //     reshopLimitData.isget = true;
+        //     reshopLimitData.gettime=DateTime.Now.ToString();
+        //     reshopLimitData.adstype = type;
+        // }
+        // else
+        // {
+        //     GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData()
+        //     {
+        //         id = shopDataItem.id,
+        //         endtime = null,
+        //         isopen = false,
+        //         gettime = DateTime.Now.ToString(),
+        //         adstype = type,
+        //         isget = true,
+        //         isoverdate = false,
+        //     });
+        // }
+
+        //AdsManager.Instance.HideBannerAd();
+        transform.gameObject.SetActive(false);
+
+        if (type == (int)LimitRewordType.Remove7DayAds)
+        {
+            //ShopManager.shopManager.UpdateAdsBtnUIEvent(reshopLimitData.gettime,true);
+        }
+
+        if (type == (int)LimitRewordType.RemoveAds)
+        {
+            ShopManager.shopManager.UpdateAdsBtnUIEvent(null,true);
+        }
+    }
+    
 }

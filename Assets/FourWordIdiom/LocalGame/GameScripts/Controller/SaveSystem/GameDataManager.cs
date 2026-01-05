@@ -46,7 +46,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public override void Init()
     {
         lastSaveTime = DateTime.Now;
-        Game.Analytics.OnSdkInit += AnalyticMgr.OnAnalyticsSdkInit;
+        Game.self.Analytics.OnSdkInit += AnalyticMgr.OnAnalyticsSdkInit;
         Application.wantsToQuit += OnWantsToQuit;
     }
 
@@ -256,7 +256,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
             if (dataInitialized)
                 CommitGameData();
        
-            if(Game.Ads?.IsPlaying == true) return; //播放广告中
+            if(Game.self?.Ads?.IsPlaying == true) return; //播放广告中
             AnalyticMgr.GameEnd();
                 
             requireFocusCheck = true;

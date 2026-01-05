@@ -17,10 +17,10 @@ namespace Middleware
     public class Game : MonoBehaviour
     {
         public static Game self;
-        public static IAds Ads { private set; get; }
-        public static IAccounts Accounts { private set; get; }
-        public static IAnalytics Analytics { private set; get; }
-        public static IShop Shop { private set; get; }
+        public IAds Ads { private set; get; }
+        public IAccounts Accounts { private set; get; }
+        public IAnalytics Analytics { private set; get; }
+        public IShop Shop { private set; get; }
         
         public Transform _uiRoot;
         public CommonErrorType CurrentErrorType { private set; get; }
@@ -45,7 +45,7 @@ namespace Middleware
         }
         
 
-        public static void InitGame()
+        public void InitGame()
         {
 #if UNITY_EDITOR
             
@@ -53,7 +53,13 @@ namespace Middleware
             CreateAd();
             CreateAccounts();
 #endif
+           StartCoroutine(WaitLoginedCreateShop());
            
+        }
+        
+        private IEnumerator WaitLoginedCreateShop()
+        {
+            yield return new WaitUntil(()=>Accounts.IsLogin);
             CreateShop();
         }
 
@@ -63,7 +69,7 @@ namespace Middleware
         //     LoadingScreen.gameObject.SetActive(true);
         // }
 
-        private static void InitManagers()
+        private void InitManagers()
         {
 	        GameDataManager.Instance.Init();
 	        //AudioManager.Instance.Init();
@@ -72,7 +78,7 @@ namespace Middleware
             ChessStageController.Instance.Init();
         }
         
-        private static void CreateAccounts()
+        private void CreateAccounts()
         {
             
 #if UNITY_ANDROID
@@ -87,7 +93,7 @@ namespace Middleware
             Accounts.Init(0.2f);
         }
     
-        private static void CreateAd()
+        private void CreateAd()
         {
 #if UNITY_huawei
             // Ads = new Ads_android();
@@ -100,7 +106,7 @@ namespace Middleware
             Ads.Init(0.2f);
         }
     
-        private static void CreateAnalytic()
+        private void CreateAnalytic()
         {
 #if UNITY_ANDROID
             Analytics = new Analytics_android();
@@ -112,28 +118,26 @@ namespace Middleware
             Analytics.Init(1f);
         }
         
-        private static void CreateShop()
+        private void CreateShop()
         {
-#if UNITY_ANDROID
-            Shop = new Shop_android();
-#elif UNITY_huawei
+#if UNITY_huawei
             Shop = new Shop_huawei();
 #elif UNITY_IOS
             Shop = new Shop_ios();
 #elif UNITY_OPENHARMONY
             Shop = new Shop_harmony();
 #endif
-            Shop.Init(1.5f);
+            Shop.Init(0.2f);
         }
         
-        public static void PauseGame()
+        public void PauseGame()
         {
             Time.timeScale = 0;
             AudioListener.pause = true;
             Ads.IsPlaying = true;
         }
     
-        public static void ResumeGame()
+        public void ResumeGame()
         {
             Time.timeScale = 1;
             AudioListener.pause = false; 
@@ -142,7 +146,7 @@ namespace Middleware
 #endif
         }
         
-        public static void Ratex2Game()
+        public void Ratex2Game()
         {
             Time.timeScale = 2;
             AudioListener.pause = false; 
@@ -152,7 +156,7 @@ namespace Middleware
             
         }
         
-        public static string GetOAID()
+        public string GetOAID()
         {
 #if UNITY_OPENHARMONY
             var filePath = Path.Combine(Application.persistentDataPath, "files", "oaid.txt");
@@ -163,7 +167,7 @@ namespace Middleware
 #endif
         }
         
-        public static string GetUniqueId()
+        public string GetUniqueId()
         {
             return SystemInfo.deviceUniqueIdentifier;
         }

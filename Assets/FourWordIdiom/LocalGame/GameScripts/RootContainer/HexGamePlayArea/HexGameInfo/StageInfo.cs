@@ -28,20 +28,6 @@ public class BoardGame
     public List<List<List<char>>> board; // 三维列表：[行][列][字符层]
 }
 
-public class CellData
-{
-    public string character;
-    public int row;
-    public int col;
-}
-
-public class WordBlock
-{
-    public Vector2Int position;
-    public List<string> characters; // 可能包含多个字符
-    public string rawCharacters;    // 原始字符数据
-}
-
 public class IdiomData
 {
     public string theme;
@@ -601,7 +587,6 @@ public class StageInfo
 
                 if (HexType == 1)
                 {
-                    
                     int xoffset = (_boardData.rows-2)%2==0 ? 0 : 1;
                     int row = (_boardData.rows-2- int.Parse(blockParts[2]))+xoffset;
                     int col = int.Parse(blockParts[3])-_boardData.minCol+1; 

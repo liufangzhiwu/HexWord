@@ -107,26 +107,26 @@ public class LoadingController : MonoBehaviour
         if (!UIUtilities.isEditMode)
         {
             //初始化商店、广告、登录
-            Game.InitGame();
-            yield return new WaitUntil(()=>Game.Accounts.IsLogin);
+            Game.self.InitGame();
+            yield return new WaitUntil(()=>Game.self.Accounts.IsLogin);
             //设置登录用户ID
-            AnalyticMgr.SetLoginUser(Game.Accounts.UserId);
+            AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
         }
 #elif UNITY_huawei
 
         if (!UIUtilities.isEditMode)
         {
              Debug.Log($"进入初始化游戏服务流程");
-        //初始化游戏服务 
-        yield return InitializeGameService();
-        // 初始化商店(需要等待游戏服务完成后)
-        Game.InitGame();
-        yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
-        // 登录开始
-        yield return LoadHuaweiGameLogin();
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
-        //设置登录用户ID（需要等待游戏数据获取后）
-        AnalyticMgr.SetLoginUser(Game.Accounts.UserId);
+            //初始化游戏服务 
+            yield return InitializeGameService();
+            // 初始化商店(需要等待游戏服务完成后)
+            Game.self.InitGame();
+            yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
+            // 登录开始
+            yield return LoadHuaweiGameLogin();
+            yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
+            //设置登录用户ID（需要等待游戏数据获取后）
+            AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
         }
        
 #endif
@@ -420,7 +420,7 @@ public class LoadingController : MonoBehaviour
         appPlayerInfo.Sociaty = "sociaty";
         appPlayerInfo.PlayerId = _player.PlayerId;
         appPlayerInfo.OpenId = _player.OpenId;
-        Game.Accounts.UserId = _player.OpenId;
+        Game.self.Accounts.UserId = _player.OpenId;
         
         Debug.LogFormat("登录华为安卓用户时的数据: {0}", JsonConvert.SerializeObject(appPlayerInfo));
         HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));

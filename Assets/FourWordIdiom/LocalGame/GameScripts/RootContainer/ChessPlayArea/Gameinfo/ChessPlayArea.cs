@@ -255,13 +255,13 @@ public class ChessPlayArea : UIWindow
         // 获取广告 RectTransform 组件
         if (CurrStageInfo.StageNumber >= 11)
         {
-            Game.Ads?.ShowBanner();
+            Game.self?.Ads.ShowBanner();
             // 设置偏移值
             // rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
         }
         else
         {
-            Game.Ads?.HideBanner();
+            Game.self.Ads.HideBanner();
         }
         yield return new WaitForSeconds(0.4f);
         
