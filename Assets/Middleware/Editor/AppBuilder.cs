@@ -258,52 +258,52 @@ namespace Middleware
 			EditorUserBuildSettings.exportAsOpenHarmonyProject = true;
 			EditorUserBuildSettings.development = false;
 			PlayerSettings.stripEngineCode = true;
-			PlayerSettings.bundleVersion = buildParam.BuildVersion;
+			//PlayerSettings.bundleVersion = buildParam.BuildVersion;
 			PlayerSettings.OpenHarmony.bundleVersionCode = GenBuildNumber();
 			PlayerSettings.OpenHarmony.compatibleSdkVersion = 14;
 			PlayerSettings.OpenHarmony.targetArchitectures = OpenHarmonyArchitecture.ARM64;
 			//账户设置
-			SetDefaultIcon(1);
+			//SetDefaultIcon(1);
 			PlayerSettings.companyName = "HexaSpaceGames";
-			PlayerSettings.productName = "成语消消闯关";
-			PlayerSettings.applicationIdentifier = "chengyu.idiom.block.zen.huawei";
-			PlayerSettings.OpenHarmony.useCustomKeystore = true;
-			PlayerSettings.OpenHarmony.keystoreName =
-				Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/word_huawei.p12");
-			PlayerSettings.OpenHarmony.keystorePass = "word123456";
-			PlayerSettings.OpenHarmony.keyaliasName = "word";
-			PlayerSettings.OpenHarmony.keyaliasPass = "word123456";
-			PlayerSettings.OpenHarmony.openHarmonyAppID = "6917574075102471091";
-			PlayerSettings.OpenHarmony.openHarmonyClientID = "461323198429956566";
-			var p7Name = buildParam.IsBuildRelease ? "profile01Release.p7b" : "profile02Debug.p7b";
-			var cerName = buildParam.IsBuildRelease ? "release01.cer" : "debug01.cer";
-			PlayerSettings.OpenHarmony.openHarmonyProfile =
-				Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/{p7Name}");
-			PlayerSettings.OpenHarmony.openHarmonyCertificate =
-				Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/{cerName}");
+			PlayerSettings.productName = "成语消:禅意之境";
+			PlayerSettings.applicationIdentifier = "chengyu.idiom.hexa.zen.huawei";
+			// PlayerSettings.OpenHarmony.useCustomKeystore = true;
+			// PlayerSettings.OpenHarmony.keystoreName =
+			// 	Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/word_huawei.p12");
+			// PlayerSettings.OpenHarmony.keystorePass = "word123456";
+			// PlayerSettings.OpenHarmony.keyaliasName = "word";
+			// PlayerSettings.OpenHarmony.keyaliasPass = "word123456";
+			// PlayerSettings.OpenHarmony.openHarmonyAppID = "6917574075102471091";
+			// PlayerSettings.OpenHarmony.openHarmonyClientID = "461323198429956566";
+			// var p7Name = buildParam.IsBuildRelease ? "profile01Release.p7b" : "profile02Debug.p7b";
+			// var cerName = buildParam.IsBuildRelease ? "release01.cer" : "debug01.cer";
+			// PlayerSettings.OpenHarmony.openHarmonyProfile =
+			// 	Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/{p7Name}");
+			// PlayerSettings.OpenHarmony.openHarmonyCertificate =
+			// 	Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/{cerName}");
+			//
+			// //打资源包
+			// AssetBundleBuilder.BuildAssetBundles(false);
+			// //打版本包
+			// var outputDir = Path.GetFullPath($"{Application.dataPath}/../output/Harmony");
+			// if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
+			// // var symbolDefine = buildParam.IsBuildRelease ? "release" : "debug";
+			// // var version = PlayerSettings.bundleVersion.Replace(".", "");
+			// // var hapPath = $"{outputDir}/{symbolDefine}_{version}_{DateTime.Now:yyyy-MM-dd-HHmmss}.hap";
+			// var harProject = Path.Combine(outputDir, "project");
+			//
+			// var report = BuildPipeline.BuildPlayer(GetBuildScenes(), harProject, BuildTarget.OpenHarmony,
+			// 	BuildOptions.None);
+			// if (report.summary.result != BuildResult.Succeeded)
+			// {
+			// 	Debug.Log("打包失败");
+			// 	return;
+			// }
 
-			//打资源包
-			AssetBundleBuilder.BuildAssetBundles(false);
-			//打版本包
-			var outputDir = Path.GetFullPath($"{Application.dataPath}/../output/Harmony");
-			if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
-			// var symbolDefine = buildParam.IsBuildRelease ? "release" : "debug";
-			// var version = PlayerSettings.bundleVersion.Replace(".", "");
-			// var hapPath = $"{outputDir}/{symbolDefine}_{version}_{DateTime.Now:yyyy-MM-dd-HHmmss}.hap";
-			var harProject = Path.Combine(outputDir, "project");
-
-			var report = BuildPipeline.BuildPlayer(GetBuildScenes(), harProject, BuildTarget.OpenHarmony,
-				BuildOptions.None);
-			if (report.summary.result != BuildResult.Succeeded)
-			{
-				Debug.Log("打包失败");
-				return;
-			}
-
-			Debug.Log("打包成功");
-			if (buildParam.BuildType == BuildType.EditorBuild)
-				Application.OpenURL(@"file://" + outputDir);
-			//todo: hdc install xxx
+			// Debug.Log("打包成功");
+			// if (buildParam.BuildType == BuildType.EditorBuild)
+			// 	Application.OpenURL(@"file://" + outputDir);
+			// //todo: hdc install xxx
 		}
 		#endif
 		private static void BuildAndroid(BuildParam buildParam)
@@ -394,7 +394,7 @@ namespace Middleware
 			PlayerSettings.iOS.appInBackgroundBehavior = iOSAppInBackgroundBehavior.Custom;
 			PlayerSettings.iOS.backgroundModes = iOSBackgroundMode.RemoteNotification | iOSBackgroundMode.Fetch;
 			//账户设置
-			SetDefaultIcon(3);
+			//SetDefaultIcon(3);
 			PlayerSettings.companyName = "HexaSpace Games";
 			PlayerSettings.productName = "禅の熟語消し";
 			PlayerSettings.applicationIdentifier = "idiom.block.zen.tw";

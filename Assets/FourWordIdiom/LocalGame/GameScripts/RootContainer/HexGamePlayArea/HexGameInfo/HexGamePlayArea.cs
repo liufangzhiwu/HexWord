@@ -191,7 +191,11 @@ public class HexGamePlayArea : UIWindow
         SingleHingBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >=2);
         // 获取 RectTransform 组件
         RectTransform rectTransform = GetComponent<RectTransform>();
-        rectTransform.offsetMin = new Vector2(0, 0); // Left 和 Bottom
+        rectTransform.offsetMin = new Vector2(0, 100); // Left 和 Bottom
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= 2)
+        {
+            rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom
+        }
         //在第7关且词语少于9个的时候可以显示横幅广告
         int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
         if (CurStageInfo.StageNumber >= 10)
