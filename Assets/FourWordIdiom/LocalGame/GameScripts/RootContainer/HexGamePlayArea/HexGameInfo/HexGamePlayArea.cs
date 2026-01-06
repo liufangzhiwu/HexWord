@@ -213,10 +213,13 @@ public class HexGamePlayArea : UIWindow
         SingleHingBtn.gameObject.SetActive(CurStageData.StageId >=2);
         // 获取 RectTransform 组件
         RectTransform rectTransform = GetComponent<RectTransform>();
-        rectTransform.offsetMin = new Vector2(0,180); // Left 和 Bottom
-        //在第7关且词语少于9个的时候可以显示横幅广告
-        int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
-        if (CurStageInfo.StageNumber >= 10&&rows<9)
+        rectTransform.offsetMin = new Vector2(0, 100); // Left 和 Bottom
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= 2)
+        {
+            rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom
+        }
+        //int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
+        if (CurStageInfo.StageNumber >= 1)
         {
 #if UNITY_OPENHARMONY || UNITY_huawei
             Game.self?.Ads.ShowBanner();
@@ -728,10 +731,10 @@ public class HexGamePlayArea : UIWindow
                 //AdsManager.Instance.ShowRewardedPanel("item_gold");
                 //SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
                 
-#if UNITY_OPENHARMONY
+#if UNITY_OPENHARMONY&&!UNITY_EDITOR
         AnalyticMgr.VideoAdClick("提示灯道具广告");
         Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
-#elif Unity_ShowLog
+#elif Unity_ShowLog||UNITY_EDITOR
                 UpdateAdsRewardUI(true);
 #endif
                 
