@@ -218,7 +218,6 @@ public class LightItem : MonoBehaviour
                 {
                     //if (Curlimitdata.rewardContent.Count == 1)
                     //{
-                        ShowComplete(Curlimitdata.rewardContent.Count);
                         //AudioManager.Instance.PlaySoundEffect("limitTimeOver");
                     //}
                     GameDataManager.Instance.UserData.UpdateGold(rlist[1],true,true,message);
@@ -248,6 +247,8 @@ public class LightItem : MonoBehaviour
             default:
                 break;
         }
+        
+        ShowComplete(Curlimitdata.rewardContent.Count);
     }
     
 }

@@ -213,14 +213,18 @@ public class HexGamePlayArea : UIWindow
         SingleHingBtn.gameObject.SetActive(CurStageData.StageId >=2);
         // 获取 RectTransform 组件
         RectTransform rectTransform = GetComponent<RectTransform>();
-        rectTransform.offsetMin = new Vector2(0,180); // Left 和 Bottom
+        rectTransform.offsetMin = new Vector2(0, 100); // Left 和 Bottom
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= 2)
+        {
+            rectTransform.offsetMin = new Vector2(0, 150); // Left 和 Bottom
+        }
         //在第7关且词语少于9个的时候可以显示横幅广告
-        int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
-        if (CurStageInfo.StageNumber >= 10&&rows<9)
+        //int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
+        if (CurStageInfo.StageNumber >= 1)
         {
 #if UNITY_OPENHARMONY || UNITY_huawei
-            Game.self?.Ads.ShowBanner();
-            rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom
+            Game.self?.Ads?.ShowBanner();
+            rectTransform.offsetMin = new Vector2(0, 150); // Left 和 Bottom
             Debug.LogError("底部位置" + rectTransform.offsetMin);
 #endif
         }
@@ -471,8 +475,8 @@ public class HexGamePlayArea : UIWindow
     {       
         StageHexController.Instance.CompleteStage(CurStageInfo.StageNumber);
 
-        yield return new WaitForSeconds(1.2f);
-        
+        yield return new WaitForSeconds(1f);
+        AudioManager.Instance.PlaySoundEffect("PassStage");
         _windowAnimator.Play("StageOver");
         StageOverObj.gameObject.SetActive(true);
         StageHexController.Instance.ActiveTileSize = 0;

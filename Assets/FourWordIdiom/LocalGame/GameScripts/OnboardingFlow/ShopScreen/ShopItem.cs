@@ -177,7 +177,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             var discountText = discountbg.GetComponentInChildren<Text>();
             if (discountText != null && MultilingualManager.Instance != null)
             {
-                discountText.text = $"{data.discount}折扣";
+                discountText.text = $"{data.discount}";
             }
         }
     }
@@ -400,8 +400,21 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
     private async void OnBuyButtonClicked(ShopDataItem data)
     {
+#if UNITY_EDITOR
+        ProductItem productItem = new ProductItem
+        {
+            order_id  = "",
+            IsoCurrencyCode = "",
+            ItemName = data.produceNameId,
+            ProductId = data.produceNameId,
+            LocalizedPrice = 0,
+        };
+        OnPurchaseSuccess(productItem);
+#elif UNITY_OPENHARMONY||UNITY_huawei
+        AnalyticMgr.PurchaseStart(data.produceNameId);
         //todo 打开loading界面
         Game.self.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
+#endif
     }
 
     private void OnPurchaseSuccess(ProductItem item)
@@ -425,10 +438,10 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                     case (int)LimitRewordType.Butterfly:
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count);
                         break;
-                    case (int)LimitRewordType.Tipstool:
+                    case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
                         GameDataManager.Instance.UserData.toolInfo[102].count += count;
                         break;
-                    case (int)LimitRewordType.Resettool:
+                    case (int)LimitRewordType.Resettool://提示灯道具，单个字符提示
                         GameDataManager.Instance.UserData.toolInfo[101].count += count;
                         break;
                     case (int)LimitRewordType.RemoveAds:
@@ -439,21 +452,23 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             }
         }
         ShopManager.shopManager.paysuccess = true;
-        if (GameDataManager.Instance.UserData.TotalPayTimes == 0)
+        bool firstPay = GameDataManager.Instance.UserData.TotalPayTimes == 0;
+        if (firstPay)
             GameDataManager.Instance.UserData.firstPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         GameDataManager.Instance.UserData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
         
-        AnalyticMgr.Purchase(shopDataItem.GetProduceName(), item.IsoCurrencyCode, item.LocalizedPrice, items);
         MessageSystem.Instance.ShowTip("购买成功！");
-
-        //UIController.Instance.SubmitPayment((int)product.price);
-
-        //AdjustManager.Instance.SendPurchaseEvent();
+    
+#if UNITY_EDITOR
+        #elif UNITY_OPENSHARP||UNITY_huawei
+        
+        AnalyticMgr.PurchaseFinished(item, firstPay);
         // 处理购买成功后的逻辑，例如增加游戏内货币
         item?.OnShipmentCompleted(true);
+#endif
     }
     
     private void OnPurchaseFailed(string error)

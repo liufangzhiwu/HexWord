@@ -257,7 +257,6 @@ public class StageHexController
     private IEnumerator PlayCompletionEffects(int StageNumber)
     {
         //EventDispatcher.instance.TriggerChoicePuzzleSetStatus(false);
-        AudioManager.Instance.PlaySoundEffect("PassStage");
 
         yield return new WaitForSeconds(0.7f);
         

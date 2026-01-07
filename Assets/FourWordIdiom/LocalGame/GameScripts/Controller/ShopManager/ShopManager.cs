@@ -443,19 +443,18 @@ public class ShopManager : MonoBehaviour
             }
         }
         shopManager.paysuccess = true;
-        if (GameDataManager.Instance.UserData.TotalPayTimes == 0)
+        bool firstPay = GameDataManager.Instance.UserData.TotalPayTimes == 0;
+        if (firstPay)
             GameDataManager.Instance.UserData.firstPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         GameDataManager.Instance.UserData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
         
-        AnalyticMgr.Purchase(shopDataItem.GetProduceName(), item.IsoCurrencyCode, item.LocalizedPrice, items);
+        AnalyticMgr.PurchaseFinished(item, firstPay);
         MessageSystem.Instance.ShowTip("购买成功！");
 
         //UIController.Instance.SubmitPayment((int)product.price);
-
-        //AdjustManager.Instance.SendPurchaseEvent();
         // 处理购买成功后的逻辑，例如增加游戏内货币
         item?.OnShipmentCompleted(true);
     }

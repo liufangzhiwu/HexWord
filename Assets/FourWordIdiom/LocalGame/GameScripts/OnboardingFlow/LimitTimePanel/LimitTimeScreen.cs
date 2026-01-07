@@ -81,6 +81,7 @@ public class LimitTimeScreen : UIWindow
         
         if (GameCoreManager.Instance.IsTrueAuto)
         {
+            yield return new WaitForSeconds(0.5f);
             OnCloseBtn();
         }
     }

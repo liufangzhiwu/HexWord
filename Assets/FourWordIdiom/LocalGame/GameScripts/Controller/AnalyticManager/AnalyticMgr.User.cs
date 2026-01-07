@@ -18,6 +18,9 @@ public partial class AnalyticMgr
         SetLogoutProperties();
     }
 
+    /// <summary>
+    /// 登录时用户数据
+    /// </summary>
     private static void SetLoginProperties()
     {
         _startTime = DateTime.Now;
@@ -44,6 +47,9 @@ public partial class AnalyticMgr
         Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
     }
 
+    /// <summary>
+    /// 登出时用户数据
+    /// </summary>
     private static void SetLogoutProperties()
     {
         var properties = new Dictionary<string, object>
@@ -69,6 +75,9 @@ public partial class AnalyticMgr
         Game.self.Analytics?.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
     }
     
+    /// <summary>
+    /// 公共事件属性
+    /// </summary>
     public static void SetCommonProperties()
     {
         int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
@@ -85,6 +94,8 @@ public partial class AnalyticMgr
                 levelId = GameDataManager.Instance.UserData.CurrentHexStage;
                 break;
         }
+        
+        var span = new TimeSpan(DateTime.Now.Ticks - GameDataManager.Instance.UserData.firstLoginStamp);
      
         var properties = new Dictionary<string, object>
         {
@@ -93,7 +104,9 @@ public partial class AnalyticMgr
             {"resetItem",GameDataManager.Instance.UserData.toolInfo[101].count},
             {"flyItem",GameDataManager.Instance.UserData.toolInfo[103].count},
             {"level_id",levelId},
-            {"level_type",GameDataManager.Instance.UserData.GetLevelMode()}
+            {"level_type",GameDataManager.Instance.UserData.GetLevelMode()},
+            { "active_day", GameDataManager.Instance.UserData.activeDayCnt},
+            { "life_day", span.Days + 1},
         };
             Game.self.Analytics.SetCommonProperties(properties);
     }

@@ -307,7 +307,11 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     {
         if(StageHexController.Instance.GetIsFirstEnterStage())
         {
-            if(!ButterfliesManager.Instance.CanObtainedPupa()) return;
+            if (!ButterfliesManager.Instance.CanObtainedPupa())
+            {
+                curStageData.PupaDatas = null;
+                return;
+            }
         }
         else
         {
