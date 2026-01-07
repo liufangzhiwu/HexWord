@@ -38,7 +38,7 @@ namespace Middleware
         
         public void DestoryAdsObj()
         {
-            _isBannerShow = false;
+            //_isBannerShow = false;
             Object.Destroy(SignalHandlerObj);
             Object.Destroy(SignalReceiveObj);
         }
@@ -109,8 +109,8 @@ namespace Middleware
 
             CreateAdsObj();
             
-            if(_isBannerShow) return;
-            _isBannerShow = true;
+            // if(_isBannerShow) return;
+            // _isBannerShow = true;
             _adType = AdType.Banner;
 
             BanneradRequestParams = new AdRequestParams()
@@ -139,7 +139,7 @@ namespace Middleware
         #region 通用逻辑
         private Action<bool> _completeCallback;
         private AdType _adType;
-        private bool _isBannerShow;
+        //private bool _isBannerShow;
         
         private string GetAdId(Define.AdKey key)
         {
