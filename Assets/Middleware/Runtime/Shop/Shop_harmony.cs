@@ -177,8 +177,8 @@ namespace Middleware
                 //QuerySubscription();
                 QueryConsumable();
                 //QueryUnconsumable();
-                ConfirmCheckPurchase();
                 InitSucceed=true;
+                ConfirmCheckPurchase();
             }
             else
             {
@@ -230,14 +230,20 @@ namespace Middleware
             Debug.Log("the purchaseResult" + purchaseResult);
             Debug.Log("[StartPurchase Success]" + "\n" + purchaseResult);
             
+           purchaseDataList.Add(targetSignal.purchaseOrderPayload);
+            
             ProductItem productItem = new ProductItem
             {
+                order_id=targetSignal.purchaseOrderPayload.purchaseOrderId,
                 IsoCurrencyCode = targetSignal.purchaseOrderPayload.currency,
+                ItemName = targetSignal.purchaseOrderPayload.productId,
                 ProductId = targetSignal.purchaseOrderPayload.productId,
                 LocalizedPrice = targetSignal.purchaseOrderPayload.price,
             };
             
             buySuccessAction?.Invoke(productItem);
+            
+           ConfirmFinishPurchase();
         }
         else
         {
@@ -307,10 +313,12 @@ namespace Middleware
                     // }
 
                     Debug.Log("purchaseToken: " + purchaseData.purchaseToken + "\n purchaseOrderId: " + purchaseData.purchaseOrderId + "\n");
-                    
+                  
                     ProductItem productItem = new ProductItem
                     {
+                        order_id  = purchaseData.purchaseOrderId,
                         IsoCurrencyCode = purchaseData.currency,
+                        ItemName = purchaseData.productId,
                         ProductId = purchaseData.productId,
                         LocalizedPrice = purchaseData.price,
                     };
@@ -393,15 +401,13 @@ namespace Middleware
             return;
         }
         List<string> idsToFinish = new List<string>();
-        // foreach (Transform child in FinishScrollView.content)
-        // {
-        //     Toggle toggle = child.GetComponent<Toggle>();
-        //     if (toggle != null && toggle.isOn)
-        //     {
-        //         string id = toggle.GetComponentInChildren<Text>().text;
-        //         idsToFinish.Add(id);
-        //     }
-        // }
+        foreach (var purchaseOrderPayload in purchaseDataList.ToArray())
+        {
+            if (purchaseOrderPayload != null)
+            {
+                idsToFinish.Add(purchaseOrderPayload.purchaseOrderId);
+            }
+        }
 
         foreach (string id in idsToFinish)
         {

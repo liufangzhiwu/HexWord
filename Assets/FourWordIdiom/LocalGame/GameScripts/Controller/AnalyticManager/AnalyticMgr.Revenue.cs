@@ -66,7 +66,7 @@ public partial class AnalyticMgr
     {
         var properties = new Dictionary<string, object>
         {
-            {"pay_reason", reason},
+            {"pay_reason", transactionId},
         }; 
 
         Game.self.Analytics.LogEvent("order_failed", properties, Define.DataTarget.Think);
