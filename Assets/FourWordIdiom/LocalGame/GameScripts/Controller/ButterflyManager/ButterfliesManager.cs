@@ -328,7 +328,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// <returns></returns>
     public bool CanObtainedPupa()
     {
-        //return true;
+        return false;
         int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
         switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
         {
