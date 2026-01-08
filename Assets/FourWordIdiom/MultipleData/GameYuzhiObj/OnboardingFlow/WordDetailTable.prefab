@@ -1,16 +1,17 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!1 &1182309405548456185
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 836578483357404268}
   - component: {fileID: 7798689566910966217}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MeanTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -58,12 +59,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1137243077724983676}
   - component: {fileID: 5264374193258908934}
   - component: {fileID: 1445618727778019166}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MeanImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -134,12 +136,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5255198732324220554}
   - component: {fileID: 4135486440565890055}
   - component: {fileID: 9129815160385855270}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: huaText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -213,12 +216,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5041087554818780671}
   - component: {fileID: 2366937801341539409}
   - component: {fileID: 3397754927913820756}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: LetterItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -290,7 +294,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2559926578263480782}
   - component: {fileID: 2162470030289620355}
@@ -298,6 +302,7 @@ GameObject:
   - component: {fileID: 3980815971965684536}
   - component: {fileID: 5262209773310654211}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -399,12 +404,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7212868048770065435}
   - component: {fileID: 8860693090309955240}
   - component: {fileID: 4689286705852088815}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MeanText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -480,13 +486,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7107781113160628978}
   - component: {fileID: 6178524261512518838}
   - component: {fileID: 6773994888546622894}
   - component: {fileID: 2523630809364395939}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MeanName
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -573,11 +580,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 250543241643404217}
   - component: {fileID: 1475631466835941306}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: StarToggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -659,12 +667,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 286311690329549988}
   - component: {fileID: 7142042954425893168}
   - component: {fileID: 6910522894075698145}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: pinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -738,12 +747,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3111721263115409822}
   - component: {fileID: 2979191187597927257}
   - component: {fileID: 658920278341870195}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: WordDetailTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -805,13 +815,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2545099903156774723}
   - component: {fileID: 990117476511135268}
   - component: {fileID: 7650625028078352532}
   - component: {fileID: 5033502478075257436}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MeanName
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -898,12 +909,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 827756378251841817}
   - component: {fileID: 7236599923356166474}
   - component: {fileID: 7499282210991706738}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Checkmark
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -973,10 +985,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1003257943903965831}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MeanList
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1010,12 +1023,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2794319237803352367}
   - component: {fileID: 5195070413665861617}
   - component: {fileID: 2359694852930034326}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1086,12 +1100,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8052886120773467858}
   - component: {fileID: 5981665230143880397}
   - component: {fileID: 5435680949029128727}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MeanImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1162,11 +1177,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4696998414119082087}
   - component: {fileID: 3611941645429089669}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MeanTable (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1214,13 +1230,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7105122532475919571}
   - component: {fileID: 6186945442057810376}
   - component: {fileID: 3999994993720343334}
   - component: {fileID: 1037248768327767331}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MeanText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
