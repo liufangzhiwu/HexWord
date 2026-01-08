@@ -62033,6 +62033,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07dc2fa02d731fd488d862028b97bcca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  updateInterval: 60
 --- !u!81 &701668034
 AudioListener:
   m_ObjectHideFlags: 0
@@ -67319,7 +67320,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 570db12f7a7f582409c2d436ddc5b11d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  APIUrl: https://zen.test.mindwordplay.cn/api/
+  APIUrl: https://hex.prod.mindwordplay.cn/api/
 --- !u!1 &754952642
 GameObject:
   m_ObjectHideFlags: 0
