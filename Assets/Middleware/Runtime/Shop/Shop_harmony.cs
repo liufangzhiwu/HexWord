@@ -250,7 +250,7 @@ namespace Middleware
             Debug.Log("[StartPurchase Error ] " + "\n "
               + "Code : " + signal.code + " \n Message : " + signal.message + "\n");
             
-            buyFailedAction?.Invoke(purchaseResult);
+            buyFailedAction?.Invoke(signal.message);
         }
 
     }
@@ -326,14 +326,14 @@ namespace Middleware
                     //buySuccessAction?.Invoke(productItem);
 
                     ShopManager.shopManager.OnPurchaseSuccess(productItem);
+                    
+                    ConfirmFinishPurchase();
                 }
             }
             else
             {
                 Debug.Log("No purchase data available.\n");
             }
-            
-            ConfirmFinishPurchase();
         }
         else
         {
@@ -400,6 +400,7 @@ namespace Middleware
             Debug.Log("No items to finish purchase.Please click Create Purchase/Subscription first");
             return;
         }
+        
         List<string> idsToFinish = new List<string>();
         foreach (var purchaseOrderPayload in purchaseDataList.ToArray())
         {

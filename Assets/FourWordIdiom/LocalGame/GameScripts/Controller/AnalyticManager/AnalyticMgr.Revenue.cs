@@ -42,10 +42,11 @@ public partial class AnalyticMgr
         string itemName = product.ItemName;
         float price = product.LocalizedPrice;
         string paytype = product.IsoCurrencyCode;
+        string paymethod = "";
 #if UNITY_OPENHARMONY
-        string paymethod = "huaweiOpenHarmony";
+        paymethod = "huaweiOpenHarmony";
 #elif UNITY_huawei
-        string paymethod = "huaweiAndroid";
+        paymethod = "huaweiAndroid";
 #endif
         
         var itemJson = JsonConvert.SerializeObject(items);
@@ -67,6 +68,7 @@ public partial class AnalyticMgr
         var properties = new Dictionary<string, object>
         {
             {"pay_reason", transactionId},
+            {"failed_reason", reason},
         }; 
 
         Game.self.Analytics.LogEvent("order_failed", properties, Define.DataTarget.Think);

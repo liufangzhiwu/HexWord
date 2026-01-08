@@ -1,17 +1,18 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!1 &8483301619334878
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 333276574664635527}
   - component: {fileID: 1525376238046370286}
   - component: {fileID: 6160230133075866254}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: time
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -85,12 +86,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2336801630670668363}
   - component: {fileID: 7130097789463031082}
   - component: {fileID: 5441310110228215792}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -160,12 +162,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7890112257464666120}
   - component: {fileID: 5069015487383201528}
   - component: {fileID: 4660446556966848093}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: ItemList
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -237,12 +240,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5251977072705490630}
   - component: {fileID: 3263143447794142300}
   - component: {fileID: 3496525434878595861}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: buyItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -314,12 +318,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3973892124132053601}
   - component: {fileID: 8899899250588163202}
   - component: {fileID: 9186739489933476208}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: discountbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -390,12 +395,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2220600974725473249}
   - component: {fileID: 4996368716665040068}
   - component: {fileID: 3184472475804766292}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: dibg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -465,12 +471,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7377684877226061625}
   - component: {fileID: 1427570316954913974}
   - component: {fileID: 3532477397778443524}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: timebg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -541,13 +548,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5419933564966753064}
   - component: {fileID: 4934034164734892950}
   - component: {fileID: 3806106396541592541}
   - component: {fileID: 5226317146589379593}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -636,7 +644,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 514312882392434536}
   - component: {fileID: 7299127754893813692}
@@ -644,6 +652,7 @@ GameObject:
   - component: {fileID: 8090097732805543493}
   - component: {fileID: 1224886699962021014}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: discountText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -667,7 +676,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 36.8, y: 31.5}
-  m_SizeDelta: {x: 203.344, y: 77.9896}
+  m_SizeDelta: {x: 203.344, y: 85}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7299127754893813692
 CanvasRenderer:
@@ -703,14 +712,14 @@ MonoBehaviour:
     m_FontStyle: 1
     m_BestFit: 1
     m_MinSize: 3
-    m_MaxSize: 46
+    m_MaxSize: 85
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "50%\u6298\u6263"
+  m_Text: -50%
 --- !u!114 &8090097732805543493
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -745,7 +754,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7226707962328983597}
   - component: {fileID: 6812851740386517871}
@@ -753,6 +762,7 @@ GameObject:
   - component: {fileID: 6730872135265525495}
   - component: {fileID: 1302268861389603960}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -854,13 +864,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5393591627112643460}
   - component: {fileID: 9118993950866916683}
   - component: {fileID: 801630224456905037}
   - component: {fileID: 3893301997002433439}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -926,7 +937,7 @@ MonoBehaviour:
   m_PixelsPerUnitMultiplier: 1
 --- !u!95 &3893301997002433439
 Animator:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -937,6 +948,8 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 458f03ed8f827f04a98dd971d4ea0fe2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
+  m_UpdateFrequencyMode: 0
+  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -951,7 +964,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8704456760907074949}
   - component: {fileID: 2022054507459271449}
@@ -959,6 +972,7 @@ GameObject:
   - component: {fileID: 4364227515411403733}
   - component: {fileID: 2538063831955769991}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: ShopGiftItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}

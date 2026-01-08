@@ -70,11 +70,7 @@ public class ShopManager : MonoBehaviour
         {
             shopManager = this;
             DontDestroyOnLoad(gameObject); // 保持广告管理器在场景切换时不销毁
-        }
-        else
-        {
-            Destroy(gameObject);
-        }    
+        }         
     }
 
     void Start()
@@ -430,10 +426,10 @@ public class ShopManager : MonoBehaviour
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count);
                         break;
                     case (int)LimitRewordType.Tipstool:
-                        GameDataManager.Instance.UserData.toolInfo[102].count += count;
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count);
                         break;
                     case (int)LimitRewordType.Resettool:
-                        GameDataManager.Instance.UserData.toolInfo[101].count += count;
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool,count);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:

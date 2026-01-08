@@ -37,6 +37,20 @@ SpriteAtlas:
       m_IgnorePlatformSupport: 0
       m_AndroidETC2FallbackOverride: 0
       m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    - serializedVersion: 3
+      m_BuildTarget: OpenHarmony
+      m_MaxTextureSize: 2048
+      m_MaxPlaceholderSize: 32
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 65
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
     packingSettings:
       serializedVersion: 2
       padding: 2
@@ -111,7 +125,6 @@ SpriteAtlas:
     - 2c63377c4c653164695cd2518897d7fe: 21300000
     - d9ce46acc0b5c6d4e8aedeffdc5a7908: 21300000
     - 48f18bece103e2e4bbefdf54f94fda87: 21300000
-    - 8f18a8fcc7e29b94fad6919e71a13352: 21300000
     - c0c99ffcadf965645ad53456bda1aae3: 21300000
     - 0481131d8e02e4543bd383574c6c56f7: 21300000
     - a62db62d32c14c64b9efd04a1a844075: 21300000
@@ -185,7 +198,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 2c63377c4c653164695cd2518897d7fe, type: 3}
   - {fileID: 21300000, guid: d9ce46acc0b5c6d4e8aedeffdc5a7908, type: 3}
   - {fileID: 21300000, guid: 48f18bece103e2e4bbefdf54f94fda87, type: 3}
-  - {fileID: 21300000, guid: 8f18a8fcc7e29b94fad6919e71a13352, type: 3}
   - {fileID: 21300000, guid: c0c99ffcadf965645ad53456bda1aae3, type: 3}
   - {fileID: 21300000, guid: 0481131d8e02e4543bd383574c6c56f7, type: 3}
   - {fileID: 21300000, guid: a62db62d32c14c64b9efd04a1a844075, type: 3}
@@ -258,7 +270,6 @@ SpriteAtlas:
   - fill_bg
   - levelPuzzle
   - Coin1
-  - UI_Icon_circle
   - UI_Icon_back
   - UI_Icon_JianSeleWord
   - limiticon

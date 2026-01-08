@@ -398,8 +398,11 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    private async void OnBuyButtonClicked(ShopDataItem data)
+    private void OnBuyButtonClicked(ShopDataItem data)
     {
+        
+        MessageSystem.Instance.ShowLoadingAnimation();
+        
 #if UNITY_EDITOR
         ProductItem productItem = new ProductItem
         {
@@ -432,17 +435,16 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count);
-                        EventDispatcher.instance.TriggerChangeGoldUI(count,true);
+                        GameDataManager.Instance.UserData.UpdateGold(count, true, true,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.Butterfly:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count);
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
-                        GameDataManager.Instance.UserData.toolInfo[102].count += count;
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.Resettool://提示灯道具，单个字符提示
-                        GameDataManager.Instance.UserData.toolInfo[101].count += count;
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool,count,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:
@@ -461,9 +463,10 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
         
         MessageSystem.Instance.ShowTip("购买成功！");
-    
+        
+        MessageSystem.Instance.HideLoadingAnimation();
 #if UNITY_EDITOR
-        #elif UNITY_OPENSHARP||UNITY_huawei
+#elif UNITY_OPENHARMONY||UNITY_huawei
         
         AnalyticMgr.PurchaseFinished(item, firstPay);
         // 处理购买成功后的逻辑，例如增加游戏内货币
@@ -476,6 +479,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         //todo 关闭loading界面
         Debug.Log("购买失败: " + error);
         AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(),error);
+        MessageSystem.Instance.HideLoadingAnimation();
     }
     
     private void BuyRemoveAdsEvent(int type)
