@@ -56,7 +56,11 @@ QualitySettings:
     terrainMaxTrees: 50
     vgPersistentBufferSize: 256
     vgStreamingBufferSize: 512
-    excludedTargetPlatforms: []
+    excludedTargetPlatforms:
+    - Standalone
+    - Server
+    - Android
+    - OpenHarmony
   - serializedVersion: 3
     name: Low
     pixelLightCount: 0
@@ -313,4 +317,9 @@ QualitySettings:
     vgStreamingBufferSize: 512
     excludedTargetPlatforms: []
   m_TextureMipmapLimitGroupNames: []
-  m_PerPlatformDefaultQuality: {}
+  m_PerPlatformDefaultQuality:
+    Android: 0
+    OpenHarmony: 0
+    Server: 0
+    Standalone: 0
+    WeixinMiniGame: 0
