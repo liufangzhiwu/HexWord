@@ -171,7 +171,6 @@ public class LoadingController : MonoBehaviour
     // 加载数据
     private void LoadUserData(GameDataDto response)
     {
-        
         if (response == null)
         {
             Debug.Log("获取数据接口错误！，使用默认数据");

@@ -4,7 +4,7 @@
 QualitySettings:
   m_ObjectHideFlags: 0
   serializedVersion: 5
-  m_CurrentQuality: 0
+  m_CurrentQuality: 2
   m_QualitySettings:
   - serializedVersion: 3
     name: Very Low
@@ -56,11 +56,7 @@ QualitySettings:
     terrainMaxTrees: 50
     vgPersistentBufferSize: 256
     vgStreamingBufferSize: 512
-    excludedTargetPlatforms:
-    - Standalone
-    - Server
-    - Android
-    - OpenHarmony
+    excludedTargetPlatforms: []
   - serializedVersion: 3
     name: Low
     pixelLightCount: 0

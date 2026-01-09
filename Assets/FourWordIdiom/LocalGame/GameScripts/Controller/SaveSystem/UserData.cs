@@ -869,6 +869,8 @@ public class UserData
             
             // 发送道具统计事件
             SendCurrencyEvent(value, toolName,message); // 假设货币类型从1开始
+            //刷新道具
+            EventDispatcher.instance.TriggerChangeGoldUI(0, false);
             
             //刷新道具
             EventDispatcher.instance.TriggerChangeGoldUI(0, false);

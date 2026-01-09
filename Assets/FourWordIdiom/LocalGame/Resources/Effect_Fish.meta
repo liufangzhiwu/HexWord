@@ -1,6 +1,10 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/FourWordIdiom/LocalGame/Resources/Effect_Fish.meta
 guid: 3e7e36c67cabd6442a02faef38e68d28
 folderAsset: yes
+========
+guid: XilJs3urUS+m6rf72OZS9MEbwfa9wXG5Nn/hSrED9SO4YJ7ccd4gYEw=
+>>>>>>>> c4a8c01d (更改为华为安卓版本；修复商店购买逻辑):Assets/Plugins/Android/gradleTemplate.properties.meta
 DefaultImporter:
   externalObjects: {}
   userData: 
