@@ -47,11 +47,14 @@ namespace Middleware
 
         public void InitGame()
         {
-#if UNITY_EDITOR
+#if UNITY_OPENHARMONY||UNITY_huawei
             
-#elif UNITY_OPENHARMONY||UNITY_huawei
-            CreateAd();
-            CreateAccounts();
+            if (!UIUtilities.isEditMode)
+            {
+                CreateAd();
+                CreateAccounts();
+            }
+            
 #endif
            StartCoroutine(WaitLoginedCreateShop());
            

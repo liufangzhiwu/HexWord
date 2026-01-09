@@ -416,7 +416,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 #elif UNITY_OPENHARMONY||UNITY_huawei
         AnalyticMgr.PurchaseStart(data.produceNameId);
         //todo 打开loading界面
-        Game.self.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
+        Game.self.Shop.Purchase(data.produceNameId, OnPurchaseSuccess, OnPurchaseFailed);
 #endif
     }
 
@@ -424,14 +424,14 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     {
         //todo 关闭loading界面
         Debug.Log("购买成功: " + item.ProductId);
-        var items = new List<AnalyticMgr.Item>();
+        //var items = new List<AnalyticMgr.Item>();
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
             foreach (var dataitem in shopDataItem.productContent)
             {
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
-                items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
+                //items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
@@ -465,11 +465,12 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         MessageSystem.Instance.ShowTip("购买成功！");
         
         MessageSystem.Instance.HideLoadingAnimation();
-#if UNITY_EDITOR
-#elif UNITY_OPENHARMONY||UNITY_huawei
+
+#if UNITY_OPENHARMONY||UNITY_huawei
         
         AnalyticMgr.PurchaseFinished(item, firstPay);
         // 处理购买成功后的逻辑，例如增加游戏内货币
+#elif UNITY_huawei
         item?.OnShipmentCompleted(true);
 #endif
     }

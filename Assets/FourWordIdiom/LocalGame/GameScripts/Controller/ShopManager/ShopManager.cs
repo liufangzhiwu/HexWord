@@ -446,13 +446,17 @@ public class ShopManager : MonoBehaviour
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
+        MessageSystem.Instance.ShowTip("购买成功！");
+        
+        MessageSystem.Instance.HideLoadingAnimation();
+        
+#if UNITY_OPENHARMONY||UNITY_huawei
         
         AnalyticMgr.PurchaseFinished(item, firstPay);
-        MessageSystem.Instance.ShowTip("购买成功！");
-
-        //UIController.Instance.SubmitPayment((int)product.price);
         // 处理购买成功后的逻辑，例如增加游戏内货币
+#elif UNITY_huawei
         item?.OnShipmentCompleted(true);
+#endif
     }
     
     private void BuyRemoveAdsEvent(int type)
