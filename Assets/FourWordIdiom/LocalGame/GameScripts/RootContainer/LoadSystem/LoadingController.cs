@@ -182,34 +182,59 @@ public class LoadingController : MonoBehaviour
         }
         
         serverData = JsonConvert.DeserializeObject<UserData>(response.gameData);
+        
         if (serverData.CurrentHexStage != GameDataManager.Instance.UserData.CurrentHexStage)
         {
             if (serverData.CurrentHexStage > GameDataManager.Instance.UserData.CurrentHexStage)
             {
                 // 弹窗提示
                 Debug.Log("服务器关卡进度大于本地，默认使用服务器数据");
-                GameDataManager.Instance.UserData.InitData(serverData);
-                GameDataManager.Instance.SetInitailized(true);
-                ModifyUserWithABtest();
-                StartCoroutine(LoadingSequence());
+                UserServerData();
                 Debug.Log("服务器数据同步完成！");
             }
-            else
+            else 
             {
                 // 弹窗提示
                 Debug.Log("服务器关卡进度小于本地，默认使用本地数据");
-                ModifyUserWithABtest();
-                StartCoroutine(LoadingSequence());
+                UserLocalData();
             }
         }
-        else
+        else //关卡进度相同时，以离线时间最新的那次为主
         {
-            GameDataManager.Instance.UserData.InitData(serverData);
-            GameDataManager.Instance.SetInitailized(true);
-            ModifyUserWithABtest();
-            StartCoroutine(LoadingSequence());
-            Debug.Log("服务器数据同步完成！");
+            if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.logoutTime)||string.IsNullOrEmpty(serverData.logoutTime))
+            {
+                UserLocalData();
+            }
+            else
+            {
+                DateTime LogoutTime = DateTime.Parse(GameDataManager.Instance.UserData.logoutTime);
+                DateTime serverLogoutTime = DateTime.Parse(serverData.logoutTime);
+
+                if (LogoutTime < serverLogoutTime)
+                {
+                    UserServerData();
+                }
+                else
+                {
+                    UserLocalData();
+                }
+            }
+            
         }
+    }
+
+    private void UserLocalData()
+    {
+        ModifyUserWithABtest();
+        StartCoroutine(LoadingSequence());
+    }
+
+    private void UserServerData()
+    {
+        GameDataManager.Instance.UserData.InitData(serverData);
+        GameDataManager.Instance.SetInitailized(true);
+        ModifyUserWithABtest();
+        StartCoroutine(LoadingSequence());
     }
     
     
