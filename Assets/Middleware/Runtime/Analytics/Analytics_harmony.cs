@@ -69,6 +69,8 @@ namespace Middleware
         public void Login(string uid)
         {
             TDAnalytics.Login(uid);
+            
+            OnSdkInit?.Invoke(this,null);
         }
 
         private void InitThink()
@@ -85,7 +87,7 @@ namespace Middleware
             TDAnalytics.Init(config);
             //TDAnalytics.EnableAutoTrack( TDAutoTrackEventType.AppInstall | TDAutoTrackEventType.AppEnd);
             //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppInstall| TDAutoTrackEventType.AppEnd);
-            OnSdkInit?.Invoke(this,null);
+            
             
             //Debug.Log($"线程ID: {Thread.CurrentThread.ManagedThreadId}");
         }
