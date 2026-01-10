@@ -91,6 +91,7 @@ public class RewardAdsScreen : UIWindow
 
     private void UpdateAdsRewardUI(bool isClaimed)
     {
+        MessageSystem.Instance.HideLoadingAnimation();
         if (isClaimed)
         {
             UpdateCliamBtn(true);

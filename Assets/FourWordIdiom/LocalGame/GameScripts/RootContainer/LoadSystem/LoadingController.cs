@@ -88,6 +88,7 @@ public class LoadingController : MonoBehaviour
 
     private void OnEnable()
     {
+        UnityMainThreadDispatcher.Instance();
         StartCoroutine(InitializeLoadingProcess());
     }
 
@@ -112,7 +113,7 @@ public class LoadingController : MonoBehaviour
             //设置登录用户ID
             AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
         }
-#elif UNITY_huawei
+#elif UNITY_huawei || UNITY_EDITOR
 
         if (!UIUtilities.isEditMode)
         {
@@ -421,11 +422,13 @@ public class LoadingController : MonoBehaviour
         appPlayerInfo.PlayerId = _player.PlayerId;
         appPlayerInfo.OpenId = _player.OpenId;
         Game.self.Accounts.UserId = _player.OpenId;
+        Game.self.Accounts.IsLogin = true;
         
         Debug.LogFormat("登录华为安卓用户时的数据: {0}", JsonConvert.SerializeObject(appPlayerInfo));
         HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));
         Debug.Log("数据上报完成, 当前状态" + _flowStatus );
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
+    
     }
     private void LoadFont()
     {
@@ -520,8 +523,11 @@ public class LoadingController : MonoBehaviour
             switch (code)
             {
                 case 7002:
-                    MessageSystem.Instance.ShowTip("请检查网络");
-                    _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
+                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                    {
+                        MessageSystem.Instance.ShowTip("请检查网络");
+                        _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
+                    });
                     break;
                 case 7401:
                     _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
@@ -531,8 +537,11 @@ public class LoadingController : MonoBehaviour
                     _onRetryAction?.Invoke();
                     break;
                 default:
-                    MessageSystem.Instance.ShowTip(msg);
-                    _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
+                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                    {
+                         MessageSystem.Instance.ShowTip(msg);
+                        _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
+                    });
                     break;
             }
         }
@@ -604,29 +613,37 @@ public class LoadingController : MonoBehaviour
         {
             if (signInAccountProxy == null)
             {
-                MessageSystem.Instance.ShowTip("signInAccountProxy == null");
-                _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
+                });
                 return;
             }
             string msg = "get login success with signInAccountProxy info: \n";
             msg += String.Format("displayName:{0}, email:{1}, uid:{2}, openId:{3}, unionId:{4}, accessToken:{5}, serverAuthCode:{6}, idToken:{7}",
                 signInAccountProxy.DisplayName, signInAccountProxy.Email, signInAccountProxy.Uid, signInAccountProxy.OpenId, signInAccountProxy.UnionId,
                 signInAccountProxy.AccessToken, signInAccountProxy.ServerAuthCode, signInAccountProxy.IdToken);
-            MessageSystem.Instance.ShowTip(msg);
+            // MessageSystem.Instance.ShowTip(msg);
            _onLoginCompleted.Invoke(GameFlowStatus.GetGamePlayer);
         }
 
         public void OnSignOut()
         {
             string msg = "sign out success.";
-           MessageSystem.Instance.ShowTip(msg);
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            {
+                MessageSystem.Instance.ShowTip(msg);
+            });
         }
 
         public void OnFailure(int code, string message)
         {
             string msg = "account method failed, code:" + code + " message:" + message;
-            MessageSystem.Instance.ShowTip(msg);
-            _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            {
+                MessageSystem.Instance.ShowTip(msg);
+                _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
+            });
         }
     }
     private class GetGamePlayerListener : IGetPlayerListener
@@ -643,8 +660,11 @@ public class LoadingController : MonoBehaviour
         {
             if (player == null)
             {
-                MessageSystem.Instance.ShowTip("player == null");
-                _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
+                    MessageSystem.Instance.ShowTip("用户信息为空,请检查！");
+                });
                 return;
             }
             var msg = "getGamePlayer succeed. \n";
@@ -652,7 +672,6 @@ public class LoadingController : MonoBehaviour
                 "displayName:{0}, playerId:{1}, playerSign:{2}, openId:{3}, unionId:{4}, openIdSign:{5}, accessToken:{6}",
                 player.DisplayName, player.PlayerId, player.PlayerSign, player.OpenId, player.UnionId, player.OpenIdSign, player.AccessToken
             );
-            MessageSystem.Instance.ShowTip(msg);
             _owner?.Invoke(player);
             _onGetPlayerCompleted?.Invoke(GameFlowStatus.GamePlayerSave);
         }
@@ -660,8 +679,11 @@ public class LoadingController : MonoBehaviour
         public void OnFailure(int code, string message)
         {
             var msg = "getCurrentPlayer failed, code:" + code + " message:" + message;
-            MessageSystem.Instance.ShowTip(msg);
-            _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            {
+                _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
+                MessageSystem.Instance.ShowTip(msg);
+            });
         }
     }
     
@@ -675,16 +697,12 @@ public class LoadingController : MonoBehaviour
         }
         public void OnSuccess()
         {
-            var msg = "SavePlayerInfo succeed.";
-            MessageSystem.Instance.ShowTip(msg);
             _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
         }
         
         public void OnFailure(int code, string message)
         {
-            var msg = "SavePlayerInfo failed, code:" + code + " message:" + message;
-            MessageSystem.Instance.ShowTip(msg);
-            _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.GamePlayerSaveFailed);
+            _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
         }
     }
 

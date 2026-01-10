@@ -3,7 +3,6 @@ using UnityEngine;
 using System;
 using HuaweiService;
 using HuaweiService.ads;
-using Object = UnityEngine.Object;
 
 namespace Middleware
 {
@@ -37,10 +36,6 @@ namespace Middleware
 
         public void ShowReward(Define.AdKey key, Action<bool> callback)
         {
-#if UNITY_EDITOR 
-            callback(true);
-            return;
-#endif
             if (_isShowingReward)
             {
                 Debug.Log("[Ads_huawei] ShowReward ignored: Action in progress.");
@@ -65,6 +60,7 @@ namespace Middleware
             {
                 Debug.Log("[Ads_huawei] ShowReward: Cache Miss. Loading new ad.");
                 // 缓存无效或不存在，发起加载并自动播放
+                MessageSystem.Instance.ShowLoadingAnimation();
                 LoadRewardAd(key, true);
             }
        
@@ -88,10 +84,6 @@ namespace Middleware
 
         public void ShowInterstitial(Action<bool> callback)
         {
-#if UNITY_EDITOR 
-            callback(true);
-            return;
-#endif
             _completeCallback = callback;
             InterstitialAd ad = new InterstitialAd(new Context());
             ad.setAdId(GetAdId(Define.AdKey.InterstitialAdId));
@@ -197,11 +189,15 @@ namespace Middleware
             // 如果是准备播放时失败，需要回调给业务层并重置展示状态
             if (_isUserWaiting)
             {
-                MessageSystem.Instance.ShowTip("广告加载失败，请重试");
+                
                 _isShowingReward = false;
                 _isUserWaiting = false;
-                _completeCallback?.Invoke(false);
-                _completeCallback = null;
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _completeCallback?.Invoke(false);
+                    _completeCallback = null;
+                    MessageSystem.Instance.ShowTip("广告加载失败，请重试");
+                });
             }
         }
 
@@ -265,13 +261,20 @@ namespace Middleware
             {
                 // base.onRewardAdClosed();
                 // MessageSystem.Instance.ShowTip($"[激励广告被关闭]RewardAdClosed");
-                _callback?.Invoke(false);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _callback?.Invoke(false);
+                });
+        
                 _parent.OnAdFinishedOrClosed();
             }
             public override void onRewardAdFailedToShow(int arg0)
             {
                 // base.onRewardAdFailedToShow(arg0);
-                _callback?.Invoke(false);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _callback?.Invoke(false);
+                });
                 // MessageSystem.Instance.ShowTip($"[激励广告展示失败] RewardAdFailedToShow errorCode:{arg0}");
                 _parent.OnAdFinishedOrClosed();
             }
@@ -279,7 +282,10 @@ namespace Middleware
             {
                 // base.onRewarded(arg0);
                 // MessageSystem.Instance.ShowTip($"[激励广告完成] RewardAdFailedToShow errorCode:{arg0}");
-                _callback?.Invoke(true);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _callback?.Invoke(true);
+                });
             }
         }
         
@@ -303,13 +309,20 @@ namespace Middleware
             {
                 // base.onAdClosed();
                 // MessageSystem.Instance.ShowTip("AdListener Ad Closed");
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    MessageSystem.Instance.HideLoadingAnimation();
+                });
             }
 
             public override void onAdFailed(int arg0)
             {
                 // MessageSystem.Instance.ShowTip("AdListener Ad failed to load with error code "+ arg0);
                 // base.onAdFailed(arg0);
-                _callback?.Invoke(false);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _callback?.Invoke(false);
+                });
                 
             }
 
@@ -336,7 +349,10 @@ namespace Middleware
             {
                 // base.onAdOpened();
                 // MessageSystem.Instance.ShowTip("AdListener Ad Opened");
-                _callback?.Invoke(true);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _callback?.Invoke(true);
+                });
             }
         }
     }

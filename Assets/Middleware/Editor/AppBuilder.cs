@@ -176,7 +176,7 @@ namespace Middleware
 		[MenuItem("Tools/切换平台/Android", false, 102)]
 		public static void SwitchToAndroid()
 		{
-			SwitchPlatform(BuildTarget.Android);
+			SwitchPlatform(BuildTarget.Android, false);
 		}
 
 		[MenuItem("Tools/切换平台/IOS", false, 103)]
@@ -185,11 +185,11 @@ namespace Middleware
 			SwitchPlatform(BuildTarget.iOS);
 		}
 		
-		private static void SwitchPlatform(BuildTarget targetPlatform)
+		private static void SwitchPlatform(BuildTarget targetPlatform, bool isMerge = true)
 		{
 			if (EditorUserBuildSettings.activeBuildTarget == targetPlatform)
 				return;
-			ManagerPackage(targetPlatform);
+			if (isMerge) ManagerPackage(targetPlatform);
 			EditorUserBuildSettings.SwitchActiveBuildTarget(BuildPipeline.GetBuildTargetGroup(targetPlatform),
 				targetPlatform);
 			Debug.Log("切换平台成功");

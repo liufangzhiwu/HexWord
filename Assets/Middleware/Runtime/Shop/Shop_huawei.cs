@@ -46,6 +46,8 @@ namespace Middleware
                 int returnCode = result.getReturnCode();
                 if(returnCode == OrderStatusCode.ORDER_STATE_SUCCESS)
                     _isEnvReady = true;
+                
+                ObtainOwnedPurchases();
             })).addOnFailureListener(new HuaweiOnFailureListener(exception =>
             {
                 IapApiException apiException = HmsClassHelper.ConvertObject<IapApiException>(exception.obj);
@@ -68,6 +70,10 @@ namespace Middleware
                     }else if (status.getStatusCode() == OrderStatusCode.ORDER_ACCOUNT_AREA_NOT_SUPPORTED)
                     {
                         // 用户当前登录的华为帐号所在的服务地不在华为IAP支持结算的国家/地区中
+                        UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                        {
+                            MessageSystem.Instance.ShowTip("帐号所在的服务地不在华为IAP支持结算的国家/地区中");
+                        });
                     }
                 }
                 else
@@ -115,7 +121,10 @@ namespace Middleware
                 switch (purchaseResultInfo.getReturnCode())
                 {
                     case OrderStatusCode.ORDER_STATE_CANCEL:
-                        _failedAction?.Invoke(resultcode.ToString());
+                        UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                        {
+                            _failedAction?.Invoke(resultcode.ToString());
+                        });
                         Debug.LogWarning("支付取消!");
                         break;
                     case OrderStatusCode.ORDER_STATE_FAILED:
@@ -126,7 +135,7 @@ namespace Middleware
                         break;
                     case OrderStatusCode.ORDER_STATE_SUCCESS:
                         string inAppPurchaseData = purchaseResultInfo.getInAppPurchaseData();
-                        string inAppDataSignature = purchaseResultInfo.getInAppDataSignature();
+                        // string inAppDataSignature = purchaseResultInfo.getInAppDataSignature();
                         InAppPurchaseData  inAppPurchaseDataBean = new InAppPurchaseData(inAppPurchaseData);
                         if (inAppPurchaseDataBean.getPurchaseState() == 0)
                         {
@@ -152,27 +161,36 @@ namespace Middleware
                                     }));
                                 }
                             };
-                            _successAction?.Invoke(productItem);
+                            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                            {
+                                _successAction?.Invoke(productItem);
+                            });
                         }
                         break;
                     default:  
-                        _failedAction?.Invoke(resultcode.ToString());
+                        UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                        {
+                            _failedAction?.Invoke(resultcode.ToString());
+                        });
                         break;
                 }
             }
             else
             {
-               _failedAction?.Invoke(resultcode.ToString());
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _failedAction?.Invoke(resultcode.ToString());
+                });
             }
         }
     
         /// <summary>
         /// 消耗型商品的补单流程
         /// </summary>
-        private void ObtainOwnedPurchases()
+        private void ObtainOwnedPurchases(int type = 0)
         {
             OwnedPurchasesReq ownedPurchasesReq = new OwnedPurchasesReq();
-            ownedPurchasesReq.setPriceType(0);
+            ownedPurchasesReq.setPriceType(type);
             Activity activity = new UnityPlayerActivity();
             Task task = Iap.getIapClient(activity).obtainOwnedPurchases(ownedPurchasesReq);
             task.addOnSuccessListener(new HuaweiOnsuccessListener<OwnedPurchasesResult>(result =>
@@ -180,6 +198,8 @@ namespace Middleware
                 if (result != null && result.getInAppPurchaseDataList() != null)
                 {
                     List inAppPurchaseDataList = result.getInAppPurchaseDataList();
+                    if (inAppPurchaseDataList.size() < 1) return;
+                    
                     ConsumeOwnedPurchaseReq req = new ConsumeOwnedPurchaseReq();
                     string purchaseToken = "";
                     string inAppPurchaseDataStr  = HmsClassHelper.ConvertObject<InAppPurchaseData>(inAppPurchaseDataList.get(0)).ToString();

@@ -43,6 +43,13 @@
 
 
 #############################################
+# --- Huawei HMS ProGuard Rules START ---
+-ignorewarnings
+-keepattributes *Annotation*
+-keepattributes Exceptions
+-keepattributes InnerClasses
+-keepattributes Signature
+-keepattributes SourceFile,LineNumberTable
 
 -keep public class * extends android.app.Activity
 -keep public class * extends android.app.Application
@@ -64,6 +71,19 @@
 -keep interface com.huawei.hms.analytics.type.HAParamType{*;}
 -keep class com.huawei.hms.analytics.HiAnalyticsInstance{*;}
 -keep class com.huawei.hms.analytics.HiAnalytics{*;}
+# 保护华为 HMS 的所有类不被混淆或剪裁
+-keep class com.huawei.hianalytics.**{*;}
+-keep class com.huawei.updatesdk.**{*;}
+-keep class com.huawei.hms.**{*;}
+-keep class com.huawei.agconnect.**{*;}
+# 针对 IAP 和 支付 的特殊保护
+-keep class com.huawei.hms.iap.**{*;}
+-keep class com.huawei.hms.support.api.iap.**{*;}
+
+# 防止刘海屏适配代码丢失 (解决 getNotchSize 报错)
+-keep class com.huawei.android.util.**{*;}
+-keep class com.huawei.android.view.**{*;}
+# --- Huawei HMS ProGuard Rules END ---
 
 -keep class android.support.** {*;}
 
