@@ -21,6 +21,6 @@ namespace Middleware
         public string IsoCurrencyCode;
         public float LocalizedPrice;
 
-        public Action<bool> OnShipmentCompleted;
+        public Action<bool> OnShipmentCompleted=null;
     }
 }

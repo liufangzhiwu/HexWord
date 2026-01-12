@@ -308,7 +308,7 @@ namespace Middleware
                 // MessageSystem.Instance.ShowTip("AdListener Ad Closed");
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
-                    _callback?.Invoke(false);
+                    //_callback?.Invoke(false);
                     MessageSystem.Instance.HideLoadingAnimation();
                 });
             }

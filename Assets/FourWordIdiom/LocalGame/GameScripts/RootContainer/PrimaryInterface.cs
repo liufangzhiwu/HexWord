@@ -64,7 +64,7 @@ public class PrimaryInterface : UIWindow
         TasksBtn.AddClickAction(OnTaskClick);
         HeadBtn.AddClickAction(OnHeadClick);
         FishBtn.AddClickAction(OnFishClick);
-        ButterflyBtn.AddClickAction(OnButterflyClick);
+        //ButterflyBtn.AddClickAction(OnButterflyClick);
     }
 
     private void Start()

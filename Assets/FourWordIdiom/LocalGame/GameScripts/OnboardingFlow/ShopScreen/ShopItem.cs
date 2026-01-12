@@ -462,13 +462,11 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
         
-   
-#if UNITY_EDITOR
-#elif UNITY_OPENHARMONY||UNITY_huawei
+
+#if UNITY_OPENHARMONY||UNITY_huawei
         
         AnalyticMgr.PurchaseFinished(item, firstPay);
-        // 处理购买成功后的逻辑，例如增加游戏内货币
-#elif UNITY_huawei
+        // 处理购买成功后的逻辑，例如增加游戏内货
         item?.OnShipmentCompleted(true);
 #endif
         MessageSystem.Instance.ShowTip("购买成功！");

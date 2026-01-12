@@ -113,11 +113,18 @@ namespace Middleware
         private void OnActivityResultCallback(int requestcode, int resultcode, AndroidJavaObject obj)
         {
             var data = new Intent { obj = obj };
+            
+            Debug.Log("购买返回requestcode"+requestcode);
+            
             if (requestcode == 6666)
             {
                 Activity activity = new UnityPlayerActivity();
                 PurchaseResultInfo purchaseResultInfo =
                     Iap.getIapClient(activity).parsePurchaseResultInfoFromIntent(data);
+
+                int purchaseCode = purchaseResultInfo.getReturnCode();
+                
+                Debug.Log("购买返回Code"+purchaseCode);
                 switch (purchaseResultInfo.getReturnCode())
                 {
                     case OrderStatusCode.ORDER_STATE_CANCEL:
@@ -137,6 +144,10 @@ namespace Middleware
                         string inAppPurchaseData = purchaseResultInfo.getInAppPurchaseData();
                         // string inAppDataSignature = purchaseResultInfo.getInAppDataSignature();
                         InAppPurchaseData  inAppPurchaseDataBean = new InAppPurchaseData(inAppPurchaseData);
+                        
+                        string token = inAppPurchaseDataBean.getPurchaseToken();
+                        Debug.Log("通知发货订单"+token+"支付状态"+inAppPurchaseDataBean.getPurchaseState());
+                        
                         if (inAppPurchaseDataBean.getPurchaseState() == 0)
                         {
                             ProductItem productItem = new ProductItem
@@ -144,10 +155,12 @@ namespace Middleware
                                 IsoCurrencyCode = inAppPurchaseDataBean.getCurrency(),
                                 ProductId = inAppPurchaseDataBean.getProductId(),
                                 LocalizedPrice = inAppPurchaseDataBean.getPrice(),
+                                
                                 OnShipmentCompleted = (bool handle) =>
                                 {
                                     ConsumeOwnedPurchaseReq req = new ConsumeOwnedPurchaseReq();
-                                    req.setPurchaseToken(inAppPurchaseDataBean.getPurchaseToken());
+                                  
+                                    req.setPurchaseToken(token);
                                     Task task2 = Iap.getIapClient(activity).consumeOwnedPurchase(req);
                                     task2.addOnSuccessListener(new HuaweiOnsuccessListener<ConsumeOwnedPurchaseResult>(res =>
                                     {

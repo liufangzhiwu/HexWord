@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!687078895 &4343727234628468602
 SpriteAtlas:
   m_ObjectHideFlags: 0
@@ -7,11 +7,10 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: UI_OnboardingFlow
-  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 3
+      serializedVersion: 2
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -20,13 +19,11 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
-      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 4096
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -40,7 +37,6 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: OpenHarmony
       m_MaxTextureSize: 4096
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -73,7 +69,6 @@ SpriteAtlas:
     - 04870780dae12da468eaef9da5209bcf: 21300000
     - 4e003db0fccf9654d93ab7d34103fa15: 21300000
     - 5db30ae05243c5949a0e67a42018951e: 21300000
-    - 37a49d1121e0aa64ca38bea533de756c: 21300000
     - 6e2c30a122ed4ba45b32e4ecd344b9eb: 21300000
     - dd7008b12feea534983d4d043050c75b: 21300000
     - 0469b3c1fdeb8c64181b0cba5e98cef1: 21300000
@@ -188,7 +183,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 04870780dae12da468eaef9da5209bcf, type: 3}
   - {fileID: 21300000, guid: 4e003db0fccf9654d93ab7d34103fa15, type: 3}
   - {fileID: 21300000, guid: 5db30ae05243c5949a0e67a42018951e, type: 3}
-  - {fileID: 21300000, guid: 37a49d1121e0aa64ca38bea533de756c, type: 3}
   - {fileID: 21300000, guid: 6e2c30a122ed4ba45b32e4ecd344b9eb, type: 3}
   - {fileID: 21300000, guid: dd7008b12feea534983d4d043050c75b, type: 3}
   - {fileID: 21300000, guid: 0469b3c1fdeb8c64181b0cba5e98cef1, type: 3}
@@ -302,7 +296,6 @@ SpriteAtlas:
   - anniubg
   - dailytitle
   - wordbg
-  - close_bg
   - UI_Icon_jian
   - minbg
   - time
@@ -412,4 +405,3 @@ SpriteAtlas:
   m_RenderDataMap: {}
   m_Tag: UI_OnboardingFlow
   m_IsVariant: 0
-  m_IsPlaceholder: 0
