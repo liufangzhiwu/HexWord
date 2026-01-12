@@ -207,6 +207,7 @@ public class SignWaterScreen : UIWindow
     private void OnAdsStartBtn()
     {
         if(iswater) return;
+        MessageSystem.Instance.ShowLoadingAnimation();
         Define.AdKey key;
         var sign = GameDataManager.Instance.UserData.signid;
         AnalyticMgr.VideoAdClick("签到"+sign);
@@ -239,6 +240,7 @@ public class SignWaterScreen : UIWindow
         {
             return;
         }
+        MessageSystem.Instance.ShowLoadingAnimation();
         WaterManager.instance.StartTime=DateTime.Now;
         iswater = true;
         StartBtn.enabled = false;
