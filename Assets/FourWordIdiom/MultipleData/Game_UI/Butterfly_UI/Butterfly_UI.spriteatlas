@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!687078895 &4343727234628468602
 SpriteAtlas:
   m_ObjectHideFlags: 0
@@ -7,11 +7,10 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Butterfly_UI
-  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 3
+      serializedVersion: 2
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -20,13 +19,11 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
-      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: DefaultTexturePlatform
       m_MaxTextureSize: 64
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: -1
       m_TextureCompression: 1
@@ -40,7 +37,6 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 2048
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -54,7 +50,6 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: OpenHarmony
       m_MaxTextureSize: 2048
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -75,52 +70,14 @@ SpriteAtlas:
       enableAlphaDilation: 1
     secondaryTextureSettings: {}
     variantMultiplier: 1
-    packables:
-    - {fileID: 102900000, guid: d7d9f88b84ac0434785a9f11ac7e62e4, type: 3}
+    packables: []
     bindAsDefault: 1
     isAtlasV2: 0
     cachedData: {fileID: 0}
-    packedSpriteRenderDataKeys:
-    - 8bf498401226ec04e94ff007f3d23501: 21300000
-    - 449812f0d21e1884abbb0d1ea851544b: 21300000
-    - 6689ee31fdc1c7d4aa9400bbac12a9f7: 21300000
-    - b5cce7c16df361d4dac89d717dc16679: 21300000
-    - 0811b6e1f78410c44806cbdef9c2bb74: 21300000
-    - 717f00f11ae1f15479610e3f86b5e022: 21300000
-    - d65e1f532e7c5a34aa5c7dafd7b0d543: 21300000
-    - 9bb7da83321936d4f9487b056197a11e: 21300000
-    - da266004ddf84d848abc12de311fcfc8: 21300000
-    - 037c7bd43f8221f41917b8b391d64bef: 21300000
-    - 4b16373bc1c28344e9c5ec32bf56d556: 21300000
-    - 9e9cec6f57aa62c4fbee0157d03ecce7: 21300000
+    packedSpriteRenderDataKeys: []
   m_MasterAtlas: {fileID: 0}
-  m_PackedSprites:
-  - {fileID: 21300000, guid: 8bf498401226ec04e94ff007f3d23501, type: 3}
-  - {fileID: 21300000, guid: 449812f0d21e1884abbb0d1ea851544b, type: 3}
-  - {fileID: 21300000, guid: 6689ee31fdc1c7d4aa9400bbac12a9f7, type: 3}
-  - {fileID: 21300000, guid: b5cce7c16df361d4dac89d717dc16679, type: 3}
-  - {fileID: 21300000, guid: 0811b6e1f78410c44806cbdef9c2bb74, type: 3}
-  - {fileID: 21300000, guid: 717f00f11ae1f15479610e3f86b5e022, type: 3}
-  - {fileID: 21300000, guid: d65e1f532e7c5a34aa5c7dafd7b0d543, type: 3}
-  - {fileID: 21300000, guid: 9bb7da83321936d4f9487b056197a11e, type: 3}
-  - {fileID: 21300000, guid: da266004ddf84d848abc12de311fcfc8, type: 3}
-  - {fileID: 21300000, guid: 037c7bd43f8221f41917b8b391d64bef, type: 3}
-  - {fileID: 21300000, guid: 4b16373bc1c28344e9c5ec32bf56d556, type: 3}
-  - {fileID: 21300000, guid: 9e9cec6f57aa62c4fbee0157d03ecce7, type: 3}
-  m_PackedSpriteNamesToIndex:
-  - star_hide_1
-  - unlock
-  - top_bg
-  - name_bg
-  - star_show_2
-  - star_show_3
-  - butterfly_ghost
-  - star_show_1
-  - bg
-  - star_hide_2
-  - item_bg
-  - star_hide_3
+  m_PackedSprites: []
+  m_PackedSpriteNamesToIndex: []
   m_RenderDataMap: {}
   m_Tag: Butterfly_UI
   m_IsVariant: 0
-  m_IsPlaceholder: 0

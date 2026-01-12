@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!687078895 &4343727234628468602
 SpriteAtlas:
   m_ObjectHideFlags: 0
@@ -7,11 +7,10 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: UI_Butterflyscene
-  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 3
+      serializedVersion: 2
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -20,13 +19,11 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
-      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 8192
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 49
       m_TextureCompression: 1
@@ -40,7 +37,6 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: OpenHarmony
       m_MaxTextureSize: 8192
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 50
       m_TextureCompression: 1
@@ -61,31 +57,14 @@ SpriteAtlas:
       enableAlphaDilation: 1
     secondaryTextureSettings: {}
     variantMultiplier: 1
-    packables:
-    - {fileID: 102900000, guid: ba9a368b2027ab9409882f5ef0f5c88a, type: 3}
+    packables: []
     bindAsDefault: 1
     isAtlasV2: 0
     cachedData: {fileID: 0}
-    packedSpriteRenderDataKeys:
-    - c3cb84708b7ae9a4299e9f1ff9338a72: 21300000
-    - 5fab8eb7f1a27e34f9a253a009779bd2: 21300000
-    - 05e36638f010c6347a054bf15fc191b4: 21300000
-    - cb57181fe1c6ab34d914bd500cc0771a: 21300000
-    - 2e8f9eff731d8534d839fff0afc6b124: 21300000
+    packedSpriteRenderDataKeys: []
   m_MasterAtlas: {fileID: 0}
-  m_PackedSprites:
-  - {fileID: 21300000, guid: c3cb84708b7ae9a4299e9f1ff9338a72, type: 3}
-  - {fileID: 21300000, guid: 5fab8eb7f1a27e34f9a253a009779bd2, type: 3}
-  - {fileID: 21300000, guid: 05e36638f010c6347a054bf15fc191b4, type: 3}
-  - {fileID: 21300000, guid: cb57181fe1c6ab34d914bd500cc0771a, type: 3}
-  - {fileID: 21300000, guid: 2e8f9eff731d8534d839fff0afc6b124, type: 3}
-  m_PackedSpriteNamesToIndex:
-  - scenery1
-  - scenery9
-  - scenery3
-  - scenery5
-  - scenery2
+  m_PackedSprites: []
+  m_PackedSpriteNamesToIndex: []
   m_RenderDataMap: {}
   m_Tag: UI_Butterflyscene
   m_IsVariant: 0
-  m_IsPlaceholder: 0

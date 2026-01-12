@@ -190,7 +190,6 @@ namespace Middleware
                 {
                     _completeCallback?.Invoke(false);
                     _completeCallback = null;
-                    MessageSystem.Instance.ShowTip("广告加载失败，请重试");
                 });
             }
         }
@@ -254,12 +253,13 @@ namespace Middleware
             public override void onRewardAdClosed()
             {
                 _parent.OnAdFinishedOrClosed();
+                //可以领取奖励关闭回调
                 // base.onRewardAdClosed();
                 // MessageSystem.Instance.ShowTip($"[激励广告被关闭]RewardAdClosed");
-                UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                {
-                    _callback?.Invoke(false);
-                });
+                // UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                // {
+                //     _callback?.Invoke(false);
+                // });
             }
             public override void onRewardAdFailedToShow(int arg0)
             {
@@ -321,7 +321,6 @@ namespace Middleware
                 {
                     _callback?.Invoke(false);
                 });
-                
             }
 
             public override void onAdImpression()

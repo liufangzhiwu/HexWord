@@ -462,13 +462,13 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
         
-
-#if UNITY_OPENHARMONY||UNITY_huawei
+        if (!UIUtilities.isEditMode)
+        {
+            AnalyticMgr.PurchaseFinished(item, firstPay);
+            // 处理购买成功后的逻辑，例如增加游戏内货
+            item?.OnShipmentCompleted(true);
+        }
         
-        AnalyticMgr.PurchaseFinished(item, firstPay);
-        // 处理购买成功后的逻辑，例如增加游戏内货
-        item?.OnShipmentCompleted(true);
-#endif
         MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
     }
