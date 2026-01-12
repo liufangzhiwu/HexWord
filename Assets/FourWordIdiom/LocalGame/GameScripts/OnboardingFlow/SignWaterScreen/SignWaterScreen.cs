@@ -210,8 +210,6 @@ public class SignWaterScreen : UIWindow
         Define.AdKey key;
         var sign = GameDataManager.Instance.UserData.signid;
         AnalyticMgr.VideoAdClick("签到"+sign);
-        
-#if UNITY_OPENHARMONY
         Game.self?.Ads.ShowReward(GetAdKey(),success => {
             if (!success)
             {
@@ -232,18 +230,6 @@ public class SignWaterScreen : UIWindow
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
             }
         });
-#elif Unity_ShowLog
-        iswater = true;
-        AdsStartBtn.enabled = false;
-        closeBtn.enabled = false;
-        HideBtn.enabled = false;
-        int value = AwardValues[sign];
-        WaterManager.instance.PlayerWater(false, value);
-        StartCoroutine(CheckIsReadyToShowAd());
-        AnalyticMgr.VideoAdSuccess("签到"+sign);
-        GameDataManager.Instance.UserData.totalSeeAds++;
-        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
-#endif
     }
 
     public void OnStartBtn()
