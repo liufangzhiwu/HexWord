@@ -275,20 +275,20 @@ public class StageHexController
 
 #elif UNITY_OPENHARMONY || UNITY_huawei
 
-            // AnalyticMgr.InsetAdStart("关卡插屏");
-            // // 显示插屏广告
-            // Game.Ads.ShowInterstitial((bool issuccess) => 
-            // {
-            //     if (issuccess)
-            //     {
-            //         AnalyticMgr.InsetAdSuccess("关卡插屏");
-            //         GameDataManager.Instance.UserData.totalSeeAds++;
-            //     }
-            //     else
-            //     {
-            //         AnalyticMgr.InsetAdFail("关卡插屏");
-            //     }
-            // });
+            AnalyticMgr.InsetAdStart("关卡插屏");
+            // 显示插屏广告
+            Game.self.Ads.ShowInterstitial((bool issuccess) => 
+            {
+                if (issuccess)
+                {
+                    AnalyticMgr.InsetAdSuccess("关卡插屏");
+                    GameDataManager.Instance.UserData.totalSeeAds++;
+                }
+                else
+                {
+                    AnalyticMgr.InsetAdFail("关卡插屏");
+                }
+            });
 #endif
         }
 

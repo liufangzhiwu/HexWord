@@ -132,12 +132,6 @@ namespace Middleware
 #endif
         }
 
-        private void CallbackAd(bool success)
-        {
-            _completeCallback?.Invoke(success);
-            _completeCallback = null;
-        }
-
         private bool IsCacheValid()
         {
             if (_cachedRewardAd == null) return false;
@@ -259,24 +253,23 @@ namespace Middleware
             }
             public override void onRewardAdClosed()
             {
+                _parent.OnAdFinishedOrClosed();
                 // base.onRewardAdClosed();
                 // MessageSystem.Instance.ShowTip($"[激励广告被关闭]RewardAdClosed");
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
                     _callback?.Invoke(false);
                 });
-        
-                _parent.OnAdFinishedOrClosed();
             }
             public override void onRewardAdFailedToShow(int arg0)
             {
+                _parent.OnAdFinishedOrClosed();
                 // base.onRewardAdFailedToShow(arg0);
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
                     _callback?.Invoke(false);
                 });
                 // MessageSystem.Instance.ShowTip($"[激励广告展示失败] RewardAdFailedToShow errorCode:{arg0}");
-                _parent.OnAdFinishedOrClosed();
             }
             public override void onRewarded(Reward arg0)
             {
@@ -303,6 +296,10 @@ namespace Middleware
             {
                 // base.onAdClicked();
                 // MessageSystem.Instance.ShowTip("AdListener Ad Clicked");
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    MessageSystem.Instance.HideLoadingAnimation();
+                });
             }
 
             public override void onAdClosed()
@@ -311,6 +308,7 @@ namespace Middleware
                 // MessageSystem.Instance.ShowTip("AdListener Ad Closed");
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
+                    _callback?.Invoke(false);
                     MessageSystem.Instance.HideLoadingAnimation();
                 });
             }

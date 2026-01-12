@@ -104,7 +104,7 @@ public class RewardAdsScreen : UIWindow
         }
         else
         {
-            MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
+            MessageSystem.Instance.ShowTip("广告奖励失败，请稍后重试。");
             AnalyticMgr.VideoAdFail("金币弹窗广告");
         }
     }

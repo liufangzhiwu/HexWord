@@ -779,6 +779,7 @@ public class HexGamePlayArea : UIWindow
     
     private void UpdateAdsRewardUI(bool isShow)
     {
+        MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
             usetoolCount++;
@@ -806,7 +807,7 @@ public class HexGamePlayArea : UIWindow
         }
         else
         {
-            MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
+            MessageSystem.Instance.ShowTip("广告奖励失败，请稍后重试。");
             AnalyticMgr.VideoAdFail("提示灯广告");
         }
     }
