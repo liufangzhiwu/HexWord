@@ -732,7 +732,7 @@ public class HexGamePlayArea : UIWindow
                 //AdsManager.Instance.ShowRewardedPanel("item_gold");
                 //SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
                 
-#if UNITY_OPENHARMONY
+#if UNITY_OPENHARMONY||UNITY_huawei
         AnalyticMgr.VideoAdClick("提示灯道具广告");
         Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
 #elif Unity_ShowLog
