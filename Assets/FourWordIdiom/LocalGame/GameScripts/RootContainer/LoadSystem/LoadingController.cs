@@ -108,11 +108,14 @@ public class LoadingController : MonoBehaviour
         if (!UIUtilities.isEditMode)
         {
             //初始化商店、广告、登录
+            StartCoroutine(SimulateLoadingProgress());
             Game.self.InitGame();
             yield return new WaitUntil(()=>Game.self.Accounts.IsLogin);
             //设置登录用户ID
             AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
-        }
+        }else{
+            StartCoroutine(SimulateLoadingProgress());
+            }
 #elif UNITY_huawei || UNITY_EDITOR
 
         if (!UIUtilities.isEditMode)
@@ -120,6 +123,7 @@ public class LoadingController : MonoBehaviour
              Debug.Log($"进入初始化游戏服务流程");
             //初始化游戏服务 
             yield return InitializeGameService();
+            StartCoroutine(SimulateLoadingProgress());
             // 初始化商店(需要等待游戏服务完成后)
             Game.self.InitGame();
             yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
@@ -129,10 +133,11 @@ public class LoadingController : MonoBehaviour
             //设置登录用户ID（需要等待游戏数据获取后）
             AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
         }
-       
+        else
+        {
+            StartCoroutine(SimulateLoadingProgress());
+        }
 #endif
-        
-        yield return new WaitForSeconds(0.05f);
         yield return APIGateway.Instance.LoginApi.Login((res)=> 
         {
             if (res != null)
@@ -141,8 +146,6 @@ public class LoadingController : MonoBehaviour
             }
             isLogined = true;
         });
-        yield return new WaitForSeconds(0.05f);
-        loadStartTime = Time.time;
         
         InitializeLocalization();
         SetupRandomLoadingHint();
@@ -312,7 +315,6 @@ public class LoadingController : MonoBehaviour
     private IEnumerator LoadingSequence()
     {
         // 并行执行模拟加载和实际加载
-        yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
         //AudioManager.Instance.Initialize();
         // GameDataManager.Instance.LoadPlayerProfile();
@@ -361,9 +363,9 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator SimulateLoadingProgress()
     {
+        loadStartTime = Time.time;  // 先设置开始时间
         Loading.GetComponent<CanvasGroup>().DOFade(1, 0.1f);
-
-        float width = progressSlider.GetComponent<RectTransform>().rect.width;
+       
         RectTransform sliderBackground = progressSlider.transform.GetChild(0).GetComponent<RectTransform>();
         Vector3 localStart = new Vector3(sliderBackground.rect.xMin, 0, 0);
         Vector3 localEnd = new Vector3(sliderBackground.rect.xMax, 0, 0);
@@ -379,7 +381,7 @@ public class LoadingController : MonoBehaviour
         while (progress < 1f)
         {
             elapsedTime = Time.time - loadStartTime;
-            progress = Mathf.Clamp01(elapsedTime / 2f);
+            progress = Mathf.Clamp01(elapsedTime / 4f);
             
             progressSlider.value = progress;
             Vector3 currentPos = Vector3.Lerp(worldStart, worldEnd, progress);
@@ -493,7 +495,7 @@ public class LoadingController : MonoBehaviour
         sceneLoadOperation.allowSceneActivation = false;
 
         Debug.Log("开始加载主场景");
-        yield return new WaitUntil(() => sceneLoadOperation.progress >= 0.9f);
+        yield return new WaitUntil(() => sceneLoadOperation.progress >= 0.9f&&progressSlider.value>=0.99f);
         Debug.Log("主场景加载完成");
     }
 
