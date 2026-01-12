@@ -211,9 +211,10 @@ public class SignWaterScreen : UIWindow
         var sign = GameDataManager.Instance.UserData.signid;
         AnalyticMgr.VideoAdClick("签到"+sign);
         Game.self?.Ads.ShowReward(GetAdKey(),success => {
+            MessageSystem.Instance.HideLoadingAnimation();
             if (!success)
             {
-                MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
+                MessageSystem.Instance.ShowTip("广告奖励失败，请稍后重试。");
                 AnalyticMgr.VideoAdFail("签到"+sign);
             }
             else
