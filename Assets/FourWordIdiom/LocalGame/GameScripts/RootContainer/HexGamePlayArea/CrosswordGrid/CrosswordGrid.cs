@@ -374,12 +374,18 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         int rows = boardData.rows - boardData.minRow+1;
         int cols = boardData.cols - boardData.minCol;
         float tileSize;
-      
-        float widthMaxSize =transform.GetComponent<RectTransform>().rect.width/cols;
+        
+        float widthMaxSize = transform.GetComponent<RectTransform>().rect.width / cols;
+        
+        if ((HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.JianHexagon)
+        {
+            widthMaxSize = transform.GetComponent<RectTransform>().rect.width / (cols+1);
+        }
+       
         float heightMaxSize =transform.GetComponent<RectTransform>().rect.height/rows;
         
         tileSize = Mathf.Min(widthMaxSize, heightMaxSize);
-        tileSize = tileSize * 1.27f;
+        tileSize = tileSize * 1.25f;
         
         tileSize = Mathf.Min(tileSize, 270f);
         
@@ -459,7 +465,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minicnidex+0.5f) * horizontalSpacing;
-        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex) * verticalSpacing;
+        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex+0.5f) * verticalSpacing;
         
         // 为奇数列添加垂直偏移（六边形网格特性）
         if ((col & 1) == 1)  // 位运算判断奇数列（比取模运算更快）
@@ -509,7 +515,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
        
         // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-1) * horizontalSpacing;
-        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex+0.6f) * verticalSpacing;
+        float yPos = bottomLeft.y + (row-curStageData.BoardSnapshot.minirnidex+1f) * verticalSpacing;
 
         // 奇数行横向偏移（蜂窝状交错）
         if (row % 2 == 1)
@@ -1236,10 +1242,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         // 计算行列差值
         int deltaRow = end.Row - start.Row;
         int deltaCol = end.Column - start.Column;
+        
+        float xoffset = end.TileView.transform.position.x - start.TileView.transform.position.x;
     
-        Debug.Log($"{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为左斜方向");
+        Debug.Log($"结束位置x-起始位置x:{xoffset}_{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为左斜方向");
     
-        if (deltaCol >= 0) return false;
+        if (xoffset>=0||deltaRow == 0) return false;
     
         // 左上方向（行号减小，列号减小）的检查
         if (deltaRow < 0) // 行号减小（向上移动）
@@ -1275,11 +1283,12 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         // 计算行列差值
         int deltaRow = end.Row - start.Row;
         int deltaCol = end.Column - start.Column;
+        float xoffset = end.TileView.transform.position.x - start.TileView.transform.position.x;
     
-        Debug.Log($"{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为右斜方向");
+        Debug.Log($"结束位置x-起始位置x:{xoffset}_{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为左斜方向");
     
-        if (deltaCol < 0) return false;
-    
+        if (deltaRow == 0||xoffset<=0) return false;
+      
         // 右下方向（行号减小，列号增加）的检查      
         if (deltaRow < 0) // 行号减小（向上移动）
         {

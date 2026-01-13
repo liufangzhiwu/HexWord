@@ -46,7 +46,6 @@ namespace Middleware
                 }
                 return;
             }
-
             IsPlaying = true;
             _isShowingReward = true;
             _isUserWaiting = true;
@@ -208,6 +207,7 @@ namespace Middleware
         private void OnAdFinishedOrClosed()
         {
             IsPlaying = false;
+            Debug.Log("[Ads_huawei] OnAdFinishedOrClosed"+IsPlaying);
             _isShowingReward = false; // 重置展示状态，允许下一次点击
             _isUserWaiting = false;
         }

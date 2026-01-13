@@ -343,6 +343,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
             if (dataInitialized)
                 CommitGameData();
        
+            Debug.Log("[Ads_huawei] 进入后台时广告状态"+Game.self?.Ads?.IsPlaying);
             if(Game.self?.Ads?.IsPlaying == true) return; //播放广告中
             AnalyticMgr.GameEnd();
             StopTracking();
@@ -352,6 +353,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         }
         else if (requireFocusCheck)
         {
+            Debug.Log("[Ads_huawei] 回到前台时广告状态"+Game.self?.Ads?.IsPlaying);
             AnalyticMgr.GameStart();
             StartTracking();
             Debug.Log("应用回到前台，验证数据");
