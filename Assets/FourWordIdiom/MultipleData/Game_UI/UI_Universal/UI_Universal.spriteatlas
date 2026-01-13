@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!687078895 &4343727234628468602
 SpriteAtlas:
   m_ObjectHideFlags: 0
@@ -7,11 +7,10 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: UI_Universal
-  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 3
+      serializedVersion: 2
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -20,13 +19,11 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
-      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 4096
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 52
       m_TextureCompression: 1
@@ -40,7 +37,6 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: OpenHarmony
       m_MaxTextureSize: 4096
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -80,7 +76,6 @@ SpriteAtlas:
     - 09e58494e41045b40a27c3bba7f4e40c: 21300000
     - 07f4769516a98874f8f9be82170880cb: 21300000
     - 53c9c9d59227e8a4693359f1993fb1c1: 21300000
-    - 6b61421603460774ba285289d2c66971: 21300000
     - 0b8e35468cb38b24a9429e3c768f9002: 21300000
     - 5fe2a7c6d358b1f4fb0a0e6a75726f8a: 21300000
     - 82e70fc6d2f2cd440ad74bfe9280c237: 21300000
@@ -103,7 +98,6 @@ SpriteAtlas:
     - f3fdbabab2adbe94788bb0d25b9820a2: 21300000
     - 69fe19cb60c004e46883b7e43199685f: 21300000
     - c2d2647cf13031d4792c74db1ea82e23: 21300000
-    - 7ca0467c87ab3ac408ccab7ea2b70484: 21300000
     - d9ce46acc0b5c6d4e8aedeffdc5a7908: 21300000
     - 48f18bece103e2e4bbefdf54f94fda87: 21300000
     - 8f18a8fcc7e29b94fad6919e71a13352: 21300000
@@ -134,7 +128,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 09e58494e41045b40a27c3bba7f4e40c, type: 3}
   - {fileID: 21300000, guid: 07f4769516a98874f8f9be82170880cb, type: 3}
   - {fileID: 21300000, guid: 53c9c9d59227e8a4693359f1993fb1c1, type: 3}
-  - {fileID: 21300000, guid: 6b61421603460774ba285289d2c66971, type: 3}
   - {fileID: 21300000, guid: 0b8e35468cb38b24a9429e3c768f9002, type: 3}
   - {fileID: 21300000, guid: 5fe2a7c6d358b1f4fb0a0e6a75726f8a, type: 3}
   - {fileID: 21300000, guid: 82e70fc6d2f2cd440ad74bfe9280c237, type: 3}
@@ -157,7 +150,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: f3fdbabab2adbe94788bb0d25b9820a2, type: 3}
   - {fileID: 21300000, guid: 69fe19cb60c004e46883b7e43199685f, type: 3}
   - {fileID: 21300000, guid: c2d2647cf13031d4792c74db1ea82e23, type: 3}
-  - {fileID: 21300000, guid: 7ca0467c87ab3ac408ccab7ea2b70484, type: 3}
   - {fileID: 21300000, guid: d9ce46acc0b5c6d4e8aedeffdc5a7908, type: 3}
   - {fileID: 21300000, guid: 48f18bece103e2e4bbefdf54f94fda87, type: 3}
   - {fileID: 21300000, guid: 8f18a8fcc7e29b94fad6919e71a13352, type: 3}
@@ -187,7 +179,6 @@ SpriteAtlas:
   - Logo
   - shop_reset
   - UI_Icon_PingWord
-  - tipicon
   - UI_Icon_gold
   - reseticon
   - UI_Icon_JianWord
@@ -210,7 +201,6 @@ SpriteAtlas:
   - UI_Icon_PingSeleWord
   - Mintool
   - gold0
-  - levelicon
   - levelPuzzle
   - Coin1
   - UI_Icon_circle
@@ -229,4 +219,3 @@ SpriteAtlas:
   m_RenderDataMap: {}
   m_Tag: UI_Universal
   m_IsVariant: 0
-  m_IsPlaceholder: 0

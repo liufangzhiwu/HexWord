@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!687078895 &4343727234628468602
 SpriteAtlas:
   m_ObjectHideFlags: 0
@@ -7,11 +7,10 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: UI_MainBase
-  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 3
+      serializedVersion: 2
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -20,13 +19,11 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
-      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 4096
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 51
       m_TextureCompression: 1
@@ -40,7 +37,6 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: OpenHarmony
       m_MaxTextureSize: 2048
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 49
       m_TextureCompression: 1
@@ -81,18 +77,17 @@ SpriteAtlas:
     - ea68cd2586b8ced4498c124dadc36a94: 21300000
     - 8fe7cf0744d216649a976ca050de7ef4: 21300000
     - 902a69178c65ccd48ad0c72d5593e589: 21300000
-    - 9288506739970c04685942bd25c65727: 21300000
     - 247feaf73b76ae246b828413cf9f984f: 21300000
     - c4d712387910c72459b77a20e8975ee5: 21300000
     - 7f142c6849048424ab92ba65de748ffe: -8974891950757417909
     - 8ea8cfa8d33ab784695012c5bccc547e: 21300000
     - 5a8d88f8803371043aa43f0e62654c1e: 21300000
-    - eda66bb933869d44387704ca297137c6: 21300000
     - 7b7965e9bed9f5946a9d35729763e0f6: 21300000
     - 84192f5a5cf60af4aa4c5d05845d10a7: 21300000
     - 96df089ae2fe41d478dfec3fbd44074c: 21300000
     - 5f76b4ca87bda6045b248f707f9801b3: 21300000
     - ea397c1b470896945adedafe6b7206e5: 21300000
+    - 7b536edb2dd153b4ea33d1bc109c9ec7: 21300000
     - b81b896cda745d6429f0762da1b2a79b: 21300000
     - 05eb7c8c44ca1c34289f6f2f640883c6: 21300000
     - a0eac19cc0e29de47a5bf67e0e362fab: 21300000
@@ -118,18 +113,17 @@ SpriteAtlas:
   - {fileID: 21300000, guid: ea68cd2586b8ced4498c124dadc36a94, type: 3}
   - {fileID: 21300000, guid: 8fe7cf0744d216649a976ca050de7ef4, type: 3}
   - {fileID: 21300000, guid: 902a69178c65ccd48ad0c72d5593e589, type: 3}
-  - {fileID: 21300000, guid: 9288506739970c04685942bd25c65727, type: 3}
   - {fileID: 21300000, guid: 247feaf73b76ae246b828413cf9f984f, type: 3}
   - {fileID: 21300000, guid: c4d712387910c72459b77a20e8975ee5, type: 3}
   - {fileID: -8974891950757417909, guid: 7f142c6849048424ab92ba65de748ffe, type: 3}
   - {fileID: 21300000, guid: 8ea8cfa8d33ab784695012c5bccc547e, type: 3}
   - {fileID: 21300000, guid: 5a8d88f8803371043aa43f0e62654c1e, type: 3}
-  - {fileID: 21300000, guid: eda66bb933869d44387704ca297137c6, type: 3}
   - {fileID: 21300000, guid: 7b7965e9bed9f5946a9d35729763e0f6, type: 3}
   - {fileID: 21300000, guid: 84192f5a5cf60af4aa4c5d05845d10a7, type: 3}
   - {fileID: 21300000, guid: 96df089ae2fe41d478dfec3fbd44074c, type: 3}
   - {fileID: 21300000, guid: 5f76b4ca87bda6045b248f707f9801b3, type: 3}
   - {fileID: 21300000, guid: ea397c1b470896945adedafe6b7206e5, type: 3}
+  - {fileID: 21300000, guid: 7b536edb2dd153b4ea33d1bc109c9ec7, type: 3}
   - {fileID: 21300000, guid: b81b896cda745d6429f0762da1b2a79b, type: 3}
   - {fileID: 21300000, guid: 05eb7c8c44ca1c34289f6f2f640883c6, type: 3}
   - {fileID: 21300000, guid: a0eac19cc0e29de47a5bf67e0e362fab, type: 3}
@@ -154,18 +148,17 @@ SpriteAtlas:
   - headicon
   - redpoint
   - UI_Icon_DownLine
-  - UI_Icon_set
   - UI_Icon_tips
   - wifi
   - countbg_0
   - UI_Icon_level
   - puzzlielie
-  - di
   - levelPuzzle
   - UI_Icon_claim
   - ye
   - UI_Icon_toolvaluebg
   - worddouble
+  - UI_Icon_set
   - UI_Icon_selebg
   - tipLight
   - UI_Icon_circle
@@ -178,4 +171,3 @@ SpriteAtlas:
   m_RenderDataMap: {}
   m_Tag: UI_MainBase
   m_IsVariant: 0
-  m_IsPlaceholder: 0
