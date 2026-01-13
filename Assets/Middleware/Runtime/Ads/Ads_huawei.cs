@@ -3,12 +3,13 @@ using UnityEngine;
 using System;
 using HuaweiService;
 using HuaweiService.ads;
+using UnityEngine.Rendering;
 
 namespace Middleware
 {
     public class Ads_huawei : IAds
     {
-        public bool IsPlaying { get; set; }
+        public bool IsPlaying { get; set; } //用于判断是否正在展示广告，如果在广告中进入后台则不发送埋点
         private string _uniqueId;
         Define.AdKey _currentAdKey;
         
@@ -46,6 +47,7 @@ namespace Middleware
                 return;
             }
 
+            IsPlaying = true;
             _isShowingReward = true;
             _isUserWaiting = true;
             _currentAdKey = key;
@@ -183,7 +185,7 @@ namespace Middleware
             // 如果是准备播放时失败，需要回调给业务层并重置展示状态
             if (_isUserWaiting)
             {
-                
+                IsPlaying = false;
                 _isShowingReward = false;
                 _isUserWaiting = false;
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
@@ -205,6 +207,7 @@ namespace Middleware
         // 广告关闭或展示失败回调
         private void OnAdFinishedOrClosed()
         {
+            IsPlaying = false;
             _isShowingReward = false; // 重置展示状态，允许下一次点击
             _isUserWaiting = false;
         }

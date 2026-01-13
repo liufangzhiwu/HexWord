@@ -51,7 +51,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
     #region Unity生命周期方法
     public override void Init()
     {
-        Game.self.Analytics.OnSdkInit += AnalyticMgr.OnAnalyticsSdkInit;
         Application.wantsToQuit += OnWantsToQuit;
         
         // 游戏启动时开始追踪
@@ -180,7 +179,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         fishUserSave.LoadData();
         dynamicHard.LoadData();
         chessDynamicHard.LoadData();
-        butterfly.LoadData();
+        //butterfly.LoadData();
         dataInitialized = true;
     }
     #endregion
@@ -306,7 +305,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public void CommitGameData()
     {
         playerProfile.SaveData();
-        butterfly.SaveData();
+        //butterfly.SaveData();
         fishUserSave.SaveData();
         Debug.LogFormat("保存用户时的数据: {0}", JsonConvert.SerializeObject(playerProfile));
         StartCoroutine(APIGateway.Instance.LoginApi.UpdateUserData(playerProfile));
@@ -366,7 +365,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
         if (isPaused && dataInitialized)
         {
             CommitGameData();
-            AnalyticMgr.GameEnd();
             StopTracking();
             Debug.Log("应用暂停，数据已保存");
           
@@ -380,6 +378,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
             //ThinkManager.instance.SetUserProperties();
             CommitGameData();
             StopTracking();
+            AnalyticMgr.GameEnd();
             Debug.Log("应用关闭，数据已保存");
         }
     }

@@ -216,13 +216,17 @@ public class HexGamePlayArea : UIWindow
         rectTransform.offsetMin = new Vector2(0, 100); // Left 和 Bottom
         if (GameDataManager.Instance.UserData.CurrentHexStage >= 2)
         {
+#if UNITY_OPENHARMONY
             rectTransform.offsetMin = new Vector2(0, 150); // Left 和 Bottom
+#elif UNITY_huawei||UNITY_ANDROID
+            rectTransform.offsetMin = new Vector2(0, -40); // Left 和 Bottom
+#endif
         }
         //在第7关且词语少于9个的时候可以显示横幅广告
         //int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
         if (CurStageInfo.StageNumber >= 1)
         {
-#if UNITY_OPENHARMONY || UNITY_huawei
+#if UNITY_OPENHARMONY
             Game.self?.Ads?.ShowBanner();
             rectTransform.offsetMin = new Vector2(0, 150); // Left 和 Bottom
             Debug.LogError("底部位置" + rectTransform.offsetMin);

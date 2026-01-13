@@ -139,21 +139,22 @@ namespace Middleware
         public void ResumeGame()
         {
             Time.timeScale = 1;
-            AudioListener.pause = false; 
-#if UNITY_OPENHARMONY&&!UNITY_EDITOR
-            Ads.IsPlaying = false;
-#endif
+            AudioListener.pause = false;
+            if (!UIUtilities.isEditMode)
+            {
+                Ads.IsPlaying = false;
+            }
             MessageSystem.Instance.HideLoadingAnimation();
         }
-        
+
         public void Ratex2Game()
         {
             Time.timeScale = 2;
-            AudioListener.pause = false; 
-#if UNITY_OPENHARMONY&&!UNITY_EDITOR
-            Ads.IsPlaying = false;
-#endif
-            
+            AudioListener.pause = false;
+            if (!UIUtilities.isEditMode)
+            {
+                Ads.IsPlaying = false;
+            }
         }
         
         public string GetOAID()

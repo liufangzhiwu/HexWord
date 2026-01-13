@@ -307,7 +307,7 @@ namespace Middleware
         private void DisplayAd(Advertisement ad)
         {
             if(!_isNeedShow) return;
-            
+          
             Debug.Log("[AD]展示广告: " + (AdType)ad.adType);
             var adDisplayOptions = new AdDisplayOptions();
             ad.isFullScreen = true;

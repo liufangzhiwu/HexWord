@@ -112,7 +112,7 @@ public partial class AnalyticMgr
             Game.self.Analytics.SetCommonProperties(properties);
     }
 
-    public static void OnAnalyticsSdkInit(object sender, EventArgs e)
+    public static void OnAnalyticsStart()
     {
         if (!GameDataManager.Instance.UserData.Rigister)
         {      
@@ -142,7 +142,6 @@ public partial class AnalyticMgr
 #else
             Debug.LogError("uid is empty");
 #endif
-           
             //uid = Game.GetUniqueId();
         }
         
@@ -157,6 +156,7 @@ public partial class AnalyticMgr
         }
         
         Debug.Log("赋值后用户唯一id为："+ GameDataManager.Instance.UserData.UserId);
+        OnAnalyticsStart();
     }
     
     public static void GuideBegin()

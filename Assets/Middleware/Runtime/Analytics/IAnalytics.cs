@@ -15,6 +15,5 @@ namespace Middleware
         void SetUserProperty(Dictionary<string, object> properties, Define.DataTarget targets);
         void SetCommonProperties(Dictionary<string, object> properties);
         void Login(string uid);
-        event EventHandler OnSdkInit;
     }
 }

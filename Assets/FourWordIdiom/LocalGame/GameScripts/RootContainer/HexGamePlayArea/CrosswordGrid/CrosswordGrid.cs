@@ -210,15 +210,6 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                 List<char> layerChars = boardData.board[row][col];
                 int layerCount = layerChars.Count;
 
-                // if (curStageData.PupaDatas != null)
-                // {
-                //     if (curStageData.PupaDatas.position.x == row && curStageData.PupaDatas.position.y == col)
-                //     {
-                //         CreatePupaGrid();
-                //         continue;
-                //     }
-                // }
-
                 // 从顶层到底层遍历（索引0为最上层）
                 for (int layer = 0; layer < layerCount; layer++)
                 {
@@ -380,112 +371,18 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
     {
         BoardGame boardData = curStageData.BoardSnapshot;
         Vector3 tempscale = Vector3.one;
-        int rows = boardData.rows - boardData.minRow;
+        int rows = boardData.rows - boardData.minRow+1;
         int cols = boardData.cols - boardData.minCol;
+        float tileSize;
+      
+        float widthMaxSize =transform.GetComponent<RectTransform>().rect.width/cols;
+        float heightMaxSize =transform.GetComponent<RectTransform>().rect.height/rows;
         
-        float screenRatio = UIUtilities.GetScreenRatio();
-        bool isipad = UIUtilities.IsiPad();
+        tileSize = Mathf.Min(widthMaxSize, heightMaxSize);
+        tileSize = tileSize * 1.27f;
         
-        float height=screenRatio<=1.3f&&screenRatio>1.0f ? (Screen.height) /(float)rows : (Screen.height) /(float)rows*screenRatio;
-        float width=screenRatio<=1.3f&&screenRatio>1.0f ? (Screen.width) /(cols-1.5f) : (Screen.width) /(cols-screenRatio)*screenRatio;
-        float tileSize = Mathf.Min(width, height);
-        float temptileSize = 0;
-        float maxtileSize =screenRatio<=1.2f&&screenRatio>1.0f ? 265*screenRatio : 265;
+        tileSize = Mathf.Min(tileSize, 270f);
         
-        if(tileSize>=maxtileSize)
-        {
-            temptileSize = isipad ? 240f : maxtileSize;
-            tileSize = Mathf.Min(temptileSize, tileSize);
-        }
-        
-        float maxsize = maxtileSize;
-        if (cols >= 9||rows > 12)
-        {
-            temptileSize = isipad ? 165f : 155f;
-            tileSize = Mathf.Min(temptileSize, tileSize);
-            maxsize = screenRatio>1.3f ? 210f : 185;
-            if (cols > 9)
-            {
-                maxsize-=(cols-9)*7f;
-            }
-            if (rows > 9)
-            {
-                maxsize-=(rows-9)*10f;
-            }
-            float xrate = cols > 6 ? 8 : 5;
-            float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 4 : 3.5f;
-            temptileSize = width - (cols- xoffset) * xrate;
-            tileSize = Mathf.Min(temptileSize, tileSize);
-            tileSize = Mathf.Max(maxsize, tileSize);
-        }
-        else
-        {
-            bool resetmaxsize = false;
-            
-            if (cols >= 6)
-            {
-                int minrow = boardData.minColIndex.x;
-                if (boardData.board[minrow][cols].Count > 0)
-                {
-                    if (boardData.board[minrow][cols][0] != '\0')
-                    {
-                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*24 : 240-(cols-6)*35;
-                    }
-                    else
-                    {
-                        maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*18 : 240-(cols-6)*20;
-                    }
-                }
-                else
-                {
-                    maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 255-(cols-6)*18 : 240-(cols-6)*20;
-                }
-                float xrate = cols > 6 ? 25 : 30;
-                float xoffset = cols > 6&& (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon ? 6 : 3.5f;
-                temptileSize = width - (cols- xoffset) * xrate;
-                tileSize = Mathf.Min(temptileSize, tileSize);
-                resetmaxsize = true;
-            }
-            
-            if (rows >= 7)
-            {
-                float rmaxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 240-(rows-6)*6f: 240-(rows-6)*4;
-                if (screenRatio <= 1.2f && screenRatio > 1.0f)
-                {
-                    maxsize = (HexType)StageHexController.Instance.CurStageInfo.HexType == HexType.PingHexagon||screenRatio>1.2f ? 240*screenRatio-(rows-6)*2 : 240*screenRatio-(rows-6)*4;
-                }
-                float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
-                float offsety = (rows - 6) * 27 * yrate;
-                temptileSize = height - offsety;
-                tileSize = Mathf.Min(temptileSize, tileSize);
-                if(resetmaxsize)
-                    maxsize = Mathf.Min(maxsize, rmaxsize);
-                else
-                    maxsize=rmaxsize;
-            }
-        }
-        tileSize = Mathf.Max(maxsize, tileSize);
-        if (screenRatio > 1.08f&&!isipad)
-        {
-            screenRatio -= 0.08f;
-            tileSize *= screenRatio;
-            float yrate = Screen.height / UIUtilities.REFERENCE_HEIGHT;
-            if (yrate < 1.0f&&rows >= 7)
-            {
-                if (rows > 9)
-                {
-                    tileSize *= 0.8f;
-                }
-                else
-                {
-                    tileSize *= 0.9f;
-                }
-            }
-            else if (yrate < 1.0f&&cols >= 7)
-            {
-                tileSize *= 0.9f;
-            }
-        }
         StageHexController.Instance.ActiveTileSize = tileSize;
         
         
