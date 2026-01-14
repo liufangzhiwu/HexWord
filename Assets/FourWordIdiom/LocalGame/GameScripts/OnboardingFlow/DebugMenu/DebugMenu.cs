@@ -201,7 +201,7 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = AddGoldBtn.GetComponentInChildren<InputField>();
         int Stagenum = int.Parse(Stagenumtxt.text);
-        GameDataManager.Instance.UserData.UpdateGold(Stagenum);
+        GameDataManager.Instance.UserData.UpdateGold(Stagenum,false,true,"GM工具");
 
         MessageSystem.Instance.ShowTip("金币增加成功！");
     }
