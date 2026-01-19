@@ -141,7 +141,7 @@ namespace Middleware
         {
             Time.timeScale = 1;
             AudioListener.pause = false; 
-#if UNITY_OPENHARMONY
+#if UNITY_OPENHARMONY&&!UNITY_EDITOR
             Ads.IsPlaying = false;
 #endif
         }
@@ -150,7 +150,7 @@ namespace Middleware
         {
             Time.timeScale = 2;
             AudioListener.pause = false; 
-#if UNITY_OPENHARMONY
+#if UNITY_OPENHARMONY&&!UNITY_EDITOR
             Ads.IsPlaying = false;
 #endif
             

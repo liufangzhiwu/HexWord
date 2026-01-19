@@ -33,6 +33,8 @@ namespace Middleware
         //public Action<ProductItem> RestoreSuccessAction;
         Action<string> buyFailedAction;
         
+        ProductItem productItem = new ProductItem();
+        
         bool InitSucceed = false;
         
         public void Init(float delay)
@@ -177,8 +179,8 @@ namespace Middleware
                 //QuerySubscription();
                 QueryConsumable();
                 //QueryUnconsumable();
-                ConfirmCheckPurchase();
                 InitSucceed=true;
+                ConfirmCheckPurchase();
             }
             else
             {
@@ -216,7 +218,7 @@ namespace Middleware
         {
             IAP_PurchaseSignal targetSignal = (IAP_PurchaseSignal)signal;
 
-            purchaseResult = "Product Token " + targetSignal.purchaseOrderPayload.purchaseToken + "\n"
+            purchaseResult = "ProductToken " + targetSignal.purchaseOrderPayload.purchaseToken + "\n"
                  + "Product Order Id " + targetSignal.purchaseOrderPayload.purchaseOrderId + "\n";
 
             purchaseParam = new FinishPurchaseParameter();
@@ -230,21 +232,25 @@ namespace Middleware
             Debug.Log("the purchaseResult" + purchaseResult);
             Debug.Log("[StartPurchase Success]" + "\n" + purchaseResult);
             
-            ProductItem productItem = new ProductItem
+           purchaseDataList.Add(targetSignal.purchaseOrderPayload);
+            
+           productItem = new ProductItem
             {
+                order_id=targetSignal.purchaseOrderPayload.purchaseOrderId,
                 IsoCurrencyCode = targetSignal.purchaseOrderPayload.currency,
+                ItemName = targetSignal.purchaseOrderPayload.productId,
                 ProductId = targetSignal.purchaseOrderPayload.productId,
                 LocalizedPrice = targetSignal.purchaseOrderPayload.price,
             };
             
-            buySuccessAction?.Invoke(productItem);
+            ConfirmFinishPurchase();
         }
         else
         {
             Debug.Log("[StartPurchase Error ] " + "\n "
               + "Code : " + signal.code + " \n Message : " + signal.message + "\n");
             
-            buyFailedAction?.Invoke(purchaseResult);
+            buyFailedAction?.Invoke(signal.message);
         }
 
     }
@@ -275,6 +281,8 @@ namespace Middleware
             IAP_ConsumePurchase target = (IAP_ConsumePurchase)signal;
             Debug.Log("[ConsumePurchase Success]" + "\n");
             Debug.Log("Consume Purchase Success. purchaseToken is" + target.purchaseToken + "purchase type" + target.productType + "\n");
+            
+            ShopManager.shopManager.OnPurchaseSuccess(productItem);
         }
         else
         {
@@ -305,27 +313,24 @@ namespace Middleware
                     purchaseDataList.Add(purchaseData);
                     Debug.Log("1 purchase unfinished add");
                     // }
-
-                    Debug.Log("purchaseToken: " + purchaseData.purchaseToken + "\n purchaseOrderId: " + purchaseData.purchaseOrderId + "\n");
                     
-                    ProductItem productItem = new ProductItem
+                    productItem = new ProductItem
                     {
+                        order_id  = purchaseData.purchaseOrderId,
                         IsoCurrencyCode = purchaseData.currency,
+                        ItemName = purchaseData.productId,
                         ProductId = purchaseData.productId,
                         LocalizedPrice = purchaseData.price,
                     };
-            
-                    //buySuccessAction?.Invoke(productItem);
-
-                    ShopManager.shopManager.OnPurchaseSuccess(productItem);
+                    
+                    Debug.Log("purchaseToken: " + purchaseData.purchaseToken + "\n purchaseOrderId: " + purchaseData.purchaseOrderId + "\n");
+                    ConfirmFinishPurchase();
                 }
             }
             else
             {
                 Debug.Log("No purchase data available.\n");
             }
-            
-            ConfirmFinishPurchase();
         }
         else
         {
@@ -392,16 +397,15 @@ namespace Middleware
             Debug.Log("No items to finish purchase.Please click Create Purchase/Subscription first");
             return;
         }
+        
         List<string> idsToFinish = new List<string>();
-        // foreach (Transform child in FinishScrollView.content)
-        // {
-        //     Toggle toggle = child.GetComponent<Toggle>();
-        //     if (toggle != null && toggle.isOn)
-        //     {
-        //         string id = toggle.GetComponentInChildren<Text>().text;
-        //         idsToFinish.Add(id);
-        //     }
-        // }
+        foreach (var purchaseOrderPayload in purchaseDataList.ToArray())
+        {
+            if (purchaseOrderPayload != null)
+            {
+                idsToFinish.Add(purchaseOrderPayload.purchaseOrderId);
+            }
+        }
 
         foreach (string id in idsToFinish)
         {
@@ -415,6 +419,7 @@ namespace Middleware
                     purchaseOrderId = selectedPurchaseData.purchaseOrderId
                 };
 
+                Debug.Log("[FinishPurchase Success] purchaseToken" + purchaseParam.purchaseToken + " purchaseOrderId: " + purchaseParam.purchaseOrderId + "\n");
                 OHSDKKitManager.Instance.ConsumePurchase(purchaseParam);
                 // remove the finished item from the list
                 purchaseDataList.Remove(selectedPurchaseData);

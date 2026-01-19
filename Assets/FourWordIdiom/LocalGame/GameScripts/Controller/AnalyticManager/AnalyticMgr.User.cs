@@ -7,6 +7,7 @@ public partial class AnalyticMgr
 {
     #region 进度相关
     private static DateTime? _startTime;
+    
     public static void GameStart()
     {
         SetLoginProperties();
@@ -18,6 +19,9 @@ public partial class AnalyticMgr
         SetLogoutProperties();
     }
 
+    /// <summary>
+    /// 登录时用户数据
+    /// </summary>
     private static void SetLoginProperties()
     {
         _startTime = DateTime.Now;
@@ -44,6 +48,9 @@ public partial class AnalyticMgr
         Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
     }
 
+    /// <summary>
+    /// 登出时用户数据
+    /// </summary>
     private static void SetLogoutProperties()
     {
         var properties = new Dictionary<string, object>
@@ -69,6 +76,9 @@ public partial class AnalyticMgr
         Game.self.Analytics?.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
     }
     
+    /// <summary>
+    /// 公共事件属性
+    /// </summary>
     public static void SetCommonProperties()
     {
         int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
@@ -85,6 +95,8 @@ public partial class AnalyticMgr
                 levelId = GameDataManager.Instance.UserData.CurrentHexStage;
                 break;
         }
+        
+        var span = new TimeSpan(DateTime.Now.Ticks - GameDataManager.Instance.UserData.firstLoginStamp);
      
         var properties = new Dictionary<string, object>
         {
@@ -93,12 +105,14 @@ public partial class AnalyticMgr
             {"resetItem",GameDataManager.Instance.UserData.toolInfo[101].count},
             {"flyItem",GameDataManager.Instance.UserData.toolInfo[103].count},
             {"level_id",levelId},
-            {"level_type",GameDataManager.Instance.UserData.GetLevelMode()}
+            {"level_type",GameDataManager.Instance.UserData.GetLevelMode()},
+            { "active_day_event", GameDataManager.Instance.UserData.activeDayCnt},
+            { "life_day_event", span.Days + 1},
         };
             Game.self.Analytics.SetCommonProperties(properties);
     }
 
-    public static void OnAnalyticsSdkInit(object sender, EventArgs e)
+    public static void OnAnalyticsStart()
     {
         if (!GameDataManager.Instance.UserData.Rigister)
         {      
@@ -128,7 +142,6 @@ public partial class AnalyticMgr
 #else
             Debug.LogError("uid is empty");
 #endif
-           
             //uid = Game.GetUniqueId();
         }
         
@@ -143,6 +156,7 @@ public partial class AnalyticMgr
         }
         
         Debug.Log("赋值后用户唯一id为："+ GameDataManager.Instance.UserData.UserId);
+        OnAnalyticsStart();
     }
     
     public static void GuideBegin()
@@ -226,6 +240,27 @@ public partial class AnalyticMgr
         };
         Game.self.Analytics.LogEvent("level_completed",thproperties,Define.DataTarget.Think);
     }
+    
+    
+    /// <summary>
+    /// 上报生命周期事件
+    /// </summary>
+    /// <param name="levelIndex">事件等级索引</param>
+    /// <param name="minutes">目标分钟数</param>
+    public static void ReportLifecycleEvent(int levelIndex, int minutes)
+    {
+        string eventName = $"time_level_{levelIndex}";
+        
+        // 上报埋点
+        if (Game.self != null && Game.self.Analytics != null)
+        {
+            Game.self.Analytics.LogEvent(eventName, Define.DataTarget.Think);
+        }
+        
+        Debug.Log($"上报生命周期事件: {eventName}, 累计时长: {GameDataManager.Instance.UserData.TotalOnlineMinutes:F1}分钟, 目标: {minutes}分钟");
+       
+    }
+    
     #endregion
 
 

@@ -174,7 +174,7 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = AddResetToolBtn.GetComponentInChildren<InputField>();
         int value = int.Parse(Stagenumtxt.text);
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, value);
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, value);
         //EventManager.OnChangeLanguageUpdateUI?.Invoke();
         MessageSystem.Instance.ShowTip("重置道具增加成功！");
     }

@@ -838,13 +838,13 @@ Canvas:
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
-  m_OverrideSorting: 0
+  m_OverrideSorting: 1
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: -2013088853
+  m_SortingLayerID: -1698276591
   m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!114 &-6469708892352322294
@@ -1131,12 +1131,12 @@ PrefabInstance:
     - target: {fileID: 753959897659342732, guid: 55cd8b7e3aa7de448a30d74bea060aa3,
         type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 753959897659342732, guid: 55cd8b7e3aa7de448a30d74bea060aa3,
         type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 753959897659342732, guid: 55cd8b7e3aa7de448a30d74bea060aa3,
         type: 3}

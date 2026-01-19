@@ -88,6 +88,7 @@ public class LoadingController : MonoBehaviour
 
     private void OnEnable()
     {
+        UnityMainThreadDispatcher.Instance();
         StartCoroutine(InitializeLoadingProcess());
     }
 
@@ -102,23 +103,25 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     IEnumerator InitializeLoadingProcess()
     {
-        
 #if UNITY_OPENHARMONY
         if (!UIUtilities.isEditMode)
         {
+            StartCoroutine(SimulateLoadingProgress());
             //初始化商店、广告、登录
             Game.self.InitGame();
             yield return new WaitUntil(()=>Game.self.Accounts.IsLogin);
             //设置登录用户ID
             AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
-        }
-#elif UNITY_huawei
+        }else{
+            StartCoroutine(SimulateLoadingProgress());}
+#elif UNITY_huawei || UNITY_EDITOR
 
         if (!UIUtilities.isEditMode)
         {
              Debug.Log($"进入初始化游戏服务流程");
             //初始化游戏服务 
             yield return InitializeGameService();
+            StartCoroutine(SimulateLoadingProgress());
             // 初始化商店(需要等待游戏服务完成后)
             Game.self.InitGame();
             yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
@@ -128,10 +131,11 @@ public class LoadingController : MonoBehaviour
             //设置登录用户ID（需要等待游戏数据获取后）
             AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
         }
-       
+        else
+        {
+            StartCoroutine(SimulateLoadingProgress());
+        }
 #endif
-        
-        yield return new WaitForSeconds(0.05f);
         yield return APIGateway.Instance.LoginApi.Login((res)=> 
         {
             if (res != null)
@@ -140,8 +144,6 @@ public class LoadingController : MonoBehaviour
             }
             isLogined = true;
         });
-        yield return new WaitForSeconds(0.05f);
-        loadStartTime = Time.time;
         
         InitializeLocalization();
         SetupRandomLoadingHint();
@@ -181,34 +183,59 @@ public class LoadingController : MonoBehaviour
         }
         
         serverData = JsonConvert.DeserializeObject<UserData>(response.gameData);
+        
         if (serverData.CurrentHexStage != GameDataManager.Instance.UserData.CurrentHexStage)
         {
             if (serverData.CurrentHexStage > GameDataManager.Instance.UserData.CurrentHexStage)
             {
                 // 弹窗提示
                 Debug.Log("服务器关卡进度大于本地，默认使用服务器数据");
-                GameDataManager.Instance.UserData.InitData(serverData);
-                GameDataManager.Instance.SetInitailized(true);
-                ModifyUserWithABtest();
-                StartCoroutine(LoadingSequence());
+                UserServerData();
                 Debug.Log("服务器数据同步完成！");
             }
-            else
+            else 
             {
                 // 弹窗提示
                 Debug.Log("服务器关卡进度小于本地，默认使用本地数据");
-                ModifyUserWithABtest();
-                StartCoroutine(LoadingSequence());
+                UserLocalData();
             }
         }
-        else
+        else //关卡进度相同时，以离线时间最新的那次为主
         {
-            GameDataManager.Instance.UserData.InitData(serverData);
-            GameDataManager.Instance.SetInitailized(true);
-            ModifyUserWithABtest();
-            StartCoroutine(LoadingSequence());
-            Debug.Log("服务器数据同步完成！");
+            if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.logoutTime)||string.IsNullOrEmpty(serverData.logoutTime))
+            {
+                UserLocalData();
+            }
+            else
+            {
+                DateTime LogoutTime = DateTime.Parse(GameDataManager.Instance.UserData.logoutTime);
+                DateTime serverLogoutTime = DateTime.Parse(serverData.logoutTime);
+
+                if (LogoutTime < serverLogoutTime)
+                {
+                    UserServerData();
+                }
+                else
+                {
+                    UserLocalData();
+                }
+            }
+            
         }
+    }
+
+    private void UserLocalData()
+    {
+        ModifyUserWithABtest();
+        StartCoroutine(LoadingSequence());
+    }
+
+    private void UserServerData()
+    {
+        GameDataManager.Instance.UserData.InitData(serverData);
+        GameDataManager.Instance.SetInitailized(true);
+        ModifyUserWithABtest();
+        StartCoroutine(LoadingSequence());
     }
     
     
@@ -286,7 +313,6 @@ public class LoadingController : MonoBehaviour
     private IEnumerator LoadingSequence()
     {
         // 并行执行模拟加载和实际加载
-        yield return StartCoroutine(SimulateLoadingProgress());
         yield return StartCoroutine(LoadEssentialResources());
         //AudioManager.Instance.Initialize();
         // GameDataManager.Instance.LoadPlayerProfile();
@@ -335,9 +361,9 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator SimulateLoadingProgress()
     {
+        loadStartTime = Time.time;  // 先设置开始时间
         Loading.GetComponent<CanvasGroup>().DOFade(1, 0.1f);
-
-        float width = progressSlider.GetComponent<RectTransform>().rect.width;
+       
         RectTransform sliderBackground = progressSlider.transform.GetChild(0).GetComponent<RectTransform>();
         Vector3 localStart = new Vector3(sliderBackground.rect.xMin, 0, 0);
         Vector3 localEnd = new Vector3(sliderBackground.rect.xMax, 0, 0);
@@ -353,7 +379,7 @@ public class LoadingController : MonoBehaviour
         while (progress < 1f)
         {
             elapsedTime = Time.time - loadStartTime;
-            progress = Mathf.Clamp01(elapsedTime / 2f);
+            progress = Mathf.Clamp01(elapsedTime / 4f);
             
             progressSlider.value = progress;
             Vector3 currentPos = Vector3.Lerp(worldStart, worldEnd, progress);
@@ -421,39 +447,13 @@ public class LoadingController : MonoBehaviour
         appPlayerInfo.PlayerId = _player.PlayerId;
         appPlayerInfo.OpenId = _player.OpenId;
         Game.self.Accounts.UserId = _player.OpenId;
+        Game.self.Accounts.IsLogin = true;
         
         Debug.LogFormat("登录华为安卓用户时的数据: {0}", JsonConvert.SerializeObject(appPlayerInfo));
         HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));
         Debug.Log("数据上报完成, 当前状态" + _flowStatus );
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
-    }
-    private void LoadFont()
-    {
-        // 加载TMP字体资源
-        // TMP_FontAsset tmpFont = AdvancedBundleLoader.SharedInstance.LoadTMPFont(
-        //     "stagefonts",
-        //     "FZKTKSDF"); // 注意资源名称包含"SDF"后缀
-        //
-        // TMP_FontAsset selecttmpFont =  AdvancedBundleLoader.SharedInstance.LoadTMPFont(
-        //     "stagefonts",
-        //     "FZKTKSDF_select"); // 注意资源名称包含"SDF"后缀
-
-        // if (tmpFont != null)
-        // {
-        //    
-        //     Shader shaderLoad = Resources.Load<Shader>("TMP_SDF Overlay");
-        //
-        //     if (shaderLoad == null)
-        //     {
-        //         Debug.LogError("Shader加载失败");
-        //     }
-        //     tmpFont.material.shader = shaderLoad;
-        //     selecttmpFont.material.shader = shaderLoad;
-        // }
-        // else
-        // {
-        //     Debug.LogError("TMP字体资源加载失败");
-        // }
+    
     }
 
     /// <summary>
@@ -465,26 +465,10 @@ public class LoadingController : MonoBehaviour
         sceneLoadOperation.allowSceneActivation = false;
 
         Debug.Log("开始加载主场景");
-        yield return new WaitUntil(() => sceneLoadOperation.progress >= 0.9f);
+        yield return new WaitUntil(() => sceneLoadOperation.progress >= 0.9f&&progressSlider.value>=1f&&isLogined);
         Debug.Log("主场景加载完成");
     }
 
-    /// <summary>
-    /// 更新进度显示
-    /// </summary>
-    private void UpdateProgressDisplay(float progress)
-    {
-        // 平滑更新进度条
-        progressSlider.DOValue(progress, 0.1f);
-
-        // 更新进度指示器位置
-        // Vector2 sliderSize = progressSlider.GetComponent<RectTransform>().sizeDelta;
-        // float xPos = progress * sliderSize.x - (sliderSize.x / 2);
-        // indicatorIcon.anchoredPosition = new Vector2(xPos, 0);
-
-        // 更新百分比文本
-        // loadingHintText.text = $"{Mathf.FloorToInt(progress * 100)}%";
-    }
     
     // 🔑 1. 定义局部实现类 IAntiAddictionListener
     private class AntiAddictionHandler : IAntiAddictionListener
@@ -520,8 +504,11 @@ public class LoadingController : MonoBehaviour
             switch (code)
             {
                 case 7002:
-                    MessageSystem.Instance.ShowTip("请检查网络");
-                    _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
+                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                    {
+                        MessageSystem.Instance.ShowTip("请检查网络");
+                        _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
+                    });
                     break;
                 case 7401:
                     _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
@@ -531,8 +518,11 @@ public class LoadingController : MonoBehaviour
                     _onRetryAction?.Invoke();
                     break;
                 default:
-                    MessageSystem.Instance.ShowTip(msg);
-                    _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
+                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                    {
+                         MessageSystem.Instance.ShowTip(msg);
+                        _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
+                    });
                     break;
             }
         }
@@ -604,29 +594,37 @@ public class LoadingController : MonoBehaviour
         {
             if (signInAccountProxy == null)
             {
-                MessageSystem.Instance.ShowTip("signInAccountProxy == null");
-                _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
+                });
                 return;
             }
             string msg = "get login success with signInAccountProxy info: \n";
             msg += String.Format("displayName:{0}, email:{1}, uid:{2}, openId:{3}, unionId:{4}, accessToken:{5}, serverAuthCode:{6}, idToken:{7}",
                 signInAccountProxy.DisplayName, signInAccountProxy.Email, signInAccountProxy.Uid, signInAccountProxy.OpenId, signInAccountProxy.UnionId,
                 signInAccountProxy.AccessToken, signInAccountProxy.ServerAuthCode, signInAccountProxy.IdToken);
-            MessageSystem.Instance.ShowTip(msg);
+            // MessageSystem.Instance.ShowTip(msg);
            _onLoginCompleted.Invoke(GameFlowStatus.GetGamePlayer);
         }
 
         public void OnSignOut()
         {
             string msg = "sign out success.";
-           MessageSystem.Instance.ShowTip(msg);
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            {
+                MessageSystem.Instance.ShowTip(msg);
+            });
         }
 
         public void OnFailure(int code, string message)
         {
             string msg = "account method failed, code:" + code + " message:" + message;
-            MessageSystem.Instance.ShowTip(msg);
-            _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            {
+                MessageSystem.Instance.ShowTip(msg);
+                _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
+            });
         }
     }
     private class GetGamePlayerListener : IGetPlayerListener
@@ -643,8 +641,11 @@ public class LoadingController : MonoBehaviour
         {
             if (player == null)
             {
-                MessageSystem.Instance.ShowTip("player == null");
-                _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
+                    MessageSystem.Instance.ShowTip("用户信息为空,请检查！");
+                });
                 return;
             }
             var msg = "getGamePlayer succeed. \n";
@@ -652,7 +653,6 @@ public class LoadingController : MonoBehaviour
                 "displayName:{0}, playerId:{1}, playerSign:{2}, openId:{3}, unionId:{4}, openIdSign:{5}, accessToken:{6}",
                 player.DisplayName, player.PlayerId, player.PlayerSign, player.OpenId, player.UnionId, player.OpenIdSign, player.AccessToken
             );
-            MessageSystem.Instance.ShowTip(msg);
             _owner?.Invoke(player);
             _onGetPlayerCompleted?.Invoke(GameFlowStatus.GamePlayerSave);
         }
@@ -660,8 +660,11 @@ public class LoadingController : MonoBehaviour
         public void OnFailure(int code, string message)
         {
             var msg = "getCurrentPlayer failed, code:" + code + " message:" + message;
-            MessageSystem.Instance.ShowTip(msg);
-            _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            {
+                _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
+                MessageSystem.Instance.ShowTip(msg);
+            });
         }
     }
     
@@ -675,16 +678,12 @@ public class LoadingController : MonoBehaviour
         }
         public void OnSuccess()
         {
-            var msg = "SavePlayerInfo succeed.";
-            MessageSystem.Instance.ShowTip(msg);
             _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
         }
         
         public void OnFailure(int code, string message)
         {
-            var msg = "SavePlayerInfo failed, code:" + code + " message:" + message;
-            MessageSystem.Instance.ShowTip(msg);
-            _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.GamePlayerSaveFailed);
+            _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
         }
     }
 

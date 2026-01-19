@@ -177,7 +177,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             var discountText = discountbg.GetComponentInChildren<Text>();
             if (discountText != null && MultilingualManager.Instance != null)
             {
-                discountText.text = $"{data.discount}折扣";
+                discountText.text = $"{data.discount}";
             }
         }
     }
@@ -272,12 +272,12 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         Debug.Log($"获取商品内购名称: {data.GetProduceName()}");
 
-        //Product product = ShopManager.shopManager?.GetProduct(data.GetProduceName());
-        //if (product == null || product.metadata == null)
-        //{
-        //    ShowPriceLoadingState(true);
-        //    return;
-        //}
+        // Product product = ShopManager.shopManager?.GetProduct(data.GetProduceName());
+        // if (product == null || product.metadata == null)
+        // {
+        //     ShowPriceLoadingState(true);
+        //     return;
+        // }
 
         try
         {
@@ -398,38 +398,55 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    private async void OnBuyButtonClicked(ShopDataItem data)
+    private void OnBuyButtonClicked(ShopDataItem data)
     {
-        //todo 打开loading界面
-        Game.self.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
+        MessageSystem.Instance.ShowLoadingAnimation();
+
+        if (UIUtilities.isEditMode)
+        {
+            ProductItem productItem = new ProductItem
+            {
+                order_id  = "",
+                IsoCurrencyCode = "",
+                ItemName = data.produceNameId,
+                ProductId = data.produceNameId,
+                LocalizedPrice = 0,
+            };
+            OnPurchaseSuccess(productItem);
+        }
+        else
+        {
+            AnalyticMgr.PurchaseStart(data.produceNameId);
+            //todo 打开loading界面
+            Game.self.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
+        }
     }
 
     private void OnPurchaseSuccess(ProductItem item)
     {
         //todo 关闭loading界面
         Debug.Log("购买成功: " + item.ProductId);
-        var items = new List<AnalyticMgr.Item>();
+        //var items = new List<AnalyticMgr.Item>();
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
             foreach (var dataitem in shopDataItem.productContent)
             {
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
-                items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
+                //items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count);
-                        EventDispatcher.instance.TriggerChangeGoldUI(count,true);
+                        GameDataManager.Instance.UserData.UpdateGold(count, true, true,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.Butterfly:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count);
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count,"商店购买"+item.ItemName);
                         break;
-                    case (int)LimitRewordType.Tipstool:
-                        GameDataManager.Instance.UserData.toolInfo[102].count += count;
+                    case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,"商店购买"+item.ItemName);
                         break;
-                    case (int)LimitRewordType.Resettool:
-                        GameDataManager.Instance.UserData.toolInfo[101].count += count;
+                    case (int)LimitRewordType.SingleTipsttool://提示灯道具，单个字符提示
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool,count,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:
@@ -439,21 +456,23 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             }
         }
         ShopManager.shopManager.paysuccess = true;
-        if (GameDataManager.Instance.UserData.TotalPayTimes == 0)
+        bool firstPay = GameDataManager.Instance.UserData.TotalPayTimes == 0;
+        if (firstPay)
             GameDataManager.Instance.UserData.firstPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         GameDataManager.Instance.UserData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
         
-        AnalyticMgr.Purchase(shopDataItem.GetProduceName(), item.IsoCurrencyCode, item.LocalizedPrice, items);
+        if (!UIUtilities.isEditMode)
+        {
+            AnalyticMgr.PurchaseFinished(item, firstPay);
+            // 处理购买成功后的逻辑，例如增加游戏内货
+            item?.OnShipmentCompleted(true);
+        }
+        
         MessageSystem.Instance.ShowTip("购买成功！");
-
-        //UIController.Instance.SubmitPayment((int)product.price);
-
-        //AdjustManager.Instance.SendPurchaseEvent();
-        // 处理购买成功后的逻辑，例如增加游戏内货币
-        item?.OnShipmentCompleted(true);
+        MessageSystem.Instance.HideLoadingAnimation();
     }
     
     private void OnPurchaseFailed(string error)
@@ -461,6 +480,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         //todo 关闭loading界面
         Debug.Log("购买失败: " + error);
         AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(),error);
+        MessageSystem.Instance.HideLoadingAnimation();
     }
     
     private void BuyRemoveAdsEvent(int type)

@@ -46,7 +46,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public override void Init()
     {
         lastSaveTime = DateTime.Now;
-        Game.self.Analytics.OnSdkInit += AnalyticMgr.OnAnalyticsSdkInit;
         Application.wantsToQuit += OnWantsToQuit;
     }
 

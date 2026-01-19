@@ -18,6 +18,9 @@ public class StageFinishView : UIWindow
     [SerializeField] private MatchFishTable _matchFishtable;
     [SerializeField] private TaskTable _tasktable;
     
+    [SerializeField] private GameObject hardStageTable;          // 困难模式
+    [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
+    
     [SerializeField] private Button _nextStageButton;
     [SerializeField] private GameObject Showlimiticon;
     [SerializeField] private GameObject Enlimiticon;
@@ -69,31 +72,63 @@ public class StageFinishView : UIWindow
     {
         _currentProgressSegment = 0;
         
-        _StageNumberText.text = MultilingualManager.Instance.GetString("Level")+" " + GameDataManager.Instance.UserData.CurrentHexStage; 
-        // CalculateProgressSegments();
-        // int totalStagesInSegment = CalculateTotalStagesInSegment();
-        // DetermineCurrentProgressSegment(totalStagesInSegment);
-        //
-        // int currentStageInSegment = CalculateCurrentStageInSegment(totalStagesInSegment);
-        // sliderProgress = currentStageInSegment / (float)AppGameSettings.ProgressMilestones[_currentProgressSegment];        
-        //
-        // _progressText.text = $"0/{AppGameSettings.ProgressMilestones[_currentProgressSegment]}";
-        //
-        // _progressSlider.DOValue(sliderProgress, 0.6f)
-        //     .OnComplete(() => UpdateProgressText(currentStageInSegment, sliderProgress));
-
+        // 设置关卡文本
+        int Stage = 0;
+        switch (GameDataManager.Instance.UserData.levelMode)
+        {
+            // case 1:
+            //     Stage = GameDataManager.Instance.UserData.CurrentStage != 0 ? 
+            //         GameDataManager.Instance.UserData.CurrentStage : 1;
+            //     sprite = LoadheadIcon("icon_xiao");
+            //     break;
+            case 2:
+                Stage = GameDataManager.Instance.UserData.CurrentChessStage;
+                //sprite = LoadheadIcon("icon_pinzi");
+                break;
+            case 3:
+                Stage = GameDataManager.Instance.UserData.CurrentHexStage;
+                //sprite = LoadheadIcon("icon_layer");
+                break;
+        }
+        Stage=Stage==0?1:Stage;
         if (LimitTimeManager.Instance.IsComplete())
-        {
             _progressSlider.transform.parent.gameObject.SetActive(false);
-        }
         else
-        {
             _progressSlider.transform.parent.gameObject.SetActive(true);
-           
-        }
+       
 
         StartCoroutine(WaitTimeUpdate());
         StartCoroutine(PlayRewardSequence());
+        
+        StageHexController.Instance.CurLevelMode = GetLevelDifficulty(Stage);
+        
+        switch (StageHexController.Instance.CurLevelMode)
+        {
+            case LevelModes.Normal:
+                hardStageTable.gameObject.SetActive(false);
+                extrahardStageTable.gameObject.SetActive(false);
+                break;
+            case LevelModes.Hard:
+                hardStageTable.gameObject.SetActive(true);
+                extrahardStageTable.gameObject.SetActive(false);
+                break;
+            case LevelModes.ExtraHard:
+                hardStageTable.gameObject.SetActive(false);
+                extrahardStageTable.gameObject.SetActive(true);
+                break;
+        }
+        _StageNumberText.text = MultilingualManager.Instance.GetString("Level")+" " + GameDataManager.Instance.UserData.CurrentHexStage;
+    }
+    
+    LevelModes GetLevelDifficulty(int levelNumber) {
+        if (levelNumber % 5 == 0) {
+            if ((levelNumber / 5) % 2 == 1) {
+                return LevelModes.Hard;
+            } else {
+                return LevelModes.ExtraHard;
+            }
+        }
+        return LevelModes.Normal;
     }
 
     IEnumerator WaitTimeUpdate()

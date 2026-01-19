@@ -18,20 +18,60 @@ public partial class AnalyticMgr
         public int quantity;//如3
     }
     
-    public static void Purchase(string transactionId,string currency,float value,List<Item> items)
+     public static void PurchaseStart(string transactionId)
     {
+        var properties = new Dictionary<string, object>
+        {
+            {"pay_reason", transactionId}
+        }; 
 
+        Game.self.Analytics.LogEvent("order_start", properties, Define.DataTarget.Think);
+    }
+    
+    /// <summary>
+    /// 购买成功
+    /// </summary>
+    /// <param name="product"></param>
+    /// <param name="firstPay"></param>
+    /// <param name="items"></param>
+    public static void PurchaseFinished(ProductItem product,bool firstPay,List<Item> items=null)
+    {
+        // 1. 获取商品信息
+        string transactionid = product.order_id;
+        //string itemId = product.definition.id;
+        string itemName = product.ItemName;
+        float price = product.LocalizedPrice;
+        string paytype = product.IsoCurrencyCode;
+        string paymethod = "";
+#if UNITY_OPENHARMONY
+        paymethod = "huaweiOpenHarmony";
+#elif UNITY_huawei
+        paymethod = "huaweiAndroid";
+#endif
+        
+        var itemJson = JsonConvert.SerializeObject(items);
+        var properties = new Dictionary<string, object>
+        {
+            {"order_id", transactionid},
+            {"pay_type", paytype},
+            {"pay_amount",price},
+            {"pay_reason",itemName},
+            {"is_first_pay", firstPay},
+            {"pay_method",paymethod},
+        }; 
+        
+        Game.self.Analytics.LogEvent("order_finish", properties, Define.DataTarget.Think);
     }
     
     public static void PurchaseFailed(string transactionId,string reason)
     {
         var properties = new Dictionary<string, object>
         {
-            {"transaction_id", transactionId},
+            {"pay_reason", transactionId},
             {"failed_reason", reason},
         }; 
 
-        Game.self.Analytics.LogEvent("purchase_failed", properties, Define.DataTarget.Think);
+        Game.self.Analytics.LogEvent("order_failed", properties, Define.DataTarget.Think);
     }
     
     /// <summary>

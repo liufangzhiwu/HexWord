@@ -70,11 +70,7 @@ public class ShopManager : MonoBehaviour
         {
             shopManager = this;
             DontDestroyOnLoad(gameObject); // 保持广告管理器在场景切换时不销毁
-        }
-        else
-        {
-            Destroy(gameObject);
-        }    
+        }         
     }
 
     void Start()
@@ -145,7 +141,7 @@ public class ShopManager : MonoBehaviour
     void ConvertCSVToJSON(string data)
     {
         // 用于构建 JSON 字符串
-        List<ShopDataItem> items = new List<ShopDataItem>();
+        shopItems = new List<ShopDataItem>();
         string[] lines = data.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
 
         for (int i = 2; i < lines.Length; i++) // 从第一行开始，跳过标题行
@@ -157,6 +153,8 @@ public class ShopManager : MonoBehaviour
                 int id = int.Parse(fields[0].Trim());
                 string nameID = fields[1].Trim();
                 int purchaseType = int.Parse(fields[2].Trim());
+                
+                if(purchaseType<0) return;
               
                 int type = int.Parse(fields[4].Trim());
                 
@@ -171,7 +169,8 @@ public class ShopManager : MonoBehaviour
                 string des = fields[9].Trim();
                 string pointdes = fields[10].Trim();
                 string isHomeDisplay = fields[11].Trim();
-                int sort = int.Parse(fields[12].Trim());
+                string sortname=string.IsNullOrEmpty(fields[12].Trim())?"0":fields[12].Trim();
+                int sort = int.Parse(sortname);
                 string homeSort = fields[13].Trim();
                 List<string> unlocks = new List<string>(
                     fields[14].Trim().Split('#') // 假设用分号分隔
@@ -199,14 +198,14 @@ public class ShopManager : MonoBehaviour
                     limitedTime = limittime,
                     discount=discount,
                 };
-                items.Add(item);
+                shopItems.Add(item);
             }
             else
             {
                 Debug.LogWarning($"Skipping line {i + 1}: Not enough fields.");
             }
         }
-        shopItems = items .OrderBy(item => item.sort).ToList();
+        shopItems = shopItems.OrderBy(item => item.sort).ToList();
     }
     
     //商店首页界面物品列表
@@ -430,10 +429,10 @@ public class ShopManager : MonoBehaviour
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count);
                         break;
                     case (int)LimitRewordType.Tipstool:
-                        GameDataManager.Instance.UserData.toolInfo[102].count += count;
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count);
                         break;
-                    case (int)LimitRewordType.Resettool:
-                        GameDataManager.Instance.UserData.toolInfo[101].count += count;
+                    case (int)LimitRewordType.SingleTipsttool:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool,count);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:
@@ -443,21 +442,24 @@ public class ShopManager : MonoBehaviour
             }
         }
         shopManager.paysuccess = true;
-        if (GameDataManager.Instance.UserData.TotalPayTimes == 0)
+        bool firstPay = GameDataManager.Instance.UserData.TotalPayTimes == 0;
+        if (firstPay)
             GameDataManager.Instance.UserData.firstPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         GameDataManager.Instance.UserData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
-        
-        AnalyticMgr.Purchase(shopDataItem.GetProduceName(), item.IsoCurrencyCode, item.LocalizedPrice, items);
         MessageSystem.Instance.ShowTip("购买成功！");
-
-        //UIController.Instance.SubmitPayment((int)product.price);
-
-        //AdjustManager.Instance.SendPurchaseEvent();
+        
+        MessageSystem.Instance.HideLoadingAnimation();
+        
+#if UNITY_OPENHARMONY||UNITY_huawei
+        
+        AnalyticMgr.PurchaseFinished(item, firstPay);
         // 处理购买成功后的逻辑，例如增加游戏内货币
+#elif UNITY_huawei
         item?.OnShipmentCompleted(true);
+#endif
     }
     
     private void BuyRemoveAdsEvent(int type)

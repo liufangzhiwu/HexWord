@@ -37,7 +37,7 @@ public class GiftItem : MonoBehaviour
                 spritename = "tipicon";
                 countText.text = "x "+data[1]; // 假设 productContent 是数量
                 break;
-            case (int)LimitRewordType.Resettool:
+            case (int)LimitRewordType.SingleTipsttool:
                 spritename = "shop_reset";
                 countText.text = "x "+data[1]; // 假设 productContent 是数量
                 break;

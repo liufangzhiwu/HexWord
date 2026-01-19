@@ -15,7 +15,9 @@ namespace Middleware
     /// </summary>
     public class ProductItem
     {
+        public string order_id;
         public string ProductId;
+        public string ItemName;
         public string IsoCurrencyCode;
         public float LocalizedPrice;
 

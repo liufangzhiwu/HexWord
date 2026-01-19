@@ -35,7 +35,7 @@ public class PanelType  // Renamed class
     public const string ButterflyGardenHelp = "ButterflyGardenHelp";
 
     // 已注释的旧界面常量 (Legacy commented constants)
-    public const string RewardAdsScreen = "RewardAdsScreen"; 
+    public const string GetItemScreen = "GetItemScreen"; 
     public const string ShopScreen = "ShopScreen";  
     public const string AdsDiscountScreen = "AdsDiscountScreen";  
     public const string WordVocabularyScreen = "WordVocabularyScreen";  

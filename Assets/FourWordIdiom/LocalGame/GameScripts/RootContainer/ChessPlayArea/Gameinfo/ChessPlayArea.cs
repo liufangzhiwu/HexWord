@@ -535,16 +535,16 @@ public class ChessPlayArea : UIWindow
 
         if(toolInfo.count <= 0)
         {
-            if (CanUseTool(toolInfo))
-            {
-                useCoins = true;
-            }
-            else
-            {
-                MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
-                SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
+            // if (CanUseTool(toolInfo))
+            // {
+            //     useCoins = true;
+            // }
+            // else
+            // {
+            //     MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
+                SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
                 return;
-            }
+            //}
         }
 
         if (CurrStageInfo.StageNumber == 5)
@@ -602,16 +602,16 @@ public class ChessPlayArea : UIWindow
         bool useCoins = false;
         if(toolInfo.count <= 0)
         {
-            if (CanUseTool(toolInfo))
-            {
-                useCoins = true;
-            }
-            else
-            {
-                MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
-                SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
+            // if (CanUseTool(toolInfo))
+            // {
+            //     useCoins = true;
+            // }
+            // else
+            // {
+               // MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
+                SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
                 return;
-            }
+            //}
         }
 
         // 第二关新手引导 不计数

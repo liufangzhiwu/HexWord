@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Middleware;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 // using ThinkingAnalytics;
@@ -73,6 +74,10 @@ public class UserData
     public int totallogin;       // 总登录次数
     public int totalSeeAds;       // 总看广告次数
     public int activeDayCnt; //活跃天数
+    
+    // 生命周期事件相关数据
+    public float TotalOnlineMinutes;    // 累计在线总时长（分钟）
+    public Dictionary<string, bool> ReportedLifecycleEvents; // 已上报的生命周期事件
     
     /// <summary>
     /// 词库数据
@@ -155,16 +160,11 @@ public class UserData
     #endregion
     
     
-    #region PlayerPrefs 键名常量
-    private const string USER_DATA_KEY = "UserData";
-    private const string USER_DATA_VERSION_KEY = "UserData_Version";
-    private const int CURRENT_DATA_VERSION = 2; // 每次数据结构变更时递增
-    #endregion
+    // 生命周期事件配置
+    private readonly int[] LIFE_CYCLE_MINUTES = { 1, 5, 10, 15, 20, 30, 40, 60, 120, 300, 600 };
+    private readonly string LIFE_CYCLE_EVENT_PREFIX = "time_level_";
     
-    // 增量保存的键名前缀
-    private const string CURRENT_STAGE_KEY = "CurrentStage";
-    private const string MAX_STAGE_KEY = "MaxStage";
-    private const string TOOL_KEY_PREFIX = "Tool_";
+   
 
     #region 数据初始化方法
     
@@ -262,14 +262,23 @@ public class UserData
         curStageStartTime = null;
         curStageOnlineTime = 0;
         curIsEnter = false;
-        curIsEnter = false;
+        
+        // 生命周期事件相关数据初始化
+        TotalOnlineMinutes = 0f;
+        ReportedLifecycleEvents = new Dictionary<string, bool>();
+        foreach (var minutes in LIFE_CYCLE_MINUTES)
+        {
+            string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{minutes}";
+            ReportedLifecycleEvents[eventKey] = false;
+        }
+        
         // 初始化道具数据
         toolInfo = new Dictionary<int, ToolInfo>
         {
-            { 101, new ToolInfo { cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint", count = AppGameSettings.ShopItems.StartingResets } },
-            { 102, new ToolInfo { cost = AppGameSettings.ShopItems.WordHintCost, type = "WordHint", count = AppGameSettings.ShopItems.StartingHints } },
+            { 101, new ToolInfo { cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint", count = AppGameSettings.ShopItems.SingleHintCount } },
+            { 102, new ToolInfo { cost = AppGameSettings.ShopItems.WordHintCost, type = "WordHint", count = AppGameSettings.ShopItems.WordHintCount } },
             { 103, new ToolInfo { cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly", count = AppGameSettings.ShopItems.StartingButterflies } },
-            { 104, new ToolInfo { cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete", count = AppGameSettings.ShopItems.StartingHints } }
+            { 104, new ToolInfo { cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete", count = AppGameSettings.ShopItems.WordHintCount } }
         };
         // 签到数据
         signOpenTime = null;
@@ -371,8 +380,18 @@ public class UserData
         isAllCompleteTask = user.isAllCompleteTask;
         wordVocabularyChinSim = user.wordVocabularyChinSim;
         
+        // 生命周期事件相关数据
+        TotalOnlineMinutes = user.TotalOnlineMinutes;
+        ReportedLifecycleEvents = user.ReportedLifecycleEvents ?? new Dictionary<string, bool>();
+        
+        // 检查并初始化缺失的生命周期事件
+        InitializeLifecycleEvents();
+        
         // 检查是否需要重置每日数据
         CheckResetLimitTime();
+        
+        // 检查是否需要上报生命周期事件
+        CheckLifecycleEvents();
     }
 
     #endregion
@@ -613,6 +632,8 @@ public class UserData
             TotalEarnedGold += value;
             SendCurrencyEvent(value, "金币",message); // 获得金币事件
         }
+        
+        GameDataManager.Instance.CommitGameData();
     }
     
     /// <summary>
@@ -743,11 +764,11 @@ public class UserData
 
             switch (type)
             {
-                case LimitRewordType.Resettool:
-                    toolName = "重置道具";
+                case LimitRewordType.SingleTipsttool:
+                    toolName = "重置(提示灯)道具";
                     break;
                 case LimitRewordType.Tipstool:
-                    toolName = "提示道具";
+                    toolName = "提示（放大镜）道具";
                     break;
                 case LimitRewordType.Butterfly:
                     toolName = "蝴蝶道具";
@@ -759,6 +780,11 @@ public class UserData
             
             // 发送道具统计事件
             SendCurrencyEvent(value, toolName,message); // 假设货币类型从1开始
+            
+            //刷新道具
+            EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+            
+            GameDataManager.Instance.CommitGameData();
         }
     }
 
@@ -770,11 +796,129 @@ public class UserData
     {
         return type switch
         {
-            LimitRewordType.Resettool => 101,
+            LimitRewordType.SingleTipsttool => 101,
             LimitRewordType.Tipstool => 102,
             LimitRewordType.Butterfly => 103,
             _ => 0
         };
+    }
+
+    #endregion
+    
+     #region 生命周期事件管理
+
+    /// <summary>
+    /// 初始化生命周期事件数据结构
+    /// </summary>
+    private void InitializeLifecycleEvents()
+    {
+        if (ReportedLifecycleEvents == null)
+        {
+            ReportedLifecycleEvents = new Dictionary<string, bool>();
+        }
+        
+        // 确保所有生命周期事件都在字典中
+        foreach (var minutes in LIFE_CYCLE_MINUTES)
+        {
+            string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{minutes}";
+            if (!ReportedLifecycleEvents.ContainsKey(eventKey))
+            {
+                ReportedLifecycleEvents[eventKey] = false;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 增加在线时长并检查生命周期事件
+    /// </summary>
+    /// <param name="minutes">增加的分钟数</param>
+    public void AddOnlineMinutes(float minutes)
+    {
+        TotalOnlineMinutes += minutes;
+        CheckLifecycleEvents();
+        
+        Debug.Log($"累计在线时长增加: {minutes}分钟, 总时长: {TotalOnlineMinutes:F1}分钟");
+    }
+    
+    /// <summary>
+    /// 检查并上报生命周期事件
+    /// </summary>
+    private void CheckLifecycleEvents()
+    {
+        for (int i = 0; i < LIFE_CYCLE_MINUTES.Length; i++)
+        {
+            int targetMinutes = LIFE_CYCLE_MINUTES[i];
+            string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{targetMinutes}";
+            
+            // 如果达到目标时长且未上报过
+            if (TotalOnlineMinutes >= targetMinutes && 
+                (!ReportedLifecycleEvents.ContainsKey(eventKey) || !ReportedLifecycleEvents[eventKey]))
+            {
+                AnalyticMgr.ReportLifecycleEvent(i + 1, targetMinutes);
+                ReportedLifecycleEvents[eventKey] = true;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 获取下一个生命周期事件信息
+    /// </summary>
+    public (int minutes, string eventName) GetNextLifecycleEvent()
+    {
+        foreach (var minutes in LIFE_CYCLE_MINUTES)
+        {
+            string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{minutes}";
+            if (!ReportedLifecycleEvents.ContainsKey(eventKey) || !ReportedLifecycleEvents[eventKey])
+            {
+                int index = Array.IndexOf(LIFE_CYCLE_MINUTES, minutes) + 1;
+                return (minutes, $"{LIFE_CYCLE_EVENT_PREFIX}{index}");
+            }
+        }
+        
+        // 所有事件都已完成
+        return (0, "已完成所有生命周期事件");
+    }
+    
+    /// <summary>
+    /// 获取已完成的生命周期事件数量
+    /// </summary>
+    public int GetCompletedLifecycleEventCount()
+    {
+        int count = 0;
+        foreach (var eventKey in ReportedLifecycleEvents.Keys)
+        {
+            if (ReportedLifecycleEvents[eventKey])
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+    
+    /// <summary>
+    /// 获取生命周期事件完成进度
+    /// </summary>
+    public float GetLifecycleEventProgress()
+    {
+        int completed = GetCompletedLifecycleEventCount();
+        return (float)completed / LIFE_CYCLE_MINUTES.Length;
+    }
+    
+    /// <summary>
+    /// 重置所有生命周期事件（用于测试或账号重置）
+    /// </summary>
+    public void ResetLifecycleEvents()
+    {
+        foreach (var minutes in LIFE_CYCLE_MINUTES)
+        {
+            string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{minutes}";
+            ReportedLifecycleEvents[eventKey] = false;
+        }
+        
+        TotalOnlineMinutes = 0f;
+        SaveData();
+        
+        Debug.Log("已重置所有生命周期事件");
     }
 
     #endregion
@@ -881,11 +1025,7 @@ public class UserData
     /// </summary>
     public void ClearAllData()
     {
-        PlayerPrefs.DeleteKey(USER_DATA_KEY);
-        PlayerPrefs.DeleteKey(USER_DATA_VERSION_KEY);
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
-        Debug.Log("已清空所有用户数据");
+        InitData();
     }
 
     #endregion

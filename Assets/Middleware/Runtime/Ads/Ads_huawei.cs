@@ -3,13 +3,13 @@ using UnityEngine;
 using System;
 using HuaweiService;
 using HuaweiService.ads;
-using Object = UnityEngine.Object;
+using UnityEngine.Rendering;
 
 namespace Middleware
 {
     public class Ads_huawei : IAds
     {
-        public bool IsPlaying { get; set; }
+        public bool IsPlaying { get; set; } //用于判断是否正在展示广告，如果在广告中进入后台则不发送埋点
         private string _uniqueId;
         Define.AdKey _currentAdKey;
         
@@ -37,10 +37,6 @@ namespace Middleware
 
         public void ShowReward(Define.AdKey key, Action<bool> callback)
         {
-#if UNITY_EDITOR 
-            callback(true);
-            return;
-#endif
             if (_isShowingReward)
             {
                 Debug.Log("[Ads_huawei] ShowReward ignored: Action in progress.");
@@ -50,7 +46,7 @@ namespace Middleware
                 }
                 return;
             }
-
+            IsPlaying = true;
             _isShowingReward = true;
             _isUserWaiting = true;
             _currentAdKey = key;
@@ -65,6 +61,7 @@ namespace Middleware
             {
                 Debug.Log("[Ads_huawei] ShowReward: Cache Miss. Loading new ad.");
                 // 缓存无效或不存在，发起加载并自动播放
+                MessageSystem.Instance.ShowLoadingAnimation();
                 LoadRewardAd(key, true);
             }
        
@@ -88,10 +85,6 @@ namespace Middleware
 
         public void ShowInterstitial(Action<bool> callback)
         {
-#if UNITY_EDITOR 
-            callback(true);
-            return;
-#endif
             _completeCallback = callback;
             InterstitialAd ad = new InterstitialAd(new Context());
             ad.setAdId(GetAdId(Define.AdKey.InterstitialAdId));
@@ -138,12 +131,6 @@ namespace Middleware
             }
             return adId;
 #endif
-        }
-
-        private void CallbackAd(bool success)
-        {
-            _completeCallback?.Invoke(success);
-            _completeCallback = null;
         }
 
         private bool IsCacheValid()
@@ -197,11 +184,14 @@ namespace Middleware
             // 如果是准备播放时失败，需要回调给业务层并重置展示状态
             if (_isUserWaiting)
             {
-                MessageSystem.Instance.ShowTip("广告加载失败，请重试");
+                IsPlaying = false;
                 _isShowingReward = false;
                 _isUserWaiting = false;
-                _completeCallback?.Invoke(false);
-                _completeCallback = null;
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _completeCallback?.Invoke(false);
+                    _completeCallback = null;
+                });
             }
         }
 
@@ -216,6 +206,8 @@ namespace Middleware
         // 广告关闭或展示失败回调
         private void OnAdFinishedOrClosed()
         {
+            IsPlaying = false;
+            Debug.Log("[Ads_huawei] OnAdFinishedOrClosed"+IsPlaying);
             _isShowingReward = false; // 重置展示状态，允许下一次点击
             _isUserWaiting = false;
         }
@@ -263,23 +255,33 @@ namespace Middleware
             }
             public override void onRewardAdClosed()
             {
+                _parent.OnAdFinishedOrClosed();
+                //可以领取奖励关闭回调
                 // base.onRewardAdClosed();
                 // MessageSystem.Instance.ShowTip($"[激励广告被关闭]RewardAdClosed");
-                _callback?.Invoke(false);
-                _parent.OnAdFinishedOrClosed();
+                // UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                // {
+                //     _callback?.Invoke(false);
+                // });
             }
             public override void onRewardAdFailedToShow(int arg0)
             {
-                // base.onRewardAdFailedToShow(arg0);
-                _callback?.Invoke(false);
-                // MessageSystem.Instance.ShowTip($"[激励广告展示失败] RewardAdFailedToShow errorCode:{arg0}");
                 _parent.OnAdFinishedOrClosed();
+                // base.onRewardAdFailedToShow(arg0);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _callback?.Invoke(false);
+                });
+                // MessageSystem.Instance.ShowTip($"[激励广告展示失败] RewardAdFailedToShow errorCode:{arg0}");
             }
             public override void onRewarded(Reward arg0)
             {
                 // base.onRewarded(arg0);
                 // MessageSystem.Instance.ShowTip($"[激励广告完成] RewardAdFailedToShow errorCode:{arg0}");
-                _callback?.Invoke(true);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _callback?.Invoke(true);
+                });
             }
         }
         
@@ -297,20 +299,31 @@ namespace Middleware
             {
                 // base.onAdClicked();
                 // MessageSystem.Instance.ShowTip("AdListener Ad Clicked");
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    MessageSystem.Instance.HideLoadingAnimation();
+                });
             }
 
             public override void onAdClosed()
             {
                 // base.onAdClosed();
                 // MessageSystem.Instance.ShowTip("AdListener Ad Closed");
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    //_callback?.Invoke(false);
+                    MessageSystem.Instance.HideLoadingAnimation();
+                });
             }
 
             public override void onAdFailed(int arg0)
             {
                 // MessageSystem.Instance.ShowTip("AdListener Ad failed to load with error code "+ arg0);
                 // base.onAdFailed(arg0);
-                _callback?.Invoke(false);
-                
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _callback?.Invoke(false);
+                });
             }
 
             public override void onAdImpression()
@@ -336,7 +349,10 @@ namespace Middleware
             {
                 // base.onAdOpened();
                 // MessageSystem.Instance.ShowTip("AdListener Ad Opened");
-                _callback?.Invoke(true);
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    _callback?.Invoke(true);
+                });
             }
         }
     }

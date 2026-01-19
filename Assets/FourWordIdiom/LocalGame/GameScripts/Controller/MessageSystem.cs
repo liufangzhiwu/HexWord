@@ -46,6 +46,7 @@ public class MessageSystem : MonoBehaviour
     private GameObject _tipPrefab;
     private ObjectPool<MessageWindow> _tipPool;
     private bool _isActiveTip;
+    private GameObject loadingPanel;
     #endregion
 
     #region Unity生命周期
@@ -84,6 +85,13 @@ public class MessageSystem : MonoBehaviour
             bundleName,
             prefabName
         );
+      
+        if (loadingPanel == null)
+        {
+            GameObject prefab = AssetBundleLoader.SharedInstance.LoadGameObject(bundleName, "LoadingScreen");
+            loadingPanel = Instantiate(prefab,transform); // 实例化加载面板
+            loadingPanel.gameObject.SetActive(false);
+        }
 
         yield return loadRequest;
 
@@ -118,6 +126,16 @@ public class MessageSystem : MonoBehaviour
         );
     }
     #endregion
+    
+    public void ShowLoadingAnimation()
+    {
+        loadingPanel.SetActive(true); // 显示加载动画Panel
+    }
+
+    public void HideLoadingAnimation()
+    {
+        loadingPanel.SetActive(false); // 隐藏加载动画Panel
+    }
 
     #region 提示显示接口
     /// <summary>

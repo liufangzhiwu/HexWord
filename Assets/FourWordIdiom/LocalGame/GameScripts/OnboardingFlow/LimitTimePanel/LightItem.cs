@@ -87,7 +87,7 @@ public class LightItem : MonoBehaviour
                 return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
             case LimitRewordType.Tipstool:
                 return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
-            case LimitRewordType.Resettool:
+            case LimitRewordType.SingleTipsttool:
                 return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
             case LimitRewordType.Min5Double:
                 return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
@@ -218,7 +218,7 @@ public class LightItem : MonoBehaviour
                 {
                     //if (Curlimitdata.rewardContent.Count == 1)
                     //{
-                        ShowComplete(Curlimitdata.rewardContent.Count);
+                       
                         //AudioManager.Instance.PlaySoundEffect("limitTimeOver");
                     //}
                     GameDataManager.Instance.UserData.UpdateGold(rlist[1],true,true,message);
@@ -233,9 +233,9 @@ public class LightItem : MonoBehaviour
                 //GameDataManager.instance.UserData.toolInfo[102].count+=rlist[1];
                 GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist[1],message);
                 break;
-            case LimitRewordType.Resettool:
+            case LimitRewordType.SingleTipsttool:
                 //GameDataManager.instance.UserData.toolInfo[101].count+=rlist[1];
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, rlist[1],message);
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, rlist[1],message);
                 break;
             case LimitRewordType.Min5Double:
                 GameDataManager.Instance.UserData.UpdateLimitEndTime(5);
@@ -248,6 +248,7 @@ public class LightItem : MonoBehaviour
             default:
                 break;
         }
+        ShowComplete(Curlimitdata.rewardContent.Count);
     }
     
 }

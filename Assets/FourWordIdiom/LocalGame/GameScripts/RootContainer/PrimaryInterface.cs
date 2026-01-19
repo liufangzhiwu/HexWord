@@ -451,11 +451,11 @@ public class PrimaryInterface : UIWindow
     
     private void OnButterflyClick()
     {
-        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
-        {
+        //SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        // SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
+        // {
             SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
-        });
+        //});
     }
     
     /// <summary>

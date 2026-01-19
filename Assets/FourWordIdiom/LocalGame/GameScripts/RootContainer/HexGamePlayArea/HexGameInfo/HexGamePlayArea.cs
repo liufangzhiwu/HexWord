@@ -112,7 +112,7 @@ public class HexGamePlayArea : UIWindow
         if (GameDataManager.Instance.UserData.toolInfo[101].count > 0) 
         {
             ResetCounttxt.GetComponentInChildren<Text>().text =GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
-            ResetCostObj.gameObject.SetActive(false);
+            //ResetCostObj.gameObject.SetActive(false);
             ResetCounttxt.gameObject.SetActive(true);
             ResetAdsObj.gameObject.SetActive(false);
         }
@@ -124,26 +124,26 @@ public class HexGamePlayArea : UIWindow
             ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
             if (!CanUseTool(toolInfo))
             {
-                ResetAdsObj.gameObject.SetActive(true);
-                ResetCostObj.gameObject.SetActive(false);
+                //ResetAdsObj.gameObject.SetActive(true);
+                //ResetCostObj.gameObject.SetActive(false);
             }
             else
             {
-                ResetAdsObj.gameObject.SetActive(false);
-                ResetCostObj.gameObject.SetActive(true);
+                //ResetAdsObj.gameObject.SetActive(false);
+                //ResetCostObj.gameObject.SetActive(true);
             }
         }
 
         if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
         {
             HintCounttxt.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
-            HintCostObj.gameObject.SetActive(false);
+            //HintCostObj.gameObject.SetActive(false);
             HintCounttxt.gameObject.SetActive(true);
         }
         else
         {
             HintCostObj.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
-            HintCostObj.gameObject.SetActive(true);
+            //HintCostObj.gameObject.SetActive(true);
             HintCounttxt.gameObject.SetActive(false);
         }
     }
@@ -216,14 +216,17 @@ public class HexGamePlayArea : UIWindow
         rectTransform.offsetMin = new Vector2(0, 100); // Left 和 Bottom
         if (GameDataManager.Instance.UserData.CurrentHexStage >= 2)
         {
-            rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom
+#if UNITY_huawei||UNITY_ANDROID
+            rectTransform.offsetMin = new Vector2(0, -40); // Left 和 Bottom
+#endif
         }
+        //在第7关且词语少于9个的时候可以显示横幅广告
         //int rows=StageHexController.Instance.CurStageInfo.CurBoardData.rows-StageHexController.Instance.CurStageInfo.CurBoardData.minRow;
         if (CurStageInfo.StageNumber >= 1)
         {
-#if UNITY_OPENHARMONY || UNITY_huawei
-            Game.self?.Ads.ShowBanner();
-            rectTransform.offsetMin = new Vector2(0, 180); // Left 和 Bottom
+#if UNITY_OPENHARMONY
+            Game.self?.Ads?.ShowBanner();
+            rectTransform.offsetMin = new Vector2(0, 150); // Left 和 Bottom
             Debug.LogError("底部位置" + rectTransform.offsetMin);
 #endif
         }
@@ -259,7 +262,6 @@ public class HexGamePlayArea : UIWindow
         
         SingleTipLight.gameObject.SetActive(false);
         WordTipLight.gameObject.SetActive(false);
-           
     }
 
     //设置当前关卡数据（配置数据、保存进度数据）
@@ -720,27 +722,26 @@ public class HexGamePlayArea : UIWindow
 
         if (toolInfo.count <= 0) 
         {
-            if (CanUseTool(toolInfo))
-            {
-                //PopupManager.Instance.Show("not_enough_coins");
-                useCoins = true;                    
-            }
-            else
-            {
-                //MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
-                //AdsManager.Instance.ShowRewardedPanel("item_gold");
-                //SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
+            // if (CanUseTool(toolInfo))
+            // {
+            //     //PopupManager.Instance.Show("not_enough_coins");
+            //     useCoins = true;                    
+            // }
+            // else
+            // {
+            GetItemScreen.limitRewordType = LimitRewordType.SingleTipsttool;
+            SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
                 
-#if UNITY_OPENHARMONY&&!UNITY_EDITOR
-        AnalyticMgr.VideoAdClick("提示灯道具广告");
-        Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
-#elif Unity_ShowLog||UNITY_EDITOR
-                UpdateAdsRewardUI(true);
-#endif
+// #if UNITY_OPENHARMONY&&!UNITY_EDITOR
+//         AnalyticMgr.VideoAdClick("提示灯道具广告");
+//         Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+// #elif Unity_ShowLog||UNITY_EDITOR
+//                 UpdateAdsRewardUI(true);
+// #endif
                 
                 SingleHingBtn.enabled = true;
                 return;
-            }
+            //}
         }
         usetoolCount++;
 
@@ -750,12 +751,12 @@ public class HexGamePlayArea : UIWindow
             if (useCoins) 
             {
                 GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, 1,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, -1,"关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"购买道具");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, -1,"关卡内使用");
             }
             else
             {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, -1, "关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, -1, "关卡内使用");
                 InitToolUI();
             }
             
@@ -781,12 +782,12 @@ public class HexGamePlayArea : UIWindow
         if (isShow)
         {
             usetoolCount++;
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, 1,"看广告获取提示灯道具");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"看广告获取提示灯道具");
             
             string Str = GetRandomTipsPuzzle();
             if (!string.IsNullOrEmpty(Str))
             {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Resettool, -1, "关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, -1, "关卡内使用");
                 InitToolUI();
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipAllWordTool,1);
                 AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
@@ -870,17 +871,18 @@ public class HexGamePlayArea : UIWindow
 
         if (toolInfo.count <= 0)
         {
-            if (CanUseTool(toolInfo))
-            {
-                //PopupManager.Instance.Show("not_enough_coins");
-                useCoins = true;                   
-            }
-            else
-            {
-                MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
-                SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
+            // if (CanUseTool(toolInfo))
+            // {
+            //     //PopupManager.Instance.Show("not_enough_coins");
+            //     useCoins = true;                   
+            // }
+            // else
+            // {
+            //     MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
+            GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
+                SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
                 return;
-            }
+            //}
         }
 
         usetoolCount++;
