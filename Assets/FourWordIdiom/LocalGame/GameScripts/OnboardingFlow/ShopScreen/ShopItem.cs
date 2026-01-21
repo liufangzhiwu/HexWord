@@ -402,22 +402,25 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     {
         
         MessageSystem.Instance.ShowLoadingAnimation();
-        
-#if UNITY_EDITOR
-        ProductItem productItem = new ProductItem
+
+        if (!UIUtilities.isEditMode)
         {
-            order_id  = "",
-            IsoCurrencyCode = "",
-            ItemName = data.produceNameId,
-            ProductId = data.produceNameId,
-            LocalizedPrice = 0,
-        };
-        OnPurchaseSuccess(productItem);
-#elif UNITY_OPENHARMONY||UNITY_huawei
-        AnalyticMgr.PurchaseStart(data.produceNameId);
-        //todo 打开loading界面
-        Game.self.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
-#endif
+            ProductItem productItem = new ProductItem
+            {
+                order_id  = "",
+                IsoCurrencyCode = "",
+                ItemName = data.produceNameId,
+                ProductId = data.produceNameId,
+                LocalizedPrice = 0,
+            };
+            OnPurchaseSuccess(productItem);
+        }
+        else
+        {
+            AnalyticMgr.PurchaseStart(data.produceNameId);
+            //todo 打开loading界面
+            Game.self.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
+        }
     }
 
     private void OnPurchaseSuccess(ProductItem item)

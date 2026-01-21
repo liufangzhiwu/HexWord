@@ -334,7 +334,7 @@ namespace Middleware
                         desc = "奖励广告-签到金币3";
                         break;
                 }
-                MessageSystem.Instance.HideLoadingAnimation();
+                //MessageSystem.Instance.HideLoadingAnimation();
                 AnalyticMgr.VideoStart(desc);
             }
         }
@@ -381,7 +381,7 @@ namespace Middleware
                 {
                     Debug.Log($"[OnLoadAdsTrigger]targetSignal Ad null, Code :{signal.code} Message : {signal.message}");
                     CallbackAd(false);
-                    MessageSystem.Instance.HideLoadingAnimation();
+                    //MessageSystem.Instance.HideLoadingAnimation();
                 }
             }
             else
@@ -389,7 +389,7 @@ namespace Middleware
                 Debug.Log($"[OnLoadAdsTrigger]LoadAds Error, Code :{signal.code} Message : {signal.message}");
                 _isPreloading = false; // 预加载失败，重置状态
                 CallbackAd(false);
-                MessageSystem.Instance.HideLoadingAnimation();
+                //MessageSystem.Instance.HideLoadingAnimation();
             }
         }
 
@@ -399,9 +399,9 @@ namespace Middleware
             {
                 var targetSignal = (AdsShowSignal)signal;
                 Debug.Log($"[OnShowAdsTrigger] type:{(AdType)targetSignal.adType},uniqueId：{targetSignal.uniqueId}");
-                Game.self.PauseGame();
             }
 
+            Game.self.PauseGame();
             if (_adType == AdType.Interstitial)
             {
                 CallbackAd(true);
@@ -418,11 +418,13 @@ namespace Middleware
                 if (targetSignal.AdStatus == "onAdReward" ||
                     targetSignal.AdStatus == "onVideoPlayEnd" && _adType == AdType.Reward)
                 {
+                    MessageSystem.Instance.HideLoadingAnimation();
                     CallbackAd(true);
                 }
                
                 if (targetSignal.AdStatus == "onAdClose" || targetSignal.AdStatus == "onAdFail")
                 {
+                    MessageSystem.Instance.HideLoadingAnimation();
                     Game.self.ResumeGame();
                     
                     // 广告关闭或失败后，尝试重新预加载

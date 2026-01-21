@@ -216,9 +216,7 @@ public class HexGamePlayArea : UIWindow
         rectTransform.offsetMin = new Vector2(0, 100); // Left 和 Bottom
         if (GameDataManager.Instance.UserData.CurrentHexStage >= 2)
         {
-#if UNITY_OPENHARMONY
-            rectTransform.offsetMin = new Vector2(0, 150); // Left 和 Bottom
-#elif UNITY_huawei||UNITY_ANDROID
+#if UNITY_huawei||UNITY_ANDROID
             rectTransform.offsetMin = new Vector2(0, -40); // Left 和 Bottom
 #endif
         }

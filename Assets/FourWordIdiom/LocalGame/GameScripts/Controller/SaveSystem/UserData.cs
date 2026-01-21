@@ -859,66 +859,7 @@ public class UserData
         }
     }
     
-    /// <summary>
-    /// 获取下一个生命周期事件信息
-    /// </summary>
-    public (int minutes, string eventName) GetNextLifecycleEvent()
-    {
-        foreach (var minutes in LIFE_CYCLE_MINUTES)
-        {
-            string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{minutes}";
-            if (!ReportedLifecycleEvents.ContainsKey(eventKey) || !ReportedLifecycleEvents[eventKey])
-            {
-                int index = Array.IndexOf(LIFE_CYCLE_MINUTES, minutes) + 1;
-                return (minutes, $"{LIFE_CYCLE_EVENT_PREFIX}{index}");
-            }
-        }
-        
-        // 所有事件都已完成
-        return (0, "已完成所有生命周期事件");
-    }
-    
-    /// <summary>
-    /// 获取已完成的生命周期事件数量
-    /// </summary>
-    public int GetCompletedLifecycleEventCount()
-    {
-        int count = 0;
-        foreach (var eventKey in ReportedLifecycleEvents.Keys)
-        {
-            if (ReportedLifecycleEvents[eventKey])
-            {
-                count++;
-            }
-        }
-        return count;
-    }
-    
-    /// <summary>
-    /// 获取生命周期事件完成进度
-    /// </summary>
-    public float GetLifecycleEventProgress()
-    {
-        int completed = GetCompletedLifecycleEventCount();
-        return (float)completed / LIFE_CYCLE_MINUTES.Length;
-    }
-    
-    /// <summary>
-    /// 重置所有生命周期事件（用于测试或账号重置）
-    /// </summary>
-    public void ResetLifecycleEvents()
-    {
-        foreach (var minutes in LIFE_CYCLE_MINUTES)
-        {
-            string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{minutes}";
-            ReportedLifecycleEvents[eventKey] = false;
-        }
-        
-        TotalOnlineMinutes = 0f;
-        SaveData();
-        
-        Debug.Log("已重置所有生命周期事件");
-    }
+
 
     #endregion
 

@@ -64,13 +64,9 @@ namespace Middleware
             TDAnalytics.SetSuperProperties(properties);
         }
 
-        public event EventHandler OnSdkInit;
-
         public void Login(string uid)
         {
             TDAnalytics.Login(uid);
-            
-            OnSdkInit?.Invoke(this,null);
         }
 
         private void InitThink()

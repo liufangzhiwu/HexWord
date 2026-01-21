@@ -455,34 +455,6 @@ public class LoadingController : MonoBehaviour
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
     
     }
-    private void LoadFont()
-    {
-        // 加载TMP字体资源
-        // TMP_FontAsset tmpFont = AdvancedBundleLoader.SharedInstance.LoadTMPFont(
-        //     "stagefonts",
-        //     "FZKTKSDF"); // 注意资源名称包含"SDF"后缀
-        //
-        // TMP_FontAsset selecttmpFont =  AdvancedBundleLoader.SharedInstance.LoadTMPFont(
-        //     "stagefonts",
-        //     "FZKTKSDF_select"); // 注意资源名称包含"SDF"后缀
-
-        // if (tmpFont != null)
-        // {
-        //    
-        //     Shader shaderLoad = Resources.Load<Shader>("TMP_SDF Overlay");
-        //
-        //     if (shaderLoad == null)
-        //     {
-        //         Debug.LogError("Shader加载失败");
-        //     }
-        //     tmpFont.material.shader = shaderLoad;
-        //     selecttmpFont.material.shader = shaderLoad;
-        // }
-        // else
-        // {
-        //     Debug.LogError("TMP字体资源加载失败");
-        // }
-    }
 
     /// <summary>
     /// 异步加载主场景
@@ -497,22 +469,6 @@ public class LoadingController : MonoBehaviour
         Debug.Log("主场景加载完成");
     }
 
-    /// <summary>
-    /// 更新进度显示
-    /// </summary>
-    private void UpdateProgressDisplay(float progress)
-    {
-        // 平滑更新进度条
-        progressSlider.DOValue(progress, 0.1f);
-
-        // 更新进度指示器位置
-        // Vector2 sliderSize = progressSlider.GetComponent<RectTransform>().sizeDelta;
-        // float xPos = progress * sliderSize.x - (sliderSize.x / 2);
-        // indicatorIcon.anchoredPosition = new Vector2(xPos, 0);
-
-        // 更新百分比文本
-        // loadingHintText.text = $"{Mathf.FloorToInt(progress * 100)}%";
-    }
     
     // 🔑 1. 定义局部实现类 IAntiAddictionListener
     private class AntiAddictionHandler : IAntiAddictionListener
