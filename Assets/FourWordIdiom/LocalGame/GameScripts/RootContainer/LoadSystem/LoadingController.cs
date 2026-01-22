@@ -83,7 +83,7 @@ public class LoadingController : MonoBehaviour
     private void Awake()
     {
         loadingHintText.text = "";
-        loadingHintText.transform.GetChild(0).GetComponent<Text>().text = "";
+        //loadingHintText.transform.GetChild(0).GetComponent<Text>().text = "";
     }
 
     private void OnEnable()

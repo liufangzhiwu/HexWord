@@ -72,6 +72,7 @@ SpriteAtlas:
     - fa09f6d2ff43d9048ada00317fb6761d: 21300000
     - 2ba19d03c3401cb4caa46dffbfdcc9c5: 21300000
     - 7f9e206373123e24d90b343ab9087baf: 21300000
+    - c86924636c0994f46b89e7b54d4f0058: 21300000
     - 2b9c54a3aa7bbdc41a113b3f08699f68: 21300000
     - 6c37c4c31918a6849a13fa4ec22bb259: 21300000
     - 0eb0b5c308ad6b54794dcd5ee705c8b1: 21300000
@@ -118,6 +119,7 @@ SpriteAtlas:
     - 9422c0a7aa2b54d4982a2121ffe60692: 21300000
     - 8e0eb1c76604267438669799ebf8abaf: 21300000
     - 78afd148a30dff24cab32d8cd0a514de: 21300000
+    - 3fca778870f9f764798f7f20c2500208: 21300000
     - 0bb77a980ef39b644baa4407f8ca4367: 21300000
     - ef3976b85c7af6a458ac005d1de51d2c: 21300000
     - 70efad19faea27144988ef081894a320: 21300000
@@ -139,6 +141,7 @@ SpriteAtlas:
     - 3636b56bf61c9cb499ee1f6e8eabca83: 21300000
     - 88d5d1ab8e8d53d4891d6e8cda9419e8: 21300000
     - 534387ab71b224b41a254fcc3473b3dc: 21300000
+    - d919b9bba35ec7643ae8ba94aa898eb9: 21300000
     - 23fb51ebe569b0048a5bc6fce854bf97: 21300000
     - 30f43d1cb2968d049965beb59393d1ff: 21300000
     - 36244c5c92c12cc4a999695e44bdb31c: 21300000
@@ -171,6 +174,7 @@ SpriteAtlas:
     - ab90ca8f803443a428e0c475d4095adc: 21300000
     - 02c8f6bf41d4436408a090d3d5d62cd0: 21300000
     - 9a97fdcf453bc89478aef892ad0fb033: 21300000
+    - 67e68cdf06f6b8344bb489e9398f83bf: 21300000
     - f6a17eff005c6294f9cb4ceed357927b: 21300000
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
@@ -196,6 +200,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: fa09f6d2ff43d9048ada00317fb6761d, type: 3}
   - {fileID: 21300000, guid: 2ba19d03c3401cb4caa46dffbfdcc9c5, type: 3}
   - {fileID: 21300000, guid: 7f9e206373123e24d90b343ab9087baf, type: 3}
+  - {fileID: 21300000, guid: c86924636c0994f46b89e7b54d4f0058, type: 3}
   - {fileID: 21300000, guid: 2b9c54a3aa7bbdc41a113b3f08699f68, type: 3}
   - {fileID: 21300000, guid: 6c37c4c31918a6849a13fa4ec22bb259, type: 3}
   - {fileID: 21300000, guid: 0eb0b5c308ad6b54794dcd5ee705c8b1, type: 3}
@@ -242,6 +247,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 9422c0a7aa2b54d4982a2121ffe60692, type: 3}
   - {fileID: 21300000, guid: 8e0eb1c76604267438669799ebf8abaf, type: 3}
   - {fileID: 21300000, guid: 78afd148a30dff24cab32d8cd0a514de, type: 3}
+  - {fileID: 21300000, guid: 3fca778870f9f764798f7f20c2500208, type: 3}
   - {fileID: 21300000, guid: 0bb77a980ef39b644baa4407f8ca4367, type: 3}
   - {fileID: 21300000, guid: ef3976b85c7af6a458ac005d1de51d2c, type: 3}
   - {fileID: 21300000, guid: 70efad19faea27144988ef081894a320, type: 3}
@@ -263,6 +269,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 3636b56bf61c9cb499ee1f6e8eabca83, type: 3}
   - {fileID: 21300000, guid: 88d5d1ab8e8d53d4891d6e8cda9419e8, type: 3}
   - {fileID: 21300000, guid: 534387ab71b224b41a254fcc3473b3dc, type: 3}
+  - {fileID: 21300000, guid: d919b9bba35ec7643ae8ba94aa898eb9, type: 3}
   - {fileID: 21300000, guid: 23fb51ebe569b0048a5bc6fce854bf97, type: 3}
   - {fileID: 21300000, guid: 30f43d1cb2968d049965beb59393d1ff, type: 3}
   - {fileID: 21300000, guid: 36244c5c92c12cc4a999695e44bdb31c, type: 3}
@@ -295,6 +302,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: ab90ca8f803443a428e0c475d4095adc, type: 3}
   - {fileID: 21300000, guid: 02c8f6bf41d4436408a090d3d5d62cd0, type: 3}
   - {fileID: 21300000, guid: 9a97fdcf453bc89478aef892ad0fb033, type: 3}
+  - {fileID: 21300000, guid: 67e68cdf06f6b8344bb489e9398f83bf, type: 3}
   - {fileID: 21300000, guid: f6a17eff005c6294f9cb4ceed357927b, type: 3}
   m_PackedSpriteNamesToIndex:
   - timebg
@@ -319,6 +327,7 @@ SpriteAtlas:
   - UI_Icon_huiStar
   - timebg
   - lbigdeng
+  - tips2
   - rightjian
   - garden_item_2
   - Garden
@@ -365,6 +374,7 @@ SpriteAtlas:
   - garden_item_mask
   - goldbg
   - itembg2
+  - timebg
   - garden_itemss
   - word
   - rewardicon
@@ -386,6 +396,7 @@ SpriteAtlas:
   - puzzleBook
   - UI_Icon_togglebg
   - tips
+  - freebg
   - tai
   - UI_Icon_point
   - title
@@ -418,6 +429,7 @@ SpriteAtlas:
   - jddi
   - ainamebg
   - garden_item_3
+  - tipspanel
   - ui_garden_title
   m_RenderDataMap: {}
   m_Tag: UI_OnboardingFlow

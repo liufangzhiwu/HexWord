@@ -18,6 +18,8 @@ public class ShopScreen : UIWindow
     [SerializeField] private ShopItem ShopItemPrefab;
     [SerializeField] private Transform parent;
     [SerializeField] private ScrollRect shopScrollView;
+    [SerializeField] private FreeItemTable freeItemTable;
+    [SerializeField] private GameObject goldItemTable;
     private ObjectPool objectPool; // 对象池实例
     private ObjectPool giftobjectPool; // 对象池实例
     Dictionary<int, ShopItem> shophomeItems = new Dictionary<int, ShopItem>();
@@ -70,7 +72,7 @@ public class ShopScreen : UIWindow
         }
 
         BuyRemoveAdsEvent();
-
+        
         //GameDataManager.Instance.UserData.CheckShopBuyData();
     }
 
@@ -168,6 +170,7 @@ public class ShopScreen : UIWindow
             
             // 根据类型选择对象池
             var pool = shopDataItem.type == 2 ? giftobjectPool : objectPool;
+            Transform itemparent = shopDataItem.type == 2 ? parent : goldItemTable.transform;
     
             // 尝试获取或创建商品项
             if (targetDict.TryGetValue(shopDataItem.id, out var shopItem))
@@ -178,7 +181,7 @@ public class ShopScreen : UIWindow
             }
             else
             {
-                shopItem = pool.GetObject<ShopItem>(parent);
+                shopItem = pool.GetObject<ShopItem>(itemparent);
                 shopItem.SetShopData(shopDataItem);
                 shopItem.transform.SetSiblingIndex(i);
                 // 添加到对应字典
@@ -203,6 +206,7 @@ public class ShopScreen : UIWindow
             pageBtn.transform.SetParent(parent);
         }
         
+        freeItemTable.transform.SetAsFirstSibling();
     }
 
     protected override void InitializeUIComponents()

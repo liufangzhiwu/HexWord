@@ -263,7 +263,7 @@ public class HeaderSection : UIWindow
         {
             GameDataManager.Instance.ButterflyData.AddPupa(pupa);
             Pupatxt.text = $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow.Count}";
-        }, 0.6f));
+        }, 1.3f));
 
 
     }

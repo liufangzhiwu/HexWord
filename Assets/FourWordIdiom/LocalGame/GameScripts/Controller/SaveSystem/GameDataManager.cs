@@ -361,7 +361,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
             StartTracking();
             Debug.Log("应用回到前台，验证数据");
             requireFocusCheck = false;
-            playerProfile.CheckResetLimitTime();
+            playerProfile.CheckResetDailyTime();
         }
     }
 

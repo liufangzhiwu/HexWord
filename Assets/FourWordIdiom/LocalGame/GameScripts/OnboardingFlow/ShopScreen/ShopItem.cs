@@ -79,8 +79,24 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     private void OnItemClicked()
     {
         Debug.Log("条目被点击，执行功能");
-        // 在这里实现你的点击功能逻辑
-        OnBuyButtonClicked(shopDataItem);
+
+        if (shopDataItem.purchaseType == -1)
+        {
+            if (shopDataItem.produceNameId == "FreeGoods")
+            {
+                
+            }
+
+            if (shopDataItem.produceNameId == "GoldGoods")
+            {
+                
+            }
+        }
+        else
+        {
+            // 在这里实现你的点击功能逻辑
+            OnBuyButtonClicked(shopDataItem);
+        }
     }
     
 
@@ -92,23 +108,16 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             return;
         }
 
-        shopDataItem = data;       
-
-        try
-        {
-            SetShopIcon();
-            HandleTimeLimitedItems(data);
-            HandleDiscountDisplay(data);
-            HandleProductContentDisplay(data);
-            HandleSpecialTypeItems(data);
-            SetProductPrice(data);
-            //SetupPurchaseButton(data);
-            HandleMultiProductContent(data);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Error setting shop data: {ex.Message}");
-        }
+        shopDataItem = data;   
+        
+        SetShopIcon();
+        HandleTimeLimitedItems(data);
+        HandleDiscountDisplay(data);
+        HandleProductContentDisplay(data);
+        HandleSpecialTypeItems(data);
+        SetProductPrice(data);
+        //SetupPurchaseButton(data);
+        HandleMultiProductContent(data);
     }
 
     public void UpdateUI()
@@ -157,12 +166,14 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             //     StartCoroutine(UpdateTime());
             // }
             
-            giftsParent.GetComponent<RectTransform>().anchoredPosition = new Vector2(31.2f, 40);
+            giftsParent.GetComponent<RectTransform>().anchoredPosition = new Vector2(50f, 40);
         }
         else
         {
-            giftsParent.GetComponent<RectTransform>().anchoredPosition = new Vector2(31.2f, 65);
+            giftsParent.GetComponent<RectTransform>().anchoredPosition = new Vector2(50f, 65);
         }
+        
+        giftsParent.GetComponent<Image>().sprite = LoadShopIcon("itemdi"+data.id);
     }
 
     private void HandleDiscountDisplay(ShopDataItem data)
@@ -188,7 +199,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         shopCountText.gameObject.SetActive(data.type != 1);
 
-        if (data.type == 0 && data.productContent != null && data.productContent.Count > 0)
+        if (data.type == 0|| data.type == -1&& data.productContent != null && data.productContent.Count > 0)
         {
             shopCountText.text = $"x {data.productContent[0][1]}";
         }
@@ -196,6 +207,26 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         {
             shopCountText.text = MultilingualManager.Instance?.GetString(data.name) ?? data.name;
             dibg.sprite =LoadShopIcon("giftdi"+data.id);
+            
+            Color color = new Color(40.0f/255,144.0f/255,1);
+
+            switch (data.id)
+            {
+                case 6:
+                    color = new Color(25.0f/255f,193.0f/255,134.0f/255);
+                    break;
+                case 7:
+                    color =new Color(251.0f/255,91.0f/255,168.0f/255);
+                    break;
+                case 8:
+                    color = new Color(254.0f/255,141.0f/255,50.0f/255);
+                    break;
+                case 9:
+                    color =new Color(140.0f/255,89.0f/255,246.0f/255);
+                    break;
+            }
+            
+            shopCountText.color = color;
         }
     }
 

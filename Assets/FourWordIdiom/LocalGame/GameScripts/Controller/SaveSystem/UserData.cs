@@ -128,7 +128,6 @@ public class UserData
     public bool isNeedShowHelp;      // 是否需要主动弹窗帮助界面
     public bool isDayEnterLimint;      // 限时活动重置后是否为首次进入
     
-    
     /// <summary>
     /// 每日任务数据
     /// </summary>
@@ -145,6 +144,7 @@ public class UserData
     /// 商店限时商品数据
     /// </summary>
     //public List<ShopLimitData> limitShopItems=new List<ShopLimitData>();
+    public bool isDayFreeGet;      // 商店每日免费商品是否获得
 
     #endregion
 
@@ -265,6 +265,9 @@ public class UserData
         curStageOnlineTime = 0;
         curIsEnter = false;
         
+        passLevelUseTime = new Dictionary<int, int>();
+        isDayFreeGet=false;
+        
         // 生命周期事件相关数据初始化
         TotalOnlineMinutes = 0f;
         ReportedLifecycleEvents = new Dictionary<string, bool>();
@@ -341,6 +344,7 @@ public class UserData
         showRateusCount = user.showRateusCount;
         // 评价界面显示时间
         showRateusTime = user.showRateusTime;
+        isDayFreeGet=user.isDayFreeGet;
         //支付次数
         TotalPayTimes = user.TotalPayTimes;
         //累计付费金额
@@ -355,6 +359,7 @@ public class UserData
         TutorialProgress = user.TutorialProgress;
         butterflyTaskIsOpen = user.butterflyTaskIsOpen;
         taskButterflyUseMinutes = user.taskButterflyUseMinutes;
+        passLevelUseTime = user.passLevelUseTime;
         ChessTutorialProgress = user.ChessTutorialProgress ?? new Dictionary<int,bool> {{1,false},{2,false},{3,false},{4,false},{5,false}};
         IsFirstLaunch = user.IsFirstLaunch;
         isShowVocabulary = user.isShowVocabulary;
@@ -391,7 +396,7 @@ public class UserData
         InitializeLifecycleEvents();
         
         // 检查是否需要重置每日数据
-        CheckResetLimitTime();
+        CheckResetDailyTime();
         
         // 检查是否需要上报生命周期事件
         CheckLifecycleEvents();
@@ -422,7 +427,7 @@ public class UserData
     /// <summary>
     /// 检查并重置每日限时数据
     /// </summary>
-    public void CheckResetLimitTime()
+    public void CheckResetDailyTime()
     {
         if (string.IsNullOrEmpty(logoutTime)) return;
 
@@ -438,6 +443,7 @@ public class UserData
             ResetDailyTaskDate();
             
             UpdatePanelUI();
+            isDayFreeGet = false;
         }
     }
     
@@ -568,6 +574,35 @@ public class UserData
             }
         }
     }
+    
+    
+    /// <summary>
+    /// 更新关卡用时
+    /// </summary>
+    public void UpdateLevelUseTimes(int level,int secondtimes)
+    {
+        if (!passLevelUseTime.ContainsKey(level))
+        {
+            passLevelUseTime.Add(level,secondtimes);
+        }
+        
+        if (passLevelUseTime.Count > 9)
+        {
+            // 假设字典的键或值中包含时间信息，我们可以根据时间排序后保留最近的9个
+            // 例如，如果键是时间戳或包含时间信息：
+            var recentEntries = passLevelUseTime.OrderByDescending(x => x.Key).Take(9).ToList();
+    
+            // 清空原字典
+            passLevelUseTime.Clear();
+    
+            // 将最近的9个条目添加回字典
+            foreach (var entry in recentEntries)
+            {
+                passLevelUseTime[entry.Key] = entry.Value;
+            }
+        }
+    }
+    
 
     /// <summary>
     /// 更新关卡进度

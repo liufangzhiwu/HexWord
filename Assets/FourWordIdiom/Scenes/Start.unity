@@ -36914,7 +36914,7 @@ PrefabInstance:
     - target: {fileID: 40593819569410530, guid: cb22c978b28879b42b9f46d14d733c69,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 370.125
+      value: 374
       objectReference: {fileID: 0}
     - target: {fileID: 1763250562576917828, guid: cb22c978b28879b42b9f46d14d733c69,
         type: 3}
@@ -37039,7 +37039,7 @@ PrefabInstance:
     - target: {fileID: 5066839883382606432, guid: cb22c978b28879b42b9f46d14d733c69,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 760.8125
+      value: 769
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -62033,6 +62033,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07dc2fa02d731fd488d862028b97bcca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  updateInterval: 60
 --- !u!81 &701668034
 AudioListener:
   m_ObjectHideFlags: 0

@@ -269,6 +269,8 @@ public class StageHexController
         // 发送分析事件（示例）
         AnalyticMgr.LevelCompleted(duration);
         
+        GameDataManager.Instance.UserData.UpdateLevelUseTimes(StageNumber,(int)duration);
+        
         if (StageNumber >= 1)
         {
 

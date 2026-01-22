@@ -58,7 +58,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
         {
             if (timeRemaining.Hours == 24)
             {
-                GameDataManager.Instance.UserData.CheckResetLimitTime();
+                GameDataManager.Instance.UserData.CheckResetDailyTime();
             }
             string time = UIUtilities.FormatTimeRemaining(timeRemaining);
             OnLimitTimeUpdated?.Invoke(time); // 触发事件，通知所有订阅者

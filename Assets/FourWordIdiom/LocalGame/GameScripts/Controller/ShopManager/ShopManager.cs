@@ -43,6 +43,7 @@ public class ShopDataItem
 
 public class ShopManager : MonoBehaviour
 {
+    private List<ShopDataItem> allShopItems;
     private List<ShopDataItem> shopItems;
     /// <summary>
     /// 当前限时商店物品
@@ -123,6 +124,20 @@ public class ShopManager : MonoBehaviour
 
         return null;
     }
+    
+    // 获取商品
+    public ShopDataItem FormAllItemsGetProduct(string _productId)
+    {
+        if (shopItems.Count>0)
+        {
+            // 现在shopItems列表中包含所有商品
+            Debug.Log("获取购买商品: " + _productId);
+            ShopDataItem dataItem=allShopItems.Find((item)=>item.produceNameId==_productId);
+            return dataItem; // 调用 IAPManager 的购买方法
+        }
+
+        return null;
+    }
 
     public void UpdateAdsBtnUIEvent(string gettime,bool updateui)
     {
@@ -142,6 +157,7 @@ public class ShopManager : MonoBehaviour
     {
         // 用于构建 JSON 字符串
         shopItems = new List<ShopDataItem>();
+        allShopItems = new List<ShopDataItem>();
         string[] lines = data.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
 
         for (int i = 2; i < lines.Length; i++) // 从第一行开始，跳过标题行
@@ -153,8 +169,6 @@ public class ShopManager : MonoBehaviour
                 int id = int.Parse(fields[0].Trim());
                 string nameID = fields[1].Trim();
                 int purchaseType = int.Parse(fields[2].Trim());
-                
-                if(purchaseType<0) return;
               
                 int type = int.Parse(fields[4].Trim());
                 
@@ -163,7 +177,7 @@ public class ShopManager : MonoBehaviour
                     .Select(group => group.Split(';').ToList())
                     .ToList();
 
-                float price = float.Parse(fields[6].Trim().Trim('"')); // 去掉引号
+                float price =purchaseType >= 0? float.Parse(fields[6].Trim().Trim('"')):0; // 去掉引号
                 string showIcon = fields[7].Trim();
                 string name = fields[8].Trim();
                 string des = fields[9].Trim();
@@ -198,7 +212,12 @@ public class ShopManager : MonoBehaviour
                     limitedTime = limittime,
                     discount=discount,
                 };
-                shopItems.Add(item);
+                allShopItems.Add(item);
+
+                if (purchaseType >= 0)
+                {
+                    shopItems.Add(item);
+                }
             }
             else
             {
@@ -254,7 +273,7 @@ public class ShopManager : MonoBehaviour
                 //     }                    
                 // }
                 // 基础条件：必须显示在首页且未解锁
-                if (item.isHomeDisplay == "1" && string.IsNullOrEmpty(item.unlocked[0]))
+                if (string.IsNullOrEmpty(item.unlocked[0])&&!string.IsNullOrEmpty(item.homeSort))
                 {
                     if (item.type == 2)
                     {
