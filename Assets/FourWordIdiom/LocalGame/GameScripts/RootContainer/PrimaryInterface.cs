@@ -77,16 +77,19 @@ public class PrimaryInterface : UIWindow
     /// </summary>
     protected override void OnEnable()
     {
+        GameCoreManager.Instance.PanelState = PanelState.MainMenuPanel;
+        
         EnhancedVideoController.Instance.PlayVideo();
         LimitTimeManager.Instance.OnLimitTimeBtnUI += InitLimtBtnUI;
         DailyTaskManager.Instance.OnDailyTaskBtnUI += UpdateDailyTaskBtnUI;
         DailyTaskManager.Instance.OnDailyButterflyTaskUI += UpdateButterflyTime;
         EventDispatcher.instance.OnUpdateGameLobbyUI += UpdateGameLobbyUI;
-        //FishInfoController.Instance.OnFishTimeUpdated += UpdateFishTime;
+        FishInfoController.Instance.OnFishTimeUpdated += UpdateFishTime;
+        EventDispatcher.instance.OnChangeHeadIconUpdateUI += UpdateHeadBtnUI;
         //EventManager.OnChangeLanguageUpdateUI += InitUI;
         UpdateGameLobbyUI();
-        //UpdateHeadBtnUI();
-        //StartCoroutine(UpdateFishRankUI());
+        UpdateHeadBtnUI();
+        StartCoroutine(UpdateFishRankUI());
     }
 
     private void UpdateGameLobbyUI()
@@ -102,22 +105,30 @@ public class PrimaryInterface : UIWindow
         CheckFishBtn();
         FishClaim.gameObject.SetActive(false);
         // 提取重复使用的SaveData引用
-        //var fishSave = GameDataManager.Instance.FishUserSave;
-        //FishInfoController.Instance.RoundResultFishRank();
+        //var fishSave = GameDataManager.MainInstance.FishUserSave;
+        FishInfoController.Instance.RoundResultFishRank();
         UpdateFishRank();
         
         while (FishBtn.gameObject.activeSelf)
         {
             yield return new WaitForSeconds(0.5f);
-            //FishInfoController.Instance.RoundResultFishRank();
+            FishInfoController.Instance.RoundResultFishRank();
             UpdateFishRank();
-           
         }
     }
     
     private void CheckFishBtn()
     {
-       
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
+            ||GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
+            || !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
+        {
+            FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
+        }
+        else
+        {
+            FishBtn.gameObject.SetActive(false);
+        }
     }
     
     
@@ -142,7 +153,18 @@ public class PrimaryInterface : UIWindow
             }
             else
             {
-                SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
+                if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+                {
+                    SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+                }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+                {
+                    SystemManager.Instance.HidePanel(PanelType.StageFinishView);
+                }
+                
+                SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
+                {
+                    SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
+                });
             }
         }
         else
@@ -160,28 +182,83 @@ public class PrimaryInterface : UIWindow
     private void UpdateFishTime(string time="")
     {
         fishtimetext.text = time;
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel||
+            GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel||
+            !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
+        {
+            FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
+        }
     }
     
     
     private void UpdateFishRank()
     {
-       
+        if (Game.IsNetworkActive)
+        {
+            fishwifiimage.gameObject.SetActive(false);
+            if (GameDataManager.Instance.FishUserSave.rank > 0&& !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
+            {
+                int rank = GameDataManager.Instance.FishUserSave.rank;
+                switch (rank)
+                {
+                    case 1:
+                        fishrankimage.sprite = LoadheadIcon("fishbtnred");
+                        break;
+                    case 2:
+                        fishrankimage.sprite = LoadheadIcon("fishbtnblue");
+                        break;
+                    case 3:
+                        fishrankimage.sprite = LoadheadIcon("fishbtngreen");
+                        break;
+                    case 4:
+                    case 5:
+                        fishrankimage.sprite = LoadheadIcon("fishbtngrey");
+                        break;
+                }
+
+                if (!FishInfoController.Instance.RoundFishIsOver())
+                {
+                    fishtimetext.transform.parent.gameObject.SetActive(true);
+                    fishrankimage.gameObject.SetActive(true);
+                    fishrankcount.text = rank.ToString();
+                }
+                else
+                {
+                    FishClaim.gameObject.SetActive(true);
+                    fishtimetext.transform.parent.gameObject.SetActive(false);
+                    fishrankimage.gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                fishtimetext.transform.parent.gameObject.SetActive(true);
+                fishrankimage.gameObject.SetActive(false);
+                FishClaim.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            fishtimetext.transform.parent.gameObject.SetActive(true);
+            fishrankimage.gameObject.SetActive(false);
+            fishwifiimage.gameObject.SetActive(true);
+            FishClaim.gameObject.SetActive(false);
+        }
     }
 
     
     private void UpdateHeadBtnUI()
     {
-        // if (GameDataManager.Instance.UserData.UserHeadId > 0)
-        // {
-        //     headicon.sprite = LoadheadIcon("head" + GameDataManager.Instance.UserData.UserHeadId);
-        //     headicon.transform.gameObject.SetActive(true);
-        //     starticon.transform.gameObject.SetActive(false);
-        // }
-        // else
-        // {
-        //     headicon.transform.gameObject.SetActive(false);
-        //     starticon.transform.gameObject.SetActive(true);
-        // }
+        if (GameDataManager.Instance.UserData.UserHeadId > 0)
+        {
+            headicon.sprite = LoadheadIcon("head" + GameDataManager.Instance.UserData.UserHeadId);
+            headicon.transform.gameObject.SetActive(true);
+            starticon.transform.gameObject.SetActive(false);
+        }
+        else
+        {
+            headicon.transform.gameObject.SetActive(false);
+            starticon.transform.gameObject.SetActive(true);
+        }
     }
     
     private void UpdateTaskBtnUI()
@@ -224,7 +301,7 @@ public class PrimaryInterface : UIWindow
 
     private void CheckButtonsIsOpen()
     {
-        //HeadBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
+        HeadBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
         TasksBtn.transform.parent.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage>= AppGameSettings.UnlockRequirements.DailyMissions);
         
         LimitTimeBtn.transform.parent.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
@@ -233,7 +310,7 @@ public class PrimaryInterface : UIWindow
         SignInBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.SignInRewards
         ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.signOpenTime));
         
-        // ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
+        //ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
     }
     
     private void UpdateTimeDisplay(string time)
@@ -341,7 +418,8 @@ public class PrimaryInterface : UIWindow
          DailyTaskManager.Instance.OnDailyTaskBtnUI -= UpdateDailyTaskBtnUI;
          DailyTaskManager.Instance.OnDailyButterflyTaskUI -= UpdateButterflyTime;
          EventDispatcher.instance.OnUpdateGameLobbyUI -=UpdateGameLobbyUI ;
-         //FishInfoController.Instance.OnFishTimeUpdated -= UpdateFishTime;
+         FishInfoController.Instance.OnFishTimeUpdated -= UpdateFishTime;
+         EventDispatcher.instance.OnChangeHeadIconUpdateUI -= UpdateHeadBtnUI;
         
          if (!LimitTimeManager.Instance.IsComplete())
          {
@@ -451,17 +529,27 @@ public class PrimaryInterface : UIWindow
     
     private void OnButterflyClick()
     {
-        //SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        // SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
-        // {
+        
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.StageFinishView);
+        }
+        
+        
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
+        {
             SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
-        //});
+        });
+        
     }
     
     /// <summary>
     /// 点击开始游戏按钮
     /// </summary>
-    private void OnPlayClick()
+    public void OnPlayClick()
     {
         base.Close();
         OnEnterStageClick();
@@ -477,7 +565,7 @@ public class PrimaryInterface : UIWindow
     /// <summary>
     /// 进入关卡回调
     /// </summary>
-    public void OnEnterStageClick()
+    private void OnEnterStageClick()
     {
         
         switch (GameDataManager.Instance.UserData.levelMode)

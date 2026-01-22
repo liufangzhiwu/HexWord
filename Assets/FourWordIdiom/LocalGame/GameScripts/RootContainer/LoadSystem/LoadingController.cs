@@ -302,9 +302,9 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private void SetupRandomLoadingHint()
     {
-        int id=Random.Range(1,21);
+        int id=Random.Range(1,12);
         string sid = id < 10 ? "0" + id : id.ToString();
-        loadingHintText.text =MultilingualManager.Instance.GetString("Haiku"+ sid);    
+        loadingHintText.text =MultilingualManager.Instance.GetString("loadText"+ sid);    
     }
 
     /// <summary>
@@ -417,6 +417,10 @@ public class LoadingController : MonoBehaviour
         yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
             "effectsitemmats",
             "Circle");       
+        
+        yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
+            "materials",
+            "lizi01"); 
         
         //预加载关卡文件
          StageHexController.Instance.LoadPackInfos();

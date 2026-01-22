@@ -223,6 +223,17 @@ public class ShopScreen : UIWindow
     private void OnCloseBtn()
     {
         base.Close(); // 隐藏面板
+        
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
+        }
+
+        SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+
         //UIManager.Instance.ShowPanel(PanelName.TopContainer);
     }
     

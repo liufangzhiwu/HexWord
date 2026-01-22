@@ -2,10 +2,16 @@ using System;
 using System.Collections;
 using Middleware;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 #if UNITY_IOS
 using UnityEngine.iOS;
 #endif
+
+public enum PanelState
+{
+   Null,MainMenuPanel,FinishPanel,GamePanel,
+}
 
 /// <summary>
 /// 游戏核心管理器（单例模式）
@@ -24,6 +30,7 @@ public sealed class GameCoreManager: MonoBehaviour
     
     public bool IsTrueAuto;
     public GameObject AutoLevelTalbe;
+    public PanelState PanelState=PanelState.Null;
 
     void Awake()
     {
@@ -60,7 +67,11 @@ public sealed class GameCoreManager: MonoBehaviour
         AutoLevelTalbe.gameObject.SetActive(false);
         Debug.unityLogger.logEnabled = false;
 #endif
+    }
 
+    public void SetAutoLevelTalbe(bool isShow)
+    {
+        AutoLevelTalbe.gameObject.SetActive(isShow);
     }
     
     private void OnAutoLevelTalbeValueChanged(bool ison)

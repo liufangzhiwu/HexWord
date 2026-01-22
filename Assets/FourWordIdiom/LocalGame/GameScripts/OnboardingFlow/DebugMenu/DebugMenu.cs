@@ -26,6 +26,7 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button UseButterflyBtn; //蝴蝶道具
     [SerializeField] private Button ShopBuyBtn;
     [SerializeField] private Button AddPupaBtn;
+    [SerializeField] private Toggle AutoToggle;
 
     //public InputField EmailText; 
     public Text FPSText; 
@@ -54,7 +55,7 @@ public class DebugMenu : UIWindow
 
     protected void InitializeButtons()
     {
-     
+        AutoToggle.onValueChanged.AddListener(OnAutoToggleValueChanged);
         CloseBtn.AddClickAction(OnCloseBtn);
         //MailBtn.AddClickAction(SendMail);
         EnterStageBtn.AddClickAction(OnEnterStageClick);
@@ -87,6 +88,11 @@ public class DebugMenu : UIWindow
         InitBtnData(UseButterflyBtn, "10");
         InitBtnData(ShopBuyBtn, "10");
         InitBtnData(AddPupaBtn, "10");
+    }
+
+    private void OnAutoToggleValueChanged(bool value)
+    {
+        GameCoreManager.Instance.SetAutoLevelTalbe(value);
     }
 
     private void InitBtnData(Button button, string count)

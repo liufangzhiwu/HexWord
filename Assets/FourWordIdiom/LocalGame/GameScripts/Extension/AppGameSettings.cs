@@ -51,6 +51,7 @@ public static class AppGameSettings
         public static int FishOpenLevel { get; } = 21;
         //10关卡进入结算界面时开启（命名界面）
         public static int HeadOpenLevel { get; } = 11;
+      
     }
 
     // ===== 任务系统 =====

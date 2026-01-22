@@ -90,6 +90,8 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         {
             Debug.LogError("Failed to load ButterflySceneTable csv data.");
         }
+        
+        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflyparts");
     }
 
     /// <summary>
@@ -211,7 +213,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
             // yield return SetSliderProgress(0,targetValue,0.5f,0.3f);
         
         Transform target = processBar.transform.Find("Icon");
-        yield return  FlyPupaCoroutine(sTransform, target, call ,0.6f);
+        yield return FlyPupaCoroutine(sTransform, target, call ,0.6f);
         
         float ratio = GameDataManager.Instance.ButterflyData.currPupa / (float)butterflyGrow.Count;
         float targetValue = Mathf.Clamp01(ratio);
@@ -223,7 +225,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// <summary>
     /// 蝉蛹飞行协程
     /// </summary>
-    private IEnumerator FlyPupaCoroutine(Transform start, Transform target, Action call, float duration=0f)
+    public IEnumerator FlyPupaCoroutine(Transform start, Transform target, Action call, float duration=0f)
     {
            GameObject go = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "Pupa");
            GameObject effect = Instantiate(go, start.position, Quaternion.identity, target);
@@ -356,14 +358,24 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         {
             if (GameDataManager.Instance.ButterflyData.intervalLv >= butterflyGrow.Interval)
             {
-                able = true;
-                GameDataManager.Instance.ButterflyData.intervalLv = 0;
+                if (StageHexController.Instance.CurStageData.PupaDatas == null)
+                {
+                    GameDataManager.Instance.ButterflyData.intervalLv++;
+                    Debug.LogError("关卡id:"+levelId+ "限时概率为不显示蚕蛹 累计次数到达上限触发显示蚕蛹逻辑 但没有可以放置的蚕蛹位置");
+                    return false;
+                }
+                else
+                {
+                    able = true;
+                    GameDataManager.Instance.ButterflyData.intervalLv = 0;
+                    Debug.LogError("关卡id:"+levelId+ "限时概率为不显示蚕蛹 累计次数到达上限触发显示蚕蛹逻辑 可以放置的蚕蛹位置");
+                }
             }
             else
             {
                 GameDataManager.Instance.ButterflyData.intervalLv++;
                 StageHexController.Instance.CurStageData.PupaDatas = null;
-                Debug.LogError("限时概率为不显示蚕蛹");
+                Debug.LogError("关卡id:"+levelId+ "限时概率为不显示蚕蛹 累计不出现蚕蛹关卡"+GameDataManager.Instance.ButterflyData.intervalLv);
             }
         }else
         {
@@ -371,9 +383,14 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
             if (StageHexController.Instance.CurStageData.PupaDatas == null)
             {
                 GameDataManager.Instance.ButterflyData.intervalLv++;
-                Debug.LogError("限时概率为显示蚕蛹但没有可以放置的蚕蛹位置");
+                Debug.LogError("关卡id:"+levelId+ "限时概率为显示蚕蛹但没有可以放置的蚕蛹位置");
                 return false;
-            } 
+            }
+            else
+            {
+                GameDataManager.Instance.ButterflyData.intervalLv = 0;
+                Debug.LogError("关卡id:"+levelId+ "限时概率为显示蚕蛹且可以放置的蚕蛹位置");
+            }
         }
         
         return able;
@@ -395,7 +412,16 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         {
             GameDataManager.Instance.ButterflyData.AddPupa(pupa);
         }
-        
+    }
+    
+    /// <summary>
+    /// 在六边形玩法界面中添加蛹数
+    /// </summary>
+    public void AddObtainedPupaOnHexGamePanel(Transform startPoint, int pupa = 1)
+    {
+        HeaderSection headerSection =
+            SystemManager.Instance.GetPanel(PanelType.HeaderSection)?.GetComponent<HeaderSection>();
+        headerSection.ShowPupaTableAnima(startPoint,1);
     }
 
     /// <summary>
@@ -452,7 +478,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// <summary>
     /// 获取当前成长配置
     /// </summary>
-    private ButterflyGrow GetCurrentGrow()
+    public ButterflyGrow GetCurrentGrow()
     {
         return ButterfliesGrow.Find(x => x.Id == GameDataManager.Instance.ButterflyData.currGarden);
     }

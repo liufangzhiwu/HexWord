@@ -28,6 +28,8 @@ public class EventDispatcher:MonoBehaviour
     private Action _onCheckShowTutorial;
     private Action<bool> _onChangeTopRaycast;
     private Action _onUpdateGameLobbyUI;
+    
+    private Action _onChangeHeadIconUpdateUI;
 
     /// <summary>
     /// 更新词库按钮状态
@@ -154,6 +156,16 @@ public class EventDispatcher:MonoBehaviour
         add => _onButterflyGardenChange += value;
         remove => _onButterflyGardenChange -= value;
     } 
+    
+    /// <summary>
+    /// 头像切换时UI界面刷新
+    /// </summary>
+    public event Action OnChangeHeadIconUpdateUI  
+    {
+        add => _onChangeHeadIconUpdateUI += value;
+        remove => _onChangeHeadIconUpdateUI -= value;
+    }
+    
     #endregion
 
     #region 事件触发方法
@@ -212,5 +224,9 @@ public class EventDispatcher:MonoBehaviour
     /// </summary>
     public void TriggerChangeButterflyGarden()
         => _onButterflyGardenChange?.Invoke();
+    
+    public void TriggerChangeHeadIconUpdateEvent()
+        => _onChangeHeadIconUpdateUI?.Invoke();
+    
     #endregion
 }

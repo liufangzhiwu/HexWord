@@ -38,42 +38,42 @@ public class UserHeadScreen : UIWindow
     
     private void UpdateHeadName()
     {
-        //if (string.IsNullOrEmpty(GameDataManager.instance.UserData.UserName))
+        if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.UserName))
         {
-            //GameDataManager.instance.UserData.UserName = FishInfoController.Instance.GeneratePlayerName();
+            GameDataManager.Instance.UserData.UserName = FishInfoController.Instance.GeneratePlayerName();
         }
-        //NameText.text = GameDataManager.instance.UserData.UserName;
+        NameText.text = GameDataManager.Instance.UserData.UserName;
     }
 
     private void UpdateHeadIcon()
     {
-        //headIcon.sprite = LoadheadIcon("head"+GameDataManager.instance.UserData.UserHeadId);
+        headIcon.sprite = LoadheadIcon("head"+GameDataManager.Instance.UserData.UserHeadId);
     }
 
     private void InitHeadIconList()
     {
-        // int headid = GameDataManager.instance.UserData.UserHeadId;
-        // for (int i = 0; i < 25; i++)
-        // {
-        //     int index = i;
-        //     GameObject HeadItemObj = Instantiate(HeadItemBtn.gameObject, HeadItemParent);
-        //     HeadItemObj.GetComponent<Image>().sprite = LoadheadIcon("head"+i);
-        //     HeadItemObj.gameObject.SetActive(true);
-        //     if (headid == i)
-        //     {
-        //         HeadItemObj.transform.GetChild(0).gameObject.SetActive(true);
-        //         if (headid >= 1)
-        //         {
-        //             HeadItemObj.transform.SetSiblingIndex(2);
-        //         }
-        //     }
-        //     else
-        //     {
-        //         HeadItemObj.transform.GetChild(0).gameObject.SetActive(false);
-        //     }
-        //     HeadItemObj.GetComponent<Button>().onClick.AddListener(()=>ClickHeadItemBtn(index));
-        //     Headitems.Add(index, HeadItemObj);
-        // }
+        int headid = GameDataManager.Instance.UserData.UserHeadId;
+        for (int i = 0; i < 25; i++)
+        {
+            int index = i;
+            GameObject HeadItemObj = Instantiate(HeadItemBtn.gameObject, HeadItemParent);
+            HeadItemObj.GetComponent<Image>().sprite = LoadheadIcon("head"+i);
+            HeadItemObj.gameObject.SetActive(true);
+            if (headid == i)
+            {
+                HeadItemObj.transform.GetChild(0).gameObject.SetActive(true);
+                if (headid >= 1)
+                {
+                    HeadItemObj.transform.SetSiblingIndex(2);
+                }
+            }
+            else
+            {
+                HeadItemObj.transform.GetChild(0).gameObject.SetActive(false);
+            }
+            HeadItemObj.GetComponent<Button>().onClick.AddListener(()=>ClickHeadItemBtn(index));
+            Headitems.Add(index, HeadItemObj);
+        }
     }
 
     protected override void InitializeUIComponents()
@@ -84,33 +84,33 @@ public class UserHeadScreen : UIWindow
 
     private void ClickHeadItemBtn(int index)
     {
-        //GameDataManager.instance.UserData.UserHeadId = index;
+        GameDataManager.Instance.UserData.UserHeadId = index;
         UpdateHeadIcon();
         UpdateHeadIconList();
 
-        //ThinkManager.instance.Event_changerolehead();
+        AnalyticMgr.HeadChange();
     }
     
     private void UpdateHeadIconList(bool show = false)
     {
-        // int headid = GameDataManager.instance.UserData.UserHeadId;
-        // for (int i = 0; i < Headitems.Count; i++)
-        // {
-        //     int index = i;
-        //     GameObject HeadItemObj = Headitems[index];
-        //     if (headid == i)
-        //     {
-        //         HeadItemObj.transform.GetChild(0).gameObject.SetActive(true);
-        //         if (headid >= 1&&show)
-        //         {
-        //             HeadItemObj.transform.SetSiblingIndex(2);
-        //         }
-        //     }
-        //     else
-        //     {
-        //         HeadItemObj.transform.GetChild(0).gameObject.SetActive(false);
-        //     }
-        // }
+        int headid = GameDataManager.Instance.UserData.UserHeadId;
+        for (int i = 0; i < Headitems.Count; i++)
+        {
+            int index = i;
+            GameObject HeadItemObj = Headitems[index];
+            if (headid == i)
+            {
+                HeadItemObj.transform.GetChild(0).gameObject.SetActive(true);
+                if (headid >= 1&&show)
+                {
+                    HeadItemObj.transform.SetSiblingIndex(2);
+                }
+            }
+            else
+            {
+                HeadItemObj.transform.GetChild(0).gameObject.SetActive(false);
+            }
+        }
     }
 
     private void OnClickComfirmBtn()
@@ -119,22 +119,23 @@ public class UserHeadScreen : UIWindow
 
         if (!string.IsNullOrEmpty(name))
         {
-            // if (MultilingualManager.Instance.ContainsForbiddenWords(name))
-            // {
-            //     string tips= MultilingualManager.Instance.GetString("CharacterInfoTips01");
-            //     if (tips.Contains("\\n"))
-            //     {
-            //         tips = tips.Replace("\\n", "\n");
-            //     }
-            //     MessageSystem.Instance.ShowTip(tips, false);
-            // }
-            // else
-            // {
-            //     // GameDataManager.instance.UserData.isChangeUserName = true;
-            //     // GameDataManager.instance.UserData.UserName = name;
-            //     //ThinkManager.instance.SetRoleName(GameDataManager.instance.UserData.UserName);
-            //     OnCloseBtn();
-            // }
+            if (MultilingualManager.Instance.ContainsForbiddenWords(name))
+            {
+                string tips= MultilingualManager.Instance.GetString("CharacterInfoTips01");
+                if (tips.Contains("\\n"))
+                {
+                    tips = tips.Replace("\\n", "\n");
+                }
+                MessageSystem.Instance.ShowTip(tips, false);
+            }
+            else
+            {
+                GameDataManager.Instance.UserData.isChangeUserName = true;
+                GameDataManager.Instance.UserData.UserName = name;
+                AnalyticMgr.NameChange(GameDataManager.Instance.UserData.UserName);
+                GameDataManager.Instance.CommitGameData();
+                OnCloseBtn();
+            }
         }
         else
         {
@@ -144,7 +145,7 @@ public class UserHeadScreen : UIWindow
  
     private void OnCloseBtn()
     {
-        //EventDispatcher.instance.TriggerChangeHeadIconUpdateEvent();
+        EventDispatcher.instance.TriggerChangeHeadIconUpdateEvent();
         base.Close(); // 隐藏面板
     }
     

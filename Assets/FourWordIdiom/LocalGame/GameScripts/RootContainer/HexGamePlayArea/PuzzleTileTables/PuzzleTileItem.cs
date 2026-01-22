@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Coffee.UIEffects;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +15,7 @@ public class PuzzleTileItem : MonoBehaviour
     [Header("Puzzle Tile")] 
     [SerializeField] private GameObject PuzzleRightObj;
     [SerializeField] private GameObject lineObj;
+    [SerializeField] private GameObject effect;
     [SerializeField] private GameObject background; // 空白字块对象
     [SerializeField] private GameObject tipsTextObj; // 硬币对象
     [SerializeField] private GameObject PuzzleTextObj; // 硬币对象
@@ -74,6 +76,8 @@ public class PuzzleTileItem : MonoBehaviour
         PuzzleTextObj.gameObject.SetActive(false);
         background.SetActive(true); // 显示空白字块
         wordbutton.enabled = false;
+        wordbutton.GetComponent<UIShiny>().enabled = false;
+        effect.gameObject.SetActive(false);
         PuzzleRightObj.GetComponent<Image>().DOFade(0, 0);
       
         for (int i = 0; i < Puzzle.Length; i++)
@@ -230,6 +234,8 @@ public class PuzzleTileItem : MonoBehaviour
         wordbutton.enabled = true;
         PuzzleRightObj.GetComponent<Image>().DOFade(1, 0.2f).OnComplete(() =>
         {
+            effect.gameObject.SetActive(true);
+            wordbutton.GetComponent<UIShiny>().enabled = true;
             PuzzleTextObj.gameObject.SetActive(true);
             callback?.Invoke();
         });

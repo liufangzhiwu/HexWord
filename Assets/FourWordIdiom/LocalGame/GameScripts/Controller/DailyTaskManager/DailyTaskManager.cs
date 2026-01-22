@@ -21,8 +21,8 @@ public class TaskDataItem
 //对应限时奖励配置表中奖励配置批准中的奖励索引表示的类型
 public enum TaskEvent
 {
-    Null,NeedPassLevel,NeedFindWord,NeedUseTipsTool,NeedUseTipAllWordTool,NeedUseButterflyTool,NeedOnlineTime,
-    NeedSeeAds,NeedLightLimit,NeedWinMatch,NeedShopBuy,
+    Null,NeedPassLevel,NeedFindWord,NeedUseTipsTool,NeedUseTipAllWordTool,NeedLightLimit,NeedWinMatch,NeedUseButterflyTool,NeedOnlineTime,
+    NeedSeeAds,NeedShopBuy,
 }
 
 public enum TaskType

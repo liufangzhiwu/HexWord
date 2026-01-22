@@ -11011,7 +11011,7 @@ MonoBehaviour:
   HintCounttxt: {fileID: 5829072899453575262}
   PuzzleTipsBtn: {fileID: 4409436973005003240}
   SingleHingBtn: {fileID: 7750746584088573653}
-  LevelPuzzleBtn: {fileID: 8212930510038863984}
+  ShopBtn: {fileID: 8212930510038863984}
   Stagetxt: {fileID: 6778961576738992116}
   choicePuzzleTable: {fileID: 8300021455270911074}
   crossPuzzleGrid: {fileID: 3010644413813043949}
@@ -21847,7 +21847,7 @@ GameObject:
   - component: {fileID: 8212930510038863984}
   - component: {fileID: 821759420539357210}
   m_Layer: 5
-  m_Name: LevelPuzzleBtn
+  m_Name: ShopBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -21869,8 +21869,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 158.20001, y: 154.1}
-  m_SizeDelta: {x: 200, y: 200}
+  m_AnchoredPosition: {x: 141.7, y: 168.8}
+  m_SizeDelta: {x: 181.6, y: 182.9}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7980751267992000568
 CanvasRenderer:
@@ -21944,9 +21944,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 7b7965e9bed9f5946a9d35729763e0f6, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6518201438985e74082a37503316c758, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1

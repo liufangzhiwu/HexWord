@@ -41,13 +41,106 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public ButterflyData ButterflyData { get { return butterfly; } }
     #endregion
     
+    
+    private Coroutine _trackingCoroutine;
+    private float _currentSessionTime = 0f; // 当前会话时长（秒）
+    private bool _isTracking = false;
+    
+    // 更新频率（秒）
+    [SerializeField] private float updateInterval = 60f;
+    
 
     #region Unity生命周期方法
     public override void Init()
     {
         lastSaveTime = DateTime.Now;
         Application.wantsToQuit += OnWantsToQuit;
+        
+        // 游戏启动时开始追踪
+        StartTracking();
     }
+    
+    
+    /// <summary>
+    /// 开始追踪玩家在线时长
+    /// </summary>
+    public void StartTracking()
+    {
+        if (_isTracking) return;
+        
+        _isTracking = true;
+        _trackingCoroutine = StartCoroutine(TrackPlayTime());
+        
+        Debug.Log("玩家生命周期追踪已启动");
+    }
+    
+    /// <summary>
+    /// 停止追踪玩家在线时长
+    /// </summary>
+    public void StopTracking()
+    {
+        if (!_isTracking) return;
+        
+        _isTracking = false;
+        
+        if (_trackingCoroutine != null)
+        {
+            StopCoroutine(_trackingCoroutine);
+            _trackingCoroutine = null;
+        }
+        
+        // 保存当前的会话时长
+        SaveSessionTime();
+        
+        Debug.Log("玩家生命周期追踪已停止");
+    }
+    
+    private IEnumerator TrackPlayTime()
+    {
+        var waitTime = new WaitForSecondsRealtime(updateInterval);
+        
+        while (_isTracking)
+        {
+            yield return waitTime;
+            
+            // 更新当前会话时长
+            _currentSessionTime += updateInterval;
+            
+            // 转换为分钟并添加到总在线时长
+            float minutesToAdd = updateInterval / 60f;
+            
+            // 调用UserData添加在线时长
+            AddOnlineMinutes(minutesToAdd);
+            
+            Debug.Log($"更新在线时长: {minutesToAdd:F2}分钟, 当前会话: {_currentSessionTime / 60f:F1}分钟");
+        }
+    }
+    
+    /// <summary>
+    /// 添加在线时长到用户数据
+    /// </summary>
+    private void AddOnlineMinutes(float minutes)
+    {
+        if (Instance == null || UserData == null)
+        {
+            Debug.LogWarning("无法添加在线时长：用户数据未初始化");
+            return;
+        }
+        UserData.AddOnlineMinutes(minutes);
+    }
+    
+    /// <summary>
+    /// 保存当前会话时长到用户数据
+    /// </summary>
+    private void SaveSessionTime()
+    {
+        if (_currentSessionTime <= 0) return;
+        
+        float minutesToAdd = _currentSessionTime / 60f;
+        AddOnlineMinutes(minutesToAdd);
+        _currentSessionTime = 0f;
+    }
+    
 
     private void OnApplicationFocus(bool focusStatus)
     {
@@ -258,12 +351,14 @@ public class GameDataManager : SingletonMono<GameDataManager>
             if(Game.self?.Ads?.IsPlaying == true) return; //播放广告中
             AnalyticMgr.GameEnd();
                 
+            StopTracking();
             requireFocusCheck = true;
             Debug.Log("应用进入后台，数据已保存");
         }
         else if (requireFocusCheck)
         {
             AnalyticMgr.GameStart();
+            StartTracking();
             Debug.Log("应用回到前台，验证数据");
             requireFocusCheck = false;
             playerProfile.CheckResetLimitTime();
@@ -275,9 +370,8 @@ public class GameDataManager : SingletonMono<GameDataManager>
         if (isPaused && dataInitialized)
         {
             CommitGameData();
-            AnalyticMgr.GameEnd();
+            StopTracking();
             Debug.Log("应用暂停，数据已保存");
-          
         }
     }
 
@@ -285,8 +379,9 @@ public class GameDataManager : SingletonMono<GameDataManager>
     {
         if (dataInitialized)
         {
-            //ThinkManager.instance.SetUserProperties();
-            //CommitGameData();
+            CommitGameData();
+            StopTracking();
+            AnalyticMgr.GameEnd();
             Debug.Log("应用关闭，数据已保存");
         }
     }

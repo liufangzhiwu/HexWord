@@ -1,18 +1,17 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &221924717232416786
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3827343646250827322}
   - component: {fileID: 8978424759441055186}
   - component: {fileID: 1989565221473033332}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: wordbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -83,13 +82,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1451896622676978211}
   - component: {fileID: 2060335579729964415}
   - component: {fileID: 8534874120481759233}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: nameText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -146,8 +144,8 @@ MonoBehaviour:
   m_FontData:
     m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
     m_FontSize: 38
-    m_FontStyle: 0
-    m_BestFit: 0
+    m_FontStyle: 1
+    m_BestFit: 1
     m_MinSize: 3
     m_MaxSize: 45
     m_Alignment: 4
@@ -163,13 +161,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6410206797581497283}
   - component: {fileID: 846492933351892352}
   - component: {fileID: 8095740836477354246}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: aiNamebg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -223,7 +220,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 3bf8824df72e65248856218ec8b7cc7c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 02c8f6bf41d4436408a090d3d5d62cd0, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -239,13 +236,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 631396340084933990}
   - component: {fileID: 6168982519003395623}
   - component: {fileID: 9165651599499066288}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: nametable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -302,7 +298,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: e6c80292631be7d41b6505f9121b5a2a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 40cc7a2a362e9c043a762e7339bd677e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -318,12 +314,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2658806909130200855}
   - component: {fileID: 82167925212714559}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: shadow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -365,13 +360,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7811730331579106132}
   - component: {fileID: 7891999552193759451}
   - component: {fileID: 6842598530758300661}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: target
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -425,8 +419,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -5944304753569942187, guid: 30cbab9a4568f46fc9fb2d0492bfacf4,
-    type: 3}
+  m_Sprite: {fileID: 21300000, guid: 2f90571785b2c234ba02d441737037eb, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -442,11 +435,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8147021461813542904}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: fish
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -479,13 +471,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5014525251490808175}
   - component: {fileID: 6212783275841920101}
   - component: {fileID: 252608011342726595}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: rankbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -555,12 +546,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3633950674805044260}
   - component: {fileID: 3904704341194864629}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: fishicon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -600,7 +590,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5814356007615336710}
   - component: {fileID: 6706319136554958700}
@@ -608,7 +598,6 @@ GameObject:
   - component: {fileID: 3223825011785709660}
   - component: {fileID: 8470945073127877232}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: box
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -718,13 +707,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5177589562365704926}
   - component: {fileID: 3151911810865409684}
   - component: {fileID: 5023241222643048241}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: level
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -781,10 +769,10 @@ MonoBehaviour:
   m_FontData:
     m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
     m_FontSize: 32
-    m_FontStyle: 0
-    m_BestFit: 0
+    m_FontStyle: 1
+    m_BestFit: 1
     m_MinSize: 3
-    m_MaxSize: 45
+    m_MaxSize: 40
     m_Alignment: 7
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -798,13 +786,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8750070281827489587}
   - component: {fileID: 8586962148999313800}
   - component: {fileID: 6679786299131191169}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: wordcount
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -861,8 +848,8 @@ MonoBehaviour:
   m_FontData:
     m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
     m_FontSize: 35
-    m_FontStyle: 0
-    m_BestFit: 0
+    m_FontStyle: 1
+    m_BestFit: 1
     m_MinSize: 3
     m_MaxSize: 40
     m_Alignment: 4
@@ -878,12 +865,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5880887281877823977}
   - component: {fileID: 4342524715574153761}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: targettable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -926,13 +912,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1495276838706385047}
   - component: {fileID: 83461644600679938}
   - component: {fileID: 8705224079281647243}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1002,13 +987,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7738531017014243844}
   - component: {fileID: 6519527129246635268}
   - component: {fileID: 293169151139034304}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: FishItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1065,7 +1049,7 @@ MonoBehaviour:
   isclaim: 0
 --- !u!95 &293169151139034304
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1076,8 +1060,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: c32d93c7a7d611f4bb18fe8ba55199fd, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0

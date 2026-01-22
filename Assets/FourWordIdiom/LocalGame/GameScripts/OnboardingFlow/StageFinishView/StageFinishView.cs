@@ -21,6 +21,7 @@ public class StageFinishView : UIWindow
     [SerializeField] private GameObject hardStageTable;          // 困难模式
     [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
     
+    [SerializeField] private Button Content;
     [SerializeField] private Button _nextStageButton;
     [SerializeField] private GameObject Showlimiticon;
     [SerializeField] private GameObject Enlimiticon;
@@ -40,19 +41,26 @@ public class StageFinishView : UIWindow
         _nextStageButton.AddClickAction(OnNextStageButtonClicked);
         _limitBtnTable._limitTimeEventButton.AddClickAction(OnLimitTimeEventButtonClicked);
         SignBtn.AddClickAction(ShowSignInPanel);
+        Content.onClick.AddListener(() =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
+            
+        });
     }
 
     protected override void OnEnable()
     {
         base.OnEnable();
+
+        GameCoreManager.Instance.PanelState = PanelState.FinishPanel;
         
         GameDataManager.Instance.UserData.curIsEnter = false;
         LimitTimeManager.Instance.OnDailyTimeUpdated += UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyButterflyTaskUI += UpdateButterflyTime;
-        LimitTimeManager.Instance.OnLimitTimeBtnUI += UpdateProgress;       
-        //FishInfoController.Instance.OnFishTimeUpdated += _matchFishtable.UpdateFishTime;
+        LimitTimeManager.Instance.OnLimitTimeBtnUI += UpdateProgress; 
+        FishInfoController.Instance.OnFishTimeUpdated += _matchFishtable.UpdateFishTime;
         //EventDispatcher.OnChangeHeadIconUpdateUI += UpdateHeadBtnUI;
-        //_matchFishtable.CheckFishBtn();
+        _matchFishtable.CheckFishBtn();
         AudioManager.Instance.PlaySoundEffect("StageFinish");   
         
         //AdsManager.Instance.HideBannerAd();
@@ -264,12 +272,12 @@ public class StageFinishView : UIWindow
             _tasktable.CheckTasksScreen();
             yield return new WaitForSeconds(1.5f);
         }
-        //if (FishInfoController.Instance.IsShowFishProgressAnim()&&_matchFishtable.FishBtn.gameObject.activeSelf)
-        //{
-        //    _matchFishtable.ShowFishWordAnim();
-        //    StartCoroutine(UpdateFishRankUI());
-        //    yield return new WaitForSeconds(1.2f);
-        //}
+        if (FishInfoController.Instance.IsShowFishProgressAnim()&&_matchFishtable.FishBtn.gameObject.activeSelf)
+        {
+            _matchFishtable.ShowFishWordAnim();
+            StartCoroutine(UpdateFishRankUI());
+            yield return new WaitForSeconds(1.2f);
+        }
 
         //Animator.Play("ShowLevelBtn");
         

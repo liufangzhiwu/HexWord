@@ -27,14 +27,14 @@ public class MatchFishTable : MonoBehaviour
     {
         if (Game.IsNetworkActive)
         {
-            // if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
-            // {
-            //     SystemManager.Instance.ShowPanel(PanelType.CompetitionStart);
-            // }
-            // else
-            // {
-            //     SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
-            // }
+            if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
+            {
+                SystemManager.Instance.ShowPanel(PanelType.CompetitionStart);
+            }
+            else
+            {
+                SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
+            }
         }
         else
         {
@@ -45,9 +45,10 @@ public class MatchFishTable : MonoBehaviour
     public void CheckFishBtn()
     {
         claimObj.gameObject.SetActive(false);
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
+            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
         {
-            if (GameDataManager.Instance.UserData.CurrentHexStage == AppGameSettings.UnlockRequirements.FishOpenLevel)
+            if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
             {
                 DateTime openTime = DateTime.Now;
                 //DateTime openTime = DateTime.Today.AddDays(1);
@@ -63,18 +64,23 @@ public class MatchFishTable : MonoBehaviour
                     closeTime = openTime.AddDays(daysUntilMonday);
                 }
                 
-                // GameDataManager.Instance.FishUserSave.opentime = openTime.ToString();
-                // GameDataManager.Instance.FishUserSave.cloestime = closeTime.ToString();
-                //FishInfoController.Instance.UpdateFishTime();
+                GameDataManager.Instance.FishUserSave.opentime = openTime.ToString();
+                GameDataManager.Instance.FishUserSave.cloestime = closeTime.ToString();
+                FishInfoController.Instance.UpdateFishTime();
                 FishBtn.gameObject.SetActive(true);
             }
             else
             {
-                //FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
+                FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
                 
-                if (GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.FishOpenLevel)
+                if (GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.FishOpenLevel
+                    || GameDataManager.Instance.UserData.CurrentChessStage > AppGameSettings.UnlockRequirements.FishOpenLevel
+                    ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
                 {
-                    //GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageController.Instance.CurStageInfo.Puzzles.Count);
+                    if(GameDataManager.Instance.UserData.levelMode == 3)
+                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageHexController.Instance.CurStageInfo.Puzzles.Count);
+                    else if(GameDataManager.Instance.UserData.levelMode == 2)
+                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(ChessStageController.Instance.CurrStageInfo.PhraseGroups.Count);
                 }
             }
         }
@@ -88,17 +94,59 @@ public class MatchFishTable : MonoBehaviour
     public void UpdateFishTime(string time="")
     {
         fishTime.text = time;
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
+            ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
         {
-            //FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
+            FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
         }  
     }
     
     public void UpdateFishRank()
     {
-         if (Game.IsNetworkActive)
+        if (Game.IsNetworkActive)
          {
              fishwifiimage.gameObject.SetActive(false);
+             if (GameDataManager.Instance.FishUserSave.rank > 0&& !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
+             {
+                 int rank = GameDataManager.Instance.FishUserSave.rank;
+                 switch (rank)
+                 {
+                     case 1:
+                         rankimage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtnred");
+                         break;
+                     case 2:
+                         rankimage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtnblue");
+                         break;
+                     case 3:
+                         rankimage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtngreen");
+                         break;
+                     case 4:
+                     case 5:
+                         rankimage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtngrey");
+                         break;
+        
+                 }
+
+                 if (!FishInfoController.Instance.RoundFishIsOver())
+                 {
+                     fishTime.transform.parent.gameObject.SetActive(true);
+                     rankimage.gameObject.SetActive(true);
+                     rankcount.text = rank.ToString();
+                 }
+                 else
+                 {
+                     claimObj.gameObject.SetActive(true);
+                     rankimage.gameObject.SetActive(false);
+                     fishTime.transform.parent.gameObject.SetActive(false);
+                 }
+                
+             }
+             else
+             {
+                 fishTime.transform.parent.gameObject.SetActive(true);
+                 rankimage.gameObject.SetActive(false);
+                 claimObj.gameObject.SetActive(false);
+             }
          }
         else
         {

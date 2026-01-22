@@ -37,6 +37,8 @@ public class MultilingualManager:MonoBehaviour
         //pinziLocalized = ToolUtil.ReadCvsLanguage(pinCsvFile,"pingzi_lang");
         TextAsset hudieCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflyLocales");
         butterfliesLocalized = ToolUtil.ParseCvsLanguage(hudieCsvFile,"ButterflyLocales");
+
+        LoadLocalizationNameTable();
     }
 
     public string GetString(string key, string filename = "multilingual")
@@ -68,7 +70,7 @@ public class MultilingualManager:MonoBehaviour
     public void LoadLocalizationNameTable()
     {
         // 从AssetBundle中加载CSV文件
-        TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile(ToolUtil.GetLanguageBundle(), "config_choiceNiCheng");
+        TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "config_choiceNiCheng");
         localizedNames = ToolUtil.ParseCvsLanguage(csvFile,"config_choiceNiCheng");
     }
 

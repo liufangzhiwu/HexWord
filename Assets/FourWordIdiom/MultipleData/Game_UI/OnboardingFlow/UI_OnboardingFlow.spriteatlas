@@ -68,6 +68,7 @@ SpriteAtlas:
     - 29218972f8eb76246b4f43510a783c95: 21300000
     - e563ac922d7d95c4d8f2e7815ef2678c: 21300000
     - c0fcfbb2ab8d6df4cb3dfc4828fb000f: 21300000
+    - 392b3cb2d5e249849b92a552fb1442bd: 21300000
     - fa09f6d2ff43d9048ada00317fb6761d: 21300000
     - 2ba19d03c3401cb4caa46dffbfdcc9c5: 21300000
     - 7f9e206373123e24d90b343ab9087baf: 21300000
@@ -77,6 +78,7 @@ SpriteAtlas:
     - cb7046e3252d37f4698dbb3cf6f0be98: 21300000
     - c9ffd21451f8ddc4698d65f680a24a18: 21300000
     - 3757b924ba5ca10458233aa64cfd96eb: 21300000
+    - 8d0ea434a5b88b84383bb68fd1f08a0c: 21300000
     - d69dbe447ed1d1b4c9a0bea83cf1e48a: 21300000
     - 8d885354fcf422b47ba2d82a5e8c858e: 21300000
     - c27d0d64a13648b4e927f6e0a3d9ff43: 21300000
@@ -125,6 +127,7 @@ SpriteAtlas:
     - 9fb011998004a27409d05c7381537d0d: 21300000
     - fa40cea93e2d19d4fb3a7f8b8fc7a8c8: 21300000
     - 41dc9eb91bc9036408bd76d2e3ccf151: 21300000
+    - edb4192ad8f2a8b4abf18a26f9c9b8dd: 21300000
     - 40cc7a2a362e9c043a762e7339bd677e: 21300000
     - d9d0d73a49e96cd4b9b644f23b21f319: 21300000
     - c43bb47af536109428b4696e75a005bd: 21300000
@@ -136,6 +139,7 @@ SpriteAtlas:
     - 3636b56bf61c9cb499ee1f6e8eabca83: 21300000
     - 88d5d1ab8e8d53d4891d6e8cda9419e8: 21300000
     - 534387ab71b224b41a254fcc3473b3dc: 21300000
+    - 23fb51ebe569b0048a5bc6fce854bf97: 21300000
     - 30f43d1cb2968d049965beb59393d1ff: 21300000
     - 36244c5c92c12cc4a999695e44bdb31c: 21300000
     - 2e55cc5cdde54c94eaeaa6acf58a5d24: 21300000
@@ -146,13 +150,16 @@ SpriteAtlas:
     - 32a0994d38b21114d8b94ece0530b57a: 21300000
     - e905d07d34533574b85f3fba2f3e8a44: 21300000
     - 8659277d313d1f6458aec0364abd9f8e: 21300000
+    - fe7f57bd6ffa95546a1b6f56dfdafa5a: 21300000
     - 9646f8cdabc839c49be75059873009d8: 21300000
     - 2165f7edfe36fa34d8c3ef74d5033598: 21300000
+    - 6a3da8ed028405240b58e681e8cd6ba7: 21300000
     - a4672b2e33d48244baf774d11864001e: 21300000
     - bffaa63e09d348940af91192079a75a9: 21300000
     - 4a13025e0a844a3479141eeab5b3bc5e: 21300000
     - dbb06f5ec256d3b4ca25fed1ae4e9173: 21300000
     - dabcd98edce6323469a71a236255bef4: 21300000
+    - 9e44fa8eee07e4628b4e63245e066d5c: 21300000
     - 6b28bf9ed0edefc46ba8a7e2fa7fa8b7: 21300000
     - 89bfe3de69ef5dc4db3eb9e8378516ac: 21300000
     - f03e681f440dfc748b218aefa0d36ca0: 21300000
@@ -185,6 +192,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 29218972f8eb76246b4f43510a783c95, type: 3}
   - {fileID: 21300000, guid: e563ac922d7d95c4d8f2e7815ef2678c, type: 3}
   - {fileID: 21300000, guid: c0fcfbb2ab8d6df4cb3dfc4828fb000f, type: 3}
+  - {fileID: 21300000, guid: 392b3cb2d5e249849b92a552fb1442bd, type: 3}
   - {fileID: 21300000, guid: fa09f6d2ff43d9048ada00317fb6761d, type: 3}
   - {fileID: 21300000, guid: 2ba19d03c3401cb4caa46dffbfdcc9c5, type: 3}
   - {fileID: 21300000, guid: 7f9e206373123e24d90b343ab9087baf, type: 3}
@@ -194,6 +202,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: cb7046e3252d37f4698dbb3cf6f0be98, type: 3}
   - {fileID: 21300000, guid: c9ffd21451f8ddc4698d65f680a24a18, type: 3}
   - {fileID: 21300000, guid: 3757b924ba5ca10458233aa64cfd96eb, type: 3}
+  - {fileID: 21300000, guid: 8d0ea434a5b88b84383bb68fd1f08a0c, type: 3}
   - {fileID: 21300000, guid: d69dbe447ed1d1b4c9a0bea83cf1e48a, type: 3}
   - {fileID: 21300000, guid: 8d885354fcf422b47ba2d82a5e8c858e, type: 3}
   - {fileID: 21300000, guid: c27d0d64a13648b4e927f6e0a3d9ff43, type: 3}
@@ -242,6 +251,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 9fb011998004a27409d05c7381537d0d, type: 3}
   - {fileID: 21300000, guid: fa40cea93e2d19d4fb3a7f8b8fc7a8c8, type: 3}
   - {fileID: 21300000, guid: 41dc9eb91bc9036408bd76d2e3ccf151, type: 3}
+  - {fileID: 21300000, guid: edb4192ad8f2a8b4abf18a26f9c9b8dd, type: 3}
   - {fileID: 21300000, guid: 40cc7a2a362e9c043a762e7339bd677e, type: 3}
   - {fileID: 21300000, guid: d9d0d73a49e96cd4b9b644f23b21f319, type: 3}
   - {fileID: 21300000, guid: c43bb47af536109428b4696e75a005bd, type: 3}
@@ -253,6 +263,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 3636b56bf61c9cb499ee1f6e8eabca83, type: 3}
   - {fileID: 21300000, guid: 88d5d1ab8e8d53d4891d6e8cda9419e8, type: 3}
   - {fileID: 21300000, guid: 534387ab71b224b41a254fcc3473b3dc, type: 3}
+  - {fileID: 21300000, guid: 23fb51ebe569b0048a5bc6fce854bf97, type: 3}
   - {fileID: 21300000, guid: 30f43d1cb2968d049965beb59393d1ff, type: 3}
   - {fileID: 21300000, guid: 36244c5c92c12cc4a999695e44bdb31c, type: 3}
   - {fileID: 21300000, guid: 2e55cc5cdde54c94eaeaa6acf58a5d24, type: 3}
@@ -263,13 +274,16 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 32a0994d38b21114d8b94ece0530b57a, type: 3}
   - {fileID: 21300000, guid: e905d07d34533574b85f3fba2f3e8a44, type: 3}
   - {fileID: 21300000, guid: 8659277d313d1f6458aec0364abd9f8e, type: 3}
+  - {fileID: 21300000, guid: fe7f57bd6ffa95546a1b6f56dfdafa5a, type: 3}
   - {fileID: 21300000, guid: 9646f8cdabc839c49be75059873009d8, type: 3}
   - {fileID: 21300000, guid: 2165f7edfe36fa34d8c3ef74d5033598, type: 3}
+  - {fileID: 21300000, guid: 6a3da8ed028405240b58e681e8cd6ba7, type: 3}
   - {fileID: 21300000, guid: a4672b2e33d48244baf774d11864001e, type: 3}
   - {fileID: 21300000, guid: bffaa63e09d348940af91192079a75a9, type: 3}
   - {fileID: 21300000, guid: 4a13025e0a844a3479141eeab5b3bc5e, type: 3}
   - {fileID: 21300000, guid: dbb06f5ec256d3b4ca25fed1ae4e9173, type: 3}
   - {fileID: 21300000, guid: dabcd98edce6323469a71a236255bef4, type: 3}
+  - {fileID: 21300000, guid: 9e44fa8eee07e4628b4e63245e066d5c, type: 3}
   - {fileID: 21300000, guid: 6b28bf9ed0edefc46ba8a7e2fa7fa8b7, type: 3}
   - {fileID: 21300000, guid: 89bfe3de69ef5dc4db3eb9e8378516ac, type: 3}
   - {fileID: 21300000, guid: f03e681f440dfc748b218aefa0d36ca0, type: 3}
@@ -301,6 +315,7 @@ SpriteAtlas:
   - tiptool
   - ldengicon
   - itembg
+  - win
   - UI_Icon_huiStar
   - timebg
   - lbigdeng
@@ -310,6 +325,7 @@ SpriteAtlas:
   - endengicon
   - timebg
   - taskjd
+  - startdi
   - gift
   - left
   - jdstyle
@@ -358,6 +374,7 @@ SpriteAtlas:
   - tipsbg
   - UI_Icon_message
   - puzzlebg
+  - left
   - namebg
   - gou
   - line
@@ -369,6 +386,7 @@ SpriteAtlas:
   - puzzleBook
   - UI_Icon_togglebg
   - tips
+  - tai
   - UI_Icon_point
   - title
   - UI_Icon_vibrate
@@ -379,13 +397,16 @@ SpriteAtlas:
   - itembg
   - collect_bg
   - gifttablebg
+  - right
   - scroll_bg
   - butterfly_ti
+  - ui_dashTitle
   - endeng
   - lockicon
   - shopgiftbg
   - UI_Icon_sound
   - UI_Icon_tutorialbg
+  - lingqu
   - downbtn
   - taskitembg
   - content_bg

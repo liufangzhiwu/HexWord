@@ -202,7 +202,7 @@ public class ButterflyHome : UIWindow
         else
         {
             SystemManager.Instance.HidePanel(PanelType.ButterflyHome);
-            SystemManager.Instance.GetPanel(PanelType.PrimaryInterface)?.GetComponent<PrimaryInterface>()?.OnEnterStageClick();
+            SystemManager.Instance.GetPanel(PanelType.PrimaryInterface)?.GetComponent<PrimaryInterface>()?.OnPlayClick();
         }
     }
 
@@ -297,8 +297,8 @@ public class ButterflyHome : UIWindow
         CanvasGroup nameCG = gradeGo.GetComponentInChildren<CanvasGroup>(true);
         nameCG.alpha = 0;
         // 设置 Canvas 排序
-        Canvas cvs = gradeGo.GetComponentInChildren<Canvas>(true);
-        if(cvs != null) cvs.sortingLayerName = "BaseEffect";
+        //Canvas cvs = gradeGo.GetComponentInChildren<Canvas>(true);
+        //if(cvs != null) cvs.sortingLayerName = "BaseEffect";
         nameCG.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString(butterflyInfo.Name,"hudie");
         SpriteAtlas atlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflymaunal");
         gradeGo.GetComponentInChildren<Image>(true).sprite = atlas.GetSprite(butterflyInfo.ButterflyIcon);

@@ -276,10 +276,13 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 			}
 		}
 
-        foreach (PuzzleTile item in LayerpuzzleTiles)
-        {           
-            item.TileView.TileTransform.SetAsFirstSibling();
-            item.TileView.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
+        if (LayerpuzzleTiles.Count > 0)
+        {
+            foreach (PuzzleTile item in LayerpuzzleTiles)
+            {           
+                item.TileView.TileTransform.SetAsFirstSibling();
+                item.TileView.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
+            }
         }
         
         if (isanim)

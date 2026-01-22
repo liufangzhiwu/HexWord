@@ -48,6 +48,7 @@ public class UserData
     public int dayPassStageCount;        // 每日通关数量
     public int showRateusCount;         // 好评界面显示次数
     public string showRateusTime;       // 好评界面显示时间
+    public bool isChangeUserName;       // 是否更改过用户名称
 
     #endregion
 
@@ -238,6 +239,7 @@ public class UserData
         showRateusCount = 0;
         // 评价界面显示时间
         showRateusTime = null;
+        isChangeUserName = false;
         // 游戏进度
         TutorialProgress = 0;
         ChessTutorialProgress = new Dictionary<int,bool> {{1,false},{2,false},{3,false},{4,false},{5,false}};
@@ -334,6 +336,7 @@ public class UserData
         lastLoginDay = user.lastLoginDay;
         firstPayTime = user.firstPayTime;
         lastPayTime = user.lastPayTime;
+        isChangeUserName = user.isChangeUserName;
         // 评价界面显示次数
         showRateusCount = user.showRateusCount;
         // 评价界面显示时间

@@ -47,18 +47,26 @@ public class CompetitionFail : UIWindow
     
     private void OnCloseBtn()
     {
-        // if (string.IsNullOrEmpty(GameDataManager.instance.FishUserSave.roundstarttime)) 
-        //     GameDataManager.instance.FishUserSave.roundstarttime = DateTime.Now.ToString();
+        if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime)) 
+            GameDataManager.Instance.FishUserSave.roundstarttime = DateTime.Now.ToString();
         
-        // TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(GameDataManager.instance.FishUserSave.roundstarttime));
-        // //int progress = GameDataManager.instance.FishUserSave.matchCount;
-        // ThinkManager.instance.Event_ActivityComplete("竞速活动",(int)ts.TotalSeconds);
-        // //FirebaseManager.Instance.ActivityProgress("竞速活动",progress,(int)ts.TotalSeconds);
-        //
-        // GameDataManager.instance.FishUserSave.UpdateRound(-1);
-        // GameDataManager.instance.FishUserSave.ResetFishData();
-        //FishInfoController.Instance.FishMatchOver();
-        //UIManager.Instance.HidePanel(PanelName.DashCompetition);
+        TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(GameDataManager.Instance.FishUserSave.roundstarttime));
+        AnalyticMgr.ActivityComplete("竞速活动",(int)ts.TotalSeconds);
+       
+        GameDataManager.Instance.FishUserSave.UpdateRound(-1);
+        GameDataManager.Instance.FishUserSave.ResetFishData();
+        FishInfoController.Instance.FishMatchOver();
+
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        {
+            //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
+        }
+
+        SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        
         base.Close(); // 隐藏面板
     }
 

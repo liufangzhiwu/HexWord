@@ -1,4 +1,5 @@
 using System.Collections;
+using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,6 +12,9 @@ public class HeaderSection : UIWindow
     public Button ShopBtn;
     public Button PuzzlebookBtn;
     public Button LevelPuzzleBtn;
+    public Button PupaTable;
+    public GameObject PupaImage;
+    public Text Pupatxt; 
     public GameObject GoldImage;
     public Text Goldtxt;       
 
@@ -84,6 +88,18 @@ public class HeaderSection : UIWindow
         {
             BackBtn.GetComponent<Image>().sprite =AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_back");
         }
+        
+        if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
+        {
+            ShopBtn.gameObject.SetActive(false);
+            PupaTable.gameObject.SetActive(StageHexController.Instance.CurStageData.PupaDatas!=null);
+        }
+        else
+        {
+            ShopBtn.gameObject.SetActive(true);
+            PupaTable.gameObject.SetActive(false);
+        }
+        
          EventDispatcher.instance.TriggerChangeTopRaycast(true);
          EventDispatcher.instance.TriggerChangeGoldUI(0,false);       
 
@@ -171,7 +187,24 @@ public class HeaderSection : UIWindow
 
     private void OnShopClick()
     {
-        SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        {
+            //SystemManager.Instance.HidePanel(PanelType.StageFinishView);
+        }
+       
+        UnityTimer.Delay(0.2f, () =>
+        {
+            SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+        });
+        
+        UnityTimer.Delay(0.5f, () =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
+        });
+      
         // SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
     }
 
@@ -217,6 +250,22 @@ public class HeaderSection : UIWindow
     private void ChangeTopRaycast(bool isblock)
     {
         transform.GetComponent<CanvasGroup>().blocksRaycasts = isblock;
+    }
+
+    public void ShowPupaTableAnima(Transform startPoint, int pupa = 1, Transform parent  = null)
+    {
+        
+        ButterflyGrow butterflyGrow =ButterfliesManager.Instance.GetCurrentGrow();
+        if(butterflyGrow == null)
+            return;
+
+        StartCoroutine(ButterfliesManager.Instance.FlyPupaCoroutine(startPoint, PupaImage.transform, () =>
+        {
+            GameDataManager.Instance.ButterflyData.AddPupa(pupa);
+            Pupatxt.text = $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow.Count}";
+        }, 0.6f));
+
+
     }
 
     public override void OnHideAnimationEnd()

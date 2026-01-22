@@ -33,7 +33,7 @@ public class HexGamePlayArea : UIWindow
 
     [SerializeField] private Button PuzzleTipsBtn;
     [SerializeField] private Button SingleHingBtn;
-    [SerializeField] private Button LevelPuzzleBtn;
+    [SerializeField] private Button ShopBtn;
     [SerializeField] private Text Stagetxt;
     
     //选定词面板
@@ -89,7 +89,7 @@ public class HexGamePlayArea : UIWindow
     {
         SingleHingBtn.AddClickAction(ToolItemFirstLetter,"");
         PuzzleTipsBtn.AddClickAction(UseTips,"");
-        LevelPuzzleBtn.AddClickAction(OnClickWordVocabulary);
+        ShopBtn.AddClickAction(OnClickShop);
     }
 
     public void Initialize()
@@ -150,6 +150,7 @@ public class HexGamePlayArea : UIWindow
 
     protected override void OnEnable()
     {
+        GameCoreManager.Instance.PanelState = PanelState.GamePanel;
         InitUI();
         EventDispatcher.instance.OnLetterSelected += OnLetterSelected;
         //EventManager.OnComboTriggerButterfly +=UseButterfly;
@@ -161,7 +162,7 @@ public class HexGamePlayArea : UIWindow
         boardExplorer = new WordMatrixExplorer(CurStageData.BoardSnapshot,CurStageData.GetLeftPuzzles());
         AudioManager.Instance.PlaySoundEffect("EnterStage");
         EventDispatcher.instance.TriggerChoicePuzzleSetStatus(true);
-        LevelPuzzleBtn.gameObject.SetActive(false);
+        //LevelPuzzleBtn.gameObject.SetActive(false);
         
         StartTime = DateTime.Now;
         EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
@@ -423,7 +424,7 @@ public class HexGamePlayArea : UIWindow
         
         if(CurStageData.PupaDatas.breakProgress>=4)
         {
-            ButterfliesManager.Instance.AddObtainedPupa(crossPuzzleGrid.PupatileView.transform,1,PupaProgress.gameObject.transform);
+            ButterfliesManager.Instance.AddObtainedPupaOnHexGamePanel(crossPuzzleGrid.PupatileView.transform);
 
             CurStageData.PupaDatas = null;
             yield return new WaitForSeconds(0.5f);
@@ -689,10 +690,9 @@ public class HexGamePlayArea : UIWindow
        
     }
     
-    private void OnClickWordVocabulary()
+    private void OnClickShop()
     {
-        StageHexController.Instance.IsEnterVocabulary = true;
-        SystemManager.Instance.ShowPanel(PanelType.LevelWordScreen);
+        SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
     }
 
     private bool CanUseTool(ToolInfo toolInfo)

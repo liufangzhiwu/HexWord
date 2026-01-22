@@ -67231,6 +67231,7 @@ GameObject:
   - component: {fileID: 752339127}
   - component: {fileID: 752339129}
   - component: {fileID: 752339130}
+  - component: {fileID: 752339131}
   m_Layer: 0
   m_Name: Game
   m_TagString: Untagged
@@ -67320,6 +67321,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   APIUrl: https://hex.prod.mindwordplay.cn/api/
+--- !u!114 &752339131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 752339123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90a9dd6766ab57a488d7ad9482e83490, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dashparent: {fileID: 0}
 --- !u!1 &754952642
 GameObject:
   m_ObjectHideFlags: 0

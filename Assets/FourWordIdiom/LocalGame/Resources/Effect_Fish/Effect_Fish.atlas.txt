@@ -1,0 +1,16 @@
+Effect_Fish.png
+size:1024,256
+filter:Linear,Linear
+shui
+bounds:1,59,388,177
+yingzi
+bounds:390,95,311,141
+yu01_chi
+bounds:1,21,55,37
+yu01_qi
+bounds:1002,134,102,18
+rotate:90
+yu01_shengti
+bounds:702,119,299,117
+yu02_shengti
+bounds:702,1,299,117

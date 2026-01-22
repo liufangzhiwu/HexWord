@@ -23,7 +23,7 @@ public class FishItem : MonoBehaviour
     public Image wordbg;
     [SerializeField] private Image RankImage;
     private DashCompetition dashparent;
-    //[HideInInspector] public FishAISaveData  fishaiSaveData;
+    [HideInInspector] public FishAISaveData  fishaiSaveData;
     private GameObject fish01Spine;
     private GameObject fish02Spine;
     
@@ -80,12 +80,12 @@ public class FishItem : MonoBehaviour
         }
     }
 
-    public void SetAiFishData(DashCompetition daparent)
+    public void SetAiFishData(FishAISaveData data,DashCompetition daparent)
     {
         InitSpine();
         LoadPanelUI();
         curisai = true;
-        //fishaiSaveData = data;
+        fishaiSaveData = data;
         dashparent = daparent;
         UpdateFishLocation();
         //objectPool=bjectPool;
@@ -124,17 +124,17 @@ public class FishItem : MonoBehaviour
     {
         if (curisai)
         {
-            // FishInfoController.Instance.CheckAIPassLevel(fishaiSaveData.aiid,null);
-            //
-            // if(spinefishitem==null)
-            //     spinefishitem = Instantiate(fish02Spine, fishtransparent);
-            //
-            // spinefishitem.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "idle", true);
-            // spinefishitem.GetComponent<SkeletonAnimation>().DOPlay();
-            // //fishSpine = Resources.Load<GameObject>("wightfish");
-            // userName.text = fishaiSaveData.ainame;
-            // userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {fishaiSaveData.ailevel}";
-            // targetcount.text = fishaiSaveData.Puzzleprogress.ToString();
+            FishInfoController.Instance.CheckAIPassLevel(fishaiSaveData.aiid,null);
+            
+            if(spinefishitem==null)
+                spinefishitem = Instantiate(fish02Spine, fishtransparent);
+            
+            spinefishitem.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "idle", true);
+            spinefishitem.GetComponent<SkeletonAnimation>().DOPlay();
+            //fishSpine = Resources.Load<GameObject>("wightfish");
+            userName.text = fishaiSaveData.ainame;
+            userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {fishaiSaveData.ailevel}";
+            targetcount.text = fishaiSaveData.Puzzleprogress.ToString();
         }
         else
         {
@@ -146,14 +146,14 @@ public class FishItem : MonoBehaviour
             spinefishitem.GetComponent<SkeletonAnimation>().DOPlay();
           
             //fishIcon.sprite = LoadtaskIcon("rightfish");
-            //if (string.IsNullOrEmpty(GameDataManager.instance.UserData.UserName))
+            if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.UserName))
             {
-                //GameDataManager.instance.UserData.UserName = FishInfoController.Instance.GeneratePlayerName();
-                //ThinkManager.instance.SetRoleName(GameDataManager.instance.UserData.UserName);
+                GameDataManager.Instance.UserData.UserName = FishInfoController.Instance.GeneratePlayerName();
+                AnalyticMgr.NameChange(GameDataManager.Instance.UserData.UserName);
             }
-            //userName.text = GameDataManager.instance.UserData.UserName;
+            userName.text = GameDataManager.Instance.UserData.UserName;
             userLevel.text= $"{MultilingualManager.Instance.GetString("Level")} {GameDataManager.Instance.UserData.CurrentHexStage}"; 
-            //targetcount.text = GameDataManager.instance.FishUserSave.Puzzleprogress.ToString();
+            targetcount.text = GameDataManager.Instance.FishUserSave.Puzzleprogress.ToString();
         }
         ainamebg.gameObject.SetActive(curisai);
        
@@ -165,32 +165,32 @@ public class FishItem : MonoBehaviour
             
             userLevel.transform.DOMoveZ(0,waittime-0.4f).OnComplete(() =>
             {     
-                //int rank = curisai ?fishaiSaveData.rank:GameDataManager.instance.FishUserSave.rank;
+                int rank = curisai ?fishaiSaveData.rank:GameDataManager.Instance.FishUserSave.rank;
             
-                // switch (rank)
-                // {
-                //     case 1:
-                //         wordbg.sprite = LoadtaskIcon("targetred");
-                //         RankImage.sprite= LoadtaskIcon("rank1");
-                //         RankImage.gameObject.SetActive(true);
-                //         break;
-                //     case 2:
-                //         wordbg.sprite = LoadtaskIcon("targetblue");
-                //         RankImage.sprite = LoadtaskIcon("rank2");
-                //         RankImage.gameObject.SetActive(true);
-                //         break;
-                //     case 3:
-                //         wordbg.sprite = LoadtaskIcon("targetgreen");
-                //         RankImage.sprite = LoadtaskIcon("rank3");
-                //         RankImage.gameObject.SetActive(true);
-                //         break;
-                //     case 4:
-                //     case 5:
-                //         wordbg.sprite = LoadtaskIcon("targetgrey");
-                //         RankImage.gameObject.SetActive(false);
-                //         break;
-                //
-                // }
+                switch (rank)
+                {
+                    case 1:
+                        wordbg.sprite = LoadtaskIcon("targetred");
+                        RankImage.sprite= LoadtaskIcon("rank1");
+                        RankImage.gameObject.SetActive(true);
+                        break;
+                    case 2:
+                        wordbg.sprite = LoadtaskIcon("targetblue");
+                        RankImage.sprite = LoadtaskIcon("rank2");
+                        RankImage.gameObject.SetActive(true);
+                        break;
+                    case 3:
+                        wordbg.sprite = LoadtaskIcon("targetgreen");
+                        RankImage.sprite = LoadtaskIcon("rank3");
+                        RankImage.gameObject.SetActive(true);
+                        break;
+                    case 4:
+                    case 5:
+                        wordbg.sprite = LoadtaskIcon("targetgrey");
+                        RankImage.gameObject.SetActive(false);
+                        break;
+            
+                }
             });
             
         });
@@ -201,24 +201,24 @@ public class FishItem : MonoBehaviour
         float duration = ismove ? 1.0f : 0.5f;
         if (curisai)
         {
-            // if (!FishInfoController.Instance.RoundFishIsOver())
-            // {
-            //     // FishInfoController.Instance.CheckAIPassLevel(fishaiSaveData.aiid,()=>
-            //     // {
-            //     //     FishMove(out float waittime, true);
-            //     //     duration=waittime;
-            //     // });
-            //     // userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {fishaiSaveData.ailevel}";
-            //     // targetcount.text = fishaiSaveData.Puzzleprogress.ToString();
-            // }
+            if (!FishInfoController.Instance.RoundFishIsOver())
+            {
+                FishInfoController.Instance.CheckAIPassLevel(fishaiSaveData.aiid,()=>
+                {
+                    FishMove(out float waittime, true);
+                    duration=waittime;
+                });
+                userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {fishaiSaveData.ailevel}";
+                targetcount.text = fishaiSaveData.Puzzleprogress.ToString();
+            }
             //if(offlevel>fishaiSaveData.ailevel)
             //    FishMove();
         }
         else
         {
-            //userName.text = GameDataManager.instance.UserData.UserName;
+            userName.text = GameDataManager.Instance.UserData.UserName;
             userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {GameDataManager.Instance.UserData.CurrentHexStage}";
-            //targetcount.text = GameDataManager.instance.FishUserSave.Puzzleprogress.ToString();     
+            targetcount.text = GameDataManager.Instance.FishUserSave.Puzzleprogress.ToString();     
             // userLevel.transform.DOMoveZ(0, 0.5f).OnComplete(() =>
             // {
                 FishMove(out float waittime, ismove);
@@ -231,11 +231,11 @@ public class FishItem : MonoBehaviour
             int rank = 0;
             if (curisai)
             {
-                //rank = fishaiSaveData.Puzzleprogress>0? fishaiSaveData.rank:0;
+                rank = fishaiSaveData.Puzzleprogress>0? fishaiSaveData.rank:0;
             }
             else
             {
-                //rank = GameDataManager.instance.FishUserSave.Puzzleprogress>0? GameDataManager.instance.FishUserSave.rank:0;
+                rank = GameDataManager.Instance.FishUserSave.Puzzleprogress>0? GameDataManager.Instance.FishUserSave.rank:0;
             }
 
             switch (rank)
@@ -268,14 +268,14 @@ public class FishItem : MonoBehaviour
     private void FishMove(out float waittime,bool isneedmove=true)
     {
         float point = 0, targetx = 0;
-        // if (fishaiSaveData != null)
-        // {
-        //     point= fishaiSaveData.Puzzleprogress /(float) AppGameSettings.FishTargetWordCount;
-        // }
-        // else
-        // {
-        //     point= GameDataManager.instance.FishUserSave.Puzzleprogress /(float) AppGameSettings.FishTargetWordCount;
-        // }
+        if (fishaiSaveData != null)
+        {
+            point= fishaiSaveData.Puzzleprogress /(float) AppGameSettings.FishTargetWordCount;
+        }
+        else
+        {
+            point= GameDataManager.Instance.FishUserSave.Puzzleprogress /(float) AppGameSettings.FishTargetWordCount;
+        }
 
         if (point > 0&&isneedmove)
         {
@@ -329,18 +329,18 @@ public class FishItem : MonoBehaviour
                 break;
             case 3:
                 start =  dashparent.threeBoxImage.gameObject;
-                //GameDataManager.instance.FishUserSave.isRoundOver = true;
+                GameDataManager.Instance.FishUserSave.isRoundOver = true;
                 break;
         }
         
         if (!curisai)
         {
-            //GameDataManager.instance.FishUserSave.isRoundOver = true;
+            GameDataManager.Instance.FishUserSave.isRoundOver = true;
             isclaim=true;
         }
         else
         {
-            //fishaiSaveData.iscliam = true;
+            fishaiSaveData.iscliam = true;
             isclaim=true;
         }
         box.sprite = start.GetComponent<Image>().sprite;
@@ -371,31 +371,31 @@ public class FishItem : MonoBehaviour
 
     public void OnHide()
     {
-        // if (string.IsNullOrEmpty(GameDataManager.instance.FishUserSave.roundstarttime))
-        // {
-        //     fishRect.anchoredPosition = new Vector2(startx, fishRect.anchoredPosition.y);
-        //     isclaim = false;
-        //     if (curisai&&fishaiSaveData!=null)
-        //     {               
-        //         fishaiSaveData.iscliam = false;
-        //         fishaiSaveData.Puzzleprogress = 0;
-        //         fishaiSaveData.rank = 0;
-        //     }
-        //     else
-        //     {
-        //         GameDataManager.instance.FishUserSave.Puzzleprogress = 0;
-        //         GameDataManager.instance.FishUserSave.rank = 0;
-        //     }
-        //     
-        //     targetcount.text = "0";
-        //     wordbg.sprite = LoadtaskIcon("targetgrey");
-        //     RankImage.gameObject.SetActive(false);
-        //     HideBosSpine();
-        // }
-        // else
-        // {
-        //     FishMove(out float waittime, false);
-        // }
+        if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
+        {
+            fishRect.anchoredPosition = new Vector2(startx, fishRect.anchoredPosition.y);
+            isclaim = false;
+            if (curisai&&fishaiSaveData!=null)
+            {               
+                fishaiSaveData.iscliam = false;
+                fishaiSaveData.Puzzleprogress = 0;
+                fishaiSaveData.rank = 0;
+            }
+            else
+            {
+                GameDataManager.Instance.FishUserSave.Puzzleprogress = 0;
+                GameDataManager.Instance.FishUserSave.rank = 0;
+            }
+            
+            targetcount.text = "0";
+            wordbg.sprite = LoadtaskIcon("targetgrey");
+            RankImage.gameObject.SetActive(false);
+            HideBosSpine();
+        }
+        else
+        {
+            FishMove(out float waittime, false);
+        }
         
         transform.GetComponent<Animator>().enabled = false;
         wordbg.transform.localScale = Vector3.zero;

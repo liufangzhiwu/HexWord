@@ -794,6 +794,7 @@ GameObject:
   - component: {fileID: 1931616188647014729}
   - component: {fileID: 3129756215946606854}
   - component: {fileID: 8319482085665892801}
+  - component: {fileID: 6511313336022782168}
   m_Layer: 5
   m_Name: ButterflyHome
   m_TagString: Untagged
@@ -913,6 +914,27 @@ MonoBehaviour:
   circleDurationMax: 1.2
   nextFlyMin: 3
   nextFlyMax: 6
+--- !u!95 &6511313336022782168
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7834268690713381915}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 9574d8ce10bd09c459d28379ff89b4ed, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &8281187445185267915
 GameObject:
   m_ObjectHideFlags: 0

@@ -24,6 +24,11 @@ public partial class AnalyticMgr
     /// </summary>
     private static void SetLoginProperties()
     {
+         
+        if (GameDataManager.Instance.UserData.lastLoginDay != DateTime.Now.ToString("yyyy-MM-dd"))
+            GameDataManager.Instance.UserData.activeDayCnt ++;
+        GameDataManager.Instance.UserData.lastLoginDay = DateTime.Now.ToString("yyyy-MM-dd");
+        
         _startTime = DateTime.Now;
         var span = new TimeSpan(_startTime.Value.Ticks - GameDataManager.Instance.UserData.firstLoginStamp);
         var firstLoginTime = new DateTime(GameDataManager.Instance.UserData.firstLoginStamp);
@@ -122,10 +127,6 @@ public partial class AnalyticMgr
             GameDataManager.Instance.UserData.Rigister = true;
             GameDataManager.Instance.UserData.firstLoginStamp = DateTime.Now.Ticks;
         }
-        
-        if (GameDataManager.Instance.UserData.lastLoginDay != DateTime.Now.ToString("yyyy-MM-dd"))
-            GameDataManager.Instance.UserData.activeDayCnt ++;
-        GameDataManager.Instance.UserData.lastLoginDay = DateTime.Now.ToString("yyyy-MM-dd");
         
         SetCommonProperties();
         SetLoginProperties();

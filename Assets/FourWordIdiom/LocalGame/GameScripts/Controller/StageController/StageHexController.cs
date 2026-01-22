@@ -182,7 +182,7 @@ public class StageHexController
     /// <summary>
     /// 创建关卡配置信息
     /// </summary>
-    public StageInfo CreateStageInfo(int StageId)
+    public StageInfo CreateStageInfo(int StageId,bool isAi=false)
     {
         int actualStageId = CalculateActualStageId(StageId);
         var stageInfo = new StageInfo(

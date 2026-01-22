@@ -49,15 +49,10 @@ public class CompetitionStart : UIWindow
 
     private void ClickStartBtn()
     {
-        //GameDataManager.MainInstance.FishUserSave.OpenRoundTime();
+        GameDataManager.Instance.FishUserSave.OpenRoundTime();
         SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
         
-        //FishInfoController.Instance.UpdateFishTime();
-       // DateTime dateTime = DateTime.Today;// 将字符串转换为 DateTime
-        
-        //if(GameDataManager.MainInstance.FishUserSave.matchCount<=0)
-            //ThinkManager.instance.Event_ActivityBegin("竞速活动");
-        //GameDataManager.MainInstance.UserData.EveryDayOpenLimit();
+        AnalyticMgr.ActivityBegin("竞速活动");
         
         OnCloseBtn();
     }

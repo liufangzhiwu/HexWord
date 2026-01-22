@@ -28,16 +28,6 @@ public class MatchSuccess : UIWindow
     {
         // 初始化对象池
         _objectPool = new ObjectPool(awardIconprofab.gameObject, ObjectPool.CreatePoolContainer(transform, "RewardItemPool"));
-
-        //switch (GameDataManager.Instance.UserData.LanguageCode)
-        //{
-        //    case "Japanese":
-        //        titleImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("riMatchWin");
-        //        break;
-        //    case "ChineseTraditional":
-        //        titleImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fanMatchWin");
-        //        break;
-        //}
         InitButton();
     }
 
@@ -53,64 +43,64 @@ public class MatchSuccess : UIWindow
     IEnumerator PlayBoxSpineAnim()
     {
         // 移除未使用的初始化值
-        // GameObject fispine;
-        // string spinePath = "Effect_FishBox01";
-        // // 修正局部变量命名
-        // Vector3 startVector = FishInfoController.Instance.dashparent.threeBoxImage.transform.position;
-        // // switch (GameDataManager.Instance.FishUserSave.rank)
-        // // {
-        // //     case 1:
-        // //         spinePath = "Effect_FishBox01";
-        // //         startVector = FishInfoController.Instance.dashparent.oneBoxImage.transform.position;
-        // //         break;
-        // //     case 2:
-        // //         spinePath = "Effect_FishBox02";
-        // //         startVector = FishInfoController.Instance.dashparent.twoBoxImage.transform.position;
-        // //         break;
-        // //     case 3:
-        // //         spinePath = "Effect_FishBox03";
-        // //         startVector = FishInfoController.Instance.dashparent.threeBoxImage.transform.position;
-        // //         break;
-        // // }
-        //
-        // fispine = Resources.Load<GameObject>(spinePath);
-        // _boxSpine = Instantiate(fispine);
-        //
-        // _boxSpine.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-        // _boxSpine.transform.position = startVector;
-        // _boxSpine.gameObject.SetActive(true);
-        // AudioManager.Instance.PlaySoundEffect("FishBoxFly");
-        // _boxSpine.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "out", false);
-        // _boxSpine.GetComponent<SkeletonAnimation>().DOPlay();
-        // _boxSpine.transform.DOScale(new Vector3(0.7f, 0.7f, 0.7f), 0.8f);
-         yield return new WaitForSeconds(0.4f);
-        // _boxSpine.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "idle01", true);
-        // _boxSpine.GetComponent<SkeletonAnimation>().DOPlay();
-        // yield return new WaitForSeconds(0.1f);
-        // _boxSpine.gameObject.SetActive(false);
-        // _boxSpine.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f) ;
-        // CustomFlyInManager.Instance.FlyIn(_boxSpine.transform,boxImageParent.transform,_boxSpine, () =>
-        // {
-        //     _boxSpine.gameObject.SetActive(true);
-        //     _boxSpine.transform.SetParent(boxImageParent);
-        //     _boxSpine.transform.localScale = new Vector3(100, 100, 100);
-        //     _boxSpine.transform.localPosition = Vector3.zero;
-        // },0.5f);
-        // yield return new WaitForSeconds(0.5f);
-        // _boxSpine.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "end", false);
-        // _boxSpine.GetComponent<SkeletonAnimation>().DOPlay();
-        // yield return new WaitForSeconds(0.5f);
-        // AudioManager.Instance.PlaySoundEffect("FishBoxOpen");
-        // yield return new WaitForSeconds(0.5f);
-        // _boxSpine.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "idle02", true);
-        // _boxSpine.GetComponent<SkeletonAnimation>().DOPlay();
+        GameObject fispine;
+        string spinePath = "Effect_FishBox01";
+        // 修正局部变量命名
+        Vector3 startVector = FishInfoController.Instance.dashparent.threeBoxImage.transform.position;
+        switch (GameDataManager.Instance.FishUserSave.rank)
+        {
+            case 1:
+                spinePath = "Effect_FishBox01";
+                startVector = FishInfoController.Instance.dashparent.oneBoxImage.transform.position;
+                break;
+            case 2:
+                spinePath = "Effect_FishBox02";
+                startVector = FishInfoController.Instance.dashparent.twoBoxImage.transform.position;
+                break;
+            case 3:
+                spinePath = "Effect_FishBox03";
+                startVector = FishInfoController.Instance.dashparent.threeBoxImage.transform.position;
+                break;
+        }
+
+        fispine = Resources.Load<GameObject>(spinePath);
+        _boxSpine = Instantiate(fispine);
+        
+        _boxSpine.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+        _boxSpine.transform.position = startVector;
+        _boxSpine.gameObject.SetActive(true);
+        AudioManager.Instance.PlaySoundEffect("FishBoxFly");
+        _boxSpine.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "out", false);
+        _boxSpine.GetComponent<SkeletonAnimation>().DOPlay();
+        _boxSpine.transform.DOScale(new Vector3(0.7f, 0.7f, 0.7f), 0.8f);
+        yield return new WaitForSeconds(0.4f);
+        _boxSpine.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "idle01", true);
+        _boxSpine.GetComponent<SkeletonAnimation>().DOPlay();
+        yield return new WaitForSeconds(0.1f);
+        _boxSpine.gameObject.SetActive(false);
+        _boxSpine.transform.localScale = new Vector3(0.7f, 0.7f, 0.7f) ;
+        CustomFlyInManager.Instance.FlyIn(_boxSpine.transform,boxImageParent.transform,_boxSpine, () =>
+        {
+            _boxSpine.gameObject.SetActive(true);
+            _boxSpine.transform.SetParent(boxImageParent);
+            _boxSpine.transform.localScale = new Vector3(100, 100, 100);
+            _boxSpine.transform.localPosition = Vector3.zero;
+        },0.5f);
+        yield return new WaitForSeconds(0.5f);
+        _boxSpine.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "end", false);
+        _boxSpine.GetComponent<SkeletonAnimation>().DOPlay();
+        yield return new WaitForSeconds(0.5f);
+        AudioManager.Instance.PlaySoundEffect("FishBoxOpen");
+        yield return new WaitForSeconds(0.5f);
+        _boxSpine.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "idle02", true);
+        _boxSpine.GetComponent<SkeletonAnimation>().DOPlay();
     }
 
     private void InitUI()
     {
         closeBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ADPopReceive");
         wordtips.text = MultilingualManager.Instance.GetString("CarpMatchVictory");
-        //_awards = FishInfoController.Instance.GetAwardItems();
+        _awards = FishInfoController.Instance.GetAwardItems();
         GetAwardValue();
 
         StartCoroutine(PlayAwardAnim());
@@ -125,7 +115,7 @@ public class MatchSuccess : UIWindow
             switch (type)
             {
                 case LimitRewordType.Coins:
-                    GameDataManager.Instance.UserData.UpdateGold(award[1],true,false,message);
+                    GameDataManager.Instance.UserData.UpdateGold(award[1],true,true,message);
                     break;
                 case LimitRewordType.Butterfly:
                     GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, award[1],message);
@@ -189,17 +179,16 @@ public class MatchSuccess : UIWindow
     private void OnCloseBtn()
     {
         // 显式指定字符串区域性
-        // if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime)) 
-        //     GameDataManager.Instance.FishUserSave.roundstarttime = DateTime.Now.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        //
-        // TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(GameDataManager.Instance.FishUserSave.roundstarttime, System.Globalization.CultureInfo.InvariantCulture));
-        // //int progress = GameDataManager.Instance.FishUserSave.matchCount;
-        // ThinkManager.instance.Event_ActivityComplete("竞速活动",(int)ts.TotalSeconds);
-        // //FirebaseManager.Instance.ActivityProgress("竞速活动",progress,(int)ts.TotalSeconds);
-        //
-        // GameDataManager.Instance.FishUserSave.UpdateRound(1);
-        // GameDataManager.Instance.FishUserSave.ResetFishData();
-        //FishInfoController.Instance.FishMatchOver();
+        if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime)) 
+            GameDataManager.Instance.FishUserSave.roundstarttime = DateTime.Now.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        
+        TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(GameDataManager.Instance.FishUserSave.roundstarttime, System.Globalization.CultureInfo.InvariantCulture));
+        //int progress = GameDataManager.MainInstance.FishUserSave.matchCount;
+        AnalyticMgr.ActivityComplete("竞速活动",(int)ts.TotalSeconds);
+        
+        GameDataManager.Instance.FishUserSave.UpdateRound(1);
+        GameDataManager.Instance.FishUserSave.ResetFishData();
+        FishInfoController.Instance.FishMatchOver();
         
         _boxSpine.gameObject.SetActive(false);
         Destroy(_boxSpine);
