@@ -188,6 +188,8 @@ public class SystemManager : MonoBehaviour
             _panelConfig = AssetBundleLoader.SharedInstance
                 .LoadScriptableObject("objects", "InterfaceConfigs") as Configuration;
         }
+        
+        // Debug.Log("面板配置已经全部加载" + JsonUtility.ToJson(_panelConfig));
     }
 
     private void InitializePanelEvents()

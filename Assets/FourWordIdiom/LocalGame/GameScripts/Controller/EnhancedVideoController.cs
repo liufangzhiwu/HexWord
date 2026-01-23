@@ -1,8 +1,10 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
 using DG.Tweening;
 using System.Collections;
+using System.IO;
 
 /// <summary>
 /// 增强版视频播放控制器（单例模式）
@@ -20,8 +22,10 @@ public class EnhancedVideoController : MonoBehaviour
     [Header("播放设置")]
     [SerializeField] private float fadeDuration = 1f;    // 淡入淡出动画时长（秒）
     [SerializeField] private float preparationTimeout = 5f; // 视频准备超时时间（秒）
-
-    private bool isPreparing;                              // 视频准备状态标志
+    
+    [SerializeField] private string videoRelPath = "Video/flower.mp4";
+    
+    private bool isPrepared;                              // 视频准备状态标志
 
     #region Unity生命周期
     private void Awake()
@@ -30,14 +34,41 @@ public class EnhancedVideoController : MonoBehaviour
         ConfigureVideoPlayer();   // 配置播放器参数
     }
 
-    // 启用时注册事件
-    private void OnEnable() => RegisterEvents();
+    private void Start()
+    {
+        string finalUrl = GetPlatformSpecificPath();
+        Debug.Log($"[VideoController] 最终播放地址: {finalUrl}");
+        
+        videoPlayer.source = VideoSource.Url;
+        videoPlayer.url = finalUrl;
+        PrepareVideo();
+    }
 
-    // 禁用时注销事件
-    private void OnDisable() => UnregisterEvents();
 
     // 销毁时清理资源
     private void OnDestroy() => CleanupResources();
+    private string GetPlatformSpecificPath()
+    {
+        string finalUrl = "";
+
+#if UNITY_EDITOR
+        // ==========================================
+        // 编辑器模式：本地绝对路径 + file:// 协议
+        // ==========================================
+        string localPath = Path.Combine(Application.streamingAssetsPath, videoRelPath);
+        localPath = localPath.Replace("\\", "/");
+        
+        // Windows 编辑器必须加 file:// 否则会报 empty file 错误
+        finalUrl = "file://" + localPath; 
+#else
+        // ==========================================
+        // 微信/WebGL模式：CDN 绝对路径
+        // ==========================================
+        string basePath = Application.streamingAssetsPath;
+        finalUrl = $"{basePath}/{videoRelPath}";
+#endif
+        return finalUrl;
+    }
     #endregion
 
     #region 公共接口
@@ -46,8 +77,15 @@ public class EnhancedVideoController : MonoBehaviour
     /// </summary>
     public void PlayVideo()
     {
-         StopAllPlayback();       // 先停止当前播放
-        StartCoroutine(PlayRoutine(videoPlayer.clip)); // 启动播放协程
+        if (isPrepared)
+        {
+            DoPlay();
+        }
+        else
+        {
+            ShowLoadingOverlay();
+            videoPlayer.Prepare();
+        }
     }
 
     /// <summary>
@@ -57,12 +95,12 @@ public class EnhancedVideoController : MonoBehaviour
     {
         if (videoPlayer.isPlaying)
         {
-            videoPlayer.playbackSpeed = 0;           // 暂停播放
-            ShowLoadingOverlay();             // 显示加载遮罩
+            videoPlayer.Pause();           // 暂停播放
+            // ShowLoadingOverlay();             // 显示加载遮罩
         }
         else
         {
-            videoPlayer.playbackSpeed = 1;             // 继续播放
+            videoPlayer.Play();          // 继续播放
             HideLoadingOverlay();             // 隐藏加载遮罩
         }
     }
@@ -81,21 +119,32 @@ public class EnhancedVideoController : MonoBehaviour
     /// <summary>
     /// 视频播放协程（处理准备和播放流程）
     /// </summary>
-    private IEnumerator PlayRoutine(VideoClip clip)
+    private void PrepareVideo()
     {
         ShowLoadingOverlay();                 // 显示加载动画
+    
+        
+        videoPlayer.prepareCompleted += OnPrepareCompleted;
+        videoPlayer.errorReceived += HandleVideoError;
+       
         videoPlayer.Prepare();               // 开始准备视频
-
-        // 启动并等待准备监控协程
-        yield return new WaitForSeconds(1f);
-
-        // 准备完成后开始播放
-        if (videoPlayer.isPrepared)
-        {
-            videoPlayer.Play();               // 开始播放
-            videoPlayer.playbackSpeed = 1;        // 开始播放
-            HideLoadingOverlay();             // 隐藏加载动画
-        }
+    }
+    private void OnPrepareCompleted(VideoPlayer source)
+    {
+        Debug.Log("[Video] 准备完成");
+        isPrepared = true;
+        
+        // 移除事件防止重复调用
+        videoPlayer.prepareCompleted -= OnPrepareCompleted;
+        
+        // 这里可以选择直接播放，或者等待外部调用 PlayVideo
+        // 如果想要自动播放：
+        DoPlay(); 
+    }
+    private void DoPlay()
+    {
+        HideLoadingOverlay();
+        videoPlayer.Play();
     }
     #endregion
 
@@ -106,17 +155,9 @@ public class EnhancedVideoController : MonoBehaviour
     private void HandleVideoError(VideoPlayer source, string message)
     {
         Debug.LogError($"视频播放错误: {message}");
-        StopAllPlayback();  // 出错时停止播放
+        loadingOverlay.DOFade(1, 0);
     }
-
-    /// <summary>
-    /// 视频播放结束事件处理
-    /// </summary>
-    private void HandleVideoEnd(VideoPlayer source)
-    {
-        //Debug.Log("视频自然播放结束");
-        // 可在此处添加循环播放或触发结束事件
-    }
+    
     #endregion
 
     #region 辅助方法
@@ -133,7 +174,7 @@ public class EnhancedVideoController : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);  // 跨场景保持
+        // DontDestroyOnLoad(gameObject);  // 跨场景保持
     }
 
     /// <summary>
@@ -143,43 +184,39 @@ public class EnhancedVideoController : MonoBehaviour
     {
         videoPlayer.playOnAwake = false;    // 禁用自动播放
         videoPlayer.waitForFirstFrame = true; // 等待首帧
+        // 🔥 微信小游戏重要设置：静音以允许自动播放
+        videoPlayer.SetDirectAudioMute(0, true);
+        videoPlayer.aspectRatio = VideoAspectRatio.FitOutside; // 推荐：填满屏幕但裁切边缘
     }
-
-    /// <summary>
-    /// 注册视频事件监听
-    /// </summary>
-    private void RegisterEvents()
-    {
-        videoPlayer.errorReceived += HandleVideoError;          // 错误事件
-        videoPlayer.loopPointReached += HandleVideoEnd;        // 结束事件
-    }
-
-    /// <summary>
-    /// 注销视频事件监听
-    /// </summary>
-    private void UnregisterEvents()
-    {
-        videoPlayer.errorReceived -= HandleVideoError;
-        videoPlayer.loopPointReached -= HandleVideoEnd;
-    }
-
+    
     /// <summary>
     /// 清理资源
     /// </summary>
     private void CleanupResources()
     {
-        StopAllPlayback();       // 停止播放
-        videoPlayer.clip = null; // 释放视频资源
+        videoPlayer.prepareCompleted -= OnPrepareCompleted;
+        videoPlayer.errorReceived -= HandleVideoError;
     }
 
     /// <summary>
     /// 显示加载遮罩（渐入动画）
     /// </summary>
-    private void ShowLoadingOverlay() => loadingOverlay.DOFade(1, fadeDuration);
+    private void ShowLoadingOverlay()
+    {
+        loadingOverlay.gameObject.SetActive(true);
+        loadingOverlay.DOFade(1, fadeDuration);
+    }
 
     /// <summary>
     /// 隐藏加载遮罩（渐出动画）
     /// </summary>
-    private void HideLoadingOverlay() => loadingOverlay.DOFade(0, fadeDuration);
+    private void HideLoadingOverlay()
+    {
+        loadingOverlay.DOFade(0, fadeDuration).OnComplete(() =>
+        {
+            loadingOverlay.gameObject.SetActive(false);
+        });
+    }
+
     #endregion
 }

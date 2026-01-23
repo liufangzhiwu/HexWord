@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Middleware;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -98,15 +97,15 @@ public class ChessLearningGuide : UIWindow
         {
             
             Canvas canvas = chessView.GetComponent<Canvas>();
-            if(canvas == null)
-            {
-                canvas = chessView.AddComponent<Canvas>();
-            }
-            GraphicRaycaster graphicRaycaster = chessView.GetComponent<GraphicRaycaster>();
-            if (graphicRaycaster == null)
-            {
-                graphicRaycaster = chessView.AddComponent<GraphicRaycaster>();
-            }
+            // if(canvas == null)
+            // {
+            //     canvas = chessView.AddComponent<Canvas>();
+            // }
+            // GraphicRaycaster graphicRaycaster = chessView.GetComponent<GraphicRaycaster>();
+            // if (graphicRaycaster == null)
+            // {
+            //     graphicRaycaster = chessView.AddComponent<GraphicRaycaster>();
+            // }
             canvas.overrideSorting = true;
             canvas.sortingLayerName = UIPanelLayer.TipsPanel;
             canvas.sortingOrder = 1;
@@ -114,32 +113,32 @@ public class ChessLearningGuide : UIWindow
             {
                 chessView.SetChoose(true, UIPanelLayer.TipsPanel);
             }
-            if(ChessGuideSystem.Instance.toolSourceName != "ChessError")
-                graphicRaycaster.enabled = false;
-            else
-                graphicRaycaster.enabled = true;
+            // if(ChessGuideSystem.Instance.toolSourceName != "ChessError")
+            //     graphicRaycaster.enabled = false;
+            // else
+            //     graphicRaycaster.enabled = true;
 
             chessViews.Add(chessView);
         }
         yield return null;
 
         int index = 0;
-        foreach (BowlView bowlView in ChessGuideSystem.Instance.TargetPuzzle)
-        {
-            if (ChessGuideSystem.Instance.currentTutorial == 1 && index == 0)
-            {
-                Canvas canvas = bowlView.GetComponent<Canvas>();
-                if (canvas == null)
-                    canvas = bowlView.AddComponent<Canvas>();
-                canvas.overrideSorting = true;
-                canvas.sortingLayerName = UIPanelLayer.TipsPanel;
-                canvas.sortingOrder = 1;
-                if(bowlView.GetComponent<GraphicRaycaster>() == null)
-                    bowlView.AddComponent<GraphicRaycaster>();
-            }
-            bowlViews.Add(bowlView);
-            index++;
-        }
+        // foreach (BowlView bowlView in ChessGuideSystem.Instance.TargetPuzzle)
+        // {
+        //     if (ChessGuideSystem.Instance.currentTutorial == 1 && index == 0)
+        //     {
+        //         Canvas canvas = bowlView.GetComponent<Canvas>();
+        //         if (canvas == null)
+        //             canvas = bowlView.AddComponent<Canvas>();
+        //         canvas.overrideSorting = true;
+        //         canvas.sortingLayerName = UIPanelLayer.TipsPanel;
+        //         canvas.sortingOrder = 1;
+        //         if(bowlView.GetComponent<GraphicRaycaster>() == null)
+        //             bowlView.AddComponent<GraphicRaycaster>();
+        //     }
+        //     bowlViews.Add(bowlView);
+        //     index++;
+        // }
         yield return null;
 
         // if(bowlViews.Count > 0)
@@ -187,20 +186,20 @@ public class ChessLearningGuide : UIWindow
             ChessView chessView = ChessGuideSystem.Instance.ChesspieceList[0];
             int index = chessViews.IndexOf(chessView);
             Canvas canvas = chessView.GetComponent<Canvas>();
-            if (canvas == null)
-            {
-                canvas = chessView.AddComponent<Canvas>();
-            }
-            GraphicRaycaster gr = chessView.GetComponent<GraphicRaycaster>();
-            if (gr == null)
-            {
-                gr = chessView.AddComponent<GraphicRaycaster>();
-            }
+            // if (canvas == null)
+            // {
+            //     canvas = chessView.AddComponent<Canvas>();
+            // }
+            // GraphicRaycaster gr = chessView.GetComponent<GraphicRaycaster>();
+            // if (gr == null)
+            // {
+            //     gr = chessView.AddComponent<GraphicRaycaster>();
+            // }
             canvas.overrideSorting = true;
             canvas.sortingLayerName = UIPanelLayer.TipsPanel;
             canvas.sortingOrder = 1;
             canvas.enabled =true;
-            gr.enabled = true;
+            // gr.enabled = true;
             if (chessView.CurrState == TileState.Check)
             {
                 chessView.SetChoose(true, UIPanelLayer.TipsPanel);

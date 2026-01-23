@@ -19,6 +19,16 @@ public class LoginRequest
 }
 
 [Serializable]
+public class WechatLoginRequest
+{
+    public string code;      // 微信返回的 code
+    public string factory;   // "wechat"
+    public string platform;  // 平台
+    public string version;   // 版本
+    public string language;  // 语言
+}
+
+[Serializable]
 public class LoginResponse
 {
     public string token;

@@ -111,7 +111,7 @@ public class AudioManager : MonoBehaviour
         return newSource;
     }
 
-    private void OnEnable()
+    public void Init()
     {
         // 预加载背景音乐
         string[] musicNames =

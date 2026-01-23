@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.HuaweiAppGallery;
 
 namespace Middleware
 {
@@ -32,49 +31,26 @@ namespace Middleware
             self = this;
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
-         
-            
-#if UNITY_huawei&&!UNITY_EDITOR
-            HuaweiGameService.AppInit();
-#endif
-            // StartCoroutine(ShowLoadingScreen());
-            StartCoroutine(CheckNetworkConnection());
-            
-            CreateAnalytic();
-            InitManagers();
         }
         
 
         public void InitGame()
         {
+            MultilingualManager.Instance.LoadLocalization();
+            CreateAnalytic();
             if (UIUtilities.isEditMode) return;
-            
-            CreateAd();
             CreateAccounts();
-
-           StartCoroutine(WaitLoginedCreateShop());
-           
         }
-        
-        private IEnumerator WaitLoginedCreateShop()
+        public void InitManagers()
         {
-            yield return new WaitUntil(()=>Accounts.IsLogin);
-            CreateShop();
-        }
-
-        // IEnumerator  ShowLoadingScreen()
-        // {
-        //     yield return new WaitForSeconds(2f);
-        //     LoadingScreen.gameObject.SetActive(true);
-        // }
-
-        private void InitManagers()
-        {
-	        GameDataManager.Instance.Init();
-	        //AudioManager.Instance.Init();
+            AudioManager.Instance.Init();
 	        LimitTimeManager.Instance.Init();
-            
-            ChessStageController.Instance.Init();
+            ConfigManager.Instance.LoadAdjustTable();
+            DailyTaskManager.Instance.Init();
+            ShopManager.shopManager.Initialize();
+            // ChessStageController.Instance.Init();
+            CreateAd();
+            CreateShop();
         }
         
         private void CreateAccounts()
@@ -89,6 +65,7 @@ namespace Middleware
             Accounts = new Account_harmony();
            
 #endif
+            Accounts = new Account_wechat();
             Accounts.Init(0.2f);
         }
     
@@ -102,6 +79,7 @@ namespace Middleware
 #elif UNITY_OPENHARMONY
             Ads = new Ads_harmony();
 #endif
+            Ads = new Ads_wecaht();
             Ads.Init(0.2f);
         }
     
@@ -114,6 +92,7 @@ namespace Middleware
 #elif UNITY_OPENHARMONY
             Analytics = new Analytics_harmony();
 #endif
+            Analytics = new Analytics_wechat();
             Analytics.Init(1f);
         }
         
@@ -126,6 +105,7 @@ namespace Middleware
 #elif UNITY_OPENHARMONY
             Shop = new Shop_harmony();
 #endif
+            Shop = new Shop_wechat();
             Shop.Init(0.2f);
         }
         
@@ -172,42 +152,6 @@ namespace Middleware
             return SystemInfo.deviceUniqueIdentifier;
         }
         
-        private IEnumerator CheckNetworkConnection()
-        {
-            while (true)
-            {
-                bool isSuccess = false;
-                Ping ping = new Ping("8.8.8.8");
-                float timeout = 3.0f;
-                float startTime = Time.time;
-
-                // 等待Ping完成或超时
-                while (!ping.isDone && Time.time - startTime < timeout)
-                {
-                    yield return null;
-                }
-
-                // 关键修改：明确超时和成功的条件
-                if (ping.isDone && ping.time > 0 && ping.time < 2000)
-                {
-                    isSuccess = true;
-                }
-                else
-                {
-                    isSuccess = false;
-                }
-
-                // 释放Ping资源（Unity需手动销毁）
-                ping.DestroyPing();
-                ping = null;
-
-                IsNetworkActive = isSuccess;
-                Debug.Log("网络状态: " + (IsNetworkActive ? "已连接" : "未连接"));
-
-                yield return new WaitForSeconds(5);
-            }
-        }
-
         public void ShowLoginErrorPanel()
         {
             if(_uiRoot == null) return;

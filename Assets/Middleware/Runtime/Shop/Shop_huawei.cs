@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_huawei
+using System;
 using HuaweiService;
 using HuaweiService.IAP;
 using UnityEngine;
@@ -259,3 +260,4 @@ namespace Middleware
         }
     }
 }
+#endif

@@ -80,7 +80,50 @@ public class LoginApi
                 action?.Invoke(null);
             });
     }
+    /**
+         * 2. 【新增】微信登录接口
+         * 接收前端获取到的 code，发送给后端
+         */
+    public IEnumerator WechatLogin(string code, Action<object> action)
+    {
+        if (string.IsNullOrEmpty(code))
+        {
+            Debug.LogError("微信登录失败：Code 为空");
+            action?.Invoke(null);
+            yield break;
+        }
 
+        var data = new WechatLoginRequest
+        {
+            code = code,
+            factory = "wechat",
+            platform = Application.platform.ToString(),
+            version = Application.version ?? "1.0.0",
+            language = Application.systemLanguage.ToString()
+        };
+
+        Debug.LogFormat("微信登录请求数据: {0}", JsonConvert.SerializeObject(data));
+
+        // 注意：路由地址对应 Laravel 里的 Route::post('wechat-login', ...)
+        yield return httpClient.Post<LoginResponse>("auth/wechat-login",
+            data,
+            response =>
+            {
+                // 保存 Token (后端逻辑是一样的，返回 Token)
+                HTTPClient.Instance.SetAuthToken(response.token);
+                Debug.Log("WeChat Login success! Token: " + response.token);
+                
+                // 这里可以顺便把 openId (uid) 更新到本地数据管理器
+                // GameDataManager.Instance.UserData.UserId = response.uid; 
+                
+                action?.Invoke(response);
+            },
+            error =>
+            {
+                Debug.Log($"WeChat Login failed: {error}");
+                action?.Invoke(null);
+            });
+    }
     /**
      * 退出游戏， 保存数据
      */

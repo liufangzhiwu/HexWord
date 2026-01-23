@@ -52,7 +52,7 @@ public class NetErrorView : MonoBehaviour
 
     private void OnTryAgainClick()
     {
-        Game.self.Accounts.Login(true);
+        Game.self.Accounts.Login(null);
         transform.gameObject.SetActive(false);
     }
     

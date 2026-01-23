@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq;
 using Middleware;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -39,28 +40,24 @@ public sealed class GameCoreManager: MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject); // 保持广告管理器在场景切换时不销毁
         }
+        
     }
-
-
-    /// <summary>
-    /// 显示游戏主界面
-    /// </summary>
-    public void ShowGamePanel()
-    {
-        StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
-        SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
-    }
-
+ 
     private void Start()
     {
-        Game.self._uiRoot=SystemManager.Instance._uiRoot;
+        Application.targetFrameRate = 60; // 平台设置为60帧
+        Game.self.InitManagers();
+        // Game.self._uiRoot=SystemManager.Instance._uiRoot;
+        // 🔥 修复 UI 相机丢失问题
+        SetupCanvasCamera();
+        
         StartCoroutine(InitializeGameRoutine());
         //StartCoroutine(CheckNetworkConnection());
         AutoLevelTalbe.GetComponent<Toggle>().onValueChanged.AddListener(OnAutoLevelTalbeValueChanged);
         
 #if Unity_ShowLog || UNITY_EDITOR
         IsTrueAuto = false;
-        AutoLevelTalbe.gameObject.SetActive(true);
+        AutoLevelTalbe.gameObject.SetActive(false);
         Debug.unityLogger.logEnabled = true;
 #else 
         IsTrueAuto = false;
@@ -73,7 +70,28 @@ public sealed class GameCoreManager: MonoBehaviour
     {
         AutoLevelTalbe.gameObject.SetActive(isShow);
     }
+    private void SetupCanvasCamera()
+    {
+        // 1. 找到场景里的 Canvas (假设你的 Canvas 名字叫 "Canvas")
+        Canvas myCanvas = GameObject.Find("Canvas")?.GetComponent<Canvas>();
     
+        if (myCanvas != null && myCanvas.renderMode == RenderMode.ScreenSpaceCamera)
+        {
+            // 2. 如果 Render Camera 是空的，把主相机赋给它
+            if (myCanvas.worldCamera == null)
+            {
+                myCanvas.worldCamera = Camera.main;
+                Debug.Log("[UI Fix] 已重新绑定 Canvas 的相机");
+            }
+        
+            // 3. 确保 Plane Distance 没问题 (有时候会变成负数导致被裁剪)
+            if(myCanvas.planeDistance < 1) myCanvas.planeDistance = 100;
+        
+            // 4. 强制刷新一下 Sorting Layer (有时层级会错乱)
+            myCanvas.sortingLayerName = "UI"; // 确保你项目里有这个 Layer
+            myCanvas.sortingOrder = 0;
+        }
+    }
     private void OnAutoLevelTalbeValueChanged(bool ison)
     {
         IsTrueAuto = ison;
@@ -105,7 +123,7 @@ public sealed class GameCoreManager: MonoBehaviour
     private IEnumerator InitializeGameRoutine()
     {
         yield return new WaitForSeconds(0.2f);
-        
+        Debug.Log("主场景核心初始化完成 。。。。");
         StageHexController.Instance.CreateStageInfo(1);
         
         if (GameDataManager.Instance.UserData.IsFirstLaunch)
@@ -120,7 +138,15 @@ public sealed class GameCoreManager: MonoBehaviour
             SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
         }
     }
-
+    /// <summary>
+    /// 显示游戏主界面
+    /// </summary>
+    public void ShowGamePanel()
+    {
+        StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
+        SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
+    }
+    
     /// <summary>
     /// 显示隐私协议界面
     /// </summary>

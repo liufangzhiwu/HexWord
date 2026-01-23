@@ -25,7 +25,7 @@ public class MultilingualManager:MonoBehaviour
         else
         {
             Destroy(gameObject); // 销毁重复的实例
-        }           
+        }       
     }
 
     public void LoadLocalization()

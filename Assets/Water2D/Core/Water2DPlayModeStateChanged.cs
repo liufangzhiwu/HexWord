@@ -1,7 +1,7 @@
-﻿#if UNITY_EDITOR
-namespace Water2D
+﻿namespace Water2D
 {
     using UnityEngine;
+#if UNITY_EDITOR
     using UnityEditor;
 
 
@@ -74,6 +74,5 @@ namespace Water2D
 
         
     }
-
+#endif // 🔥 结束包围
 }
-#endif

@@ -1,6 +1,10 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/FourWordIdiom/LocalGame/Resources/Effect_FishBox.meta
 guid: 6c7ba3b1d65f1ce46b3ad6be8e03b6f6
 folderAsset: yes
+========
+guid: df9c4f64f5bbb414188d893e42bc9657
+>>>>>>>> ebfcae0e (微信开发中...):Assets/Plugins/Android/gradleTemplate.properties.meta
 DefaultImporter:
   externalObjects: {}
   userData: 

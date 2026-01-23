@@ -1,193 +1,231 @@
 var Lib_BEST_HTTP_WebGL_HTTP_Bridge =
 {
-	/*LogLevels: {
-		All: 0,
-		Information: 1,
-		Warning: 2,
-		Error: 3,
-		Exception: 4,
-		None: 5
-	}*/
+    /*LogLevels: {
+        All: 0,
+        Information: 1,
+        Warning: 2,
+        Error: 3,
+        Exception: 4,
+        None: 5
+    }*/
 
-	$wr: {
-		requestInstances: {},
-		nextRequestId: 1,
-		loglevel: 2
-	},
+    $wr: {
+        requestInstances: {},
+        nextRequestId: 1,
+        loglevel: 2, responses: {}, timer: {}, requests: {}, abortControllers: {}
+    },
 
-	XHR_Create: function(method, url, user, passwd, withCredentials)
-	{
-		var _url = /*encodeURI*/(Pointer_stringify(url))
-					.replace(/\+/g, '%2B')
-					.replace(/%252[fF]/ig, '%2F');
-		var _method = Pointer_stringify(method);
+    XHR_Create: function(method, url, user, passwd, withCredentials)
+    {
+        var _url = /*encodeURI*/(UTF8ToString(url))
+                    .replace(/\+/g, '%2B')
+                    .replace(/%252[fF]/ig, '%2F');
+        var _method = UTF8ToString(method);
 
-		if (wr.loglevel <= 1) /*information*/
-			console.log(wr.nextRequestId + ' XHR_Create - withCredentials: ' + withCredentials + ' method: ' + _method + ' url: ' + _url);
+        if (wr.loglevel <= 1) /*information*/
+            console.log(wr.nextRequestId + ' XHR_Create - withCredentials: ' + withCredentials + ' method: ' + _method + ' url: ' + _url);
 
-		var http = new XMLHttpRequest();
+        var http = new XMLHttpRequest();
 
-		if (user && passwd)
-		{
-			var u = Pointer_stringify(user);
-			var p = Pointer_stringify(passwd);
+        if (user && passwd)
+        {
+            var u = UTF8ToString(user);
+            var p = UTF8ToString(passwd);
 
-			http.withCredentials = true;
-			http.open(_method, _url, /*async:*/ true , u, p);
-		}
-		else {
+            http.withCredentials = true;
+            http.open(_method, _url, /*async:*/ true , u, p);
+        }
+        else {
             http.withCredentials = withCredentials;
-			http.open(_method, _url, /*async:*/ true);
+            http.open(_method, _url, /*async:*/ true);
         }
 
-		http.responseType = 'arraybuffer';
+        http.responseType = 'arraybuffer';
 
-		wr.requestInstances[wr.nextRequestId] = http;
-		return wr.nextRequestId++;
-	},
+        wr.requestInstances[wr.nextRequestId] = http;
+        return wr.nextRequestId++;
+    },
 
-	XHR_SetTimeout: function (request, timeout)
-	{
-		if (wr.loglevel <= 1) /*information*/
-			console.log(request + ' XHR_SetTimeout ' + timeout);
+    XHR_SetTimeout: function (request, timeout)
+    {
+        if (wr.loglevel <= 1) /*information*/
+            console.log(request + ' XHR_SetTimeout ' + timeout);
 
-		wr.requestInstances[request].timeout = timeout;
-	},
+        wr.requestInstances[request].timeout = timeout;
+    },
 
-	XHR_SetRequestHeader: function (request, header, value)
-	{
-		var _header = Pointer_stringify(header);
-		var _value = Pointer_stringify(value);
+    XHR_SetRequestHeader: function (request, header, value)
+    {
+        var _header = UTF8ToString(header);
+        var _value = UTF8ToString(value);
 
-		if (wr.loglevel <= 1) /*information*/
-			console.log(request + ' XHR_SetRequestHeader ' + _header + ' ' + _value);
+        if (wr.loglevel <= 1) /*information*/
+            console.log(request + ' XHR_SetRequestHeader ' + _header + ' ' + _value);
 
-        if (_header != 'Cookie')
-		    wr.requestInstances[request].setRequestHeader(_header, _value);
+        if (_header != 'Cookie') {
+            wr.requestInstances[request].setRequestHeader(_header, _value);
+        }
         else {
-            var cookies = _value.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                document.cookie = cookies[i];
+            // [修复] 增加非空判断，防止 _value 为空时报错
+            if (_value) {
+                var cookies = _value.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    if (typeof document !== 'undefined' && document.cookie !== undefined) {
+                        document.cookie = cookies[i];
+                    }
+                }
             }
         }
-	},
+    },
 
-	XHR_SetResponseHandler: function (request, onresponse, onerror, ontimeout, onaborted)
-	{
-		if (wr.loglevel <= 1) /*information*/
-			console.log(request + ' XHR_SetResponseHandler');
+    XHR_SetResponseHandler: function (request, onresponse, onerror, ontimeout, onaborted)
+    {
+        if (wr.loglevel <= 1) /*information*/
+            console.log(request + ' XHR_SetResponseHandler');
 
-		var http = wr.requestInstances[request];
-		// LOAD
-		http.onload = function http_onload(e) {
-			if (wr.loglevel <= 1) /*information*/
-				console.log(request + '  - onload ' + http.status + ' ' + http.statusText);
+        var http = wr.requestInstances[request];
+        // LOAD
+        http.onload = function http_onload(e) {
+            if (wr.loglevel <= 1) /*information*/
+                console.log(request + '  - onload ' + http.status + ' ' + http.statusText);
 
-			if (onresponse)
-			{
-				var response = 0;
-				if (!!http.response)
-					response = http.response;
+            if (onresponse)
+            {
+                var response = 0;
+                if (!!http.response)
+                    response = http.response;
 
-				var byteArray = new Uint8Array(response);
-				var buffer = _malloc(byteArray.length);
-				HEAPU8.set(byteArray, buffer);
+                var byteArray = new Uint8Array(response);
+                var buffer = _malloc(byteArray.length);
+                HEAPU8.set(byteArray, buffer);
 
-				Runtime.dynCall('viiiii', onresponse, [request, http.status, buffer, byteArray.length, 0]);
+                // [修复] Runtime.dynCall -> Module.dynCall
+                if (typeof Module !== 'undefined' && Module.dynCall) {
+                    Module.dynCall('viiiii', onresponse, [request, http.status, buffer, byteArray.length, 0]);
+                } else if (typeof dynCall === 'function') {
+                    dynCall('viiiii', onresponse, [request, http.status, buffer, byteArray.length, 0]);
+                }
 
-				_free(buffer);
-			}
-		};
+                _free(buffer);
+            }
+        };
 
-		if (onerror)
-		{
-			http.onerror = function http_onerror(e) {
-				function HandleError(err)
-				{
-					var length = lengthBytesUTF8(err) + 1;
-					var buffer = _malloc(length);
+        if (onerror)
+        {
+            http.onerror = function http_onerror(e) {
+                function HandleError(err)
+                {
+                    var length = lengthBytesUTF8(err) + 1;
+                    var buffer = _malloc(length);
 
-					stringToUTF8Array(err, HEAPU8, buffer, length);
+                    stringToUTF8Array(err, HEAPU8, buffer, length);
 
-					Runtime.dynCall('vii', onerror, [request, buffer]);
+                    if (typeof Module !== 'undefined' && Module.dynCall) {
+                        Module.dynCall('vii', onerror, [request, buffer]);
+                    } else if (typeof dynCall === 'function') {
+                        dynCall('vii', onerror, [request, buffer]);
+                    }
 
-					_free(buffer);
-				}
+                    _free(buffer);
+                }
 
-				if (e.error)
-					HandleError(e.error);
-				else
-					HandleError("Unknown Error! Maybe a CORS porblem?");
-			};
-		}
+                if (e.error)
+                    HandleError(e.error);
+                else
+                    HandleError("Unknown Error! Maybe a CORS porblem?");
+            };
+        }
 
-		if (ontimeout)
-			http.ontimeout = function http_onerror(e) {
-				Runtime.dynCall('vi', ontimeout, [request]);
-			};
+        if (ontimeout)
+            http.ontimeout = function http_onerror(e) {
+                if (typeof Module !== 'undefined' && Module.dynCall) {
+                    Module.dynCall('vi', ontimeout, [request]);
+                } else if (typeof dynCall === 'function') {
+                    dynCall('vi', ontimeout, [request]);
+                }
+            };
 
-		if (onaborted)
-			http.onabort = function http_onerror(e) {
-				Runtime.dynCall('vi', onaborted, [request]);
-			};
-	},
+        if (onaborted)
+            http.onabort = function http_onerror(e) {
+                if (typeof Module !== 'undefined' && Module.dynCall) {
+                    Module.dynCall('vi', onaborted, [request]);
+                } else if (typeof dynCall === 'function') {
+                    dynCall('vi', onaborted, [request]);
+                }
+            };
+    },
 
-	XHR_SetProgressHandler: function (request, onprogress, onuploadprogress)
-	{
-		if (wr.loglevel <= 1) /*information*/
-			console.log(request + ' XHR_SetProgressHandler');
+    XHR_SetProgressHandler: function (request, onprogress, onuploadprogress)
+    {
+        if (wr.loglevel <= 1) /*information*/
+            console.log(request + ' XHR_SetProgressHandler');
 
-		var http = wr.requestInstances[request];
-		if (http)
-		{
-			if (onprogress)
-				http.onprogress = function http_onprogress(e) {
-					if (wr.loglevel <= 1) /*information*/
-						console.log(request + ' XHR_SetProgressHandler - onProgress ' + e.loaded + ' ' + e.total);
+        var http = wr.requestInstances[request];
+        if (http)
+        {
+            if (onprogress)
+                http.onprogress = function http_onprogress(e) {
+                    if (wr.loglevel <= 1) /*information*/
+                        console.log(request + ' XHR_SetProgressHandler - onProgress ' + e.loaded + ' ' + e.total);
 
-					if (e.lengthComputable)
-						Runtime.dynCall('viii', onprogress, [request, e.loaded, e.total]);
-				};
+                    if (e.lengthComputable) {
+                        if (typeof Module !== 'undefined' && Module.dynCall) {
+                            Module.dynCall('viii', onprogress, [request, e.loaded, e.total]);
+                        } else if (typeof dynCall === 'function') {
+                            dynCall('viii', onprogress, [request, e.loaded, e.total]);
+                        }
+                    }
+                };
 
-			if (onuploadprogress)
-				http.upload.addEventListener("progress", function http_onprogress(e) {
-					if (wr.loglevel <= 1) /*information*/
-						console.log(request + ' XHR_SetProgressHandler - onUploadProgress ' + e.loaded + ' ' + e.total);
+            if (onuploadprogress)
+                http.upload.addEventListener("progress", function http_onprogress(e) {
+                    if (wr.loglevel <= 1) /*information*/
+                        console.log(request + ' XHR_SetProgressHandler - onUploadProgress ' + e.loaded + ' ' + e.total);
 
-					if (e.lengthComputable)
-						Runtime.dynCall('viii', onuploadprogress, [request, e.loaded, e.total]);
-				}, true);
-		}
-	},
+                    if (e.lengthComputable) {
+                        if (typeof Module !== 'undefined' && Module.dynCall) {
+                            Module.dynCall('viii', onuploadprogress, [request, e.loaded, e.total]);
+                        } else if (typeof dynCall === 'function') {
+                            dynCall('viii', onuploadprogress, [request, e.loaded, e.total]);
+                        }
+                    }
+                }, true);
+        }
+    },
 
-	XHR_Send: function (request, ptr, length)
-	{
-		if (wr.loglevel <= 1) /*information*/
-			console.log(request + ' XHR_Send ' + ptr + ' ' + length);
+    XHR_Send: function (request, ptr, length)
+    {
+        if (wr.loglevel <= 1) /*information*/
+            console.log(request + ' XHR_Send ' + ptr + ' ' + length);
 
-		var http = wr.requestInstances[request];
+        var http = wr.requestInstances[request];
 
-		try {
-			if (length > 0)
-				http.send(HEAPU8.subarray(ptr, ptr+length));
-			else
-				http.send();
-		}
-		catch(e) {
-			if (wr.loglevel <= 4) /*exception*/
-				console.error(request + ' ' + e.name + ": " + e.message);
-		}
-	},
+        try {
+            if (length > 0)
+                http.send(HEAPU8.subarray(ptr, ptr+length));
+            else
+                http.send();
+        }
+        catch(e) {
+            if (wr.loglevel <= 4) /*exception*/
+                console.error(request + ' ' + e.name + ": " + e.message);
+        }
+    },
 
-	XHR_GetResponseHeaders: function(request, callback)
-	{
-		if (wr.loglevel <= 1) /*information*/
-			console.log(request + ' XHR_GetResponseHeaders');
+    XHR_GetResponseHeaders: function(request, callback)
+    {
+        if (wr.loglevel <= 1) /*information*/
+            console.log(request + ' XHR_GetResponseHeaders');
 
-        var headers = ''
-        var cookies = document.cookie.split(';');
-        for(var i = 0; i < cookies.length; ++i)
-            headers += "Set-Cookie:" + cookies[i] + "\r\n";
+        var headers = '';
+        
+        // [修复] 增加对 document.cookie 的安全检查
+        // 微信环境下 document.cookie 可能是 undefined，直接 split 会报错
+        if (typeof document !== 'undefined' && document.cookie) {
+            var cookies = document.cookie.split(';');
+            for(var i = 0; i < cookies.length; ++i)
+                headers += "Set-Cookie:" + cookies[i] + "\r\n";
+        }
 
         var additionalHeaders = wr.requestInstances[request].getAllResponseHeaders().trim();
         if (additionalHeaders.length > 0) {
@@ -195,64 +233,72 @@ var Lib_BEST_HTTP_WebGL_HTTP_Bridge =
             headers += "\r\n";
         }
 
-		if (wr.loglevel <= 1) /*information*/
-			console.log('  "' + headers + '"');
+        if (wr.loglevel <= 1) /*information*/
+            console.log('  "' + headers + '"');
 
-		var byteArray = new Uint8Array(headers.length);
-		for(var i=0,j=headers.length;i<j;++i){
-			byteArray[i]=headers.charCodeAt(i);
-		}
+        var byteArray = new Uint8Array(headers.length);
+        for(var i=0,j=headers.length;i<j;++i){
+            byteArray[i]=headers.charCodeAt(i);
+        }
 
-		var buffer = _malloc(byteArray.length);
-		HEAPU8.set(byteArray, buffer);
+        var buffer = _malloc(byteArray.length);
+        HEAPU8.set(byteArray, buffer);
 
-		Runtime.dynCall('viii', callback, [request, buffer, byteArray.length]);
+        if (typeof Module !== 'undefined' && Module.dynCall) {
+            Module.dynCall('viii', callback, [request, buffer, byteArray.length]);
+        } else if (typeof dynCall === 'function') {
+            dynCall('viii', callback, [request, buffer, byteArray.length]);
+        }
 
-		_free(buffer);
-	},
+        _free(buffer);
+    },
 
-	XHR_GetStatusLine: function(request, callback)
-	{
-		if (wr.loglevel <= 1) /*information*/
-			console.log(request + ' XHR_GetStatusLine');
+    XHR_GetStatusLine: function(request, callback)
+    {
+        if (wr.loglevel <= 1) /*information*/
+            console.log(request + ' XHR_GetStatusLine');
 
-		var status = "HTTP/1.1 " + wr.requestInstances[request].status + " " + wr.requestInstances[request].statusText;
+        var status = "HTTP/1.1 " + wr.requestInstances[request].status + " " + wr.requestInstances[request].statusText;
 
-		if (wr.loglevel <= 1) /*information*/
-			console.log(status);
+        if (wr.loglevel <= 1) /*information*/
+            console.log(status);
 
-		var byteArray = new Uint8Array(status.length);
-		for(var i=0,j=status.length;i<j;++i){
-			byteArray[i]=status.charCodeAt(i);
-		}
-		var buffer = _malloc(byteArray.length);
-		HEAPU8.set(byteArray, buffer);
+        var byteArray = new Uint8Array(status.length);
+        for(var i=0,j=status.length;i<j;++i){
+            byteArray[i]=status.charCodeAt(i);
+        }
+        var buffer = _malloc(byteArray.length);
+        HEAPU8.set(byteArray, buffer);
 
-		Runtime.dynCall('viii', callback, [request, buffer, byteArray.length]);
+        if (typeof Module !== 'undefined' && Module.dynCall) {
+            Module.dynCall('viii', callback, [request, buffer, byteArray.length]);
+        } else if (typeof dynCall === 'function') {
+            dynCall('viii', callback, [request, buffer, byteArray.length]);
+        }
 
-		_free(buffer);
-	},
+        _free(buffer);
+    },
 
-	XHR_Abort: function (request)
-	{
-		if (wr.loglevel <= 1) /*information*/
-			console.log(request + ' XHR_Abort');
+    XHR_Abort: function (request)
+    {
+        if (wr.loglevel <= 1) /*information*/
+            console.log(request + ' XHR_Abort');
 
-		wr.requestInstances[request].abort();
-	},
+        wr.requestInstances[request].abort();
+    },
 
-	XHR_Release: function (request)
-	{
-		if (wr.loglevel <= 1) /*information*/
-			console.log(request + ' XHR_Release');
+    XHR_Release: function (request)
+    {
+        if (wr.loglevel <= 1) /*information*/
+            console.log(request + ' XHR_Release');
 
-		delete wr.requestInstances[request];
-	},
+        delete wr.requestInstances[request];
+    },
 
-	XHR_SetLoglevel: function (level)
-	{
-		wr.loglevel = level;
-	}
+    XHR_SetLoglevel: function (level)
+    {
+        wr.loglevel = level;
+    }
 };
 
 autoAddDeps(Lib_BEST_HTTP_WebGL_HTTP_Bridge, '$wr');

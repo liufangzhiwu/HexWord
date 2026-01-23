@@ -184,6 +184,11 @@ namespace Middleware
 		{
 			SwitchPlatform(BuildTarget.iOS);
 		}
+		[MenuItem("Tools/切换平台/微信小游戏", false, 104)]
+		public static void SwitchToMiniGame()
+		{
+			SwitchPlatform(BuildTarget.WeixinMiniGame, false);
+		}
 		
 		private static void SwitchPlatform(BuildTarget targetPlatform, bool isMerge = true)
 		{
@@ -345,7 +350,7 @@ namespace Middleware
 			PlayerSettings.Android.keyaliasName = "liu";
 			PlayerSettings.Android.keyaliasPass = "hex123456";
 			//打资源包
-			AssetBundleBuilder.BuildAssetBundles(false);
+			AssetBundleBuilder.BuildAssetBundles();
 			//打版本包
 			var outputDir = Path.GetFullPath($"{Application.dataPath}/../output/Android");
 			if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
@@ -399,7 +404,7 @@ namespace Middleware
 			PlayerSettings.productName = "禅の熟語消し";
 			PlayerSettings.applicationIdentifier = "idiom.block.zen.tw";
 			//打资源包
-			AssetBundleBuilder.BuildAssetBundles(false);
+			AssetBundleBuilder.BuildAssetBundles();
 			//打版本包
 			var outputDir = Path.GetFullPath($"{Application.dataPath}/../output/IOS");
 			if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);

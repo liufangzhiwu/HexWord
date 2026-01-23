@@ -1,10 +1,11 @@
-﻿#if UNITY_EDITOR
-namespace Water2D
+﻿namespace Water2D
 {
     using UnityEngine;
     using UnityEngine.SceneManagement;
+#if UNITY_EDITOR
     using UnityEditor.SceneManagement;
     using UnityEditor;
+#endif
     using System.Collections.Generic;
 
     [ExecuteInEditMode]
@@ -13,6 +14,7 @@ namespace Water2D
     {
         static void Initialize()
         {
+#if UNITY_EDITOR
             if (instance == null)
             {
                 GameObject go = GameObject.Find("physim_Water2d");
@@ -40,7 +42,7 @@ namespace Water2D
             else {
                 instance.Simulate = true;
             }
-               
+#endif
         }
 
         
@@ -55,7 +57,7 @@ namespace Water2D
 
         public static void Run()
         {
-
+#if UNITY_EDITOR
             for (int i = 0; i < 500; i++)
             {
                 //waiting time
@@ -78,17 +80,18 @@ namespace Water2D
 
             instance.OnRun();
 
-
+#endif
         }
 
         public static void Stop()
         {
+#if UNITY_EDITOR
             if (instance != null)
             {
 
                 instance.OnStop();
             }
-
+#endif
         }
 
 
@@ -106,7 +109,7 @@ namespace Water2D
 
         private void OnRun()
         {
-
+#if UNITY_EDITOR
             if (Simulate)
                 return;
 
@@ -119,11 +122,11 @@ namespace Water2D
             Simulate = true;
             EditorApplication.update += UpdatePhysics;
 
-
+#endif
         }
         private void OnStop()
         {
-
+#if UNITY_EDITOR
            
             Simulate = false;
             EditorApplication.update -= UpdatePhysics;
@@ -131,19 +134,20 @@ namespace Water2D
 
             //Unity Simulate ON
             Physics2D.autoSimulation = true;
+#endif
         }
 
        [HideInInspector]public bool alreadyCreated = false;
         void Create()
         {
-            
+#if UNITY_EDITOR
             Scene scene = EditorSceneManager.GetActiveScene();//EditorSceneManager.CreateScene("MyScene1", csp);
             CurrentPhysicsScene = scene.GetPhysicsScene2D();
 
             RBAltered = new List<Rigidbody2D>(10);
 
             alreadyCreated = true;
-
+#endif
         }
 
         //remove all rb2d from simulation but metaballs
@@ -202,7 +206,7 @@ namespace Water2D
 
         void UpdatePhysics()
         {
-
+#if UNITY_EDITOR
 
             if (Application.isPlaying)
                 return;
@@ -239,9 +243,8 @@ namespace Water2D
 
             }
 
-
+#endif
         }
 
     }
 }
-#endif

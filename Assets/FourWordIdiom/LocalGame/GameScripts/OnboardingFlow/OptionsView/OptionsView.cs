@@ -1,7 +1,6 @@
 using System.Collections;
 using DG.Tweening;
 using Middleware;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -106,7 +105,7 @@ public class OptionsView : UIWindow
     private void ChangeAccount()
     {
        Game.self.Accounts.Logout();
-       Game.self.Accounts.Login(true);
+       Game.self.Accounts.Login(null);
     }
     
     private void AccountQuit()

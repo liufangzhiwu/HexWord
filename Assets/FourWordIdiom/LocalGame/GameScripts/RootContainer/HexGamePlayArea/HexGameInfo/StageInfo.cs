@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -532,7 +531,7 @@ public class StageInfo
                 cellChars.Reverse();
 
                 // 调试输出
-                Debug.Log($"Cell ({row}, {col}) layers: {string.Join(", ", cellChars)}");
+                // Debug.Log($"Cell ({row}, {col}) layers: {string.Join(", ", cellChars)}");
             }
         }
 
@@ -707,12 +706,12 @@ public class StageInfo
         
         foreach (var (row, col, neighbors) in emptyCellsWithAllNeighbors)
         {
-            Debug.Log($"空单元格位置: ({row}, {col})");
-            Debug.Log("六个方向的邻居:");
+            // Debug.Log($"空单元格位置: ({row}, {col})");
+            // Debug.Log("六个方向的邻居:");
             foreach (var neighbor in neighbors)
             {
                 var chars = _boardData.board[neighbor.x][neighbor.y];
-                Debug.Log($"  ({neighbor.x}, {neighbor.y}): {string.Join(", ", chars)}");
+                // Debug.Log($"  ({neighbor.x}, {neighbor.y}): {string.Join(", ", chars)}");
                 if (chars.Count > 1&&_pupaData==null)
                 {
                     _pupaData = new PupaData()

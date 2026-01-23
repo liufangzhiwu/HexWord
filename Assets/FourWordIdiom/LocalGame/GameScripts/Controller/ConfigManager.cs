@@ -11,8 +11,6 @@ public class ConfigManager : MonoBehaviour
     public bool isLog=false;
     
     public static ConfigManager Instance;
-    [HideInInspector] public GameObject SpineObject;
-    [HideInInspector] public GameObject SpineObject2;
 
     private void Awake()
     {
@@ -31,23 +29,11 @@ public class ConfigManager : MonoBehaviour
     {
         //等待100毫秒（保证数据初始化成功）
         await Task.Delay(100);
-        
-        LoadAdjustTable();
-        if (SpineObject == null)
-        {
-            SpineObject = Resources.Load<GameObject>("StageBox");
-        }
-        
-        if (SpineObject == null)
-        {
-            SpineObject = Resources.Load<GameObject>("StageBox");
-        }
-        
         //Debug.unityLogger.logEnabled = isLog;
-        Application.targetFrameRate = 60; // 平台设置为60帧
+       
     }
     
-    private void LoadAdjustTable()
+    public void LoadAdjustTable()
     {
         // 从AssetBundle中加载CSV文件
         TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "GameConfig");

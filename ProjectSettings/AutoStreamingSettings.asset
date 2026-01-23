@@ -4,11 +4,743 @@
 AutoStreamingSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  mSearchMode: 15
-  mCustomSearchFile: 
+  mSearchMode: 7
+  mCustomSearchFile: Assets\StreamingAssets\Res\BuildBundles
   mTextureSearchString: 
   mMeshSearchString: 
-  mTextures: []
+  mTextures:
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/Game_UI/Butterfly_UI/Butterfly_UI.spriteatlas
+    assetName: 
+    localFileId: 4343727234628468602
+    rtMem: 0
+    warningFlag: 0
+    refs:
+    - butterfly_ui
+    - objects
+    - onboardingflow
+    maxPlaceholderSize: 1114112
+    width: 0
+    height: 0
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/Game_UI/Butterfly_UI/UI_Butterflyparts.spriteatlas
+    assetName: 
+    localFileId: 4343727234628468602
+    rtMem: 0
+    warningFlag: 0
+    refs:
+    - butterfly_parts
+    - butterfly_ui
+    - scenehudie
+    maxPlaceholderSize: 1114112
+    width: 0
+    height: 0
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/Game_UI/Butterfly_UI/UI_Butterfly_icon.spriteatlas
+    assetName: 
+    localFileId: 4343727234628468602
+    rtMem: 0
+    warningFlag: 0
+    refs:
+    - butterfly_ui
+    - commonitem
+    - scenehudie
+    maxPlaceholderSize: 1114112
+    width: 0
+    height: 0
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/Game_UI/Butterfly_UI/UI_Butterflyscene.spriteatlas
+    assetName: 
+    localFileId: 4343727234628468602
+    rtMem: 0
+    warningFlag: 0
+    refs:
+    - butterfly_ui
+    - butterflybg
+    - objects
+    - onboardingflow
+    maxPlaceholderSize: 1114112
+    width: 0
+    height: 0
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/Game_UI/UI_MainBase/UI_MainBase.spriteatlas
+    assetName: 
+    localFileId: 4343727234628468602
+    rtMem: 0
+    warningFlag: 0
+    refs:
+    - 1
+    - commonitem
+    - objects
+    - onboardingflow
+    - rootcanvas
+    - ui_mainbase
+    maxPlaceholderSize: 1114112
+    width: 0
+    height: 0
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/Game_UI/OnboardingFlow/UI_OnboardingFlow.spriteatlas
+    assetName: 
+    localFileId: 4343727234628468602
+    rtMem: 0
+    warningFlag: 0
+    refs:
+    - commonitem
+    - objects
+    - onboardingflow
+    - rootcanvas
+    maxPlaceholderSize: 1114112
+    width: 0
+    height: 0
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/Game_UI/UI_Universal/UI_Universal.spriteatlas
+    assetName: 
+    localFileId: 4343727234628468602
+    rtMem: 0
+    warningFlag: 0
+    refs:
+    - 0
+    - commonitem
+    - objects
+    - onboardingflow
+    - rootcanvas
+    - ui_universal
+    maxPlaceholderSize: 1114112
+    width: 0
+    height: 0
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/SpecialEffects/Effect_Sprite/trailAltas.spriteatlas
+    assetName: 
+    localFileId: 4343727234628468602
+    rtMem: 0
+    warningFlag: 0
+    refs:
+    - commonitem
+    - effect_sprite
+    - effectsitemmats
+    - objects
+    - onboardingflow
+    - rootcanvas
+    - useritems
+    maxPlaceholderSize: 1114112
+    width: 0
+    height: 0
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/Game_UI/Butterfly_UI/UI_Butterflymaunal.spriteatlas
+    assetName: 
+    localFileId: 4343727234628468602
+    rtMem: 0
+    warningFlag: 0
+    refs:
+    - butterfly_ui
+    - materials
+    maxPlaceholderSize: 1114112
+    width: 0
+    height: 0
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/UIEffect/UIEffect/Resources/Default-Transition.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 29584
+    warningFlag: 0
+    refs:
+    - res
+    maxPlaceholderSize: 0
+    width: 256
+    height: 256
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/Loadanniubg.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 41216
+    warningFlag: 0
+    refs:
+    - commonitem
+    - objects
+    - onboardingflow
+    maxPlaceholderSize: 0
+    width: 550
+    height: 167
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/Privacy_bg1.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 542416
+    warningFlag: 0
+    refs:
+    - res
+    maxPlaceholderSize: 0
+    width: 1002
+    height: 1214
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/privacy_close.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 1296
+    warningFlag: 0
+    refs:
+    - res
+    maxPlaceholderSize: 0
+    width: 52
+    height: 52
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/Water2D/Sprites/rect.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 4624
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 100
+    height: 100
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/Water2D/Sprites/dropTexture.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 467856
+    warningFlag: 0
+    refs:
+    - 0
+    - 1
+    maxPlaceholderSize: 0
+    width: 1024
+    height: 1024
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/Finish_02.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 59168
+    warningFlag: 0
+    refs:
+    - commonitem
+    maxPlaceholderSize: 0
+    width: 512
+    height: 256
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/UI_Icon_tutorialbg.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 270848
+    warningFlag: 0
+    refs:
+    - commonitem
+    - objects
+    - onboardingflow
+    maxPlaceholderSize: 0
+    width: 1104
+    height: 548
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/zen_icon.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 10000
+    warningFlag: 0
+    refs:
+    - 0
+    - onboardingflow
+    maxPlaceholderSize: 0
+    width: 146
+    height: 149
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/background.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 494208
+    warningFlag: 0
+    refs:
+    - 0
+    - 1
+    - onboardingflow
+    maxPlaceholderSize: 0
+    width: 789
+    height: 1399
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/handle.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 3360
+    warningFlag: 0
+    refs:
+    - 0
+    - onboardingflow
+    maxPlaceholderSize: 0
+    width: 85
+    height: 84
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/pro_bg.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 22144
+    warningFlag: 0
+    refs:
+    - 0
+    - onboardingflow
+    maxPlaceholderSize: 0
+    width: 1038
+    height: 46
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/pro_fill.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 15456
+    warningFlag: 0
+    refs:
+    - 0
+    - onboardingflow
+    maxPlaceholderSize: 0
+    width: 828
+    height: 37
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/Icons/rate_icon.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 467856
+    warningFlag: 0
+    refs:
+    - objects
+    - onboardingflow
+    maxPlaceholderSize: 0
+    width: 1024
+    height: 1024
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/Resources/Scenes_hudie/Scenes_hudie01.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 2048
+    warningFlag: 0
+    refs:
+    - materials
+    - res
+    - scenehudie
+    maxPlaceholderSize: 0
+    width: 32
+    height: 16
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset
+    assetName: 
+    localFileId: 28684132378477856
+    rtMem: 1048576
+    warningFlag: 0
+    refs:
+    - res
+    maxPlaceholderSize: 0
+    width: 1024
+    height: 1024
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/Resources/PupaSpine/bingkuai/bingkuai.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 4194304
+    warningFlag: 0
+    refs:
+    - res
+    maxPlaceholderSize: 0
+    width: 1024
+    height: 1024
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/Resources/Huoqu_hudie/UI_hudie01.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 1048576
+    warningFlag: 0
+    refs:
+    - hudie_project
+    - res
+    - scenehudie
+    maxPlaceholderSize: 0
+    width: 1024
+    height: 256
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/Resources/Huoqu_hudie/huoqu_hudie/UI_hudie_new.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 1024
+    warningFlag: 0
+    refs:
+    - hudie_project
+    - res
+    - scenehudie
+    maxPlaceholderSize: 0
+    width: 16
+    height: 16
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/age_tip.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 17168
+    warningFlag: 0
+    refs:
+    - 0
+    maxPlaceholderSize: 0
+    width: 170
+    height: 218
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/copyright.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 230656
+    warningFlag: 0
+    refs:
+    - 0
+    maxPlaceholderSize: 0
+    width: 1270
+    height: 406
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/LOGO2.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 37536
+    warningFlag: 0
+    refs:
+    - 0
+    maxPlaceholderSize: 0
+    width: 612
+    height: 138
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/hehua/hehua_amin.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 4194304
+    warningFlag: 0
+    refs:
+    - hehua
+    - res
+    maxPlaceholderSize: 0
+    width: 1024
+    height: 1024
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/TextMesh Pro/Sprites/EmojiOne.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 158432
+    warningFlag: 0
+    refs:
+    - res
+    maxPlaceholderSize: 0
+    width: 512
+    height: 512
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/Materials/lizi04.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 7568
+    warningFlag: 0
+    refs:
+    - hudie_project
+    - materials
+    - scenehudie
+    maxPlaceholderSize: 0
+    width: 64
+    height: 256
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/2.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 6720
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 180
+    height: 81
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/water.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 19008
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 198
+    height: 211
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/jian.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 576
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 33
+    height: 36
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/hehua/hehua_01.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 35424
+    warningFlag: 0
+    refs:
+    - hehua_project
+    - res
+    maxPlaceholderSize: 0
+    width: 323
+    height: 246
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/Materials/lizi01.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 29584
+    warningFlag: 0
+    refs:
+    - materials
+    - res
+    maxPlaceholderSize: 0
+    width: 256
+    height: 256
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/beiziwai.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 115024
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 470
+    height: 546
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/beizi.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 90528
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 409
+    height: 492
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/Materials/Ui_hudie01.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 200000
+    warningFlag: 0
+    refs:
+    - hudie_project
+    - scenehudie
+    maxPlaceholderSize: 0
+    width: 750
+    height: 600
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/1.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 6720
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 180
+    height: 81
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/Water2D/Misc/play.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 576
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 32
+    height: 32
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/Materials/lizi03.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 7744
+    warningFlag: 0
+    refs:
+    - materials
+    maxPlaceholderSize: 0
+    width: 128
+    height: 128
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/hu.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 309136
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 832
+    height: 833
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/zen.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 78400
+    warningFlag: 0
+    refs:
+    - commonitem
+    maxPlaceholderSize: 0
+    width: 417
+    height: 417
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/UI_Icon_circle.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 63504
+    warningFlag: 0
+    refs:
+    - commonitem
+    maxPlaceholderSize: 0
+    width: 375
+    height: 375
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/Water2D/Textures/TrailTexture.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 467856
+    warningFlag: 0
+    refs:
+    - 0
+    - 1
+    maxPlaceholderSize: 0
+    width: 1024
+    height: 1024
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/line.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 976
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 361
+    height: 4
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/Materials/lizi02.jpg
+    assetName: 
+    localFileId: 2800000
+    rtMem: 467856
+    warningFlag: 0
+    refs:
+    - hudie_project
+    - materials
+    - scenehudie
+    maxPlaceholderSize: 0
+    width: 1024
+    height: 1024
+    abSize: 0
+  - serializedVersion: 2
+    onDemandDownload: 0
+    assetPath: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/3.png
+    assetName: 
+    localFileId: 2800000
+    rtMem: 6720
+    warningFlag: 0
+    refs:
+    - 1
+    maxPlaceholderSize: 0
+    width: 180
+    height: 81
+    abSize: 0
   mAudios: []
   mMeshes: []
   mAnimations: []
@@ -16,8 +748,8 @@ AutoStreamingSettings:
   mScenes: []
   mConfigCCD:
     useCCD: 0
-    uosSecret: 
-    uosAppid: 
+    uosSecret: 11111
+    uosAppid: 111111111111111
     bucketUuid: 
     bucketName: 
     badgeName: 

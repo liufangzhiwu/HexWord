@@ -1028,7 +1028,7 @@ public class HexGamePlayArea : UIWindow
         {
             float elapsed = Time.time - StageHexController.Instance.lastActivityTime;
         
-            Debug.Log($"无操作时间:{elapsed} 提示词 {StageHexController.Instance.tipPuzzle}");
+            // Debug.Log($"无操作时间:{elapsed} 提示词 {StageHexController.Instance.tipPuzzle}");
             
             // 检查是否超过阈值
             if (elapsed > inactivityThreshold&&GameDataManager.Instance.UserData.GetTutorialProgress()>=2

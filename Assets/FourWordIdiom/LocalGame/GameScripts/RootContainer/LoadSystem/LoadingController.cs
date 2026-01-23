@@ -3,12 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using DG.Tweening;
-using Middleware;
 using Newtonsoft.Json;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
-using UnityEngine.HuaweiAppGallery;
-using UnityEngine.HuaweiAppGallery.Listener;
-using UnityEngine.HuaweiAppGallery.Model;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Game = Middleware.Game;
@@ -28,55 +28,23 @@ using Random = UnityEngine.Random;
 /// </summary>
 public class LoadingController : MonoBehaviour
 {
-    private enum GameFlowStatus 
-    {
-        NotStarted,
     
-        // --- 1. 初始化阶段 ---
-        Initializing,
-        InitFailed,
-    
-        // --- 2. 更新检查阶段 ---
-        CheckingUpdate,
-        UpdateRequired, // 需要更新，等待用户操作
-    
-        // --- 3. 登录阶段 ---
-        LoggingIn,
-        SilentFailed,
-        LoginFailed,
-        
-        // 获取用户信息
-        GetGamePlayer,
-        GetGamePlayerFailed,
-        // 上传角色信息
-        GamePlayerSave,
-        GamePlayerSaveFailed,
-        // --- 4. 完成状态 ---
-        Ready // 所有流程完成，游戏可以启动
-    }
-    private GameFlowStatus _flowStatus = GameFlowStatus.NotStarted;
-    private int _retryAttempt = 0;
-    private const int MAX_RETRIES = 3; // 设置最大重试次数
-    private const float RETRY_DELAY = 1.0f; // 重试间隔（秒）
-    
-    [Header("UI组件引用")]
-    [SerializeField] private Text loadingHintText;    // 加载提示文本
-    [SerializeField] private Slider progressSlider;   // 进度条组件
-     [SerializeField] private GameObject Loading;   // 进度条组件
-     [SerializeField] private RectTransform rollingObject;   // 滚动的方块 (Image)
-     private float _objectRadius;    // 方块半径
-    // [SerializeField] private Button AccountQuitBtn;   // 进度条组件
-    //[SerializeField] private RectTransform indicatorIcon; // 进度指示图标
+    [Header("UI组件引用")] 
+    [SerializeField] private Text loadingHintText; // 加载提示文本
+    [SerializeField] private Slider progressSlider; // 进度条组件
+    [SerializeField] private GameObject Loading; // 进度条组件
+
+    [SerializeField] private RectTransform rollingObject; // 滚动的方块 (Image)
 
     [Header("加载配置")]
-    //[SerializeField] private float minLoadingTime = 5f; // 最小加载时间(秒)
-    [SerializeField] private int randomHintCount = 20;    // 随机提示数量
+    [SerializeField]
+    private int randomHintCount = 20; // 随机提示数量
 
-    private AsyncOperation sceneLoadOperation;        // 场景加载操作
-    private float loadStartTime;                      // 加载开始时间
-    
-    
-    private LoginResponse loginResponse;       // 登录响应数据
+    private AsyncOperation sceneLoadOperation; // 场景加载操作
+    private float loadStartTime; // 加载开始时间
+
+
+    private LoginResponse loginResponse; // 登录响应数据
     private bool isLogined = false;
     
     private UserData serverUserData;          // 解析后的主数据
@@ -95,11 +63,15 @@ public class LoadingController : MonoBehaviour
         StartCoroutine(InitializeLoadingProcess());
     }
 
-    private void Start()
+    private async void Start()
     {
-        _objectRadius = (rollingObject.rect.width * rollingObject.lossyScale.x) / 2f;
+        await WordVocabularyManager.Instance.LoadEntriesAsync();
+        Debug.Log("开始下载场景包...");
+        
+        Task taskScene = AssetBundleLoader.SharedInstance.PreloadSingleBundle("scene_gamelobby");
+        await Task.WhenAll(taskScene);
+        Debug.Log("所有资源下载完毕！");
     }
-
 
     /// <summary>
     /// 初始化加载流程
@@ -108,66 +80,93 @@ public class LoadingController : MonoBehaviour
     {
         InitializeLocalization();
         SetupRandomLoadingHint();
+        loadStartTime = Time.time;
+        GameDataManager.Instance.LoadPlayerProfile();
+        StartCoroutine(GameInit());
         
-#if UNITY_OPENHARMONY
-        if (!UIUtilities.isEditMode)
+        yield return new WaitForSeconds(0.05f);
+        SetupRandomLoadingHint();
+        yield return new WaitForSeconds(0.05f);
+        StartCoroutine(LoadingSequence());
+        #if UNITY_EDITOR
+        yield break;
+        #endif
+        Game.self.Accounts.Init(0.01f);
+        yield return new WaitForSeconds(0.05f);
+        Game.self.Accounts.VerifyPlayer();
+        // yield return new WaitUntil(() => Game.self.Accounts.IsAuthorized);
+        // 3. 开始微信登录流程
+        bool isLoginProcessFinished = false; // 用于控制协程等待的标志位
+        bool isLoginSuccess = false;       // 用于记录结果
+        Debug.Log("开始调用微信 SDK 登录...");
+        Game.self.Accounts.Login((code) =>
         {
-            StartCoroutine(SimulateLoadingProgress());
-            //初始化商店、广告、登录
-            Game.self.InitGame();
-            yield return new WaitUntil(()=>Game.self.Accounts.IsLogin);
-            //设置登录用户ID
-            AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
-        }else{
-            StartCoroutine(SimulateLoadingProgress());}
-#elif UNITY_huawei || UNITY_EDITOR
-
-        if (!UIUtilities.isEditMode)
+            if (!string.IsNullOrEmpty(code))
+            {
+                // 2. 拿到 Code 后，调用 LoginApi 发送给服务器
+                StartCoroutine( APIGateway.Instance.LoginApi.WechatLogin(code, (response) => 
+                {
+                    if (response != null)
+                    {
+                        Debug.Log("服务器验证通过，Token 已保存");
+                        isLoginSuccess = true;
+                    }
+                    else
+                    {
+                        Debug.LogError("服务器验证失败");
+                        isLoginSuccess = false;
+                    }
+                    isLoginProcessFinished = true;
+                }));
+            }
+            else
+            {
+                Debug.LogError("微信 SDK 登录失败，未获取到 Code");
+                isLoginSuccess = false;
+                isLoginProcessFinished = true; // 即使失败也要标记完成，否则会死锁
+            }
+        });
+        float loginTimeout = 3.0f; 
+        float timer = 0f;
+        while (!isLoginProcessFinished && timer < loginTimeout)
         {
-             Debug.Log($"进入初始化游戏服务流程");
-            //初始化游戏服务 
-            yield return InitializeGameService();
-            StartCoroutine(SimulateLoadingProgress());
-            // 初始化商店(需要等待游戏服务完成后)
-            Game.self.InitGame();
-            yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
-            // 登录开始
-            yield return LoadHuaweiGameLogin();
-            yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
-            //设置登录用户ID（需要等待游戏数据获取后）
-            AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+        if (timer >= loginTimeout)
+        {
+            Debug.LogWarning("登录超时，跳过等待，进入离线模式");
+            isLoginProcessFinished = true;
+            isLoginSuccess = false;
+        }
+        if (isLoginSuccess)
+        {
+            Debug.Log("登录流程全部完成，开始加载用户存档...");
+            yield return APIGateway.Instance.LoginApi.GetUserData(LoadUserData);
         }
         else
         {
-            StartCoroutine(SimulateLoadingProgress());
+            // 弹窗提示用户：登录失败，请重试
+            Debug.LogWarning("⚠️ 登录失败/网络错误/超时：进入离线模式");
         }
-#endif
-        yield return APIGateway.Instance.LoginApi.Login((res)=> 
-        {
-            if (res != null)
-            {
-                loginResponse = res as LoginResponse;
-            }
-            isLogined = true;
-        });
-       
-        LoadWordVocabulary();
-
-        yield return new WaitUntil(() => isLogined);
-        
-        
-        yield return APIGateway.Instance.LoginApi.GetUserData(LoadUserData);
-        yield return APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
-        {
-            if (res != null)
-            {
-                Debug.Log("获取用户信息成功！"+ res.uid);
-                //GameDataManager.Instance.UserData.Zenlevel = res.zen_level;
-            }
-        });
+        // yield return APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
+        // {
+        //     if (res != null)
+        //     {
+        //         Debug.Log("获取用户信息成功！" + res.uid);
+        //         //GameDataManager.Instance.UserData.Zenlevel = res.zen_level;
+        //     }
+        // });
     }
-    
-    
+
+    private IEnumerator GameInit()
+    {
+        Debug.Log("打印一下" + Game.self);
+        yield return new WaitForSeconds(0.05f);
+        Game.self.InitGame();
+    }
+
+    #region 服务器数据处理
     // 加载数据
     private void LoadUserData(GameDataDto response)
     {
@@ -239,6 +238,7 @@ public class LoadingController : MonoBehaviour
                 Debug.Log("本地存档时间更新，使用本地数据");
                 UserLocalData();
             }
+            
         }
     }
     
@@ -326,7 +326,8 @@ public class LoadingController : MonoBehaviour
     {
         int id=Random.Range(1,12);
         string sid = id < 10 ? "0" + id : id.ToString();
-        loadingHintText.text =MultilingualManager.Instance.GetString("loadText"+ sid);    
+        loadingHintText.text = MultilingualManager.Instance.GetString("loadText" + sid);
+        loadingHintText.transform.GetChild(0).GetComponent<Text>().text = MultilingualManager.Instance.GetString("loadText101");
     }
 
     /// <summary>
@@ -389,15 +390,15 @@ public class LoadingController : MonoBehaviour
         RectTransform sliderBackground = progressSlider.transform.GetChild(0).GetComponent<RectTransform>();
         Vector3 localStart = new Vector3(sliderBackground.rect.xMin, 0, 0);
         Vector3 localEnd = new Vector3(sliderBackground.rect.xMax, 0, 0);
-        
+
         Vector3 worldStart = sliderBackground.TransformPoint(localStart);
         Vector3 worldEnd = sliderBackground.TransformPoint(localEnd);
 
         float startY = rollingObject.position.y;
-        
+
         float elapsedTime = 0;
         float progress = 0;
-        
+
         while (progress < 1f)
         {
             elapsedTime = Time.time - loadStartTime;
@@ -419,298 +420,54 @@ public class LoadingController : MonoBehaviour
     private IEnumerator LoadEssentialResources()
     {
         Debug.Log("开始预加载游戏资源");
+        // yield return AssetBundleLoader.SharedInstance.LoadAtlas(
+        //     "ui_universal",
+        //     "UI_Universal");
+        //
+        // //LoadFont();
+        // // 加载字体资源
+        // Font mainFont = AssetBundleLoader.SharedInstance.LoadFont(
+        //     "stagefonts",
+        //     "FZKTK");
+        // //loadingHintText.font = mainFont;
+        //
+        // // 并行加载其他关键资源
+        // yield return AssetBundleLoader.SharedInstance.LoadAtlas(
+        //     "effect_sprite",
+        //     "trailAltas");
+        //
+        // yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
+        //     "effectsitemmats",
+        //     "Circle");
 
-        yield return AssetBundleLoader.SharedInstance.LoadAtlas(
-           "ui_universal",
-           "UI_Universal");
-
-        //LoadFont();
-        // 加载字体资源
-        Font mainFont = AssetBundleLoader.SharedInstance.LoadFont(
-             "stagefonts",
-             "FZKTK");
-        //loadingHintText.font = mainFont;
-
-        // 并行加载其他关键资源
-        yield return AssetBundleLoader.SharedInstance.LoadAtlas(
-            "effect_sprite",
-            "trailAltas");
-
-        yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
-            "effectsitemmats",
-            "Circle");       
-        
-        yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
-            "materials",
-            "lizi01"); 
-        
         //预加载关卡文件
-         StageHexController.Instance.LoadPackInfos();
+        StageHexController.Instance.LoadPackInfos();
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }
-
-    private IEnumerator LoadHuaweiGameLogin()
-    {
-        Action<GameFlowStatus> statusSetter = (status) => { _flowStatus = status; };
-        
-        HuaweiGameService.SilentSignIn(new SilentLoginListener(statusSetter));
-        if (_flowStatus == GameFlowStatus.SilentFailed)
-        {
-            HuaweiGameService.Login(new SilentLoginListener(statusSetter));
-        }
-        Debug.Log("登录完成, 当前状态" + _flowStatus );
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GetGamePlayer);
-        Player _player = null;
-        HuaweiGameService.GetGamePlayer(new GetGamePlayerListener(statusSetter, player=> _player = player));
-        Debug.Log("获取用户信息, 当前状态" + _flowStatus );
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GamePlayerSave);
-        AppPlayerInfo appPlayerInfo = new AppPlayerInfo();
-        appPlayerInfo.Rank = "test rank";
-        appPlayerInfo.Area = "test area";
-        appPlayerInfo.Role = GameDataManager.Instance.UserData.UserName;
-        appPlayerInfo.Sociaty = "sociaty";
-        appPlayerInfo.PlayerId = _player.PlayerId;
-        appPlayerInfo.OpenId = _player.OpenId;
-        Game.self.Accounts.UserId = _player.OpenId;
-        Game.self.Accounts.IsLogin = true;
-        
-        Debug.LogFormat("登录华为安卓用户时的数据: {0}", JsonConvert.SerializeObject(appPlayerInfo));
-        HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));
-        Debug.Log("数据上报完成, 当前状态" + _flowStatus );
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
     
-    }
-
     /// <summary>
     /// 异步加载主场景
     /// </summary>
     private IEnumerator LoadMainSceneAsync()
     {
-        sceneLoadOperation = SceneManager.LoadSceneAsync("GameLobby");
-        sceneLoadOperation.allowSceneActivation = false;
+#if UNITY_EDITOR
+        Debug.Log("[Editor] 正在编辑器模式下切换场景...");
+        string[] guids = AssetDatabase.FindAssets("GameLobby t:Scene");
+        if (guids.Length == 0)
+        {
+            Debug.LogError($"找不到场景文件: GameLobby");
+            yield break;
+        }
 
-        Debug.Log("开始加载主场景");
+        string scenePath = AssetDatabase.GUIDToAssetPath(guids[0]);
+        sceneLoadOperation = EditorSceneManager.LoadSceneAsyncInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
+#else
+        sceneLoadOperation = SceneManager.LoadSceneAsync("GameLobby");
+#endif
+        sceneLoadOperation!.allowSceneActivation = false;
         yield return new WaitUntil(() => sceneLoadOperation.progress >= 0.9f&&progressSlider.value>=1f&&isLogined);
         Debug.Log("主场景加载完成");
+
     }
-
-    
-    // 🔑 1. 定义局部实现类 IAntiAddictionListener
-    private class AntiAddictionHandler : IAntiAddictionListener
-    {
-        public void OnExit()
-        {
-            Debug.Log("防沉迷退出回调：退出应用。");
-            GameDataManager.Instance.CommitGameData();
-            Application.Quit();
-        }
-    }
-    
-    // 🔑 2. 定义局部实现类 IInitListener
-    private class InitHandler : IInitListener
-    {
-        private readonly Action<GameFlowStatus> _onCompletedCallback;
-        private readonly Action  _onRetryAction;
-
-        public InitHandler(Action<GameFlowStatus> onCompletedCallback, Action onRetryAction = null)
-        {
-            _onCompletedCallback = onCompletedCallback;
-            _onRetryAction = onRetryAction;
-        }
-        public void OnSuccess()
-        {
-            HuaweiGameService.ShowFloatWindow();
-            _onCompletedCallback?.Invoke(GameFlowStatus.CheckingUpdate);
-        }
-
-        public void OnFailure(int code, string message)
-        {
-            string msg = $"JosAppsClient init failed, code:{code} message:{message}";
-            switch (code)
-            {
-                case 7002:
-                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                    {
-                        MessageSystem.Instance.ShowTip("请检查网络");
-                        _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
-                    });
-                    break;
-                case 7401:
-                    _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
-                    Application.Quit();
-                    break;
-                case 907135003:
-                    _onRetryAction?.Invoke();
-                    break;
-                default:
-                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                    {
-                         MessageSystem.Instance.ShowTip(msg);
-                        _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
-                    });
-                    break;
-            }
-        }
-    }
-    
-    private class CheckUpdateListener : ICheckUpdateListener
-    {
-        private readonly Action<GameFlowStatus> _onCompletedCallback;
-
-        public CheckUpdateListener(Action<GameFlowStatus> onCompletedCallback)
-        {
-            _onCompletedCallback = onCompletedCallback;
-        }
-        public  void OnUpdateInfo(AndroidJavaObject intent)
-        {
-            if (intent !=null)
-            {
-                int status = intent.Call<int>("getIntExtra", "status", 0);
-                if (status==0)
-                {
-                    // 无需更新，直接进入下一阶段：登录
-                    _onCompletedCallback?.Invoke(GameFlowStatus.LoggingIn);
-                }
-                else if (status == 7)
-                {
-                    // 发现更新，等待用户操作或退出
-                    _onCompletedCallback.Invoke(GameFlowStatus.UpdateRequired);
-                    AndroidJavaObject apkUpgradeInfo = intent.Call<AndroidJavaObject>("getSerializableExtra", "updatesdk_update_info");
-                    HuaweiGameService.ShowUpdateDialog(apkUpgradeInfo, true);
-                    // bool isExit = intent.Call<bool>("getBooleanExtra", ",", false);
-                    // TODO
-                }
-                else
-                {
-                    _onCompletedCallback?.Invoke(GameFlowStatus.LoggingIn);
-                }
-            }
-            else
-            {
-                _onCompletedCallback?.Invoke(GameFlowStatus.LoggingIn);
-            }
-        }
-
-        public void OnMarketInstallInfo(AndroidJavaObject intent)
-        {
-           
-        }
-
-        public void OnMarketStoreError(int responseCode)
-        {
-           
-        }
-
-        public void OnUpdateStoreError(int responseCode)
-        {
-           
-        }
-    }
-    
-    private class SilentLoginListener : ILoginListener
-    {
-        private readonly Action<GameFlowStatus> _onLoginCompleted;
-
-        public SilentLoginListener(Action<GameFlowStatus> onLoginCompleted)
-        {
-            _onLoginCompleted = onLoginCompleted;
-        }
-        public void OnSuccess(SignInAccountProxy signInAccountProxy)
-        {
-            if (signInAccountProxy == null)
-            {
-                UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                {
-                    _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
-                });
-                return;
-            }
-            string msg = "get login success with signInAccountProxy info: \n";
-            msg += String.Format("displayName:{0}, email:{1}, uid:{2}, openId:{3}, unionId:{4}, accessToken:{5}, serverAuthCode:{6}, idToken:{7}",
-                signInAccountProxy.DisplayName, signInAccountProxy.Email, signInAccountProxy.Uid, signInAccountProxy.OpenId, signInAccountProxy.UnionId,
-                signInAccountProxy.AccessToken, signInAccountProxy.ServerAuthCode, signInAccountProxy.IdToken);
-            // MessageSystem.Instance.ShowTip(msg);
-           _onLoginCompleted.Invoke(GameFlowStatus.GetGamePlayer);
-        }
-
-        public void OnSignOut()
-        {
-            string msg = "sign out success.";
-            UnityMainThreadDispatcher.Instance().Enqueue(() =>
-            {
-                MessageSystem.Instance.ShowTip(msg);
-            });
-        }
-
-        public void OnFailure(int code, string message)
-        {
-            string msg = "account method failed, code:" + code + " message:" + message;
-            UnityMainThreadDispatcher.Instance().Enqueue(() =>
-            {
-                MessageSystem.Instance.ShowTip(msg);
-                _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
-            });
-        }
-    }
-    private class GetGamePlayerListener : IGetPlayerListener
-    {
-        private readonly Action<GameFlowStatus> _onGetPlayerCompleted;
-        private readonly Action<Player> _owner;
-
-        public GetGamePlayerListener(Action<GameFlowStatus> onGetPlayerCompleted, Action<Player> owner)
-        {
-            _onGetPlayerCompleted = onGetPlayerCompleted;
-            _owner = owner;
-        }
-        public void OnSuccess(Player player)
-        {
-            if (player == null)
-            {
-                UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                {
-                    _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
-                    MessageSystem.Instance.ShowTip("用户信息为空,请检查！");
-                });
-                return;
-            }
-            var msg = "getGamePlayer succeed. \n";
-            msg += string.Format(
-                "displayName:{0}, playerId:{1}, playerSign:{2}, openId:{3}, unionId:{4}, openIdSign:{5}, accessToken:{6}",
-                player.DisplayName, player.PlayerId, player.PlayerSign, player.OpenId, player.UnionId, player.OpenIdSign, player.AccessToken
-            );
-            _owner?.Invoke(player);
-            _onGetPlayerCompleted?.Invoke(GameFlowStatus.GamePlayerSave);
-        }
-
-        public void OnFailure(int code, string message)
-        {
-            var msg = "getCurrentPlayer failed, code:" + code + " message:" + message;
-            UnityMainThreadDispatcher.Instance().Enqueue(() =>
-            {
-                _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
-                MessageSystem.Instance.ShowTip(msg);
-            });
-        }
-    }
-    
-    private class SavePlayerInfoListener : ISavePlayerInfoListener
-    {
-        private readonly Action<GameFlowStatus> _onSavePlayerInfoCompleted;
-
-        public SavePlayerInfoListener(Action<GameFlowStatus> onSavePlayerInfoCompleted)
-        {
-            _onSavePlayerInfoCompleted = onSavePlayerInfoCompleted;
-        }
-        public void OnSuccess()
-        {
-            _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
-        }
-        
-        public void OnFailure(int code, string message)
-        {
-            _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
-        }
-    }
-
 }

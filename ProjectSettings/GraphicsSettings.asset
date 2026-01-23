@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!30 &1
 GraphicsSettings:
   m_ObjectHideFlags: 0
@@ -26,18 +26,12 @@ GraphicsSettings:
     m_Mode: 1
     m_Shader: {fileID: 102, guid: 0000000000000000f000000000000000, type: 0}
   m_VideoShadersIncludeMode: 2
+  m_LengthOfAlwaysIncludedShadersInInspector: 4
   m_AlwaysIncludedShaders:
   - {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 10770, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 17000, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 16000, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 16002, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 10720, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 10721, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 10720, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 4800000, guid: fa95b0fb6983c0f40a152e6f9aa82bfb, type: 3}
-  - {fileID: 4800000, guid: a1e4ab34b07f81e4e94f0d241c416669, type: 3}
-  - {fileID: 211, guid: 0000000000000000f000000000000000, type: 0}
   m_PreloadedShaders: []
   m_PreloadShadersBatchTimeLimit: -1
   m_SpritesDefaultMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000,
@@ -62,11 +56,21 @@ GraphicsSettings:
   m_FogKeepExp: 1
   m_FogKeepExp2: 1
   m_AlbedoSwatchInfos: []
+  m_ModelImportDefaultMaterial: {fileID: 0}
   m_LightsUseLinearIntensity: 0
   m_LightsUseColorTemperature: 0
   m_DefaultRenderingLayerMask: 1
   m_LogWhenShaderIsCompiled: 0
+  m_NoExactGfxBuffer: 0
+  m_DisableClearAlpha: 0
   m_SRPDefaultSettings: {}
   m_LightProbeOutsideHullStrategy: 0
   m_CameraRelativeLightCulling: 0
   m_CameraRelativeShadowCulling: 0
+  m_GenerateGeometryBuffer: 0
+  m_EnableGDRP: 0
+  m_EnableTuanjieGI: 0
+  m_VariableRateShadingMode: 0
+  m_RelativeRateShadingLevel: 1
+  m_MaxDistanceRatio: 500
+  m_MinDistanceRatio: 1

@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using Middleware.Network.Api;
 using UnityEngine;
 
 public class APIGateway: MonoBehaviour
@@ -9,11 +9,11 @@ public class APIGateway: MonoBehaviour
     public static APIGateway Instance => _instance;
 
     [SerializeField] private string APIUrl = "https://zen.test.mindwordplay.cn/api/";
-
+    public HTTPClient HttpClient { get; private set; }
     public LoginApi LoginApi { get; private set; }
     public ConfigApi ConfigApi { get; private set; }
     public LeaderboardApi LeaderboardApi { get; private set; }
-    public HTTPClient HttpClient { get; private set; }
+    public PaymentApi PaymentApi { get; private set; }
 
     private void Awake()
     {
@@ -35,6 +35,7 @@ public class APIGateway: MonoBehaviour
         LoginApi = new LoginApi(HttpClient);
         ConfigApi = new ConfigApi(HttpClient);
         LeaderboardApi = new LeaderboardApi(HttpClient);
+        PaymentApi = new PaymentApi(HttpClient);
         
         //StartCoroutine(HttpClient.Get<object>("", 
         // onSuccess=>

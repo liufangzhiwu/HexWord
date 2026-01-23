@@ -54,7 +54,7 @@ public class DailyTaskManager : MonoBehaviour
         }       
     }
 
-    void Start()
+    public void Init()
     {
         TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "dailytask");
         if (data != null)

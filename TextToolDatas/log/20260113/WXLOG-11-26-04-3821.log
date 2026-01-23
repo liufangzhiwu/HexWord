@@ -1,0 +1,83 @@
+﻿<wxlog>
+  <threadId>#main</threadId>
+  <timestamp>11:26:04:2186</timestamp>
+  <msgtype>MsgWXLogLaunch</msgtype>
+  <content>[The WXLogger is launched!]</content>
+  <stackFrames>
+[CALL STACK][0]: Method:WXTextureTools.Application.Options.OptionsConfig..ctor; File:.0
+[CALL STACK][1]: Method:WXTextureTools.Application.App..ctor; File:.0
+[CALL STACK][2]: Method:WXTextureTools.Program.Main; File:.0
+</stackFrames>
+</wxlog>
+<wxlog>
+  <threadId>#main</threadId>
+  <timestamp>11:26:04:2309</timestamp>
+  <msgtype>MsgMixture</msgtype>
+  <content>string|String[]
+OptionsConfig,-option=fbDecompress
+-classDataPath=E:\UnityProjects\HexWord\Library\PackageCache\com.qq.weixin.minigame@0da89858dd\Editor/TextureEditor/classdata.tpk
+-dataDir=E:/UnityProjects/HexWord/TextToolDatas
+-sourcePath=E:/UnityProjects/HexWord/TextToolDatas\slim\backup.txt
+</content>
+  <stackFrames>
+[CALL STACK][0]: Method:WXTextureTools.Application.App..ctor; File:.0
+[CALL STACK][1]: Method:WXTextureTools.Program.Main; File:.0
+</stackFrames>
+</wxlog>
+<wxlog>
+  <threadId>#main</threadId>
+  <timestamp>11:26:04:2319</timestamp>
+  <msgtype>MsgMixture</msgtype>
+  <content>string|string
+UnityBridgeHandler - SetDataDir,E:/UnityProjects/HexWord/TextToolDatas\temp</content>
+  <stackFrames>
+[CALL STACK][0]: Method:WXTextureTools.Program.Main; File:.0
+</stackFrames>
+</wxlog>
+<wxlog>
+  <threadId>#main</threadId>
+  <timestamp>11:26:04:2394</timestamp>
+  <msgtype>MsgMixture</msgtype>
+  <content>string|string
+BundlePicRecord initFile,E:/UnityProjects/HexWord/TextToolDatas\FIRSTBUNDLETEXTURES.json</content>
+  <stackFrames>
+[CALL STACK][0]: Method:WXTextureTools.Application.AppCmdExec.WXFirstBundleDecompressExec.todo; File:.0
+[CALL STACK][1]: Method:WXTextureTools.Application.App.process; File:.0
+[CALL STACK][2]: Method:WXTextureTools.Application.App..ctor; File:.0
+</stackFrames>
+</wxlog>
+<wxlog>
+  <threadId>#main</threadId>
+  <timestamp>11:26:04:2404</timestamp>
+  <msgtype>MsgMixture</msgtype>
+  <content>string|string
+BundlePicRecord readAllRecord,</content>
+  <stackFrames>
+[CALL STACK][0]: Method:WXTextureTools.Application.App.process; File:.0
+[CALL STACK][1]: Method:WXTextureTools.Application.App..ctor; File:.0
+[CALL STACK][2]: Method:WXTextureTools.Program.Main; File:.0
+</stackFrames>
+</wxlog>
+<wxlog>
+  <threadId>#main</threadId>
+  <timestamp>11:26:04:3296</timestamp>
+  <msgtype>MsgException</msgtype>
+  <content>
+要求非负数。
+参数名: count
+   在 System.IO.BinaryReader.ReadBytes(Int32 count)
+   在 AssetsTools.NET.AssetTypeTemplateField.ReadType(AssetsFileReader reader, AssetTypeValueField valueField, RefTypeManager refMan)
+   在 AssetsTools.NET.AssetTypeTemplateField.ReadType(AssetsFileReader reader, AssetTypeValueField valueField, RefTypeManager refMan)
+   在 AssetsTools.NET.AssetTypeTemplateField.ReadType(AssetsFileReader reader, AssetTypeValueField valueField, RefTypeManager refMan)
+   在 AssetsTools.NET.AssetTypeTemplateField.MakeValue(AssetsFileReader reader, RefTypeManager refMan)
+   在 AssetsTools.NET.Extra.AssetsManager.GetBaseField(AssetsFileInstance inst, AssetFileInfo info, AssetReadFlags readFlags)
+   在 WXTextureTools.Application.Texture.FirstBundleText.export(String outDir, String dstPath, String colorSpace, IgnoreHandler ignore, Boolean all)
+   在 WXTextureTools.Application.FirstBundle.FirstBundleHandler.splitText(String assetsOutDir, String colorSpace, IgnoreHandler ignore, Boolean all)
+   在 WXTextureTools.Application.AppCmdExec.WXFirstBundleDecompressExec.todo()
+   在 WXTextureTools.Application.App.process()
+   在 WXTextureTools.Application.App..ctor(String[] args)
+</content>
+  <stackFrames>
+[CALL STACK][0]: Method:WXTextureTools.Program.Main; File:.0
+</stackFrames>
+</wxlog>
