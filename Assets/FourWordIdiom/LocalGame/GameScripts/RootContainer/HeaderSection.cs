@@ -21,38 +21,7 @@ public class HeaderSection : UIWindow
     // Start is called before the first frame update
     protected void Start()
     {
-        InitUI();
         InitializeButtons();       
-    }
-
-    private void InitUI(int value=0,bool isanim=false)
-    {
-        if(value>0&&isanim)
-        {
-            StartCoroutine(AnimateCoinAddition(value));
-        }
-        else
-        {
-            Goldtxt.text = GameDataManager.Instance.UserData.Gold.ToString();
-        }
-    }
-    
-    private IEnumerator AnimateCoinAddition(int amount)
-    {
-        int startValue = GameDataManager.Instance.UserData.Gold-amount;
-        int targetValue = GameDataManager.Instance.UserData.Gold;
-        float duration = 0.2f; // 动画持续时间
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration); // 归一化
-            int currentValue = Mathf.RoundToInt(Mathf.Lerp(startValue, targetValue, t));
-            Goldtxt.text = currentValue.ToString();
-            yield return null;
-        }
-        Goldtxt.text = targetValue.ToString(); // 确保最终值正确显示
     }
 
     protected void InitializeButtons()
@@ -78,7 +47,8 @@ public class HeaderSection : UIWindow
         GmBtn.gameObject.SetActive(ishomeshow);
         BackBtn.gameObject.SetActive(!ishomeshow);
         SetBtn.gameObject.SetActive(ishomeshow);
-        
+        InitPupaUI();
+        InitUI();
         CustomFlyInManager.Instance.GoldObj=GoldImage.gameObject;
 
         if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
@@ -111,7 +81,48 @@ public class HeaderSection : UIWindow
             // 启用时开始重复调用 (0秒延迟，每秒1次)
             InvokeRepeating(nameof(CheckLevelPuzzleVisibility), 1f, 1f);
         }
+        
     }
+
+    private void InitPupaUI()
+    {
+        ButterflyGrow butterflyGrow =ButterfliesManager.Instance.GetCurrentGrow();
+        if(butterflyGrow == null)
+            return;
+        
+        Pupatxt.text = $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow.Count}";
+    }
+    
+    private void InitUI(int value=0,bool isanim=false)
+    {
+        if(value>0&&isanim)
+        {
+            StartCoroutine(AnimateCoinAddition(value));
+        }
+        else
+        {
+            Goldtxt.text = GameDataManager.Instance.UserData.Gold.ToString();
+        }
+    }
+    
+    private IEnumerator AnimateCoinAddition(int amount)
+    {
+        int startValue = GameDataManager.Instance.UserData.Gold-amount;
+        int targetValue = GameDataManager.Instance.UserData.Gold;
+        float duration = 0.2f; // 动画持续时间
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration); // 归一化
+            int currentValue = Mathf.RoundToInt(Mathf.Lerp(startValue, targetValue, t));
+            Goldtxt.text = currentValue.ToString();
+            yield return null;
+        }
+        Goldtxt.text = targetValue.ToString(); // 确保最终值正确显示
+    }
+    
     
     private void CheckLevelPuzzleVisibility()
     {

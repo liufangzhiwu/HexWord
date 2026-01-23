@@ -73,9 +73,12 @@ SpriteAtlas:
     - 2ba19d03c3401cb4caa46dffbfdcc9c5: 21300000
     - 7f9e206373123e24d90b343ab9087baf: 21300000
     - c86924636c0994f46b89e7b54d4f0058: 21300000
+    - 4666b2a30de3c264b9f0eca09e364d19: 21300000
     - 2b9c54a3aa7bbdc41a113b3f08699f68: 21300000
+    - ca6479a386295b1438f415ede137c4db: 21300000
     - 6c37c4c31918a6849a13fa4ec22bb259: 21300000
     - 0eb0b5c308ad6b54794dcd5ee705c8b1: 21300000
+    - 166f04d3a999bb1439ef984e950f9df3: 21300000
     - cb7046e3252d37f4698dbb3cf6f0be98: 21300000
     - c9ffd21451f8ddc4698d65f680a24a18: 21300000
     - 3757b924ba5ca10458233aa64cfd96eb: 21300000
@@ -201,9 +204,12 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 2ba19d03c3401cb4caa46dffbfdcc9c5, type: 3}
   - {fileID: 21300000, guid: 7f9e206373123e24d90b343ab9087baf, type: 3}
   - {fileID: 21300000, guid: c86924636c0994f46b89e7b54d4f0058, type: 3}
+  - {fileID: 21300000, guid: 4666b2a30de3c264b9f0eca09e364d19, type: 3}
   - {fileID: 21300000, guid: 2b9c54a3aa7bbdc41a113b3f08699f68, type: 3}
+  - {fileID: 21300000, guid: ca6479a386295b1438f415ede137c4db, type: 3}
   - {fileID: 21300000, guid: 6c37c4c31918a6849a13fa4ec22bb259, type: 3}
   - {fileID: 21300000, guid: 0eb0b5c308ad6b54794dcd5ee705c8b1, type: 3}
+  - {fileID: 21300000, guid: 166f04d3a999bb1439ef984e950f9df3, type: 3}
   - {fileID: 21300000, guid: cb7046e3252d37f4698dbb3cf6f0be98, type: 3}
   - {fileID: 21300000, guid: c9ffd21451f8ddc4698d65f680a24a18, type: 3}
   - {fileID: 21300000, guid: 3757b924ba5ca10458233aa64cfd96eb, type: 3}
@@ -328,9 +334,12 @@ SpriteAtlas:
   - timebg
   - lbigdeng
   - tips2
+  - wordDetailbg
   - rightjian
+  - discountbg
   - garden_item_2
   - Garden
+  - bookwordbg
   - endengicon
   - timebg
   - taskjd
