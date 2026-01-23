@@ -258,7 +258,8 @@ public class HexGamePlayArea : UIWindow
         {
             wordErrorCount = 0;
             usetoolCount = 0;
-            //ShopManager.shopManager.ShowLimitAdsPanel();
+            yield return new WaitForSeconds(1f);
+            ShopManager.shopManager.ShowLimitAdsPanel();
         }
         
         SingleTipLight.gameObject.SetActive(false);

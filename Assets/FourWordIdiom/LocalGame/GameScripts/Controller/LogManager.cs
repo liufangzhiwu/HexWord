@@ -30,10 +30,6 @@ public class LogManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject); // 在场景切换时不销毁
         }
-        else
-        {
-            Destroy(gameObject); // 销毁重复的实例
-        }
 
         CreateLogFile();
         // 注册日志回调
@@ -82,11 +78,8 @@ public class LogManager : MonoBehaviour
     }
 
 
-    /// <summary>
-    /// 将日志条目写入到日志文件中。
-    /// 如果当前日志文件大小达到最大限制，将自动创建新的日志文件。
-    /// </summary>
-    /// <param name="logEntry">要写入的日志条目内容。</param>
+    private readonly object fileLock = new object();
+
     void WriteLog(string logEntry)
     {
         string logFileName = $"log_{logFileIndex}.txt";
@@ -99,11 +92,26 @@ public class LogManager : MonoBehaviour
             logFileName = $"log_{logFileIndex}.txt";
             fullPath = Path.Combine(logFilePath, logFileName);
         }
-        //File.AppendAllText(fullPath, logEntry + "\n");
-        // 写入日志
-        using (StreamWriter writer = new StreamWriter(fullPath, true))
+    
+        // 使用锁确保同一时间只有一个线程可以写入文件
+        lock (fileLock)
         {
-            writer.WriteLine(logEntry);
+            try
+            {
+                // 写入日志
+                using (StreamWriter writer = new StreamWriter(fullPath, true))
+                {
+                    writer.WriteLine(logEntry);
+                }
+            }
+            catch (IOException ex)
+            {
+                // 如果发生共享冲突，可以稍后重试或记录到其他地方
+                Debug.LogWarning($"Failed to write log: {ex.Message}");
+            
+                // 可选：将日志暂时缓存，稍后重试
+                // 或者使用 File.AppendAllText 的另一个重载版本
+            }
         }
     }
 

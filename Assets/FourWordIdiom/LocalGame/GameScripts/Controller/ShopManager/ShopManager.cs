@@ -340,70 +340,70 @@ public class ShopManager : MonoBehaviour
     public async void ShowLimitAdsPanel()
     {
         // 检查限购状态
-        //ShopLimitData buyshopDta = GameDataManager.Instance.UserData.limitShopItems.Find(itemdata => itemdata.isget && !itemdata.isoverdate);
+        ShopLimitData buyshopDta = GameDataManager.Instance.UserData.limitShopItems.Find(itemdata => itemdata.isget && !itemdata.isoverdate);
 
-        // foreach (var item in _limitAdsGifts)
-        // {
-        //     // 判断是否到达解锁关卡
-        //     if (!item.unlocked.Contains(StageController.Instance.CurStageInfo.StageNumber.ToString()))
-        //         continue;
-        //
-        //
-        //     if (buyshopDta != null)
-        //     {
-        //         if (buyshopDta.id == item.id && buyshopDta.adstype == (int)LimitRewordType.Remove7DayAds)
-        //         {
-        //             return;
-        //         }
-        //
-        //         if (buyshopDta.adstype == (int)LimitRewordType.RemoveAds)
-        //         {
-        //             return;
-        //         }
-        //     }
-        //
-        //
-        //     // 设置当前广告项目
-        //     curshopAdsItem = item;
-        //
-        //     ShopLimitData shopdata = GameDataManager.Instance.UserData.limitShopItems.Find(itemdata => itemdata.id == curshopAdsItem.id);
-        //
-        //     int hours = int.Parse(curshopAdsItem.limitedTime);
-        //     DateTime endtime = DateTime.Now.AddHours(hours);
-        //                 
-        //     if (shopdata!=null)
-        //     {
-        //         if (!string.IsNullOrEmpty(shopdata.endtime))
-        //         {
-        //             DateTime buyendtime = DateTime.Parse(shopdata.endtime);
-        //             TimeSpan timeSpan = DateTime.Now.Subtract(buyendtime);
-        //             if (timeSpan.TotalMinutes <=0)
-        //             {
-        //                 endtime = buyendtime;
-        //             }
-        //         }
-        //         shopdata.isopen = true;
-        //         shopdata.endtime = endtime.ToString();
-        //     }
-        //     else
-        //     {
-        //         GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData()
-        //         {
-        //             id = curshopAdsItem.id,
-        //             endtime = endtime.ToString(),
-        //             isopen = true,
-        //             gettime = "",
-        //             adstype = 0,
-        //             isget = false,
-        //             isoverdate = false,
-        //         });
-        //     }
+         foreach (var item in _limitAdsGifts)
+         {
+             // 判断是否到达解锁关卡
+             if (!item.unlocked.Contains(StageHexController.Instance.CurStageInfo.StageNumber.ToString()))
+                 continue;
+        
+        
+             if (buyshopDta != null)
+             {
+                 if (buyshopDta.id == item.id && buyshopDta.adstype == (int)LimitRewordType.Remove7DayAds)
+                 {
+                     return;
+                 }
+        
+                 if (buyshopDta.adstype == (int)LimitRewordType.RemoveAds)
+                 {
+                     return;
+                 }
+             }
+        
+        
+             // 设置当前广告项目
+             curshopAdsItem = item;
+        
+             ShopLimitData shopdata = GameDataManager.Instance.UserData.limitShopItems.Find(itemdata => itemdata.id == curshopAdsItem.id);
+        
+             int hours = int.Parse(curshopAdsItem.limitedTime);
+             DateTime endtime = DateTime.Now.AddHours(hours);
+                         
+             if (shopdata!=null)
+             {
+                 if (!string.IsNullOrEmpty(shopdata.endtime))
+                 {
+                     DateTime buyendtime = DateTime.Parse(shopdata.endtime);
+                     TimeSpan timeSpan = DateTime.Now.Subtract(buyendtime);
+                     if (timeSpan.TotalMinutes <=0)
+                     {
+                         endtime = buyendtime;
+                     }
+                 }
+                 shopdata.isopen = true;
+                 shopdata.endtime = endtime.ToString();
+             }
+             else
+             {
+                 GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData()
+                 {
+                     id = curshopAdsItem.id,
+                     endtime = endtime.ToString(),
+                     isopen = true,
+                     gettime = "",
+                     adstype = 0,
+                     isget = false,
+                     isoverdate = false,
+                 });
+             }
         
             // 等待1秒后显示面板
             await Task.Delay(1500); // 1000毫秒 = 1秒
             SystemManager.Instance.ShowPanel(PanelType.AdsDiscountScreen);
             return;
-        //}
+        }
     }
 
     /// <summary>

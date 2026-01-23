@@ -76,6 +76,8 @@ public class ShopScreen : UIWindow
         BuyRemoveAdsEvent();
         CustomFlyInManager.Instance.GoldObj=CoinIcon.gameObject;
         //GameDataManager.Instance.UserData.CheckShopBuyData();
+        
+        GameDataManager.Instance.UserData.CheckShopBuyData();
     }
 
     private void InitUI(int value = 0, bool isanim = false)

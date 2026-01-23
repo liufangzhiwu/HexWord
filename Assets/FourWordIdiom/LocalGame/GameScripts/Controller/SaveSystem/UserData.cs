@@ -143,7 +143,7 @@ public class UserData
     /// <summary>
     /// 商店限时商品数据
     /// </summary>
-    //public List<ShopLimitData> limitShopItems=new List<ShopLimitData>();
+    public List<ShopLimitData> limitShopItems=new List<ShopLimitData>();
     public bool isDayFreeGet;      // 商店每日免费商品是否获得
     public bool isDayGoldBuy;      // 商店每日金币购买商品是否买过
     public bool isDayMoneyBuy;      // 商店每日现金购买商品是否买过
@@ -268,6 +268,8 @@ public class UserData
         curIsEnter = false;
         
         passLevelUseTime = new Dictionary<int, int>();
+        //限时商店数据
+        limitShopItems =new List<ShopLimitData>();
         isDayFreeGet=false;
         isDayGoldBuy = false;
         isDayMoneyBuy = false;
@@ -348,6 +350,8 @@ public class UserData
         showRateusCount = user.showRateusCount;
         // 评价界面显示时间
         showRateusTime = user.showRateusTime;
+        //限时商店数据
+        limitShopItems =user.limitShopItems??new List<ShopLimitData>();
         isDayFreeGet=user.isDayFreeGet;
         isDayGoldBuy = user.isDayGoldBuy;
         isDayMoneyBuy = user.isDayMoneyBuy;
@@ -406,6 +410,8 @@ public class UserData
         
         // 检查是否需要上报生命周期事件
         CheckLifecycleEvents();
+        
+        CheckShopBuyData();
     }
 
     #endregion
@@ -508,6 +514,37 @@ public class UserData
         {
             WaterManager.instance.WaterShow(false);
             WaterManager.instance.ClearWater();
+        }
+    }
+    
+    
+    public void CheckShopBuyData()
+    {
+        foreach (ShopLimitData shopdata in limitShopItems)
+        {
+            if (shopdata.isopen)
+            {
+                DateTime getendtime = DateTime.Parse(shopdata.endtime);
+                TimeSpan timeSpan = getendtime.Subtract(DateTime.Now);
+      
+                if (timeSpan.TotalMinutes <= 0)
+                {
+                    shopdata.isopen=false;
+                    shopdata.endtime=null;
+                }
+            }
+            
+            if (shopdata.isget&&shopdata.adstype==(int)LimitRewordType.Remove7DayAds)
+            {
+                int hour = 24*7;
+                DateTime buyendTime = DateTime.Parse(shopdata.gettime).AddHours(hour);
+                TimeSpan timeSpan = buyendTime.Subtract(DateTime.Now);
+      
+                if (timeSpan.TotalMinutes <= 0)
+                {
+                    shopdata.isoverdate = true;
+                }
+            }
         }
     }
 

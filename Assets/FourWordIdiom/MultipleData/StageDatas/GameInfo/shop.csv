@@ -15,4 +15,4 @@ id,nameID,purchaseType,,type,productContent,,showIcon,name,des,pointDes,isHomeDi
 12,FreeGoods,-1,免费商品,3,0;30,,,,,,1,1,1,,24,,
 13,GoldGoods,-1,金币商品,4,2;5,400金币,,,,,1,2,2,,24,-25%,
 14,SingleGoods,0,单一道具商品,5,2;8,3,,,,,1,3,3,,24,-30%,
-15,BoxTime,1,限时宝箱,2,0;1000#2;10,6,adsgift,ShopBoxName07,,,1,4,4,12,48,-50%,
+15,BoxTime,0,限时宝箱,2,0;1000#2;10,6,adsgift,ShopBoxName07,,,1,4,4,12,48,-50%,
