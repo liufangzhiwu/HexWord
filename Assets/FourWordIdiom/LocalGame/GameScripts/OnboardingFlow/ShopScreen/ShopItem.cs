@@ -17,10 +17,11 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     [SerializeField] private GameObject timebg;
     [SerializeField] private GameObject circle;
     [SerializeField] private Image shopIcon;
+    public Image btntagicon;
     [SerializeField] private Text nameText;
     [SerializeField] private Text desText;
     [SerializeField] private Text shopCountText;
-    [SerializeField] private Text shopPriceText;
+    public Text shopPriceText;
     //[SerializeField] private Button buyButton;
     [SerializeField] private Transform giftsParent;
     [SerializeField] private GiftItem giftItemPrefab;
@@ -84,18 +85,80 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         {
             if (shopDataItem.produceNameId == "FreeGoods")
             {
-                
+                if (UIUtilities.isEditMode||!GameDataManager.Instance.UserData.isDayFreeGet)
+                {
+                    UpdateAdsRewardUI(true);
+                }
+                else
+                {
+                    AnalyticMgr.VideoAdClick("看广告领取商店金币");
+                    Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+                }
             }
 
             if (shopDataItem.produceNameId == "GoldGoods")
             {
                 
+                if (!GameDataManager.Instance.UserData.isDayGoldBuy)
+                {
+                    
+                    if (GameDataManager.Instance.UserData.Gold < 400)
+                    {
+                        MessageSystem.Instance.ShowTip("TipGoldInsufficient");
+                        return;
+                    }
+                    
+                    List<string> giftdata=shopDataItem.productContent[0];
+                    int count = int.Parse(giftdata[1]);
+                    int type = int.Parse(giftdata[0]);
+                    
+                    GameDataManager.Instance.UserData.UpdateGold(-400, true,true,"看广告领取商店金币");
+                    GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count,"看广告领取商店金币");
+                    GameDataManager.Instance.UserData.isDayGoldBuy = true;
+                    shopPriceText.text = "已购买";
+                    btntagicon.gameObject.SetActive(false);
+                    MessageSystem.Instance.ShowTip("购买成功！");
+                }
+                else
+                {
+                    shopPriceText.text = "已购买";
+                }
             }
         }
         else
         {
+            
+            if (shopDataItem.produceNameId == "SingleGoods")
+            {
+                if (GameDataManager.Instance.UserData.isDayMoneyBuy)
+                {
+                    return;
+                }
+            }
+            
             // 在这里实现你的点击功能逻辑
             OnBuyButtonClicked(shopDataItem);
+        }
+    }
+    
+    private void UpdateAdsRewardUI(bool isShow)
+    {
+        if (isShow)
+        {
+            List<string> giftdata=shopDataItem.productContent[0];
+            int count = int.Parse(giftdata[1]);
+            
+            CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
+            GameDataManager.Instance.UserData.UpdateGold(count, true,true,"看广告领取商店金币");
+            GameDataManager.Instance.UserData.isDayFreeGet=true;
+            btntagicon.gameObject.SetActive(true);
+            AnalyticMgr.VideoAdSuccess("看广告领取商店金币");
+            MessageSystem.Instance.ShowTip("购买成功！");
+        }
+        else
+        {
+            MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
+            AnalyticMgr.VideoAdFail("看广告领取商店金币");
         }
     }
     
@@ -199,7 +262,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         shopCountText.gameObject.SetActive(data.type != 1);
 
-        if (data.type == 0|| data.type == -1&& data.productContent != null && data.productContent.Count > 0)
+        if (data.type == 0||data.type == 5|| data.purchaseType == -1&& data.productContent != null && data.productContent.Count > 0)
         {
             shopCountText.text = $"x {data.productContent[0][1]}";
         }
@@ -326,7 +389,34 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             CultureInfo culture = UIUtilities.GetCultureForCurrency("");
 #endif
            
-            shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
+            
+            if (shopDataItem.produceNameId == "SingleGoods")
+            {
+                if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
+                {
+                    shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
+                }
+                else
+                {
+                    shopPriceText.text = "已购买";
+                }
+            }
+            else if (shopDataItem.produceNameId == "GoldGoods")
+            {
+                if (!GameDataManager.Instance.UserData.isDayGoldBuy)
+                {
+                    shopPriceText.text = "400";
+                }
+                else
+                {
+                    shopPriceText.text = "已购买";
+                }
+            }
+            else
+            {
+                shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
+            }
+           
 
             ShowPriceLoadingState(false);
         }
@@ -500,6 +590,15 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             AnalyticMgr.PurchaseFinished(item, firstPay);
             // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);
+        }
+        
+        if (shopDataItem.produceNameId == "SingleGoods")
+        {
+            if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
+            {
+                GameDataManager.Instance.UserData.isDayMoneyBuy = true;
+                shopPriceText.text = "已购买";
+            }
         }
         
         MessageSystem.Instance.ShowTip("购买成功！");

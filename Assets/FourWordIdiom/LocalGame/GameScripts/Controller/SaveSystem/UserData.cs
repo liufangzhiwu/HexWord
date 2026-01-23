@@ -145,6 +145,8 @@ public class UserData
     /// </summary>
     //public List<ShopLimitData> limitShopItems=new List<ShopLimitData>();
     public bool isDayFreeGet;      // 商店每日免费商品是否获得
+    public bool isDayGoldBuy;      // 商店每日金币购买商品是否买过
+    public bool isDayMoneyBuy;      // 商店每日现金购买商品是否买过
 
     #endregion
 
@@ -267,6 +269,8 @@ public class UserData
         
         passLevelUseTime = new Dictionary<int, int>();
         isDayFreeGet=false;
+        isDayGoldBuy = false;
+        isDayMoneyBuy = false;
         
         // 生命周期事件相关数据初始化
         TotalOnlineMinutes = 0f;
@@ -345,6 +349,8 @@ public class UserData
         // 评价界面显示时间
         showRateusTime = user.showRateusTime;
         isDayFreeGet=user.isDayFreeGet;
+        isDayGoldBuy = user.isDayGoldBuy;
+        isDayMoneyBuy = user.isDayMoneyBuy;
         //支付次数
         TotalPayTimes = user.TotalPayTimes;
         //累计付费金额
@@ -444,6 +450,8 @@ public class UserData
             
             UpdatePanelUI();
             isDayFreeGet = false;
+            isDayGoldBuy = false;
+            isDayMoneyBuy = false;
         }
     }
     

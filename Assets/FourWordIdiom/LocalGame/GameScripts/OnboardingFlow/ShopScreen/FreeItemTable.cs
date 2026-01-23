@@ -76,23 +76,24 @@ public class FreeItemTable : MonoBehaviour
     {
         TickTime();
         
-        freeitem.gameObject.SetActive(!GameDataManager.Instance.UserData.isDayFreeGet);
+        freeitem.btntagicon.gameObject.SetActive(GameDataManager.Instance.UserData.isDayFreeGet);
+        golditem.btntagicon.gameObject.SetActive(!GameDataManager.Instance.UserData.isDayGoldBuy);
 
-        if (GameDataManager.Instance.UserData.isDayFreeGet)
-        {
-            Sprite sprite=LoadShopIcon("freemaxitembg");
-
-            freeitem.GetComponent<Image>().sprite = sprite;
-            golditem.GetComponent<Image>().sprite = sprite;
-            toolitem.GetComponent<Image>().sprite = sprite;
-        }
-        else
-        {
-            Sprite sprite=LoadShopIcon("freeitembg");
-            freeitem.GetComponent<Image>().sprite = sprite;
-            golditem.GetComponent<Image>().sprite = sprite;
-            toolitem.GetComponent<Image>().sprite = sprite;
-        }
+        // if (GameDataManager.Instance.UserData.isDayFreeGet)
+        // {
+        //     Sprite sprite=LoadShopIcon("freemaxitembg");
+        //
+        //     freeitem.GetComponent<Image>().sprite = sprite;
+        //     golditem.GetComponent<Image>().sprite = sprite;
+        //     toolitem.GetComponent<Image>().sprite = sprite;
+        // }
+        // else
+        // {
+        //     Sprite sprite=LoadShopIcon("freeitembg");
+        //     freeitem.GetComponent<Image>().sprite = sprite;
+        //     golditem.GetComponent<Image>().sprite = sprite;
+        //     toolitem.GetComponent<Image>().sprite = sprite;
+        // }
     }
     
     private void TickTime()

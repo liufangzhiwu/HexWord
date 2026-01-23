@@ -11,6 +11,7 @@ public class ShopScreen : UIWindow
     [SerializeField] private Button closeBtn; // 关闭按钮
     [SerializeField] private Button pageBtn; // 关闭按钮
     [SerializeField] private Button adsbtn; // 关闭按钮
+    [SerializeField] private Image CoinIcon;
     [SerializeField] private Text HeaderText;
     [SerializeField] private Text GoldText;
     [SerializeField] private Text ButteryText;
@@ -20,6 +21,7 @@ public class ShopScreen : UIWindow
     [SerializeField] private ScrollRect shopScrollView;
     [SerializeField] private FreeItemTable freeItemTable;
     [SerializeField] private GameObject goldItemTable;
+    [SerializeField] private GameObject goldItemTable2;
     private ObjectPool objectPool; // 对象池实例
     private ObjectPool giftobjectPool; // 对象池实例
     Dictionary<int, ShopItem> shophomeItems = new Dictionary<int, ShopItem>();
@@ -45,7 +47,7 @@ public class ShopScreen : UIWindow
         giftobjectPool = new ObjectPool(ShopGiftItemPrefab.gameObject, ObjectPool.CreatePoolContainer(transform, "ShopGiftItemPool"));
         
         shopallDataItems  =  ShopManager.shopManager.GetShopItems();
-        shopDataItems=  ShopManager.shopManager.GetShopHomeItems();
+        shopDataItems =  ShopManager.shopManager.GetShopHomeItems();
         CrateShopItem(shopDataItems,true);
     }
 
@@ -72,7 +74,7 @@ public class ShopScreen : UIWindow
         }
 
         BuyRemoveAdsEvent();
-        
+        CustomFlyInManager.Instance.GoldObj=CoinIcon.gameObject;
         //GameDataManager.Instance.UserData.CheckShopBuyData();
     }
 
@@ -181,6 +183,11 @@ public class ShopScreen : UIWindow
             }
             else
             {
+                if (shopDataItem.id>=3&&shopDataItem.type==0)
+                {
+                    itemparent =goldItemTable2.transform;
+                }
+                
                 shopItem = pool.GetObject<ShopItem>(itemparent);
                 shopItem.SetShopData(shopDataItem);
                 shopItem.transform.SetSiblingIndex(i);
@@ -207,6 +214,9 @@ public class ShopScreen : UIWindow
         }
         
         freeItemTable.transform.SetAsFirstSibling();
+        
+        goldItemTable.transform.SetAsLastSibling();
+        goldItemTable2.transform.SetAsLastSibling();
     }
 
     protected override void InitializeUIComponents()
@@ -269,7 +279,7 @@ public class ShopScreen : UIWindow
     
     private void ShowBanner()
     {
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= 7)
+        if (GameDataManager.Instance?.UserData.CurrentHexStage >= 7)
         {
             if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
             {
@@ -300,5 +310,7 @@ public class ShopScreen : UIWindow
         // if(!ShopManager.shopManager.paysuccess) 
         //     AdsManager.Instance.ShowRewardedPanel("store_gold");
         OnPanelClosed();
+        
+        //CustomFlyInManager.Instance.GoldObj=null;
     }
 }

@@ -31,6 +31,7 @@ public class GetItemScreen : UIWindow
         InitUI();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
         //EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
     }
 
     private void InitUI()
@@ -119,7 +120,20 @@ public class GetItemScreen : UIWindow
         
         GameDataManager.Instance.UserData.UpdateTool(limitRewordType, 1,"金币购买道具");
         GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"金币购买道具");
+        
+        
+        if (limitRewordType == LimitRewordType.SingleTipsttool)
+        {
+            SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                ?.ToolItemFirstLetter();
+        }else if (limitRewordType == LimitRewordType.Tipstool)
+        {
+            SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                ?.UseTips();
+        }
+        
        
+        Close();
     }
 
     private void UpdateAdsRewardUI(bool isShow)
@@ -127,8 +141,11 @@ public class GetItemScreen : UIWindow
         if (isShow)
         {
             GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"看广告获取"+title.text+"道具");
+            SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                ?.ToolItemFirstLetter();
             
             AnalyticMgr.VideoAdSuccess(eventDes);
+            Close();
         }
         else
         {
@@ -159,5 +176,6 @@ public class GetItemScreen : UIWindow
         base.OnDisable();
         ClaimGoldBtn.interactable = true;
         closeBtn.interactable = true;
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false);
     }
 }

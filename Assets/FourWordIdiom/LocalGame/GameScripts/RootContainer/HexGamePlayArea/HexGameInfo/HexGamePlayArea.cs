@@ -707,7 +707,7 @@ public class HexGamePlayArea : UIWindow
     /// <summary>
     /// 使用首字提示工具
     /// </summary>
-    private void ToolItemFirstLetter()
+    public void ToolItemFirstLetter()
     {
         ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
         

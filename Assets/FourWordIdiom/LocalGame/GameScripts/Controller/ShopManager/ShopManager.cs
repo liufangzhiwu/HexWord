@@ -304,7 +304,7 @@ public class ShopManager : MonoBehaviour
         // shopItems = shopItems.OrderBy(item => item.sort).ToList();
         // return shopItems;
         return shopItems
-            .Where(item => item.isHomeDisplay == "1" && string.IsNullOrEmpty(item.unlocked[0]))
+            .Where(item => !string.IsNullOrEmpty(item.sort.ToString()) && string.IsNullOrEmpty(item.unlocked[0]))
             .OrderBy(item => item.sort)
             .ToList();
     }

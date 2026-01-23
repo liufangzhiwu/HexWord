@@ -257,8 +257,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4622479256525605902}
   - {fileID: 4800643108336424273}
+  - {fileID: 4622479256525605902}
   m_Father: {fileID: 8704456760907074949}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
@@ -1067,6 +1067,7 @@ MonoBehaviour:
   timebg: {fileID: 0}
   circle: {fileID: 2091413758138296795}
   shopIcon: {fileID: 5441310110228215792}
+  btntagicon: {fileID: 0}
   nameText: {fileID: 5184956613348870837}
   desText: {fileID: 8792795795179897049}
   shopCountText: {fileID: 4918798243018221555}
@@ -1106,8 +1107,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 645672744049092509}
   - {fileID: 3998768810826718549}
+  - {fileID: 645672744049092509}
   m_Father: {fileID: 8704456760907074949}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}

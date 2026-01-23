@@ -65,6 +65,7 @@ public class HeaderSection : UIWindow
 #endif
         PuzzlebookBtn.AddClickAction(OnClickPuzzleVocabulary);
         LevelPuzzleBtn.AddClickAction(OnClickStagePuzzleScreen);
+        PupaTable.AddClickAction(()=>SystemManager.Instance.ShowPanel(PanelType.ButterflyHome));
     }
 
     protected override void OnEnable()
@@ -141,12 +142,14 @@ public class HeaderSection : UIWindow
            
         if (istop)
         {
+            coinObj.gameObject.SetActive(true);
             canvas.overrideSorting=true;
             canvas.sortingLayerName="TipsPanel";
             canvas.sortingOrder=100;
         }
         else
         {
+            coinObj.gameObject.SetActive(false);
             canvas.overrideSorting=true;
             canvas.sortingLayerName="TopPanel";
             canvas.sortingOrder=0;
@@ -280,7 +283,7 @@ public class HeaderSection : UIWindow
         EventDispatcher.instance.OnUpdateLayerCoin -= UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         EventDispatcher.instance.OnChangeTopRaycast -= ChangeTopRaycast;
-        CustomFlyInManager.Instance.GoldObj = null;
+        //CustomFlyInManager.Instance.GoldObj = null;
         // 禁用时取消调用
         //CancelInvoke(nameof(CheckLevelPuzzleVisibility));
     }
