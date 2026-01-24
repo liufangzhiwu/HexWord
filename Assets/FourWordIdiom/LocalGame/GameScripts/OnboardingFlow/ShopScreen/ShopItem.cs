@@ -26,7 +26,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     [SerializeField] private Transform giftsParent;
     [SerializeField] private GiftItem giftItemPrefab;
     [SerializeField] private GameObject tipBtnPrefab;
-    //private ShopLimitData _shopLimitData=null;
+    private ShopLimitData _shopLimitData=null;
     private Button tipBtn;
     
     [Header("缩放设置")]
@@ -219,15 +219,15 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         if (shouldShowTimeBg)
         {
-            // _shopLimitData = GameDataManager.Instance.UserData.limitShopItems?
-            //     .Find(item => item.id == data.id);
-            //
-            // if (_shopLimitData != null &&
-            //     !string.IsNullOrEmpty(_shopLimitData.endtime) &&
-            //     _shopLimitData.isopen)
-            // {
-            //     StartCoroutine(UpdateTime());
-            // }
+            _shopLimitData = GameDataManager.Instance.UserData.limitShopItems?
+                .Find(item => item.id == data.id);
+            
+            if (_shopLimitData != null &&
+                !string.IsNullOrEmpty(_shopLimitData.endtime) &&
+                _shopLimitData.isopen)
+            {
+                StartCoroutine(UpdateTime());
+            }
             
             giftsParent.GetComponent<RectTransform>().anchoredPosition = new Vector2(50f, 40);
         }
@@ -458,17 +458,17 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
     private string Gettime()
     {
-        // DateTime startTime = DateTime.Parse(_shopLimitData.endtime);
-        // TimeSpan timeSpan = startTime.Subtract(DateTime.Now);
-        //   
-        // if (timeSpan.TotalMinutes > 0)
-        // {
-        //     timebg.GetComponentInChildren<Text>().text = UIUtilities.FormatTimeRemaining(timeSpan);
-        // }
-        //
-        // // 输出倒计时
-        // return timeSpan.TotalMinutes.ToString();
-        return "00:00:00";
+        DateTime startTime = DateTime.Parse(_shopLimitData.endtime);
+        TimeSpan timeSpan = startTime.Subtract(DateTime.Now);
+          
+        if (timeSpan.TotalMinutes > 0)
+        {
+            timebg.GetComponentInChildren<Text>().text = UIUtilities.FormatTimeRemaining(timeSpan);
+        }
+        
+        // 输出倒计时
+        return timeSpan.TotalMinutes.ToString();
+        //return "00:00:00";
     }
     
     private IEnumerator UpdateTime()
@@ -480,9 +480,8 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             time = Gettime();
             if (string.IsNullOrEmpty(time))
             {
-                //_shopLimitData.isopen = false;
+                _shopLimitData.isopen = false;
                 transform.gameObject.SetActive(false);
-                //OnCloseBtn();
                 break; // 如果时间为空，退出循环
             }
               

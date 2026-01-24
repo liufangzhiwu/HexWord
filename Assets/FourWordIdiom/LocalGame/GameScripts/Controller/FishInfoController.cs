@@ -138,12 +138,12 @@ public class FishInfoController : MonoBehaviour
 
         // 合并符合条件的AI和玩家数据，并包含usetime
         var query = GameDataManager.Instance.FishUserSave.aiSaveDatas
-            .Where(ai => ai.Puzzleprogress >= 100)
+            .Where(ai => ai.Puzzleprogress >= AppGameSettings.FishTargetWordCount)
             .Select(ai => new { IsPlayer = false, UseTime = ai.updatePuzzleusetime, Data = ai })
             .ToList();
 
         // 添加玩家数据（如果符合条件）
-        if (playerWordProgress >= 100)
+        if (playerWordProgress >= AppGameSettings.FishTargetWordCount)
         {
             query.Add(new { IsPlayer = true, UseTime = userUseTime, Data = (FishAISaveData)null });
         }
@@ -177,11 +177,11 @@ public class FishInfoController : MonoBehaviour
             .ToList();
 
         var leftquery = GameDataManager.Instance.FishUserSave.aiSaveDatas
-           .Where(ai => ai.Puzzleprogress < 100&&ai.Puzzleprogress>0)
+           .Where(ai => ai.Puzzleprogress < AppGameSettings.FishTargetWordCount&&ai.Puzzleprogress>0)
             .Select(ai => new { IsPlayer = false, leftword = AppGameSettings.FishTargetWordCount - ai.Puzzleprogress,usetime=ai.updatePuzzleusetime, Data = ai })
            .ToList();
 
-        if (playerWordProgress < 100&&playerWordProgress>0)
+        if (playerWordProgress < AppGameSettings.FishTargetWordCount&&playerWordProgress>0)
         {
             leftquery.Add(new { IsPlayer = true, leftword = AppGameSettings.FishTargetWordCount- playerWordProgress,usetime= userUseTime, Data = (FishAISaveData)null });
         }

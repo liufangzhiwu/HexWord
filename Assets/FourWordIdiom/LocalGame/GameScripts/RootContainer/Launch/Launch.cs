@@ -26,15 +26,19 @@ public class Launch : MonoBehaviour
 
         if (!GameDataManager.Instance.UserData.IsAgreePrivacy)
         {
-            // GameObject pg = Resources.Load<GameObject>("Privacy/PrivacyGuidance");
-            // GameObject ps = Instantiate(pg, transform);
-            // ps.SetActive(true);
-            GameDataManager.Instance.UserData.IsAgreePrivacy = true;
+#if UNITY_OPENHARMONY
+             GameDataManager.Instance.UserData.IsAgreePrivacy = true;
+             isTiming = true;
+#else
+            GameObject pg = Resources.Load<GameObject>("Privacy/PrivacyGuidance");
+            GameObject ps = Instantiate(pg, transform);
+            ps.SetActive(true);
+#endif
         }
-        // else
-        // {
-        isTiming = true;
-        //}
+        else
+        {
+            isTiming = true;
+        }
     }
 
     // Update is called once per frame

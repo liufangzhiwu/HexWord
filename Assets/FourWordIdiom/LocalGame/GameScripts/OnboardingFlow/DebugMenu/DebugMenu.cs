@@ -12,6 +12,7 @@ public class DebugMenu : UIWindow
 
     [SerializeField] private Button PassStageBtn; // 一键通关     
     [SerializeField] private Button ReSetGameBtn; //清空存档
+    [SerializeField] private Button MailBtn; 
 
     [SerializeField] private Button AddGoldBtn; //增加金币
     [SerializeField] private Button EnterStageBtn; // 跳关   
@@ -28,7 +29,7 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button AddPupaBtn;
     [SerializeField] private Toggle AutoToggle;
 
-    //public InputField EmailText; 
+    public InputField EmailText; 
     public Text FPSText; 
     public Text logText; // 用于显示日志信息的 UI 文本 
     private bool isRebuilding = false;
@@ -57,7 +58,7 @@ public class DebugMenu : UIWindow
     {
         AutoToggle.onValueChanged.AddListener(OnAutoToggleValueChanged);
         CloseBtn.AddClickAction(OnCloseBtn);
-        //MailBtn.AddClickAction(SendMail);
+        MailBtn.AddClickAction(SendMail);
         EnterStageBtn.AddClickAction(OnEnterStageClick);
         AddGoldBtn.AddClickAction(OnAddGoldClick);
         AddResetToolBtn.AddClickAction(AddResetCountClick);
@@ -254,24 +255,85 @@ public class DebugMenu : UIWindow
 
         isRebuilding = true;
 
-        //// 添加新日志信息
-        //LogSystem.Instance.logBuilder.AppendLine(logString);
-        //// 限制文本长度，避免文本过大
-        //const int maxLogLength = 8000; // 设置最大日志长度
-        //if (LogSystem.Instance.logBuilder.Length > maxLogLength)
-        //{
-        //    // 删除旧的内容，保留最新的部分
-        //    LogSystem.Instance.logBuilder.Remove(0, LogSystem.Instance.logBuilder.Length - maxLogLength);
-        //}
+        // 添加新日志信息
+        LogManager.Instance.logBuilder.AppendLine(logString);
+        // 限制文本长度，避免文本过大
+        const int maxLogLength = 8000; // 设置最大日志长度
+        if (LogManager.Instance.logBuilder.Length > maxLogLength)
+        {
+            // 删除旧的内容，保留最新的部分
+            LogManager.Instance.logBuilder.Remove(0, LogManager.Instance.logBuilder.Length - maxLogLength);
+        }
 
-        //// 更新 UI 文本
-        //if (logText != null)
-        //{
-        //    logText.text = LogSystem.Instance.logBuilder.ToString();
-        //}
-
+        // 更新 UI 文本
+        if (logText != null)
+        {
+            logText.text = LogManager.Instance.logBuilder.ToString();
+        }
         isRebuilding = false;
     }
+    
+    
+       private async void SendMail()
+        {        
+            // 日志文件路径           
+            string logFilePath = Path.Combine(Application.persistentDataPath, "logs/log_0.txt");
+
+            // 设置 SMTP 服务器信息
+            string smtpAddress = "smtp.qq.com"; // QQ 邮箱的 SMTP 地址
+            int portNumber = 587; // 使用 TLS 的端口号
+            bool enableSSL = true; // 是否启用 SSL
+
+            // 发送者和接收者的电子邮件地址
+            string emailFrom = "f2608544640@foxmail.com"; // 发送者的QQ邮箱
+            string password = "grwdqvewgxwzeagc"; // QQ邮箱的授权码
+            string emailTo = "f2608544640@foxmail.com"; // 接收者的邮箱
+            string subject = EmailText.text;
+            string body = "Please find the attached log file.";
+
+            MessageSystem.Instance.ShowTip("邮件已发送！");
+            MailBtn.enabled = false;
+
+            // 创建邮件
+            using (MailMessage mail = new MailMessage())
+            {
+                mail.From = new MailAddress(emailFrom);
+                mail.To.Add(emailTo);
+                mail.Subject = subject;
+                mail.Body = body;
+                mail.IsBodyHtml = true; // 如果邮件内容是 HTML 格式，设置为 true
+
+                // 添加日志文件作为附件
+                if (File.Exists(logFilePath))
+                {
+                    Attachment attachment = new Attachment(logFilePath);
+                    mail.Attachments.Add(attachment);
+                }
+                else
+                {
+                    Console.WriteLine("Log file does not exist.");
+                    MailBtn.enabled = true;
+                    return;
+                }
+
+                // 发送邮件
+                using (SmtpClient smtp = new SmtpClient(smtpAddress, portNumber))
+                {
+                    smtp.Credentials = new NetworkCredential(emailFrom, password);
+                    smtp.EnableSsl = enableSSL; // 启用 SSL
+                    //try
+                    //{
+                        await smtp.SendMailAsync(mail);  // 使用异步发送邮件
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    Console.WriteLine("Error sending email: " + ex.Message);
+                    //}
+                }
+            }
+
+            MailBtn.enabled = true;
+        }
 
 
     public void ShowDetail(string logEntry)
