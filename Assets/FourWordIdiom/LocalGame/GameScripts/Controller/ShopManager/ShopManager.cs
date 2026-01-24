@@ -50,12 +50,8 @@ public class ShopManager : MonoBehaviour
     /// </summary>
     public ShopDataItem curshopAdsItem;
     public static ShopManager shopManager;
-    /// <summary>
-    /// 当前限时商店物品
-    /// </summary>
-    //private List<ShopLimitData> limitDatas;
     
-    //private Dictionary<int, ShopLimitData> shoplimitDatas;
+    private Dictionary<int, ShopLimitData> shoplimitDatas;
     private List<ShopDataItem> _limitAdsGifts;
 
     public Action<string,bool> UpdateAdsBtnUI;
@@ -93,8 +89,8 @@ public class ShopManager : MonoBehaviour
 
     public void Initialize()
     {
-        // shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
-        //     .ToDictionary(x => x.id, x => x);
+        shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
+            .ToDictionary(x => x.id, x => x);
         // 初始化查找结构
         _limitAdsGifts = GetLimitAdsGifts();
     }
@@ -232,8 +228,8 @@ public class ShopManager : MonoBehaviour
     {
         var type2Count = 0;
         var maxType2 = 3; // 最多允许的type2商品数量
-         //shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
-        //     .ToDictionary(x => x.id, x => x);
+         shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
+             .ToDictionary(x => x.id, x => x);
 
         // 检查限购状态(永久去广告)
         //bool removeads = GameDataManager.Instance.UserData.limitShopItems.Any(itemdata => itemdata.isget && !itemdata.isoverdate && itemdata.adstype == 6);
@@ -261,17 +257,17 @@ public class ShopManager : MonoBehaviour
 
 
                 // 检查limitData是否存在且isopen为true
-                // shoplimitDatas.TryGetValue(item.id, out var limitData);
-                // if (limitData != null)
-                // {
-                //     if (!limitData.isopen||limitData.isget&&!limitData.isoverdate) return false;
-                //
-                //     if (!limitData.isget||limitData.isget&&limitData.isoverdate)
-                //     {
-                //         type2Count++;
-                //         return true;
-                //     }                    
-                // }
+                shoplimitDatas.TryGetValue(item.id, out var limitData);
+                if (limitData != null)
+                {
+                    if (!limitData.isopen||limitData.isget&&!limitData.isoverdate) return false;
+                
+                    if (!limitData.isget||limitData.isget&&limitData.isoverdate)
+                    {
+                        type2Count++;
+                        return true;
+                    }                    
+                }
                 // 基础条件：必须显示在首页且未解锁
                 if (string.IsNullOrEmpty(item.unlocked[0])&&!string.IsNullOrEmpty(item.homeSort))
                 {

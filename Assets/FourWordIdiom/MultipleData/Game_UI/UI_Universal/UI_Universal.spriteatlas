@@ -114,6 +114,7 @@ SpriteAtlas:
     - 2e9505f7ea857684ba6f9adce1d8fa8b: 21300000
     - 324edc086de31b14c94b9ad2847b0d02: 21300000
     - 69178c1874146ef4b8ca42635a94133a: 21300000
+    - 34006668c5e018245ae69bab8949d37a: 21300000
     - fd804e88747b549e2af4ae573f28459e: 21300000
     - 58a29598c84c90c4c88209e07f1c6563: 21300000
     - 8ba012a8effc5f04593473242834b468: 21300000
@@ -240,6 +241,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 2e9505f7ea857684ba6f9adce1d8fa8b, type: 3}
   - {fileID: 21300000, guid: 324edc086de31b14c94b9ad2847b0d02, type: 3}
   - {fileID: 21300000, guid: 69178c1874146ef4b8ca42635a94133a, type: 3}
+  - {fileID: 21300000, guid: 34006668c5e018245ae69bab8949d37a, type: 3}
   - {fileID: 21300000, guid: fd804e88747b549e2af4ae573f28459e, type: 3}
   - {fileID: 21300000, guid: 58a29598c84c90c4c88209e07f1c6563, type: 3}
   - {fileID: 21300000, guid: 8ba012a8effc5f04593473242834b468, type: 3}
@@ -365,6 +367,7 @@ SpriteAtlas:
   - adsgift
   - "\uFF1F"
   - shopgift2
+  - giftdi15
   - targetred
   - jian
   - fishline
@@ -386,7 +389,7 @@ SpriteAtlas:
   - UI_Icon_Home
   - rank2
   - UI_Icon_claim
-  - itemdi13
+  - itemdi15
   - adsicon
   - UI_Icon_PingSeleWord
   - head12
@@ -399,7 +402,7 @@ SpriteAtlas:
   - Highlight_142
   - head9
   - head19
-  - gold0
+  - gold1
   - levelicon
   - fill_bg
   - head23
@@ -420,7 +423,7 @@ SpriteAtlas:
   - btnAds
   - fishicon
   - giftdi9
-  - gold1
+  - gold0
   - head7
   - puzzleBook
   - itemdi6
