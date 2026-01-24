@@ -78,7 +78,10 @@ public class LoadingController : MonoBehaviour
     
     private LoginResponse loginResponse;       // 登录响应数据
     private bool isLogined = false;
-    private UserData serverData;               // 服务器数据
+    
+    private UserData serverUserData;          // 解析后的主数据
+    private FishUserSaveData serverFishData;      // 解析后的鱼数据 (假设你的类名叫 FishSaveData)
+    private ButterflyData serverButterflyData;// 解析后的蝴蝶数据 (假设你的类名叫 ButterflyData)
 
     private void Awake()
     {
@@ -165,7 +168,7 @@ public class LoadingController : MonoBehaviour
     
     
     // 加载数据
-    private void LoadUserData(GetGameDataResponse response)
+    private void LoadUserData(GameDataDto response)
     {
         
         if (response == null)
@@ -174,56 +177,71 @@ public class LoadingController : MonoBehaviour
             StartCoroutine(LoadingSequence());
             return;
         } 
-        if (string.IsNullOrEmpty(response.gameData))
+        if (string.IsNullOrEmpty(response.UserData))
         {
-            Debug.Log("服务端数据不存在，初始化数据！");
-            ModifyUserWithABtest();
-            StartCoroutine(LoadingSequence());
+            Debug.Log("服务端主数据为空，视为新号或异常，使用本地初始化逻辑！");
+            UserLocalData(); // 没数据就直接走本地逻辑
+            return;
+        }
+
+        try
+        {
+            serverUserData = JsonConvert.DeserializeObject<UserData>(response.UserData);
+            if (response.ExtraData != null)
+            {
+                if (!string.IsNullOrEmpty(response.ExtraData.FishUserSave))
+                    serverFishData = JsonConvert.DeserializeObject<FishUserSaveData>(response.ExtraData.FishUserSave);
+                
+                if (!string.IsNullOrEmpty(response.ExtraData.Butterfly))
+                    serverButterflyData = JsonConvert.DeserializeObject<ButterflyData>(response.ExtraData.Butterfly);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"解析服务器数据失败: {ex.Message}，回退到本地数据");
+            UserLocalData();
             return;
         }
         
-        serverData = JsonConvert.DeserializeObject<UserData>(response.gameData);
-        
-        if (serverData.CurrentHexStage != GameDataManager.Instance.UserData.CurrentHexStage)
+        // 对比逻辑 (服务器 vs 本地)
+        CompareAndSelectData();
+    }
+    // 抽离对比逻辑，保持代码整洁
+    private void CompareAndSelectData()
+    {
+        // A. 优先比对关卡进度
+        if (serverUserData.CurrentHexStage != GameDataManager.Instance.UserData.CurrentHexStage)
         {
-            if (serverData.CurrentHexStage > GameDataManager.Instance.UserData.CurrentHexStage)
+            if (serverUserData.CurrentHexStage > GameDataManager.Instance.UserData.CurrentHexStage)
             {
-                // 弹窗提示
-                Debug.Log("服务器关卡进度大于本地，默认使用服务器数据");
                 UserServerData();
-                Debug.Log("服务器数据同步完成！");
+                Debug.Log("服务器关卡进度更优，使用服务器数据, 服务器数据同步完成！");
             }
             else 
             {
-                // 弹窗提示
-                Debug.Log("服务器关卡进度小于本地，默认使用本地数据");
                 UserLocalData();
+                Debug.Log("本地关卡进度更优，使用本地数据");
             }
         }
-        else //关卡进度相同时，以离线时间最新的那次为主
+        else // B. 关卡进度相同时，比对离线时间
         {
-            if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.logoutTime)||string.IsNullOrEmpty(serverData.logoutTime))
+            // 安全的时间解析，防止 Parse 报错
+            DateTime.TryParse(GameDataManager.Instance.UserData.logoutTime, out DateTime localTime);
+            DateTime.TryParse(serverUserData.logoutTime, out DateTime serverTime);
+            Debug.Log($"本地时间: {localTime}  <--> 服务器时间: {serverTime}");
+            if (localTime < serverTime)
             {
-                UserLocalData();
+                Debug.Log("服务器存档时间更新，使用服务器数据");
+                UserServerData();
             }
             else
             {
-                DateTime LogoutTime = DateTime.Parse(GameDataManager.Instance.UserData.logoutTime);
-                DateTime serverLogoutTime = DateTime.Parse(serverData.logoutTime);
-
-                if (LogoutTime < serverLogoutTime)
-                {
-                    UserServerData();
-                }
-                else
-                {
-                    UserLocalData();
-                }
+                Debug.Log("本地存档时间更新，使用本地数据");
+                UserLocalData();
             }
-            
         }
     }
-
+    
     private void UserLocalData()
     {
         ModifyUserWithABtest();
@@ -232,7 +250,11 @@ public class LoadingController : MonoBehaviour
 
     private void UserServerData()
     {
-        GameDataManager.Instance.UserData.InitData(serverData);
+        GameDataManager.Instance.UserData.InitData(serverUserData);
+        if (serverFishData != null)
+            GameDataManager.Instance.FishUserSave.InitData(serverFishData);
+        if (serverButterflyData != null)
+            GameDataManager.Instance.ButterflyData.InitData(serverButterflyData);
         GameDataManager.Instance.SetInitailized(true);
         ModifyUserWithABtest();
         StartCoroutine(LoadingSequence());

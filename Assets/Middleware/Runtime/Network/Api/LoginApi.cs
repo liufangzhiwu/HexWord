@@ -14,7 +14,24 @@ public class LoginApi
     {
         httpClient = client;
     }
-
+    // 辅助：获取当前渠道厂商
+    private string GetCurrentFactory()
+    {
+        // 如果是华为渠道包
+#if UNITY_huawei
+    return "huawei";
+#elif UNITY_hornor
+    return "hornor";
+    // 如果是 Google Play 渠道包 (包括 PC 版)
+#elif UNITY_ANDROID || UNITY_STANDALONE_WIN
+        // 注意：Google Play Games PC 版也是 Google 厂商
+        return "google"; 
+#elif UNITY_IOS
+    return "apple";
+#else
+    return "editor";
+#endif
+    }
     /**
      * 登录
      */
@@ -27,16 +44,20 @@ public class LoginApi
         // }
         
         string openId = GameDataManager.Instance.UserData.UserId;
-        string factory = "huawei";
+        string factory = GetCurrentFactory();
         
 #if UNITY_huawei
         factory = "huawei";
 #endif
+        #if UNITY_EDITOR
+        openId = SystemInfo.deviceUniqueIdentifier;
+        #endif
         
         var data = new LoginRequest
         {
             factory = factory,
             openId = openId,
+            deviceId =  SystemInfo.deviceUniqueIdentifier,
             platform = Application.platform.ToString(),
             version = Application.version ?? "1.0.0",
             language = Application.systemLanguage.ToString(),
@@ -82,11 +103,11 @@ public class LoginApi
     /**
      * 获取游戏数据
      */
-    public IEnumerator GetUserData(Action<GetGameDataResponse> callback)
+    public IEnumerator GetUserData(Action<GameDataDto> callback)
     {
-        yield return httpClient.Get<GetGameDataResponse>("auth/getGameData",
+        yield return httpClient.Get<GameDataDto>("auth/getGameData",
             onSuccess => {
-                Debug.Log("GetUserData success!" + onSuccess.gameData);
+                Debug.Log("GetUserData success!" + onSuccess.UserData);
                 callback?.Invoke(onSuccess);
             },
             onError => {
@@ -97,9 +118,9 @@ public class LoginApi
     /**
      * 更新游戏数据
      */
-    public IEnumerator UpdateUserData(object data)
+    public IEnumerator UpdateUserData(GameDataDto data)
     {
-        yield return httpClient.Post<System.Collections.Generic.List<bool>>("auth/update-gameData",
+        yield return httpClient.Post<bool>("auth/update-gameData",
             data,
             response =>
             {

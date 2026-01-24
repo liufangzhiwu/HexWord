@@ -182,9 +182,9 @@ public class GameDataManager : SingletonMono<GameDataManager>
     {
         playerProfile.LoadData();
         fishUserSave.LoadData();
-        dynamicHard.LoadData();
-        chessDynamicHard.LoadData();
         butterfly.LoadData();
+        dynamicHard.LoadData();
+        // chessDynamicHard.LoadData();
         dataInitialized = true;
     }
     #endregion
@@ -312,8 +312,15 @@ public class GameDataManager : SingletonMono<GameDataManager>
         playerProfile.SaveData();
         butterfly.SaveData();
         fishUserSave.SaveData();
-        Debug.LogFormat("保存用户时的数据: {0}", JsonConvert.SerializeObject(playerProfile));
-        StartCoroutine(APIGateway.Instance.LoginApi.UpdateUserData(playerProfile));
+        StartCoroutine(APIGateway.Instance.LoginApi.UpdateUserData(new GameDataDto
+        {
+            UserData = JsonConvert.SerializeObject(playerProfile),
+            ExtraData = new ExtraDataDto
+            {
+                FishUserSave = JsonConvert.SerializeObject(fishUserSave),
+                Butterfly = JsonConvert.SerializeObject(butterfly),
+            }
+        }));
         //leaderboardCache.SaveData();
         
          string currentLevelId = CreateLevelIdentifier(playerProfile.CurrentHexStage);
