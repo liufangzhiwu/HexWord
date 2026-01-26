@@ -310,7 +310,7 @@ public class PrimaryInterface : UIWindow
         SignInBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.SignInRewards
         ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.signOpenTime));
         
-        //ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
+        ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
     }
     
     private void UpdateTimeDisplay(string time)

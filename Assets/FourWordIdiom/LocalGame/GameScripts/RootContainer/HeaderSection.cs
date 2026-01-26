@@ -13,6 +13,9 @@ public class HeaderSection : UIWindow
     public Button PuzzlebookBtn;
     public Button LevelPuzzleBtn;
     public Button PupaTable;
+    public GameObject addObj;
+    public GameObject redpoint;
+    public GameObject sale;
     public GameObject PupaImage;
     public Text Pupatxt; 
     public GameObject GoldImage;
@@ -64,6 +67,10 @@ public class HeaderSection : UIWindow
         {
             ShopBtn.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(StageHexController.Instance.CurStageData.PupaDatas!=null);
+            if (StageHexController.Instance.CurStageData.PupaDatas != null&&!GameDataManager.Instance.ButterflyData.IsOpenButterfly)
+            {
+                GameDataManager.Instance.ButterflyData.IsOpenButterfly = true;
+            }
         }
         else
         {
@@ -103,6 +110,9 @@ public class HeaderSection : UIWindow
         {
             Goldtxt.text = GameDataManager.Instance.UserData.Gold.ToString();
         }
+        
+        redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
+        sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
     }
     
     private IEnumerator AnimateCoinAddition(int amount)
@@ -155,7 +165,7 @@ public class HeaderSection : UIWindow
         {
             coinObj.gameObject.SetActive(true);
             canvas.overrideSorting=true;
-            canvas.sortingLayerName="TipsPanel";
+            canvas.sortingLayerName="RewardPanel";
             canvas.sortingOrder=100;
         }
         else
@@ -166,6 +176,7 @@ public class HeaderSection : UIWindow
             canvas.sortingOrder=0;
         }
         
+        addObj.gameObject.SetActive(isshopbtnEnable);
         ShopBtn.enabled = isshopbtnEnable;
     }
     

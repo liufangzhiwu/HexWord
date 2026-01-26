@@ -39,6 +39,8 @@ public class FreeItemTable : MonoBehaviour
     private void OnEnable()
     {
         InitUI();
+
+        EventDispatcher.instance.OnChangeFreeTipsPanel += ChangeTipsPanelState;
     }
 
     private void SetShowIcon(ShopDataItem shopDataItem)
@@ -126,12 +128,19 @@ public class FreeItemTable : MonoBehaviour
 
     private void ClicktipBtn()
     {
-
         tipPanel.SetActive(!tipPanel.activeSelf);
+    }
+    
+    private void ChangeTipsPanelState()
+    {
+        if (tipPanel.activeSelf)
+        {
+            tipPanel.SetActive(false);
+        }
     }
 
     private void OnDisable()
     {
-       
+        EventDispatcher.instance.OnChangeFreeTipsPanel -= ChangeTipsPanelState;
     }
 }

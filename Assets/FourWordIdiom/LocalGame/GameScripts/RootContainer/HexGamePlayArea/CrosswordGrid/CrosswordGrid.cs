@@ -280,8 +280,8 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         {
             foreach (PuzzleTile item in LayerpuzzleTiles)
             {           
-                item.TileView.TileTransform.SetAsFirstSibling();
-                item.TileView.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
+                item.TileView?.TileTransform.SetAsFirstSibling();
+                item.TileView?.TileTransform.GetComponent<CanvasGroup>().DOFade(1, 0.02f);
             }
         }
         
@@ -1388,13 +1388,15 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         foreach (IdiomBlock block in idiomData.blocks)
         {
             Vector2Int pos = block.position;
+            List<PuzzleTile> puzzlelist = gridList[pos.x][pos.y];
+            if(puzzlelist.Count<=0) continue;
 
-            int layers = gridList[pos.x][pos.y].Count;
+            int layers = puzzlelist.Count;
 
             if (layers > 0)
             {
                 // 获取该位置的所有字块           
-                PuzzleTile tilesAtPosition = gridList[pos.x][pos.y][0];
+                PuzzleTile tilesAtPosition = puzzlelist[0];
           
                 if (tilesAtPosition != null)
                 {

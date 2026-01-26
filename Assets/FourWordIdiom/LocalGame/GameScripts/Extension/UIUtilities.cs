@@ -39,6 +39,7 @@ public static class UIUtilities
             }
 
             AudioManager.Instance.TriggerVibration(10, 200);
+            EventDispatcher.instance.TriggerChangeFreeTipsPanel();
         });
     }
 

@@ -44,7 +44,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     private float fadeDuration = 0.5f;
     public bool IsOpen
     {
-        get => GameDataManager.Instance.ButterflyData.pupa > 0;
+        get => GameDataManager.Instance.ButterflyData.IsOpenButterfly;
     }
 
     protected override void Awake()

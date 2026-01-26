@@ -104,7 +104,7 @@ public class DailyTasksScreen : UIWindow
             StartCoroutine(UpdateTaskItemUI());
         }
         
-        //EventDispatcher.instance.TriggerUpdateLayerCoin(true,true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
         CheckTaskOverText();
     }
 
@@ -216,6 +216,6 @@ public class DailyTasksScreen : UIWindow
         LimitTimeManager.Instance.OnDailyTimeUpdated -= UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyTaskBtnUI -= UpdateButterflyUI;
         DailyTaskManager.Instance.isResetDailyTask=false;
-        //EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,true);
     }
 }

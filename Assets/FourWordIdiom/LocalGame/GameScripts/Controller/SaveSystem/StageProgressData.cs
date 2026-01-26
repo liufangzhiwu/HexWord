@@ -221,6 +221,8 @@ public class StageProgressData
         PupaDatas.breakProgress += progress;
         
         PupaDatas.breakProgress=Mathf.Clamp(PupaDatas.breakProgress,0,4);
+        
+        AudioManager.Instance.PlaySoundEffect("breakPupa");
     }
     
     #endregion

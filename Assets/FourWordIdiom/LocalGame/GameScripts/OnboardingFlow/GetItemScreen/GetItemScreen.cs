@@ -176,6 +176,6 @@ public class GetItemScreen : UIWindow
         base.OnDisable();
         ClaimGoldBtn.interactable = true;
         closeBtn.interactable = true;
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
     }
 }

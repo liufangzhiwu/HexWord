@@ -30,6 +30,8 @@ public class EventDispatcher:MonoBehaviour
     private Action _onUpdateGameLobbyUI;
     
     private Action _onChangeHeadIconUpdateUI;
+    
+    private Action _onChangeFreeTipsPanel;
 
     /// <summary>
     /// 更新词库按钮状态
@@ -166,6 +168,16 @@ public class EventDispatcher:MonoBehaviour
         remove => _onChangeHeadIconUpdateUI -= value;
     }
     
+    
+    /// <summary>
+    /// 刷新商店免费商品提示面板状态
+    /// </summary>
+    public event Action OnChangeFreeTipsPanel  
+    {
+        add => _onChangeFreeTipsPanel += value;
+        remove => _onChangeFreeTipsPanel -= value;
+    }
+    
     #endregion
 
     #region 事件触发方法
@@ -202,8 +214,6 @@ public class EventDispatcher:MonoBehaviour
     public void TriggerChangeTopRaycast(bool enable)
         => _onChangeTopRaycast?.Invoke(enable);
     
-   
-    
     public void TriggerOnUpdateGameLobbyUI()
         => _onUpdateGameLobbyUI?.Invoke();
     
@@ -227,6 +237,9 @@ public class EventDispatcher:MonoBehaviour
     
     public void TriggerChangeHeadIconUpdateEvent()
         => _onChangeHeadIconUpdateUI?.Invoke();
+    
+    public void TriggerChangeFreeTipsPanel()
+        => _onChangeFreeTipsPanel?.Invoke();
     
     #endregion
 }

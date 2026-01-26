@@ -60,6 +60,8 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     {
         isPressed = true;
         pressPosition = eventData.position;
+        
+        EventDispatcher.instance.TriggerChangeFreeTipsPanel();
     }
 
     public void OnPointerUp(PointerEventData eventData)

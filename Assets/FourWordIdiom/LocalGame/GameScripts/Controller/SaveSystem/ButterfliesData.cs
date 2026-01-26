@@ -12,7 +12,8 @@ using UnityEngine;
 [Serializable]
 public class ButterflyData
 {
-    public int pupa = 1;   // 蛹的总数量
+    public int pupa = 0;   // 蛹的总数量
+    public bool IsOpenButterfly = false;   // 是否开启蝶园
 
     public int currPupa;  // 当前蝶园收集的蛹
     public int currGarden; // 当前选择的蝶园
@@ -33,6 +34,7 @@ public class ButterflyData
         this.intervalLv = 0;
         this.butterflies = new HashSet<int>();
         this.gardens = new HashSet<int>();
+        IsOpenButterfly = false;
         gardens.Add(1);
     }
 
@@ -44,6 +46,7 @@ public class ButterflyData
         intervalLv = data.intervalLv;
         butterflies = data.butterflies;
         gardens = data.gardens;
+        IsOpenButterfly=data.IsOpenButterfly;
     }
     
     public void LoadData()

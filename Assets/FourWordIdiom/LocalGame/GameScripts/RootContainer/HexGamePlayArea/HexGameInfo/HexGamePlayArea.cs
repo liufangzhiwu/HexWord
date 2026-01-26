@@ -36,6 +36,9 @@ public class HexGamePlayArea : UIWindow
     [SerializeField] private Button ShopBtn;
     [SerializeField] private Text Stagetxt;
     
+    public GameObject redpoint;
+    public GameObject sale;
+    
     //选定词面板
     [SerializeField] private ChoicePuzzleTable choicePuzzleTable;
     //字块矩阵面板
@@ -146,6 +149,9 @@ public class HexGamePlayArea : UIWindow
             //HintCostObj.gameObject.SetActive(true);
             HintCounttxt.gameObject.SetActive(false);
         }
+        
+        redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
+        sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
     }
 
     protected override void OnEnable()
@@ -260,6 +266,8 @@ public class HexGamePlayArea : UIWindow
             usetoolCount = 0;
             yield return new WaitForSeconds(1f);
             ShopManager.shopManager.ShowLimitAdsPanel();
+
+            StageHexController.Instance.IsFirstEnterStage = false;
         }
         
         SingleTipLight.gameObject.SetActive(false);
@@ -431,6 +439,7 @@ public class HexGamePlayArea : UIWindow
             yield return new WaitForSeconds(0.5f);
             crossPuzzleGrid.PupatileView.HideElement();
             crossPuzzleGrid.PupatileView = null;
+            AudioManager.Instance.PlaySoundEffect("getPupa");
         }
     }
     

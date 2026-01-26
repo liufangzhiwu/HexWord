@@ -71,8 +71,8 @@ public class AdsDiscountScreen : UIWindow
         discountText.gameObject.SetActive(hasDiscount);
 
         // 调整价格文本位置
-        priceText.GetComponent<RectTransform>().anchoredPosition =
-            hasDiscount ? new Vector2(93, 0) : Vector2.zero;
+        // priceText.GetComponent<RectTransform>().anchoredPosition =
+        //     hasDiscount ? new Vector2(93, 0) : Vector2.zero;
 
         InitPriceText(hasDiscount);
     }
@@ -124,7 +124,7 @@ public class AdsDiscountScreen : UIWindow
                     decimal discountRate = (decimal)(discountPercent / 100f);
                     decimal originalPrice = (decimal) price / discountRate;
                     discountText.text = UIUtilities.FormatCurrency(originalPrice, culture);
-                    discountObj.GetComponentInChildren<Text>().text = $"{currentShopItem.discount}{MultilingualManager.Instance.GetString("ShopDiscount")}";
+                    discountObj.GetComponentInChildren<Text>().text = $"{currentShopItem.discount}";
                    
                 }
                 else
@@ -309,6 +309,6 @@ public class AdsDiscountScreen : UIWindow
         base.OnDisable();
         ClaimBtn.interactable = true;
         closeBtn.interactable = true;
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
     }
 }

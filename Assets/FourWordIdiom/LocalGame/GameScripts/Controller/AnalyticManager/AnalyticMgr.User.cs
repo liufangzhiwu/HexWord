@@ -11,6 +11,15 @@ public partial class AnalyticMgr
     public static void GameStart()
     {
         SetLoginProperties();
+
+        if (SystemManager.Instance != null)
+        {
+            if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
+            {
+                // 记录关卡开始时间
+                GameDataManager.Instance.UserData.curStageStartTime = DateTime.Now.ToString();
+            }
+        }
     }
 
     public static void GameEnd()

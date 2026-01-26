@@ -106,6 +106,9 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     IEnumerator InitializeLoadingProcess()
     {
+        InitializeLocalization();
+        SetupRandomLoadingHint();
+        
 #if UNITY_OPENHARMONY
         if (!UIUtilities.isEditMode)
         {
@@ -147,9 +150,7 @@ public class LoadingController : MonoBehaviour
             }
             isLogined = true;
         });
-        
-        InitializeLocalization();
-        SetupRandomLoadingHint();
+       
         LoadWordVocabulary();
 
         yield return new WaitUntil(() => isLogined);

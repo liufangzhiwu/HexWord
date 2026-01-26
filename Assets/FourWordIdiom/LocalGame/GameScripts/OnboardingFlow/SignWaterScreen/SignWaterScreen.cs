@@ -337,7 +337,7 @@ public class SignWaterScreen : UIWindow
     protected override void OnDisable()
     {
         base.OnDisable();
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,true);
         WaterManager.instance.OnWaterProgress -= ShowWaterProgress;
     }
 }

@@ -238,6 +238,7 @@ public class ShopScreen : UIWindow
 
     private void OnCloseBtn()
     {
+        GameDataManager.Instance.UserData.isHideShopRedPoint=true;
         base.Close(); // 隐藏面板
         
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
@@ -312,7 +313,6 @@ public class ShopScreen : UIWindow
         // if(!ShopManager.shopManager.paysuccess) 
         //     AdsManager.Instance.ShowRewardedPanel("store_gold");
         OnPanelClosed();
-        
         //CustomFlyInManager.Instance.GoldObj=null;
     }
 }

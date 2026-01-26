@@ -144,6 +144,7 @@ public class UserData
     /// 商店限时商品数据
     /// </summary>
     public List<ShopLimitData> limitShopItems=new List<ShopLimitData>();
+    public bool isHideShopRedPoint;      // 商店每日免费商品是否获得
     public bool isDayFreeGet;      // 商店每日免费商品是否获得
     public bool isDayGoldBuy;      // 商店每日金币购买商品是否买过
     public bool isDayMoneyBuy;      // 商店每日现金购买商品是否买过
@@ -273,6 +274,7 @@ public class UserData
         isDayFreeGet=false;
         isDayGoldBuy = false;
         isDayMoneyBuy = false;
+        isHideShopRedPoint=false;
         
         // 生命周期事件相关数据初始化
         TotalOnlineMinutes = 0f;
@@ -355,6 +357,7 @@ public class UserData
         isDayFreeGet=user.isDayFreeGet;
         isDayGoldBuy = user.isDayGoldBuy;
         isDayMoneyBuy = user.isDayMoneyBuy;
+        isHideShopRedPoint=user.isHideShopRedPoint;
         //支付次数
         TotalPayTimes = user.TotalPayTimes;
         //累计付费金额
@@ -617,9 +620,11 @@ public class UserData
             {
                 curStageOnlineTime += (int)duration.TotalSeconds;
             }
+
+            //保存完当前在线时长后，需要清空开始时间，防止进入后台时重复计算时长；
+            curStageStartTime = null;
         }
     }
-    
     
     /// <summary>
     /// 更新关卡用时

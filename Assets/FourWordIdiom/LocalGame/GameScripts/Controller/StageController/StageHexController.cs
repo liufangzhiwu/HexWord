@@ -67,7 +67,7 @@ public class StageHexController
     public bool IsEnterPuzzle { get; set; }       // 是否从目标词进入熟语
     public bool IsEnterVocabulary { get; set; } // 是否进入关卡内熟语
     public bool IsGMEnterStage { get; set; }    // 是否通过GM工具进入关卡
-    public bool IsFirstEnterStage { get; private set; } = true; // 是否首次进入当前关卡
+    public bool IsFirstEnterStage { get; set; } = true; // 是否首次进入当前关卡
 
     // 引用组件（通过方法注入）
     public PuzzleTile UpPuzzleGrid { get; set; }    // 字块矩阵中最上方字块
@@ -147,7 +147,7 @@ public class StageHexController
     public void SetStageData(int StageIndex)
     {
         // 初始化关卡配置
-        IsFirstEnterStage = GetIsFirstEnterStage();
+        //IsFirstEnterStage = GetIsFirstEnterStage();
         
         CurStageInfo = CreateStageInfo(StageIndex);
         CurStageData = GameDataManager.Instance.RetrieveLevelProgress(CurStageInfo);
@@ -157,11 +157,13 @@ public class StageHexController
         
         // 记录关卡开始时间
         GameDataManager.Instance.UserData.curStageStartTime = DateTime.Now.ToString();
+        Debug.LogError("关卡id:"+StageIndex+"关卡开始时间"+GameDataManager.Instance.UserData.curStageStartTime);
         AnalyticMgr.SetCommonProperties();
 
         // 首次进入关卡的特殊处理
         if (!GameDataManager.Instance.UserData.curIsEnter)
         {
+            IsFirstEnterStage = true;
             GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Clear();
             GameDataManager.Instance.UserData.curStageOnlineTime = 0;
             PuzzleComboCount = 0;  
@@ -260,12 +262,20 @@ public class StageHexController
         AudioManager.Instance.PlaySoundEffect("PassStage");
 
         yield return new WaitForSeconds(0.7f);
+
+        if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.curStageStartTime))
+        {
+            Debug.LogError("关卡开始时间异常"+StageNumber);
+            GameDataManager.Instance.UserData.curStageStartTime= DateTime.Now.ToString();
+        }
         
         // 计算耗时
         DateTime startTime = DateTime.Parse(GameDataManager.Instance.UserData.curStageStartTime);
         float duration = (float)(DateTime.Now - startTime).TotalSeconds + 
                          GameDataManager.Instance.UserData.curStageOnlineTime;
-
+        
+        Debug.LogError("关卡id:"+StageNumber+"关卡进行时间(秒)"+duration);
+            
         // 发送分析事件（示例）
         AnalyticMgr.LevelCompleted(duration);
         
@@ -274,9 +284,7 @@ public class StageHexController
         if (StageNumber >= 1)
         {
 
-#if UNITY_EDITOR
-
-#elif UNITY_OPENHARMONY || UNITY_huawei
+#if UNITY_OPENHARMONY || UNITY_huawei
 
             // AnalyticMgr.InsetAdStart("关卡插屏");
             // // 显示插屏广告

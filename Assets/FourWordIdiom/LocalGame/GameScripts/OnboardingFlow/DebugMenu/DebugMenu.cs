@@ -89,6 +89,7 @@ public class DebugMenu : UIWindow
         InitBtnData(UseButterflyBtn, "10");
         InitBtnData(ShopBuyBtn, "10");
         InitBtnData(AddPupaBtn, "10");
+        
     }
 
     private void OnAutoToggleValueChanged(bool value)
@@ -175,6 +176,9 @@ public class DebugMenu : UIWindow
         WaterManager.instance.ClearWater();
         DailyTaskManager.Instance.GetTaskSaveData();
         DailyTaskManager.Instance.isResetDailyTask = true;
+
+        //同步到服务器
+        GameDataManager.Instance.CommitGameData();
     }
 
     private void AddResetCountClick()
@@ -228,6 +232,7 @@ public class DebugMenu : UIWindow
         {
             GameDataManager.Instance.UserData.UpdateHexStage(Stagenum,true);
         }
+        StageHexController.Instance.IsFirstEnterStage = true;
         StageHexController.Instance.SetStageData(Stagenum);
         StageHexController.Instance.IsGMEnterStage = true;
 

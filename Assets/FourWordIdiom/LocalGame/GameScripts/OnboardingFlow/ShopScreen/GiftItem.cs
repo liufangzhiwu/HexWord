@@ -27,19 +27,19 @@ public class GiftItem : MonoBehaviour
         {
             case (int)LimitRewordType.Coins:
                 spritename = "gold2";
-                countText.text = "x "+data[1]; // 假设 productContent 是数量
+                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.Butterfly:
                 spritename = "Butterfly";
-                countText.text = "x "+data[1]; // 假设 productContent 是数量
+                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.Tipstool:
                 spritename = "tipicon";
-                countText.text = "x "+data[1]; // 假设 productContent 是数量
+                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.SingleTipsttool:
                 spritename = "shop_reset";
-                countText.text = "x "+data[1]; // 假设 productContent 是数量
+                countText.text ="\u00d7 "+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.RemoveAds:
                 spritename = "shopads";

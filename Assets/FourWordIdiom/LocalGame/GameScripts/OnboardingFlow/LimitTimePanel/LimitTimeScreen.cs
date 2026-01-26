@@ -28,7 +28,7 @@ public class LimitTimeScreen : UIWindow
     {
         base.OnEnable();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
-        //EventDispatcher.instance.TriggerUpdateLayerCoin(true,true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
         CheckLimtEvent();
         LimitTimeManager.Instance.OnLimitTimeUpdated += UpdateTimeDisplay; // 订阅事件
         InitLightItems();
@@ -197,7 +197,7 @@ public class LimitTimeScreen : UIWindow
     protected override void OnDisable()
     {
         LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
-        //EventDispatcher.instance.TriggerUpdateLayerCoin(false, true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true, true);
         LimitTimeManager.Instance.OnLimitTimeUpdated -= UpdateTimeDisplay; // 订阅事件
         base.OnDisable();
        

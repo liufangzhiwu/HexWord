@@ -61,6 +61,8 @@ public class DashCompetition : UIWindow
         }
         CheckUserName();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false);
     }
 
     private void CheckUserName()
@@ -353,5 +355,7 @@ public class DashCompetition : UIWindow
         base.OnDisable();
         FishInfoController.Instance.OnFishTimeUpdated -= UpdateFishTime;
         FishInfoController.Instance.OnFishMatchOver -= OnClosePanel;
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,true);
     }
 }

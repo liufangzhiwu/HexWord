@@ -23,7 +23,7 @@ SpriteAtlas:
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
-      m_MaxTextureSize: 2048
+      m_MaxTextureSize: 4096
       m_ResizeAlgorithm: 0
       m_TextureFormat: 50
       m_TextureCompression: 1
@@ -92,6 +92,7 @@ SpriteAtlas:
     - 05eb7c8c44ca1c34289f6f2f640883c6: 21300000
     - a0eac19cc0e29de47a5bf67e0e362fab: 21300000
     - 5cf53c4d049a76a47beafb87dd1415ae: 21300000
+    - cee4555d04e798a4a989bc3288e20de5: 21300000
     - b193e79d45d059b4398506897df823c1: 21300000
     - 5db46b0e5925cf84eb214f4acc9af589: 21300000
     - 400471be92fa74449aa9a5af9c4c7dd6: 21300000
@@ -143,6 +144,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 05eb7c8c44ca1c34289f6f2f640883c6, type: 3}
   - {fileID: 21300000, guid: a0eac19cc0e29de47a5bf67e0e362fab, type: 3}
   - {fileID: 21300000, guid: 5cf53c4d049a76a47beafb87dd1415ae, type: 3}
+  - {fileID: 21300000, guid: cee4555d04e798a4a989bc3288e20de5, type: 3}
   - {fileID: 21300000, guid: b193e79d45d059b4398506897df823c1, type: 3}
   - {fileID: 21300000, guid: 5db46b0e5925cf84eb214f4acc9af589, type: 3}
   - {fileID: 21300000, guid: 400471be92fa74449aa9a5af9c4c7dd6, type: 3}
@@ -193,6 +195,7 @@ SpriteAtlas:
   - tipLight
   - UI_Icon_circle
   - adsimage
+  - shopsale
   - tehardbg
   - UI_Icon_goldbg
   - deng

@@ -168,7 +168,11 @@ public class ButterflyHome : UIWindow
     private void OnBackHomeClick()
     {
         SystemManager.Instance.HidePanel(PanelType.ButterflyHome);
-        SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        }
     }
 
     private void OnHelpClick()
