@@ -1,3 +1,4 @@
+using System.Collections;
 using DG.Tweening;
 using Middleware;
 using Unity.VisualScripting;
@@ -110,6 +111,14 @@ public class OptionsView : UIWindow
     
     private void AccountQuit()
     {
+        StartCoroutine(AppQuit());
+
+    }
+    private IEnumerator AppQuit()
+    {
+        GameDataManager.Instance.CommitGameData();
+        yield return new WaitUntil(()=> GameDataManager.Instance.SaveNumber >= 3);
+        Debug.Log("点击退出,保存数据成功！");
         Application.Quit();
     }
 

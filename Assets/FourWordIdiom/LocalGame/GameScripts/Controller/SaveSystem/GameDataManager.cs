@@ -55,7 +55,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     {
         lastSaveTime = DateTime.Now;
         Application.wantsToQuit += OnWantsToQuit;
-        
+        // needLogout = false;
         // 游戏启动时开始追踪
         StartTracking();
     }
@@ -160,7 +160,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
 
     #region 初始化方法
     
-    bool logoutCompleted = false;
+    public bool PushServerCompleted { get; private set; } = false;
     private bool OnWantsToQuit()
     {
         if (dataInitialized)
@@ -168,11 +168,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
             Debug.Log("应用请求关闭，保存数据中...");
             CommitGameData();
             AnalyticMgr.GameEnd();
-            StartCoroutine(APIGateway.Instance.LoginApi.Logout(playerProfile,(res) =>
-            {
-                logoutCompleted = res;
-                Application.Quit();
-            }));
         }
         return true;
     }
@@ -307,12 +302,43 @@ public class GameDataManager : SingletonMono<GameDataManager>
     #endregion
 
     #region 数据保存
+
+    public int SaveNumber { get; private set; } = 0;
     public void CommitGameData()
     {
         playerProfile.SaveData();
         butterfly.SaveData();
         fishUserSave.SaveData();
-        StartCoroutine(APIGateway.Instance.LoginApi.UpdateUserData(new GameDataDto
+      
+        //leaderboardCache.SaveData();
+         string currentLevelId = CreateLevelIdentifier(playerProfile.CurrentHexStage);
+         if (LevelProgressDict.ContainsKey(currentLevelId))
+         {
+             LevelProgressDict[currentLevelId].SaveToPlayerPrefs();
+         }
+         
+         // string chessCurrentLevelId = ChessStageProgressData.CreateLevelIdentifier(playerProfile.CurrentChessStage);
+         // if (ChessLevelProgressDict.ContainsKey(chessCurrentLevelId))
+         // {
+         //     ChessLevelProgressDict[chessCurrentLevelId].SaveToFile();
+         // }
+    }
+
+    public void CommitPushServerData(bool needLogout = false)
+    {
+        try
+        {
+            StartCoroutine(PushServerData(needLogout));
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("提交到服务器错误？ " + e);   
+        }
+    }
+    private IEnumerator PushServerData(bool needLogout = false)
+    {
+        bool saveOver = false;
+        yield return APIGateway.Instance.LoginApi.UpdateUserData(new GameDataDto
         {
             UserData = JsonConvert.SerializeObject(playerProfile),
             ExtraData = new ExtraDataDto
@@ -320,20 +346,17 @@ public class GameDataManager : SingletonMono<GameDataManager>
                 FishUserSave = JsonConvert.SerializeObject(fishUserSave),
                 Butterfly = JsonConvert.SerializeObject(butterfly),
             }
-        }));
-        //leaderboardCache.SaveData();
-        
-         string currentLevelId = CreateLevelIdentifier(playerProfile.CurrentHexStage);
-         if (LevelProgressDict.ContainsKey(currentLevelId))
-         {
-             LevelProgressDict[currentLevelId].SaveToPlayerPrefs();
-         }
-         
-         string chessCurrentLevelId = ChessStageProgressData.CreateLevelIdentifier(playerProfile.CurrentChessStage);
-         if (ChessLevelProgressDict.ContainsKey(chessCurrentLevelId))
-         {
-             ChessLevelProgressDict[chessCurrentLevelId].SaveToFile();
-         }
+        }, over=> saveOver = over);
+        yield return new WaitUntil(() => saveOver);
+        // if (needLogout)
+        // {
+        //     yield return APIGateway.Instance.LoginApi.Logout(playerProfile, (res) =>
+        //     {
+        //         PushServerCompleted = res;
+        //         Application.Quit();
+        //     });
+        // }
+        SaveNumber++;
     }
     
     public void SetNewUser(UserData user)

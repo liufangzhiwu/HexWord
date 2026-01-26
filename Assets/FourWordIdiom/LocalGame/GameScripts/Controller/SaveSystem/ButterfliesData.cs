@@ -90,7 +90,8 @@ public class ButterflyData
     }
 
     public void SaveData()
-    {
+    { 
+        GameDataManager.Instance.CommitPushServerData();
        string oldJson = JsonConvert.SerializeObject(this, Formatting.Indented);
        string json = SecurityProvider.ProtectData(oldJson);
        File.WriteAllText(Getfilepath, json);
