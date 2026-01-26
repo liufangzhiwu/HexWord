@@ -1,5 +1,5 @@
 {
-  "dependencies": {
+  "dependencies": {   
     "cn.tuanjie.openharmony.sdkkit": "1.0.3",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "1.1.6",
