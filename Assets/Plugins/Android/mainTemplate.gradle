@@ -6,14 +6,14 @@ apply plugin: 'com.huawei.agconnect'
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 // Android Resolver Dependencies Start
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4' // Packages/com.liufangzhiwu.google-ext/GoogleMobileAds/Editor/GoogleMobileAdsDependencies.xml:12
-    implementation 'com.google.android.gms:play-services-ads:24.3.0' // Packages/com.liufangzhiwu.google-ext/GoogleMobileAds/Editor/GoogleMobileAdsDependencies.xml:7
-    implementation 'com.google.android.gms:play-services-base:18.6.0' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AppDependencies.xml:17
-    implementation 'com.google.android.ump:user-messaging-platform:3.1.0' // Packages/com.liufangzhiwu.google-ext/GoogleMobileAds/Editor/GoogleUmpDependencies.xml:7
-    implementation 'com.google.firebase:firebase-analytics:22.4.0' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AppDependencies.xml:15
-    implementation 'com.google.firebase:firebase-analytics-unity:12.10.1' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AnalyticsDependencies.xml:18
-    implementation 'com.google.firebase:firebase-app-unity:12.10.1' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AppDependencies.xml:22
-    implementation 'com.google.firebase:firebase-common:21.0.0' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AppDependencies.xml:13
+//     implementation 'androidx.constraintlayout:constraintlayout:2.1.4' // Packages/com.liufangzhiwu.google-ext/GoogleMobileAds/Editor/GoogleMobileAdsDependencies.xml:12
+//     implementation 'com.google.android.gms:play-services-ads:24.3.0' // Packages/com.liufangzhiwu.google-ext/GoogleMobileAds/Editor/GoogleMobileAdsDependencies.xml:7
+//     implementation 'com.google.android.gms:play-services-base:18.6.0' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AppDependencies.xml:17
+//     implementation 'com.google.android.ump:user-messaging-platform:3.1.0' // Packages/com.liufangzhiwu.google-ext/GoogleMobileAds/Editor/GoogleUmpDependencies.xml:7
+//     implementation 'com.google.firebase:firebase-analytics:22.4.0' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AppDependencies.xml:15
+//     implementation 'com.google.firebase:firebase-analytics-unity:12.10.1' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AnalyticsDependencies.xml:18
+//     implementation 'com.google.firebase:firebase-app-unity:12.10.1' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AppDependencies.xml:22
+//     implementation 'com.google.firebase:firebase-common:21.0.0' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AppDependencies.xml:13
 // Android Resolver Dependencies End
 
 //     implementation 'com.huawei.hms:hianalytics:6.3.2.300'

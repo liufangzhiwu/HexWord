@@ -282,7 +282,14 @@ namespace Middleware
             Debug.Log("[ConsumePurchase Success]" + "\n");
             Debug.Log("Consume Purchase Success. purchaseToken is" + target.purchaseToken + "purchase type" + target.productType + "\n");
             
-            ShopManager.shopManager.OnPurchaseSuccess(productItem);
+            if (buySuccessAction != null)
+            {
+                buySuccessAction?.Invoke(productItem);
+            }
+            else
+            {
+                ShopManager.shopManager.OnPurchaseSuccess(productItem);
+            }
         }
         else
         {
