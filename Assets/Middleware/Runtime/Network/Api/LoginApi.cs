@@ -18,7 +18,7 @@ public class LoginApi
     private string GetCurrentFactory()
     {
         // 如果是华为渠道包
-#if UNITY_huawei
+#if UNITY_huawei || UNITY_OPENHARMONY
     return "huawei";
 #elif UNITY_hornor
     return "hornor";
@@ -46,11 +46,11 @@ public class LoginApi
         string openId = GameDataManager.Instance.UserData.UserId;
         string factory = GetCurrentFactory();
         
-#if UNITY_huawei
-        factory = "huawei";
-#endif
         #if UNITY_EDITOR
-        openId = SystemInfo.deviceUniqueIdentifier;
+        if (string.IsNullOrEmpty(openId))
+        {
+            openId = SystemInfo.deviceUniqueIdentifier;
+        }
         #endif
         
         var data = new LoginRequest
@@ -118,7 +118,7 @@ public class LoginApi
     /**
      * 更新游戏数据
      */
-    public IEnumerator UpdateUserData(GameDataDto data)
+    public IEnumerator UpdateUserData(GameDataDto data, Action<bool> callback)
     {
         yield return httpClient.Post<bool>("auth/update-gameData",
             data,
@@ -126,10 +126,12 @@ public class LoginApi
             {
                 // 保存游戏数据成功
                 Debug.Log("保存游戏数据成功 success! " + response);
+                callback?.Invoke(true);
             },
             error =>
             {
                 Debug.Log($"保存游戏数据失败 failed: {error}");
+                callback?.Invoke(true);
             });
     }
 

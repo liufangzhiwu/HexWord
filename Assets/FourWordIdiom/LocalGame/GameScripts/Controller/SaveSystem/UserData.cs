@@ -570,6 +570,7 @@ public class UserData
             
             // 更新在线时长
             UpdateOnlineStageTime();
+            GameDataManager.Instance.CommitPushServerData();
             
             // 序列化并加密数据
             string json = JsonConvert.SerializeObject(this, Formatting.Indented);

@@ -262,6 +262,7 @@ public class FishUserSaveData
     // 保存数据
     public void SaveData()
     {     
+        GameDataManager.Instance.CommitPushServerData();
         string filePath = Getfilepath;
         string oldjson = JsonConvert.SerializeObject(this, Formatting.Indented); // 转换为 JSON 格式          
         string json = SecurityProvider.ProtectData(oldjson); //加密
