@@ -63,7 +63,7 @@ public class GiftTable : MonoBehaviour
         
         eventDes=giftNameText.text;
         SetProductPrice();
-        AnalyticMgr.VideoAdShow(eventDes);
+        //AnalyticMgr.VideoAdShow(eventDes);
     }
     
     private void SetProductPrice()
@@ -179,8 +179,11 @@ public class GiftTable : MonoBehaviour
         if (!UIUtilities.isEditMode)
         {
             AnalyticMgr.PurchaseFinished(item, firstPay);
-            // 处理购买成功后的逻辑，例如增加游戏内货
+            
+#if UNITY_huawei
+         // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);
+#endif
         }
         
         MessageSystem.Instance.ShowTip("购买成功！");

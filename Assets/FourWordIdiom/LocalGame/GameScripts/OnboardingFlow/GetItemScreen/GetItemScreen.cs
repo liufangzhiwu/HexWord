@@ -61,6 +61,7 @@ public class GetItemScreen : UIWindow
                 tips.text = "提示一个成语中的所有字";
                 AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_tip");
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
+                eventDes=title.text+"弹窗广告";
                 break;
             case LimitRewordType.SingleTipsttool:
                 UpdateCliamBtn(true);
@@ -69,15 +70,16 @@ public class GetItemScreen : UIWindow
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
                 AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_reset");
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
+                eventDes=title.text+"弹窗广告";
+                AnalyticMgr.VideoAdShow(eventDes);
                 break;
             // case LimitRewordType.Min5Double:
             //     return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
             // case LimitRewordType.Min15Double:
             //     return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
         }
-        eventDes=title.text+"弹窗广告";
+       
         giftTable.InitUI(limitRewordType,shopDataItem);
-        AnalyticMgr.VideoAdShow(eventDes);
     }
 
     protected override void InitializeUIComponents()
