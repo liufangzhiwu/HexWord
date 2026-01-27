@@ -123,6 +123,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 }
                 else
                 {
+                    MessageSystem.Instance.ShowTip("每日只能购买一次！");
                     shopPriceText.text = "已购买";
                 }
             }
@@ -134,6 +135,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             {
                 if (GameDataManager.Instance.UserData.isDayMoneyBuy)
                 {
+                    MessageSystem.Instance.ShowTip("每日只能购买一次！");
                     return;
                 }
             }
@@ -589,8 +591,10 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         if (!UIUtilities.isEditMode)
         {
             AnalyticMgr.PurchaseFinished(item, firstPay);
-            // 处理购买成功后的逻辑，例如增加游戏内货
+#if UNITY_huawei
+         // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);
+#endif
         }
         
         if (shopDataItem.produceNameId == "SingleGoods")

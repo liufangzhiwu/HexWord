@@ -178,6 +178,9 @@ public class HexGamePlayArea : UIWindow
             StartCoroutine(CheckInactivity());
             StageHexController.Instance.tipPuzzle = "";
         }
+        
+        SingleHingBtn.enabled = false;
+        PuzzleTipsBtn.enabled = false;
     }
     
     LevelModes GetLevelDifficulty(int levelNumber) {
@@ -268,10 +271,21 @@ public class HexGamePlayArea : UIWindow
             ShopManager.shopManager.ShowLimitAdsPanel();
 
             StageHexController.Instance.IsFirstEnterStage = false;
+            yield return new WaitForSeconds(0.5f);
+            SingleHingBtn.enabled = true;
+            PuzzleTipsBtn.enabled = true;
+        }
+        else
+        {
+            yield return new WaitForSeconds(1.5f);
+            SingleHingBtn.enabled = true;
+            PuzzleTipsBtn.enabled = true;
         }
         
         SingleTipLight.gameObject.SetActive(false);
         WordTipLight.gameObject.SetActive(false);
+        
+        
     }
 
     //设置当前关卡数据（配置数据、保存进度数据）

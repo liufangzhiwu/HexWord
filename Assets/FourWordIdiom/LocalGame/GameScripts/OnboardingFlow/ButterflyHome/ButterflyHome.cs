@@ -196,7 +196,7 @@ public class ButterflyHome : UIWindow
     /// 收集蝴蝶按钮
     /// </summary>
     private void OnCollectClick()
-    {
+    { 
         if (ButterfliesManager.Instance.CanMakeButterfly())
         {
             SetButtonsState(false);
@@ -206,7 +206,14 @@ public class ButterflyHome : UIWindow
         else
         {
             SystemManager.Instance.HidePanel(PanelType.ButterflyHome);
-            SystemManager.Instance.GetPanel(PanelType.PrimaryInterface)?.GetComponent<PrimaryInterface>()?.OnPlayClick();
+            
+            if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+            {
+                SystemManager.Instance.GetPanel(PanelType.PrimaryInterface)?.GetComponent<PrimaryInterface>()?.OnPlayClick();
+            }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+            {
+                //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
+            }
         }
     }
 

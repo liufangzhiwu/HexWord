@@ -464,17 +464,28 @@ public class ShopManager : MonoBehaviour
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
-        MessageSystem.Instance.ShowTip("购买成功！");
         
-        MessageSystem.Instance.HideLoadingAnimation();
-        
-#if UNITY_OPENHARMONY||UNITY_huawei
-        
-        AnalyticMgr.PurchaseFinished(item, firstPay);
-        // 处理购买成功后的逻辑，例如增加游戏内货币
-#elif UNITY_huawei
-        item?.OnShipmentCompleted(true);
+        if (!UIUtilities.isEditMode)
+        {
+             AnalyticMgr.PurchaseFinished(item, firstPay);
+#if UNITY_huawei
+         // 处理购买成功后的逻辑，例如增加游戏内货
+            item?.OnShipmentCompleted(true);
 #endif
+          
+        }
+        
+        if (shopDataItem.produceNameId == "SingleGoods")
+        {
+            if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
+            {
+                GameDataManager.Instance.UserData.isDayMoneyBuy = true;
+                ///shopPriceText.text = "已购买";
+            }
+        }
+        
+        MessageSystem.Instance.ShowTip("购买成功！");
+        MessageSystem.Instance.HideLoadingAnimation();
     }
     
     private void BuyRemoveAdsEvent(int type)
