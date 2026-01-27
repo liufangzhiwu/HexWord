@@ -329,15 +329,15 @@ public class StageHexController
     {
         var userData = GameDataManager.Instance.UserData;
 
-        // 第9关首次触发
-        if (StageIndex == 9 && userData.showRateusCount <= 0)
+        // 第5关首次触发
+        if (StageIndex == 5 && userData.showRateusCount <= 0)
         {
             SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
             return;
         }
 
         // 每日通关条件
-        if (userData.dayPassStageCount == 9 && 
+        if (userData.dayPassStageCount == 5 && 
             userData.showRateusCount < 3 &&
             !string.IsNullOrEmpty(userData.showRateusTime))
         {

@@ -315,23 +315,22 @@ namespace Middleware
 
                 foreach (var purchaseData in targetSignal.purchaseDataArray)
                 {
-                    //if (purchaseData.finishStatus == "2")//still haven't finish purchase,add to the list for user to finish purchase
-                    //{
-                    purchaseDataList.Add(purchaseData);
-                    Debug.Log("1 purchase unfinished add");
-                    // }
-                    
-                    productItem = new ProductItem
+                    if (purchaseData.finishStatus == "2")//still haven't finish purchase,add to the list for user to finish purchase
                     {
-                        order_id  = purchaseData.purchaseOrderId,
-                        IsoCurrencyCode = purchaseData.currency,
-                        ItemName = purchaseData.productId,
-                        ProductId = purchaseData.productId,
-                        LocalizedPrice = purchaseData.price,
-                    };
-                    
+                        purchaseDataList.Add(purchaseData);
+                        Debug.Log("1 purchase unfinished add");
+                        
+                        productItem = new ProductItem
+                        {
+                            order_id  = purchaseData.purchaseOrderId,
+                            IsoCurrencyCode = purchaseData.currency,
+                            ItemName = purchaseData.productId,
+                            ProductId = purchaseData.productId,
+                            LocalizedPrice = purchaseData.price,
+                        };
+                        ConfirmFinishPurchase();
+                    }
                     Debug.Log("purchaseToken: " + purchaseData.purchaseToken + "\n purchaseOrderId: " + purchaseData.purchaseOrderId + "\n");
-                    ConfirmFinishPurchase();
                 }
             }
             else

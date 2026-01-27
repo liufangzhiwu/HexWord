@@ -60,7 +60,7 @@ public class GetItemScreen : UIWindow
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
                 tips.text = "提示一个成语中的所有字";
                 AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_tip");
-                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
+                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
                 break;
             case LimitRewordType.SingleTipsttool:
                 UpdateCliamBtn(true);
@@ -68,7 +68,7 @@ public class GetItemScreen : UIWindow
                 tips.text = "提示一个成语的首字";
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
                 AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_reset");
-                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
+                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
                 break;
             // case LimitRewordType.Min5Double:
             //     return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
