@@ -347,7 +347,7 @@ public class ShopManager : MonoBehaviour
         
              if (buyshopDta != null)
              {
-                 if (buyshopDta.id == item.id && buyshopDta.adstype == (int)LimitRewordType.Remove7DayAds)
+                 if (buyshopDta.nameid == item.produceNameId && buyshopDta.adstype == (int)LimitRewordType.Remove7DayAds)
                  {
                      return;
                  }
@@ -386,6 +386,7 @@ public class ShopManager : MonoBehaviour
                  GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData()
                  {
                      id = curshopAdsItem.id,
+                     nameid = curshopAdsItem.produceNameId,
                      endtime = endtime.ToString(),
                      isopen = true,
                      gettime = "",

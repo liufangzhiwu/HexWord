@@ -67,7 +67,7 @@ public class StageHexController
     public bool IsEnterPuzzle { get; set; }       // 是否从目标词进入熟语
     public bool IsEnterVocabulary { get; set; } // 是否进入关卡内熟语
     public bool IsGMEnterStage { get; set; }    // 是否通过GM工具进入关卡
-    public bool IsFirstEnterStage { get; set; } = true; // 是否首次进入当前关卡
+    public bool IsFirstEnterStage { get; set; } // 是否首次进入当前关卡
 
     // 引用组件（通过方法注入）
     public PuzzleTile UpPuzzleGrid { get; set; }    // 字块矩阵中最上方字块

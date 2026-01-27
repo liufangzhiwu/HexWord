@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -224,7 +225,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         if (shouldShowTimeBg)
         {
             _shopLimitData = GameDataManager.Instance.UserData.limitShopItems?
-                .Find(item => item.id == data.id);
+                .Find(item => item.nameid == data.produceNameId);
             
             if (_shopLimitData != null &&
                 !string.IsNullOrEmpty(_shopLimitData.endtime) &&
@@ -605,6 +606,15 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 shopPriceText.text = "已购买";
             }
         }
+
+        ShopLimitData limitData =
+            GameDataManager.Instance.UserData.limitShopItems.Find((x) => x.nameid == shopDataItem.produceNameId);
+        if (limitData != null)
+        {
+            limitData.isget = true;
+            transform.gameObject.SetActive(false);
+        }
+        
         
         MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();

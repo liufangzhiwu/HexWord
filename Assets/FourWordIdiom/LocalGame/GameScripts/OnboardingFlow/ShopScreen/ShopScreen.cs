@@ -239,6 +239,8 @@ public class ShopScreen : UIWindow
     private void OnCloseBtn()
     {
         GameDataManager.Instance.UserData.isHideShopRedPoint=true;
+        //刷新道具
+        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
         base.Close(); // 隐藏面板
         
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)

@@ -4,6 +4,7 @@ using UnityEngine;
 public class ShopLimitData
 {
     public int id;
+    public string nameid;
     //活动结束时间
     public string endtime;
     /// <summary>

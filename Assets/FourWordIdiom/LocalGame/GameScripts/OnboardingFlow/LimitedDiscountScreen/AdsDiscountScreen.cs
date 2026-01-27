@@ -278,11 +278,22 @@ public class AdsDiscountScreen : UIWindow
         {
             AnalyticMgr.PurchaseFinished(item, firstPay);
             // 处理购买成功后的逻辑，例如增加游戏内货
+#if UNITY_huawei
+            // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);
+#endif
         }
         
         MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
+        
+        ShopLimitData limitData =
+            GameDataManager.Instance.UserData.limitShopItems.Find((x) => x.nameid == currentShopItem.produceNameId);
+        if (limitData != null)
+        {
+            limitData.isget = true;
+            Close();
+        }
     }
 
     private void OnPurchaseFailed(string error)

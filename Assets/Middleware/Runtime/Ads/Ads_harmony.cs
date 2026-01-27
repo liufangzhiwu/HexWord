@@ -381,7 +381,7 @@ namespace Middleware
                 {
                     Debug.Log($"[OnLoadAdsTrigger]targetSignal Ad null, Code :{signal.code} Message : {signal.message}");
                     CallbackAd(false);
-                    //MessageSystem.Instance.HideLoadingAnimation();
+                    MessageSystem.Instance.HideLoadingAnimation();
                 }
             }
             else
@@ -389,7 +389,7 @@ namespace Middleware
                 Debug.Log($"[OnLoadAdsTrigger]LoadAds Error, Code :{signal.code} Message : {signal.message}");
                 _isPreloading = false; // 预加载失败，重置状态
                 CallbackAd(false);
-                //MessageSystem.Instance.HideLoadingAnimation();
+                MessageSystem.Instance.HideLoadingAnimation();
             }
         }
 
