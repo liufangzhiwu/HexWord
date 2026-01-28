@@ -18,8 +18,8 @@ namespace Middleware
         public struct ConfigHuaweiAndroid
         {
             public const string TestBannerAdId = "ca-app-pub-3940256099942544/6300978111";
-            public const string TestInterstitialAdId = "teste9ih9j0rc3";
-            public const string TestRewardAdId = "u2k89ub7vq";
+            public const string TestInterstitialAdId = "v8iv8ucy62";
+            public const string TestRewardAdId = "g76o3ir936";
         }
 #endif
 
