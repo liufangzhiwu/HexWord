@@ -111,6 +111,8 @@ public class LimitTimeScreen : UIWindow
         
         slider.DOValue(progress,durtime).OnComplete(() =>
         {
+            //重新获取一下当前限时奖励id对应的限时任务；（避免重复叠加数值）
+            wordcount = LimitTimeManager.Instance.GetCurWordCount();
             if (wordcount >= limitData.num)
             {
                 LightItems[GameDataManager.Instance.UserData.timerePuzzleid].UpdateRewardValue();
