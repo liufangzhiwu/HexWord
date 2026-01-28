@@ -211,7 +211,7 @@ public class SignWaterScreen : UIWindow
         var sign = GameDataManager.Instance.UserData.signid;
         AnalyticMgr.VideoAdClick("签到"+sign);
         
-#if UNITY_OPENHARMONY
+#if !UNITY_EDITOR
         Game.self?.Ads.ShowReward(GetAdKey(),success => {
             if (!success)
             {
@@ -231,6 +231,7 @@ public class SignWaterScreen : UIWindow
                 GameDataManager.Instance.UserData.totalSeeAds++;
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
             }
+            MessageSystem.Instance.HideLoadingAnimation();
         });
 #elif Unity_ShowLog
         iswater = true;
