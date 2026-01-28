@@ -10,6 +10,7 @@ using UnityEngine.HuaweiAppGallery;
 using UnityEngine.HuaweiAppGallery.Listener;
 using UnityEngine.HuaweiAppGallery.Model;
 using UnityEngine.SceneManagement;
+using UnityEngine.Scripting;
 using UnityEngine.UI;
 using Game = Middleware.Game;
 using Random = UnityEngine.Random;
@@ -87,6 +88,7 @@ public class LoadingController : MonoBehaviour
     {
         loadingHintText.text = "";
         //loadingHintText.transform.GetChild(0).GetComponent<Text>().text = "";
+        
     }
 
     private void OnEnable()
@@ -125,6 +127,7 @@ public class LoadingController : MonoBehaviour
             // 初始化商店(需要等待游戏服务完成后)
             Game.self.InitGame();
             yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
+            HuaweiGameService.ShowFloatWindow();
             // 登录开始
             yield return LoadHuaweiGameLogin();
             yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
@@ -180,12 +183,16 @@ public class LoadingController : MonoBehaviour
 
         try
         {
+            Debug.Log("UserData 开始解析");
             serverUserData = JsonConvert.DeserializeObject<UserData>(response.UserData);
+            Debug.Log("UserData 解析成功");
             if (response.ExtraData != null)
             {
+                Debug.Log("FishUserSave 开始解析");
                 if (!string.IsNullOrEmpty(response.ExtraData.FishUserSave))
                     serverFishData = JsonConvert.DeserializeObject<FishUserSaveData>(response.ExtraData.FishUserSave);
-                
+                Debug.Log("FishUserSave 解析成功");
+                Debug.Log("Butterfly 开始解析" + response.ExtraData.Butterfly);
                 if (!string.IsNullOrEmpty(response.ExtraData.Butterfly))
                     serverButterflyData = JsonConvert.DeserializeObject<ButterflyData>(response.ExtraData.Butterfly);
                 Debug.Log("Butterfly 解析成功");
@@ -224,7 +231,7 @@ public class LoadingController : MonoBehaviour
             DateTime.TryParse(GameDataManager.Instance.UserData.logoutTime, out DateTime localTime);
             DateTime.TryParse(serverUserData.logoutTime, out DateTime serverTime);
             Debug.Log($"本地时间: {localTime}  <--> 服务器时间: {serverTime}");
-            if (localTime < serverTime)
+            if (localTime <= serverTime)
             {
                 Debug.Log("服务器存档时间更新，使用服务器数据");
                 UserServerData();
@@ -356,11 +363,11 @@ public class LoadingController : MonoBehaviour
             Debug.LogError($"初始化游戏服务失败，重试次数：{_retryAttempt}");
         }));
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.CheckingUpdate);
-        Debug.LogError($"进入检查更新流程");
+        Debug.Log($"进入检查更新流程");
         HuaweiGameService.CheckUpdate(new CheckUpdateListener(statusSetter));
-        Debug.LogError($"检查更新流程完成");
+        Debug.Log($"检查更新流程完成");
         yield return new WaitUntil(() => _flowStatus is GameFlowStatus.LoggingIn);
-        Debug.LogError($"进入登录流程");
+        Debug.Log($"进入登录流程");
     }
     
     // 助手协程：用于在重试前等待一段时间
@@ -490,7 +497,11 @@ public class LoadingController : MonoBehaviour
         Debug.Log("主场景加载完成");
     }
 
-    
+    private void OnDestroy()
+    {
+        HuaweiGameService.HideFloatWindow();
+    }
+
     // 🔑 1. 定义局部实现类 IAntiAddictionListener
     private class AntiAddictionHandler : IAntiAddictionListener
     {
@@ -707,5 +718,13 @@ public class LoadingController : MonoBehaviour
             _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
         }
     }
-
+    [Preserve]
+    public void AotHelper()
+    {
+        // 强制引用 HashSet<int> 的构造函数，防止被裁剪
+        var dummy1 = new HashSet<int>();
+    
+        // 同时也为了防止 List 被裁剪（虽然 List 通常没事）
+        var dummy2 = new List<int>();
+    }
 }

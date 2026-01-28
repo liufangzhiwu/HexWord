@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Middleware;
 using UnityEngine;
+using UnityEngine.HuaweiAppGallery;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 #if UNITY_IOS
@@ -53,6 +54,9 @@ public sealed class GameCoreManager: MonoBehaviour
 
     private void Start()
     {
+#if UNITY_huawei
+        HuaweiGameService.ShowFloatWindow();
+#endif
         Game.self._uiRoot=SystemManager.Instance._uiRoot;
         StartCoroutine(InitializeGameRoutine());
         //StartCoroutine(CheckNetworkConnection());
@@ -128,6 +132,12 @@ public sealed class GameCoreManager: MonoBehaviour
     {
         SystemManager.Instance.ShowPanel(PanelType.PolicyView);
     }
-    
     #endregion
+
+    private void OnDisable()
+    {
+        #if UNITY_huawei
+        HuaweiGameService.HideFloatWindow();
+        #endif
+    }
 }
