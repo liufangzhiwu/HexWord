@@ -306,6 +306,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public int SaveNumber { get; private set; } = 0;
     public void CommitGameData()
     {
+        SaveNumber = 0;
         playerProfile.SaveData();
         butterfly.SaveData();
         fishUserSave.SaveData();

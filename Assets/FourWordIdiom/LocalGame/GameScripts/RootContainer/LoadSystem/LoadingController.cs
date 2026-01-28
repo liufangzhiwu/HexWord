@@ -62,9 +62,9 @@ public class LoadingController : MonoBehaviour
     [Header("UI组件引用")]
     [SerializeField] private Text loadingHintText;    // 加载提示文本
     [SerializeField] private Slider progressSlider;   // 进度条组件
-     [SerializeField] private GameObject Loading;   // 进度条组件
-     [SerializeField] private RectTransform rollingObject;   // 滚动的方块 (Image)
-     private float _objectRadius;    // 方块半径
+    [SerializeField] private GameObject Loading;   // 进度条组件
+    [SerializeField] private RectTransform rollingObject;   // 滚动的方块 (Image)
+
     // [SerializeField] private Button AccountQuitBtn;   // 进度条组件
     //[SerializeField] private RectTransform indicatorIcon; // 进度指示图标
 
@@ -95,16 +95,10 @@ public class LoadingController : MonoBehaviour
         StartCoroutine(InitializeLoadingProcess());
     }
 
-    private void Start()
-    {
-        _objectRadius = (rollingObject.rect.width * rollingObject.lossyScale.x) / 2f;
-    }
-
-
     /// <summary>
     /// 初始化加载流程
     /// </summary>
-    IEnumerator InitializeLoadingProcess()
+    private IEnumerator InitializeLoadingProcess()
     {
         InitializeLocalization();
         SetupRandomLoadingHint();
@@ -167,7 +161,6 @@ public class LoadingController : MonoBehaviour
         });
     }
     
-    
     // 加载数据
     private void LoadUserData(GameDataDto response)
     {
@@ -195,11 +188,12 @@ public class LoadingController : MonoBehaviour
                 
                 if (!string.IsNullOrEmpty(response.ExtraData.Butterfly))
                     serverButterflyData = JsonConvert.DeserializeObject<ButterflyData>(response.ExtraData.Butterfly);
+                Debug.Log("Butterfly 解析成功");
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"解析服务器数据失败: {ex.Message}，回退到本地数据");
+            Debug.LogError($"解析服务器数据失败: {ex.Message} {ex.ToString()} ，回退到本地数据");
             UserLocalData();
             return;
         }
