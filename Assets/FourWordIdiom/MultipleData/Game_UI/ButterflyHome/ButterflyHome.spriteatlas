@@ -67,7 +67,7 @@ SpriteAtlas:
       m_ForceMaximumCompressionQuality_BC6H_BC7: 0
     - serializedVersion: 3
       m_BuildTarget: WeixinMiniGame
-      m_MaxTextureSize: 4096
+      m_MaxTextureSize: 2048
       m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 53
@@ -84,7 +84,7 @@ SpriteAtlas:
       padding: 2
       blockOffset: 1
       allowAlphaSplitting: 0
-      enableRotation: 0
+      enableRotation: 1
       enableTightPacking: 0
       enableAlphaDilation: 1
     secondaryTextureSettings: {}
@@ -330,7 +330,6 @@ SpriteAtlas:
     - 4d50e8adffc4c4a4fa105dea0f76b067: 21300000
     - 41a59badbe1fb1944bea814d3d0f4bdf: 21300000
     - a4127abdfc650ec40adddc6f082bb3a6: 21300000
-    - 9646f8cdabc839c49be75059873009d8: 21300000
     - 4466e2dd849978e459d539b6d625165a: 21300000
     - c1a4f4dd7672f014db89bd093f562c0b: 21300000
     - 2165f7edfe36fa34d8c3ef74d5033598: 21300000
@@ -349,7 +348,6 @@ SpriteAtlas:
     - 27f4d5fe68284784cb6f471bb88b14ec: 21300000
     - 4f7b551f1535b964aade71c825cea1af: 21300000
     - 167f951fe62344f46bc23418d6cc9230: 21300000
-    - f03e681f440dfc748b218aefa0d36ca0: 21300000
     - e2b4b62f730175b43a2a68a6ebdc24cb: 21300000
     - 322de62fc8bcd4b42b5a0064cb1f85b9: 21300000
     - fe64733f87f37a1498a6225a99721cb9: 21300000
@@ -603,7 +601,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 4d50e8adffc4c4a4fa105dea0f76b067, type: 3}
   - {fileID: 21300000, guid: 41a59badbe1fb1944bea814d3d0f4bdf, type: 3}
   - {fileID: 21300000, guid: a4127abdfc650ec40adddc6f082bb3a6, type: 3}
-  - {fileID: 21300000, guid: 9646f8cdabc839c49be75059873009d8, type: 3}
   - {fileID: 21300000, guid: 4466e2dd849978e459d539b6d625165a, type: 3}
   - {fileID: 21300000, guid: c1a4f4dd7672f014db89bd093f562c0b, type: 3}
   - {fileID: 21300000, guid: 2165f7edfe36fa34d8c3ef74d5033598, type: 3}
@@ -622,7 +619,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 27f4d5fe68284784cb6f471bb88b14ec, type: 3}
   - {fileID: 21300000, guid: 4f7b551f1535b964aade71c825cea1af, type: 3}
   - {fileID: 21300000, guid: 167f951fe62344f46bc23418d6cc9230, type: 3}
-  - {fileID: 21300000, guid: f03e681f440dfc748b218aefa0d36ca0, type: 3}
   - {fileID: 21300000, guid: e2b4b62f730175b43a2a68a6ebdc24cb, type: 3}
   - {fileID: 21300000, guid: 322de62fc8bcd4b42b5a0064cb1f85b9, type: 3}
   - {fileID: 21300000, guid: fe64733f87f37a1498a6225a99721cb9, type: 3}
@@ -875,7 +871,6 @@ SpriteAtlas:
   - BF306
   - BF116-wing
   - BF123
-  - scroll_bg
   - BF127-wing
   - BF112-body
   - butterfly_ti
@@ -894,7 +889,6 @@ SpriteAtlas:
   - BF124
   - BF222-body
   - BF203-wing
-  - content_bg
   - BF109-wing
   - BF112-wing
   - BF129-wing

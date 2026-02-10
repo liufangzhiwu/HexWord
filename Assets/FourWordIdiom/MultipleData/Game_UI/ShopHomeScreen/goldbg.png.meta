@@ -3,7 +3,7 @@ guid: By8f4HisAHz2EGXpQZ5laeLGJgdJ7XXYIxMd0+8j3XRPRA8ZeL7pEUI=
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
-  serializedVersion: 14
+  serializedVersion: 13
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -184,15 +184,15 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
     buildTarget: WeixinMiniGame
-    maxTextureSize: 2048
+    maxTextureSize: 256
     maxPlaceholderSize: 32
     resizeAlgorithm: 0
-    textureFormat: 53
+    textureFormat: 50
     textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
-    overridden: 0
+    overridden: 1
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
@@ -212,8 +212,6 @@ TextureImporter:
     nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  doOverrideTextureManagerOperations: 0
-  platformOperationGroupSettings: 
   userData: 
   assetBundleName: 
   assetBundleVariant: 
