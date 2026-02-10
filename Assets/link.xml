@@ -2,7 +2,6 @@
     <assembly fullname="Assembly-CSharp">
         <type fullname="*" preserve="all"/>
     </assembly>
-
     <assembly fullname="UnityEngine.UI">
         <type fullname="UnityEngine.UI.*" preserve="all"/>
     </assembly>
@@ -13,7 +12,14 @@
     <assembly fullname="DOTween">
         <type fullname="*" preserve="all"/>
     </assembly>
-    
+    <assembly fullname="spine-unity">
+        <type fullname="*" preserve="all"/>
+    </assembly> 
+    <assembly fullname="spine-csharp">
+        <type fullname="*" preserve="all"/>
+    </assembly>
+    <assembly fullname="BestHTTP" preserve="all" />
+    <assembly fullname="BestHTTP.SignalR" preserve="all" /> <assembly fullname="Newtonsoft.Json" preserve="all" />
     <assembly fullname="UnityEngine">
         <type fullname="UnityEngine.SpriteMask" preserve="all"/>
     </assembly>
@@ -25,14 +31,24 @@
         <type fullname="UnityEngine.Sprite" preserve="all"/>
         <type fullname="UnityEngine.Mesh" preserve="all"/>
         <type fullname="UnityEngine.MeshFilter" preserve="all"/>
-     
+        <type fullname="UnityEngine.Networking.*" preserve="all"/>
     </assembly>
     
     <assembly fullname="UnityEngine.Physics2DModule">
         <type fullname="UnityEngine.EdgeCollider2D" preserve="all"/>
+        <type fullname="UnityEngine.PolygonCollider2D" preserve="all"/>
+        <type fullname="UnityEngine.BoxCollider2D" preserve="all"/>
     </assembly>
     <assembly fullname="UnityEngine.PhysicsModule">
         <type fullname="UnityEngine.MeshCollider" preserve="all"/>
+    </assembly>
+    <assembly fullname="UnityEngine.ParticleSystemModule">
+        <type fullname="UnityEngine.ParticleSystem" preserve="all"/>
+        <type fullname="UnityEngine.ParticleSystemRenderer" preserve="all"/>
+    </assembly>
+
+    <assembly fullname="UnityEngine.TextRenderingModule">
+        <type fullname="UnityEngine.TextMesh" preserve="all"/>
     </assembly>
     
     <assembly fullname="UnityEngine.AudioModule">
@@ -42,11 +58,27 @@
     <assembly fullname="UnityEngine.AnimationModule">
         <type fullname="*" preserve="all"/>
     </assembly>
+    <assembly fullname="UnityEngine.UnityWebRequestModule">
+        <type fullname="*" preserve="all"/>
+    </assembly>
+    <assembly fullname="UnityEngine.UnityWebRequestAssetBundleModule">
+        <type fullname="*" preserve="all"/>
+    </assembly>
     
+    <assembly fullname="Newtonsoft.Json">
+        <type fullname="Newtonsoft.Json.JsonConvert" preserve="all" />
+        <type fullname="Newtonsoft.Json.JsonSerializer" preserve="all" />
+        <type fullname="Newtonsoft.Json.JsonSerializerSettings" preserve="all" />
+        <namespace fullname="Newtonsoft.Json.Serialization" preserve="all" />
+
+        <namespace fullname="Newtonsoft.Json.Converters" preserve="all" />
+    </assembly>
+
     <assembly fullname="mscorlib">
         <type fullname="System.Collections.Generic.List`1" preserve="all" />
         <type fullname="System.Collections.Generic.Dictionary`2" preserve="all" />
+        <type fullname="System.Collections.Generic.HashSet`1" preserve="all" />
         <type fullname="System.Reflection.*" preserve="all" />
+        <type fullname="System.Type" preserve="all" />
     </assembly>
-
 </linker>

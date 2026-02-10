@@ -55,19 +55,20 @@ public class CompetitionFail : UIWindow
        
         GameDataManager.Instance.FishUserSave.UpdateRound(-1);
         GameDataManager.Instance.FishUserSave.ResetFishData();
-        FishInfoController.Instance.FishMatchOver();
-
-        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
-        {
-            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
-        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
-        {
-            //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
-        }
-
-        SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
         
-        base.Close(); // 隐藏面板
+
+        // if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        // {
+        //     SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        // }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        // {
+        //     //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
+        // }
+        //
+        // SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        
+        // base.Close(); // 隐藏面板
+        FishInfoController.Instance.FishMatchOver();
     }
 
     public override void OnHideAnimationEnd()

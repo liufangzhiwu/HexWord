@@ -21,6 +21,30 @@ namespace Middleware
             WX.InitSDK((code) =>
             {
                 Debug.Log("微信初始化 Init WxSDK code: " + code);
+                // CheckPrivacySetting(null);
+            });
+        }
+
+        private void CheckPrivacySetting(Action onSuccess)
+        {
+            WX.GetPrivacySetting(new GetPrivacySettingOption()
+            {
+                success = (res) =>
+                {
+                    if (res.needAuthorization)
+                    {
+                        
+                    }
+                    else
+                    {
+                        Debug.Log("隐私协议已授权");
+                        onSuccess?.Invoke();
+                    }
+                },
+                fail = (err) =>
+                {
+                    Debug.Log("检查隐私配置失败: " + err.errMsg);
+                }
             });
         }
 
@@ -195,9 +219,62 @@ namespace Middleware
         public void Login(Action<string> callback)
         {
             Debug.Log("调用了登录方法");
-            GetWXLoginCode(callback);
+            // GetWXLoginCode(callback);
+            WX.GetPrivacySetting(new GetPrivacySettingOption()
+            {
+                success = (privacyRes) =>
+                {
+                    if (privacyRes.needAuthorization)
+                    {
+                        WX.RequirePrivacyAuthorize(new RequirePrivacyAuthorizeOption()
+                        {
+                            success = (authRes) =>
+                            {
+                                ExecuteWxLogin(callback);
+                            },
+                            fail = (err) => 
+                            {
+                                Debug.LogError("用户拒绝了隐私协议: " + err.errMsg);
+                                callback?.Invoke(null); // 返回空表示失败
+                            }
+                        });
+                    }
+                    else
+                    {
+                        // 3. 不需要授权（之前同意过），直接登录
+                        ExecuteWxLogin(callback);
+                    }
+                },fail = (err) =>
+                {
+                    Debug.LogError("检查隐私配置失败: " + err.errMsg);
+                    callback?.Invoke(null);
+                }
+            });
         }
 
+        private void ExecuteWxLogin(Action<string> callback)
+        {
+            WX.Login(new LoginOption()
+            {
+                success = (res) =>
+                {
+                    if (!string.IsNullOrEmpty(res.code))
+                    {
+                        callback?.Invoke(res.code);
+                    }
+                    else
+                    {
+                        Debug.LogError("登录失败，Code为空");
+                        callback?.Invoke(null);
+                    }
+                },
+                fail = (err) =>
+                {
+                    Debug.LogError("微信登录接口失败: " + err.errMsg);
+                    callback?.Invoke(null);
+                }
+            });
+        }
         public void Logout()
         {
             

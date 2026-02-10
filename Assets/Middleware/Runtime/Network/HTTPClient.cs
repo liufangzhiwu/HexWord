@@ -105,7 +105,7 @@ public class HTTPClient
             Debug.Log($"[API] {method} {req.Uri} \n" +
                       $"Request Header: {req.DumpHeaders()}\n" +
                       $"Request Body: {(body != null ? JsonConvert.SerializeObject(body) : "N/A")}\n" +
-                      $"Response Header: {JsonConvert.SerializeObject(resp.Headers)}\n" +
+                      $"Response Header: {(resp != null && resp.Headers != null ? JsonConvert.SerializeObject(resp.Headers) : "N/A" )}\n" +
                       $"Response Body: {(resp != null ? resp.DataAsText : "N/A")}\n" +
                       $"Code: {resp.StatusCode} Time: {duration:F2}s");
             HandleResponse(resp, onSuccess, onError);
@@ -150,12 +150,17 @@ public class HTTPClient
                 }
                 return;
             }
+            T finalData = default(T);
+            bool isSuccess = false;
             try
             {
                 var apiResponse = JsonConvert.DeserializeObject<ApiResponse<T>>(response.DataAsText);
                 if (apiResponse.code == 200)
                 {
-                    onSuccess?.Invoke(apiResponse.data);
+                    isSuccess = true;
+                    finalData = apiResponse.data;
+                    Debug.Log($"[API] {apiResponse.data}");
+                    // onSuccess?.Invoke(apiResponse.data);
                 }
                 else
                 {
@@ -165,6 +170,11 @@ public class HTTPClient
             catch (Exception ex)
             {
                 onError?.Invoke($"API JSON Parsing Error: {ex}");
+            }
+
+            if (isSuccess)
+            {
+                onSuccess?.Invoke(finalData);
             }
         }
         else if(response != null)

@@ -1,0 +1,284 @@
+ManifestFileVersion: 0
+CRC: 3074054453
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f7047b97abb1ff8adcfb62d37f4ab2b4
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 027c47bbdde6aee84877dd350121c284
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f7047b97abb1ff8adcfb62d37f4ab2b4
+HashAppended: 1
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 49
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8d915e18fb2c6384abf47bdfe6403a5c, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 7f726fb798ad621458c431cb9966d91d, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 29af1af7f1d1b564d8f26ed0436b7fb3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: c8fbd88184c07b647bedb5e367e29c58, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 90215f4529ba10c4e891a034f7ad5424, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d85b887af7e6c3f45a2e2d2920d641bc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 047f7884c9cc0e943a2dc94c471241d4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f1b3b4b945939a54ea0b23d3396115fb, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b238dfcde8209044b97d23f62bcaadf6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: ce2788a3177704c45baf090d1b699fe2, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+- Class: 198
+  Script: {instanceID: 0}
+- Class: 199
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 223
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+- Class: 225
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.RectOffset
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.AnimationTriggers
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Button/ButtonClickedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ColorBlock
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.FontData
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Navigation
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ScrollRect/ScrollRectEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Slider/SliderEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.SpriteState
+- AssemblyName: spine-unity
+  ClassName: Spine.Unity.BlendModeMaterials
+- AssemblyName: spine-unity
+  ClassName: Spine.Unity.BlendModeMaterials/ReplacementMaterial
+- AssemblyName: spine-unity
+  ClassName: Spine.Unity.MeshGenerator
+- AssemblyName: spine-unity
+  ClassName: Spine.Unity.MeshGenerator/Settings
+Assets:
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF218.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF123.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF112.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/FX_ButterflyUnlock.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/UI_hudie02.skel.bytes
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF227.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF110.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF107.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/scenery/scenery9.jpg
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF124.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/butterflayicons/butterflay_fill.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF109.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF115.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/scenery/scenery5.jpg
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/star_hide_1.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/pupa.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF206.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF214.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF302.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/ButterflyHome.spriteatlas
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/manualBg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/scenery/scenery1.jpg
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/UI_hudie01.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/butterflayicons/butterflay_slider_gg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF204.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF215.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF306.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/star_hide_3.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF201.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF222.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Scenes_hudie/Scenes_hudie01.skel.bytes
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF207.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF128.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF205.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF114.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF216.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF108.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/butterflayicons/pupabg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/hudie02_Animation.anim
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF129.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF225.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF113.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyGardenHelp.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF309.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/Manual.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/UI_hudie01.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/right.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/ButterflyScenery.spriteatlas
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF208.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF211.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF105.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/star_hide_2.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/butterflayicons/butterflay_slider_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/hudie02.controller
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/scroll_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/UI_hudie03.skel.bytes
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF126.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/hudie01_Animation.anim
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF301.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/garden_item_3.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF111.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/huoqu_hudie/UI_hudie_new.skel.bytes
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF307.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF130.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/garden_item_1.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF217.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/Scenes_hudie03.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF117.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/top_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/butterflayicons/pupa.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/hudie03.controller
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/garden_item_mask.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/ui_garden_title.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/garden_item_5.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF310.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/item_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF210.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/selecticon.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/star_show_2.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/scenery/scenery2.jpg
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF103.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF116.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF303.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/unlock.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF311.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/star_show_1.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF219.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF314.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyHome.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF228.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/collect_bg.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyGarden.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF119.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF118.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF229.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF102.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF220.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF312.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF212.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF230.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF224.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF121.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF315.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF101.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/garden_item_2.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/butterfly_ti.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/garden_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF221.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/content_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF313.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/lockicon.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/UI_hudie03_Controller.controller
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/scenery/scenery3.jpg
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/UI_hudie03.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/hudie01.controller
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/garden_item_4.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/left.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/name_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/hudie03_Animation.anim
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF122.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF202.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/garden_itemss.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF125.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF106.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF127.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF203.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF308.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF104.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF223.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF304.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/butterfly_ghost.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyManual.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF226.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/20251222-183113.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF213.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/UI_hudie02.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/Garden.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/btn_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/PanelUI/star_show_3.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF209.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Huoqu_hudie/UI_hudie01.skel.bytes
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/butterflayicons/butterflay_slider_icon_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF305.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF120.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/butterflayicons/buttername_bg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/ButterflyHome/Butterfly_UI/maunal/BF316.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyProcessBar.prefab
+Dependencies:
+- E:/UnityProjects/HexWord/./BuildBundles/butterfly_parts_3d3d66d19e9c60b6b7d80e74735e738f
+- E:/UnityProjects/HexWord/./BuildBundles/huoqu_hudie_30e2d8996fed908b409ccab1cfb8c46d
+- E:/UnityProjects/HexWord/./BuildBundles/scenes_hudie_f2783eb9e767344bb2c95eb6134f19db
+- E:/UnityProjects/HexWord/./BuildBundles/stagefonts_e3b88446a2836db4d16bfa449b1f1913

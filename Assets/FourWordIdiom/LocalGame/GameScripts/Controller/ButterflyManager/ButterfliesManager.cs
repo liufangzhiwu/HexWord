@@ -52,46 +52,31 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         base.Awake();
         LoadConfigTables();
     }
-
-    private void Start()
-    {
-        if (processBar == null)
-        {
-            AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterfly_icon");
-            GameObject go =  AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyProcessBar");
-            processBar = Instantiate(go);
-            processBar.SetActive(false);
-        }
-       
-    }
-
+    
     #region 配置文件解析
 
     private void LoadConfigTables()
     {
-        TextAsset butterfliesTable =
-            AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflyCollectionTable");
+        string butterfliesTable = ConfigManager.Instance.FetchConfig( "ButterflyCollectionTable");
         if (butterfliesTable != null)
         {
-            ParseButterflies(butterfliesTable.text);
+            ParseButterflies(butterfliesTable);
         }
         else
         {
             Debug.LogError("Failed to load ButterflyCollectionTable csv data.");
         }
 
-        TextAsset probabilityTable =
-            AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflySceneTable");
+        string probabilityTable = ConfigManager.Instance.FetchConfig( "ButterflySceneTable");
         if (probabilityTable != null)
         {
-            ParseProbabilityTable(probabilityTable.text);
+            ParseProbabilityTable(probabilityTable);
         }
         else
         {
             Debug.LogError("Failed to load ButterflySceneTable csv data.");
         }
         
-        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflyparts");
     }
 
     /// <summary>
@@ -166,6 +151,13 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         if(butterflyGrow == null)
              return;
         
+        if (processBar == null)
+        {
+            GameObject go =  AssetBundleLoader.SharedInstance.LoadGameObject("ButterflyHome","ButterflyProcessBar");
+            processBar = Instantiate(go);
+            processBar.SetActive(false);
+        }
+        
         processBar.transform.SetParent(parent);
         processBar.transform.localScale = Vector3.one;
         processBar.transform.localPosition = Vector3.zero;
@@ -227,7 +219,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// </summary>
     public IEnumerator FlyPupaCoroutine(Transform start, Transform target, Action call, float duration=0f)
     {
-           GameObject go = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "Pupa");
+           GameObject go = AssetBundleLoader.SharedInstance.LoadGameObject("gameplayarea", "Pupa");
            GameObject effect = Instantiate(go, start.position, Quaternion.identity, target);
            effect.gameObject.SetActive(true);
            Vector3 endPosition = target.position;

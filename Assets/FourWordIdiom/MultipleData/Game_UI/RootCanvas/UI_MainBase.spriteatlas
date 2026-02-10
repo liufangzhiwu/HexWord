@@ -1,0 +1,120 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: UI_MainBase
+  serializedVersion: 2
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 3
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      webStreaming: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: Android
+      m_MaxTextureSize: 4096
+      m_MaxPlaceholderSize: 32
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 50
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    - serializedVersion: 3
+      m_BuildTarget: OpenHarmony
+      m_MaxTextureSize: 2048
+      m_MaxPlaceholderSize: 32
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 65
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    - serializedVersion: 3
+      m_BuildTarget: WeixinMiniGame
+      m_MaxTextureSize: 2048
+      m_MaxPlaceholderSize: 32
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 53
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 2
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 0
+      enableAlphaDilation: 1
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: 69a0ca03d44a3b04fa1587752fe9604f, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - 9e804a0144b7eed4baf302d7541b5ee8: 21300000
+    - ed3e91023b3196e438cdc489257dac82: 21300000
+    - 2f3c85c2084a3784dbe1ed4b4de652b0: 21300000
+    - be8808a463ad7484c9a87e23256c3fa3: 21300000
+    - e90acd4932b2744418f04cacc986fe32: 21300000
+    - fa40cea93e2d19d4fb3a7f8b8fc7a8c8: 21300000
+    - 0fd3968a845efe842b4aaeb792c707f1: 21300000
+    - 88d5d1ab8e8d53d4891d6e8cda9419e8: 21300000
+    - 2e55cc5cdde54c94eaeaa6acf58a5d24: 21300000
+    - dbb06f5ec256d3b4ca25fed1ae4e9173: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 9e804a0144b7eed4baf302d7541b5ee8, type: 3}
+  - {fileID: 21300000, guid: ed3e91023b3196e438cdc489257dac82, type: 3}
+  - {fileID: 21300000, guid: 2f3c85c2084a3784dbe1ed4b4de652b0, type: 3}
+  - {fileID: 21300000, guid: be8808a463ad7484c9a87e23256c3fa3, type: 3}
+  - {fileID: 21300000, guid: e90acd4932b2744418f04cacc986fe32, type: 3}
+  - {fileID: 21300000, guid: fa40cea93e2d19d4fb3a7f8b8fc7a8c8, type: 3}
+  - {fileID: 21300000, guid: 0fd3968a845efe842b4aaeb792c707f1, type: 3}
+  - {fileID: 21300000, guid: 88d5d1ab8e8d53d4891d6e8cda9419e8, type: 3}
+  - {fileID: 21300000, guid: 2e55cc5cdde54c94eaeaa6acf58a5d24, type: 3}
+  - {fileID: 21300000, guid: dbb06f5ec256d3b4ca25fed1ae4e9173, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - gou
+  - btnicon
+  - input
+  - UI_Icon_music
+  - headdi
+  - UI_Icon_message
+  - UI_Icon_di
+  - UI_Icon_togglebg
+  - UI_Icon_vibrate
+  - UI_Icon_sound
+  m_RenderDataMap: {}
+  m_Tag: UI_MainBase
+  m_IsVariant: 0
+  m_IsPlaceholder: 0

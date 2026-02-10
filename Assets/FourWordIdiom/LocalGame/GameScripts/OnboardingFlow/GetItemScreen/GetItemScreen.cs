@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using DG.Tweening;
-using HuaweiService.CloudStorage;
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -140,6 +139,7 @@ public class GetItemScreen : UIWindow
 
     private void UpdateAdsRewardUI(bool isShow)
     {
+        MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
             GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"看广告获取"+title.text+"道具");
@@ -158,7 +158,7 @@ public class GetItemScreen : UIWindow
 
     private void UpdateCliamBtn(bool canClaimed)
     {
-        ClaimAdsBtn.gameObject.SetActive(canClaimed);
+        // ClaimAdsBtn.gameObject.SetActive(canClaimed);
         ClaimGoldBtn.gameObject.SetActive(true);
     }
     

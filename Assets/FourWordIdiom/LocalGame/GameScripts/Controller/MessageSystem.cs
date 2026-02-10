@@ -62,6 +62,7 @@ public class MessageSystem : MonoBehaviour
 
     private IEnumerator Start()
     {
+        yield return new WaitForSeconds(DISPLAY_DURATION);
         yield return InitializeTipSystem();
     }
     #endregion
@@ -93,7 +94,7 @@ public class MessageSystem : MonoBehaviour
             loadingPanel.gameObject.SetActive(false);
         }
 
-        yield return loadRequest;
+        yield return new WaitForSeconds(DISPLAY_DURATION);
 
         if (loadRequest == null)
         {

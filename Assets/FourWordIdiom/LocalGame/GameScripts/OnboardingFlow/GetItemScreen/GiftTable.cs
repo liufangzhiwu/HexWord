@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using DG.Tweening;
-using HuaweiService.CloudStorage;
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -34,7 +33,7 @@ public class GiftTable : MonoBehaviour
         limitRewordType=limitReType;
         shopDataItem=shopItem;
         
-        discount.text=shopItem.discount;
+        discount.text=shopItem?.discount;
         
         switch (limitRewordType)
         {
@@ -53,16 +52,14 @@ public class GiftTable : MonoBehaviour
                 giftNameText.text ="提示灯礼包";
                 break;
         }
-
-        for (int i = 0; i < shopDataItem.productContent.Count; i++)
-        {
-            List<string> giftdata=shopDataItem.productContent[i];
-            GiftItem giftItem = _giftItems[i];
-            giftItem.SetShopData(giftdata, shopDataItem.id);
-        }
-        
         eventDes=giftNameText.text;
-        SetProductPrice();
+        // for (int i = 0; i < shopDataItem.productContent.Count; i++)
+        // {
+        //     List<string> giftdata=shopDataItem.productContent[i];
+        //     GiftItem giftItem = _giftItems[i];
+        //     giftItem.SetShopData(giftdata, shopDataItem.id);
+        // }
+        // SetProductPrice();
         //AnalyticMgr.VideoAdShow(eventDes);
     }
     

@@ -5050,7 +5050,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -5177,7 +5176,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 60
     m_FontStyle: 1
     m_BestFit: 1
@@ -10164,7 +10163,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -10350,7 +10348,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 78
     m_FontStyle: 1
     m_BestFit: 0
@@ -15264,7 +15262,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -20224,7 +20221,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -25685,7 +25681,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -30787,7 +30782,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -30913,7 +30907,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 35
     m_FontStyle: 1
     m_BestFit: 1
@@ -36068,7 +36062,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -41028,7 +41021,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -45977,7 +45969,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -46440,7 +46431,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -47167,7 +47158,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  m_UseSpriteMesh: 0
+  m_UseSpriteMesh: 1
   m_PixelsPerUnitMultiplier: 1
 --- !u!1 &2682065743451324048
 GameObject:
@@ -52083,7 +52074,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -57375,7 +57365,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -62500,7 +62489,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -67594,7 +67582,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -72834,7 +72821,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -73120,7 +73106,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -73443,7 +73429,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 36
     m_FontStyle: 1
     m_BestFit: 1
@@ -78493,7 +78479,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -78695,7 +78680,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -83546,7 +83531,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -83868,7 +83852,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  m_UseSpriteMesh: 0
+  m_UseSpriteMesh: 1
   m_PixelsPerUnitMultiplier: 1
 --- !u!1 &5271488715873323987
 GameObject:
@@ -88936,7 +88920,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -89062,7 +89045,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -89142,7 +89125,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -94145,7 +94128,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -99236,7 +99218,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -104528,7 +104509,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -109640,7 +109620,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -110501,7 +110480,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -115428,7 +115407,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -115554,7 +115532,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -115694,7 +115672,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 43
     m_FontStyle: 1
     m_BestFit: 1
@@ -115774,7 +115752,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -120764,7 +120742,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -125724,7 +125701,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -125927,7 +125903,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 65
     m_FontStyle: 1
     m_BestFit: 1
@@ -130982,7 +130958,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -131184,7 +131159,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -131503,7 +131478,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1
@@ -136354,7 +136329,6 @@ ParticleSystemRenderer:
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
   m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
   m_ShadingRate: 0
   m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
@@ -136480,7 +136454,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 60
     m_FontStyle: 1
     m_BestFit: 1
@@ -136560,7 +136534,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 70
     m_FontStyle: 1
     m_BestFit: 1

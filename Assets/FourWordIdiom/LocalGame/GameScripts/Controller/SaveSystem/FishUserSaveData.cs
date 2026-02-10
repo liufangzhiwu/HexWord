@@ -172,7 +172,7 @@ public class FishUserSaveData
                 string Dejson = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
            
                 string json = SecurityProvider.RestoreData(Dejson); //解密   
-                Debug.Log("数据加载路径: " + filePath + "读取json数据" + Dejson + "解密后数据" + json);
+                // Debug.Log("数据加载路径: " + filePath + "读取json数据" + Dejson + "解密后数据" + json);
                 // 验证 JSON 数据格式
                 if (!IsValidJson(json))
                 { 
@@ -184,7 +184,7 @@ public class FishUserSaveData
                     FishUserSaveData fishUser = JsonConvert.DeserializeObject<FishUserSaveData>(json);               
                     Debug.Log("竞速数据已加载: " + json+" 竞速回合数据 "+fishUser.curround);
                     InitData(fishUser);
-                    Debug.Log("竞速回合数据: " + fishUser.curround);
+                    // Debug.Log("竞速回合数据: " + fishUser.curround);
                     if (fishUser.curround<=0)
                     { 
                         Debug.Log("数据加载异常: " + json);

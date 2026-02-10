@@ -15,14 +15,26 @@ MonoBehaviour:
   viewsData:
   - panelName: HexGamePlayArea
     panelLayer: BasePanel
-    bundleName: RootCanvas
-    spriteAtlasName: UI_MainBase
+    bundleName: GamePlayArea
+    spriteAtlasName: GamePlayArea
     prefab: {fileID: 3928016723604912977, guid: 121a649aa227684499243306c180f5a1,
+      type: 3}
+  - panelName: HardView
+    panelLayer: PopPanel
+    bundleName: GamePlayArea
+    spriteAtlasName: GamePlayArea
+    prefab: {fileID: 2508230401924753788, guid: b5471a4703b43b9419889d9a9193c011,
+      type: 3}
+  - panelName: StageFinishView
+    panelLayer: UpPopPanel
+    bundleName: GamePlayArea
+    spriteAtlasName: GamePlayArea
+    prefab: {fileID: 4165248868016293823, guid: 0405853341f0aa841837fa413d182b50,
       type: 3}
   - panelName: HeaderSection
     panelLayer: BasePanel
-    bundleName: RootCanvas
-    spriteAtlasName: UI_MainBase
+    bundleName: OnboardingFlow
+    spriteAtlasName: UI_Universal
     prefab: {fileID: 3024168589130899512, guid: 8d757dade3725104282bf2df52e4a93f,
       type: 3}
   - panelName: PrimaryInterface
@@ -50,21 +62,15 @@ MonoBehaviour:
       type: 3}
   - panelName: DebugMenu
     panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: RootCanvas
+    spriteAtlasName: UI_MainBase
     prefab: {fileID: 2508230401924753788, guid: 168bdf41c2f05cb4984f4cdaa7c1ffe6,
       type: 3}
   - panelName: OptionsView
     panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: RootCanvas
+    spriteAtlasName: UI_MainBase
     prefab: {fileID: 2508230401924753788, guid: 5922bedc73f20174bb191be1079858e7,
-      type: 3}
-  - panelName: StageFinishView
-    panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 4165248868016293823, guid: 0405853341f0aa841837fa413d182b50,
       type: 3}
   - panelName: LimitTimeScreen
     panelLayer: UpPopPanel
@@ -92,8 +98,8 @@ MonoBehaviour:
       type: 3}
   - panelName: HeadScreen
     panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: RootCanvas
+    spriteAtlasName: UI_MainBase
     prefab: {fileID: 2508230401924753788, guid: 6d8eeb1c522d1194e9f71f2cbf4810d0,
       type: 3}
   - panelName: CompetitionStart
@@ -104,39 +110,39 @@ MonoBehaviour:
       type: 3}
   - panelName: DashCompetition
     panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: FishHomeScreen
+    spriteAtlasName: FishHomeScreen
     prefab: {fileID: 2508230401924753788, guid: 21c66e00116e30d4ba506a1b7ff418bf,
-      type: 3}
-  - panelName: MatchSuccess
-    panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 2508230401924753788, guid: debfca372b5dcf74e832de7807d23b89,
       type: 3}
   - panelName: CompetitionFail
     panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: FishHomeScreen
+    spriteAtlasName: FishHomeScreen
     prefab: {fileID: 2508230401924753788, guid: 59f0b10f00079d74cbdc7f405b613d43,
       type: 3}
   - panelName: CompetitionHelp
     panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: FishHomeScreen
+    spriteAtlasName: FishHomeScreen
     prefab: {fileID: 2508230401924753788, guid: f7d4ed6d05c193c4593da32d3116779b,
+      type: 3}
+  - panelName: MatchSuccess
+    panelLayer: UpPopPanel
+    bundleName: FishHomeScreen
+    spriteAtlasName: FishHomeScreen
+    prefab: {fileID: 2508230401924753788, guid: debfca372b5dcf74e832de7807d23b89,
       type: 3}
   - panelName: ShopScreen
     panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: ShopHomeScreen
+    spriteAtlasName: UI_ShopHomeScreen
     prefab: {fileID: 2508230401924753788, guid: e354a790ae565f94c9dbcba6d498b6ac,
       type: 3}
   - panelName: AdsDiscountScreen
     panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 2508230401924753788, guid: 2a51c3225d5da4e43b5af8a7cbf419e3,
+    bundleName: ShopHomeScreen
+    spriteAtlasName: UI_ShopHomeScreen
+    prefab: {fileID: 2508230401924753788, guid: c5f43d761d8abdd4abb287a1f376d34c,
       type: 3}
   - panelName: GetItemScreen
     panelLayer: UpPopPanel
@@ -168,51 +174,21 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 4165248868016293823, guid: 3829a928e24ad4f408586c70e4f7a487,
       type: 3}
-  - panelName: SelectMode
-    panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 2901091611323133692, guid: a626ff0c784c44c4687a2a412e3a682e,
-      type: 3}
-  - panelName: ChessPlayArea
-    panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 2746254273192117949, guid: 47c9d0604f9e185459adf71fd94bf9da,
-      type: 3}
-  - panelName: ChessLearningGuide
-    panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 1327257544548013465, guid: 61b38a17f7adddb46a94631f2c253a2c,
-      type: 3}
-  - panelName: ChessFinishView
-    panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 4236006176551709113, guid: 777a3d5cdafc06e42b51a49c8d71e479,
-      type: 3}
   - panelName: ButterflyHome
     panelLayer: BasePanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: ButterflyHome
+    spriteAtlasName: Butterfly_UI
     prefab: {fileID: 7834268690713381915, guid: 16c366d5236b52348a96b7e11bdb6c3f,
       type: 3}
   - panelName: ButterflyManual
     panelLayer: BasePanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: ButterflyHome
+    spriteAtlasName: Butterfly_UI
     prefab: {fileID: 6605392508642925096, guid: 88ad866d3f9c49a4a8a00609c375f7f8,
       type: 3}
   - panelName: ButterflyGardenHelp
     panelLayer: BasePanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
+    bundleName: ButterflyHome
+    spriteAtlasName: Butterfly_UI
     prefab: {fileID: 2508230401924753788, guid: eece4436aba43d14faeabe1a886207bc,
-      type: 3}
-  - panelName: HardView
-    panelLayer: PopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 2508230401924753788, guid: b5471a4703b43b9419889d9a9193c011,
       type: 3}

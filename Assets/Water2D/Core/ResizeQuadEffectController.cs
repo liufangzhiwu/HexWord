@@ -113,7 +113,7 @@ public class ResizeQuadEffectController : MonoBehaviour
         // Only for toon style
         if (backgroundCamera != null)
         {
-            RenderTexture BackgroundRT = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+            RenderTexture BackgroundRT = new RenderTexture(width, height, 16, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
             GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_BackgroundTex", BackgroundRT);
             backgroundCamera.GetComponent<Camera>().forceIntoRenderTexture = true;
             backgroundCamera.GetComponent<Camera>().targetTexture = BackgroundRT;
@@ -121,7 +121,7 @@ public class ResizeQuadEffectController : MonoBehaviour
 
 
         //CREATING AND ADDING RT
-        RenderTexture EffectRT = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+        RenderTexture EffectRT = new RenderTexture(width, height, 16, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
        
         //For Regular shader
         GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_MainTex", EffectRT);

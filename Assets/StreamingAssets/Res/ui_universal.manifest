@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 512031374
+CRC: 1197793353
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d36e6ac6c3bdf73483fba34425186f18
+    Hash: 1f59f957cda0cfdb275b88fdc6d46713
   TypeTreeHash:
     serializedVersion: 2
     Hash: fabfeac254184fd86a46abf5f656d198
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d36e6ac6c3bdf73483fba34425186f18
+    Hash: 1f59f957cda0cfdb275b88fdc6d46713
 HashAppended: 1
 ClassTypes:
 - Class: 28
@@ -21,9 +21,4 @@ ClassTypes:
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/FourWordIdiom/MultipleData/Game_UI/UI_Universal/UI_Universal.spriteatlas
-- Assets/FourWordIdiom/MultipleData/Game_UI/UI_Universal/chess/error_bg.png
-- Assets/FourWordIdiom/MultipleData/Game_UI/UI_Universal/chess/Highlight_142.png
-- Assets/FourWordIdiom/MultipleData/Game_UI/UI_Universal/chess/Highlight_126.png
-- Assets/FourWordIdiom/MultipleData/Game_UI/UI_Universal/chess/Highlight_162.png
-- Assets/FourWordIdiom/MultipleData/Game_UI/UI_Universal/chess/success_bg.png
 Dependencies: []

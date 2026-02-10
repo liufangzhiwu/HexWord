@@ -1,82 +1,132 @@
 ManifestFileVersion: 0
-CRC: 89371836
+CRC: 1394134120
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
-      Name: butterfly_parts_536b4a86f2a67d8afd0ba1b71d33a53a
-      Dependencies: {}
+      Name: fishhomescreen_ef8afe17757d93b3b6ae97345a206faa
+      Dependencies:
+        Dependency_0: effect_fishbox_a18e69c66f319147f11b193c9aae8747
+        Dependency_1: effectsitemmats_7916430859da7c75e5c390e065a825f1
+        Dependency_2: effect_fish_ff37c9f3d23ef9dfba135d40dff32b66
+        Dependency_3: stagefonts_e3b88446a2836db4d16bfa449b1f1913
     Info_1:
-      Name: musics_69679dcf01836dc9bca0ba06f7da8e3a
+      Name: butterfly_parts_3d3d66d19e9c60b6b7d80e74735e738f
       Dependencies: {}
     Info_2:
-      Name: useritems_0fec14d0c0ed4fc6500803d52665985a
+      Name: gameplayarea_25f8cb15827c55ae6ffd46dff58b9ba2
       Dependencies:
-        Dependency_0: effectsitemmats_554f2020f980e384e4d6839f599ee8a3
+        Dependency_0: effectsitemmats_7916430859da7c75e5c390e065a825f1
+        Dependency_1: stagefonts_e3b88446a2836db4d16bfa449b1f1913
     Info_3:
-      Name: butterfly_ui_d4b504dd4a93358439344d214590b962
+      Name: effect_fishbox_a18e69c66f319147f11b193c9aae8747
       Dependencies:
-        Dependency_0: butterfly_parts_536b4a86f2a67d8afd0ba1b71d33a53a
+        Dependency_0: fishhomescreen_ef8afe17757d93b3b6ae97345a206faa
     Info_4:
-      Name: onboardingflow_f7a1bde99d7133b16a8bffc010bef342
+      Name: onboardingflow_0900c41303df10a8b388c353b4ca28b6
       Dependencies:
-        Dependency_0: effectsitemmats_554f2020f980e384e4d6839f599ee8a3
-        Dependency_1: commonitem_4b353481a96db2b179cc13201310842d
-        Dependency_2: stagefonts_d6e423becd0c6abea067b35996ed7b9c
+        Dependency_0: effectsitemmats_7916430859da7c75e5c390e065a825f1
+        Dependency_1: commonitem_b94d6f8bd4b9248cba33aa2c6d59ee97
+        Dependency_2: stagefonts_e3b88446a2836db4d16bfa449b1f1913
     Info_5:
-      Name: effectsitemmats_554f2020f980e384e4d6839f599ee8a3
-      Dependencies: {}
-    Info_6:
-      Name: commonitem_4b353481a96db2b179cc13201310842d
+      Name: butterflybg_2d4c94a4a9d42cdd873b0e03d2b4554c
       Dependencies:
-        Dependency_0: effectsitemmats_554f2020f980e384e4d6839f599ee8a3
-        Dependency_1: ui_universal_d36e6ac6c3bdf73483fba34425186f18
-        Dependency_2: stagefonts_d6e423becd0c6abea067b35996ed7b9c
+        Dependency_0: butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
+    Info_6:
+      Name: effectsitemmats_7916430859da7c75e5c390e065a825f1
+      Dependencies: {}
     Info_7:
-      Name: ui_universal_d36e6ac6c3bdf73483fba34425186f18
+      Name: gameinfo_11320ddbf1da02b17dcf52fb27241a3b
       Dependencies: {}
     Info_8:
-      Name: butterflybg_2752bfa6bff36663404d9abdc63df9a4
-      Dependencies: {}
+      Name: butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
+      Dependencies:
+        Dependency_0: butterfly_parts_3d3d66d19e9c60b6b7d80e74735e738f
+        Dependency_1: huoqu_hudie_30e2d8996fed908b409ccab1cfb8c46d
+        Dependency_2: scenes_hudie_f2783eb9e767344bb2c95eb6134f19db
+        Dependency_3: stagefonts_e3b88446a2836db4d16bfa449b1f1913
     Info_9:
-      Name: gameinfo_9e44defaf213c453ad14cbac90eda4c9
-      Dependencies: {}
+      Name: commonitem_b94d6f8bd4b9248cba33aa2c6d59ee97
+      Dependencies:
+        Dependency_0: effectsitemmats_7916430859da7c75e5c390e065a825f1
+        Dependency_1: stagefonts_e3b88446a2836db4d16bfa449b1f1913
     Info_10:
-      Name: effect_sprite_a1cbe3a4d72e77e7deb44e80e34c6959
+      Name: musics_4e8cd2cf438efb50b31efa625af8aaf7
       Dependencies: {}
     Info_11:
-      Name: hehua_project_6901dc9fe8c353fe80f24dbbef2ea98b
-      Dependencies: {}
+      Name: hudie_project_09aa8c4a7b67b00dc447a98f20ac398a
+      Dependencies:
+        Dependency_0: butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
+        Dependency_1: huoqu_hudie_30e2d8996fed908b409ccab1cfb8c46d
     Info_12:
-      Name: rootcanvas_bb0d3269b4cbbe86ff209cacf0e73b71
-      Dependencies:
-        Dependency_0: effectsitemmats_554f2020f980e384e4d6839f599ee8a3
-        Dependency_1: stagefonts_d6e423becd0c6abea067b35996ed7b9c
+      Name: hehua_321bec805bdba854825ab856f04f3ae6
+      Dependencies: {}
     Info_13:
-      Name: hudie_project_ab48ba849043169b6325481d45aecba5
+      Name: materials_828392e3f7d5c8577ee6f2bdf3dc599f
       Dependencies:
-        Dependency_0: materials_27f520acd3289f2e52123efd52a66397
+        Dependency_0: butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
     Info_14:
-      Name: materials_27f520acd3289f2e52123efd52a66397
-      Dependencies: {}
+      Name: rootcanvas_01eb0fdca100816ef0f32d67749c7802
+      Dependencies:
+        Dependency_0: stagefonts_e3b88446a2836db4d16bfa449b1f1913
     Info_15:
-      Name: hehua_4ba8088b0b63d3929d3f394b81eaade5
-      Dependencies: {}
+      Name: shophomescreen_e8e64509d17ef7f034b2130740d27f5d
+      Dependencies:
+        Dependency_0: stagefonts_e3b88446a2836db4d16bfa449b1f1913
     Info_16:
-      Name: stagefonts_d6e423becd0c6abea067b35996ed7b9c
-      Dependencies: {}
+      Name: huoqu_hudie_30e2d8996fed908b409ccab1cfb8c46d
+      Dependencies:
+        Dependency_0: butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
     Info_17:
-      Name: objects_9245f9c2a2ea58d9232f98ddd9b35d96
+      Name: useritems_b79317a2afcf704bc32dfe78af9cb4cb
       Dependencies:
-        Dependency_0: onboardingflow_f7a1bde99d7133b16a8bffc010bef342
-        Dependency_1: rootcanvas_bb0d3269b4cbbe86ff209cacf0e73b71
+        Dependency_0: effectsitemmats_7916430859da7c75e5c390e065a825f1
     Info_18:
-      Name: scene_gamelobby_7f8e16bd17f51591e1d03e9300e6e22e
-      Dependencies: {}
-    Info_19:
-      Name: scenehudie_89ef7a8e6c878401b649606c23218de3
+      Name: scenehudie_3c7c252ac959d111087cd5f1725ce5db
       Dependencies:
-        Dependency_0: butterfly_parts_536b4a86f2a67d8afd0ba1b71d33a53a
-        Dependency_1: materials_27f520acd3289f2e52123efd52a66397
+        Dependency_0: butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
+        Dependency_1: materials_828392e3f7d5c8577ee6f2bdf3dc599f
+        Dependency_2: huoqu_hudie_30e2d8996fed908b409ccab1cfb8c46d
+        Dependency_3: scenes_hudie_f2783eb9e767344bb2c95eb6134f19db
+    Info_19:
+      Name: gameyuzhiobj_244d57e2784fcac25d29156c91425982
+      Dependencies:
+        Dependency_0: stagefonts_e3b88446a2836db4d16bfa449b1f1913
     Info_20:
-      Name: ui_mainbase_3360b26ea1292c5ff3fd147b6d51a63e
+      Name: effect_fish_ff37c9f3d23ef9dfba135d40dff32b66
+      Dependencies:
+        Dependency_0: fishhomescreen_ef8afe17757d93b3b6ae97345a206faa
+    Info_21:
+      Name: scenes_hudie_f2783eb9e767344bb2c95eb6134f19db
+      Dependencies:
+        Dependency_0: butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
+    Info_22:
+      Name: objects_5ff6f609abef1b753a8b8ec467aabebc
+      Dependencies:
+        Dependency_0: fishhomescreen_ef8afe17757d93b3b6ae97345a206faa
+        Dependency_1: gameplayarea_25f8cb15827c55ae6ffd46dff58b9ba2
+        Dependency_2: onboardingflow_0900c41303df10a8b388c353b4ca28b6
+        Dependency_3: butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
+        Dependency_4: rootcanvas_01eb0fdca100816ef0f32d67749c7802
+        Dependency_5: shophomescreen_e8e64509d17ef7f034b2130740d27f5d
+        Dependency_6: gameyuzhiobj_244d57e2784fcac25d29156c91425982
+    Info_23:
+      Name: ui_universal_1f59f957cda0cfdb275b88fdc6d46713
       Dependencies: {}
+    Info_24:
+      Name: scene_gamelobby_23dc77982c7096e1a58a92bb76796d1e
+      Dependencies: {}
+    Info_25:
+      Name: hehua_project_6514bd7b2a937f61878c54eb18048468
+      Dependencies: {}
+    Info_26:
+      Name: localization_68b4ae1fd36efc790912a517b624a9f4
+      Dependencies:
+        Dependency_0: hehua_321bec805bdba854825ab856f04f3ae6
+        Dependency_1: materials_828392e3f7d5c8577ee6f2bdf3dc599f
+    Info_27:
+      Name: stagefonts_e3b88446a2836db4d16bfa449b1f1913
+      Dependencies: {}
+    Info_28:
+      Name: effectfx_05b9d0e0e5aec8b5e6f8968e096dd230
+      Dependencies:
+        Dependency_0: effectsitemmats_7916430859da7c75e5c390e065a825f1

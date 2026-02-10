@@ -51,23 +51,11 @@ public class WordVocabularyManager
     /// </summary>
     /// <param name="filePath"></param>
     /// <returns></returns>
-    public async Task LoadEntriesAsync()
+    public void LoadEntriesAsync()
     {
         string txtname = "ChinSimWordBan";
-        // switch (GameDataManager.instance.UserData.LanguageCode)
-        // {
-        //     case "Japanese":
-        //         txtname = "JanWordBan";
-        //         break;
-        //     case "ChineseTraditional":
-        //         txtname = "ChinTraWordBan";
-        //         break;
-        //     case "ChineseSimplified":
-        //         txtname = "ChinSimWordBan";
-        //         break;
-        // }
         // 加载 TextAsset
-        TextAsset textAsset = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo",txtname);
+        string textAsset = ConfigManager.Instance.FetchConfig(txtname);
         if (textAsset == null)
         {
             Debug.LogError("Could not load the dictionary file.");
@@ -75,10 +63,10 @@ public class WordVocabularyManager
         }
 
         // 使用 StringReader 读取内容
-        using (StringReader reader = new StringReader(textAsset.text))
+        using (StringReader reader = new StringReader(textAsset))
         {
             string line;
-            while ((line = await reader.ReadLineAsync()) != null)
+            while ((line =  reader.ReadLine()) != null)
             {
                 // 按 '#' 拆分字符串
                 var parts = line.Split(new[] { '#' }, StringSplitOptions.RemoveEmptyEntries)

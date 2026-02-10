@@ -44,13 +44,14 @@ public class WordDetailTable : MonoBehaviour
 
     public void SetText(string str)
     {
+        Debug.Log("设置词语解释的字符串" + str);
         word = str;
         wordText.text = word;
         
         starToggle.isOn = GameDataManager.Instance.UserData.GetWordVocabulary().UserNotes.Contains(word);
         
         DictionaryEntry entry = WordVocabularyManager.Instance.GetEntry(str);
-        
+        Debug.Log("查询出来的解释: " + JsonUtility.ToJson(entry));
         if (entry != null)
         {
             if(entry.Pinyin != null)

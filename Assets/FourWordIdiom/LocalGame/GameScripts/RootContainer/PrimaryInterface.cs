@@ -57,7 +57,7 @@ public class PrimaryInterface : UIWindow
     protected override void InitializeUIComponents()
     {      
         GameStageBtn.AddClickAction(OnPlayClick);
-        ModeBtn.AddClickAction(OnModeClick);
+        // ModeBtn.AddClickAction(OnModeClick);
         SignInBtn.AddClickAction(ShowSignInPanel);
         LimitTimeBtn.AddClickAction(ClickLimintTime);
         TasksBtn.AddClickAction(OnTaskClick);
@@ -141,29 +141,17 @@ public class PrimaryInterface : UIWindow
         SystemManager.Instance.ShowPanel(PanelType.SelectMode);
     }
     
-    private void OnFishClick()
+    private async void OnFishClick()
     {
         if (Game.IsNetworkActive)
         {
             if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
             {
-                SystemManager.Instance.ShowPanel(PanelType.CompetitionStart);
-                //GameDataManager.MainInstance.FishUserSave.UpdateOpenTime();
+                 SystemManager.Instance.ShowPanel(PanelType.CompetitionStart);
             }
             else
             {
-                if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
-                {
-                    SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-                }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
-                {
-                    SystemManager.Instance.HidePanel(PanelType.StageFinishView);
-                }
-                
-                SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
-                {
-                    SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
-                });
+                await GameCoreManager.Instance.SwitchToState(GameState.Fish); 
             }
         }
         else
@@ -497,14 +485,14 @@ public class PrimaryInterface : UIWindow
     
     private void UpdateButterflyTime(string time="")
     {
-        // bool shouldActivate = GameDataManager.Instance.UserData.butterflyTaskIsOpen;
-        // if (ButterflyTime.activeSelf != shouldActivate)
-        // {
-        //     ButterflyTime.gameObject.SetActive(shouldActivate);
-        // }
-        //
-        // if(shouldActivate)
-        //     ButterflyTime.GetComponentInChildren<Text>().text=time;
+        bool shouldActivate = GameDataManager.Instance.UserData.butterflyTaskIsOpen;
+        if (ButterflyTime.activeSelf != shouldActivate)
+        {
+            ButterflyTime.gameObject.SetActive(shouldActivate);
+        }
+        
+        if(shouldActivate)
+            ButterflyTime.GetComponentInChildren<Text>().text=time;
     }
 
     
@@ -522,38 +510,41 @@ public class PrimaryInterface : UIWindow
         yield return new WaitForSeconds(0.5f);
         if (GameCoreManager.Instance.IsTrueAuto)
         {
-            OnPlayClick();
+            OnEnterStageClick();
         }
     }
     
-    private void OnButterflyClick()
+    private async void OnButterflyClick()
     {
-        
-        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        ButterflyBtn.interactable = false;
+
+        try
         {
-            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
-        {
-            SystemManager.Instance.HidePanel(PanelType.StageFinishView);
+            // 此时 UI 线程会被释放（不卡顿），Loading 圈在转，直到资源加载完毕
+            await GameCoreManager.Instance.SwitchToState(GameState.Butterfly);
         }
-        
-        
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
+        catch (System.Exception e)
         {
-            SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
-        });
-        
+            Debug.LogError($"进入蝴蝶模块失败: {e}");
+            if (this != null) // 检查自己是否还活着
+            {
+                ButterflyBtn.interactable = true;
+                MessageSystem.Instance.HideLoadingAnimation();
+            }
+        }
     }
     
     /// <summary>
     /// 点击开始游戏按钮
     /// </summary>
-    public void OnPlayClick()
+    public async void OnPlayClick()
     {
         base.Close();
-        OnEnterStageClick();
-        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+        StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
+        await GameCoreManager.Instance.SwitchToState(GameState.Gameplay);
+        // OnEnterStageClick();
+        // SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        // SystemManager.Instance.HidePanel(PanelType.HeaderSection);
     }
     
     private Sprite LoadheadIcon(string showIcon)
@@ -609,9 +600,10 @@ public class PrimaryInterface : UIWindow
         Debug.Log("1秒已到，开始加载 Bundle！");
         
         // 调用你写的加载器
-        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflymaunal");
-        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflyscene");
-        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","Butterfly_UI");
-        AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts", "BF101-body");
+        // AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflymaunal");
+        // // AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflyscene");
+        // AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","Butterfly_UI");
+        // AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts", "BF101-body");
+        // AssetBundleLoader.SharedInstance.GetSpriteFromBundle("scenery1", "scenery1");
     }
 }

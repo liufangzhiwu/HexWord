@@ -56,10 +56,10 @@ public class DailyTaskManager : MonoBehaviour
 
     public void Init()
     {
-        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "dailytask");
+        string data = ConfigManager.Instance.FetchConfig( "dailytask");
         if (data != null)
         {
-            ParseLimitItems(data.text);
+            ParseLimitItems(data);
         }
         else
         {

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2527178628
+CRC: 156234874
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 4ba8088b0b63d3929d3f394b81eaade5
+    Hash: 321bec805bdba854825ab856f04f3ae6
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 7c4f54fa17eb2629a009b7f07618a220
+    Hash: ae54c08b1bcfdc4acccd8efee7245915
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 4ba8088b0b63d3929d3f394b81eaade5
+    Hash: 321bec805bdba854825ab856f04f3ae6
 HashAppended: 1
 ClassTypes:
 - Class: 21
@@ -21,17 +21,17 @@ ClassTypes:
 - Class: 49
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: f1b3b4b945939a54ea0b23d3396115fb, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: a6b194f808b1af6499c93410e504af42, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f1b3b4b945939a54ea0b23d3396115fb, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: spine-unity
   ClassName: Spine.Unity.BlendModeMaterials
 Assets:
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/hehua/hehua_amin.atlas.txt
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/hehua/hehua_amin_SkeletonData.asset
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/hehua/hehua_amin_Atlas.asset
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/spine/hehua/hehua_amin_Material.mat
+- Assets/FourWordIdiom/LocalGame/spine/hehua/hehua_amin.atlas.txt
+- Assets/FourWordIdiom/LocalGame/spine/hehua/hehua_amin_SkeletonData.asset
+- Assets/FourWordIdiom/LocalGame/spine/hehua/hehua_amin_Atlas.asset
+- Assets/FourWordIdiom/LocalGame/spine/hehua/hehua_amin_Material.mat
 Dependencies: []

@@ -31,10 +31,10 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
 
     public override void Init()
     {
-        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "limittime");
+        string data = ConfigManager.Instance.FetchConfig( "limittime");
         if (data != null)
         {
-            ParseLimitItems(data.text);
+            ParseLimitItems(data);
         }
         else
         {
@@ -72,7 +72,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
         ConvertCSVToJSON(data);
 
         // 现在limitItems列表中包含所有商品
-        Debug.Log("Limit items loaded: " + limitItems.Count);
+        // Debug.Log("Limit items loaded: " + limitItems.Count);
     }
     
     /// <summary>

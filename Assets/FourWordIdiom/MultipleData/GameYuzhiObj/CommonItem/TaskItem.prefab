@@ -1,18 +1,19 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!1 &941575105618920851
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7377357389275309820}
   - component: {fileID: 817510994841194241}
   - component: {fileID: 1429725345543869871}
   - component: {fileID: 5947942866765770775}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: itemtitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -67,7 +68,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 55
     m_FontStyle: 1
     m_BestFit: 1
@@ -101,12 +102,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7229819112555852375}
   - component: {fileID: 1452149510866681504}
   - component: {fileID: 7135667536982334755}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: taskicon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -176,11 +178,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8482339748904995925}
   - component: {fileID: 1619451150583654150}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: butterflySlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -266,12 +269,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2438262656618627100}
   - component: {fileID: 431011764671642380}
   - component: {fileID: 367011320276797447}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: taskbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -341,13 +345,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4149296154156092204}
   - component: {fileID: 1086136480903838598}
   - component: {fileID: 7119510214942962831}
   - component: {fileID: 6398925229578157739}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: value
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -402,7 +407,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
     m_FontSize: 52
     m_FontStyle: 1
     m_BestFit: 1
@@ -436,12 +441,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2541409386227649538}
   - component: {fileID: 1559196139163727659}
   - component: {fileID: 5281473430312668834}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -511,12 +517,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1558755939738057038}
   - component: {fileID: 1874213430320297010}
   - component: {fileID: 3423711834732602942}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: gifticon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -586,10 +593,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 9083425752162350270}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Fill Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -622,12 +630,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3429880971176456319}
   - component: {fileID: 7439682027680873100}
   - component: {fileID: 1591351099098269406}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -697,12 +706,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 376898122893127835}
   - component: {fileID: 7145252390813913160}
   - component: {fileID: 7316581713134163663}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Effect (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5487,6 +5497,9 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_virtualGeometry: 0
+  m_ShadingRate: 0
+  m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -5549,12 +5562,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1089235379719374163}
   - component: {fileID: 8593112669177987746}
   - component: {fileID: 2581236078680879421}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Effect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10322,6 +10336,9 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_virtualGeometry: 0
+  m_ShadingRate: 0
+  m_ForceDisableGRD: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -10384,7 +10401,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 9214268109764764019}
   - component: {fileID: 6425002246631587669}
@@ -10393,6 +10410,7 @@ GameObject:
   - component: {fileID: 8796003227563833663}
   - component: {fileID: 8883871354900781901}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: TaskItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10482,7 +10500,7 @@ MonoBehaviour:
   giftIcon: {fileID: 3423711834732602942}
 --- !u!95 &8796003227563833663
 Animator:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -10493,6 +10511,8 @@ Animator:
   m_Controller: {fileID: 9100000, guid: ca805c6649ff26f4b93d7bd31683c01e, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
+  m_UpdateFrequencyMode: 0
+  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0

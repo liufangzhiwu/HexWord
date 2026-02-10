@@ -57,7 +57,7 @@ public class LoginApi
         {
             factory = factory,
             openId = openId,
-            deviceId =  SystemInfo.deviceUniqueIdentifier,
+            deviceId =  Application.identifier, // SystemInfo.deviceUniqueIdentifier,
             platform = Application.platform.ToString(),
             version = Application.version ?? "1.0.0",
             language = Application.systemLanguage.ToString(),
@@ -150,7 +150,7 @@ public class LoginApi
     {
         yield return httpClient.Get<GameDataDto>("auth/getGameData",
             onSuccess => {
-                Debug.Log("GetUserData success!" + onSuccess.UserData);
+                Debug.Log("GetUserData success!" + onSuccess);
                 callback?.Invoke(onSuccess);
             },
             onError => {
@@ -163,7 +163,7 @@ public class LoginApi
      */
     public IEnumerator UpdateUserData(GameDataDto data, Action<bool> callback)
     {
-        yield return httpClient.Post<bool>("auth/update-gameData",
+        yield return httpClient.Post<object>("auth/update-gameData",
             data,
             response =>
             {
@@ -173,7 +173,7 @@ public class LoginApi
             },
             error =>
             {
-                Debug.Log($"保存游戏数据失败 failed: {error}");
+                // Debug.Log($"保存游戏数据失败 failed: {error}");
                 callback?.Invoke(true);
             });
     }

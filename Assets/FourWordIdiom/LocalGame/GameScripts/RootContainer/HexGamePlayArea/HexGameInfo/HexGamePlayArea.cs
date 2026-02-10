@@ -154,9 +154,10 @@ public class HexGamePlayArea : UIWindow
         sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
     }
 
+    Coroutine coroutineRunner;
     protected override void OnEnable()
     {
-        GameCoreManager.Instance.PanelState = PanelState.GamePanel;
+        // GameCoreManager.Instance.PanelState = PanelState.GamePanel;
         InitUI();
         EventDispatcher.instance.OnLetterSelected += OnLetterSelected;
         //EventManager.OnComboTriggerButterfly +=UseButterfly;
@@ -175,12 +176,14 @@ public class HexGamePlayArea : UIWindow
         // 开始检测协程
         if (CurStageInfo.StageNumber <= 1)
         {
-            StartCoroutine(CheckInactivity());
+            coroutineRunner =  StartCoroutine(CheckInactivity());
             StageHexController.Instance.tipPuzzle = "";
         }
         
         SingleHingBtn.enabled = false;
         PuzzleTipsBtn.enabled = false;
+        
+        ShopBtn.gameObject.SetActive(false);
     }
     
     LevelModes GetLevelDifficulty(int levelNumber) {
@@ -268,7 +271,7 @@ public class HexGamePlayArea : UIWindow
             wordErrorCount = 0;
             usetoolCount = 0;
             yield return new WaitForSeconds(1f);
-            ShopManager.shopManager.ShowLimitAdsPanel();
+            // ShopManager.shopManager.ShowLimitAdsPanel();
 
             StageHexController.Instance.IsFirstEnterStage = false;
             yield return new WaitForSeconds(0.5f);
@@ -1058,6 +1061,11 @@ public class HexGamePlayArea : UIWindow
     {
         base.OnDisable();
         firstenter = false;
+        if (coroutineRunner != null)
+        {
+            StopCoroutine(coroutineRunner);
+            coroutineRunner = null;
+        }
         //StageOverObj.gameObject.SetActive(false);
         EventDispatcher.instance.OnLetterSelected -= OnLetterSelected;
         EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
@@ -1068,7 +1076,7 @@ public class HexGamePlayArea : UIWindow
         EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
         Effect_Butterflys.Clear();
         StageOverObj.gameObject.SetActive(false);
-        
+      
         Game.self?.Ads?.HideBanner();
         //StopCoroutine(CheckInactivity());
     }

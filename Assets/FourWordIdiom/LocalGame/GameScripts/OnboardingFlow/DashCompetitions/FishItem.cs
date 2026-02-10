@@ -42,12 +42,12 @@ public class FishItem : MonoBehaviour
     {
         if (fish01Spine == null)
         {
-            fish01Spine = Resources.Load<GameObject>("Effect_Fish01");
+            fish01Spine = AssetBundleLoader.SharedInstance.LoadGameObject("FishHomeScreen","Effect_Fish01");
         }
         
         if (fish02Spine == null)
         {
-            fish02Spine = Resources.Load<GameObject>("Effect_Fish02");
+            fish02Spine = AssetBundleLoader.SharedInstance.LoadGameObject("FishHomeScreen","Effect_Fish02");
         }
 
         if (objectPoolBox == null)
@@ -140,7 +140,7 @@ public class FishItem : MonoBehaviour
             if(spinefishitem==null)
                 spinefishitem = Instantiate(fish01Spine, fishtransparent);
             
-            
+            Debug.Log("看看是否创建成功" + spinefishitem);
             spinefishitem.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "idle", true);
             spinefishitem.GetComponent<SkeletonAnimation>().DOPlay();
           
@@ -350,7 +350,7 @@ public class FishItem : MonoBehaviour
 
     private Sprite LoadtaskIcon(string showIcon)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon,"FishHomeScreen");
     }
 
     private void HideBosSpine()

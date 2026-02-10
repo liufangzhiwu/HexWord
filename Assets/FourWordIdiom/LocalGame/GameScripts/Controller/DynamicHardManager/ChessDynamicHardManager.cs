@@ -122,10 +122,10 @@ public class ChessDynamicHardManager : MonoBehaviour
     // Start is called before the first frame update
     private void Start()
     {
-        if (IsOpenDynamicHard())
-        {
-            LoadDynamicConfig();
-        }    
+        // if (IsOpenDynamicHard())
+        // {
+        //     LoadDynamicConfig();
+        // }    
     }
 
     private bool IsOpenDynamicHard()

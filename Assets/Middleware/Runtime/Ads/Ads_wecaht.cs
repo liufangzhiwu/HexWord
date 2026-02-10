@@ -29,15 +29,15 @@ namespace Middleware
         {
             UnityTimer.Delay(delay,() =>
             {
-#if UNITY_WEBGL && !UNITY_EDITOR
-            // 1. 初始化激励视频广告 (建议初始化一次，后续重复调用 Show)
-            InitVideoAd();
-            // 2. 初始化插屏广告 (插屏通常也是复用)
-            InitInterstitialAd();
-#else
-            Debug.Log("【模拟】广告系统初始化完成");
-#endif
-            });
+// #if UNITY_WEBGL && !UNITY_EDITOR
+//             // 1. 初始化激励视频广告 (建议初始化一次，后续重复调用 Show)
+//             InitVideoAd();
+//             // 2. 初始化插屏广告 (插屏通常也是复用)
+//             InitInterstitialAd();
+// #else
+//             Debug.Log("【模拟】广告系统初始化完成");
+// #endif
+             });
         }
 
         public bool IsReady(Define.AdKey key)

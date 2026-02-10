@@ -24,7 +24,7 @@ namespace Middleware
         public Transform _uiRoot;
         public CommonErrorType CurrentErrorType { private set; get; }
 
-        public static bool IsNetworkActive { private set; get; }
+        public static bool IsNetworkActive { private set; get; } = true;
 
         private void Awake()
         {
@@ -36,7 +36,6 @@ namespace Middleware
 
         public void InitGame()
         {
-            MultilingualManager.Instance.LoadLocalization();
             CreateAnalytic();
             if (UIUtilities.isEditMode) return;
             CreateAccounts();
@@ -47,10 +46,11 @@ namespace Middleware
 	        LimitTimeManager.Instance.Init();
             ConfigManager.Instance.LoadAdjustTable();
             DailyTaskManager.Instance.Init();
-            ShopManager.shopManager.Initialize();
+            // ShopManager.shopManager.Initialize();
+            MultilingualManager.Instance.LoadLocalizationNameTable();
             // ChessStageController.Instance.Init();
             CreateAd();
-            CreateShop();
+            // CreateShop();
         }
         
         private void CreateAccounts()

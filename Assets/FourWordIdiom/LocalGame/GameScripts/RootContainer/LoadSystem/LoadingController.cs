@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 using DG.Tweening;
 using Newtonsoft.Json;
 #if UNITY_EDITOR
@@ -28,12 +29,13 @@ using Random = UnityEngine.Random;
 /// </summary>
 public class LoadingController : MonoBehaviour
 {
-    
+
     [Header("UI组件引用")] 
+    [SerializeField] private Image bgImage;
     [SerializeField] private Text loadingHintText; // 加载提示文本
     [SerializeField] private Slider progressSlider; // 进度条组件
     [SerializeField] private GameObject Loading; // 进度条组件
-
+    
     [SerializeField] private RectTransform rollingObject; // 滚动的方块 (Image)
 
     [Header("加载配置")]
@@ -42,8 +44,7 @@ public class LoadingController : MonoBehaviour
 
     private AsyncOperation sceneLoadOperation; // 场景加载操作
     private float loadStartTime; // 加载开始时间
-
-
+    
     private LoginResponse loginResponse; // 登录响应数据
     private bool isLogined = false;
     
@@ -51,60 +52,66 @@ public class LoadingController : MonoBehaviour
     private FishUserSaveData serverFishData;      // 解析后的鱼数据 (假设你的类名叫 FishSaveData)
     private ButterflyData serverButterflyData;// 解析后的蝴蝶数据 (假设你的类名叫 ButterflyData)
 
-    private void Awake()
-    {
-        loadingHintText.text = "";
+    // private void Awake()
+    // {
+        // loadingHintText.text = "";
         //loadingHintText.transform.GetChild(0).GetComponent<Text>().text = "";
-    }
+    // }
 
     private void OnEnable()
     {
-        UnityMainThreadDispatcher.Instance();
+        // UnityMainThreadDispatcher.Instance();
         StartCoroutine(InitializeLoadingProcess());
+        // Sprite bgSprite = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("background_bg", "background");
+        //
+        // if (bgSprite != null)
+        // {
+        //     // 4. 【核心一步】把图塞回 Image 组件
+        //     bgImage.sprite = bgSprite;
+        //     
+        //     // 可选：为了视觉效果，可以让颜色从黑渐变到白，或者由透明变不透明
+        //     bgImage.color = Color.white; 
+        // }
+        // else
+        // {
+        //     Debug.LogError("背景图加载失败！");
+        // }
     }
-
-    private async void Start()
-    {
-        await WordVocabularyManager.Instance.LoadEntriesAsync();
-        Debug.Log("开始下载场景包...");
-        
-        Task taskScene = AssetBundleLoader.SharedInstance.PreloadSingleBundle("scene_gamelobby");
-        await Task.WhenAll(taskScene);
-        Debug.Log("所有资源下载完毕！");
-    }
-
+    
     /// <summary>
     /// 初始化加载流程
     /// </summary>
     IEnumerator InitializeLoadingProcess()
     {
-        InitializeLocalization();
-        SetupRandomLoadingHint();
         loadStartTime = Time.time;
-        GameDataManager.Instance.LoadPlayerProfile();
         StartCoroutine(GameInit());
-        
         yield return new WaitForSeconds(0.05f);
-        SetupRandomLoadingHint();
+        StartCoroutine( SetupRandomLoadingHint());
+        GameDataManager.Instance.LoadPlayerProfile();
         yield return new WaitForSeconds(0.05f);
-        StartCoroutine(LoadingSequence());
+        StartCoroutine(LoadGameProcess());
         #if UNITY_EDITOR
+        isLogined = true;
         yield break;
         #endif
         Game.self.Accounts.Init(0.01f);
-        yield return new WaitForSeconds(0.05f);
-        Game.self.Accounts.VerifyPlayer();
-        // yield return new WaitUntil(() => Game.self.Accounts.IsAuthorized);
-        // 3. 开始微信登录流程
+        yield return null;
         bool isLoginProcessFinished = false; // 用于控制协程等待的标志位
         bool isLoginSuccess = false;       // 用于记录结果
-        Debug.Log("开始调用微信 SDK 登录...");
-        Game.self.Accounts.Login((code) =>
+        string wxCode = null;
+        Debug.Log("等待用户授权隐私协议并登录微信...");
+        Game.self.Accounts.Login(code =>
         {
-            if (!string.IsNullOrEmpty(code))
-            {
+            wxCode = code;
+            isLoginProcessFinished = true;
+        });
+        yield return new WaitUntil(() => isLoginProcessFinished);
+        isLoginProcessFinished = false;
+        // 3. 开始微信登录流程
+        if (!string.IsNullOrEmpty(wxCode))
+        {
                 // 2. 拿到 Code 后，调用 LoginApi 发送给服务器
-                StartCoroutine( APIGateway.Instance.LoginApi.WechatLogin(code, (response) => 
+                StartCoroutine( APIGateway.Instance.LoginApi.WechatLogin(wxCode, (response) => 
                 {
                     if (response != null)
                     {
@@ -118,26 +125,26 @@ public class LoadingController : MonoBehaviour
                     }
                     isLoginProcessFinished = true;
                 }));
-            }
-            else
-            {
+                
+                float loginTimeout = 3.0f; 
+                float timer = 0f;
+                while (!isLoginProcessFinished && timer < loginTimeout)
+                {
+                    timer += Time.deltaTime;
+                    yield return null;
+                }
+                if (timer >= loginTimeout)
+                {
+                    Debug.LogWarning("登录超时，跳过等待，进入离线模式");
+                    isLoginProcessFinished = true;
+                    isLoginSuccess = false;
+                }
+        }
+        else
+        {
                 Debug.LogError("微信 SDK 登录失败，未获取到 Code");
                 isLoginSuccess = false;
                 isLoginProcessFinished = true; // 即使失败也要标记完成，否则会死锁
-            }
-        });
-        float loginTimeout = 3.0f; 
-        float timer = 0f;
-        while (!isLoginProcessFinished && timer < loginTimeout)
-        {
-            timer += Time.deltaTime;
-            yield return null;
-        }
-        if (timer >= loginTimeout)
-        {
-            Debug.LogWarning("登录超时，跳过等待，进入离线模式");
-            isLoginProcessFinished = true;
-            isLoginSuccess = false;
         }
         if (isLoginSuccess)
         {
@@ -149,14 +156,9 @@ public class LoadingController : MonoBehaviour
             // 弹窗提示用户：登录失败，请重试
             Debug.LogWarning("⚠️ 登录失败/网络错误/超时：进入离线模式");
         }
-        // yield return APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
-        // {
-        //     if (res != null)
-        //     {
-        //         Debug.Log("获取用户信息成功！" + res.uid);
-        //         //GameDataManager.Instance.UserData.Zenlevel = res.zen_level;
-        //     }
-        // });
+        
+        isLogined = true;
+        Debug.Log("登录数据状态完成！ " + isLogined);
     }
 
     private IEnumerator GameInit()
@@ -173,7 +175,6 @@ public class LoadingController : MonoBehaviour
         if (response == null)
         {
             Debug.Log("获取数据接口错误！，使用默认数据");
-            StartCoroutine(LoadingSequence());
             return;
         } 
         if (string.IsNullOrEmpty(response.UserData))
@@ -183,6 +184,7 @@ public class LoadingController : MonoBehaviour
             return;
         }
 
+        
         try
         {
             serverUserData = JsonConvert.DeserializeObject<UserData>(response.UserData);
@@ -238,14 +240,12 @@ public class LoadingController : MonoBehaviour
                 Debug.Log("本地存档时间更新，使用本地数据");
                 UserLocalData();
             }
-            
         }
     }
     
     private void UserLocalData()
     {
         ModifyUserWithABtest();
-        StartCoroutine(LoadingSequence());
     }
 
     private void UserServerData()
@@ -257,7 +257,6 @@ public class LoadingController : MonoBehaviour
             GameDataManager.Instance.ButterflyData.InitData(serverButterflyData);
         GameDataManager.Instance.SetInitailized(true);
         ModifyUserWithABtest();
-        StartCoroutine(LoadingSequence());
     }
     
     
@@ -300,150 +299,97 @@ public class LoadingController : MonoBehaviour
         }
         GameDataManager.Instance.SetNewUser(user);
     }
-
-
-    /// <summary>
-    /// 初始化本地化系统
-    /// </summary>
-    private void InitializeLocalization()
-    {
-        MultilingualManager.Instance.LoadLocalization();
-        // MultilingualManager.Instance.LoadLocalizationNameTable();
-        // MultilingualManager.Instance.InitbiddenWords();
-    }
-    
-    public async void LoadWordVocabulary()
-    {
-        Debug.Log("开始加载词库资源");
-        await WordVocabularyManager.Instance.LoadEntriesAsync();
-        Debug.Log("完成加载词库资源");
-    }
+    #endregion
 
     /// <summary>
     /// 设置随机加载提示
     /// </summary>
-    private void SetupRandomLoadingHint()
+    private IEnumerator SetupRandomLoadingHint()
     {
         int id=Random.Range(1,12);
         string sid = id < 10 ? "0" + id : id.ToString();
-        loadingHintText.text = MultilingualManager.Instance.GetString("loadText" + sid);
+        string tipTxt = MultilingualManager.Instance.GetString("loadText" + sid);
+        loadingHintText.text = tipTxt;
         loadingHintText.transform.GetChild(0).GetComponent<Text>().text = MultilingualManager.Instance.GetString("loadText101");
-    }
 
-    /// <summary>
-    /// 主加载序列协程
-    /// </summary>
-    private IEnumerator LoadingSequence()
-    {
-        // 并行执行模拟加载和实际加载
-        yield return StartCoroutine(LoadEssentialResources());
-        //AudioManager.Instance.Initialize();
-        // GameDataManager.Instance.LoadPlayerProfile();
-        sceneLoadOperation.allowSceneActivation = true;
-    }
-
-    private IEnumerator InitializeGameService()
-    {
-        Action<GameFlowStatus> statusSetter = (status) => { _flowStatus = status; };
-        if (_retryAttempt >= MAX_RETRIES)
-        {
-            _flowStatus = GameFlowStatus.InitFailed;
-            Debug.LogError($"初始化游戏服务失败,并退出游戏");
-            Application.Quit();
-            yield break;
-        }
-
-        _retryAttempt++;
-        _flowStatus = GameFlowStatus.Initializing;
-        HuaweiGameService.Init(new AntiAddictionHandler(), new InitHandler(statusSetter, () =>
-        {
-            _flowStatus = GameFlowStatus.InitFailed;
-            StartCoroutine(RetryAfterDelay(RETRY_DELAY));
-            Debug.LogError($"初始化游戏服务失败，重试次数：{_retryAttempt}");
-        }));
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.CheckingUpdate);
-        Debug.LogError($"进入检查更新流程");
-        HuaweiGameService.CheckUpdate(new CheckUpdateListener(statusSetter));
-        Debug.LogError($"检查更新流程完成");
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.LoggingIn);
-        Debug.LogError($"进入登录流程");
-    }
-    
-    // 助手协程：用于在重试前等待一段时间
-    private IEnumerator RetryAfterDelay(float delay)
-    {
-        MessageSystem.Instance.ShowTip($"等待 {delay} 秒后重试...");
-        yield return new WaitForSeconds(delay);
-    
-        // 🔑 关键：重新启动初始化流程
-        StartCoroutine(InitializeGameService());
+        yield return new WaitUntil(() => Launch.FontTask.IsCompleted);
+        Font font = AssetBundleLoader.SharedInstance.LoadFont("stagefonts", "FZKTK");
+        loadingHintText.font = font;
+        loadingHintText.transform.GetChild(0).GetComponent<Text>().font = font;
     }
     
     /// <summary>
     /// 模拟加载进度（确保最小加载时间）
     /// </summary>
-    private IEnumerator SimulateLoadingProgress()
+    private IEnumerator LoadGameProcess()
     {
         loadStartTime = Time.time;  // 先设置开始时间
         Loading.GetComponent<CanvasGroup>().DOFade(1, 0.1f);
-       
         RectTransform sliderBackground = progressSlider.transform.GetChild(0).GetComponent<RectTransform>();
         Vector3 localStart = new Vector3(sliderBackground.rect.xMin, 0, 0);
         Vector3 localEnd = new Vector3(sliderBackground.rect.xMax, 0, 0);
-
         Vector3 worldStart = sliderBackground.TransformPoint(localStart);
         Vector3 worldEnd = sliderBackground.TransformPoint(localEnd);
-
         float startY = rollingObject.position.y;
-
-        float elapsedTime = 0;
-        float progress = 0;
-
-        while (progress < 1f)
+        
+        while (Launch.ResourceLoadingTask != null && !Launch.ResourceLoadingTask.IsCompleted)
         {
-            elapsedTime = Time.time - loadStartTime;
-            progress = Mathf.Clamp01(elapsedTime / 4f);
-            
-            progressSlider.value = progress;
-            Vector3 currentPos = Vector3.Lerp(worldStart, worldEnd, progress);
-            currentPos.y = startY;
-            rollingObject.position = currentPos;
-            rollingObject.localEulerAngles = new Vector3(0, 0, -progress * 360f);
+            // 如果下载失败，报错退出
+            if (Launch.ResourceLoadingTask.IsFaulted) { /* 报错处理... */ Debug.LogError("资源下载失败"); yield break; }
+
+            // 🔥 这里就是你要的“让进度条先跑”
+            // 我们让进度条在 0% ~ 30% 之间反复横跳，或者缓慢增长
+            // 告诉玩家：“别急，正在从云端拉取数据...”
+            float fakeProgress = Mathf.PingPong(Time.time * 0.3f, 0.3f); 
+            UpdateLoadingUI(fakeProgress, worldStart, worldEnd, startY);
+            yield return null; // 等待下一帧，继续检查
+        }
+        
+        Debug.Log("资源就绪，开始加载场景...");
+        AsyncOperation sceneOp = null;
+#if UNITY_EDITOR
+        string[] guids = AssetDatabase.FindAssets("GameLobby t:Scene");
+        if (guids.Length > 0) {
+            string scenePath = AssetDatabase.GUIDToAssetPath(guids[0]);
+            sceneOp = EditorSceneManager.LoadSceneAsyncInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
+        } else {
+            Debug.LogError("找不到场景: GameLobby");
+            yield break;
+        }
+#else
+        sceneOp = SceneManager.LoadSceneAsync("GameLobby");
+#endif
+        
+        sceneOp.allowSceneActivation = false; // 禁止自动跳转
+        StageHexController.Instance.LoadPackInfos();
+        float minDuration = 2f;
+        while (true)
+        {
+            // 1. 计算【时间进度】：从 loadStartTime 开始算了多久了？ 比如过了 2秒，progress 就是 0.5；过了 4秒，progress 就是 1.0
+            float timeProgress = Mathf.Clamp01((Time.time - loadStartTime) / minDuration);
+            // 2. 计算【场景进度】：Unity 真实加载到哪了？ sceneOp.progress 最大 0.9，所以除以 0.9 归一化到 0~1
+            float sceneProgress = Mathf.Clamp01(sceneOp.progress / 0.9f);
+            // 3. 🔥【核心逻辑】取两者的最小值！
+            float finalProgress = Mathf.Min(timeProgress, sceneProgress);
+            // 4. 登录卡点 (如果没登录，死活不让到 100%)
+            if (!isLogined && finalProgress >= 1f)
+            {
+                finalProgress = 0.99f;
+            }
+            UpdateLoadingUI(finalProgress, worldStart, worldEnd, startY);
+            if (timeProgress >= 1f && sceneOp.progress >= 0.9f && isLogined)
+            {
+                UpdateLoadingUI(1f, worldStart, worldEnd, startY);
+                break; // 所有条件满足，跳出循环
+            }
             yield return null;
         }
-        Loading.GetComponent<CanvasGroup>().DOFade(0, 0.1f);
-    }
+        Debug.Log("所有加载项完成，进入游戏...");
+        sceneOp.allowSceneActivation = true;
+        yield return null;
 
-    /// <summary>
-    /// 加载核心游戏资源
-    /// </summary>
-    private IEnumerator LoadEssentialResources()
-    {
-        Debug.Log("开始预加载游戏资源");
-        // yield return AssetBundleLoader.SharedInstance.LoadAtlas(
-        //     "ui_universal",
-        //     "UI_Universal");
-        //
-        // //LoadFont();
-        // // 加载字体资源
-        // Font mainFont = AssetBundleLoader.SharedInstance.LoadFont(
-        //     "stagefonts",
-        //     "FZKTK");
-        // //loadingHintText.font = mainFont;
-        //
-        // // 并行加载其他关键资源
-        // yield return AssetBundleLoader.SharedInstance.LoadAtlas(
-        //     "effect_sprite",
-        //     "trailAltas");
-        //
-        // yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
-        //     "effectsitemmats",
-        //     "Circle");
-
-        //预加载关卡文件
-        StageHexController.Instance.LoadPackInfos();
-        // 开始场景加载
-        yield return LoadMainSceneAsync();
+        Loading.GetComponent<CanvasGroup>().DOFade(0, 0.5f)
+            .OnComplete(() => { gameObject.SetActive(false); });
     }
     
     /// <summary>
@@ -466,8 +412,22 @@ public class LoadingController : MonoBehaviour
         sceneLoadOperation = SceneManager.LoadSceneAsync("GameLobby");
 #endif
         sceneLoadOperation!.allowSceneActivation = false;
-        yield return new WaitUntil(() => sceneLoadOperation.progress >= 0.9f&&progressSlider.value>=1f&&isLogined);
+        yield return new WaitUntil(() => sceneLoadOperation.progress >= 0.9f && progressSlider.value >= 1f && CheckResourceLoadingTask());
         Debug.Log("主场景加载完成");
 
+    }
+
+    private bool CheckResourceLoadingTask()
+    {
+        return (Launch.ResourceLoadingTask != null && Launch.ResourceLoadingTask.IsCompleted) && isLogined;
+    }
+    
+    private void UpdateLoadingUI(float progress, Vector3 start, Vector3 end, float y)
+    {
+        progressSlider.value = progress;
+        Vector3 currentPos = Vector3.Lerp(start, end, progress);
+        currentPos.y = y;
+        rollingObject.position = currentPos;
+        rollingObject.localEulerAngles = new Vector3(0, 0, -progress * 360f);
     }
 }

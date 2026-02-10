@@ -167,6 +167,36 @@ public class SystemManager : MonoBehaviour
         }
         return panel;
     }
+    
+    /// <summary>
+    /// 关闭并销毁面板 (释放内存专用)
+    /// </summary>
+    /// <param name="panelName">面板的预制体名称 (Key)</param>
+    public void CloseAndDestroyPanel(string panelName)
+    {
+        // 1. 检查字典里有没有这个面板
+        if (_loadedPanels.TryGetValue(panelName, out UIWindow panel))
+        {
+            if (panel != null)
+            {
+                // 2. 【核心】销毁游戏物体
+                // 这会触发 MonoBehaviour 的 OnDestroy 生命周期
+                // 也会断开该面板对 Textures/Sprites/Fonts 的引用
+                panel.transform.DOKill(true);
+                Destroy(panel.gameObject);
+            }
+
+            // 3. 【核心】从管理器的字典里移除
+            // 这一步必须做！如果不移除，字典里留着一个 "Missing" 的引用，下次访问会报错
+            _loadedPanels.Remove(panelName);
+
+            Debug.Log($"[SystemManager] 面板已销毁: {panelName}");
+        }
+        else
+        {
+            Debug.LogWarning($"[SystemManager] 试图销毁不存在的面板: {panelName}");
+        }
+    }
     #endregion
 
     #region 私有方法
@@ -235,20 +265,21 @@ public class SystemManager : MonoBehaviour
         if (panelData.prefab == null)
         {
             AssetBundleLoader.SharedInstance.LoadAtlas(
-                panelData.spriteAtlasName.ToLower(), 
-                panelName);
-                
+                panelData.bundleName.ToLower(),
+                panelData.spriteAtlasName);
+            
             panelData.prefab = AssetBundleLoader.SharedInstance.LoadGameObject(
                 panelData.bundleName.ToLower(), 
                 panelName);
+        
         }
-
+       
         if (panelData.prefab == null)
         {
             Debug.LogError($"Failed to load panel: {panelName}");
             return null;
         }
-
+        
         GameObject panelObj = Instantiate(panelData.prefab, _uiRoot);
         return panelObj.GetComponent<UIWindow>();
     }

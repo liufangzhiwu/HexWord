@@ -54,7 +54,7 @@ public class ButterflyHome : UIWindow
                 
         if (butterflyPrefab is null)
         {
-            butterflyPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("scenehudie","Scenes_hudie03");
+            butterflyPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("butterflyhome","Scenes_hudie03");
         }
         butterflyPool = new ObjectPool(butterflyPrefab.gameObject,ObjectPool.CreatePoolContainer(transform, "hudie_pool"), 3, PoolBehaviour.GameObject);
 
@@ -64,7 +64,8 @@ public class ButterflyHome : UIWindow
     {
         // 标题
         // title.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("chinesesimplified","ui_garden_title");
-
+        // AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflyparts");
+        
         Canvas rootCanvas = GetComponentInParent<Canvas>();
         float worldScreenHeight = 10.0f; // 默认保底值
         if (rootCanvas != null)
@@ -79,6 +80,7 @@ public class ButterflyHome : UIWindow
 
     protected override void OnEnable()
     {
+        // 加载蝴蝶
         base.OnEnable();
 
         EventDispatcher.instance.OnButterflyGardenChange += ChangeGardenNotify;
@@ -125,7 +127,7 @@ public class ButterflyHome : UIWindow
     {
         // 背景先删除再创建
         Destroy(transform.GetChild(0).gameObject);
-        GameObject go = AssetBundleLoader.SharedInstance.LoadGameObject("butterflybg", "ButterflyBg"+ GameDataManager.Instance.ButterflyData.currGarden);
+        GameObject go = AssetBundleLoader.SharedInstance.LoadGameObject("ButterflyBg", "ButterflyBg"+ GameDataManager.Instance.ButterflyData.currGarden);
         if(go == null)
             yield break;
         GameObject bg = Instantiate(go, transform);
@@ -165,14 +167,16 @@ public class ButterflyHome : UIWindow
     #endregion
     
     #region 按钮事件
-    private void OnBackHomeClick()
+    private async void OnBackHomeClick()
     {
-        SystemManager.Instance.HidePanel(PanelType.ButterflyHome);
+        await GameCoreManager.Instance.SwitchToState(GameState.Lobby);
+   
+        // SystemManager.Instance.HidePanel(PanelType.ButterflyHome);
         
-        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
-        {
-            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
-        }
+        // if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        // {
+            // SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        // }
     }
 
     private void OnHelpClick()
@@ -182,7 +186,7 @@ public class ButterflyHome : UIWindow
 
     private void OnSceneClick()
     {
-        GameObject GO = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyGarden");
+        GameObject GO = AssetBundleLoader.SharedInstance.LoadGameObject("butterflyhome","ButterflyGarden");
         GameObject scene =  Instantiate(GO, transform.parent);
     }
 
@@ -195,7 +199,7 @@ public class ButterflyHome : UIWindow
     /// <summary>
     /// 收集蝴蝶按钮
     /// </summary>
-    private void OnCollectClick()
+    private async void OnCollectClick()
     { 
         if (ButterfliesManager.Instance.CanMakeButterfly())
         {
@@ -205,15 +209,15 @@ public class ButterflyHome : UIWindow
         }
         else
         {
-            SystemManager.Instance.HidePanel(PanelType.ButterflyHome);
+            await GameCoreManager.Instance.SwitchToState(GameState.Gameplay);
             
-            if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
-            {
-                SystemManager.Instance.GetPanel(PanelType.PrimaryInterface)?.GetComponent<PrimaryInterface>()?.OnPlayClick();
-            }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
-            {
-                //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
-            }
+            // if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+            // {
+            //     SystemManager.Instance.GetPanel(PanelType.PrimaryInterface)?.GetComponent<PrimaryInterface>()?.OnPlayClick();
+            // }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+            // {
+            //     //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
+            // }
         }
     }
 
@@ -240,7 +244,7 @@ public class ButterflyHome : UIWindow
             if (nextGardenId is not -1)
             {
                 // MessageSystem.Instance.ShowTip("当前蝶园已收集完, 即将解锁下一个场景!");
-                GameObject GO = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyGarden");
+                GameObject GO = AssetBundleLoader.SharedInstance.LoadGameObject("butterflyhome","ButterflyGarden");
                 yield return new WaitForSeconds(0.5f);
                 GameObject scene = Instantiate(GO, transform.parent);
                 ButterflyGarden garden = scene.GetComponent<ButterflyGarden>();
@@ -303,7 +307,7 @@ public class ButterflyHome : UIWindow
     private IEnumerator PlayUnlockEffect(ButterflyInfo butterflyInfo)
     {
         // 1. 加载并实例化
-        GameObject gradePab = AssetBundleLoader.SharedInstance.LoadGameObject("scenehudie","UI_hudie0" + butterflyInfo.Rarity);
+        GameObject gradePab = AssetBundleLoader.SharedInstance.LoadGameObject("butterflyhome","UI_hudie0" + butterflyInfo.Rarity);
         GameObject gradeGo = Instantiate(gradePab, transform.parent);
         CanvasGroup nameCG = gradeGo.GetComponentInChildren<CanvasGroup>(true);
         nameCG.alpha = 0;
@@ -311,7 +315,7 @@ public class ButterflyHome : UIWindow
         //Canvas cvs = gradeGo.GetComponentInChildren<Canvas>(true);
         //if(cvs != null) cvs.sortingLayerName = "BaseEffect";
         nameCG.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString(butterflyInfo.Name,"hudie");
-        SpriteAtlas atlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflymaunal");
+        SpriteAtlas atlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterflyhome","ButterflyHome");
         gradeGo.GetComponentInChildren<Image>(true).sprite = atlas.GetSprite(butterflyInfo.ButterflyIcon);
         
         yield return new WaitForSeconds(0.8f);
@@ -400,6 +404,7 @@ public class ButterflyHome : UIWindow
     /// <param name="isFlying">飞入场景</param>
     private IEnumerator ButterflyLife(Transform butterfly, ButterflyLandPoint startPoint = null, bool isFlying = false)
     {
+        yield return new WaitForSeconds(1.2f);
         ButterflyLandPoint currentPt = startPoint;
         SkeletonGraphic skeletonGraphic = butterfly.GetComponent<SkeletonGraphic>();
         if (!skeletonGraphic.IsValid)

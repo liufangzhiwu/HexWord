@@ -19,19 +19,19 @@ namespace Middleware
         {
             if (string.IsNullOrEmpty(_curBundle))
             {
-                Debug.Log($"++++++++当前语言：{Application.systemLanguage}");
-                switch (Application.systemLanguage)
-                {
-                    default:
+                // Debug.Log($"++++++++当前语言：{Application.systemLanguage}");
+                // switch (Application.systemLanguage)
+                // {
+                //     default:
                         _curBundle = "ChineseSimplified";
-                        break;
-                }    
+                //         break;
+                // }    
             }
             return _curBundle.ToLower();
         }
         
         //获取表格中的文件
-        public static Dictionary<string,string> ParseCvsLanguage(TextAsset csvFile,string name)
+        public static Dictionary<string,string> ParseCvsLanguage(string csvFile,string name)
         {
             var dic = new Dictionary<string, string>();
             if (csvFile == null)
@@ -40,7 +40,7 @@ namespace Middleware
                 return dic;
             }
             
-            var lines = csvFile.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = csvFile.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             var headers = lines[0].Split(',');
             var rawId = -1;
             for (var i = 0; i < headers.Length; i++)
@@ -70,7 +70,7 @@ namespace Middleware
         /// <summary>
         /// 先把完整 CSV 记录（可含引号内换行）切出来，再按字段拆
         /// </summary>
-        public static Dictionary<string,string> ReadCvsLanguage(TextAsset csvFile, string name)
+        public static Dictionary<string,string> ReadCvsLanguage(string csvFile, string name)
         {
             var dic = new Dictionary<string, string>();
             if (csvFile == null)
@@ -81,7 +81,7 @@ namespace Middleware
             var table = new List<List<string>>();
 
             // 1. 状态机：按「引号对」切分记录（可含换行）
-            var records = SplitRecords(csvFile.text);
+            var records = SplitRecords(csvFile);
 
             // 2. 逐记录拆字段
             foreach (var rec in records)
@@ -111,6 +111,7 @@ namespace Middleware
             }
             return dic;
         }
+   
         /*========== 第 1 步：按记录切分（可含引号内换行）==========*/
         private static List<string> SplitRecords(string text)
         {

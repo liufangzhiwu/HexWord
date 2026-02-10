@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: XXIcsnv+VC+tOREejeVBH/V3hG+jcfX2bMqa400Vo/3HYJk8fxLI+jY=
+guid: BnsXsX6qVni2uygXUHLbVMrTEFO3RXfwuSklfrytu4AQ18FYy7kJAEM=
 AudioImporter:
   externalObjects: {}
   serializedVersion: 7
@@ -13,38 +13,20 @@ AudioImporter:
     conversionMode: 0
     preloadAudioData: 0
   platformSettingOverrides:
-    0:
+    36:
       serializedVersion: 2
-      loadType: 0
-      sampleRateSetting: 0
+      loadType: 1
+      sampleRateSetting: 2
       sampleRateOverride: 44100
-      compressionFormat: 1
-      quality: 1
+      compressionFormat: 7
+      quality: 0.01
       conversionMode: 0
       preloadAudioData: 0
-    7:
-      serializedVersion: 2
-      loadType: 0
-      sampleRateSetting: 0
-      sampleRateOverride: 44100
-      compressionFormat: 1
-      quality: 1
-      conversionMode: 0
-      preloadAudioData: 0
-    37:
-      serializedVersion: 2
-      loadType: 0
-      sampleRateSetting: 0
-      sampleRateOverride: 44100
-      compressionFormat: 1
-      quality: 1
-      conversionMode: 0
-      preloadAudioData: 1
   forceToMono: 1
-  normalize: 1
+  normalize: 0
   loadInBackground: 0
   ambisonic: 0
   3D: 1
   userData: 
-  assetBundleName: musics
+  assetBundleName: 
   assetBundleVariant: 

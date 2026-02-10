@@ -5,9 +5,12 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.Scripting;
+
 /**
  * 蝴蝶养成数据
  */
+[Preserve]
 [Serializable]
 public class ButterflyData
 {
@@ -18,9 +21,10 @@ public class ButterflyData
     public int currGarden; // 当前选择的蝶园
     public int intervalLv;   // 经过的关卡
     
-    public HashSet<int> butterflies;  // 收集的蝴蝶
-    public HashSet<int> gardens;      // 开启的蝶园
+    [Preserve] public HashSet<int> butterflies = new HashSet<int>();  // 收集的蝴蝶
+    [Preserve] public HashSet<int> gardens = new HashSet<int>();      // 开启的蝶园
 
+    [JsonIgnore]
     public string Getfilepath => Path.Combine(Application.persistentDataPath, "ButterflyData.json");
 
     #region 数据加载

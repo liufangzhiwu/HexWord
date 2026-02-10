@@ -1,17 +1,18 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!1 &1900206921952430817
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7713587777840834736}
   - component: {fileID: 6660249130156068261}
   - component: {fileID: 6075726229235894274}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: maskbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -81,12 +82,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5055872506702040393}
   - component: {fileID: 1624484817699232245}
   - component: {fileID: 2579707247117401831}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: zenbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -157,12 +159,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 9175077349814302723}
   - component: {fileID: 6171828505225058045}
   - component: {fileID: 4105140872359718179}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -216,7 +219,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 8f18a8fcc7e29b94fad6919e71a13352, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 55c5f0da66b9784428f49ef24d595aa9, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -232,7 +235,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8732677782925178857}
   - component: {fileID: 6706679526455584508}
@@ -241,6 +244,7 @@ GameObject:
   - component: {fileID: 380863744629994255}
   - component: {fileID: 1851736191949859943}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: LoadingScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -330,7 +334,7 @@ CanvasGroup:
   m_IgnoreParentGroups: 0
 --- !u!95 &1851736191949859943
 Animator:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -341,6 +345,8 @@ Animator:
   m_Controller: {fileID: 9100000, guid: e158bc25aaaf0854fb9e7428a304eac7, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
+  m_UpdateFrequencyMode: 0
+  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0

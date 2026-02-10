@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: UI_ShopHomeScreen
+  serializedVersion: 2
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 3
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      webStreaming: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: WeixinMiniGame
+      m_MaxTextureSize: 2048
+      m_MaxPlaceholderSize: 32
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 53
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: 8ef6ed0c7964b8542bfe3399f7ddc18f, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - 29218972f8eb76246b4f43510a783c95: 21300000
+    - c86924636c0994f46b89e7b54d4f0058: 21300000
+    - c9ffd21451f8ddc4698d65f680a24a18: 21300000
+    - 4029af36bce673d4e8189aadfc25682f: 21300000
+    - 8e0eb1c76604267438669799ebf8abaf: 21300000
+    - 78afd148a30dff24cab32d8cd0a514de: 21300000
+    - 3fca778870f9f764798f7f20c2500208: 21300000
+    - 534387ab71b224b41a254fcc3473b3dc: 21300000
+    - d919b9bba35ec7643ae8ba94aa898eb9: 21300000
+    - 4a13025e0a844a3479141eeab5b3bc5e: 21300000
+    - 6b28bf9ed0edefc46ba8a7e2fa7fa8b7: 21300000
+    - 67e68cdf06f6b8344bb489e9398f83bf: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 29218972f8eb76246b4f43510a783c95, type: 3}
+  - {fileID: 21300000, guid: c86924636c0994f46b89e7b54d4f0058, type: 3}
+  - {fileID: 21300000, guid: c9ffd21451f8ddc4698d65f680a24a18, type: 3}
+  - {fileID: 21300000, guid: 4029af36bce673d4e8189aadfc25682f, type: 3}
+  - {fileID: 21300000, guid: 8e0eb1c76604267438669799ebf8abaf, type: 3}
+  - {fileID: 21300000, guid: 78afd148a30dff24cab32d8cd0a514de, type: 3}
+  - {fileID: 21300000, guid: 3fca778870f9f764798f7f20c2500208, type: 3}
+  - {fileID: 21300000, guid: 534387ab71b224b41a254fcc3473b3dc, type: 3}
+  - {fileID: 21300000, guid: d919b9bba35ec7643ae8ba94aa898eb9, type: 3}
+  - {fileID: 21300000, guid: 4a13025e0a844a3479141eeab5b3bc5e, type: 3}
+  - {fileID: 21300000, guid: 6b28bf9ed0edefc46ba8a7e2fa7fa8b7, type: 3}
+  - {fileID: 21300000, guid: 67e68cdf06f6b8344bb489e9398f83bf, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - tiptool
+  - tips2
+  - timebg
+  - up
+  - goldbg
+  - itembg2
+  - timebg
+  - tips
+  - freebg
+  - shopgiftbg
+  - downbtn
+  - tipspanel
+  m_RenderDataMap: {}
+  m_Tag: UI_ShopHomeScreen
+  m_IsVariant: 0
+  m_IsPlaceholder: 0

@@ -105,19 +105,15 @@ public static class UIUtilities
         // 获取剩余的小时、分钟和秒
         int minutes = (int)timeSpan.TotalMinutes;
         int seconds = timeSpan.Seconds;
-
-        // 向上取值
-        if (seconds > 0 && minutes == 0)
-        {
-            minutes += 1;
-        }
         
-        // 格式化小时和分钟，确保小于10时前面补零
-        string min = minutes <= 0?"": minutes+"分";
-        string sec = seconds < 10 ? "0" + seconds+"秒" : seconds+"秒";
+        // 格式化：分
+        string minStr = minutes <= 0 ? "" : minutes + "分";
+    
+        // 格式化：秒 (使用 D2 格式化，自动补零，例如 5 -> "05")
+        string secStr = seconds.ToString("D2") + "秒";
 
         // 输出倒计时
-        return min + sec;
+        return minStr + secStr;
     }
 
     public static string FormatTimeRemaining(TimeSpan remainingTime)

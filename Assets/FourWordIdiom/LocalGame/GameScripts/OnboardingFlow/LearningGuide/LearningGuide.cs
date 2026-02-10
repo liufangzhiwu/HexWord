@@ -135,7 +135,7 @@ public class LearningGuide : UIWindow
                 hengshouTable.transform.localScale=new Vector3(-1f,-1f,1f);
                 hengshouTable.gameObject.SetActive(true);
                 hengshouTable.transform.position = Puzzles[0].transform.position;
-                _windowAnimator.Play("hengAnim");
+                // _windowAnimator.Play("hengAnim");
             }
             else
             {

@@ -63,7 +63,8 @@ public class MatchSuccess : UIWindow
                 break;
         }
 
-        fispine = Resources.Load<GameObject>(spinePath);
+        // fispine = Resources.Load<GameObject>(spinePath);
+        fispine = AssetBundleLoader.SharedInstance.LoadGameObject("fishhomescreen", spinePath);
         _boxSpine = Instantiate(fispine);
         
         _boxSpine.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
@@ -188,13 +189,13 @@ public class MatchSuccess : UIWindow
         
         GameDataManager.Instance.FishUserSave.UpdateRound(1);
         GameDataManager.Instance.FishUserSave.ResetFishData();
-        FishInfoController.Instance.FishMatchOver();
         
         _boxSpine.gameObject.SetActive(false);
         Destroy(_boxSpine);
       
         //SystemManager.Instance.HidePanel(PanelType.MatchSuccess);
-        base.Close(); // 隐藏面板
+        // base.Close(); // 隐藏面板
+        FishInfoController.Instance.FishMatchOver();
     }
 
     private void HideAwardObjs()

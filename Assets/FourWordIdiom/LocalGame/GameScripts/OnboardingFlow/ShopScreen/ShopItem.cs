@@ -148,6 +148,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     
     private void UpdateAdsRewardUI(bool isShow)
     {
+        MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
             List<string> giftdata=shopDataItem.productContent[0];

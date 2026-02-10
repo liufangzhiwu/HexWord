@@ -1,0 +1,207 @@
+ManifestFileVersion: 0
+CRC: 2293740530
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 25f8cb15827c55ae6ffd46dff58b9ba2
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 55e0a30c27b5948d2a5da24542f5dc03
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 25f8cb15827c55ae6ffd46dff58b9ba2
+HashAppended: 1
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 49
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 111
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b0d18823491ba4d4eae99300158d3fda, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f19b7e2285c104f6ca47d583f3e5444f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 29163f828ffd20b4cadb087192408ce4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a6b194f808b1af6499c93410e504af42, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: da19d65c0b9cc41cdb3171d2d2a13cf2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3aa9c0f64d337a848bd1f375ce255e80, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 047eeb104f9b8534295f8acc048b78b7, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8a2ba9fd71adcd74099c1dab6ec40095, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8b6cbdc4fca98475ea3e417a557bca22, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d29d464801e6a9445bd8a88764ca14a0, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 405ca559a1c3c374ab21bfb893065b49, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: c21bbfce5b755de49a697ca88feaaec6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d85b887af7e6c3f45a2e2d2920d641bc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 776b0fea64b68467f9fce71451855999, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 06c3fa938b8024698a435d79223b8da2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f1b3b4b945939a54ea0b23d3396115fb, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d8eb63db522982f4db00b997f1f3d1cc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a516bd6f746572a408807c0451fd17f5, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9f5f228502a356c48adb99f1e75239c2, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+- Class: 198
+  Script: {instanceID: 0}
+- Class: 199
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 223
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+- Class: 225
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: UIEffect
+  ClassName: Coffee.UIEffects.EffectPlayer
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.RectOffset
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.AnimationTriggers
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Button/ButtonClickedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ColorBlock
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.FontData
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Navigation
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ScrollRect/ScrollRectEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Scrollbar/ScrollEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Slider/SliderEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.SpriteState
+- AssemblyName: spine-unity
+  ClassName: Spine.Unity.BlendModeMaterials
+- AssemblyName: spine-unity
+  ClassName: Spine.Unity.BlendModeMaterials/ReplacementMaterial
+- AssemblyName: spine-unity
+  ClassName: Spine.Unity.MeshGenerator
+- AssemblyName: spine-unity
+  ClassName: Spine.Unity.MeshGenerator/Settings
+Assets:
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/tipLight.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/UI_Icon_reset.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/rewardPuzzle.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/Pupa.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/GamePlayArea/bingkuai2_SkeletonData.asset
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/ShopBtn.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/UI_Icon_toolvaluebg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/UI_Icon_tips.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/GamePlayArea/bingkuai_Material-Additive.mat
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/GamePlayArea/bingkuai.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/GamePlayArea/bingkuai1_SkeletonData.asset
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/HardView/tehardtitle.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/GamePlayArea.spriteatlas
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/HexGamePlayArea.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Tile/UI_Icon_JianSeleWord.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/StageFinishView.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Tile/UI_Icon_PingTipWord.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/titleitembg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/HardView/hardbg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/wordProgressbg.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/bingkuai2.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/puzzlielie.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Tile/UI_Icon_PingWord.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/HardView.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/tilepagebg.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/bingkuai1.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/adsimage.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/LevelFinishView/giftbg.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/GamePlayArea/bingkuai_Atlas.asset
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Tile/UI_Icon_JianTipWord.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/LevelFinishView/UI_Icon_lojd.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/PuzzleTileItem.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/UI_Icon_DownLine.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/tilepage.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/GamePlayArea/bingkuai_Material.mat
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/TileHorizontal.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/LevelFinishView/UI_Icon_lojdbg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/HardView/tehardbg.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/GamePlayArea/bingkuai.atlas.txt
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/GamePlayArea/bingkuai2.skel.bytes
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/countbg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Tile/UI_Icon_PingSeleWord.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/HardView/title.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/puzzleTitleBg.png
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Tile/UI_Icon_JianWord.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/GamePlayArea/bingkuai1.skel.bytes
+- Assets/FourWordIdiom/MultipleData/Game_UI/GamePlayArea/Area/UI_Icon_selebg.png
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/GamePlayArea/TileView.prefab
+Dependencies:
+- E:/UnityProjects/HexWord/./BuildBundles/effectsitemmats_7916430859da7c75e5c390e065a825f1
+- E:/UnityProjects/HexWord/./BuildBundles/stagefonts_e3b88446a2836db4d16bfa449b1f1913

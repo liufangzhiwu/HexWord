@@ -43,8 +43,8 @@ public class ShopDataItem
 
 public class ShopManager : MonoBehaviour
 {
-    private List<ShopDataItem> allShopItems;
-    private List<ShopDataItem> shopItems;
+    private List<ShopDataItem> allShopItems  = new List<ShopDataItem>();
+    private List<ShopDataItem> shopItems = new List<ShopDataItem>();
     /// <summary>
     /// 当前限时商店物品
     /// </summary>
@@ -69,13 +69,14 @@ public class ShopManager : MonoBehaviour
             DontDestroyOnLoad(gameObject); // 保持广告管理器在场景切换时不销毁
         }         
     }
-
-    void Start()
+    
+    
+    public void Initialize()
     {
-        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "shop");
+        string data = ConfigManager.Instance.FetchConfig( "shop");
         if (data != null)
         {
-            ParseShopItems(data.text);
+            ParseShopItems(data);
         }
         else
         {
@@ -83,12 +84,7 @@ public class ShopManager : MonoBehaviour
         }
 
         paysuccess = false;
-
-        Initialize();
-    }
-
-    public void Initialize()
-    {
+        
         shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
             .ToDictionary(x => x.id, x => x);
         // 初始化查找结构
@@ -146,7 +142,7 @@ public class ShopManager : MonoBehaviour
         ConvertCSVToJSON(data);
 
         // 现在shopItems列表中包含所有商品
-        Debug.Log("Shop items loaded: " + shopItems.Count);
+        // Debug.Log("Shop items loaded: " + shopItems.Count);
     }
 
     void ConvertCSVToJSON(string data)
@@ -159,7 +155,7 @@ public class ShopManager : MonoBehaviour
         for (int i = 2; i < lines.Length; i++) // 从第一行开始，跳过标题行
         {
             string[] fields = lines[i].Split(',');
-            Debug.Log($"查看列数 {fields.Length} : " + lines[i]);
+            // Debug.Log($"查看列数 {fields.Length} : " + lines[i]);
             if (fields.Length >= 11) // 确保有足够的字段
             {
                 int id = int.Parse(fields[0].Trim());

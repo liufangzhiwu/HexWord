@@ -11,6 +11,9 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/FourWordIdiom/Scenes/GameLobby.unity
     guid: 2ac7751d8b3baf84486daa93f913d572
+  - enabled: 0
+    path: Assets/FourWordIdiom/Scenes/test1.scene
+    guid: d16c17a22dfe99b4ca8612383e0e0d3e
   m_BuildProfiles:
   - enabled: 1
     path: Assets/Settings/Build Profiles/WeChat Profile1.asset

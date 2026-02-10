@@ -73,7 +73,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 		CreatePuzzleParent();
         if (PuzzleItemObj == null)
         {
-            PuzzleItemObj = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "TileView");
+            PuzzleItemObj = AssetBundleLoader.SharedInstance.LoadGameObject("gameplayarea", "TileView");
         }
 		//创建对象池用于管理字块
 		letterTilePool = new ObjectPool(PuzzleItemObj.gameObject, PuzzleParent,3, PoolBehaviour.CanvasGroup);        
@@ -119,9 +119,9 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         yield return new WaitForSeconds(0.3f); 
         PuzzleTitle.DOFade(1, 0.3f);
         InitHintPuzzles();
-#if UNITY_EDITOR
-        CaptureUIElementAsync();
-#endif
+// #if UNITY_EDITOR
+//         CaptureUIElementAsync();
+// #endif
         yield return new WaitForSeconds(0.5f); 
         EventDispatcher.instance.TriggerAutoPassLevel();
      
@@ -464,7 +464,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         bottomLeft.y -= yoffset;
 
-        Debug.Log($"起始坐标 bottomLeft.x={bottomLeft.x} bottomLeft.y={bottomLeft.y} 最小列字符索引 {curStageData.BoardSnapshot.minColIndex}");
+        // Debug.Log($"起始坐标 bottomLeft.x={bottomLeft.x} bottomLeft.y={bottomLeft.y} 最小列字符索引 {curStageData.BoardSnapshot.minColIndex}");
         
         // 计算当前格子位置（列控制X轴，行控制Y轴）
         float xPos = bottomLeft.x + (col-curStageData.BoardSnapshot.minicnidex+0.5f) * horizontalSpacing;
@@ -1044,7 +1044,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         int steps = isHorizontal ? Math.Abs(end.Column - start.Column) :
                     Math.Abs(end.Row - start.Row); // 斜向用行差计算步数
 
-        Debug.Log($"斜向用行差计算步数:{steps}");
+        // Debug.Log($"斜向用行差计算步数:{steps}");
 
         for (int i = 0; i <= steps; i++)
         {
@@ -1082,7 +1082,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
                     col = start.Column + (i + 1) / 2;
                 }
 
-                Debug.Log($"右斜向计算位置:{row}:{col}");
+                // Debug.Log($"右斜向计算位置:{row}:{col}");
             }
             else
             {
@@ -1103,7 +1103,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             List<PuzzleTile> puzzleGrids = gridList[row][col];
             PuzzleTile puzzleGrid = gridList[row][col][0];
 
-            Debug.Log("选中字块信息：" + puzzleGrid.Letter+"层级:"+maxLayer);
+            // Debug.Log("选中字块信息：" + puzzleGrid.Letter+"层级:"+maxLayer);
 
             // 遇到空白格退出设置选中词
             if (puzzleGrid.IsEmpty||puzzleGrid.Letter=='\0')
@@ -1248,7 +1248,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         float xoffset = end.TileView.transform.position.x - start.TileView.transform.position.x;
     
-        Debug.Log($"结束位置x-起始位置x:{xoffset}_{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为左斜方向");
+        // Debug.Log($"结束位置x-起始位置x:{xoffset}_{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为左斜方向");
     
         if (xoffset>=0||deltaRow == 0) return false;
     
@@ -1259,7 +1259,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             // 数学关系：2 * deltaCol ≈ deltaRow
             if (Mathf.Abs(2 * deltaCol - deltaRow) <= 1)
             {
-                Debug.Log($"{start.Letter} {end.Letter}为左上方向的字块");
+                // Debug.Log($"{start.Letter} {end.Letter}为左上方向的字块");
                 return true;
             }
         }
@@ -1270,7 +1270,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             // 数学关系：2 * deltaCol ≈ -deltaRow
             if (Mathf.Abs(2 * deltaCol + deltaRow) <= 1)
             {
-                Debug.Log($"{start.Letter} {end.Letter}为左下方向的字块");
+                // Debug.Log($"{start.Letter} {end.Letter}为左下方向的字块");
                 return true;
             }
         }
@@ -1288,7 +1288,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         int deltaCol = end.Column - start.Column;
         float xoffset = end.TileView.transform.position.x - start.TileView.transform.position.x;
     
-        Debug.Log($"结束位置x-起始位置x:{xoffset}_{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为左斜方向");
+        // Debug.Log($"结束位置x-起始位置x:{xoffset}_{start.Letter}_{start.Row}:{start.Column} {end.Letter}_{end.Row}:{end.Column}是否为左斜方向");
     
         if (deltaRow == 0||xoffset<=0) return false;
       
@@ -1299,7 +1299,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             // 数学关系：2 * deltaCol ≈ -deltaRow
             if (Mathf.Abs(2 * deltaCol + deltaRow) <= 1)
             {
-                Debug.Log($"{start.Letter} {end.Letter}为右下方向的字块");
+                // Debug.Log($"{start.Letter} {end.Letter}为右下方向的字块");
                 return true;
             }
         }
@@ -1310,7 +1310,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             // 数学关系：2 * deltaCol ≈ deltaRow
             if (Mathf.Abs(2 * deltaCol - deltaRow) <= 1)
             {
-                Debug.Log($"{start.Letter} {end.Letter}为右上方向的字块");
+                // Debug.Log($"{start.Letter} {end.Letter}为右上方向的字块");
                 return true;
             }
         }

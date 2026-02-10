@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1179432020
+CRC: 3367721222
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2752bfa6bff36663404d9abdc63df9a4
+    Hash: 2d4c94a4a9d42cdd873b0e03d2b4554c
   TypeTreeHash:
     serializedVersion: 2
-    Hash: d56fae729902b2a7e4234855cbf7bc77
+    Hash: 99ada4759500288ffcf186bc23a6ae50
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 2752bfa6bff36663404d9abdc63df9a4
+    Hash: 2d4c94a4a9d42cdd873b0e03d2b4554c
 HashAppended: 1
 ClassTypes:
 - Class: 1
@@ -17,9 +17,9 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: ce2788a3177704c45baf090d1b699fe2, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: ce2788a3177704c45baf090d1b699fe2, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 213
@@ -28,17 +28,16 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 224
   Script: {instanceID: 0}
-- Class: 687078895
-  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
 Assets:
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/ButterflyBg/ButterflyBg4.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/ButterflyBg/ButterflyBg5.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/ButterflyBg/ButterflyBg1.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/ButterflyBg/ButterflyBg3.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/ButterflyBg/ButterflyBg2.prefab
-Dependencies: []
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyBg/ButterflyBg4.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyBg/ButterflyBg5.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyBg/ButterflyBg1.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyBg/ButterflyBg3.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/ButterflyBg/ButterflyBg2.prefab
+Dependencies:
+- E:/UnityProjects/HexWord/./BuildBundles/butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4

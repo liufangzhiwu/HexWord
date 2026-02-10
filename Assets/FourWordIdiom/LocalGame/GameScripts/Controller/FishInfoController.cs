@@ -90,12 +90,12 @@ public class FishInfoController : MonoBehaviour
     private void InitializeData()
     {
         // 从资源管理器获取数据（需替换实际数据源）
-        TextAsset csvData = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo","MatchRobatTable");
-        TextAsset awardcsvData = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo","MatchConfig");
+        string csvData = ConfigManager.Instance.FetchConfig("MatchRobatTable");
+        string awardcsvData = ConfigManager.Instance.FetchConfig("MatchConfig");
        
         if (csvData != null)
         {
-            ParseFishaiItems(csvData.text);
+            ParseFishaiItems(csvData);
         }
         else
         {
@@ -105,7 +105,7 @@ public class FishInfoController : MonoBehaviour
          
         if (awardcsvData != null)
         {
-            ParseFishAwardItems(awardcsvData.text);
+            ParseFishAwardItems(awardcsvData);
         }
         else
         {

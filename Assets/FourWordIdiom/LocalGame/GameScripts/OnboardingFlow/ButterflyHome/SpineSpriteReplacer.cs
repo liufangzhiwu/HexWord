@@ -28,7 +28,25 @@ public class SpineSpriteReplacer : MonoBehaviour
 
     private void Start()
     {
-        skeletonGraphic.AnimationState.Data.DefaultMix = 0.2f;
+        if (skeletonGraphic == null) 
+        {
+            skeletonGraphic = GetComponent<SkeletonGraphic>();
+        }
+
+        // 核心修复：检查 Spine 是否有效，如果未初始化，强制初始化
+        if (skeletonGraphic != null)
+        {
+            if (!skeletonGraphic.IsValid)
+            {
+                skeletonGraphic.Initialize(false);
+            }
+
+            // 再次检查 AnimationState 是否存在，防止初始化失败导致的报错
+            if (skeletonGraphic.AnimationState != null)
+            {
+                skeletonGraphic.AnimationState.Data.DefaultMix = 0.2f;
+            }
+        }
     }
 
     // private void OnEnable()

@@ -217,7 +217,7 @@ public class DebugMenu : UIWindow
         MessageSystem.Instance.ShowTip("金币增加成功！");
     }
 
-    private void OnEnterStageClick()
+    private async void OnEnterStageClick()
     {
         InputField Stagenumtxt = EnterStageBtn.GetComponentInChildren<InputField>();
         int Stagenum = int.Parse(Stagenumtxt.text);
@@ -236,7 +236,8 @@ public class DebugMenu : UIWindow
         StageHexController.Instance.SetStageData(Stagenum);
         StageHexController.Instance.IsGMEnterStage = true;
 
-        OnPlayClick();
+        await GameCoreManager.Instance.SwitchToState(GameState.Gameplay);
+        // OnPlayClick();
         //EventManager.RequestChangeBack(true);
     }
     

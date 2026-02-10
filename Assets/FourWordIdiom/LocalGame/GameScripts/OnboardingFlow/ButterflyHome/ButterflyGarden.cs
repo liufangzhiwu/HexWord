@@ -83,8 +83,8 @@ public class ButterflyGarden : MonoBehaviour
         // 先将场景列表中属于 gardenId 置会加锁，再播放解锁特效
         yield return new WaitForSeconds(1.2f);
         yield return lockImg.DOFade(0, 1.5f).WaitForCompletion();
-        lockImg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("unlock", "butterfly_ui");
-        GameObject effectPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "FX_ButterflyUnlock");
+        lockImg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("unlock", "butterflyhome");
+        GameObject effectPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("butterflyhome", "FX_ButterflyUnlock");
         GameObject effectInstance = Instantiate(effectPrefab, lockGo.transform);
         effectInstance.transform.localPosition = Vector3.zero;
         effectInstance.transform.localScale = Vector3.one;

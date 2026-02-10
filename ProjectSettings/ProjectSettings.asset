@@ -14,7 +14,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: HexaSpaceGames
-  productName: "\u6210\u8BED\u6D88:\u7985\u610F\u4E4B\u5883"
+  productName: "\u6210\u8BED\u6D88\uFF1A\u7985\u610F\u4E4B\u5883"
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0, g: 0, b: 0, a: 1}
@@ -44,7 +44,7 @@ PlayerSettings:
   - logo: {fileID: 0}
     duration: 2
   m_VirtualRealitySplashScreen: {fileID: 0}
-  expectedBundleIdentifier: chengyu.idiom.hexa.zen.andriod.huawei
+  expectedBundleIdentifier: com.HexaSpaceGames.------------------------
   integrityHash: 
   m_HolographicTrackingLossScreen: {fileID: 0}
   defaultScreenWidth: 1024
@@ -86,8 +86,9 @@ PlayerSettings:
   androidAutoRotationBehavior: 1
   androidUrasMode: 0
   disableBluetoothAudioUpdate: 0
+  enableURASMultiView: 0
   androidEnableSensors: 0
-  androidPredictiveBackSupport: 0
+  androidPredictiveBackSupport: 1
   defaultIsNativeResolution: 1
   macRetinaSupport: 1
   runInBackground: 1
@@ -117,7 +118,7 @@ PlayerSettings:
   macAppStoreCategory: public.app-category.games
   gpuSkinning: 0
   gpuSkinningTransformFeedback: 0
-  vertexShaderSkinning: 0
+  vertexShaderSkinning: 1
   xboxPIXTextureCapture: 0
   xboxEnableAvatar: 0
   xboxEnableKinect: 0
@@ -162,6 +163,8 @@ PlayerSettings:
   openHarmonyDefaultWindowHeight: 1080
   openHarmonyMinimumWindowWidth: 400
   openHarmonyMinimumWindowHeight: 300
+  openHarmonyMaximumWindowRatio: 10
+  openHarmonyMinimumWindowRatio: 0.1
   stadiaPresentMode: 0
   stadiaTargetFramerate: 0
   vulkanNumSwapchainBuffers: 3
@@ -172,7 +175,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 1.2.0
+  bundleVersion: 1.0.0
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -204,12 +207,12 @@ PlayerSettings:
     iPhone: 103
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
-  AndroidBundleVersionCode: 25121168
+  AndroidBundleVersionCode: 26012844
   AndroidMinSdkVersion: 24
-  AndroidTargetSdkVersion: 34
+  AndroidTargetSdkVersion: 35
   AndroidPreferredInstallLocation: 1
   aotOptions: 
-  stripEngineCode: 0
+  stripEngineCode: 1
   iPhoneStrippingLevel: 0
   iPhoneScriptCallOptimization: 0
   ForceInternetPermission: 0
@@ -299,7 +302,7 @@ PlayerSettings:
   useCustomMainGradleTemplate: 1
   useCustomLauncherGradleManifest: 1
   useCustomBaseGradleTemplate: 1
-  useCustomGradlePropertiesTemplate: 1
+  useCustomGradlePropertiesTemplate: 0
   useCustomGradleSettingsTemplate: 1
   useCustomProguardFile: 1
   AndroidTargetArchitectures: 3
@@ -322,7 +325,7 @@ PlayerSettings:
     banner: {fileID: 0}
   androidGamepadSupportLevel: 0
   chromeosInputEmulation: 1
-  AndroidMinifyRelease: 0
+  AndroidMinifyRelease: 1
   AndroidMinifyDebug: 0
   AndroidValidateAppBundleSize: 1
   AndroidAppBundleSizeToValidate: 150
@@ -798,6 +801,9 @@ PlayerSettings:
   - m_BuildTarget: WebGLSupport
     m_APIs: 0b000000
     m_Automatic: 1
+  - m_BuildTarget: WeixinMiniGameSupport
+    m_APIs: 0b000000
+    m_Automatic: 0
   m_BuildTargetVRSettings: []
   m_DefaultShaderChunkSizeInMB: 16
   m_DefaultShaderChunkCount: 0
@@ -809,6 +815,14 @@ PlayerSettings:
     Android: 1
     iPhone: 1
     tvOS: 1
+  m_VirtualGeometryRuntimeMap:
+    Android: 1
+    Standalone: 1
+    iPhone: 1
+  m_VirtualGeometryDataEncodingMap:
+    Android: 1
+    Standalone: 2
+    iPhone: 1
   m_BuildTargetGroupLightmapEncodingQuality: []
   m_BuildTargetGroupHDRCubemapEncodingQuality: []
   m_BuildTargetGroupLightmapSettings: []
@@ -819,6 +833,8 @@ PlayerSettings:
     m_Format: 0
   - m_BuildTarget: iOS
     m_Format: 0
+  - m_BuildTarget: WeixinMiniGame
+    m_Format: 3
   playModeTestRunnerEnabled: 0
   runPlayModeTestAsEditModeTest: 0
   actionOnDotNetUnhandledException: 1
@@ -1078,13 +1094,13 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: Unity_ShowLog;Unity_ResourceAb;UNITY_huawei
+    Android: Unity_Release;UNITY_huawei
     HMIAndroid: UNITY_UOS_SECURITY
     OpenHarmony: Unity_ResourceAb;Unity_Release
     Server: 
     Standalone: UNITY_UOS_SECURITY
     WebGL: UNITY_UOS_SECURITY
-    WeixinMiniGame: UNITY_UOS_SECURITY
+    WeixinMiniGame: UNITY_UOS_SECURITY;Unity_ShowLog
     iPhone: LEVELPLAY_DEPENDENCIES_INSTALLED;UNITY_UOS_SECURITY
   additionalCompilerArguments: {}
   platformArchitecture: {}
@@ -1097,7 +1113,7 @@ PlayerSettings:
     Standalone: 0
   il2cppCodeGeneration: {}
   managedStrippingLevel:
-    Android: 1
+    Android: 4
     EmbeddedLinux: 1
     GameCoreScarlett: 1
     GameCoreXboxOne: 1
@@ -1123,7 +1139,8 @@ PlayerSettings:
   gcIncremental: 1
   gcWBarrierValidation: 0
   gcAlgorithm: {}
-  apiCompatibilityLevelPerPlatform: {}
+  apiCompatibilityLevelPerPlatform:
+    WeixinMiniGame: 6
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
   metroPackageName: Word Block
@@ -1267,7 +1284,10 @@ PlayerSettings:
   weixinMiniGameInjectStrippedMethodLogger: 0
   weixinMiniGameEnableDotNetWasmExceptionHandling: 1
   weixinMiniGamePreserveEventDelegate: 0
-  activeSubplatform: 0
+  activeSubplatform: 1
+  serializedFileTypeTreeMemoryOptimization: 0
+  activeHtmlChannel: -1
+  stripBuiltinResources: 0
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
   cloudProjectId: f64b475e-d286-43b5-bbf3-4a71cf035731
@@ -1289,6 +1309,5 @@ PlayerSettings:
   androidEGLPriority: 0
   platformRequiresReadableAssets: 0
   virtualTexturingSupportEnabled: 0
-  packClustersForPlayer: 0
   insecureHttpOption: 0
   useStringInternPool: 0

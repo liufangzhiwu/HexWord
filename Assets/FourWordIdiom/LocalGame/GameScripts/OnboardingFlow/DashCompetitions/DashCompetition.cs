@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using Middleware;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -35,7 +34,7 @@ public class DashCompetition : UIWindow
         
         if (_fishItemPrefab == null)
         {
-            _fishItemPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "FishItem").GetComponent<FishItem>();
+            _fishItemPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("FishHomeScreen", "FishItem").GetComponent<FishItem>();
         }
     
         // 初始化对象池
@@ -271,7 +270,7 @@ public class DashCompetition : UIWindow
         RectTransform rectTransform =FishLists.GetComponent<RectTransform>();
         if (UIUtilities.IsiPad())
         {
-            Background.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbigbg");
+            Background.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbigbg","FishHomeScreen");
             FishLists.GetComponent<VerticalLayoutGroup>().spacing = -40;
             BoxsParent.transform.localScale = new Vector3(1.071f, 1.071f, 1f);
             BoxsParent.GetComponent<HorizontalLayoutGroup>().spacing =15f;
@@ -284,7 +283,7 @@ public class DashCompetition : UIWindow
         }
         else
         {
-            Background.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbg");
+            Background.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbg","FishHomeScreen");
             float scale=UIUtilities.GetScreenRatio();
             FishLists.GetComponent<VerticalLayoutGroup>().spacing =Math.Clamp(-40 * scale, -40,100);
             BoxsParent.transform.localScale = Vector3.one*scale;
@@ -310,7 +309,7 @@ public class DashCompetition : UIWindow
         timeText.text = time;
     }
 
-    protected void InitButton()
+    private void InitButton()
     {
         CloseBtn.AddClickAction(OnClosePanel); // 绑定关闭按钮事件
         HelpBtn.AddClickAction(OnHelpPanel);
@@ -321,27 +320,29 @@ public class DashCompetition : UIWindow
         SystemManager.Instance.ShowPanel(PanelType.CompetitionHelp);
     }
 
-    private void OnClosePanel()
+    private async void OnClosePanel()
     {
         userfishItem.OnHide();
-
+        
         // 更新AI UI
         foreach (var fishItem in fishItems)
         {
             fishItem.OnHide();
         }
         
-        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
-        {
-            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
-        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
-        {
-            //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
-        }
-
-        SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        await GameCoreManager.Instance.SwitchToState(GameState.Lobby);
         
-        base.Close(); // 隐藏面板
+        // if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        // {
+        //     SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        // }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        // {
+        //     //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
+        // }
+
+        // SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        
+        // base.Close(); // 隐藏面板
     }
     
     public override void OnHideAnimationEnd()

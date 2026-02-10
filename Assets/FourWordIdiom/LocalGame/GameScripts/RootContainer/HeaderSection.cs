@@ -45,9 +45,11 @@ public class HeaderSection : UIWindow
          EventDispatcher.instance.OnUpdateLayerCoin += UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
          EventDispatcher.instance.OnChangeTopRaycast += ChangeTopRaycast;
-        bool ishomeshow = SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface);
-        PuzzlebookBtn.gameObject.SetActive(ishomeshow&& GameDataManager.Instance.UserData.isShowVocabulary);
+        // bool ishomeshow = SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface);
+        bool ishomeshow = GameCoreManager.Instance.CurrentState == GameState.Lobby;
+        PuzzlebookBtn.gameObject.SetActive(ishomeshow && GameDataManager.Instance.UserData.isShowVocabulary);
         GmBtn.gameObject.SetActive(ishomeshow);
+        Debug.Log("当前状态： " + GameCoreManager.Instance.CurrentState);
         BackBtn.gameObject.SetActive(!ishomeshow);
         SetBtn.gameObject.SetActive(ishomeshow);
         InitPupaUI();
@@ -74,7 +76,7 @@ public class HeaderSection : UIWindow
         }
         else
         {
-            ShopBtn.gameObject.SetActive(true);
+            // ShopBtn.gameObject.SetActive(true);
             PupaTable.gameObject.SetActive(false);
         }
         
@@ -112,7 +114,7 @@ public class HeaderSection : UIWindow
         }
         
         redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
-        sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
+        // sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
     }
     
     private IEnumerator AnimateCoinAddition(int amount)
@@ -176,8 +178,8 @@ public class HeaderSection : UIWindow
             canvas.sortingOrder=0;
         }
         
-        addObj.gameObject.SetActive(isshopbtnEnable);
-        ShopBtn.enabled = isshopbtnEnable;
+        // addObj.gameObject.SetActive(isshopbtnEnable);
+        // ShopBtn.enabled = isshopbtnEnable;
     }
     
     private void OnClickPuzzleVocabulary()
@@ -233,36 +235,41 @@ public class HeaderSection : UIWindow
         // SystemManager.Instance.ShowPanel(PanelType.RewardAdsScreen);
     }
 
-    private void OnBackClick()
+    private async void OnBackClick()
     {
         base.Close();
 
-        transform.GetComponent<HeaderSection>().AddCloseListener(() =>
-        {
-            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
-            ChangeBackBtnState(false);
-        });
-
-        if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
-        {
-            SystemManager.Instance.HidePanel(PanelType.StageFinishView);
-        }
-        
         if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
         {
-            SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
             GameDataManager.Instance.UserData.UpdateOnlineStageTime();
         }   
-        
-        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
+        transform.GetComponent<HeaderSection>().AddCloseListener(() =>
         {
-            SystemManager.Instance.HidePanel(PanelType.ChessFinishView);
-        }   
-        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
-        {
-            SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
-            GameDataManager.Instance.UserData.UpdateOnlineStageTime();
-        } 
+            // SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+            ChangeBackBtnState(false);
+        });
+        await GameCoreManager.Instance.SwitchToState(GameState.Lobby);
+
+        // if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
+        // {
+        //     SystemManager.Instance.HidePanel(PanelType.StageFinishView);
+        // }
+        //
+        // if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
+        // {
+        //     SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
+        //     GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+        // }   
+        //
+        // if (SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
+        // {
+        //     SystemManager.Instance.HidePanel(PanelType.ChessFinishView);
+        // }   
+        // if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        // {
+        //     SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
+        //     GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+        // } 
     }
 
     public void ChangeBackBtnState(bool isshow)

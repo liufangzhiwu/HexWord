@@ -2,42 +2,4 @@
   <assembly fullname="wx-runtime" preserve="all"/>
   <assembly fullname="LitJson" preserve="all"/>
   <assembly fullname="Wx" preserve="all"/>
-
-  <assembly fullname="Assembly-CSharp">
-    <type fullname="*" preserve="all"/>
-  </assembly>
-
-  <assembly fullname="UnityEngine.UI">
-    <type fullname="UnityEngine.UI.*" preserve="all"/>
-  </assembly>
-
-  <assembly fullname="DG.Tweening">
-    <type fullname="*" preserve="all"/>
-  </assembly>
-  <assembly fullname="DOTween">
-    <type fullname="*" preserve="all"/>
-  </assembly>
-
-  <assembly fullname="UnityEngine.CoreModule">
-    <type fullname="UnityEngine.Material" preserve="all"/>
-
-    <type fullname="UnityEngine.MeshFilter" preserve="all"/>
-
-    <type fullname="UnityEngine.SpriteRenderer" preserve="all"/>
-
-    <type fullname="UnityEngine.Mesh" preserve="all"/>
-    <type fullname="UnityEngine.Texture" preserve="all"/>
-    <type fullname="UnityEngine.Shader" preserve="all"/>
-  </assembly>
-
-  <assembly fullname="UnityEngine.AnimationModule">
-    <type fullname="UnityEngine.Animation" preserve="all"/>
-    <type fullname="UnityEngine.AnimationClip" preserve="all"/>
-  </assembly>
-
-  <assembly fullname="mscorlib">
-    <type fullname="System.Collections.Generic.List`1" preserve="all" />
-    <type fullname="System.Collections.Generic.Dictionary`2" preserve="all" />
-    <type fullname="System.Reflection.*" preserve="all" />
-  </assembly>
 </linker>

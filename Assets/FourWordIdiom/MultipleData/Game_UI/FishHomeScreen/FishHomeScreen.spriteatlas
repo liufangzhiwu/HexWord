@@ -1,0 +1,140 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: FishHomeScreen
+  serializedVersion: 2
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 3
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      webStreaming: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: WeixinMiniGame
+      m_MaxTextureSize: 2048
+      m_MaxPlaceholderSize: 32
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 53
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: f1f68f8238ffdd149a89515bc31ca889, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - a9a27ad0cec7579488a144dc765a96b5: 21300000
+    - d5c1d051131074801a72a360a59188ee: 21300000
+    - db1978d1e957448a19675ec66420c620: 21300000
+    - 84414432a2265f64dbe32241087ac902: 21300000
+    - 392b3cb2d5e249849b92a552fb1442bd: 21300000
+    - fe47eac231fed474dae6f37932bd2747: 21300000
+    - f0a7df23624f84489991481722517908: 21300000
+    - d9606254a6dca7a499e7da8f995a4f04: 21300000
+    - 4f43f32565a75d546bbcaa2f848243b7: 21300000
+    - 254f1b2626e3d56498286225bb0c1aab: 21300000
+    - eb019256be774e94baf6ac60babe8577: 21300000
+    - 279e4ad6815553f4ab650ae2f87254ca: 21300000
+    - 2f90571785b2c234ba02d441737037eb: 21300000
+    - 0959e58705df0f349b89c42824cfca79: 21300000
+    - 9da672a7efae64c5085c15c9e3f97922: 21300000
+    - 1e2c1ab739064474e806ac0cf96f8bd1: 21300000
+    - fd804e88747b549e2af4ae573f28459e: 21300000
+    - 8ba012a8effc5f04593473242834b468: 21300000
+    - edb4192ad8f2a8b4abf18a26f9c9b8dd: 21300000
+    - 40cc7a2a362e9c043a762e7339bd677e: 21300000
+    - 9d40e54a603f44e4b835c3574000932f: 21300000
+    - 39395c0b67f74e0438228c903d1a6880: 21300000
+    - eab8c3dbaf3ff994d9b9dabfe27afa57: 21300000
+    - 23fb51ebe569b0048a5bc6fce854bf97: 21300000
+    - fe7f57bd6ffa95546a1b6f56dfdafa5a: 21300000
+    - 02c8f6bf41d4436408a090d3d5d62cd0: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: a9a27ad0cec7579488a144dc765a96b5, type: 3}
+  - {fileID: 21300000, guid: d5c1d051131074801a72a360a59188ee, type: 3}
+  - {fileID: 21300000, guid: db1978d1e957448a19675ec66420c620, type: 3}
+  - {fileID: 21300000, guid: 84414432a2265f64dbe32241087ac902, type: 3}
+  - {fileID: 21300000, guid: 392b3cb2d5e249849b92a552fb1442bd, type: 3}
+  - {fileID: 21300000, guid: fe47eac231fed474dae6f37932bd2747, type: 3}
+  - {fileID: 21300000, guid: f0a7df23624f84489991481722517908, type: 3}
+  - {fileID: 21300000, guid: d9606254a6dca7a499e7da8f995a4f04, type: 3}
+  - {fileID: 21300000, guid: 4f43f32565a75d546bbcaa2f848243b7, type: 3}
+  - {fileID: 21300000, guid: 254f1b2626e3d56498286225bb0c1aab, type: 3}
+  - {fileID: 21300000, guid: eb019256be774e94baf6ac60babe8577, type: 3}
+  - {fileID: 21300000, guid: 279e4ad6815553f4ab650ae2f87254ca, type: 3}
+  - {fileID: 21300000, guid: 2f90571785b2c234ba02d441737037eb, type: 3}
+  - {fileID: 21300000, guid: 0959e58705df0f349b89c42824cfca79, type: 3}
+  - {fileID: 21300000, guid: 9da672a7efae64c5085c15c9e3f97922, type: 3}
+  - {fileID: 21300000, guid: 1e2c1ab739064474e806ac0cf96f8bd1, type: 3}
+  - {fileID: 21300000, guid: fd804e88747b549e2af4ae573f28459e, type: 3}
+  - {fileID: 21300000, guid: 8ba012a8effc5f04593473242834b468, type: 3}
+  - {fileID: 21300000, guid: edb4192ad8f2a8b4abf18a26f9c9b8dd, type: 3}
+  - {fileID: 21300000, guid: 40cc7a2a362e9c043a762e7339bd677e, type: 3}
+  - {fileID: 21300000, guid: 9d40e54a603f44e4b835c3574000932f, type: 3}
+  - {fileID: 21300000, guid: 39395c0b67f74e0438228c903d1a6880, type: 3}
+  - {fileID: 21300000, guid: eab8c3dbaf3ff994d9b9dabfe27afa57, type: 3}
+  - {fileID: 21300000, guid: 23fb51ebe569b0048a5bc6fce854bf97, type: 3}
+  - {fileID: 21300000, guid: fe7f57bd6ffa95546a1b6f56dfdafa5a, type: 3}
+  - {fileID: 21300000, guid: 02c8f6bf41d4436408a090d3d5d62cd0, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - twoBox
+  - rank1
+  - targetgrey
+  - fishshadow
+  - win
+  - threeBox
+  - targetblue
+  - fishbg
+  - riMatchFail
+  - Effect_FishBox
+  - oneBox
+  - bigfishline
+  - target
+  - Effect_Fish
+  - targetgreen
+  - rank3
+  - targetred
+  - fishline
+  - left
+  - namebg
+  - rank2
+  - timebg
+  - fishbigbg
+  - tai
+  - right
+  - ainamebg
+  m_RenderDataMap: {}
+  m_Tag: FishHomeScreen
+  m_IsVariant: 0
+  m_IsPlaceholder: 0

@@ -30,10 +30,12 @@ public class MatchFishTable : MonoBehaviour
             if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
             {
                 SystemManager.Instance.ShowPanel(PanelType.CompetitionStart);
+                // GameCoreManager.Instance.OpenFeature("fishhomescreen",PanelType.CompetitionStart);
             }
             else
             {
-                SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
+                // SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
+                GameCoreManager.Instance.OpenFeature("fishhomescreen",PanelType.DashCompetition);
             }
         }
         else

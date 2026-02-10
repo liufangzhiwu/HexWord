@@ -1,20 +1,18 @@
 ManifestFileVersion: 0
-CRC: 3621288766
+CRC: 1204779687
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: bb0d3269b4cbbe86ff209cacf0e73b71
+    Hash: 01eb0fdca100816ef0f32d67749c7802
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 817a755cf3923ae74fdfc890e0a5c044
+    Hash: 5f87b4fc13003532749d507ab0c1ea9e
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: bb0d3269b4cbbe86ff209cacf0e73b71
+    Hash: 01eb0fdca100816ef0f32d67749c7802
 HashAppended: 1
 ClassTypes:
 - Class: 1
-  Script: {instanceID: 0}
-- Class: 4
   Script: {instanceID: 0}
 - Class: 21
   Script: {instanceID: 0}
@@ -31,58 +29,46 @@ ClassTypes:
 - Class: 111
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: da19d65c0b9cc41cdb3171d2d2a13cf2, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: b0d18823491ba4d4eae99300158d3fda, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: c21bbfce5b755de49a697ca88feaaec6, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 06c3fa938b8024698a435d79223b8da2, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: f19b7e2285c104f6ca47d583f3e5444f, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 23c509ff9b5e8374d8bc15c386ada5e3, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: a516bd6f746572a408807c0451fd17f5, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 29163f828ffd20b4cadb087192408ce4, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 395b6445ae1e1ff4691386d23944fadb, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 9f5f228502a356c48adb99f1e75239c2, type: 3}
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
+  Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 29163f828ffd20b4cadb087192408ce4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b790991f0c93a23469b5480c9c022b5d, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b5be87e0adcd3134295c8ed529220b07, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 23c509ff9b5e8374d8bc15c386ada5e3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 479a1355b830d174fac96fd8daddd302, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
-  Script: {instanceID: 0}
-- Class: 198
-  Script: {instanceID: 0}
-- Class: 199
   Script: {instanceID: 0}
 - Class: 213
   Script: {instanceID: 0}
@@ -97,8 +83,6 @@ ClassTypes:
 - Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
-- AssemblyName: UIEffect
-  ClassName: Coffee.UIEffects.EffectPlayer
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
 - AssemblyName: UnityEngine.CoreModule
@@ -112,6 +96,12 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.FontData
 - AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.InputField/EndEditEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.InputField/OnChangeEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.InputField/SubmitEvent
+- AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Navigation
@@ -120,11 +110,16 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Scrollbar/ScrollEvent
 - AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Slider/SliderEvent
+- AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.SpriteState
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Toggle/ToggleEvent
 Assets:
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/RootCanvas/HexGamePlayArea.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/RootCanvas/HeaderSection.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/RootCanvas/DebugMenu.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/RootCanvas/OptionsView.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/RootCanvas/HeadScreen.prefab
 - Assets/FourWordIdiom/MultipleData/GameYuzhiObj/RootCanvas/PrimaryInterface.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/RootCanvas/UI_MainBase.spriteatlas
 Dependencies:
-- E:/UnityProjects/HexWord/./BuildBundles/effectsitemmats_554f2020f980e384e4d6839f599ee8a3
-- E:/UnityProjects/HexWord/./BuildBundles/stagefonts_d6e423becd0c6abea067b35996ed7b9c
+- E:/UnityProjects/HexWord/./BuildBundles/stagefonts_e3b88446a2836db4d16bfa449b1f1913

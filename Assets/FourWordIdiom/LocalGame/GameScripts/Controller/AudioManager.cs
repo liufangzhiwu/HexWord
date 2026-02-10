@@ -42,7 +42,7 @@ public class AudioManager : MonoBehaviour
                 if (clip != null)
                 {
                     soundClipCache[name] = clip;
-                    Debug.Log($"预加载音效: {name}, 长度: {clip.length:F2}s");
+                    // Debug.Log($"预加载音效: {name}, 长度: {clip.length:F2}s");
                 }
                 yield return null; // 每帧加载一个，避免卡顿
             }
@@ -123,7 +123,7 @@ public class AudioManager : MonoBehaviour
         
         StartCoroutine(PlayMusic(1.5f)); // 初始化音乐开关
 
-        ApplyCriticalFixes();
+        // ApplyCriticalFixes();
     }
     
     private void ApplyCriticalFixes()

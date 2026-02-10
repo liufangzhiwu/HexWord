@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2494807166
+CRC: 3956570540
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 89ef7a8e6c878401b649606c23218de3
+    Hash: 3c7c252ac959d111087cd5f1725ce5db
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 553f5a55a19166ea01b66a7be7d000be
+    Hash: de3cf4b64bc59d7491407e68c4266f4a
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 89ef7a8e6c878401b649606c23218de3
+    Hash: 3c7c252ac959d111087cd5f1725ce5db
 HashAppended: 1
 ClassTypes:
 - Class: 1
@@ -20,30 +20,22 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 48
   Script: {instanceID: 0}
-- Class: 49
-  Script: {instanceID: 0}
-- Class: 74
-  Script: {instanceID: 0}
 - Class: 91
   Script: {instanceID: 0}
 - Class: 95
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: f1b3b4b945939a54ea0b23d3396115fb, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: b238dfcde8209044b97d23f62bcaadf6, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: a6b194f808b1af6499c93410e504af42, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: d85b887af7e6c3f45a2e2d2920d641bc, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 29af1af7f1d1b564d8f26ed0436b7fb3, type: 3}
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 7f726fb798ad621458c431cb9966d91d, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d85b887af7e6c3f45a2e2d2920d641bc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f1b3b4b945939a54ea0b23d3396115fb, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b238dfcde8209044b97d23f62bcaadf6, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -62,8 +54,6 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 225
   Script: {instanceID: 0}
-- Class: 687078895
-  Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.CoreModule
   ClassName: UnityEngine.Events.PersistentCallGroup
@@ -74,18 +64,15 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: spine-unity
   ClassName: Spine.Unity.BlendModeMaterials
 - AssemblyName: spine-unity
-  ClassName: Spine.Unity.BlendModeMaterials/ReplacementMaterial
-- AssemblyName: spine-unity
   ClassName: Spine.Unity.MeshGenerator
 - AssemblyName: spine-unity
   ClassName: Spine.Unity.MeshGenerator/Settings
 Assets:
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/SceneHudie/Scenes_hudie01.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/SceneHudie/Scenes_hudie02.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/SceneHudie/UI_hudie02.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/SceneHudie/UI_hudie01.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/SceneHudie/Scenes_hudie03.prefab
-- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/CommonItem/SceneHudie/UI_hudie03.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/SceneHudie/Scenes_hudie01.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/SceneHudie/UI_hudie03_new.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/ButterflyHome/SceneHudie/Scenes_hudie02.prefab
 Dependencies:
-- E:/UnityProjects/HexWord/./BuildBundles/butterfly_parts_536b4a86f2a67d8afd0ba1b71d33a53a
-- E:/UnityProjects/HexWord/./BuildBundles/materials_27f520acd3289f2e52123efd52a66397
+- E:/UnityProjects/HexWord/./BuildBundles/butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
+- E:/UnityProjects/HexWord/./BuildBundles/huoqu_hudie_30e2d8996fed908b409ccab1cfb8c46d
+- E:/UnityProjects/HexWord/./BuildBundles/materials_828392e3f7d5c8577ee6f2bdf3dc599f
+- E:/UnityProjects/HexWord/./BuildBundles/scenes_hudie_f2783eb9e767344bb2c95eb6134f19db

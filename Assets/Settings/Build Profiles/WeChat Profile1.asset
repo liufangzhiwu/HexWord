@@ -38,7 +38,7 @@ MonoBehaviour:
     - line: '| defaultCursor: {instanceID: 0}'
     - line: '| cursorHotspot: {x: 0, y: 0}'
     - line: '| m_SplashScreenBackgroundColor: {r: 0, g: 0, b: 0, a: 1}'
-    - line: '| m_ShowUnitySplashScreen: 1'
+    - line: '| m_ShowUnitySplashScreen: 0'
     - line: '| m_ShowUnitySplashLogo: 1'
     - line: '| m_SplashScreenOverlayOpacity: 0.5'
     - line: '| m_SplashScreenAnimation: 1'
@@ -64,8 +64,8 @@ MonoBehaviour:
     - line: '| - logo: {instanceID: 0}'
     - line: '|   duration: 2'
     - line: '| m_VirtualRealitySplashScreen: {instanceID: 0}'
-    - line: '| expectedBundleIdentifier: com.Company.ProductName'
-    - line: '| integrityHash: '
+    - line: '| expectedBundleIdentifier: com.HexaSpaceGames.---------------------'
+    - line: '| integrityHash: 1a691abdb23f8c004e17a21b52533ae4'
     - line: '| m_HolographicTrackingLossScreen: {instanceID: 0}'
     - line: '| defaultScreenWidth: 1024'
     - line: '| defaultScreenHeight: 768'
@@ -76,8 +76,8 @@ MonoBehaviour:
     - line: '| unsupportedMSAAFallback: 0'
     - line: '| m_SpriteBatchVertexThreshold: 300'
     - line: '| m_MTRendering: 1'
-    - line: '| mipStripping: 0'
-    - line: '| numberOfMipsStripped: 0'
+    - line: '| mipStripping: 1'
+    - line: '| numberOfMipsStripped: 1'
     - line: '| numberOfMipsStrippedPerMipmapLimitGroup: {}'
     - line: '| m_StackTraceTypes: 010000000100000001000000010000000100000001000000'
     - line: '| iosShowActivityIndicatorOnLoading: -1'
@@ -138,7 +138,7 @@ MonoBehaviour:
     - line: '| macAppStoreCategory: public.app-category.games'
     - line: '| gpuSkinning: 0'
     - line: '| gpuSkinningTransformFeedback: 0'
-    - line: '| vertexShaderSkinning: 0'
+    - line: '| vertexShaderSkinning: 1'
     - line: '| xboxPIXTextureCapture: 0'
     - line: '| xboxEnableAvatar: 0'
     - line: '| xboxEnableKinect: 0'
@@ -767,6 +767,9 @@ MonoBehaviour:
     - line: '| - m_BuildTarget: WebGL'
     - line: '|   m_StaticBatching: 0'
     - line: '|   m_DynamicBatching: 0'
+    - line: '| - m_BuildTarget: WeixinMiniGame'
+    - line: '|   m_StaticBatching: 0'
+    - line: '|   m_DynamicBatching: 1'
     - line: '| m_BuildTargetShaderSettings: []'
     - line: '| m_BuildTargetGraphicsJobs:'
     - line: '| - m_BuildTarget: MacStandaloneSupport'
@@ -822,7 +825,7 @@ MonoBehaviour:
     - line: '|   m_APIs: 08000000'
     - line: '|   m_Automatic: 0'
     - line: '| - m_BuildTarget: WeixinMiniGameSupport'
-    - line: '|   m_APIs: 08000000'
+    - line: '|   m_APIs: 0b000000'
     - line: '|   m_Automatic: 0'
     - line: '| m_BuildTargetVRSettings: []'
     - line: '| m_DefaultShaderChunkSizeInMB: 16'
@@ -1127,7 +1130,7 @@ MonoBehaviour:
     - line: '|   Server: '
     - line: '|   Standalone: UNITY_UOS_SECURITY'
     - line: '|   WebGL: UNITY_UOS_SECURITY;UNITY_weixin'
-    - line: '|   WeixinMiniGame: UNITY_UOS_SECURITY;Unity_ShowLog;UNITY_weixin'
+    - line: '|   WeixinMiniGame: Unity_ShowLog;UNITY_weixin'
     - line: '|   iPhone: LEVELPLAY_DEPENDENCIES_INSTALLED;UNITY_UOS_SECURITY'
     - line: '| additionalCompilerArguments: {}'
     - line: '| platformArchitecture: {}'
@@ -1135,6 +1138,7 @@ MonoBehaviour:
     - line: '|   Android: 1'
     - line: '|   OpenHarmony: 1'
     - line: '|   Standalone: 1'
+    - line: '|   WeixinMiniGame: 1'
     - line: '| il2cppCompilerConfiguration:'
     - line: '|   Android: 1'
     - line: '|   Standalone: 0'
@@ -1293,8 +1297,7 @@ MonoBehaviour:
     - line: '| weixinMiniGameDataCaching: 0'
     - line: '| weixinMiniGameDebugSymbols: 1'
     - line: '| weixinMiniGameEmscriptenArgs: '' -s EXPORTED_FUNCTIONS=_main,_sbrk,_emscripten_stack_get_base,_emscripten_stack_get_end'
-    - line: '|   -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s TOTAL_MEMORY=256MB -s EXPORTED_RUNTIME_METHODS=''''["ccall","cwrap","stackTrace","addRunDependency","removeRunDependency","FS_createPath","FS_createDataFile","stackTrace","writeStackCookie","checkStackCookie","lengthBytesUTF8","stringToUTF8"]'''''
-    - line: '|   --profiling-funcs '''
+    - line: '|   -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s TOTAL_MEMORY=256MB -s EXPORTED_RUNTIME_METHODS=''''["ccall","cwrap","stackTrace","addRunDependency","removeRunDependency","FS_createPath","FS_createDataFile","stackTrace","writeStackCookie","checkStackCookie","lengthBytesUTF8","stringToUTF8"]'''''''
     - line: '| weixinMiniGameModulesDirectory: '
     - line: '| weixinMiniGameTemplate: PATH:E:\UnityProjects\HexWord\Library\PackageCache\com.qq.weixin.minigame@8d70f12537\WebGLTemplates\WXTemplate2022TJ'
     - line: '| weixinMiniGameAnalyzeBuildSize: 0'
@@ -1303,8 +1306,8 @@ MonoBehaviour:
     - line: '| weixinMiniGameWasmArithmeticExceptions: 0'
     - line: '| weixinMiniGameLinkerTarget: 1'
     - line: '| weixinMiniGameThreadsSupport: 0'
-    - line: '| weixinMiniGameDecompressionFallback: 0'
-    - line: '| weixinMiniGameInitialMemorySize: 256'
+    - line: '| weixinMiniGameDecompressionFallback: 1'
+    - line: '| weixinMiniGameInitialMemorySize: 192'
     - line: '| weixinMiniGameMaximumMemorySize: 2048'
     - line: '| weixinMiniGameMemoryGrowthMode: 2'
     - line: '| weixinMiniGameMemoryLinearGrowthStep: 16'
@@ -1315,7 +1318,7 @@ MonoBehaviour:
     - line: '| weixinMiniGameUseSlimMetaFileFormat: 1'
     - line: '| weixinMiniGamePhysicsEngine: 0'
     - line: '| weixinMiniGameInjectStrippedMethodLogger: 0'
-    - line: '| weixinMiniGameEnableDotNetWasmExceptionHandling: 1'
+    - line: '| weixinMiniGameEnableDotNetWasmExceptionHandling: 0'
     - line: '| weixinMiniGamePreserveEventDelegate: 0'
     - line: '| activeSubplatform: 1'
     - line: '| serializedFileTypeTreeMemoryOptimization: 0'
@@ -1327,11 +1330,6 @@ MonoBehaviour:
     - line: '| framebufferDepthMemorylessMode: 0'
     - line: '| qualitySettingsNames:'
     - line: '| - Very Low'
-    - line: '| - Low'
-    - line: '| - Medium'
-    - line: '| - High'
-    - line: '| - Very High'
-    - line: '| - Ultra'
     - line: '| projectName: "\u6210\u8BED\u6D88:\u7985\u610F\u4E4B\u5883"'
     - line: '| organizationId: wansh'
     - line: '| cloudEnabled: 0'
@@ -1360,7 +1358,7 @@ MonoBehaviour:
           Appid: wx42dbb9ffc64a4965
           CDN: https://zen.test.mindwordplay.cn/hex/webgl
           assetLoadType: 0
-          compressDataPackage: 1
+          compressDataPackage: 0
           VideoUrl: 
           relativeDST: output\wechat
           DST: E:/UnityProjects/HexWord/output/wechat
@@ -1369,11 +1367,11 @@ MonoBehaviour:
           bundlePathIdentifier: StreamingAssets;
           bundleExcludeExtensions: json;
           AssetsUrl: 
-          MemorySize: 256
+          MemorySize: 496
           HideAfterCallMain: 1
           preloadFiles: 
           Orientation: 0
-          bgImageSrc: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/background.png
+          bgImageSrc: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/background.jpg
           dataFileSubPrefix: 
           maxStorage: 200
           defaultReleaseSize: 31457280
@@ -1395,7 +1393,7 @@ MonoBehaviour:
           ScriptOnly: 0
           Il2CppOptimizeSize: 1
           profilingFuncs: 0
-          Webgl2: 0
+          Webgl2: 1
           enableiOSMetal: 0
           enableEmscriptenGLX: 0
           fbslim: 0
@@ -1409,7 +1407,7 @@ MonoBehaviour:
           enableRenderAnalysis: 0
           enablePerfAnalysis: 0
           iOSAutoGCInterval: 10000
-          enableIOSPerformancePlus: 0
+          enableIOSPerformancePlus: 1
           brotliMT: 0
         CompressTexture:
           halfSize: 0
@@ -1447,7 +1445,7 @@ MonoBehaviour:
         asm: UnityEditor.CoreModule}
       data:
         m_HostName: WeChat
-        tex: {fileID: 2800000, guid: 896edabd31dff9f44b7295af833bac70, type: 3}
+        tex: {fileID: 2800000, guid: e02bc62e25f40424d9f6ceb8c5e2f396, type: 3}
     - rid: 6145871181913522180
       type: {class: MiniGamePlatformSettings, ns: UnityEditor.WeixinMiniGame, asm: UnityEditor.WeixinMiniGame.Extensions}
       data:

@@ -157,7 +157,7 @@ public class StageHexController
         
         // 记录关卡开始时间
         GameDataManager.Instance.UserData.curStageStartTime = DateTime.Now.ToString();
-        Debug.LogError("关卡id:"+StageIndex+"关卡开始时间"+GameDataManager.Instance.UserData.curStageStartTime);
+        // Debug.LogError("关卡id:"+StageIndex+"关卡开始时间"+GameDataManager.Instance.UserData.curStageStartTime);
         AnalyticMgr.SetCommonProperties();
 
         // 首次进入关卡的特殊处理
@@ -173,7 +173,7 @@ public class StageHexController
             GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
         }
         
-        CheckRateUsConditions(StageIndex);
+        // CheckRateUsConditions(StageIndex);
     }
     
     public bool GetIsFirstEnterStage()
@@ -273,7 +273,7 @@ public class StageHexController
         float duration = (float)(DateTime.Now - startTime).TotalSeconds + 
                          GameDataManager.Instance.UserData.curStageOnlineTime;
         
-        Debug.LogError("关卡id:"+StageNumber+"关卡进行时间(秒)"+duration);
+        // Debug.LogError("关卡id:"+StageNumber+"关卡进行时间(秒)"+duration);
             
         // 发送分析事件（示例）
         AnalyticMgr.LevelCompleted(duration);

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Middleware;
+using Newtonsoft.Json;
 using UnityEngine;
 
 public class MultilingualManager:MonoBehaviour
@@ -28,17 +30,14 @@ public class MultilingualManager:MonoBehaviour
         }       
     }
 
-    public void LoadLocalization()
+    public void LoadLocalization(string defCsvFile)
     {
+        localizedStrings = ToolUtil.ReadCvsLanguage(defCsvFile,"Multilingual");
+        
         // 从AssetBundle中加载CSV文件
-        TextAsset defCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "multilingual");
-        localizedStrings = ToolUtil.ReadCvsLanguage(defCsvFile,"multilingual");
+        // TextAsset defCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "multilingual");
         //TextAsset pinCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "pingzi_lang");
         //pinziLocalized = ToolUtil.ReadCvsLanguage(pinCsvFile,"pingzi_lang");
-        TextAsset hudieCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflyLocales");
-        butterfliesLocalized = ToolUtil.ParseCvsLanguage(hudieCsvFile,"ButterflyLocales");
-
-        LoadLocalizationNameTable();
     }
 
     public string GetString(string key, string filename = "multilingual")
@@ -69,9 +68,16 @@ public class MultilingualManager:MonoBehaviour
     
     public void LoadLocalizationNameTable()
     {
+        string hudieCsvFile = ConfigManager.Instance.FetchConfig( "ButterflyLocales");
+        butterfliesLocalized = ToolUtil.ParseCvsLanguage(hudieCsvFile,"ButterflyLocales");
         // 从AssetBundle中加载CSV文件
-        TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "config_choiceNiCheng");
-        localizedNames = ToolUtil.ParseCvsLanguage(csvFile,"config_choiceNiCheng");
+        string csvFile = ConfigManager.Instance.FetchConfig( "config_choiceNiCheng");
+        if (csvFile != null)
+            localizedNames = ToolUtil.ParseCvsLanguage(csvFile, "config_choiceNiCheng");
+        else
+            Debug.LogWarning("config_choiceNiCheng 在 gameinfo 中找不到！");
+
+        InitbiddenWords();
     }
 
     
@@ -110,7 +116,7 @@ public class MultilingualManager:MonoBehaviour
     public void InitbiddenWords()
     {
         // 加载 TextAsset
-        TextAsset textAsset = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo","NoneedLetter");
+        string textAsset = ConfigManager.Instance.FetchConfig("NoneedLetter");
         if (textAsset == null)
         {
             Debug.LogError("Could not load the dictionary file.");
@@ -119,7 +125,7 @@ public class MultilingualManager:MonoBehaviour
         
         if (textAsset != null)
         {
-            string[] words = textAsset.text.Split('\n');
+            string[] words = textAsset.Split('\n');
             foreach (string word in words)
             {
                 string cleanWord = word.Trim().ToLower();

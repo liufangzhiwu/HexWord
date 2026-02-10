@@ -16,12 +16,8 @@ public class CustomFlyInManager : MonoBehaviour
     
     private void Awake()
     {
-        Instance = this;
-    }
-
-    private void Start()
-    {
-        GoldPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "GameGole");
+        if(Instance == null)
+            Instance = this;
     }
     
     public void FlyInGold(Transform start,Action call=null,int count=5)
@@ -40,6 +36,11 @@ public class CustomFlyInManager : MonoBehaviour
 
     IEnumerator FlyInValueGold(Transform start,int count,Vector3 scale,Action call,bool isaudio)
     {
+        if(GoldPrefab == null)
+            GoldPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "GameGole");
+        
+        yield return null;
+        
         for (int i = 0; i < count; i++)
         {
             float s = 0.85f - i * 0.01f;

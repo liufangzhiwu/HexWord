@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2955727887
+CRC: 1630950652
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 554f2020f980e384e4d6839f599ee8a3
+    Hash: 7916430859da7c75e5c390e065a825f1
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 4512c0870cb7173ced83198be415a191
+    Hash: bcc9e3a54e49cc5b7c45399e627fd2cc
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 554f2020f980e384e4d6839f599ee8a3
+    Hash: 7916430859da7c75e5c390e065a825f1
 HashAppended: 1
 ClassTypes:
 - Class: 21
@@ -17,6 +17,10 @@ ClassTypes:
 - Class: 28
   Script: {instanceID: 0}
 - Class: 48
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
@@ -32,6 +36,7 @@ Assets:
 - Assets/FourWordIdiom/MultipleData/SpecialEffects/EffectsItemMats/FinishTwo.mat
 - Assets/FourWordIdiom/MultipleData/SpecialEffects/EffectsItemMats/kouyjkuyjuy.mat
 - Assets/FourWordIdiom/MultipleData/SpecialEffects/EffectsItemMats/Lianci_TwoTc.mat
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/EffectsItemMats/Effect_Sprite.spriteatlas
 - Assets/FourWordIdiom/MultipleData/SpecialEffects/EffectsItemMats/Finish_Three.mat
 - Assets/FourWordIdiom/MultipleData/SpecialEffects/EffectsItemMats/E_02.mat
 - Assets/FourWordIdiom/MultipleData/SpecialEffects/EffectsItemMats/vvfdyhtrytryrt.mat

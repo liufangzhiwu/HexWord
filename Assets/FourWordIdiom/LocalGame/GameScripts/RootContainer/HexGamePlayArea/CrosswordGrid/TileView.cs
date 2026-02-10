@@ -68,16 +68,16 @@ public class TileView : MonoBehaviour
         switch((HexType)StageHexController.Instance.CurStageInfo.HexType)
         {
             case HexType.PingHexagon:
-                tipPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingTipWord");
-                starttile.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingWord");
-                showTipObj.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingTipWord");
-                selectionPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingSeleWord");
+                tipPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingTipWord","GamePlayArea");
+                starttile.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingWord","GamePlayArea");
+                showTipObj.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingTipWord" ,"GamePlayArea");
+                selectionPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingSeleWord","GamePlayArea");
                 break;
             case HexType.JianHexagon:
-                tipPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianTipWord");
-                starttile.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianWord");
-                showTipObj.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianTipWord");
-                selectionPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianSeleWord");
+                tipPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianTipWord","GamePlayArea");
+                starttile.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianWord","GamePlayArea");
+                showTipObj.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianTipWord","GamePlayArea");
+                selectionPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianSeleWord", "GamePlayArea");
                 break;
         }
         
@@ -106,7 +106,8 @@ public class TileView : MonoBehaviour
         // var pupaObject = AssetBundleLoader.SharedInstance.LoadGameObject(
         //     "project", 
         //     tileName);
-        var pupaObject = Resources.Load<GameObject>("project/" + tileName);
+        // var pupaObject = Resources.Load<GameObject>("project/" + tileName);
+        var pupaObject = AssetBundleLoader.SharedInstance.LoadGameObject("gameplayarea", tileName);
         
         if(pupaObject!=null)
         {

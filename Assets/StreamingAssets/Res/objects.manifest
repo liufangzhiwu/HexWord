@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1390576113
+CRC: 1004396016
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9245f9c2a2ea58d9232f98ddd9b35d96
+    Hash: 5ff6f609abef1b753a8b8ec467aabebc
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 24aeecdd0dee506b36057855c62bd5c7
+    Hash: bd222cb7710579901367cfadb4e70eda
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 9245f9c2a2ea58d9232f98ddd9b35d96
+    Hash: 5ff6f609abef1b753a8b8ec467aabebc
 HashAppended: 1
 ClassTypes:
 - Class: 1
@@ -17,9 +17,9 @@ ClassTypes:
 - Class: 49
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: 11500000, guid: 10bcf557676fa844e8fc7a729c59077d, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 51a9cc164a84d064483349fa652d26f7, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 10bcf557676fa844e8fc7a729c59077d, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
@@ -29,5 +29,10 @@ Assets:
 - Assets/FourWordIdiom/MultipleData/Objects/CS_Content.asset
 - Assets/FourWordIdiom/MultipleData/Objects/InterfaceConfigs.asset
 Dependencies:
-- E:/UnityProjects/HexWord/./BuildBundles/onboardingflow_f7a1bde99d7133b16a8bffc010bef342
-- E:/UnityProjects/HexWord/./BuildBundles/rootcanvas_bb0d3269b4cbbe86ff209cacf0e73b71
+- E:/UnityProjects/HexWord/./BuildBundles/butterflyhome_f7047b97abb1ff8adcfb62d37f4ab2b4
+- E:/UnityProjects/HexWord/./BuildBundles/fishhomescreen_ef8afe17757d93b3b6ae97345a206faa
+- E:/UnityProjects/HexWord/./BuildBundles/gameplayarea_25f8cb15827c55ae6ffd46dff58b9ba2
+- E:/UnityProjects/HexWord/./BuildBundles/gameyuzhiobj_244d57e2784fcac25d29156c91425982
+- E:/UnityProjects/HexWord/./BuildBundles/onboardingflow_0900c41303df10a8b388c353b4ca28b6
+- E:/UnityProjects/HexWord/./BuildBundles/rootcanvas_01eb0fdca100816ef0f32d67749c7802
+- E:/UnityProjects/HexWord/./BuildBundles/shophomescreen_e8e64509d17ef7f034b2130740d27f5d

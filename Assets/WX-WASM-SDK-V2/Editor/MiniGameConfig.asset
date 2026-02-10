@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: MiniGameConfig
   m_EditorClassIdentifier: 
   ProjectConf:
-    projectName: 
-    Appid: 
-    CDN: 
+    projectName: "\u6210\u8BED\u6D88\u7985\u610F\u4E4B\u5883"
+    Appid: wx42dbb9ffc64a4965
+    CDN: https://zen.test.mindwordplay.cn/hex/webgl
     assetLoadType: 0
-    compressDataPackage: 0
+    compressDataPackage: 1
     VideoUrl: 
-    relativeDST: 
-    DST: E:\UnityProjects\HexWord\
+    relativeDST: output\wechat
+    DST: E:\UnityProjects\HexWord\output\wechat
     StreamCDN: 
     bundleHashLength: 32
     bundlePathIdentifier: StreamingAssets;
@@ -30,7 +30,7 @@ MonoBehaviour:
     HideAfterCallMain: 1
     preloadFiles: 
     Orientation: 0
-    bgImageSrc: Assets/WX-WASM-SDK-V2/Runtime/wechat-default/images/background.jpg
+    bgImageSrc: Assets/FourWordIdiom/MultipleData/Game_UI/background.jpg
     dataFileSubPrefix: 
     maxStorage: 200
     defaultReleaseSize: 31457280
@@ -52,23 +52,23 @@ MonoBehaviour:
     AutoProfile: 0
     ScriptOnly: 0
     Il2CppOptimizeSize: 1
-    profilingFuncs: 1
-    Webgl2: 0
+    profilingFuncs: 0
+    Webgl2: 1
     fbslim: 0
     DeleteStreamingAssets: 1
     ProfilingMemory: 0
-    CleanBuild: 0
+    CleanBuild: 1
     CustomNodePath: 
-    autoAdaptScreen: 0
-    showMonitorSuggestModal: 1
+    autoAdaptScreen: 1
+    showMonitorSuggestModal: 0
     enableProfileStats: 0
     enableRenderAnalysis: 0
-    enablePerfAnalysis: 0
+    enablePerfAnalysis: 1
     iOSAutoGCInterval: 10000
-    enableIOSPerformancePlus: 0
+    enableIOSPerformancePlus: 1
     enableiOSMetal: 0
     enableEmscriptenGLX: 0
-    brotliMT: 1
+    brotliMT: 0
     enableWasm2023: 0
   CompressTexture:
     halfSize: 0
