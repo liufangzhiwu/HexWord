@@ -3,7 +3,7 @@ guid: DC9JsXiuVHMnnIMPh8Z8G0az4nmp+aY1tZcGhRZOCKxYxRoijEDuaWM=
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
-  serializedVersion: 14
+  serializedVersion: 13
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -142,15 +142,43 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
     buildTarget: WeixinMiniGame
-    maxTextureSize: 1024
+    maxTextureSize: 256
     maxPlaceholderSize: 32
     resizeAlgorithm: 0
-    textureFormat: 53
+    textureFormat: 49
     textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
+    maxTextureSize: 2048
+    maxPlaceholderSize: 32
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: HMIAndroid
+    maxTextureSize: 2048
+    maxPlaceholderSize: 32
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
@@ -170,8 +198,6 @@ TextureImporter:
     nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  doOverrideTextureManagerOperations: 0
-  platformOperationGroupSettings: 
   userData: 
   assetBundleName: huoqu_hudie
   assetBundleVariant: 
