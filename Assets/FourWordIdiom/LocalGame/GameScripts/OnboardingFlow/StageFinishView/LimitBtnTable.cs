@@ -75,16 +75,6 @@ public class LimitBtnTable : MonoBehaviour
                     Effect.gameObject.SetActive(false);
                 }
             }
-            else
-            {
-                //_limitTimeEventButton.GetComponent<Animator>().enabled = true;
-                // AudioManager.Instance.PlaySoundEffect("BtnUnlock");
-                // AddCount.transform.DOScaleZ(1,1f).OnComplete(()=>
-                // {
-                //     SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
-                //     //_limitTimeEventButton.GetComponent<Animator>().enabled = false;
-                // });
-            }
         }
         else
         {

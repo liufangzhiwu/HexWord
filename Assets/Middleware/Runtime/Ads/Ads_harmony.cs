@@ -414,17 +414,16 @@ namespace Middleware
             {
                 var targetSignal = (AdsStatusSignal)signal;
                 Debug.Log($"[OnAdsStatusTrigger] type:{(AdType)targetSignal.AdType} status:{targetSignal.AdStatus}");
-
+                
                 if (targetSignal.AdStatus == "onAdReward" ||
                     targetSignal.AdStatus == "onVideoPlayEnd" && _adType == AdType.Reward)
                 {
-                    MessageSystem.Instance.HideLoadingAnimation();
+                   
                     CallbackAd(true);
                 }
                
                 if (targetSignal.AdStatus == "onAdClose" || targetSignal.AdStatus == "onAdFail")
                 {
-                    MessageSystem.Instance.HideLoadingAnimation();
                     Game.self.ResumeGame();
                     
                     // 广告关闭或失败后，尝试重新预加载
@@ -434,6 +433,8 @@ namespace Middleware
                         UnityTimer.Delay(3f, () => ForcePreloadAds());
                     }
                 }
+                
+                UnityTimer.Delay(3f, () =>  MessageSystem.Instance.HideLoadingAnimation());
             }
             else
             {

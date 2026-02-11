@@ -30,7 +30,6 @@ public class FreeItemTable : MonoBehaviour
         SetShowIcon(goldDataItem);
         SetShowIcon(toolDataItem);
         
-        
         freeitem.SetShopData(freeDataItem);
         golditem.SetShopData(goldDataItem);
         toolitem.SetShopData(toolDataItem);

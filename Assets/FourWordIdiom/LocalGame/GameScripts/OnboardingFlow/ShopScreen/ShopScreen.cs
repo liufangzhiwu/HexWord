@@ -78,6 +78,7 @@ public class ShopScreen : UIWindow
         //GameDataManager.Instance.UserData.CheckShopBuyData();
         
         GameDataManager.Instance.UserData.CheckShopBuyData();
+        GameDataManager.Instance.UserData.isHideShopRedPoint=true;
     }
 
     private void InitUI(int value = 0, bool isanim = false)
@@ -238,7 +239,6 @@ public class ShopScreen : UIWindow
 
     private void OnCloseBtn()
     {
-        GameDataManager.Instance.UserData.isHideShopRedPoint=true;
         //刷新道具
         EventDispatcher.instance.TriggerChangeGoldUI(0, false);
         base.Close(); // 隐藏面板

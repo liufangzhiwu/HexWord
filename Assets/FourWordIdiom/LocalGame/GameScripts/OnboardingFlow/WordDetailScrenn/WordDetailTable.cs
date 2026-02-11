@@ -109,7 +109,7 @@ public class WordDetailTable : MonoBehaviour
         
         // if (isStar)
         // {
-            meanTable.SetTextLayer();
+            //meanTable.SetTextLayer();
             //exampstrTable.SetTextLayer();
         //}
         

@@ -42,9 +42,9 @@ public class HeaderSection : UIWindow
 
     protected override void OnEnable()
     {
-         EventDispatcher.instance.OnUpdateLayerCoin += UpdateCoinLayer;
+        EventDispatcher.instance.OnUpdateLayerCoin += UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
-         EventDispatcher.instance.OnChangeTopRaycast += ChangeTopRaycast;
+        EventDispatcher.instance.OnChangeTopRaycast += ChangeTopRaycast;
         bool ishomeshow = SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface);
         PuzzlebookBtn.gameObject.SetActive(ishomeshow&& GameDataManager.Instance.UserData.isShowVocabulary);
         GmBtn.gameObject.SetActive(ishomeshow);

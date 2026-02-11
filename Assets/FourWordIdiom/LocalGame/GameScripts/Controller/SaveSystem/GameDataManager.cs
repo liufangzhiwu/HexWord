@@ -306,6 +306,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public int SaveNumber { get; private set; } = 0;
     public void CommitGameData()
     {
+        SaveNumber = 0;
         playerProfile.SaveData();
         butterfly.SaveData();
         fishUserSave.SaveData();
@@ -400,7 +401,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         if (isPaused && dataInitialized)
         {
             CommitGameData();
-            StopTracking();
+            //StopTracking();
             Debug.Log("应用暂停，数据已保存");
         }
     }

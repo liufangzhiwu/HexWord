@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 // using ThinkingAnalytics;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 #region 数据结构定义
 
@@ -461,6 +462,7 @@ public class UserData
             isDayFreeGet = false;
             isDayGoldBuy = false;
             isDayMoneyBuy = false;
+            isHideShopRedPoint = false;
         }
     }
     
