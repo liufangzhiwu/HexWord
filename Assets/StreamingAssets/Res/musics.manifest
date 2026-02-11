@@ -1,0 +1,48 @@
+ManifestFileVersion: 0
+CRC: 2183864196
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 4e8cd2cf438efb50b31efa625af8aaf7
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9a2ca7bdbd1871f7131daf57de908e0c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 4e8cd2cf438efb50b31efa625af8aaf7
+HashAppended: 1
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/FourWordIdiom/MultipleData/Musics/xuanzhecuowu.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/Puzzle3.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/showButterfly.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/cichufa.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/tips.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/ciright.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/WordClick.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/filyGold.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/Puzzle1.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/Puzzle4.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/success.wav
+- Assets/FourWordIdiom/MultipleData/Musics/getPupa.wav
+- Assets/FourWordIdiom/MultipleData/Musics/ShowUI.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/EnterStage.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/lianci.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/limitGetReward.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/StageFinish.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/BtnUnlock.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/Button.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/chongzhidaoju.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/OpenStageBox.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/tishidaoju.wav
+- Assets/FourWordIdiom/MultipleData/Musics/ChoiceError_UI.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/music.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/levelOverLimitwordAward.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/Puzzle2.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/PassStage.mp3
+- Assets/FourWordIdiom/MultipleData/Musics/breakPupa.wav
+- Assets/FourWordIdiom/MultipleData/Musics/SignWater.mp3
+Dependencies: []

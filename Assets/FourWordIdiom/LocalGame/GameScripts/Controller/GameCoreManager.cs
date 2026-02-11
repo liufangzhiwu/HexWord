@@ -105,6 +105,7 @@ public sealed class GameCoreManager: MonoBehaviour
         Debug.Log("开始进入"+targetState);
         CurrentState = targetState;
         await EnterNewStateRoutine(targetState);
+        _isSwitching = false;
         MessageSystem.Instance.HideLoadingAnimation();
     }
 
@@ -114,6 +115,7 @@ public sealed class GameCoreManager: MonoBehaviour
         {
             case GameState.Lobby:
                 SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+                await Task.Yield();
                 SystemManager.Instance.CloseAndDestroyPanel(PanelType.PrimaryInterface);
                 SystemManager.Instance.CloseAndDestroyPanel(PanelType.OptionsView);
                 SystemManager.Instance.CloseAndDestroyPanel(PanelType.HeadScreen);
@@ -123,9 +125,11 @@ public sealed class GameCoreManager: MonoBehaviour
                 break;
 
             case GameState.Gameplay:
-                SystemManager.Instance.HidePanel(PanelType.HeaderSection,false);
+                SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+                await Task.Yield();
                 SystemManager.Instance.CloseAndDestroyPanel(PanelType.HexGamePlayArea);
                 SystemManager.Instance.CloseAndDestroyPanel(PanelType.StageFinishView);
+                SystemManager.Instance.CloseAndDestroyPanel(PanelType.HardView);
                 await Task.Yield();
                 UnloadBundles(_gameplayBundles);
                 break;

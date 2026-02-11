@@ -20,17 +20,17 @@ MonoBehaviour:
     compressDataPackage: 1
     VideoUrl: 
     relativeDST: output\wechat
-    DST: E:\UnityProjects\HexWord\output\wechat
+    DST: E:/UnityProjects/HexWord/output/wechat
     StreamCDN: 
     bundleHashLength: 32
     bundlePathIdentifier: StreamingAssets;
     bundleExcludeExtensions: json;
     AssetsUrl: 
-    MemorySize: 256
+    MemorySize: 496
     HideAfterCallMain: 1
     preloadFiles: 
     Orientation: 0
-    bgImageSrc: Assets/FourWordIdiom/MultipleData/Game_UI/background.jpg
+    bgImageSrc: Assets/FourWordIdiom/LocalGame/JiazaiJiemianUPian/background.jpg
     dataFileSubPrefix: 
     maxStorage: 200
     defaultReleaseSize: 31457280
@@ -63,7 +63,7 @@ MonoBehaviour:
     showMonitorSuggestModal: 0
     enableProfileStats: 0
     enableRenderAnalysis: 0
-    enablePerfAnalysis: 1
+    enablePerfAnalysis: 0
     iOSAutoGCInterval: 10000
     enableIOSPerformancePlus: 1
     enableiOSMetal: 0

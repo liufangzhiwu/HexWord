@@ -183,6 +183,7 @@ public class SystemManager : MonoBehaviour
                 // 这会触发 MonoBehaviour 的 OnDestroy 生命周期
                 // 也会断开该面板对 Textures/Sprites/Fonts 的引用
                 panel.transform.DOKill(true);
+                panel.Close(UIWindow.CloseMethod.Immediate);
                 Destroy(panel.gameObject);
             }
 

@@ -1,0 +1,181 @@
+ManifestFileVersion: 0
+CRC: 2612427423
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b4b28ee8fb6708dcf8de970448c10d79
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: c94151e099553ea9d346786c434de020
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b4b28ee8fb6708dcf8de970448c10d79
+HashAppended: 1
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9395cc984f623514ba98abd57e7b92b6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 40525e0a094c91043a012226d792930a, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 714d393996423f34a9630893b16bfb23, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 928aaf6312cf36a469174b0e024c611f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 624878430d50e8745bb89c5f55f0f803, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f19b7e2285c104f6ca47d583f3e5444f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: db9fe4b3a456a0944825162f37728cb7, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 29163f828ffd20b4cadb087192408ce4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 0694da9b399050244931446db13ae8b9, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 15042e403689738408a8ef6e6091c13d, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: c8fa908f53cd8334481fe6728a963270, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 536919d774f77ad49a63625a8c463394, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 15ecb7ba31be1ba48bd0d4543f92e885, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b00699e6aca82e24f9f8f5a23a7bf026, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a89de333043c9ec4e8786d9e040235cd, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 86ad685ff748f4149b89951b89e8c763, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d477ff82ee23f844b8af9e04ab96f9f3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 595bbe359ab09af469b25974c3d1bba4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 395b6445ae1e1ff4691386d23944fadb, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d10ee0e91e2a15a4596d3dbc804a6cb5, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: c42866090e4bc8241a06745eed3cabad, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 827d8cc5a2cc25247ab0f9c938235998, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 16409af0834a93747837880e2d60f555, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9ed4ee216c81c56498a147341b9198ba, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+- Class: 198
+  Script: {instanceID: 0}
+- Class: 199
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 223
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+- Class: 225
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: UIEffect
+  ClassName: Coffee.UIEffects.EffectPlayer
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.RectOffset
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.AnimationTriggers
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Button/ButtonClickedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ColorBlock
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.FontData
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Navigation
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ScrollRect/ScrollRectEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Scrollbar/ScrollEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Slider/SliderEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.SpriteState
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Toggle/ToggleEvent
+Assets:
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/LevelWordDTable.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/WordButton.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/LevelWordScreen.prefab
+- Assets/FourWordIdiom/MultipleData/Game_UI/OnboardingFlow/UI_OnboardingFlow.spriteatlas
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/LevelWordDetail.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/WordVocabularyScreen.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/WordLevelBtn.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/CompetitionStart.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/WordDetailScreen.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/WordDetailTable.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/LearningGuide.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/HeaderSection.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/LimitHelpScreen.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/GetItemScreen.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/SignWaterScreen.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/DailyTasksScreen.prefab
+- Assets/FourWordIdiom/MultipleData/GameYuzhiObj/OnboardingFlow/LimitTimeScreen.prefab
+Dependencies:
+- E:/UnityProjects/HexWord/./BuildBundles/commonitem_42b9337a0c88125285df8ab4e332a23e
+- E:/UnityProjects/HexWord/./BuildBundles/effectsitemmats_7916430859da7c75e5c390e065a825f1
+- E:/UnityProjects/HexWord/./BuildBundles/stagefonts_e3b88446a2836db4d16bfa449b1f1913

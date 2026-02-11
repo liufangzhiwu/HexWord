@@ -30,8 +30,7 @@ public class StageFinishView : UIWindow
     [SerializeField] private Toggle _puzzletoggle;
     [SerializeField] private Text _progressText;    
     [SerializeField] private GameObject _butterflyTimerDisplay;
-
-    private GameObject _treasureBoxEffect;
+    
     private int _currentProgressSegment = 0;
     private float sliderProgress;
   
@@ -51,8 +50,6 @@ public class StageFinishView : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
-
-        GameCoreManager.Instance.PanelState = PanelState.FinishPanel;
         
         GameDataManager.Instance.UserData.curIsEnter = false;
         LimitTimeManager.Instance.OnDailyTimeUpdated += UpdateTimeDisplay; // 订阅事件
@@ -397,14 +394,12 @@ public class StageFinishView : UIWindow
         LimitTimeManager.Instance.OnDailyTimeUpdated -= UpdateTimeDisplay; // 订阅事件
         DailyTaskManager.Instance.OnDailyButterflyTaskUI -= UpdateButterflyTime;
         LimitTimeManager.Instance.OnLimitTimeBtnUI -= UpdateProgress;       
-        //FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
-        //EventDispatcher.OnChangeHeadIconUpdateUI -= UpdateHeadBtnUI;
+        FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
         
         UpdateProgress(false);
         GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
         base.OnDisable();
         EventDispatcher.instance.TriggerChangeGoldUI(AppGameSettings.LevelCompleteBonus, false);
-        if (_treasureBoxEffect != null)
-            _treasureBoxEffect.gameObject.SetActive(false);
+   
     }
 }

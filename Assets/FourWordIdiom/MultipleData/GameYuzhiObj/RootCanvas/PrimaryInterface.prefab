@@ -207,7 +207,7 @@ MonoBehaviour:
   headicon: {fileID: 8444126995624546829}
   ButterflyTime: {fileID: 799790905708860071}
   ButterflyBtn: {fileID: 3274688436957651219}
-  topPanelDelay: 0.01
+  topPanelDelay: 0.5
 --- !u!223 &8516875778687806565
 Canvas:
   m_ObjectHideFlags: 0

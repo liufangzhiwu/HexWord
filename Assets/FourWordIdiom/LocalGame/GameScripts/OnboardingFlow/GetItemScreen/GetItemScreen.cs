@@ -58,7 +58,7 @@ public class GetItemScreen : UIWindow
                 UpdateCliamBtn(false);
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
                 tips.text = "提示一个成语中的所有字";
-                AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_tip");
+                AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
                 eventDes=title.text+"弹窗广告";
                 break;
@@ -67,7 +67,7 @@ public class GetItemScreen : UIWindow
                 title.text = "提示灯";
                 tips.text = "提示一个成语的首字";
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
-                AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_reset");
+                AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("reseticon");
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
                 eventDes=title.text+"弹窗广告";
                 AnalyticMgr.VideoAdShow(eventDes);

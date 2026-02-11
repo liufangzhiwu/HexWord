@@ -32,11 +32,17 @@ public class HardView : UIWindow
                 break;
         }
     }
-    
+
+    public override void Close(CloseMethod method = CloseMethod.Default)
+    {
+        hardStageTable.SetActive(false);
+        extrahardStageTable.SetActive(false);
+        base.Close(method);
+    }
 
     private void OnClosePanel()
     {
-        base.Close(); // 隐藏面板
+    
     }
     
     public override void OnHideAnimationEnd()

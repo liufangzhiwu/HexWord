@@ -1,0 +1,27 @@
+ManifestFileVersion: 0
+CRC: 3508785645
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 828392e3f7d5c8577ee6f2bdf3dc599f
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 4512c0870cb7173ced83198be415a191
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 828392e3f7d5c8577ee6f2bdf3dc599f
+HashAppended: 1
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/FourWordIdiom/LocalGame/spine/Materials/unlockGrandeBF.mat
+- Assets/FourWordIdiom/LocalGame/spine/Materials/lizi03.mat
+- Assets/FourWordIdiom/LocalGame/spine/Materials/lizi01.mat
+Dependencies:
+- E:/UnityProjects/HexWord/./BuildBundles/butterflyhome_d40c8bd3b0b2778431f35efeccf12990

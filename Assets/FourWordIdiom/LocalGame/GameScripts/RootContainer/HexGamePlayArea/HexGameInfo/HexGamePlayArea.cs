@@ -174,11 +174,11 @@ public class HexGamePlayArea : UIWindow
         StartTime = DateTime.Now;
         EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
         // 开始检测协程
-        if (CurStageInfo.StageNumber <= 1)
-        {
-            coroutineRunner =  StartCoroutine(CheckInactivity());
-            StageHexController.Instance.tipPuzzle = "";
-        }
+        // if (CurStageInfo.StageNumber <= 1)
+        // {
+        //     coroutineRunner =  StartCoroutine(CheckInactivity());
+        //     StageHexController.Instance.tipPuzzle = "";
+        // }
         
         SingleHingBtn.enabled = false;
         PuzzleTipsBtn.enabled = false;
@@ -1069,8 +1069,6 @@ public class HexGamePlayArea : UIWindow
         //StageOverObj.gameObject.SetActive(false);
         EventDispatcher.instance.OnLetterSelected -= OnLetterSelected;
         EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
-        //EventManager.OnChangeLanguageUpdateUI -= InitUI;
-        //EventManager.OnComboTriggerButterfly -=UseButterfly;
         EventDispatcher.instance.OnChoicePuzzleSetStatus -= ChoicePuzzleSetStatus;
         EventDispatcher.instance.OnCheckShowTutorial -= CheackShowTotrialEvent;
         EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;

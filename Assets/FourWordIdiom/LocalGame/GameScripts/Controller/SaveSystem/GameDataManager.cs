@@ -57,7 +57,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         Application.wantsToQuit += OnWantsToQuit;
         // needLogout = false;
         // 游戏启动时开始追踪
-        StartTracking();
+        // StartTracking();
     }
     
     
@@ -389,7 +389,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         else if (requireFocusCheck)
         {
             AnalyticMgr.GameStart();
-            StartTracking();
+            // StartTracking();
             Debug.Log("应用回到前台，验证数据");
             requireFocusCheck = false;
             playerProfile.CheckResetDailyTime();

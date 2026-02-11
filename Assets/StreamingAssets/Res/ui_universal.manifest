@@ -1,0 +1,24 @@
+ManifestFileVersion: 0
+CRC: 4146690410
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: bdd3e788d3905dca99f50a7214f69680
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: fabfeac254184fd86a46abf5f656d198
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: bdd3e788d3905dca99f50a7214f69680
+HashAppended: 1
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/FourWordIdiom/MultipleData/Game_UI/UI_Universal/UI_Universal.spriteatlas
+Dependencies: []

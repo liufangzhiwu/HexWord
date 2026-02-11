@@ -1,0 +1,40 @@
+ManifestFileVersion: 0
+CRC: 3711899373
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b79317a2afcf704bc32dfe78af9cb4cb
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: e25d4b35deadeb2df9810cfb161efc28
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b79317a2afcf704bc32dfe78af9cb4cb
+HashAppended: 1
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 96
+  Script: {instanceID: 0}
+- Class: 198
+  Script: {instanceID: 0}
+- Class: 199
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/AwPuzzleTwo.prefab
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/AwPuzzleFour.prefab
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/AwPuzzleOne.prefab
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/ToolTipsEffect.prefab
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/GameFinish.prefab
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/WordAppear.prefab
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/Butterfly.prefab
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/ShowTipTuowei.prefab
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/AwPuzzleThree.prefab
+- Assets/FourWordIdiom/MultipleData/SpecialEffects/UserItems/AwPuzzleFive.prefab
+Dependencies:
+- E:/UnityProjects/HexWord/./BuildBundles/effectsitemmats_7916430859da7c75e5c390e065a825f1

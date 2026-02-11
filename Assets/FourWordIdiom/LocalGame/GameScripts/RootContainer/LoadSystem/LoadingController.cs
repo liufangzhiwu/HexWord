@@ -245,7 +245,7 @@ public class LoadingController : MonoBehaviour
     
     private void UserLocalData()
     {
-        ModifyUserWithABtest();
+        // ModifyUserWithABtest();
     }
 
     private void UserServerData()
@@ -256,7 +256,7 @@ public class LoadingController : MonoBehaviour
         if (serverButterflyData != null)
             GameDataManager.Instance.ButterflyData.InitData(serverButterflyData);
         GameDataManager.Instance.SetInitailized(true);
-        ModifyUserWithABtest();
+        // ModifyUserWithABtest();
     }
     
     

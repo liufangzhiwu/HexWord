@@ -1130,7 +1130,7 @@ MonoBehaviour:
     - line: '|   Server: '
     - line: '|   Standalone: UNITY_UOS_SECURITY'
     - line: '|   WebGL: UNITY_UOS_SECURITY;UNITY_weixin'
-    - line: '|   WeixinMiniGame: Unity_ShowLog;UNITY_weixin'
+    - line: '|   WeixinMiniGame: UNITY_weixin'
     - line: '|   iPhone: LEVELPLAY_DEPENDENCIES_INSTALLED;UNITY_UOS_SECURITY'
     - line: '| additionalCompilerArguments: {}'
     - line: '| platformArchitecture: {}'
@@ -1302,7 +1302,7 @@ MonoBehaviour:
     - line: '| weixinMiniGameTemplate: PATH:E:\UnityProjects\HexWord\Library\PackageCache\com.qq.weixin.minigame@8d70f12537\WebGLTemplates\WXTemplate2022TJ'
     - line: '| weixinMiniGameAnalyzeBuildSize: 0'
     - line: '| weixinMiniGameUseEmbeddedResources: 0'
-    - line: '| weixinMiniGameCompressionFormat: 0'
+    - line: '| weixinMiniGameCompressionFormat: 2'
     - line: '| weixinMiniGameWasmArithmeticExceptions: 0'
     - line: '| weixinMiniGameLinkerTarget: 1'
     - line: '| weixinMiniGameThreadsSupport: 0'
@@ -1356,9 +1356,9 @@ MonoBehaviour:
         ProjectConf:
           projectName: "\u6210\u8BED\u6D88\u7985\u610F\u4E4B\u5883"
           Appid: wx42dbb9ffc64a4965
-          CDN: https://zen.test.mindwordplay.cn/hex/webgl
+          CDN: https://hex.prod.mindwordplay.cn/hex/webgl
           assetLoadType: 0
-          compressDataPackage: 0
+          compressDataPackage: 1
           VideoUrl: 
           relativeDST: output\wechat
           DST: E:/UnityProjects/HexWord/output/wechat
