@@ -28,5 +28,19 @@
                   android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
                   android:exported="false">
         </activity>
+        <activity
+                android:name="com.unity.hms.account.HmsAccountActivity"
+                android:screenOrientation="fullSensor"
+                android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:exported="true">
+        </activity>
+        
+        <meta-data android:name="com.huawei.hms.client.appid" android:value="116093983"/>
+
+        <meta-data
+                android:name="com.huawei.hms.client.channel.androidMarket"
+                android:value="false" />
+        
     </application>
 </manifest>

@@ -23,7 +23,6 @@ namespace Middleware
                 IapActivity.setCallback(callback);
 
                 IsEnvReady();
-
             });
         }
 
@@ -113,8 +112,8 @@ namespace Middleware
         private void OnActivityResultCallback(int requestcode, int resultcode, AndroidJavaObject obj)
         {
             var data = new Intent { obj = obj };
-            
-            Debug.Log("购买返回requestcode"+requestcode);
+
+            Debug.Log("购买返回requestcode" + requestcode);
             
             if (requestcode == 6666)
             {
@@ -200,7 +199,7 @@ namespace Middleware
         /// <summary>
         /// 消耗型商品的补单流程
         /// </summary>
-        private void ObtainOwnedPurchases(int type = 0)
+        private void ObtainOwnedPurchases(int type = 0, Action<bool, ProductItem[]> callback = null)
         {
             OwnedPurchasesReq ownedPurchasesReq = new OwnedPurchasesReq();
             ownedPurchasesReq.setPriceType(type);
@@ -216,20 +215,37 @@ namespace Middleware
                     ConsumeOwnedPurchaseReq req = new ConsumeOwnedPurchaseReq();
                     string purchaseToken = "";
                     string inAppPurchaseDataStr  = HmsClassHelper.ConvertObject<InAppPurchaseData>(inAppPurchaseDataList.get(0)).ToString();
-                    InAppPurchaseData inAppPurchaseDataBean = new InAppPurchaseData(inAppPurchaseDataStr);
-                    purchaseToken = inAppPurchaseDataBean.getPurchaseToken();
-                    req.setPurchaseToken(purchaseToken);
-                    Task task2 = Iap.getIapClient(activity).consumeOwnedPurchase(req);
-                    task2.addOnSuccessListener(new HuaweiOnsuccessListener<ConsumeOwnedPurchaseResult>(_res =>
+                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
                     {
-                        if (_res?.getReturnCode() == 0)
+                        InAppPurchaseData inAppPurchaseDataBean = new InAppPurchaseData(inAppPurchaseDataStr);
+                        callback?.Invoke(true, new ProductItem[]
                         {
-                            Debug.Log("发货通知成功");
-                        }
-                    })).addOnFailureListener(new HuaweiOnFailureListener(ex =>
-                    {
-                        Debug.Log("通知华为已发货失败！");
-                    }));
+                            new ProductItem
+                            {
+                                IsoCurrencyCode = inAppPurchaseDataBean.getCurrency(),
+                                ProductId = inAppPurchaseDataBean.getProductId(),
+                                LocalizedPrice = inAppPurchaseDataBean.getPrice(),
+                                OnShipmentCompleted = (ok) =>
+                                {
+                                    purchaseToken = inAppPurchaseDataBean.getPurchaseToken();
+
+                                    req.setPurchaseToken(purchaseToken);
+                                    Task task2 = Iap.getIapClient(activity).consumeOwnedPurchase(req);
+                                    task2.addOnSuccessListener(new HuaweiOnsuccessListener<ConsumeOwnedPurchaseResult>(
+                                        _res =>
+                                        {
+                                            if (_res?.getReturnCode() == 0)
+                                            {
+                                                Debug.Log("发货通知成功");
+                                            }
+                                        })).addOnFailureListener(new HuaweiOnFailureListener(ex =>
+                                    {
+                                        Debug.Log("通知华为已发货失败！");
+                                    }));
+                                }
+                            }
+                        });
+                    });
                 }
             })).addOnFailureListener(new HuaweiOnFailureListener(exception =>
             {
@@ -253,9 +269,10 @@ namespace Middleware
             CreatePurchaseIntent("Consumables", productId);
         }
 
+        // 在这里进行补单吧
         public void Restore(Action<bool, ProductItem[]> restoreCallback)
         {
-            throw new NotImplementedException();
+            ObtainOwnedPurchases(0, restoreCallback);
         }
     }
 }

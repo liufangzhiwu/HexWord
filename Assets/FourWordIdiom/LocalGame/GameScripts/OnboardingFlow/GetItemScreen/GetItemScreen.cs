@@ -146,6 +146,7 @@ public class GetItemScreen : UIWindow
 
     private void UpdateAdsRewardUI(bool isShow)
     {
+        MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
             GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"看广告获取"+title.text+"道具");

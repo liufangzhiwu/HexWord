@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/StreamingAssets/Res/buttonobjs.meta
 guid: 01f58304b36335d4aabdbc57002ac00a
+========
+guid: 1b1956c2afa78144495883a161fdb7ad
+>>>>>>>> cf3150a6 (release2):Assets/StreamingAssets/Res/effectfx.manifest.meta
 DefaultImporter:
   externalObjects: {}
   userData: 

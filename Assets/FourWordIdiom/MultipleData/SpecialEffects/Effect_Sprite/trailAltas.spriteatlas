@@ -62,6 +62,7 @@ SpriteAtlas:
     - ab360f048f68a8a4f8013f666f0fdce9: 21300000
     - 0159a80518131b4429c2c8208eb44e03: 21300000
     - ad2b7e166d3a58a47b4c2e3e8c487616: 21300000
+    - 16ad72262ca55cc41bcbd99e3143245c: 21300000
     - be6ace56d80ac014f9f7df88d48fe1c7: 21300000
     - 74041d76b5a84174bb0a8bfd55463375: 21300000
     - 15ae18e6fa7b5b642a60bf0d975f22dd: 21300000
@@ -92,6 +93,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: ab360f048f68a8a4f8013f666f0fdce9, type: 3}
   - {fileID: 21300000, guid: 0159a80518131b4429c2c8208eb44e03, type: 3}
   - {fileID: 21300000, guid: ad2b7e166d3a58a47b4c2e3e8c487616, type: 3}
+  - {fileID: 21300000, guid: 16ad72262ca55cc41bcbd99e3143245c, type: 3}
   - {fileID: 21300000, guid: be6ace56d80ac014f9f7df88d48fe1c7, type: 3}
   - {fileID: 21300000, guid: 74041d76b5a84174bb0a8bfd55463375, type: 3}
   - {fileID: 21300000, guid: 15ae18e6fa7b5b642a60bf0d975f22dd, type: 3}
@@ -121,6 +123,7 @@ SpriteAtlas:
   - hrtfhtrhtr
   - sparkle2
   - huytuytuyt
+  - jhgjhgjhg
   - htrhtrhtrhtr
   - beam02
   - uh6truytujytjn

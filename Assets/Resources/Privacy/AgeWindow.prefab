@@ -1,19 +1,18 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &1818319398654178600
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8931635098899593634}
   - component: {fileID: 3679878484419177475}
   - component: {fileID: 9163171750623676742}
   - component: {fileID: 2598728363250282840}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AgeWindow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -101,14 +100,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4166264271130679118}
   - component: {fileID: 4441985526250869205}
   - component: {fileID: 2571600084548536486}
   - component: {fileID: 148627529534302335}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: GameObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -131,7 +129,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 547.67, y: -0}
+  m_AnchoredPosition: {x: 547.67, y: -436}
   m_SizeDelta: {x: 1095.34, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4441985526250869205
@@ -196,14 +194,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6429821136263381261}
   - component: {fileID: 3181173322119635914}
   - component: {fileID: 6892066745720691714}
   - component: {fileID: 2160066574465424191}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Content
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -284,14 +281,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7215387271152813359}
   - component: {fileID: 8485888159244621211}
   - component: {fileID: 7065112964144736925}
   - component: {fileID: 504816618929549756}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Scroll View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -392,14 +388,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7269902417438700298}
   - component: {fileID: 3547630327778363170}
   - component: {fileID: 5923365545441954683}
   - component: {fileID: 7402722114698249128}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Viewport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -483,13 +478,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7401430391550041349}
   - component: {fileID: 7103233567041424211}
   - component: {fileID: 3388824666670993412}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -563,14 +557,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6391333811743836537}
   - component: {fileID: 7561885078535473349}
   - component: {fileID: 6787036552777124855}
   - component: {fileID: 8393703929812056618}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Button (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
