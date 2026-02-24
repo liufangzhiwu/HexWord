@@ -434,7 +434,7 @@ namespace Middleware
                     }
                 }
                 
-                UnityTimer.Delay(3f, () =>  MessageSystem.Instance.HideLoadingAnimation());
+                UnityTimer.Delay(0.5f, () =>  MessageSystem.Instance.HideLoadingAnimation());
             }
             else
             {

@@ -95,7 +95,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 else
                 {
                     AnalyticMgr.VideoAdClick("看广告领取商店金币");
-                    Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+                    StartCoroutine(ShowAdsRewardUI());
                 }
             }
 
@@ -144,6 +144,12 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             // 在这里实现你的点击功能逻辑
             OnBuyButtonClicked(shopDataItem);
         }
+    }
+    
+    IEnumerator ShowAdsRewardUI()
+    {
+        yield return new WaitForSeconds(0.05f);
+        Game.self.Ads?.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
     }
     
     private void UpdateAdsRewardUI(bool isShow)

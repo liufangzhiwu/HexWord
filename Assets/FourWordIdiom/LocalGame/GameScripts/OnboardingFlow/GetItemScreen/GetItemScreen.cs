@@ -98,8 +98,14 @@ public class GetItemScreen : UIWindow
         else
         {
             AnalyticMgr.VideoAdClick(eventDes);
-            Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+            StartCoroutine(ShowAdsRewardUI());
         }
+    }
+
+    IEnumerator ShowAdsRewardUI()
+    {
+        yield return new WaitForSeconds(0.05f);
+        Game.self.Ads?.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
     }
 
     private void ClickClaimGoldBtn()

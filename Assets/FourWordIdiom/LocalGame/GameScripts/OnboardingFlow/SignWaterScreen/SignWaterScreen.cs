@@ -211,11 +211,29 @@ public class SignWaterScreen : UIWindow
         var sign = GameDataManager.Instance.UserData.signid;
         AnalyticMgr.VideoAdClick("签到"+sign);
         
-#if UNITY_OPENHARMONY
-        Game.self?.Ads.ShowReward(GetAdKey(),success => {
+//#if UNITY_OPENHARMONY
+        StartCoroutine(ShowAdsRewardUI());
+// #elif Unity_ShowLog
+//         iswater = true;
+//         AdsStartBtn.enabled = false;
+//         closeBtn.enabled = false;
+//         HideBtn.enabled = false;
+//         int value = AwardValues[sign];
+//         WaterManager.instance.PlayerWater(false, value);
+//         StartCoroutine(CheckIsReadyToShowAd());
+//         AnalyticMgr.VideoAdSuccess("签到"+sign);
+//         GameDataManager.Instance.UserData.totalSeeAds++;
+//         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
+// #endif
+    }
+    
+    IEnumerator ShowAdsRewardUI()
+    {
+        yield return new WaitForSeconds(0.05f);
+        var sign = GameDataManager.Instance.UserData.signid;
+        Game.self.Ads.ShowReward(GetAdKey(),success => {
             if (!success)
             {
-                MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
                 AnalyticMgr.VideoAdFail("签到"+sign);
             }
             else
@@ -232,19 +250,8 @@ public class SignWaterScreen : UIWindow
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
             }
         });
-#elif Unity_ShowLog
-        iswater = true;
-        AdsStartBtn.enabled = false;
-        closeBtn.enabled = false;
-        HideBtn.enabled = false;
-        int value = AwardValues[sign];
-        WaterManager.instance.PlayerWater(false, value);
-        StartCoroutine(CheckIsReadyToShowAd());
-        AnalyticMgr.VideoAdSuccess("签到"+sign);
-        GameDataManager.Instance.UserData.totalSeeAds++;
-        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
-#endif
     }
+
 
     public void OnStartBtn()
     {
