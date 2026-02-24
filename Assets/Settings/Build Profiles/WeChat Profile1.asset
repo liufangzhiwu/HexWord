@@ -1130,7 +1130,7 @@ MonoBehaviour:
     - line: '|   Server: '
     - line: '|   Standalone: UNITY_UOS_SECURITY'
     - line: '|   WebGL: UNITY_UOS_SECURITY;UNITY_weixin'
-    - line: '|   WeixinMiniGame: UNITY_weixin'
+    - line: '|   WeixinMiniGame: UNITY_weixin;TIANJIE_LICENSE_ACTIVATED'
     - line: '|   iPhone: LEVELPLAY_DEPENDENCIES_INSTALLED;UNITY_UOS_SECURITY'
     - line: '| additionalCompilerArguments: {}'
     - line: '| platformArchitecture: {}'
