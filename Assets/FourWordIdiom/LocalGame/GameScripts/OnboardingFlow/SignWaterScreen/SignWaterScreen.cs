@@ -213,6 +213,7 @@ public class SignWaterScreen : UIWindow
         
 #if !UNITY_EDITOR
         Game.self?.Ads.ShowReward(GetAdKey(),success => {
+            MessageSystem.Instance.HideLoadingAnimation();
             if (!success)
             {
                 MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
@@ -231,7 +232,7 @@ public class SignWaterScreen : UIWindow
                 GameDataManager.Instance.UserData.totalSeeAds++;
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
             }
-            MessageSystem.Instance.HideLoadingAnimation();
+            
         });
 #elif Unity_ShowLog
         iswater = true;

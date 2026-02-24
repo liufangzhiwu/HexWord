@@ -15,7 +15,33 @@ using UnityEngine.UI;
 using Game = Middleware.Game;
 using Random = UnityEngine.Random;
 
-
+public enum GameFlowStatus 
+{
+    NotStarted,
+    
+    // --- 1. 初始化阶段 ---
+    Initializing,
+    InitFailed,
+    
+    // --- 2. 更新检查阶段 ---
+    CheckingUpdate,
+    UpdateRequired, // 需要更新，等待用户操作
+    
+    // --- 3. 登录阶段 ---
+    LoginReady,
+    LoggingIn,
+    SilentFailed,
+    LoginFailed,
+        
+    // 获取用户信息
+    GetGamePlayer,
+    GetGamePlayerFailed,
+    // 上传角色信息
+    GamePlayerSave,
+    GamePlayerSaveFailed,
+    // --- 4. 完成状态 ---
+    Ready // 所有流程完成，游戏可以启动
+}
 /// <summary>
 /// 游戏加载控制器
 /// 主要功能：
@@ -29,50 +55,15 @@ using Random = UnityEngine.Random;
 /// </summary>
 public class LoadingController : MonoBehaviour
 {
-    private enum GameFlowStatus 
-    {
-        NotStarted,
+    public static LoadingController Instance;
     
-        // --- 1. 初始化阶段 ---
-        Initializing,
-        InitFailed,
-    
-        // --- 2. 更新检查阶段 ---
-        CheckingUpdate,
-        UpdateRequired, // 需要更新，等待用户操作
-    
-        // --- 3. 登录阶段 ---
-        LoggingIn,
-        SilentFailed,
-        LoginFailed,
-        
-        // 获取用户信息
-        GetGamePlayer,
-        GetGamePlayerFailed,
-        // 上传角色信息
-        GamePlayerSave,
-        GamePlayerSaveFailed,
-        // --- 4. 完成状态 ---
-        Ready // 所有流程完成，游戏可以启动
-    }
-    private GameFlowStatus _flowStatus = GameFlowStatus.NotStarted;
-    private int _retryAttempt = 0;
-    private const int MAX_RETRIES = 3; // 设置最大重试次数
-    private const float RETRY_DELAY = 1.0f; // 重试间隔（秒）
     
     [Header("UI组件引用")]
     [SerializeField] private Text loadingHintText;    // 加载提示文本
     [SerializeField] private Slider progressSlider;   // 进度条组件
     [SerializeField] private GameObject Loading;   // 进度条组件
     [SerializeField] private RectTransform rollingObject;   // 滚动的方块 (Image)
-
-    // [SerializeField] private Button AccountQuitBtn;   // 进度条组件
-    //[SerializeField] private RectTransform indicatorIcon; // 进度指示图标
-
-    [Header("加载配置")]
-    //[SerializeField] private float minLoadingTime = 5f; // 最小加载时间(秒)
-    [SerializeField] private int randomHintCount = 20;    // 随机提示数量
-
+    
     private AsyncOperation sceneLoadOperation;        // 场景加载操作
     private float loadStartTime;                      // 加载开始时间
     
@@ -86,14 +77,11 @@ public class LoadingController : MonoBehaviour
 
     private void Awake()
     {
-        loadingHintText.text = "";
-        //loadingHintText.transform.GetChild(0).GetComponent<Text>().text = "";
-        
+        if (Instance == null) Instance = this;
     }
 
     private void OnEnable()
     {
-        UnityMainThreadDispatcher.Instance();
         StartCoroutine(InitializeLoadingProcess());
     }
 
@@ -102,9 +90,7 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private IEnumerator InitializeLoadingProcess()
     {
-        InitializeLocalization();
         SetupRandomLoadingHint();
-        
 #if UNITY_OPENHARMONY
         if (!UIUtilities.isEditMode)
         {
@@ -116,29 +102,16 @@ public class LoadingController : MonoBehaviour
             AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
         }else{
             StartCoroutine(SimulateLoadingProgress());}
-#elif UNITY_huawei || UNITY_EDITOR
-
-        if (!UIUtilities.isEditMode)
-        {
-             Debug.Log($"进入初始化游戏服务流程");
-            //初始化游戏服务 
-            yield return InitializeGameService();
-            StartCoroutine(SimulateLoadingProgress());
-            // 初始化商店(需要等待游戏服务完成后)
-            Game.self.InitGame();
-            yield return new WaitUntil(() => _flowStatus == GameFlowStatus.LoggingIn);
-            HuaweiGameService.ShowFloatWindow();
-            // 登录开始
-            yield return LoadHuaweiGameLogin();
-            yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
-            //设置登录用户ID（需要等待游戏数据获取后）
-            AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
-        }
-        else
-        {
-            StartCoroutine(SimulateLoadingProgress());
-        }
 #endif
+        StartCoroutine(SimulateLoadingProgress());
+        yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.LoggingIn);
+        Debug.Log($"进入登录流程 " + Launch.Instance.flowStatus);
+        // 登录开始
+        StartCoroutine( LoadHuaweiGameLogin());
+        yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.Ready);
+        //设置登录用户ID（需要等待游戏数据获取后）
+        AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
+        LoadWordVocabulary();
         yield return APIGateway.Instance.LoginApi.Login((res)=> 
         {
             if (res != null)
@@ -147,27 +120,21 @@ public class LoadingController : MonoBehaviour
             }
             isLogined = true;
         });
-       
-        LoadWordVocabulary();
-
         yield return new WaitUntil(() => isLogined);
-        
-        
         yield return APIGateway.Instance.LoginApi.GetUserData(LoadUserData);
-        yield return APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
-        {
-            if (res != null)
-            {
-                Debug.Log("获取用户信息成功！"+ res.uid);
-                //GameDataManager.Instance.UserData.Zenlevel = res.zen_level;
-            }
-        });
+        // yield return APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
+        // {
+        //     if (res != null)
+        //     {
+        //         Debug.Log("获取用户信息成功！"+ res.uid);
+        //         //GameDataManager.Instance.UserData.Zenlevel = res.zen_level;
+        //     }
+        // });
     }
     
     // 加载数据
     private void LoadUserData(GameDataDto response)
     {
-        
         if (response == null)
         {
             Debug.Log("获取数据接口错误！，使用默认数据");
@@ -246,6 +213,7 @@ public class LoadingController : MonoBehaviour
     
     private void UserLocalData()
     {
+        GameDataManager.Instance.SetInitailized(true);
         ModifyUserWithABtest();
         StartCoroutine(LoadingSequence());
     }
@@ -302,17 +270,6 @@ public class LoadingController : MonoBehaviour
         }
         GameDataManager.Instance.SetNewUser(user);
     }
-
-
-    /// <summary>
-    /// 初始化本地化系统
-    /// </summary>
-    private void InitializeLocalization()
-    {
-        MultilingualManager.Instance.LoadLocalization();
-        // MultilingualManager.Instance.LoadLocalizationNameTable();
-        // MultilingualManager.Instance.InitbiddenWords();
-    }
     
     public async void LoadWordVocabulary()
     {
@@ -343,42 +300,7 @@ public class LoadingController : MonoBehaviour
         sceneLoadOperation.allowSceneActivation = true;
     }
 
-    private IEnumerator InitializeGameService()
-    {
-        Action<GameFlowStatus> statusSetter = (status) => { _flowStatus = status; };
-        if (_retryAttempt >= MAX_RETRIES)
-        {
-            _flowStatus = GameFlowStatus.InitFailed;
-            Debug.LogError($"初始化游戏服务失败,并退出游戏");
-            Application.Quit();
-            yield break;
-        }
-
-        _retryAttempt++;
-        _flowStatus = GameFlowStatus.Initializing;
-        HuaweiGameService.Init(new AntiAddictionHandler(), new InitHandler(statusSetter, () =>
-        {
-            _flowStatus = GameFlowStatus.InitFailed;
-            StartCoroutine(RetryAfterDelay(RETRY_DELAY));
-            Debug.LogError($"初始化游戏服务失败，重试次数：{_retryAttempt}");
-        }));
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.CheckingUpdate);
-        Debug.Log($"进入检查更新流程");
-        HuaweiGameService.CheckUpdate(new CheckUpdateListener(statusSetter));
-        Debug.Log($"检查更新流程完成");
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.LoggingIn);
-        Debug.Log($"进入登录流程");
-    }
-    
-    // 助手协程：用于在重试前等待一段时间
-    private IEnumerator RetryAfterDelay(float delay)
-    {
-        MessageSystem.Instance.ShowTip($"等待 {delay} 秒后重试...");
-        yield return new WaitForSeconds(delay);
-    
-        // 🔑 关键：重新启动初始化流程
-        StartCoroutine(InitializeGameService());
-    }
+  
     
     /// <summary>
     /// 模拟加载进度（确保最小加载时间）
@@ -412,6 +334,8 @@ public class LoadingController : MonoBehaviour
             rollingObject.localEulerAngles = new Vector3(0, 0, -progress * 360f);
             yield return null;
         }
+
+        yield return new WaitUntil(() => isLogined);
         Loading.GetComponent<CanvasGroup>().DOFade(0, 0.1f);
     }
 
@@ -452,36 +376,71 @@ public class LoadingController : MonoBehaviour
         yield return LoadMainSceneAsync();
     }
 
+    public void TryAgainClick()
+    {
+        StartCoroutine(LoadHuaweiGameLogin());
+    }
+
+    private IEnumerator LoadHuaweiLogin()
+    {
+        bool isLoginSuccess = false;
+        Debug.Log("开始华为登录流程...");
+        var hwAccount = Game.self.Accounts as Middleware.Account_huaweiandroid;
+     
+        bool callbackReceived = false;
+      
+        hwAccount.OnLoginComplete = (success, authAccount) =>
+        {
+            isLoginSuccess = success;
+            callbackReceived = true;
+        };
+        yield return new WaitUntil(() => callbackReceived);
+    }
     private IEnumerator LoadHuaweiGameLogin()
     {
-        Action<GameFlowStatus> statusSetter = (status) => { _flowStatus = status; };
-        
-        HuaweiGameService.SilentSignIn(new SilentLoginListener(statusSetter));
-        if (_flowStatus == GameFlowStatus.SilentFailed)
+        Action<GameFlowStatus> statusSetter = (status) => { Launch.Instance.flowStatus = status; };
+        // HuaweiGameService.SilentSignIn(new SilentLoginListener(statusSetter,1));
+        // if (Launch.Instance.flowStatus == GameFlowStatus.SilentFailed)
+        // {
+        //     HuaweiGameService.Login(new SilentLoginListener(statusSetter,2));
+        // }
+        var hwAccount = Game.self.Accounts as Middleware.Account_huaweiandroid;
+        hwAccount!.Login();
+        hwAccount.OnLoginComplete = (success, authAccount) =>
         {
-            HuaweiGameService.Login(new SilentLoginListener(statusSetter));
-        }
-        Debug.Log("登录完成, 当前状态" + _flowStatus );
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GetGamePlayer);
-        Player _player = null;
-        HuaweiGameService.GetGamePlayer(new GetGamePlayerListener(statusSetter, player=> _player = player));
-        Debug.Log("获取用户信息, 当前状态" + _flowStatus );
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GamePlayerSave);
-        AppPlayerInfo appPlayerInfo = new AppPlayerInfo();
-        appPlayerInfo.Rank = "test rank";
-        appPlayerInfo.Area = "test area";
-        appPlayerInfo.Role = GameDataManager.Instance.UserData.UserName;
-        appPlayerInfo.Sociaty = "sociaty";
-        appPlayerInfo.PlayerId = _player.PlayerId;
-        appPlayerInfo.OpenId = _player.OpenId;
-        Game.self.Accounts.UserId = _player.OpenId;
-        Game.self.Accounts.IsLogin = true;
-        
-        Debug.LogFormat("登录华为安卓用户时的数据: {0}", JsonConvert.SerializeObject(appPlayerInfo));
+            if(success)
+                Launch.Instance.flowStatus = GameFlowStatus.GetGamePlayer;
+            
+            // HuaweiGameService.
+        };
+        yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.GetGamePlayer);
+        Debug.Log("登录完成, 当前状态" + Launch.Instance.flowStatus );
+        Player player = null;
+        HuaweiGameService.GetGamePlayer(new GetGamePlayerListener(statusSetter, p=> player = p));
+        yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.GamePlayerSave && player != null);
+        Debug.Log("获取用户信息, 当前状态" + Launch.Instance.flowStatus);
+            AppPlayerInfo appPlayerInfo = new AppPlayerInfo();
+            appPlayerInfo.Rank = "test rank";
+            appPlayerInfo.Area = "test area";
+            appPlayerInfo.Role = (GameDataManager.Instance?.UserData != null) 
+                ? GameDataManager.Instance.UserData.UserName 
+                : "UnknownRole";
+            appPlayerInfo.Sociaty = "sociaty";
+            appPlayerInfo.PlayerId = player.PlayerId;
+            appPlayerInfo.OpenId = player.OpenId;
+            Debug.LogFormat("登录华为安卓用户时的数据: {0}", JsonConvert.SerializeObject(appPlayerInfo));
+            if (Game.self?.Accounts != null)
+            {
+                // Game.self.Accounts.UserId = player.OpenId;
+                Game.self.Accounts.IsLogin = true;
+            }
+            else
+            {
+                Debug.LogWarning("本地 Account 为空");
+            }
         HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));
-        Debug.Log("数据上报完成, 当前状态" + _flowStatus );
-        yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
-    
+        yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.Ready);
+        Debug.Log("数据上报完成, 当前状态" + Launch.Instance.flowStatus);
     }
 
     /// <summary>
@@ -502,134 +461,23 @@ public class LoadingController : MonoBehaviour
         HuaweiGameService.HideFloatWindow();
     }
 
-    // 🔑 1. 定义局部实现类 IAntiAddictionListener
-    private class AntiAddictionHandler : IAntiAddictionListener
-    {
-        public void OnExit()
-        {
-            Debug.Log("防沉迷退出回调：退出应用。");
-            GameDataManager.Instance.CommitGameData();
-            Application.Quit();
-        }
-    }
-    
-    // 🔑 2. 定义局部实现类 IInitListener
-    private class InitHandler : IInitListener
-    {
-        private readonly Action<GameFlowStatus> _onCompletedCallback;
-        private readonly Action  _onRetryAction;
-
-        public InitHandler(Action<GameFlowStatus> onCompletedCallback, Action onRetryAction = null)
-        {
-            _onCompletedCallback = onCompletedCallback;
-            _onRetryAction = onRetryAction;
-        }
-        public void OnSuccess()
-        {
-            HuaweiGameService.ShowFloatWindow();
-            _onCompletedCallback?.Invoke(GameFlowStatus.CheckingUpdate);
-        }
-
-        public void OnFailure(int code, string message)
-        {
-            string msg = $"JosAppsClient init failed, code:{code} message:{message}";
-            switch (code)
-            {
-                case 7002:
-                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                    {
-                        MessageSystem.Instance.ShowTip("请检查网络");
-                        _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
-                    });
-                    break;
-                case 7401:
-                    _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
-                    Application.Quit();
-                    break;
-                case 907135003:
-                    _onRetryAction?.Invoke();
-                    break;
-                default:
-                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                    {
-                         MessageSystem.Instance.ShowTip(msg);
-                        _onCompletedCallback?.Invoke(GameFlowStatus.InitFailed);
-                    });
-                    break;
-            }
-        }
-    }
-    
-    private class CheckUpdateListener : ICheckUpdateListener
-    {
-        private readonly Action<GameFlowStatus> _onCompletedCallback;
-
-        public CheckUpdateListener(Action<GameFlowStatus> onCompletedCallback)
-        {
-            _onCompletedCallback = onCompletedCallback;
-        }
-        public  void OnUpdateInfo(AndroidJavaObject intent)
-        {
-            if (intent !=null)
-            {
-                int status = intent.Call<int>("getIntExtra", "status", 0);
-                if (status==0)
-                {
-                    // 无需更新，直接进入下一阶段：登录
-                    _onCompletedCallback?.Invoke(GameFlowStatus.LoggingIn);
-                }
-                else if (status == 7)
-                {
-                    // 发现更新，等待用户操作或退出
-                    _onCompletedCallback.Invoke(GameFlowStatus.UpdateRequired);
-                    AndroidJavaObject apkUpgradeInfo = intent.Call<AndroidJavaObject>("getSerializableExtra", "updatesdk_update_info");
-                    HuaweiGameService.ShowUpdateDialog(apkUpgradeInfo, true);
-                    // bool isExit = intent.Call<bool>("getBooleanExtra", ",", false);
-                    // TODO
-                }
-                else
-                {
-                    _onCompletedCallback?.Invoke(GameFlowStatus.LoggingIn);
-                }
-            }
-            else
-            {
-                _onCompletedCallback?.Invoke(GameFlowStatus.LoggingIn);
-            }
-        }
-
-        public void OnMarketInstallInfo(AndroidJavaObject intent)
-        {
-           
-        }
-
-        public void OnMarketStoreError(int responseCode)
-        {
-           
-        }
-
-        public void OnUpdateStoreError(int responseCode)
-        {
-           
-        }
-    }
     
     private class SilentLoginListener : ILoginListener
     {
         private readonly Action<GameFlowStatus> _onLoginCompleted;
+        private int _step;
 
-        public SilentLoginListener(Action<GameFlowStatus> onLoginCompleted)
+        public SilentLoginListener(Action<GameFlowStatus> onLoginCompleted, int step)
         {
             _onLoginCompleted = onLoginCompleted;
+            _step = step;
         }
         public void OnSuccess(SignInAccountProxy signInAccountProxy)
         {
+            Debug.LogWarning("登录成功？" + signInAccountProxy);
             if (signInAccountProxy == null)
             {
-                UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                {
-                    _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
-                });
+                _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
                 return;
             }
             string msg = "get login success with signInAccountProxy info: \n";
@@ -637,25 +485,30 @@ public class LoadingController : MonoBehaviour
                 signInAccountProxy.DisplayName, signInAccountProxy.Email, signInAccountProxy.Uid, signInAccountProxy.OpenId, signInAccountProxy.UnionId,
                 signInAccountProxy.AccessToken, signInAccountProxy.ServerAuthCode, signInAccountProxy.IdToken);
             // MessageSystem.Instance.ShowTip(msg);
-           _onLoginCompleted.Invoke(GameFlowStatus.GetGamePlayer);
+            // Debug.Log(msg);
+            _onLoginCompleted.Invoke(GameFlowStatus.GetGamePlayer);
         }
 
         public void OnSignOut()
         {
-            string msg = "sign out success.";
+            Debug.LogWarning("OnSignOut？" );
             UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
-                MessageSystem.Instance.ShowTip(msg);
+                // MessageSystem.Instance.ShowTip(msg);
+                Game.self.ShowLoginErrorPanel();
             });
         }
 
         public void OnFailure(int code, string message)
         {
             string msg = "account method failed, code:" + code + " message:" + message;
+            Debug.LogWarning(msg);
             UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
-                MessageSystem.Instance.ShowTip(msg);
+                // MessageSystem.Instance.ShowTip(msg);
                 _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
+                if (_step == 2) 
+                    Game.self.ShowLoginErrorPanel();
             });
         }
     }
@@ -676,7 +529,7 @@ public class LoadingController : MonoBehaviour
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
                     _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
-                    MessageSystem.Instance.ShowTip("用户信息为空,请检查！");
+                    // MessageSystem.Instance.ShowTip("用户信息为空,请检查！");
                 });
                 return;
             }
@@ -685,17 +538,23 @@ public class LoadingController : MonoBehaviour
                 "displayName:{0}, playerId:{1}, playerSign:{2}, openId:{3}, unionId:{4}, openIdSign:{5}, accessToken:{6}",
                 player.DisplayName, player.PlayerId, player.PlayerSign, player.OpenId, player.UnionId, player.OpenIdSign, player.AccessToken
             );
-            _owner?.Invoke(player);
-            _onGetPlayerCompleted?.Invoke(GameFlowStatus.GamePlayerSave);
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            {
+                _owner?.Invoke(player);
+                Debug.Log(msg);
+                _onGetPlayerCompleted?.Invoke(GameFlowStatus.GamePlayerSave);
+            });
         }
 
         public void OnFailure(int code, string message)
         {
             var msg = "getCurrentPlayer failed, code:" + code + " message:" + message;
+        
             UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
+                Debug.LogWarning(msg);
                 _onGetPlayerCompleted?.Invoke(GameFlowStatus.GetGamePlayerFailed);
-                MessageSystem.Instance.ShowTip(msg);
+                // MessageSystem.Instance.ShowTip(msg);
             });
         }
     }
@@ -712,19 +571,10 @@ public class LoadingController : MonoBehaviour
         {
             _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
         }
-        
         public void OnFailure(int code, string message)
         {
+            Debug.LogWarning($"数据上报失败： {code} - {message}");
             _onSavePlayerInfoCompleted?.Invoke(GameFlowStatus.Ready);
         }
-    }
-    [Preserve]
-    public void AotHelper()
-    {
-        // 强制引用 HashSet<int> 的构造函数，防止被裁剪
-        var dummy1 = new HashSet<int>();
-    
-        // 同时也为了防止 List 被裁剪（虽然 List 通常没事）
-        var dummy2 = new List<int>();
     }
 }

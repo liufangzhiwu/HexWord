@@ -204,7 +204,7 @@ namespace Middleware
         private void OnAdFinishedOrClosed()
         {
             IsPlaying = false;
-            Debug.Log("[Ads_huawei] OnAdFinishedOrClosed"+IsPlaying);
+            Debug.Log("[Ads_huawei] OnAdFinishedOrClosed "+IsPlaying);
             _isShowingReward = false; // 重置展示状态，允许下一次点击
             _isUserWaiting = false;
         }
@@ -230,6 +230,7 @@ namespace Middleware
             
             public override void onRewardedLoaded()
             {
+                Debug.Log($"[MRewardLoadListener]RewardedLoaded ...");
                 _parent.OnRewardAdLoaded(_ad, _autoShow);
             }
         }
@@ -237,50 +238,88 @@ namespace Middleware
         private class MRewardAdStatusListener : RewardAdStatusListener
         {
             private readonly Ads_huawei _parent;
-            private readonly Action<bool> _callback;
-
+            private Action<bool> _callback;
+            private bool _hasRewarded = false; // 【关键修改】新增标志位
+            
+            private const string TAG = "[HuaweiAdsListener]";
+            
             public MRewardAdStatusListener(Ads_huawei parent, Action<bool> callback)
             {
                 this._parent = parent;
                 this._callback = callback;
+                this._hasRewarded = false; // 初始化
+                Debug.Log($"{TAG} Listener created. Callback valid? {callback != null}");
             }
             public override void onRewardAdOpened()
             {
+                _parent.OnAdOpened();
                 // base.onRewardAdOpened();
                 // MessageSystem.Instance.ShowTip($"[激励广告被打开]RewardAdOpened show");
-                _parent.OnAdOpened();
+                Debug.Log($"{TAG} onRewardAdOpened | ThreadID: {System.Threading.Thread.CurrentThread.ManagedThreadId}");
             }
             public override void onRewardAdClosed()
             {
                 _parent.OnAdFinishedOrClosed();
+                int tid = System.Threading.Thread.CurrentThread.ManagedThreadId;
+                Debug.Log($"{TAG} onRewardAdClosed called | ThreadID: {tid}");
+                
+               
+                Debug.Log($"{TAG} Enqueueing Close callback (false)...");
                 //可以领取奖励关闭回调
                 // base.onRewardAdClosed();
                 // MessageSystem.Instance.ShowTip($"[激励广告被关闭]RewardAdClosed");
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
-                    MessageSystem.Instance.HideLoadingAnimation();
-                    _callback?.Invoke(false);
+                    Debug.Log($"{TAG} [MainThread] Executing Close logic. | ThreadID: {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+                    if (MessageSystem.Instance != null)
+                    {
+                        MessageSystem.Instance.HideLoadingAnimation();
+                    }
+                    else
+                    {
+                        Debug.LogError($"{TAG} MessageSystem.Instance is NULL!");
+                    }
+
+                    if (!_hasRewarded && _callback != null)
+                    {
+                        _callback.Invoke(false);
+                        Debug.Log($"{TAG} Callback(false) invoked successfully.");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"{TAG} Callback is NULL, cannot invoke.");
+                    }
+                    _callback = null; // 确保引用释放
                 });
             }
             public override void onRewardAdFailedToShow(int arg0)
             {
                 _parent.OnAdFinishedOrClosed();
+                Debug.LogError($"{TAG} onRewardAdFailedToShow | ErrorCode: {arg0} | ThreadID: {System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 // base.onRewardAdFailedToShow(arg0);
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
+                    Debug.Log($"{TAG} [MainThread] Executing Failed logic.");
                     MessageSystem.Instance.HideLoadingAnimation();
                     _callback?.Invoke(false);
+                    _callback = null;
                 });
                 // MessageSystem.Instance.ShowTip($"[激励广告展示失败] RewardAdFailedToShow errorCode:{arg0}");
             }
             public override void onRewarded(Reward arg0)
             {
+                // 标记已经获得奖励
+                _hasRewarded = true;
+                Debug.Log($"{TAG} onRewarded | Reward: | ThreadID: {System.Threading.Thread.CurrentThread.ManagedThreadId}");
                 // base.onRewarded(arg0);
                 // MessageSystem.Instance.ShowTip($"[激励广告完成] RewardAdFailedToShow errorCode:{arg0}");
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
+                    Debug.Log($"{TAG} [MainThread] Executing Rewarded logic (true).");
                     MessageSystem.Instance.HideLoadingAnimation();
                     _callback?.Invoke(true);
+                    Debug.Log($"{TAG} Callback(true) invoked.");
+                    // _callback = null; // 【防御性编程】调用后置空，防止后续重复调用
                 });
             }
         }

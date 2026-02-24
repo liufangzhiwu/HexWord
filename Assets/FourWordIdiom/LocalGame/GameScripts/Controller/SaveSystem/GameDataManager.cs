@@ -180,7 +180,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         butterfly.LoadData();
         dynamicHard.LoadData();
         // chessDynamicHard.LoadData();
-        dataInitialized = true;
+        // dataInitialized = true;
     }
     #endregion
 
@@ -377,14 +377,17 @@ public class GameDataManager : SingletonMono<GameDataManager>
         {
             //初始化完成后才可以保存，不然保存的数据都为默认数值
             if (dataInitialized)
+            {
                 CommitGameData();
        
-            if(Game.self?.Ads?.IsPlaying == true) return; //播放广告中
-            AnalyticMgr.GameEnd();
+                if(Game.self?.Ads?.IsPlaying == true) return; //播放广告中
+                AnalyticMgr.GameEnd();
                 
-            StopTracking();
-            requireFocusCheck = true;
-            Debug.Log("应用进入后台，数据已保存");
+                StopTracking();
+                requireFocusCheck = true;
+                Debug.Log("应用进入后台，数据已保存");
+            }
+                
         }
         else if (requireFocusCheck)
         {

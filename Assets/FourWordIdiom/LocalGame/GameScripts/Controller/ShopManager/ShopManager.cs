@@ -175,7 +175,7 @@ public class ShopManager : MonoBehaviour
 
                 float price =purchaseType >= 0? float.Parse(fields[6].Trim().Trim('"')):0; // 去掉引号
                 string showIcon = fields[7].Trim();
-                string name = fields[8].Trim();
+                string name = fields[3].Trim();
                 string des = fields[9].Trim();
                 string pointdes = fields[10].Trim();
                 string isHomeDisplay = fields[11].Trim();
@@ -485,7 +485,7 @@ public class ShopManager : MonoBehaviour
             }
         }
         
-        MessageSystem.Instance.ShowTip("购买成功！");
+        MessageSystem.Instance.ShowTip($"{shopDataItem.name} 购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
     }
     
