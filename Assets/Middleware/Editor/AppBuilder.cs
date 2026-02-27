@@ -260,7 +260,7 @@ namespace Middleware
 			PlayerSettings.stripEngineCode = true;
 			//PlayerSettings.bundleVersion = buildParam.BuildVersion;
 			PlayerSettings.OpenHarmony.bundleVersionCode = GenBuildNumber();
-			PlayerSettings.OpenHarmony.compatibleSdkVersion = 14;
+			//PlayerSettings.OpenHarmony.compatibleSdkVersion = 14;
 			PlayerSettings.OpenHarmony.targetArchitectures = OpenHarmonyArchitecture.ARM64;
 			//账户设置
 			//SetDefaultIcon(1);
