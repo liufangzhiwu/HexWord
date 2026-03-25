@@ -24,6 +24,7 @@ namespace Middleware
         private Dictionary<AdType, Advertisement> _preloadedAds = new Dictionary<AdType, Advertisement>();
         private bool _isNeedShow = false;
         private bool _isPreloading = false;
+        private bool _isRewarded = false;
         private float _preloadInterval = 30f; // 预加载间隔时间（秒）
         private DateTime _lastPreloadTime = DateTime.MinValue;
         
@@ -181,6 +182,7 @@ namespace Middleware
             _completeCallback = callback;
             _adType = AdType.Reward;
             _isNeedShow = true;
+            _isRewarded = false;
             
             // 检查是否有预加载的激励视频广告
             var preloadedAd = GetPreloadedAd(AdType.Reward);
@@ -343,7 +345,7 @@ namespace Middleware
         {
             _completeCallback?.Invoke(success);
             _completeCallback = null;
-            
+            _isRewarded = false;
             // 广告展示完成后，触发重新预加载
             if (success)
             {
@@ -351,7 +353,7 @@ namespace Middleware
             }
         }
 
-        private void OnLoadAdsTrigger(SignalBase signal)
+       private void OnLoadAdsTrigger(SignalBase signal)
         {
             if (!signal.hasError())
             {
@@ -370,25 +372,33 @@ namespace Middleware
                         _preloadedAds[(AdType)ad.adType] = ad;
                         _isPreloading = false;
                         Debug.Log($"[AD]预加载广告完成: {(AdType)ad.adType}");
+                        MessageSystem.Instance.HideLoadingAnimation();
                     }
                     else
                     {
                         // 立即展示的广告
-                        DisplayAd(ad);
+                        if(!_isPreloading)
+                            DisplayAd(ad);
                     }
                 }
                 else
                 {
                     Debug.Log($"[OnLoadAdsTrigger]targetSignal Ad null, Code :{signal.code} Message : {signal.message}");
-                    CallbackAd(false);
+                    if(!_isPreloading)
+                        CallbackAd(false);
                     MessageSystem.Instance.HideLoadingAnimation();
                 }
             }
             else
             {
                 Debug.Log($"[OnLoadAdsTrigger]LoadAds Error, Code :{signal.code} Message : {signal.message}");
-                _isPreloading = false; // 预加载失败，重置状态
-                CallbackAd(false);
+               
+                if(!_isPreloading)
+                    CallbackAd(false);
+                else
+                {
+                    _isPreloading = false; // 预加载失败，重置状态
+                }
                 MessageSystem.Instance.HideLoadingAnimation();
             }
         }
@@ -418,12 +428,15 @@ namespace Middleware
                 if (targetSignal.AdStatus == "onAdReward" ||
                     targetSignal.AdStatus == "onVideoPlayEnd" && _adType == AdType.Reward)
                 {
-                   
-                    CallbackAd(true);
+                    _isRewarded = true;
                 }
                
                 if (targetSignal.AdStatus == "onAdClose" || targetSignal.AdStatus == "onAdFail")
                 {
+                    if (_adType == AdType.Reward)
+                    {
+                        CallbackAd(_isRewarded);
+                    }
                     Game.self.ResumeGame();
                     
                     // 广告关闭或失败后，尝试重新预加载

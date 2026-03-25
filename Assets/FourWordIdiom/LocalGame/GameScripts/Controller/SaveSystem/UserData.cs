@@ -101,7 +101,7 @@ public class UserData
     
     public string firstPayTime;//首次充值时间
     public string lastPayTime;//最后充值时间
-    public long firstLoginStamp;//首次登录时间戳
+    public string firstLoginTime;//首次登录时间
     public string lastLoginDay;//最后登录时间
 
     #endregion
@@ -263,7 +263,7 @@ public class UserData
         logoutTime = DateTime.Now.ToString();
         firstPayTime = DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss");
         lastPayTime = DateTime.MinValue.ToString("yyyy-MM-dd HH:mm:ss");
-        firstLoginStamp = DateTime.Now.Ticks;
+        firstLoginTime = DateTime.Now.ToString();
         lastLoginDay = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         curStageStartTime = null;
         curStageOnlineTime = 0;
@@ -344,7 +344,7 @@ public class UserData
         IsSoundOn = user.IsSoundOn;
         IsAgreePrivacy = user.IsAgreePrivacy;
         Rigister = user.Rigister;
-        firstLoginStamp = user.firstLoginStamp;
+        firstLoginTime = user.firstLoginTime ?? DateTime.Now.ToString();
         lastLoginDay = user.lastLoginDay;
         firstPayTime = user.firstPayTime;
         lastPayTime = user.lastPayTime;

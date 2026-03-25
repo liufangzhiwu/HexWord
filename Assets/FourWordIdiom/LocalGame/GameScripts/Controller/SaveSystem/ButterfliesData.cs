@@ -21,6 +21,8 @@ public class ButterflyData
     
     public HashSet<int> butterflies;  // 收集的蝴蝶
     public HashSet<int> gardens;      // 开启的蝶园
+    
+    public string gardensOpenTime;       // 蝶园开启时间
 
     public string Getfilepath => Path.Combine(Application.persistentDataPath, "ButterflyData.json");
 
@@ -36,6 +38,8 @@ public class ButterflyData
         this.gardens = new HashSet<int>();
         IsOpenButterfly = false;
         gardens.Add(1);
+        
+        gardensOpenTime=DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
     }
 
     public void InitData(ButterflyData data)
@@ -47,6 +51,7 @@ public class ButterflyData
         butterflies = data.butterflies;
         gardens = data.gardens;
         IsOpenButterfly=data.IsOpenButterfly;
+        gardensOpenTime=data.gardensOpenTime??DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
     }
     
     public void LoadData()

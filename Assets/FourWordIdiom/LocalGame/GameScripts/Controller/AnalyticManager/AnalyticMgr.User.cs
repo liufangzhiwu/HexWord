@@ -6,7 +6,7 @@ using UnityEngine;
 public partial class AnalyticMgr
 {
     #region 进度相关
-    private static DateTime? _startTime;
+    private static DateTime? _startTime;// 使用 记录开始时间
     
     public static void GameStart()
     {
@@ -33,19 +33,55 @@ public partial class AnalyticMgr
     /// </summary>
     private static void SetLoginProperties()
     {
-         
-        if (GameDataManager.Instance.UserData.lastLoginDay != DateTime.Now.ToString("yyyy-MM-dd"))
-            GameDataManager.Instance.UserData.activeDayCnt ++;
-        GameDataManager.Instance.UserData.lastLoginDay = DateTime.Now.ToString("yyyy-MM-dd");
+        var userData = GameDataManager.Instance.UserData;
+        var now = DateTime.Now;
+        var today = now.Date;
+
+        // 处理首次登录（仅在首次时设置，避免 OnAnalyticsSdkInit 中重复覆盖）
+        if (string.IsNullOrEmpty(userData.firstLoginTime))
+        {
+            userData.firstLoginTime = now.ToString("yyyy-MM-dd HH:mm:ss");
+            userData.activeDayCnt = 1;
+            userData.lastLoginDay = today.ToString("yyyy-MM-dd");
+            userData.totallogin = 1;
+        }
+        else
+        {
+            // 非首次登录：更新活跃天数（基于上次登录日期）
+            if (DateTime.TryParse(userData.lastLoginDay, out var lastLoginDate))
+            {
+                if (lastLoginDate.Date != today)
+                {
+                    userData.activeDayCnt++;
+                }
+            }
+            else
+            {
+                // 解析失败，保守增加
+                userData.activeDayCnt++;
+            }
+
+            userData.totallogin++;
+            userData.lastLoginDay = today.ToString("yyyy-MM-dd");
+        }
+
+        // 记录本次登录开始时间
+        _startTime = now;
+
+        // 计算生命周期天数（基于首次登录时间）
+        int lifeDays = 0;
+        if (!string.IsNullOrEmpty(userData.firstLoginTime) &&
+            DateTime.TryParse(userData.firstLoginTime, out var firstLoginDate))
+        {
+            lifeDays = (today - firstLoginDate.Date).Days+ 1; // +1 表示第1天
+            Debug.Log("当前时间："+today.ToString("yyyy-MM-dd HH:mm:ss")+"周期天数 life:"+lifeDays);
+        }
         
-        _startTime = DateTime.Now;
-        var span = new TimeSpan(_startTime.Value.Ticks - GameDataManager.Instance.UserData.firstLoginStamp);
-        var firstLoginTime = new DateTime(GameDataManager.Instance.UserData.firstLoginStamp);
         var properties = new Dictionary<string, object>
         {
             //时间类
-            { "first_login_time", firstLoginTime.ToString("yyyy-MM-dd HH:mm:ss")},
-            { "last_login_time", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") },
+            { "first_login_time",userData.firstLoginTime},
+            { "last_login_time", now.ToString("yyyy-MM-dd HH:mm:ss")},
             { "first_pay_time", GameDataManager.Instance.UserData.firstPayTime},
             { "last_pay_time", GameDataManager.Instance.UserData.lastPayTime},
             //累积类
@@ -55,7 +91,7 @@ public partial class AnalyticMgr
             { "total_ad_times", GameDataManager.Instance.UserData.totalSeeAds},
             { "total_item_cost", GameDataManager.Instance.UserData.GetTotalToolCost()},
             { "active_day", GameDataManager.Instance.UserData.activeDayCnt},
-            { "life_day", span.Days + 1},
+            { "life_day", lifeDays},
         };
         Game.self?.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
         
@@ -95,6 +131,10 @@ public partial class AnalyticMgr
     /// </summary>
     public static void SetCommonProperties()
     {
+        
+        var userData = GameDataManager.Instance.UserData;
+        if(userData==null)  return;
+        
         int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
         
         switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
@@ -109,8 +149,14 @@ public partial class AnalyticMgr
                 levelId = GameDataManager.Instance.UserData.CurrentHexStage;
                 break;
         }
-        
-        var span = new TimeSpan(DateTime.Now.Ticks - GameDataManager.Instance.UserData.firstLoginStamp);
+
+        // 计算生命周期天数（基于首次登录时间）
+        int lifeDays = 0;
+        if (!string.IsNullOrEmpty(userData.firstLoginTime) &&
+            DateTime.TryParse(userData.firstLoginTime, out var firstLoginDate))
+        {
+            lifeDays = (DateTime.Now.Date - firstLoginDate.Date).Days+ 1; // +1 表示第1天
+        }
      
         var properties = new Dictionary<string, object>
         {
@@ -120,8 +166,8 @@ public partial class AnalyticMgr
             {"flyItem",GameDataManager.Instance.UserData.toolInfo[103].count},
             {"level_id",levelId},
             {"level_type",GameDataManager.Instance.UserData.GetLevelMode()},
-            { "active_day_event", GameDataManager.Instance.UserData.activeDayCnt},
-            { "life_day_event", span.Days + 1},
+            { "active_day_event", userData.activeDayCnt},
+            { "life_day_event", lifeDays}
         };
             Game.self.Analytics.SetCommonProperties(properties);
     }
@@ -134,7 +180,6 @@ public partial class AnalyticMgr
             Game.self.Analytics.LogEvent("ta_app_startFirst", Define.DataTarget.Think);
             Game.self.Analytics.LogEvent("register", Define.DataTarget.Think);
             GameDataManager.Instance.UserData.Rigister = true;
-            GameDataManager.Instance.UserData.firstLoginStamp = DateTime.Now.Ticks;
         }
         
         SetCommonProperties();

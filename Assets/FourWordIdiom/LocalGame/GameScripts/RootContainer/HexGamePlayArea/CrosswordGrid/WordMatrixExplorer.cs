@@ -89,16 +89,26 @@ public class WordMatrixExplorer
                         
                         StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
                         
-                        List<char> cellChars = CurStageInfo.CurBoardData.board[leftBlock.position.x][leftBlock.position.y];
+                        List<char> cellChars = GameBoard.board[leftBlock.position.x][leftBlock.position.y];
                         
                         int findCharCount = cellChars.FindAll(x => x == targetChar).Count;
                         
-                        if(findCharCount<=1) continue;
+                        if(findCharCount<1) continue;
+                        
+
+                        // 找到所有等于 targetChar 的字符的索引
+                        var indices = cellChars.Select((c, i) => new { Char = c, Index = i })
+                            .Where(x => x.Char == targetChar)
+                            .Select(x => x.Index)
+                            .ToList();
+
+                        int index = indices[0];
                         
                         char oldcellChar = GameBoard.board[leftBlock.position.x][leftBlock.position.y][0];
                         
                         GameBoard.board[leftBlock.position.x][leftBlock.position.y][0] = targetChar;
-                        GameBoard.board[leftBlock.position.x][leftBlock.position.y][1] = oldcellChar;
+                        
+                        GameBoard.board[leftBlock.position.x][leftBlock.position.y][index] = oldcellChar;
 
                         discoveredWords.Add(word);
                         return discoveredWords;

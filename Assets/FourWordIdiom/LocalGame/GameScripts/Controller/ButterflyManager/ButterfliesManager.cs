@@ -445,12 +445,17 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         if (butterflyGrow == null || GameDataManager.Instance.ButterflyData.currPupa < butterflyGrow.Count) 
             return false;
         
+        if (string.IsNullOrEmpty(GameDataManager.Instance.ButterflyData.gardensOpenTime)) 
+            GameDataManager.Instance.ButterflyData.gardensOpenTime = DateTime.Now.ToString();
+        TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(GameDataManager.Instance.ButterflyData.gardensOpenTime));
+        
         // 检查是否已经完成的蝶园, 已经满的蝶园不再处理
         List<ButterflyInfo> checkGardenButterflies = GetCurrentGardenButterflies();
         bool checkAllCollected = checkGardenButterflies.All(p=> GameDataManager.Instance.ButterflyData.butterflies.Contains(p.Id));
         if (checkAllCollected)
         {
             MessageSystem.Instance.ShowTip("当前蝶园已经收集完了！");
+            AnalyticMgr.ActivityComplete("蝶园活动", (int)ts.TotalSeconds);
             return false;
         }
         // --- 核心解锁逻辑 ---
@@ -458,6 +463,9 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         ButterflyInfo randomInfo = RandomButterflyByCurrentGarden();
         GameDataManager.Instance.ButterflyData.AddButterfly(randomInfo.Id);
         callback?.Invoke(randomInfo);
+        
+        int butterflyCount=GameDataManager.Instance.ButterflyData.butterflies.Count;
+        AnalyticMgr.ActivityProgress("蝶园活动", butterflyCount, (int)ts.TotalSeconds);
         
         // 检查一下是否收集完，进入下一个蝶园 
         // 若玩家收集齐最后一个场景的蝴蝶，则不再播放转场动画，而是提示“下个场景正在制作中”；在下个场景实装时，玩家进入该界面会自动播放转场动画

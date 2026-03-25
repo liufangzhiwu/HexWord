@@ -114,6 +114,8 @@ public sealed class GameCoreManager: MonoBehaviour
             //ShowPrivacyScreen();
             // 标记非首次进入
             GameDataManager.Instance.UserData.IsFirstLaunch = false;
+            
+            AnalyticMgr.ActivityBegin("蝶园活动");
         }
         else
         {
