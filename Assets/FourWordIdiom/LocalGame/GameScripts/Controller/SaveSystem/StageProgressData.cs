@@ -30,6 +30,9 @@ public class StageProgressData
         StageId = stageInfo.StageNumber;
         Puzzles = stageInfo.Puzzles;
         BoardSnapshot = stageInfo.CurBoardData;
+        
+        stageInfo.ProcessPupaData();
+        
         PupaDatas = stageInfo._pupaData;
     }
 
@@ -45,6 +48,7 @@ public class StageProgressData
         this.PuzzleHints = sourceData.PuzzleHints != null ? 
             new List<string>(sourceData.PuzzleHints) : new List<string>();
         this.BoardSnapshot = sourceData.BoardSnapshot;
+
     }
     #endregion
 

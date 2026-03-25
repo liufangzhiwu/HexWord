@@ -152,6 +152,8 @@ public class StageInfo
         _StageNumber = StageNumber;
 
         LoadStageData(); // 立即加载数据
+        
+        SetPupaNeighBors();
     }
 
     #endregion
@@ -209,8 +211,6 @@ public class StageInfo
 
         // 5. 解析russ数据（成语列表）
         ParseRussData(russContent);
-    
-        ProcessPupaData();
         
         _isStageFileLoaded = true;
     }
@@ -699,7 +699,17 @@ public class StageInfo
     }
 
     // 使用方法示例
-    private void ProcessPupaData()
+    public void ProcessPupaData()
+    {
+        SetPupaNeighBors();
+        
+        bool canCreate = ButterfliesManager.Instance.CanObtainedPupa();
+
+        if (!canCreate) _pupaData = null;
+    }
+    
+    // 获取邻居数据
+    public void SetPupaNeighBors()
     {
         var emptyCellsWithAllNeighbors = FindEmptyCellsWithAllNeighbors();
         
@@ -720,6 +730,7 @@ public class StageInfo
                         position = new Vector2Int(row, col),
                         breakProgress = 0,
                     };
+                    
                     
                     PupaNeighbors = neighbors;
                 }
