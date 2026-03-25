@@ -795,6 +795,8 @@ public class HexGamePlayArea : UIWindow
         else
         {
             MessageSystem.Instance.ShowTip("TipAllWordPrompted");
+            
+            AnalyticMgr.BugRecord("关卡卡关 "+Application.version,"");
         }   
         
         SingleTipLight.gameObject.SetActive(false);
@@ -935,6 +937,7 @@ public class HexGamePlayArea : UIWindow
         else
         {
             MessageSystem.Instance.ShowTip("TipAllWordPrompted");
+            AnalyticMgr.BugRecord("关卡卡关 "+Application.version,"");
         }    
         
         SingleTipLight.gameObject.SetActive(false);

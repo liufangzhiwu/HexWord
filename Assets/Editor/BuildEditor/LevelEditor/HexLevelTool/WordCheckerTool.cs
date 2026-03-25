@@ -16,13 +16,16 @@ public class WordCheckerTool : EditorWindow
     // 数据存储
     private HashSet<string> bankWords = new HashSet<string>();
     private Dictionary<string, List<string>> missingWordsByStage = new Dictionary<string, List<string>>();
+    private Dictionary<string, List<string>> duplicatesByStage = new Dictionary<string, List<string>>(); // 新增：存储重复字符信息
     private int totalStagesChecked = 0;
     private int totalWordsChecked = 0;
     private int totalMissingWords = 0;
 
     // UI相关
     private Vector2 scrollPosition;
+    private Vector2 scrollPositionDuplicates; // 新增：重复信息滚动位置
     private bool showDetails = true;
+    private bool showDuplicates = true;
     private string searchFilter = "";
     private List<string> allMissingWords = new List<string>();
 
@@ -76,13 +79,14 @@ public class WordCheckerTool : EditorWindow
         EditorGUILayout.HelpBox(
             $"已检查关卡: {totalStagesChecked}\n" +
             $"检查词语总数: {totalWordsChecked}\n" +
-            $"缺失词语总数: {totalMissingWords}",
+            $"缺失词语总数: {totalMissingWords}\n" +
+            $"有重复字符的关卡: {duplicatesByStage.Count}",
             MessageType.None
         );
 
         EditorGUILayout.Space();
 
-        // 显示结果
+        // 显示缺失词语详情
         showDetails = EditorGUILayout.Foldout(showDetails, $"缺失词语详情 ({missingWordsByStage.Count} 个关卡有缺失)");
 
         if (showDetails && missingWordsByStage.Count > 0)
@@ -116,6 +120,35 @@ public class WordCheckerTool : EditorWindow
                     EditorGUILayout.LabelField($"• {word}");
                 }
 
+                EditorGUI.indentLevel--;
+
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space(5);
+            }
+
+            EditorGUILayout.EndScrollView();
+        }
+
+        // 显示重复字符详情
+        EditorGUILayout.Space();
+        showDuplicates = EditorGUILayout.Foldout(showDuplicates, $"重复字符详情 ({duplicatesByStage.Count} 个关卡有重复)");
+
+        if (showDuplicates && duplicatesByStage.Count > 0)
+        {
+            scrollPositionDuplicates = EditorGUILayout.BeginScrollView(scrollPositionDuplicates);
+
+            foreach (var stage in duplicatesByStage.Keys.OrderBy(k => ExtractNumberFromFileName(k)))
+            {
+                var duplicates = duplicatesByStage[stage];
+
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.LabelField($"{stage} ({duplicates.Count} 处重复)", EditorStyles.boldLabel);
+
+                EditorGUI.indentLevel++;
+                foreach (var info in duplicates)
+                {
+                    EditorGUILayout.LabelField($"• {info}");
+                }
                 EditorGUI.indentLevel--;
 
                 EditorGUILayout.EndVertical();
@@ -228,6 +261,7 @@ public class WordCheckerTool : EditorWindow
 
         // 清空之前的结果
         missingWordsByStage.Clear();
+        duplicatesByStage.Clear(); // 清空重复信息
         allMissingWords.Clear();
         totalStagesChecked = 0;
         totalWordsChecked = 0;
@@ -283,7 +317,8 @@ public class WordCheckerTool : EditorWindow
                              $"已检查: {totalStagesChecked} 个关卡\n" +
                              $"检查词语: {totalWordsChecked} 个\n" +
                              $"缺失词语: {totalMissingWords} 个\n" +
-                             $"有缺失的关卡: {missingWordsByStage.Count} 个";
+                             $"有缺失的关卡: {missingWordsByStage.Count} 个\n" +
+                             $"有重复字符的关卡: {duplicatesByStage.Count} 个";
 
             EditorUtility.DisplayDialog("完成", message, "确定");
 
@@ -303,10 +338,15 @@ public class WordCheckerTool : EditorWindow
     private void CheckSingleStage(string filePath, string stageName)
     {
         string content = File.ReadAllText(filePath, Encoding.UTF8);
-        List<string> stageWords = ExtractWordsFromStage(ExtractNumberFromFileName(stageName), content);
-
+        int stageId = ExtractNumberFromFileName(stageName);
+        
+        // 解析russ字段，获取词语列表和位置映射
+        List<string> stageWords = new List<string>();
+        Dictionary<string, List<string>> positionToWords = new Dictionary<string, List<string>>();
+        ParseRuss(stageId, content, stageWords, positionToWords);
+        
+        // 检查词语缺失
         List<string> missingWords = new List<string>();
-
         foreach (string word in stageWords)
         {
             totalWordsChecked++;
@@ -320,35 +360,162 @@ public class WordCheckerTool : EditorWindow
                 }
             }
         }
-
         if (missingWords.Count > 0)
         {
             missingWordsByStage[stageName] = missingWords;
         }
+        
+        // 解析pass字段，检查每个位置的字符重复
+        Dictionary<string, List<string>> positionToChars = ParsePass(stageId, content);
+        List<string> stageDuplicates = new List<string>();
+
+        foreach (var kvp in positionToChars)
+        {
+            string position = kvp.Key;
+            List<string> chars = kvp.Value;
+            
+            // 检查是否有重复字符
+            var duplicates = chars.GroupBy(c => c).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+            if (duplicates.Count > 0)
+            {
+                // 获取该位置对应的词语
+                List<string> relatedWords=new List<string>();
+                if (positionToWords.ContainsKey(position))
+                {
+                    List<string> valueWords = positionToWords[position];
+                    foreach (var word in valueWords)
+                    {
+                        if (word.Contains(duplicates[0]))
+                        {
+                            relatedWords.Add(word);
+                        }
+                    }
+                }
+                
+                string wordsStr = relatedWords.Count > 0 ? string.Join(", ", relatedWords) : "未知词语";
+
+                if (wordsStr.Contains(duplicates[0]))
+                {
+                    string duplicateInfo = $"位置 {position} 存在重复字符: {string.Join(", ", duplicates)}，涉及词语: {wordsStr}";
+                    stageDuplicates.Add(duplicateInfo);
+                     Debug.LogWarning($"关卡 {stageName} {duplicateInfo}");
+                }
+            }
+        }
+
+        if (stageDuplicates.Count > 0)
+        {
+            duplicatesByStage[stageName] = stageDuplicates;
+        }
     }
 
     /// <summary>
-    /// 从关卡内容中提取词语
+    /// 解析russ字段，填充词语列表和位置映射
     /// </summary>
-    private List<string> ExtractWordsFromStage(int stageId, string content)
+    private void ParseRuss(int stageId, string content, List<string> stageWords, Dictionary<string, List<string>> positionToWords)
     {
-        List<string> words = new List<string>();
-
-      
-        // 首先找到"russ"字段
-        int russStart = content.IndexOf($"\"{stageId}_russ\":");
-        if (russStart == -1)
+        string russField = $"\"{stageId}_russ\":";
+        int russStart = content.IndexOf(russField);
+        if (russStart == -1) return;
+        
+        // 提取russ值
+        string russValue = ExtractFieldValue(content, russStart);
+        if (string.IsNullOrEmpty(russValue)) return;
+        
+        // 按管道符分割成语条目
+        string[] phraseEntries = russValue.Split('|');
+        foreach (string entry in phraseEntries)
         {
-            // 如果没有找到，可能是不同的命名方式
-            return words;
+            if (string.IsNullOrWhiteSpace(entry)) continue;
+            
+            // 格式："无主题"_国泰民安_1:1_国_7_6#1_泰_7_5#1_民_7_4#1_安_7_3
+            // 提取词语名
+            string[] wordparts = entry.Split(':');
+            string[] parts = wordparts[1].Split('#');
+            if (parts.Length >= 2)
+            {
+                string[] words = wordparts[0].Split('_');
+                string word = words[1];
+                if (!string.IsNullOrEmpty(word) && word.Length >= 3)
+                {
+                    if (!stageWords.Contains(word))
+                        stageWords.Add(word);
+                    
+                    // 解析该词语的所有字符位置
+                    // 从第2个部分开始，每个部分可能是类似 "1:1" 或 "国_7_6#1" 等
+                    for (int i = 0; i < parts.Length; i++)
+                    {
+                        string part = parts[i];
+                        // 跳过类似 "1:1" 这样的部分
+                        //if (part.Contains(":")) continue;
+                        
+                        // 格式：字符_行_列#序号
+                        string[] subParts = part.Split('_');
+                        if (subParts.Length >= 3)
+                        {
+                            string ch = subParts[1];
+                            string row = subParts[2];
+                            string col = subParts[3];
+                            string position = $"{row}_{col}";
+                            
+                            if (!positionToWords.ContainsKey(position))
+                                positionToWords[position] = new List<string>();
+                            if (!positionToWords[position].Contains(word))
+                                positionToWords[position].Add(word);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 解析pass字段，返回位置到字符列表的映射
+    /// </summary>
+    private Dictionary<string, List<string>> ParsePass(int stageId, string content)
+    {
+        Dictionary<string, List<string>> result = new Dictionary<string, List<string>>();
+        string passField = $"\"{stageId}_pass\":";
+        int passStart = content.IndexOf(passField);
+        if (passStart == -1) return result;
+        
+        // 提取pass值
+        string passValue = ExtractFieldValue(content, passStart);
+        if (string.IsNullOrEmpty(passValue)) return result;
+        
+        // 按管道符分割条目
+        string[] entries = passValue.Split('|');
+        foreach (string entry in entries)
+        {
+            if (string.IsNullOrWhiteSpace(entry)) continue;
+            
+            // 格式："位置:字符列表"，例如 "3_6:水_柳_心_修"
+            int colonIndex = entry.IndexOf(':');
+            if (colonIndex == -1) continue;
+            
+            string position = entry.Substring(0, colonIndex);
+            string charsStr = entry.Substring(colonIndex + 1);
+            
+            List<string> chars = charsStr.Split('_').Where(c => !string.IsNullOrEmpty(c)).ToList();
+            result[position] = chars;
         }
         
-        // 找到字段值的开始位置
-        int valueStart = content.IndexOf(':', russStart) + 1;
-        int valueEnd = -1;
+        return result;
+    }
+
+    /// <summary>
+    /// 辅助方法：从JSON文本中提取指定字段的值（基于字段开始索引）
+    /// </summary>
+    private string ExtractFieldValue(string content, int fieldStart)
+    {
+        // 找到冒号后的起始位置
+        int valueStart = content.IndexOf(':', fieldStart) + 1;
+        // 跳过空白
+        while (valueStart < content.Length && char.IsWhiteSpace(content[valueStart]))
+            valueStart++;
         
-        // 确定值的结束位置
         char startChar = content[valueStart];
+        int valueEnd = -1;
         
         if (startChar == '"')
         {
@@ -358,65 +525,55 @@ public class WordCheckerTool : EditorWindow
             {
                 valueEnd = content.IndexOf('"', valueEnd + 1);
             }
+            valueEnd++; // 包含结束引号
         }
         else if (startChar == '[')
         {
-            // 数组值
-            valueEnd = content.IndexOf(']', valueStart) + 1;
+            // 数组值，找到匹配的]
+            int depth = 1;
+            int i = valueStart + 1;
+            while (i < content.Length && depth > 0)
+            {
+                if (content[i] == '[') depth++;
+                else if (content[i] == ']') depth--;
+                i++;
+            }
+            valueEnd = i;
         }
         else if (startChar == '{')
         {
-            // 对象值
-            valueEnd = content.IndexOf('}', valueStart) + 1;
+            // 对象值，找到匹配的}
+            int depth = 1;
+            int i = valueStart + 1;
+            while (i < content.Length && depth > 0)
+            {
+                if (content[i] == '{') depth++;
+                else if (content[i] == '}') depth--;
+                i++;
+            }
+            valueEnd = i;
         }
         else
         {
-            // 简单值
-            valueEnd = content.IndexOfAny(new char[] { ',', '}', '\n', '\r' }, valueStart);
+            // 简单值（数字等），找到逗号或换行
+            int i = valueStart;
+            while (i < content.Length && !(content[i] == ',' || content[i] == '}' || content[i] == '\n' || content[i] == '\r'))
+                i++;
+            valueEnd = i;
         }
         
-        if (valueEnd == -1)
+        if (valueEnd == -1) valueEnd = content.Length;
+        
+        string value = content.Substring(valueStart, valueEnd - valueStart).Trim();
+        
+        // 如果是字符串，移除引号并处理转义
+        if (value.StartsWith("\"") && value.EndsWith("\""))
         {
-            valueEnd = content.Length;
+            value = value.Substring(1, value.Length - 2);
+            value = value.Replace("\\\"", "\"");
         }
         
-        string russValue = content.Substring(valueStart, valueEnd - valueStart).Trim();
-        
-        // 移除引号
-        if (russValue.StartsWith("\"") && russValue.EndsWith("\""))
-        {
-            russValue = russValue.Substring(1, russValue.Length - 2);
-            // 处理转义字符
-            russValue = russValue.Replace("\\\"", "\"");
-        }
-        
-        // 按管道符分割成语条目
-        string[] phraseEntries = russValue.Split('|');
-        
-        foreach (string entry in phraseEntries)
-        {
-            if (string.IsNullOrWhiteSpace(entry)) continue;
-            
-            // 提取词语
-            // 格式示例："无主题"_国泰民安_1:1_国_7_6#1_泰_7_5#1_民_7_4#1_安_7_3
-            // 我们需要提取"国泰民安"这个部分
-            
-            // 按'_'分割
-            string[] parts = entry.Split('_');
-            if (parts.Length >= 2)
-            {
-                // 第二个部分是词语名称
-                string word = parts[1].Trim('"');
-                
-                // 检查是否为有效的词语（至少2个字符）
-                if (!string.IsNullOrEmpty(word) && word.Length >= 3)
-                {
-                    words.Add(word);
-                }
-            }
-        }
-
-        return words.Distinct().ToList();
+        return value;
     }
 
     /// <summary>
@@ -424,9 +581,9 @@ public class WordCheckerTool : EditorWindow
     /// </summary>
     private void ExportReport()
     {
-        if (missingWordsByStage.Count == 0)
+        if (missingWordsByStage.Count == 0 && duplicatesByStage.Count == 0)
         {
-            EditorUtility.DisplayDialog("提示", "没有缺失的词语，无需导出报告", "确定");
+            EditorUtility.DisplayDialog("提示", "没有缺失词语也没有重复字符，无需导出报告", "确定");
             return;
         }
 
@@ -434,56 +591,75 @@ public class WordCheckerTool : EditorWindow
         {
             StringBuilder report = new StringBuilder();
 
-            report.AppendLine("=== 缺失词语检查报告 ===");
+            report.AppendLine("=== 词语检查报告 ===");
             report.AppendLine($"生成时间: {System.DateTime.Now}");
             report.AppendLine($"词库文件: {bankWordsPath}");
             report.AppendLine($"检查关卡数: {totalStagesChecked}");
             report.AppendLine($"检查词语数: {totalWordsChecked}");
             report.AppendLine($"缺失词语总数: {totalMissingWords}");
+            report.AppendLine($"有重复字符的关卡数: {duplicatesByStage.Count}");
             report.AppendLine();
 
-            // 按关卡分类，并按数字顺序排序
-            report.AppendLine("=== 按关卡分类（按数字顺序） ===");
-            report.AppendLine();
-
-            // 按数字顺序排序关卡
-            var sortedStages = missingWordsByStage.Keys.OrderBy(k => 
+            // 按关卡分类（缺失词语）
+            if (missingWordsByStage.Count > 0)
             {
-                return ExtractNumberFromFileName(k);
-            }).ToList();
-
-            foreach (var stage in sortedStages)
-            {
-                var missingWords = missingWordsByStage[stage];
-
-                report.AppendLine($"【{stage}】({missingWords.Count} 个缺失)");
-
-                foreach (var word in missingWords.OrderBy(w => w))
-                {
-                    report.AppendLine($"  • {word}");
-                }
-
+                report.AppendLine("=== 缺失词语（按关卡分类） ===");
                 report.AppendLine();
+
+                var sortedStages = missingWordsByStage.Keys.OrderBy(k => ExtractNumberFromFileName(k)).ToList();
+                foreach (var stage in sortedStages)
+                {
+                    var missingWords = missingWordsByStage[stage];
+                    report.AppendLine($"【{stage}】({missingWords.Count} 个缺失)");
+                    foreach (var word in missingWords.OrderBy(w => w))
+                    {
+                        report.AppendLine($"  • {word}");
+                    }
+                    report.AppendLine();
+                }
+            }
+
+            // 重复字符信息
+            if (duplicatesByStage.Count > 0)
+            {
+                report.AppendLine("=== 重复字符信息（同一格子出现相同字符） ===");
+                report.AppendLine();
+
+                var sortedDuplicatesStages = duplicatesByStage.Keys.OrderBy(k => ExtractNumberFromFileName(k)).ToList();
+                foreach (var stage in sortedDuplicatesStages)
+                {
+                    var duplicates = duplicatesByStage[stage];
+                    report.AppendLine($"【{stage}】({duplicates.Count} 处重复)");
+                    foreach (var info in duplicates)
+                    {
+                        report.AppendLine($"  • {info}");
+                    }
+                    report.AppendLine();
+                }
             }
 
             // 所有缺失词语列表（去重）
-            report.AppendLine("=== 所有缺失词语（去重） ===");
-            report.AppendLine();
-
-            var uniqueMissingWords = allMissingWords.Distinct().OrderBy(w => w).ToList();
-
-            for (int i = 0; i < uniqueMissingWords.Count; i++)
+            if (allMissingWords.Count > 0)
             {
-                report.AppendLine($"{i + 1}. {uniqueMissingWords[i]}");
+                report.AppendLine("=== 所有缺失词语（去重） ===");
+                report.AppendLine();
+
+                var uniqueMissingWords = allMissingWords.Distinct().OrderBy(w => w).ToList();
+                for (int i = 0; i < uniqueMissingWords.Count; i++)
+                {
+                    report.AppendLine($"{i + 1}. {uniqueMissingWords[i]}");
+                }
+                report.AppendLine();
             }
 
             // 统计信息
-            report.AppendLine();
             report.AppendLine("=== 统计信息 ===");
             report.AppendLine($"总关卡数: {totalStagesChecked}");
             report.AppendLine($"有缺失的关卡数: {missingWordsByStage.Count}");
-            report.AppendLine($"缺失词语种类数: {uniqueMissingWords.Count}");
+            if (allMissingWords.Count > 0)
+                report.AppendLine($"缺失词语种类数: {allMissingWords.Distinct().Count()}");
             report.AppendLine($"缺失词语总次数: {totalMissingWords}");
+            report.AppendLine($"有重复字符的关卡数: {duplicatesByStage.Count}");
 
             // 写入文件
             File.WriteAllText(outputPath, report.ToString(), Encoding.UTF8);
@@ -492,7 +668,8 @@ public class WordCheckerTool : EditorWindow
             bool openFile = EditorUtility.DisplayDialog("成功",
                 $"报告已生成到: {outputPath}\n\n" +
                 $"有缺失的关卡: {missingWordsByStage.Count} 个\n" +
-                $"缺失词语种类: {uniqueMissingWords.Count} 个\n\n" +
+                $"缺失词语种类: {allMissingWords.Distinct().Count()} 个\n" +
+                $"有重复字符的关卡: {duplicatesByStage.Count} 个\n\n" +
                 "是否立即打开报告文件？",
                 "是", "否");
 

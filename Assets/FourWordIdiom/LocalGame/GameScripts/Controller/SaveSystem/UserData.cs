@@ -200,7 +200,7 @@ public class UserData
             {
                 Debug.LogError($"关卡数据异常: {json}");
                 InitData();
-                //AnalyticMgr.BugRecord("关卡存档异常",json);
+                AnalyticMgr.BugRecord("关卡存档异常",json);
                 return;
             }
 
