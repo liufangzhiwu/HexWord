@@ -397,8 +397,8 @@ public class StageInfo
         switch (GameDataManager.Instance.UserData.LanguageCode)
         {
             case "ChineseSimplified": return "chineseStage";
-            case "CT": return "chinesetraStage";
-            default: return "japanese";
+            //case "CT": return "chineseStage";
+            default: return "chineseStage";
         }
     }
 

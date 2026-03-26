@@ -90,11 +90,13 @@ public class WordMatrixExplorer
                         StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
                         
                         List<char> cellChars = GameBoard.board[leftBlock.position.x][leftBlock.position.y];
+                        //List<char> infoCellChars = CurStageInfo.CurBoardData.board[leftBlock.position.x][leftBlock.position.y];
                         
+                        //int infofindCharCount = infoCellChars.FindAll(x => x == targetChar).Count;
                         int findCharCount = cellChars.FindAll(x => x == targetChar).Count;
                         
+                        //找到数据中存在一个，且关卡文件中重复字符的成语
                         if(findCharCount<1) continue;
-                        
 
                         // 找到所有等于 targetChar 的字符的索引
                         var indices = cellChars.Select((c, i) => new { Char = c, Index = i })
@@ -103,12 +105,15 @@ public class WordMatrixExplorer
                             .ToList();
 
                         int index = indices[0];
-                        
-                        char oldcellChar = GameBoard.board[leftBlock.position.x][leftBlock.position.y][0];
-                        
+
+                        // 将索引 0 到 index-1 的字符依次向后移动一位
+                        for (int i = index; i > 0; i--) {
+                            GameBoard.board[leftBlock.position.x][leftBlock.position.y][i] =
+                                GameBoard.board[leftBlock.position.x][leftBlock.position.y][i - 1];
+                        }
+
+                        // 将目标字符放入索引 0 位置
                         GameBoard.board[leftBlock.position.x][leftBlock.position.y][0] = targetChar;
-                        
-                        GameBoard.board[leftBlock.position.x][leftBlock.position.y][index] = oldcellChar;
 
                         discoveredWords.Add(word);
                         return discoveredWords;
