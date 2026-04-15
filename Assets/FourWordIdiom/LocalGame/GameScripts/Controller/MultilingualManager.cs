@@ -31,7 +31,7 @@ public class MultilingualManager:MonoBehaviour
     public void LoadLocalization()
     {
         // 从AssetBundle中加载CSV文件
-        TextAsset defCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "multilingual");
+        TextAsset defCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "Multilingual");
         localizedStrings = ToolUtil.ReadCvsLanguage(defCsvFile,"multilingual");
         //TextAsset pinCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "pingzi_lang");
         //pinziLocalized = ToolUtil.ReadCvsLanguage(pinCsvFile,"pingzi_lang");
