@@ -215,7 +215,7 @@ public class HeaderSection : UIWindow
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
         {
             //SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }
@@ -263,6 +263,7 @@ public class HeaderSection : UIWindow
             SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
             GameDataManager.Instance.UserData.UpdateOnlineStageTime();
         } 
+
     }
 
     public void ChangeBackBtnState(bool isshow)
@@ -289,8 +290,7 @@ public class HeaderSection : UIWindow
             GameDataManager.Instance.ButterflyData.AddPupa(pupa);
             Pupatxt.text = $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow.Count}";
         }, 1.3f));
-
-
+        
     }
 
     public override void OnHideAnimationEnd()

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Middleware;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -20,7 +21,8 @@ public class ChessStageController
 
     public static ChessStageController Instance => _instance;
 
-
+    public LevelModes CurLevelMode;
+    
     private ChessStageController() { }
     #endregion
 
@@ -44,6 +46,11 @@ public class ChessStageController
     public int ComboErrorCount { get;  set; } = 0;   // 连续错误次数
     public int UseTipToolCount { get;  set; } = 0;   // 使用提示工具次数
     public int UseCompleteCount { get; set; } = 0;  // 使用完成工具的字数
+    
+    public Chesspiece pupaLetter;     // 蝶蛹字
+
+    public int PuzzleSumCount { get; private set; } // 总正确数
+    
     #endregion
 
     #region 属性封装
@@ -60,11 +67,9 @@ public class ChessStageController
     /// </summary>
     public void Init()
     {
+        string levelConfigName = GameDataManager.Instance.UserData.ABName == "1" ? "A_ChessPackInfo" : "B_ChessPackInfo";   
         
-        if (StagePackInfo == null)
-        {
-            //StagePackInfo = AssetBundleLoader.SharedInstance.LoadScriptableObject(ToolUtil.GetLanguageBundle(), "ChessPackInfo") as ChessPackInfo;
-        }
+        StagePackInfo = AssetBundleLoader.SharedInstance.LoadScriptableObject("objects", levelConfigName) as ChessPackInfo;
     }
     #endregion
 
@@ -79,8 +84,8 @@ public class ChessStageController
         IsFirstEnterStage = GameDataManager.Instance.IsNewLevelEntry(StageIndex);
 
         CurrStageInfo = CreateStageInfo(StageIndex);
-        CurrStageData = GameDataManager.Instance.RetrieveChessLevelProgress(CurrStageInfo);
-        IsFirstEnterStage &= CurrStageData.IsFirstEnter;
+        CurrStageData = GameDataManager.Instance.RetrieveLevelProgress(CurrStageInfo);
+        IsFirstEnterStage = CurrStageData.IsFirstEnter;
         Debug.Log("当前是否首次进入关卡: " + IsFirstEnterStage + " " + CurrStageData.IsFirstEnter);
         // 重置关卡状态
         ResetStageState(StageIndex);
@@ -99,13 +104,33 @@ public class ChessStageController
             UseCompleteCount = 0;
             UseTipToolCount = 0;
             ComboErrorCount = 0;
+            PuzzleSumCount = 0;
+            // float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
             AnalyticMgr.LevelStart();
             CurrStageData.IsFirstEnter = false;
             GameDataManager.Instance.UserData.curIsEnter = true;
             GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
+            
+            pupaLetter = null;
+            if (ButterfliesManager.Instance.CanObtainedPupa())
+            {
+                //Chesspiece cp = CurrStageData.BoardSnapshot.ToList()[UnityEngine.Random.Range(0, CurrStageData.BoardSnapshot.Count)];
+                var candidates = CurrStageData.BoardSnapshot.Where(v => v.state == TileState.Default).ToList();
+                if (candidates.Count > 0)
+                {
+                    int randomIndex = UnityEngine.Random.Range(0, candidates.Count);
+                    pupaLetter = candidates[randomIndex];
+                }
+                CurrStageData.PupaDatas = pupaLetter;
+            }
         }
 
-        GameDataManager.Instance.UpdateChessLevelProgress(CurrStageData);
+        if (CurrStageData.PupaDatas != null)
+        {
+            pupaLetter = CurrStageData.PupaDatas;
+        }
+
+        GameDataManager.Instance.UpdateLevelProgress(CurrStageData);
         CheckRateUsConditions(StageIndex);
         
         foreach (var puzzle in CurrStageData.FoundTargetPuzzles)
@@ -123,9 +148,6 @@ public class ChessStageController
         int wordCount= ChessDynamicHardManager.Instance.CheckLevelHardChange(stageIndex);
       
         int actualStageId = CalculateActualStageId(stageIndex);
-        
-        if(PackInfos.PackInfos.Count <= actualStageId)
-            actualStageId = 0;
         
         var stageInfo = new ChessStageInfo(
             PackInfos.Get(actualStageId),
@@ -157,6 +179,7 @@ public class ChessStageController
     private void ResetStageState(int stageIndex)
     {
         _limitPuzzleCount = 0;
+        PuzzleComboCount = 0;
     }
 
     /// <summary>
@@ -164,8 +187,53 @@ public class ChessStageController
     /// </summary>
     private void CheckRateUsConditions(int stageIndex)
     {
+        var userData = GameDataManager.Instance.UserData;
 
+        // 第9关首次触发
+        if (stageIndex == 6 && userData.showRateusCount <= 0)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
+            return;
+        }
+
+        // 每日通关条件
+        if (userData.dayPassStageCount == 6 && 
+            userData.showRateusCount < 3 &&
+            !string.IsNullOrEmpty(userData.showRateusTime))
+        {
+            DateTime lastTime = DateTime.Parse(userData.showRateusTime).Date;
+            if ((DateTime.Now.Date - lastTime).TotalDays >= 1)
+            {
+                SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
+            }
+        }
     }
+    
+    /// <summary>
+    /// 更新连击状态
+    /// </summary>
+    /// <param name="isCorrect">当前回答是否正确</param>
+    public void OnUpdateRewardPuzzle(bool isCorrect)
+    {
+        if (isCorrect)
+        {
+            HandleCorrectAnswer();
+        }
+        else
+        {
+            ResetStageState(CurrentStage);
+        }
+    }
+
+    /// <summary>
+    /// 处理正确答案逻辑
+    /// </summary>
+    private void HandleCorrectAnswer()
+    {
+        PuzzleComboCount++;
+        PuzzleSumCount += PuzzleComboCount;
+    }
+    
     #endregion
 
     #region 关卡流程控制
@@ -189,6 +257,7 @@ public class ChessStageController
         if (stageNumber == CurrentStage)
         {
             GameDataManager.Instance.UserData.UpdateChessStage();
+            GameDataManager.Instance.UserData.zenCount += PuzzleSumCount;
         }
 
         yield return PlayCompletionEffects(stageNumber);
@@ -207,16 +276,42 @@ public class ChessStageController
         AudioManager.Instance.PlaySoundEffect("success");
 
         yield return new WaitForSeconds(0.7f);
+        
+        if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.curStageStartTime))
+        {
+            Debug.LogError("关卡开始时间异常"+stageNumber);
+            GameDataManager.Instance.UserData.curStageStartTime= DateTime.Now.ToString();
+        }
 
         // 计算耗时
         DateTime startTime = DateTime.Parse(GameDataManager.Instance.UserData.curStageStartTime);
+        
         float duration = (float)(DateTime.Now - startTime).TotalSeconds +
                          GameDataManager.Instance.UserData.curStageOnlineTime;
+        // float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
         AnalyticMgr.LevelCompleted(duration);
         
         GameDataManager.Instance.UserData.dayPassStageCount++;
-
-        CheckDynamicDifficultyIntervention(stageNumber,ComboErrorCount, duration);
+        
+        if(ChessDynamicHardManager.Instance.IsOpenDynamicHard())
+            CheckDynamicDifficultyIntervention(stageNumber,ComboErrorCount, duration);
+        
+        if (stageNumber >= 15)
+        {                
+            // 显示插屏广告
+            Game.self.Ads?.ShowInterstitial((bool issuccess) => 
+            {
+                if (issuccess)
+                {
+                    AnalyticMgr.InsetAdSuccess("关卡插屏");
+                    GameDataManager.Instance.UserData.totalSeeAds++;
+                }
+                else
+                {
+                    AnalyticMgr.InsetAdFail("关卡插屏");
+                }
+            });
+        }
 
         yield return new WaitForSeconds(0.8f);
         // 播放过关视频
@@ -295,6 +390,8 @@ public class ChessStageController
         CurrStageData.FoundTargetPuzzles.Add(puzzle);
         GameDataManager.Instance.UserData.AddStagePuzzle(puzzle);
         _limitPuzzleCount += 1;
+
+        OnUpdateRewardPuzzle(true);
     }
     /// <summary>
     /// 修改棋盘内的值

@@ -202,7 +202,7 @@ namespace Middleware
                 ping = null;
 
                 IsNetworkActive = isSuccess;
-                Debug.Log("网络状态: " + (IsNetworkActive ? "已连接" : "未连接"));
+                // Debug.Log("网络状态: " + (IsNetworkActive ? "已连接" : "未连接"));
 
                 yield return new WaitForSeconds(5);
             }

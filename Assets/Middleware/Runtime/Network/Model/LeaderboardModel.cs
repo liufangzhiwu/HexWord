@@ -22,6 +22,7 @@ public class LeaderboardResponse
 {
     public LeaderboardEntry my;
     public string updated_at;
+    public int remaining_seconds; // 🌟 接收后端传来的秒数
     public List<LeaderboardEntry> top;
     public List<LeaderboardEntry> middle;
     public List<LeaderboardEntry> bottom;

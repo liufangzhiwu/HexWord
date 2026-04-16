@@ -76,7 +76,6 @@ SpriteAtlas:
     - 5472548cf6d2f8c439cc32cadf51ef8c: 21300000
     - 85d2cfbde0ae89c49896cb0a980315be: 21300000
     - 9499edede8ccde04783179beace9a4d1: 21300000
-    - 9c3fd0fd011675443b8c0154f53627a9: 21300000
     - 98d3688ed18beb040a848e435722aa5a: 21300000
     - 9ea764cf8397b8b4db60187f970acff2: 21300000
   m_MasterAtlas: {fileID: 0}
@@ -107,7 +106,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 5472548cf6d2f8c439cc32cadf51ef8c, type: 3}
   - {fileID: 21300000, guid: 85d2cfbde0ae89c49896cb0a980315be, type: 3}
   - {fileID: 21300000, guid: 9499edede8ccde04783179beace9a4d1, type: 3}
-  - {fileID: 21300000, guid: 9c3fd0fd011675443b8c0154f53627a9, type: 3}
   - {fileID: 21300000, guid: 98d3688ed18beb040a848e435722aa5a, type: 3}
   - {fileID: 21300000, guid: 9ea764cf8397b8b4db60187f970acff2, type: 3}
   m_PackedSpriteNamesToIndex:
@@ -137,7 +135,6 @@ SpriteAtlas:
   - UI_01
   - Finish_01
   - yt6uytuytujty
-  - jhgjhgjhg
   - beam01
   - sparkle1
   m_RenderDataMap: {}

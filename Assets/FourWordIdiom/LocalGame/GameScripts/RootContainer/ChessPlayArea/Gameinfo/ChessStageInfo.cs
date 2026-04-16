@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using Middleware;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 /// <summary>
 /// 词组数据结构
@@ -15,6 +16,8 @@ public class PhraseGroup // phrase group
 {
     public string id;   // 词组ID
     public int direction; // 方向 1横向，0纵向
+    public int weight;   // 权重
+    public int quadrant; // 象限位置
     public List<Chesspiece> chesspieces; // 字块列表 
 }
 [Serializable]  
@@ -78,6 +81,7 @@ public class ChessStageInfo
     public int MinCol => _MinCol;
     
     public List<PhraseGroup> PhraseGroups => _phraseGroups;
+    public Chesspiece _pupaData=null;       // 蚕蛹数据
     #endregion
 
     #region 构造函数
@@ -103,6 +107,16 @@ public class ChessStageInfo
         
         if (wordCount != 0)
             DynamicHardLevelChange(wordCount);
+        else if(_cursor.Count < 2)
+        {
+            GroupWeightSort();
+            Chesspiece cpp = FindMinRowNonePiece();
+            if (cpp != null)
+            {
+                this._cursor.Add(cpp.row);
+                this._cursor.Add(cpp.col);
+            }
+        }
     }
 
     #endregion
@@ -131,8 +145,114 @@ public class ChessStageInfo
         {
             DecreaseShowWord(wordCount);
         }
-    }
 
+        VerifyAndSyncPuzzles();
+    }
+    /// <summary>
+    /// 校验关卡数据终态：
+    /// 1. 检查是否有词组全部为 Default (全显示)，如果有，强制隐藏其中一个。
+    /// 2. 严格校验棋盘上的隐藏字(None)与字盘(_puzzles)的数量是否一致，多退少补。
+    /// </summary>
+    public void VerifyAndSyncPuzzles()
+    {
+        // ==========================================
+        // 1. 检查每组内是否全部为 Default
+        // ==========================================
+        foreach (var group in _phraseGroups)
+        {
+            if (group.chesspieces.Count == 0) continue;
+
+            // 检查这组是否全是 Default
+            bool isAllDefault = group.chesspieces.All(p => p.state == TileState.Default);
+            
+            if (isAllDefault)
+            {
+                // 找一个合适的字隐藏：优先找不与其他组交叉的字，如果没有，就取第一个字
+                Chesspiece targetToHide = group.chesspieces.FirstOrDefault(p => !IsMultiGroup(p.row, p.col)) 
+                                       ?? group.chesspieces.First();
+                
+                targetToHide.state = TileState.None;
+                
+                // 同步更新 HashSet 中引用的对象状态 (安全起见)
+                var origConfig = _chesspiece.FirstOrDefault(cp => cp.row == targetToHide.row && cp.col == targetToHide.col);
+                if (origConfig != null) origConfig.state = TileState.None;
+
+                Debug.Log($"[数据校验] 发现全显词组 {group.id}，强制隐藏字: '{targetToHide.letter}' ({targetToHide.row}, {targetToHide.col})");
+                Debug.Log($"[数据校验] 发现全显词组 " + JsonConvert.SerializeObject(group.chesspieces));
+            }
+        }
+
+        // ==========================================
+        // 2. 统计棋盘上真实需要的隐藏字 (state == None)
+        // ==========================================
+        Dictionary<string, int> requiredCounts = new Dictionary<string, int>();
+        foreach (var piece in _chesspiece)
+        {
+            if (piece.state is TileState.None or TileState.Check)
+            {
+                if (!requiredCounts.ContainsKey(piece.letter))
+                    requiredCounts[piece.letter] = 0;
+                
+                requiredCounts[piece.letter]++;
+            }
+        }
+
+        // ==========================================
+        // 3. 统计当前字盘(_puzzles)里拥有的字
+        // ==========================================
+        Dictionary<string, int> currentCounts = new Dictionary<string, int>();
+        foreach (var bowl in _puzzles)
+        {
+            if (!currentCounts.ContainsKey(bowl.letter))
+                currentCounts[bowl.letter] = 0;
+            
+            currentCounts[bowl.letter]++;
+        }
+
+        // ==========================================
+        // 4. 对比并进行“多退少补”
+        // ==========================================
+        
+        // 4.1 补齐缺少的字
+        foreach (var kvp in requiredCounts)
+        {
+            string letter = kvp.Key;
+            int reqCount = kvp.Value;
+            int currCount = currentCounts.ContainsKey(letter) ? currentCounts[letter] : 0;
+
+            while (currCount < reqCount)
+            {
+                _puzzles.Add(new Bowl
+                {
+                    id = "b_" + Guid.NewGuid().ToString("N").Substring(0, 8),
+                    letter = letter,
+                    status = 0
+                });
+                currCount++;
+                Debug.Log($"[数据校验] 字盘缺少字 '{letter}'，已自动补充。");
+            }
+        }
+
+        // 4.2 移除多余的字
+        foreach (var kvp in currentCounts)
+        {
+            string letter = kvp.Key;
+            int currCount = kvp.Value;
+            int reqCount = requiredCounts.ContainsKey(letter) ? requiredCounts[letter] : 0;
+
+            while (currCount > reqCount)
+            {
+                // 找到第一个该字母的 Bowl 移除
+                var bowlToRemove = _puzzles.FirstOrDefault(b => b.letter == letter);
+                if (bowlToRemove != null)
+                {
+                    _puzzles.Remove(bowlToRemove);
+                    currCount--;
+                    Debug.Log($"[数据校验] 字盘多余字 '{letter}'，已自动移除。");
+                }
+            }
+        }
+    }
     /// <summary>
     /// 增加可见字，小幅度简单
     /// </summary>
@@ -182,7 +302,7 @@ public class ChessStageInfo
             
             changedLetters.Add(targetPiece.letter);
             usedPos.Add((targetPiece.row, targetPiece.col));
-            Debug.Log($"已点亮：{targetPiece.letter}  state={targetPiece.state}");
+            Debug.Log($"已点亮：{origConfig.letter}  state={origConfig.state}");
         }while (number > 0);
 
         foreach (var key in usedPos)
@@ -198,11 +318,11 @@ public class ChessStageInfo
             if (bowl != null) _puzzles.Remove(bowl);
         }
         
-        Debug.Log($"_cursor长度={_cursor.Count} 内容 " + JsonConvert.SerializeObject(_cursor) );
-        
+        RandomlySetOneDefaultToNone();
         if (_cursor.Count < 2 || usedPos.Contains((_cursor[0], _cursor[1])))
         {
-            Chesspiece nextCross  = GetFirstCrossNoneChess();
+            GroupWeightSort();
+            Chesspiece nextCross  = FindMinRowNonePiece();
             if (nextCross  != null)
             {
                 _cursor.Clear();
@@ -235,8 +355,6 @@ public class ChessStageInfo
             if(!qualifiedGroups.Any()) break;
 
             Chesspiece selected = null;
-            PhraseGroup fromGroup = null;
-
             foreach (var g in qualifiedGroups)
             {
                 bool isHorz = g.direction == 1;
@@ -251,7 +369,6 @@ public class ChessStageInfo
                     if (isCross)
                     {
                         selected = cp;
-                        fromGroup = g;
                         break;
                     }
                 }
@@ -261,7 +378,6 @@ public class ChessStageInfo
                     if(cp.state != TileState.None || usedPos.Contains((cp.row, cp.col)))
                         continue;
                     selected = cp;
-                    fromGroup = g;
                     break;
                 }
 
@@ -275,7 +391,7 @@ public class ChessStageInfo
             changedLetters.Add(selected.letter);
             var origConfig = _chesspiece.First(cp => cp.row == selected.row && cp.col == selected.col);
             origConfig.state = TileState.Default;
-            Debug.Log($"已点亮：{selected.letter}  state={selected.state}");
+            Debug.Log($"已点亮：{origConfig.letter}  state={origConfig.state}");
         }while (number > 0);
 
         Debug.Log("增加可见字完成, 关卡内容" + JsonConvert.SerializeObject(_chesspiece));
@@ -287,14 +403,15 @@ public class ChessStageInfo
             
         }
         // ---------- 6. 光标移到下一个交叉未填字 ----------
-        
-        if (usedPos.Contains((_cursor[0], _cursor[1])))
+        RandomlySetOneDefaultToNone();
+        if (_cursor.Count < 2 || usedPos.Contains((_cursor[0], _cursor[1])))
         {
-            Chesspiece nextCross  = GetFirstCrossNoneChess();
+            GroupWeightSort();
+            Chesspiece nextCross  = FindMinRowNonePiece();
+            _cursor.Clear();
             Debug.Log("初始字为: " + JsonConvert.SerializeObject(nextCross));
             if (nextCross  != null)
             {
-                _cursor.Clear();
                 _cursor.Add(nextCross .row);
                 _cursor.Add(nextCross .col);
             }
@@ -358,8 +475,7 @@ public class ChessStageInfo
             if (target == default) break; // 无候选
             var targetPiece = target.piece;
             targetPiece.state = TileState.None;
-           
- 
+            changedPieces.Add(targetPiece);
             // // 4. 首/尾均显示 → 可去尾；若尾关联其他组 → 去首；**若首尾皆不关联其他组，则任去一端**
             // bool isHead = target.index == 0;
             // bool isTail = target.index == target.group.chesspieces.Count - 1;
@@ -406,10 +522,10 @@ public class ChessStageInfo
             if (ShowCount() <= minShow) break;
             
             // 6. 隐藏并标记
-            changedPieces.Add(targetPiece);
+     
   
         } while (number < 0);
-
+        
         foreach (var piece in changedPieces)
         {
             if (_puzzles.Count >= 32) break;
@@ -417,8 +533,7 @@ public class ChessStageInfo
             Chesspiece findpize = _chesspiece.FirstOrDefault(p => p.row == piece.row && p.col == piece.col);
             if (findpize.state != TileState.None)
                 findpize.state = TileState.None;
-
-            Debug.Log("再看字是否隐藏成功-->" + JsonConvert.SerializeObject(findpize));
+            
             _puzzles.Add(new Bowl
             {
                 id = "b_" + Guid.NewGuid().ToString("N")[..8],
@@ -426,13 +541,14 @@ public class ChessStageInfo
                 status = 0,
             });
         }
-        // Chesspiece newCp = GetFirstCrossNoneChess();
-        // if (newCp != null)
-        // {
-        //     _cursor.Clear();
-        //     _cursor.Add(newCp.row);
-        //     _cursor.Add(newCp.col);
-        // }
+        GroupWeightSort();
+        Chesspiece newCp = FindMinRowNonePiece();
+        if (newCp != null)
+        {
+            _cursor.Clear();
+            _cursor.Add(newCp.row);
+            _cursor.Add(newCp.col);
+        }
         Debug.Log("钱少可见字完成--> " + JsonConvert.SerializeObject(changedPieces));
     }
     
@@ -506,20 +622,71 @@ public class ChessStageInfo
         ParseStageContent(_StageConf);
     }
     /// <summary>
-    /// 返回棋盘内从上到下、从左到右第一个未填写（None）且属于≥2个组（交叉字）的字。
-    /// 没有满足条件的字时返回 null。
+    /// 1. 先收集所有 state==Default 的字块；
+    /// 2. 只保留“只属于 1 个组”的那些字块；
+    /// 3. 若集合为空直接返回；
+    /// 4. 否则随机选 1 个，把它的 state 改成 None。
     /// </summary>
-    private Chesspiece GetFirstCrossNoneChess()
+    public void RandomlySetOneDefaultToNone()
     {
-        return _chesspiece
-            .OrderBy(cp => cp.row)      // 从上到下
-            .ThenBy(cp => cp.col)       // 从左到右
-            .FirstOrDefault(cp =>
-                _chessGroup.TryGetValue((cp.row, cp.col), out var groups) &&
-                groups.Count >= 2 &&                              // 交叉字
-                cp.state == TileState.None);                // 未填写
+        // 1. 统计每个字块隶属的组数
+        var groupCount = new Dictionary<Chesspiece, int>();
+        foreach (var g in _phraseGroups)
+        foreach (var p in g.chesspieces)
+            groupCount[p] = groupCount.TryGetValue(p, out int c) ? c + 1 : 1;
+
+        // 2. 筛选：state==Default 且 只属于 1 个组
+        List<Chesspiece> candidates = _phraseGroups
+            .SelectMany(g => g.chesspieces)
+            .Where(p => p.state == TileState.Default && groupCount[p] == 1)
+            .ToList();
+        
+        if (candidates.Count == 0) return;   // 没有符合要求的，安全退出
+
+        // 3. 随机选 1 个
+        Chesspiece picked = candidates[Random.Range(0, candidates.Count)];
+
+        // 4. 修改状态
+        picked.state = TileState.None;
+        Chesspiece findpize = _chesspiece.FirstOrDefault(p => p.row == picked.row && p.col == picked.col);
+        if (findpize.state != TileState.None)
+            findpize.state = TileState.None;
+        
+        _puzzles.Add(new Bowl{
+            id = "b_" + Guid.NewGuid().ToString("N")[..8],
+            letter = picked.letter ,
+            status = 0,
+        });
     }
-    
+    /// <summary>
+    /// 在所有组中按 weight 降序查找，返回第一个拥有
+    /// state==None 且 row 最小的那个。
+    /// 找不到返回 null。
+    /// </summary>
+    public Chesspiece FindMinRowNonePiece()
+    {
+            // ① 组级排序：weight 高→低，同 weight 时 direction 高→低
+        var sortedGroups = _phraseGroups
+                .OrderByDescending(g => g.weight) // 组按 weight 大→小排序
+                .ThenByDescending(g=>g.quadrant) // 按四象限位置排序
+                .ThenBy(g => g.chesspieces          // 首空：row 小→大，col 大→小
+                    .Where(p => p.state is TileState.None)
+                    .Select(p => (p.row, -p.col))
+                    .DefaultIfEmpty((int.MaxValue, 0))
+                    .First())        // 按首次出现空格的最小row和最大col排序
+                .ThenByDescending(g => g.direction)
+                .ToList(); // 同权重时方向值大优先 高→低
+            
+        Debug.Log("看看所有组的分数: " + JsonConvert.SerializeObject(sortedGroups));
+  
+        var representative = sortedGroups[0].chesspieces
+                    .Where(p => p.state == TileState.None)
+                    .OrderBy(p => p.row)   // 组内 row 最小
+                    .ThenByDescending(p=>p.col)    // 组内col最大
+                    .FirstOrDefault();     // 本组代表
+       
+        return representative;
+    }
     /// <summary>
     /// 解析关卡文件内容
     /// </summary>
@@ -608,7 +775,7 @@ public class ChessStageInfo
         }
         
         // 处理光标
-        if(stageConf.cursor != null)
+        if(!string.IsNullOrEmpty(stageConf.cursor))
         {
             string[] cursor = stageConf.cursor.Split(",",2, StringSplitOptions.RemoveEmptyEntries);
             foreach (string s in cursor)
@@ -621,9 +788,52 @@ public class ChessStageInfo
         _MaxCol = maxCol;
         _MinRow = minRow;
         _MinCol = minCol;
-        
         Debug.Log($"关卡 {_StageNumber} 解析完成： 最大行 {_MaxRow}， 最大列 {_MaxCol}， 最小行 {_MinRow}， 最小列 {_MinCol} ");
         // _phraseGroups = tempGroup;
     }
+    
+    // public void CreatePupaData()
+    // {
+    //     bool canCreate = ButterfliesManager.Instance.CanObtainedPupa();
+    //     if (canCreate&&_pupaData==null)
+    //     {
+    //         PhraseGroup curPhraseGroup = _phraseGroups[Random.Range(0,_phraseGroups.Count)];
+    //         if (curPhraseGroup.chesspieces.Count>0)
+    //         {
+    //             List<Chesspiece> currentPositions = curPhraseGroup.chesspieces.FindAll((x)=>x.state==TileState.None);
+    //             Chesspiece charPosition = currentPositions[Random.Range(0,currentPositions.Count)];
+    //             _pupaData = new PupaData()
+    //             {
+    //                 position = new Vector2Int(charPosition.row, charPosition.col),
+    //                 breakProgress = 0,
+    //             };
+    //         }
+    //     }
+    // }
+
+    private void GroupWeightSort()
+    {
+        int vertical = Mathf.FloorToInt((_MaxCol + 1) / 2f);
+        int horizontal = Mathf.FloorToInt((_MaxRow + 1) / 2f);
+        Debug.Log($"水平 {horizontal} 和 锤子 {vertical}");
+        // 分组对应的词
+        foreach (var group in _phraseGroups)
+        {
+            int vcount = 0;
+            int hcount = 0;
+            foreach(var piece in group.chesspieces)
+            {
+                if (piece.col >= vertical)
+                    vcount++;
+                if(piece.row < horizontal)
+                    hcount++;
+                if (piece.state == TileState.Default)
+                    group.weight += 1;
+            }
+            group.weight += (vcount >= 3 ? 4 : 0);
+            group.quadrant = (vcount >= 3 ? 2 : 0) +  (hcount >= 3 ? 1 : 0) + 1;
+        }
+    }
+
     #endregion
 }

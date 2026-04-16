@@ -60,7 +60,7 @@ public class ChessDynamicHardManager : MonoBehaviour
     readonly string[] intervalFields = { "intervalE01", "intervalE02", "intervalE03", "intervalE04", "intervalE05" };
     
     [Tooltip("动态难度开关")]
-    public int DynamicHardIsOpen = 1;
+    int DynamicHardIsOpen = 0;
     [Tooltip("初始层关卡号")]
     public int StartLevel = 11;
     
@@ -122,31 +122,71 @@ public class ChessDynamicHardManager : MonoBehaviour
     // Start is called before the first frame update
     private void Start()
     {
-        if (IsOpenDynamicHard())
-        {
-            LoadDynamicConfig();
-        }    
+         StartCoroutine(LoadDynamicConfig());
     }
 
-    private bool IsOpenDynamicHard()
+    public bool IsOpenDynamicHard()
     {
         return DynamicHardIsOpen == 1;
     }
     /// <summary>
     /// 加载动态配置表
     /// </summary>
-    private void LoadDynamicConfig()
+    private IEnumerator LoadDynamicConfig()
     {
-        TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_dynamicConfig");
-        TextAsset levelCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_levelDifficultyChange");
+        yield return new WaitForSeconds(1.5f);
+   
+        string dynamicCsvData = null;
+        string levelCsvData = null;
+        // 🌟 1. 定义两把锁
+        bool isDynamicDone = false;
+        bool isLevelDone = false;
+        // ==========================================
+        // 1. 获取主配置 (dynamicConfig)
+        // ==========================================
+        StartCoroutine( APIGateway.Instance.GameConfigApi.GetGameConfig("cypz_dynamicConfig",
+            onSuccess: (response) => { dynamicCsvData = response.CsvString; isDynamicDone = true;},
+            onError:   (error) => {isDynamicDone = true; Debug.LogWarning("服务器拉取 cypz_dynamicConfig 配置失败，准备兜底"); }
+        ));
+        // ==========================================
+        // 2. 获取关卡难度配置 (cypz_levelDifficultyChange)
+        // ==========================================
+        StartCoroutine(  APIGateway.Instance.GameConfigApi.GetGameConfig("cypz_levelDifficultyChange",
+            onSuccess: (response) => { levelCsvData = response.CsvString; isLevelDone = true;},
+            onError:   (error) => {isLevelDone = true; Debug.LogWarning("服务器拉取 cypz_levelDifficultyChange 难度配置失败，准备兜底"); }
+        ));
         
-        if(csvFile != null)
-            ConverCSVToJSON(csvFile.text);
+        float timeout = 5f;
+        while (!(isDynamicDone && isLevelDone) && timeout > 0)
+        {
+            timeout -= Time.deltaTime;
+            yield return null;
+        }
+        
+        // ==========================================
+        // 3. 执行断网兜底逻辑 (读取本地 Bundle)
+        // ==========================================
+        if (string.IsNullOrEmpty(dynamicCsvData))
+        {
+            TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_dynamicConfig");
+            dynamicCsvData = csvFile?.text;
+        }
+        if (string.IsNullOrEmpty(levelCsvData))
+        {
+            TextAsset levelCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_levelDifficultyChange");
+            levelCsvData = levelCsvFile?.text;
+        }
+        
+        // ==========================================
+        // 4. 解析生效
+        // ==========================================
+        if (!string.IsNullOrEmpty(dynamicCsvData))
+            ConverCSVToJSON(dynamicCsvData);
         else
             Debug.LogError("Failed to load cypz_dynamicConfig csv data.");
         
-        if (levelCsvFile != null)
-            ConvertLevelCSVToJSON(levelCsvFile.text);
+        if (!string.IsNullOrEmpty(levelCsvData))
+            ConvertLevelCSVToJSON(levelCsvData);
         else
             Debug.LogError("Failed to load cypz_levelDifficultyChange csv data.");
     }

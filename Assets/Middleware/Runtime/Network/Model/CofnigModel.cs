@@ -1,18 +1,24 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 
-public class CofnigModel : MonoBehaviour
+[Serializable]
+public class GameConfigResponse
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [JsonProperty("module_name")]
+    public string ModuleName { get; set; }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [JsonProperty("ab_group")]
+    public string AbGroup { get; set; }
+
+    [JsonProperty("version")]
+    public string Version { get; set; }
+
+    [JsonProperty("md5_hash")]
+    public string Md5Hash { get; set; }
+
+    [JsonProperty("csv_string")]
+    public string CsvString { get; set; }
 }

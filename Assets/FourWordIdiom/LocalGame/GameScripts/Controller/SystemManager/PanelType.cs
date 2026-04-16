@@ -33,7 +33,11 @@ public class PanelType  // Renamed class
     public const string ButterflyHome = "ButterflyHome";
     public const string ButterflyManual = "ButterflyManual";
     public const string ButterflyGardenHelp = "ButterflyGardenHelp";
-
+    
+    public const string ZenRankScreen= "ZenRankScreen";
+    public const string ZenRankHelpScreen= "ZenRankHelpScreen";
+    public const string ZenSettlementScreen= "ZenSettlementScreen";
+    
     // 已注释的旧界面常量 (Legacy commented constants)
     public const string GetItemScreen = "GetItemScreen"; 
     public const string ShopScreen = "ShopScreen";  

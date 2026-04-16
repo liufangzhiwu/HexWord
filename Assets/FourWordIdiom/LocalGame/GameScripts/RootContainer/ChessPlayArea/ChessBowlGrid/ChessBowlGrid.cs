@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -117,7 +116,7 @@ public class ChessBowlGrid : MonoBehaviour
     public void OnPuzzleSelected(BowlView puzzle)
     {
         CurrPuzzle = puzzle;
-        StartCoroutine(GamePlayArea.chessboardGrid.HandleBolwViewState(puzzle));
+        StartCoroutine(GamePlayArea.chessboardGrid.HandleBlowViewState(puzzle));
     }
 
     public  void Clear()

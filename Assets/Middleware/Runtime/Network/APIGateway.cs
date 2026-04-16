@@ -11,7 +11,7 @@ public class APIGateway: MonoBehaviour
     [SerializeField] private string APIUrl = "https://zen.test.mindwordplay.cn/api/";
 
     public LoginApi LoginApi { get; private set; }
-    public ConfigApi ConfigApi { get; private set; }
+    public GameConfigApi GameConfigApi { get; private set; }
     public LeaderboardApi LeaderboardApi { get; private set; }
     public HTTPClient HttpClient { get; private set; }
 
@@ -33,7 +33,7 @@ public class APIGateway: MonoBehaviour
         //HttpClient = HTTPClient.Instance.Initialize();
 
         LoginApi = new LoginApi(HttpClient);
-        ConfigApi = new ConfigApi(HttpClient);
+        GameConfigApi = new GameConfigApi(HttpClient);
         LeaderboardApi = new LeaderboardApi(HttpClient);
         
         //StartCoroutine(HttpClient.Get<object>("", 

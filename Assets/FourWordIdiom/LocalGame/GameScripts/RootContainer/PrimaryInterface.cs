@@ -156,7 +156,7 @@ public class PrimaryInterface : UIWindow
                 if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
                 {
                     SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-                }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+                }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
                 {
                     SystemManager.Instance.HidePanel(PanelType.StageFinishView);
                 }
@@ -444,18 +444,18 @@ public class PrimaryInterface : UIWindow
         Sprite sprite = null;
         switch (GameDataManager.Instance.UserData.levelMode)
         {
-            // case 1:
-            //     Stage = GameDataManager.Instance.UserData.CurrentStage != 0 ? 
-            //         GameDataManager.Instance.UserData.CurrentStage : 1;
-            //     sprite = LoadheadIcon("icon_xiao");
-            //     break;
+                // case 1:
+                //     Stage = GameDataManager.Instance.UserData.CurrentStage != 0 ? 
+                //         GameDataManager.Instance.UserData.CurrentStage : 1;
+                //     sprite = LoadheadIcon("icon_xiao");
+                // break;
             case 2:
                 Stage = GameDataManager.Instance.UserData.CurrentChessStage;
-                //sprite = LoadheadIcon("icon_pinzi");
+                sprite = LoadheadIcon("icon_pinzi");
                 break;
             case 3:
                 Stage = GameDataManager.Instance.UserData.CurrentHexStage;
-                //sprite = LoadheadIcon("icon_layer");
+                sprite = LoadheadIcon("icon_layer");
                 break;
         }
         
@@ -533,7 +533,7 @@ public class PrimaryInterface : UIWindow
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }
@@ -551,23 +551,6 @@ public class PrimaryInterface : UIWindow
     /// </summary>
     public void OnPlayClick()
     {
-        base.Close();
-        OnEnterStageClick();
-        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
-    }
-    
-    private Sprite LoadheadIcon(string showIcon)
-    {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
-    }
-
-    /// <summary>
-    /// 进入关卡回调
-    /// </summary>
-    private void OnEnterStageClick()
-    {
-        
         switch (GameDataManager.Instance.UserData.levelMode)
         {
             case 1:
@@ -580,7 +563,20 @@ public class PrimaryInterface : UIWindow
                 StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
                 break;
         }
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection, true, OnEnterStageClick);
+        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+    }
+    
+    private Sprite LoadheadIcon(string showIcon)
+    {
+        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+    }
 
+    /// <summary>
+    /// 进入关卡回调
+    /// </summary>
+    private void OnEnterStageClick()
+    {
         switch (GameDataManager.Instance.UserData.levelMode)
         {
             case 1:

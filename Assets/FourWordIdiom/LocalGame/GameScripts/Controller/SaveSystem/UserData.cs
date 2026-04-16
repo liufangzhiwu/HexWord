@@ -3,28 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Middleware;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-// using ThinkingAnalytics;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Rendering;
-
-#region 数据结构定义
-
-// /// <summary>
-// /// 道具类型枚举
-// /// </summary>
-// public enum ToolType 
-// { 
-//     Reset,     // 重置道具
-//     Hint,      // 提示道具
-//     Butterfly, // 蝴蝶道具
-//     Null       // 空类型
-// }
-
-#endregion
 
 /// <summary>
 /// 用户游戏数据管理类
@@ -50,7 +30,7 @@ public class UserData
     public int showRateusCount;         // 好评界面显示次数
     public string showRateusTime;       // 好评界面显示时间
     public bool isChangeUserName;       // 是否更改过用户名称
-
+    public string Zenlevel;             // 禅模式当前关卡
     #endregion
 
     #region 系统设置数据
@@ -103,7 +83,7 @@ public class UserData
     public string lastPayTime;//最后充值时间
     public string firstLoginTime;//首次登录时间
     public string lastLoginDay;//最后登录时间
-
+    public int zenCount;       // 禅意值数量
     #endregion
 
     #region 道具数据
@@ -224,7 +204,7 @@ public class UserData
         // 基础数据
         // 用户基础数据
         PlayerId = null;
-        ABName = null;
+        ABName = "0";
         UserHeadId = 0;
         UserName=null;
         UserId = null;
@@ -239,6 +219,7 @@ public class UserData
         IsMusicOn = true;
         IsSoundOn = true;
         IsAgreePrivacy = false;
+        Zenlevel = "ZenState01";
         // 评价界面显示次数
         showRateusCount = 0;
         // 评价界面显示时间
@@ -268,7 +249,7 @@ public class UserData
         curStageStartTime = null;
         curStageOnlineTime = 0;
         curIsEnter = false;
-        
+        zenCount = 0;
         passLevelUseTime = new Dictionary<int, int>();
         //限时商店数据
         limitShopItems =new List<ShopLimitData>();
@@ -338,6 +319,8 @@ public class UserData
         CurrentHexStage = user.CurrentHexStage;
         CurrentChessStage = user.CurrentChessStage;
         levelMode = user.levelMode;
+        zenCount = user.zenCount;
+        Zenlevel = user.Zenlevel ?? "ZenState01";
         dayPassStageCount = user.dayPassStageCount;
         LanguageCode = GetLanguage();
         IsMusicOn = user.IsMusicOn;

@@ -210,7 +210,7 @@ public class ButterflyHome : UIWindow
             if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
             {
                 SystemManager.Instance.GetPanel(PanelType.PrimaryInterface)?.GetComponent<PrimaryInterface>()?.OnPlayClick();
-            }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+            }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
             {
                 //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
             }

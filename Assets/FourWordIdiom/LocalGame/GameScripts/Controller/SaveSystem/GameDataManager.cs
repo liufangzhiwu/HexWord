@@ -233,6 +233,22 @@ public class GameDataManager : SingletonMono<GameDataManager>
         string identifier = CreateLevelIdentifier(levelDetails.StageNumber);
         LevelProgressDict[identifier] = progress;
     }
+    
+    public ChessStageProgressData RetrieveLevelProgress(ChessStageInfo levelDetails)
+    {
+        string identifier = ChessStageProgressData.CreateLevelIdentifier(levelDetails.StageNumber);
+
+        if (!ChessLevelProgressDict.ContainsKey(identifier))
+        {
+            ChessStageProgressData progress = new ChessStageProgressData();
+            progress.LoadFromFile(levelDetails);
+            ChessLevelProgressDict[identifier] = progress;
+        }
+
+        // 无用数据转换
+        var tempData = ChessLevelProgressDict[identifier];
+        return tempData;
+    }
 
     private string CreateLevelIdentifier(int levelId)
     {
@@ -299,6 +315,15 @@ public class GameDataManager : SingletonMono<GameDataManager>
             Debug.Log($"更新了偶数关卡 {progressData.StageId}");
         }
     }
+    // 更新拼字关卡进度
+    public void UpdateLevelProgress(ChessStageProgressData progressData)
+    {
+        string identifier = ChessStageProgressData.CreateLevelIdentifier(progressData.StageId);
+        if (ChessLevelProgressDict.ContainsKey(identifier))
+        {
+            ChessLevelProgressDict[identifier] = progressData;
+        }
+    }
     #endregion
 
     #region 数据保存
@@ -318,11 +343,11 @@ public class GameDataManager : SingletonMono<GameDataManager>
              LevelProgressDict[currentLevelId].SaveToPlayerPrefs();
          }
          
-         // string chessCurrentLevelId = ChessStageProgressData.CreateLevelIdentifier(playerProfile.CurrentChessStage);
-         // if (ChessLevelProgressDict.ContainsKey(chessCurrentLevelId))
-         // {
-         //     ChessLevelProgressDict[chessCurrentLevelId].SaveToFile();
-         // }
+         string chessCurrentLevelId = ChessStageProgressData.CreateLevelIdentifier(playerProfile.CurrentChessStage);
+         if (ChessLevelProgressDict.ContainsKey(chessCurrentLevelId))
+         {
+             ChessLevelProgressDict[chessCurrentLevelId].SaveToFile();
+         }
     }
 
     public void CommitPushServerData(bool needLogout = false)
