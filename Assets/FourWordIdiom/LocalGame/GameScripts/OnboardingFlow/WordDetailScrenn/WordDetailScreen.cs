@@ -23,7 +23,16 @@ public class WordDetailScreen : UIWindow
   
     protected override void OnEnable()
     {
-        if (StageHexController.Instance.IsEnterVocabulary)
+        bool isEnter = false;
+        if (GameDataManager.Instance.UserData.levelMode is 1 or 3)
+        {
+            isEnter = StageHexController.Instance.IsEnterVocabulary;
+        }
+        else
+        {
+            isEnter = ChessStageController.Instance.IsEnterVocabulary;
+        }
+        if (isEnter)
         {               
             ShowVocabularyWords();
             HeadTitle.text = MultilingualManager.Instance.GetString("LevelWord");                
@@ -114,7 +123,15 @@ public class WordDetailScreen : UIWindow
     private void UpdateVisibleWords()
     {
         width = scrollRect.GetComponent<RectTransform>().rect.width;
-        curPage = StageHexController.Instance.PuzzleData.PageIndex;
+        switch (GameDataManager.Instance.UserData.levelMode)
+        {
+            case  1 or 3:
+                curPage = StageHexController.Instance.PuzzleData.PageIndex;
+                break;
+            case 2 :
+                curPage = ChessStageController.Instance.PuzzleData.PageIndex;
+                break;
+        }
         viewList.InitList(words);
         ParentMovePos(width * -(curPage-1),false);
         PageCount.text= curPage+"/"+ words.Count;

@@ -70,10 +70,20 @@ public class WordButton : MonoBehaviour
    
     private void ClickWord()
     {
-         StageHexController.Instance.PuzzleData = wordData;
+        bool isEnter = false;
         //Debug.LogError("点击词语的索引"+LevelManager.Instance.WordData.PageIndex);
         //LevelManager.Instance.WordData.CurWord=word;
-        if (StageHexController.Instance.IsEnterVocabulary)
+        if (GameDataManager.Instance.UserData.levelMode is 1 or 3)
+        {
+            StageHexController.Instance.PuzzleData = wordData;
+            isEnter = StageHexController.Instance.IsEnterVocabulary;
+        }
+        else
+        {
+            ChessStageController.Instance.PuzzleData = wordData;
+            isEnter = ChessStageController.Instance.IsEnterVocabulary;
+        }
+        if (isEnter)
         {
             SystemManager.Instance.HidePanel(PanelType.LevelWordScreen,false);
             SystemManager.Instance.ShowPanel(PanelType.LevelWordDetail);

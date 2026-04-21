@@ -301,8 +301,7 @@ public class ChessPlayArea : UIWindow
             isAnimFinished = true; // 动画播完，标记设为 true
         });
         // 协程在这里暂停，直到 isAnimFinished 变成 true 才往下走
-        UIWindow uiWindow = SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
-        Debug.Log("HeaderSection 显示"+ uiWindow.IsWindowVisible);
+        SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
         yield return new WaitUntil(() => isAnimFinished);
         // 检查一下是否存在错误的成功状态
         chessboardGrid.FixChessState();

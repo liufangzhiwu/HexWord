@@ -87,6 +87,10 @@ public class ButterflyHome : UIWindow
         StopAllCoroutines();
         StartCoroutine(BackgroundInit());
         SetButtonsState();
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankScreen))
+        {
+            SystemManager.Instance.HidePanel(PanelType.ZenRankScreen);
+        }
     }
 
     private void ChangeGardenNotify()
@@ -205,14 +209,34 @@ public class ButterflyHome : UIWindow
         }
         else
         {
-            SystemManager.Instance.HidePanel(PanelType.ButterflyHome);
-            
-            if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+            try
             {
-                SystemManager.Instance.GetPanel(PanelType.PrimaryInterface)?.GetComponent<PrimaryInterface>()?.OnPlayClick();
-            }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
+                switch (GameDataManager.Instance.UserData.levelMode)
+                {
+                    case 1 :
+                    case 3:
+                        StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
+                        break;
+                    case 2:
+                        ChessStageController.Instance.SetStageData(ChessStageController.Instance.CurrentStage);
+                        break;
+                }
+                SystemManager.Instance.HidePanel(PanelType.ButterflyHome, true, () =>
+                {
+                    switch (GameDataManager.Instance.UserData.levelMode)
+                    {
+                        case 1:
+                        case 3:
+                            SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
+                            break;
+                        case 2:
+                            SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
+                            break;
+                    }
+                });
+            }catch (System.Exception e)
             {
-                //SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
+                Debug.LogError("设置关卡数据失败: " + e);
             }
         }
     }

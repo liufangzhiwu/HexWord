@@ -90,6 +90,7 @@ public class HeaderSection : UIWindow
         }else if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
         {
             PupaTable.gameObject.SetActive(ChessStageController.Instance.pupaLetter != null);
+            ShopBtn.gameObject.SetActive(!PupaTable.gameObject.activeSelf);
             if (ChessStageController.Instance.pupaLetter != null&&!GameDataManager.Instance.ButterflyData.IsOpenButterfly)
             {
                 GameDataManager.Instance.ButterflyData.IsOpenButterfly = true;
@@ -149,11 +150,13 @@ public class HeaderSection : UIWindow
     {
         if (SystemManager.Instance != null)
         {
-            bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea) || SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea);
-    
-            if (isgameshow)
+            if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
             {
                 bool hasLevelWords = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count > 0;
+                LevelPuzzleBtn.gameObject.SetActive(hasLevelWords);
+            }else if(SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+            {
+                bool hasLevelWords = ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0;
                 LevelPuzzleBtn.gameObject.SetActive(hasLevelWords);
             }
         }
@@ -194,12 +197,14 @@ public class HeaderSection : UIWindow
     private void OnClickPuzzleVocabulary()
     {
         StageHexController.Instance.IsEnterVocabulary = false;
+        ChessStageController.Instance.IsEnterVocabulary = false;
         SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
     }
     
     private void OnClickStagePuzzleScreen()
     {
         StageHexController.Instance.IsEnterVocabulary = true;
+        ChessStageController.Instance.IsEnterVocabulary = true;
         SystemManager.Instance.ShowPanel(PanelType.LevelWordScreen);
     }
 
@@ -293,7 +298,6 @@ public class HeaderSection : UIWindow
     {
         
         ButterflyGrow butterflyGrow =ButterfliesManager.Instance.GetCurrentGrow();
-        Debug.LogError("当前的成长配置" + JsonUtility.ToJson(butterflyGrow));
         if(butterflyGrow == null)
             return;
 
