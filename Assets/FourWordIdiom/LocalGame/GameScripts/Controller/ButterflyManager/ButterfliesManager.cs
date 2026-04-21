@@ -324,9 +324,10 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// </summary>
     public void AddObtainedPupaOnGamePanel(Transform startPoint, int pupa = 1)
     {
+        Debug.LogWarning("开始飞蝶蛹字");
         HeaderSection headerSection =
-            SystemManager.Instance.GetPanel(PanelType.HeaderSection)?.GetComponent<HeaderSection>();
-        headerSection?.ShowPupaTableAnima(startPoint,pupa);
+            SystemManager.Instance.GetPanel(PanelType.HeaderSection).GetComponent<HeaderSection>();
+        headerSection.ShowPupaTableAnima(startPoint,pupa);
     }
     
     #endregion
@@ -356,58 +357,75 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         
         if(levelId<3)
         {
-            // Debug.LogError("当前等级未到，不能展示蚕蛹");
+            Debug.LogError("当前等级未到，不能展示蚕蛹");
             return false;
         }
         
         ButterflyGrow butterflyGrow = GetCurrentGrow();
         if (butterflyGrow == null || GameDataManager.Instance.ButterflyData.currPupa >= butterflyGrow.Count)
-            return false;
-        
-        if (StageHexController.Instance.CurStageInfo == null ||ChessStageController.Instance.CurrStageInfo == null)
         {
-            GameDataManager.Instance.ButterflyData.intervalLv++;
-            // Debug.LogError("关卡id:"+levelId+ "关卡数据为空 限时概率为显示蚕蛹但没有可以放置的蚕蛹位置");
+            Debug.LogError("蝶蛹未消费，不再收集");
             return false;
+        }
+
+        if (GameDataManager.Instance.UserData.levelMode is 1 or 3)
+        {
+            if (StageHexController.Instance.CurStageInfo == null)
+            {
+                GameDataManager.Instance.ButterflyData.intervalLv++;
+                Debug.LogError("关卡id:"+levelId+ "关卡数据为空 限时概率为显示蚕蛹但没有可以放置的蚕蛹位置");
+                return false;
+            }
+        }
+        else
+        {
+            if (ChessStageController.Instance.CurrStageInfo == null)
+            {
+                GameDataManager.Instance.ButterflyData.intervalLv++;
+                Debug.LogError("关卡id:"+levelId+ "关卡数据为空 限时概率为显示蚕蛹但没有可以放置的蚕蛹位置");
+                return false;
+            }
         }
         
         bool able = UnityEngine.Random.Range(0, 100) < butterflyGrow.Prob * 100;
         if (able)
         {
             //检查是否有可放置的蚕蛹数据
-            if (StageHexController.Instance.CurStageInfo._pupaData == null)
+            if (GameDataManager.Instance.UserData.levelMode is 1 or 3)
             {
-                GameDataManager.Instance.ButterflyData.intervalLv++;
-                // Debug.LogError("关卡id:"+levelId+ "蚕蛹数据为空 限时概率为显示蚕蛹但没有可以放置的蚕蛹位置");
-                return false;
+                if (StageHexController.Instance.CurStageInfo._pupaData == null)
+                {
+                    GameDataManager.Instance.ButterflyData.intervalLv++;
+                    Debug.LogError("关卡id:" + levelId + "蚕蛹数据为空 限时概率为显示蚕蛹但没有可以放置的蚕蛹位置");
+                    return false;
+                }
             }
-           
+            
             GameDataManager.Instance.ButterflyData.intervalLv = 0;
-            // Debug.LogError("关卡id:"+levelId+ "限时概率为显示蚕蛹且可以放置的蚕蛹位置");
+            Debug.LogError("关卡id:"+levelId+ "限时概率为显示蚕蛹且可以放置的蚕蛹位置");
             
         }else
         {
-            if (GameDataManager.Instance.ButterflyData.intervalLv < butterflyGrow.Interval)
+            if (GameDataManager.Instance.UserData.levelMode is 1 or 3)
             {
                 if (StageHexController.Instance.CurStageInfo._pupaData == null)
                 {
                     GameDataManager.Instance.ButterflyData.intervalLv++;
-                    // Debug.LogError("关卡id:"+levelId+ "限时概率为不显示蚕蛹 累计次数没有到达上限触发显示蚕蛹逻辑 且没有可以放置的蚕蛹位置");
+                    Debug.LogError("关卡id:" + levelId + "限时概率为不显示蚕蛹 累计次数到达上限触发显示蚕蛹逻辑 但没有可以放置的蚕蛹位置");
                     return false;
                 }
             }
+            if (GameDataManager.Instance.ButterflyData.intervalLv < butterflyGrow.Interval)
+            {
+                GameDataManager.Instance.ButterflyData.intervalLv++;
+                Debug.LogError("关卡id:"+levelId+ "限时概率为不显示蚕蛹 累计次数没有到达上限触发显示蚕蛹逻辑 且没有可以放置的蚕蛹位置");
+                able =  false;
+            }
             else
             {
-                if (StageHexController.Instance.CurStageInfo._pupaData == null)
-                {
-                    GameDataManager.Instance.ButterflyData.intervalLv++;
-                    // Debug.LogError("关卡id:"+levelId+ "限时概率为不显示蚕蛹 累计次数到达上限触发显示蚕蛹逻辑 但没有可以放置的蚕蛹位置");
-                    return false;
-                }
-               
                 able = true;
                 GameDataManager.Instance.ButterflyData.intervalLv = 0;
-                // Debug.LogError("关卡id:"+levelId+ "限时概率为不显示蚕蛹 累计次数到达上限触发显示蚕蛹逻辑 可以放置的蚕蛹位置");
+                Debug.LogError("关卡id:"+levelId+ "限时概率为不显示蚕蛹 累计次数到达上限触发显示蚕蛹逻辑 可以放置的蚕蛹位置");
             }
         }
         

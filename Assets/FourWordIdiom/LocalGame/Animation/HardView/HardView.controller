@@ -57,7 +57,7 @@ AnimatorController:
   m_Name: HardView
   serializedVersion: 5
   m_AnimatorParameters:
-  - m_Name: isHide
+  - m_Name: IsHidden
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0

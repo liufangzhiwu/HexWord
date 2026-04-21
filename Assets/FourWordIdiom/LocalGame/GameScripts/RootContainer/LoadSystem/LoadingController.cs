@@ -106,11 +106,13 @@ public class LoadingController : MonoBehaviour
         StartCoroutine(SimulateLoadingProgress());
         yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.LoggingIn);
         Debug.Log($"进入登录流程 " + Launch.Instance.flowStatus);
+        #if !UNITY_EDITOR
         // 登录开始
         StartCoroutine( LoadHuaweiGameLogin());
         yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.Ready);
+        #endif
         //设置登录用户ID（需要等待游戏数据获取后）
-        AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
+        AnalyticMgr.SetLoginUser(Game.self.Accounts?.UserId);
         LoadWordVocabulary();
         yield return APIGateway.Instance.LoginApi.Login((res)=> 
         {
@@ -458,7 +460,9 @@ public class LoadingController : MonoBehaviour
 
     private void OnDestroy()
     {
+        #if UNITY_huawei &&  !UNITY_EDITOR
         HuaweiGameService.HideFloatWindow();
+        #endif
     }
 
     

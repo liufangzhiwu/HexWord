@@ -84,6 +84,10 @@ public class Launch : MonoBehaviour
             HuaweiGameService.ShowFloatWindow();
             yield return new WaitForSeconds(0.02f);
         }
+        else
+        {
+            Game.self.InitGame();
+        }
         Debug.Log("完成初始化游戏服务流程");
         flowStatus = GameFlowStatus.LoggingIn;
         yield return new WaitUntil(() => flowStatus == GameFlowStatus.LoggingIn);

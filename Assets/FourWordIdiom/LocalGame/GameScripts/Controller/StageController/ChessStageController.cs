@@ -112,7 +112,7 @@ public class ChessStageController
             GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
             
             pupaLetter = null;
-            if (ButterfliesManager.Instance.CanObtainedPupa())
+            if ( ButterfliesManager.Instance.CanObtainedPupa())
             {
                 //Chesspiece cp = CurrStageData.BoardSnapshot.ToList()[UnityEngine.Random.Range(0, CurrStageData.BoardSnapshot.Count)];
                 var candidates = CurrStageData.BoardSnapshot.Where(v => v.state == TileState.Default).ToList();
@@ -121,6 +121,7 @@ public class ChessStageController
                     int randomIndex = UnityEngine.Random.Range(0, candidates.Count);
                     pupaLetter = candidates[randomIndex];
                 }
+                Debug.LogWarning($"是否找到蝶蛹字： {pupaLetter?.letter}");
                 CurrStageData.PupaDatas = pupaLetter;
             }
         }

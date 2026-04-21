@@ -867,6 +867,7 @@ MonoBehaviour:
   _tasktable: {fileID: 4702468257007861619}
   hardStageTable: {fileID: 3686823383354572527}
   extrahardStageTable: {fileID: 8928268146540192794}
+  _zenRankBtn: {fileID: 7908734238845177039}
   Content: {fileID: 1499769812402863208}
   _nextStageButton: {fileID: 8379068596404640020}
   Showlimiticon: {fileID: 5004602386354373299}
@@ -2014,6 +2015,18 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 2330421325209645055}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7908734238845177039 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5590698019911344944, guid: b571aae95f895f442a2bee904a3cb345,
+    type: 3}
+  m_PrefabInstance: {fileID: 2330421325209645055}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8293eb154b473c14881b6f48342c9586, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2702642188555078600
 PrefabInstance:
   m_ObjectHideFlags: 0

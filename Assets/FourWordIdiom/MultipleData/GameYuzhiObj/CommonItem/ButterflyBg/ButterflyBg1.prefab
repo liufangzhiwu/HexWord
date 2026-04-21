@@ -49,6 +49,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 1
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &1303903822468181415
 GameObject:
   m_ObjectHideFlags: 0
@@ -98,6 +100,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 1
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &1786139385910154563
 GameObject:
   m_ObjectHideFlags: 0
@@ -108,8 +112,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3183643097335924057}
   - component: {fileID: 5950775752164580693}
-  - component: {fileID: 5069737672059190495}
   - component: {fileID: 4691107261332536876}
+  - component: {fileID: 4534960061462821565}
+  - component: {fileID: 7011839796853778666}
   m_Layer: 5
   m_Name: ButterflyBg1
   m_TagString: Untagged
@@ -146,36 +151,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1786139385910154563}
   m_CullTransparentMesh: 1
---- !u!114 &5069737672059190495
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1786139385910154563}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: c3cb84708b7ae9a4299e9f1ff9338a72, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 1
-  m_PixelsPerUnitMultiplier: 1
 --- !u!114 &4691107261332536876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -190,6 +165,85 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_AspectMode: 4
   m_AspectRatio: 0.725
+--- !u!114 &4534960061462821565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1786139385910154563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d85b887af7e6c3f45a2e2d2920d641bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 2100000, guid: b66cf7a186d13054989b33a5c90044e4, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  skeletonDataAsset: {fileID: 11400000, guid: 368dcd7943feeb048ab532d81ded0718, type: 2}
+  additiveMaterial: {fileID: 0}
+  multiplyMaterial: {fileID: 0}
+  screenMaterial: {fileID: 0}
+  m_SkeletonColor: {r: 1, g: 1, b: 1, a: 1}
+  initialSkinName: 
+  initialFlipX: 0
+  initialFlipY: 0
+  startingAnimation: 
+  startingLoop: 0
+  timeScale: 1
+  freeze: 0
+  layoutScaleMode: 0
+  referenceSize: {x: 1948.8, y: 2688}
+  pivotOffset: {x: 0, y: 0}
+  referenceScale: 1
+  layoutScale: 1
+  rectTransformSize: {x: 1948.8, y: 2688}
+  editReferenceRect: 0
+  updateWhenInvisible: 3
+  allowMultipleCanvasRenderers: 0
+  canvasRenderers: []
+  separatorSlotNames: []
+  enableSeparatorSlots: 0
+  separatorParts: []
+  updateSeparatorPartLocation: 1
+  updateSeparatorPartScale: 0
+  disableMeshAssignmentOnOverride: 1
+  physicsPositionInheritanceFactor: {x: 1, y: 1}
+  physicsRotationInheritanceFactor: 1
+  physicsMovementRelativeTo: {fileID: 0}
+  meshGenerator:
+    settings:
+      useClipping: 1
+      zSpacing: 0
+      tintBlack: 0
+      canvasGroupCompatible: 0
+      pmaVertexColors: 1
+      addNormals: 0
+      calculateTangents: 0
+      immutableTriangles: 0
+  updateTiming: 1
+  unscaledTime: 0
+--- !u!114 &7011839796853778666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1786139385910154563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f726fb798ad621458c431cb9966d91d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneRoot: {fileID: 0}
+  flipBy180DegreeRotation: 0
+  skeletonRenderer: {fileID: 0}
+  skeletonGraphic: {fileID: 4534960061462821565}
 --- !u!1 &1793662934273523406
 GameObject:
   m_ObjectHideFlags: 0
@@ -239,6 +293,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 0
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &2321108710623786799
 GameObject:
   m_ObjectHideFlags: 0
@@ -343,6 +399,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 0
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &3832112061660300400
 GameObject:
   m_ObjectHideFlags: 0
@@ -392,6 +450,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 1
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &4494731604289801561
 GameObject:
   m_ObjectHideFlags: 0
@@ -441,6 +501,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 0
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &4612986616070369887
 GameObject:
   m_ObjectHideFlags: 0
@@ -490,6 +552,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 1
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &4807197896370816695
 GameObject:
   m_ObjectHideFlags: 0
@@ -539,6 +603,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 0
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &4876077095868644239
 GameObject:
   m_ObjectHideFlags: 0
@@ -588,6 +654,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 1
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &5164418443615065062
 GameObject:
   m_ObjectHideFlags: 0
@@ -637,6 +705,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 0
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &5586777577293270632
 GameObject:
   m_ObjectHideFlags: 0
@@ -729,6 +799,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 1
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &7781648068046115451
 GameObject:
   m_ObjectHideFlags: 0
@@ -778,6 +850,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 1
+  Occupied: 0
+  OccupiedBy: {fileID: 0}
 --- !u!1 &8981682142629886838
 GameObject:
   m_ObjectHideFlags: 0
@@ -827,3 +901,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   area: 1
+  Occupied: 0
+  OccupiedBy: {fileID: 0}

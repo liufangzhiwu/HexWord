@@ -1303,10 +1303,12 @@ public class ChessPlayArea : UIWindow
     {
         if (ChessStageController.Instance.pupaLetter != null)
         {
+            Debug.LogWarning("是否蝶蛹字进入");
             Chesspiece pupa = ChessStageController.Instance.pupaLetter;
-            CurrStageData.PupaDatas = null;
             if (pupa.Equals(view.chesspiece))
             {
+                Debug.LogWarning("蝶蛹字处理");
+                CurrStageData.PupaDatas = null;
                 ChessStageController.Instance.pupaLetter = null;
                 ButterfliesManager.Instance.AddObtainedPupaOnGamePanel(view.transform);
                 view.ShowButterflyPupa(false);

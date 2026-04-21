@@ -940,7 +940,7 @@ MonoBehaviour:
   _tasktable: {fileID: 851695587073121401}
   hardStageTable: {fileID: 9001860410649334092}
   extrahardStageTable: {fileID: 2276472365151529544}
-  _zenRankBtn: {fileID: 1730257501268686013}
+  _zenRankBtn: {fileID: 7279048814274866795}
   Content: {fileID: 5972038460822632039}
   nextBtn: {fileID: 3550607149674913449}
   progressSlider: {fileID: 974993057847591136}
@@ -1892,9 +1892,15 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b571aae95f895f442a2bee904a3cb345, type: 3}
---- !u!114 &1730257501268686013 stripped
+--- !u!224 &3653513391594539833 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 1882968073342764642, guid: b571aae95f895f442a2bee904a3cb345,
+    type: 3}
+  m_PrefabInstance: {fileID: 2923476550384831835}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7279048814274866795 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3499677794001779174, guid: b571aae95f895f442a2bee904a3cb345,
+  m_CorrespondingSourceObject: {fileID: 5590698019911344944, guid: b571aae95f895f442a2bee904a3cb345,
     type: 3}
   m_PrefabInstance: {fileID: 2923476550384831835}
   m_PrefabAsset: {fileID: 0}
@@ -1904,12 +1910,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8293eb154b473c14881b6f48342c9586, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!224 &3653513391594539833 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 1882968073342764642, guid: b571aae95f895f442a2bee904a3cb345,
-    type: 3}
-  m_PrefabInstance: {fileID: 2923476550384831835}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4389669898282048036
 PrefabInstance:
   m_ObjectHideFlags: 0

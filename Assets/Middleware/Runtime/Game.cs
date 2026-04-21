@@ -55,7 +55,6 @@ namespace Middleware
         {
             yield return new WaitUntil(()=>Accounts.IsLogin);
 #if UNITY_EDITOR
-            
 #elif UNITY_OPENHARMONY||UNITY_huawei
             CreateAnalytic();
             CreateAd();
@@ -76,6 +75,9 @@ namespace Middleware
 	        LimitTimeManager.Instance.Init();
             
             ChessStageController.Instance.Init();
+            #if UNITY_EDITOR
+            CreateAnalytic();
+            #endif
         }
         
         private void CreateAccounts()
