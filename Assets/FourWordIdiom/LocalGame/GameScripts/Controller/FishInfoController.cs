@@ -12,6 +12,8 @@ public class FishaiInfoItem
     public int round;
     //时间系数
     public float timeFactor;
+    //目标词数量
+    public int wordCount;
 }
 
 public class FishAwardItem
@@ -605,7 +607,7 @@ public class FishInfoController : MonoBehaviour
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    private List<FishaiInfoItem> GetRoundFishaiItems(int roundindex)
+    public List<FishaiInfoItem> GetRoundFishaiItems(int roundindex)
     {
         List<FishaiInfoItem>  fishaiInfos= _fishaiInfoItems.FindAll((item)=>roundindex==item.round);
         Shuffle(fishaiInfos);
@@ -643,12 +645,14 @@ public class FishInfoController : MonoBehaviour
             int id = int.Parse(fields[0].Trim());
             int round = int.Parse(fields[1].Trim());
             float timeFactor = float.Parse(fields[2].Trim());
+            int wordCount = int.Parse(fields[3].Trim());
 
             _fishaiInfoItems.Add(new FishaiInfoItem
             {
                 id = id,
                 round = round,
-                timeFactor = timeFactor
+                timeFactor = timeFactor,
+                wordCount = wordCount
             });
         }
     }
