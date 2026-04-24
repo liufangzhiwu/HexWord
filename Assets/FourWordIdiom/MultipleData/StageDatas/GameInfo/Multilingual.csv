@@ -87,9 +87,9 @@ PrivacyAgreement01_General,"欢迎来到「成语消：禅意之境」！
 PrivacyAgreement02,如果您选择开始使用我们的应用，请点击「同意」
 PrivacyAgreement03,同意
 PrivacyAgreement04,不同意
-PrivacyAgreement04,"根据相关法律法规以及为了保障您的个人权益,我们制定了<href=https://mindwordplay.cn/yhxyb>《用户协议》</href>和<href=https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008>《隐私政策》</href>，只有您同意了这些条款，我们才能为您服务。我们会保障您的隐私安全，若您仍然不同意本隐私和协议,很遗憾我们将无法继续为您提供服务。 "
 PrivacyAgreement05,再想想
 PrivacyAgreement06,拒绝并退出
+PrivacyAgreement07,"根据相关法律法规以及为了保障您的个人权益,我们制定了<href=https://mindwordplay.cn/yhxyb>《用户协议》</href>和<href=https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008>《隐私政策》</href>，只有您同意了这些条款，我们才能为您服务。我们会保障您的隐私安全，若您仍然不同意本隐私和协议,很遗憾我们将无法继续为您提供服务。 "
 AgeDescription,"1.本游戏玩法简单,不存在写实对抗(战斗)画面和人物关系,无剧情和故事背景,适用于年满8周岁及以上的用户,对于8周岁(含)到18周岁(不含)的未成年人用户,建议在家长监护下使用游戏产品。
 
 2.本游戏玩法简单,没有基于真实历史和现实事件的改编内容,游戏内没有设置人物角色系统。游戏中没有基于图片和语音的陌生人社交系统,不存在部落功能。
@@ -112,6 +112,7 @@ DailyTasksMainDes,1 天 8 任务，可获1小时无限蝴蝶道具
 TimeD,日
 TimeH,时
 TimeM,分
+TimeS,秒
 DailyTasksEndDes01,满月若镜 功德圆成
 DailyTasksEndDes02,无心之境 臻至圆满
 DailyTasksEndDes03,砚池沉璧 照见菩提 

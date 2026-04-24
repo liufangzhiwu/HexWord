@@ -13,7 +13,7 @@ public class PrivacyGuidance : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _descriptionText.text = MultilingualManager.Instance.GetString("PrivacyAgreement01_general");
+        _descriptionText.text = MultilingualManager.Instance.GetString("PrivacyAgreement01_General");
         _descriptionText.onHyperlinkClick = OnClickText;
         _confirmButton.AddClickAction(OnConfirmClick);
         _rejectButton.AddClickAction(OnRejectClick);

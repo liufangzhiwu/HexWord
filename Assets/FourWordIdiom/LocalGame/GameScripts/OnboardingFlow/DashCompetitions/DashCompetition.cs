@@ -302,7 +302,9 @@ public class DashCompetition : UIWindow
     
     private void InitUI()
     {
-        tipsText.text= MultilingualManager.Instance.GetString("CarpMatchDes");
+        int round= GameDataManager.Instance.FishUserSave.curround;
+        FishaiInfoItem infoItem = FishInfoController.Instance.GetCurrFishItem(round);
+        tipsText.text= string.Format( MultilingualManager.Instance.GetString("CarpMatchDes"), infoItem?.wordCount ?? 100 );
     }
    
     private void UpdateFishTime(string time="")

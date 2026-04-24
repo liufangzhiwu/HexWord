@@ -63,6 +63,7 @@ SpriteAtlas:
     - 426367d1323e99a49b8928d42beaa09b: 21300000
     - ed3e91023b3196e438cdc489257dac82: 21300000
     - 5ef604029d7f60049814db9021c25173: 21300000
+    - defb8132f3c09ad4f89e6645adf37941: 21300000
     - 2f3c85c2084a3784dbe1ed4b4de652b0: 21300000
     - 362bfac2b4bf45d40964f2b1d26a5e7e: 21300000
     - eb4659d20322ac44f926252ee89943c6: 21300000
@@ -73,6 +74,7 @@ SpriteAtlas:
     - 7593ecf3e1f282b40b82accb535335a3: 21300000
     - 6518201438985e74082a37503316c758: 21300000
     - be05d394425373f4b84caca009e9971d: 21300000
+    - 8e0f94e44d40c4d4ca71465a8b3785d9: 21300000
     - e2a280f4cbcc31e45a553ce264611dbb: 21300000
     - ea68cd2586b8ced4498c124dadc36a94: 21300000
     - 623a29659d259de429306795bd76ad30: 21300000
@@ -134,6 +136,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 426367d1323e99a49b8928d42beaa09b, type: 3}
   - {fileID: 21300000, guid: ed3e91023b3196e438cdc489257dac82, type: 3}
   - {fileID: 21300000, guid: 5ef604029d7f60049814db9021c25173, type: 3}
+  - {fileID: 21300000, guid: defb8132f3c09ad4f89e6645adf37941, type: 3}
   - {fileID: 21300000, guid: 2f3c85c2084a3784dbe1ed4b4de652b0, type: 3}
   - {fileID: 21300000, guid: 362bfac2b4bf45d40964f2b1d26a5e7e, type: 3}
   - {fileID: 21300000, guid: eb4659d20322ac44f926252ee89943c6, type: 3}
@@ -144,6 +147,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 7593ecf3e1f282b40b82accb535335a3, type: 3}
   - {fileID: 21300000, guid: 6518201438985e74082a37503316c758, type: 3}
   - {fileID: 21300000, guid: be05d394425373f4b84caca009e9971d, type: 3}
+  - {fileID: 21300000, guid: 8e0f94e44d40c4d4ca71465a8b3785d9, type: 3}
   - {fileID: 21300000, guid: e2a280f4cbcc31e45a553ce264611dbb, type: 3}
   - {fileID: 21300000, guid: ea68cd2586b8ced4498c124dadc36a94, type: 3}
   - {fileID: 21300000, guid: 623a29659d259de429306795bd76ad30, type: 3}
@@ -198,12 +202,13 @@ SpriteAtlas:
   - UI_Icon_complete
   - tilepagebg
   - maxbutterfly
-  - UI_iconcomplete
+  - UI_iconcomplete2
   - zen_select
   - fly-wing
   - bottom_bg
   - btnicon
   - UI_Icon_lojd
+  - UI_iconcomplete
   - input
   - UI_Icon_reset
   - liangdeng
@@ -214,9 +219,10 @@ SpriteAtlas:
   - UI_Icon_dengbg
   - ShopBtn
   - add
+  - zen_layer
   - fly-body
   - headicon
-  - zen_layer
+  - zen_layer2
   - UI_Icon_tip
   - UI_Icon_level
   - Triangle

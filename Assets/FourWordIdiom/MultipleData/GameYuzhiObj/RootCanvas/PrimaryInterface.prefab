@@ -182,6 +182,7 @@ MonoBehaviour:
   extrahardStageTable: {fileID: 1641547331664095661}
   logo: {fileID: 6816842715826219029}
   Stagetxt: {fileID: 8001958750307638611}
+  ZenRankBtn: {fileID: 2254930408442973542}
   LimitTimeBtn: {fileID: 1121447457861956769}
   LimitTimeObj: {fileID: 5549771546023348262}
   LimitClaim: {fileID: 4740577584268527423}
@@ -5022,6 +5023,18 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b571aae95f895f442a2bee904a3cb345, type: 3}
+--- !u!114 &2254930408442973542 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2381661738039037837, guid: b571aae95f895f442a2bee904a3cb345,
+    type: 3}
+  m_PrefabInstance: {fileID: 4487348815624176363}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &2623318768825386121 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1882968073342764642, guid: b571aae95f895f442a2bee904a3cb345,

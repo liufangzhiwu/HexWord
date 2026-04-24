@@ -12,6 +12,8 @@ public class FishaiInfoItem
     public int round;
     //时间系数
     public float timeFactor;
+    public int wordCount;
+    public float minTimer;
 }
 
 public class FishAwardItem
@@ -135,15 +137,17 @@ public class FishInfoController : MonoBehaviour
     {
         int playerWordProgress = GameDataManager.Instance.FishUserSave.Puzzleprogress;
         int userUseTime = GameDataManager.Instance.FishUserSave.updatePuzzleusetime;
-
+        int round= GameDataManager.Instance.FishUserSave.curround;
+        FishaiInfoItem infoItem = GetCurrFishItem(round);
+        int fishTargetWordCount = infoItem?.wordCount ?? AppGameSettings.FishTargetWordCount;
         // 合并符合条件的AI和玩家数据，并包含usetime
         var query = GameDataManager.Instance.FishUserSave.aiSaveDatas
-            .Where(ai => ai.Puzzleprogress >= AppGameSettings.FishTargetWordCount)
+            .Where(ai => ai.Puzzleprogress >= fishTargetWordCount)
             .Select(ai => new { IsPlayer = false, UseTime = ai.updatePuzzleusetime, Data = ai })
             .ToList();
 
         // 添加玩家数据（如果符合条件）
-        if (playerWordProgress >= AppGameSettings.FishTargetWordCount)
+        if (playerWordProgress >= fishTargetWordCount)
         {
             query.Add(new { IsPlayer = true, UseTime = userUseTime, Data = (FishAISaveData)null });
         }
@@ -177,13 +181,13 @@ public class FishInfoController : MonoBehaviour
             .ToList();
 
         var leftquery = GameDataManager.Instance.FishUserSave.aiSaveDatas
-           .Where(ai => ai.Puzzleprogress < AppGameSettings.FishTargetWordCount&&ai.Puzzleprogress>0)
-            .Select(ai => new { IsPlayer = false, leftword = AppGameSettings.FishTargetWordCount - ai.Puzzleprogress,usetime=ai.updatePuzzleusetime, Data = ai })
+           .Where(ai => ai.Puzzleprogress < fishTargetWordCount&&ai.Puzzleprogress>0)
+            .Select(ai => new { IsPlayer = false, leftword = fishTargetWordCount - ai.Puzzleprogress,usetime=ai.updatePuzzleusetime, Data = ai })
            .ToList();
 
-        if (playerWordProgress < AppGameSettings.FishTargetWordCount&&playerWordProgress>0)
+        if (playerWordProgress < fishTargetWordCount&&playerWordProgress>0)
         {
-            leftquery.Add(new { IsPlayer = true, leftword = AppGameSettings.FishTargetWordCount- playerWordProgress,usetime= userUseTime, Data = (FishAISaveData)null });
+            leftquery.Add(new { IsPlayer = true, leftword = fishTargetWordCount- playerWordProgress,usetime= userUseTime, Data = (FishAISaveData)null });
         }
 
 
@@ -445,21 +449,25 @@ public class FishInfoController : MonoBehaviour
     {
         FishAISaveData aiSaveData = GameDataManager.Instance.FishUserSave.aiSaveDatas
             .Find(item => item.aiid == aiid);
-
+        
+        int round= GameDataManager.Instance.FishUserSave.curround;
+        FishaiInfoItem infoItem = GetCurrFishItem(round);
+        int fishTargetWordCount = infoItem?.wordCount ?? AppGameSettings.FishTargetWordCount;
+        
         while (!RoundFishIsOver()&& aiSaveData!=null)
         {
             StageInfo aiLevelInfo= StageHexController.Instance.CreateStageInfo(aiSaveData.ailevel,true);
-            float needtime= aiLevelInfo.Puzzles.Count/(float)AppGameSettings.FishTargetWordCount*GetAiTargetTime(aiid);
+            float needtime= aiLevelInfo.Puzzles.Count/(float)fishTargetWordCount*GetAiTargetTime(aiid);
             needtime += aiSaveData.updatePuzzleusetime;
             
             DateTime rtargetTime = DateTime.Parse(GameDataManager.Instance.FishUserSave.roundstarttime).AddSeconds(needtime);
-            if (rtargetTime <= DateTime.Now&&aiSaveData.Puzzleprogress<AppGameSettings.FishTargetWordCount)
+            if (rtargetTime <= DateTime.Now&&aiSaveData.Puzzleprogress<fishTargetWordCount)
             {
                 aiSaveData.UpdateFishProgress(aiLevelInfo.Puzzles.Count);
                 aiSaveData.UpdatePassLvTime((int)needtime);
                 callback?.Invoke();
 
-                if (aiSaveData.Puzzleprogress >= AppGameSettings.FishTargetWordCount)
+                if (aiSaveData.Puzzleprogress >= fishTargetWordCount)
                 {
                     RoundResultFishRank();
                     break;
@@ -612,6 +620,16 @@ public class FishInfoController : MonoBehaviour
         return fishaiInfos;
     }
     
+    /// <summary>
+    /// 获取指定轮次的竞速AI数据
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    public FishaiInfoItem GetCurrFishItem(int index)
+    {
+        return _fishaiInfoItems?.FirstOrDefault((item) => item.id == index);
+    }
+    
     private void Shuffle<T>(IList<T> list)
     {
         lock (_syncLock)
@@ -643,12 +661,16 @@ public class FishInfoController : MonoBehaviour
             int id = int.Parse(fields[0].Trim());
             int round = int.Parse(fields[1].Trim());
             float timeFactor = float.Parse(fields[2].Trim());
+            int wordCount = int.Parse(fields[3].Trim());
+            float minTimer = float.Parse(fields[4].Trim());
 
             _fishaiInfoItems.Add(new FishaiInfoItem
             {
                 id = id,
                 round = round,
-                timeFactor = timeFactor
+                timeFactor = timeFactor,
+                wordCount = wordCount,
+                minTimer = minTimer
             });
         }
     }

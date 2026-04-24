@@ -101,12 +101,12 @@ public class RateUsScreen : UIWindow
         GameDataManager.Instance.UserData.showRateusCount = 3;
         
         string url = "";
-#if UNITY_ANDROID
-        url = $"market://details?id={Application.identifier}";
+#if UNITY_ANDROID || UNITY_huawei
+        url = $"https://appgallery.huawei.com/#/app/C116093983";
 #elif UNITY_IOS
         string appId = ConfigManager.Instance.GetString("Appid"); // 替换为你的App ID
         url = $"itms-apps://itunes.apple.com/app/id{appId}?action=write-review";
-#elif UNITY_OPENHARMONY
+#elif UNITY_OPENHARMONY 
         url = $"https://appgallery.huawei.com/app/detail?id={Application.identifier}";
 #endif
         Application.OpenURL(url);

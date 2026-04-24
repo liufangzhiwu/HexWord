@@ -37,7 +37,9 @@ public class CompetitionStart : UIWindow
 
     private void InitUI()
     {
-        wordtips.text = MultilingualManager.Instance.GetString("CarpMatchStartDes");
+        int round= GameDataManager.Instance.FishUserSave.curround;
+        FishaiInfoItem infoItem = FishInfoController.Instance.GetCurrFishItem(round);
+        wordtips.text = string.Format(MultilingualManager.Instance.GetString("CarpMatchStartDes"), infoItem?.wordCount ?? 100 );
         startBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("CarpMatchStart");
     }
    

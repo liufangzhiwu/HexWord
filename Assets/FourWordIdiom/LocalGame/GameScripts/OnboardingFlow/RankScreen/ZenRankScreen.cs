@@ -92,7 +92,7 @@ public class ZenRankScreen : UIWindow
         
         if (hehuaPrefab == null)
         {
-            hehuaPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("ZenHehua", "UI_hehua");
+            hehuaPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("zenhehua", "UI_hehua");
         }
         hehuaObjectPool = new ObjectPool(hehuaPrefab, ObjectPool.CreatePoolContainer(transform, "ZenHehuaPool"));
         

@@ -19,6 +19,7 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
     [SerializeField] private Image logo;       // 文字类型组件
     [SerializeField] private Text Stagetxt;           // 关卡文本
+    [SerializeField] private Button ZenRankBtn;         // 禅意排名按钮
     [Header("UI LimitTime")]
     [SerializeField] private Button LimitTimeBtn;
     [SerializeField] private GameObject LimitTimeObj;
@@ -267,7 +268,9 @@ public class PrimaryInterface : UIWindow
          {
              TaskClaim.gameObject.SetActive(false);
          }
-        TasksBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions);
+
+         int stage = Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage, GameDataManager.Instance.UserData.CurrentChessStage);
+        TasksBtn.gameObject.SetActive( stage>= AppGameSettings.UnlockRequirements.DailyMissions);
         TaskClaim.GetComponentInChildren<Text>().text= MultilingualManager.Instance.GetString("ADPopReceive");
     }
     
@@ -301,16 +304,19 @@ public class PrimaryInterface : UIWindow
 
     private void CheckButtonsIsOpen()
     {
-        HeadBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
-        TasksBtn.transform.parent.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage>= AppGameSettings.UnlockRequirements.DailyMissions);
+        int stage = Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage, GameDataManager.Instance.UserData.CurrentChessStage);
         
-        LimitTimeBtn.transform.parent.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
-        ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime));
+        HeadBtn.gameObject.SetActive(stage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
+        TasksBtn.transform.parent.gameObject.SetActive(stage>= AppGameSettings.UnlockRequirements.DailyMissions);
         
-        SignInBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.SignInRewards
-        ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.signOpenTime));
+        LimitTimeBtn.transform.parent.gameObject.SetActive(stage >= AppGameSettings.UnlockRequirements.TimeLimitMode
+                                                           ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime));
+        
+        SignInBtn.gameObject.SetActive(stage >= AppGameSettings.UnlockRequirements.SignInRewards
+                                       ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.signOpenTime));
         
         ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
+        ZenRankBtn.GetComponent<ZenRankButton>().CheckRankProgress();
     }
     
     private void UpdateTimeDisplay(string time)

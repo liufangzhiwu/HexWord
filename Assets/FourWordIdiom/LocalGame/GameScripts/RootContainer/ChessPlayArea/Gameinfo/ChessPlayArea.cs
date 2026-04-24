@@ -181,9 +181,9 @@ public class ChessPlayArea : UIWindow
         Transform CompCount = CompleteBtn.transform.GetChild(1);
         Transform compText = CompCount.GetChild(0);
         Transform compAdd = CompCount.GetChild(1);
-        if (GameDataManager.Instance.UserData.toolInfo[104].count > 0)
+        if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
         {
-            compText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[104].count.ToString();
+            compText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
             compText.gameObject.SetActive(true);
             compAdd.gameObject.SetActive(false);
             // CompCost.gameObject.SetActive(false);
@@ -200,9 +200,9 @@ public class ChessPlayArea : UIWindow
         Transform HintCount = HitsBtn.transform.GetChild(1);
         Transform hintText = HintCount.GetChild(0);
         Transform hintAdd = HintCount.GetChild(1);
-        if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
+        if (GameDataManager.Instance.UserData.toolInfo[101].count > 0)
         {
-            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
+            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
             hintText.gameObject.SetActive(true);
             hintAdd.gameObject.SetActive(false);
             // HintCost.gameObject.SetActive(false);
@@ -772,7 +772,7 @@ public class ChessPlayArea : UIWindow
     }
     public void UseComplete(bool isReset = false)
     {
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[104];
+        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
 
         if(toolInfo == null || chessboardGrid.GameOver)
         {
@@ -785,7 +785,7 @@ public class ChessPlayArea : UIWindow
 
         if(toolInfo.count <= 0)
         {
-            GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
+            GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             return;
         }
@@ -816,7 +816,7 @@ public class ChessPlayArea : UIWindow
         }
         else
         {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用");
             InitToolUI();
         }
 
@@ -866,7 +866,7 @@ public class ChessPlayArea : UIWindow
         Sequence seq = DOTween.Sequence();
         
         // 1. 飞到第 1 个格子
-        seq.Append(particle.transform.DOPath(firstPath, 0.4f, PathType.Linear).SetEase(Ease.InOutSine));
+        seq.Append(particle.transform.DOPath(firstPath, 0.2f, PathType.Linear).SetEase(Ease.InOutSine));
         seq.AppendCallback(() => {
             // 删掉外面的 SetTipMessage，因为你的 PlayRevealAnimation 里面已经有了，防止重复调用！
             emptyTargets[0].PlayRevealAnimation1(emptyTargets[0].transform); 
@@ -881,7 +881,7 @@ public class ChessPlayArea : UIWindow
             float distance = Vector3.Distance(emptyTargets[currentIndex - 1].transform.position, emptyTargets[currentIndex].transform.position);
             // 跳跃高度设定为距离的一半（比如相距 100 像素，就往上跳 50 像素）
             float jumpHeight = distance * 0.5f;
-            seq.Append(particle.transform.DOJump(emptyTargets[currentIndex].transform.position, jumpHeight, 1, 0.2f).SetEase(Ease.Linear));
+            seq.Append(particle.transform.DOJump(emptyTargets[currentIndex].transform.position, jumpHeight, 1, 0.1f).SetEase(Ease.Linear));
             
             seq.AppendCallback(() => {
                 emptyTargets[currentIndex].PlayRevealAnimation1(emptyTargets[currentIndex].transform); 
@@ -973,7 +973,7 @@ public class ChessPlayArea : UIWindow
     /// </summary>
     public void UseTips()
     {
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
+        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
 
         if (toolInfo == null || chessboardGrid.GameOver)
         {
@@ -990,7 +990,7 @@ public class ChessPlayArea : UIWindow
         bool useCoins = false;
         if(toolInfo.count <= 0)
         {
-            GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
+            GetItemScreen.limitRewordType = LimitRewordType.SingleTipsttool;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             return;
         }
@@ -1014,12 +1014,12 @@ public class ChessPlayArea : UIWindow
         {
             // 更新道具
             GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, false, true, "购买道具");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "道具购买");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1, "道具购买");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, -1, "关卡内使用");
         }
         else
         {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, -1, "关卡内使用");
             InitToolUI();
         }
         // chessboardGrid.SetSelectTip();
@@ -1052,7 +1052,7 @@ public class ChessPlayArea : UIWindow
         // 2. 计算动态距离和时长
         Vector3 startPos = particle.transform.position;
         Vector3 endPos = targetTile.transform.position;
-        float duration = 0.5f;
+        float duration = 0.25f;
         // 3. 生成贝塞尔弧线路径
         Vector3[] pathPoints = CreateBezierPath(startPos, endPos, 0.3f); // 150f是弧度，可以调大调小
         // 锁定屏幕防止飞行时玩家乱点
@@ -1302,11 +1302,9 @@ public class ChessPlayArea : UIWindow
     {
         if (ChessStageController.Instance.pupaLetter != null)
         {
-            Debug.LogWarning("是否蝶蛹字进入");
             Chesspiece pupa = ChessStageController.Instance.pupaLetter;
             if (pupa.Equals(view.chesspiece))
             {
-                Debug.LogWarning("蝶蛹字处理");
                 CurrStageData.PupaDatas = null;
                 ChessStageController.Instance.pupaLetter = null;
                 ButterfliesManager.Instance.AddObtainedPupaOnGamePanel(view.transform);

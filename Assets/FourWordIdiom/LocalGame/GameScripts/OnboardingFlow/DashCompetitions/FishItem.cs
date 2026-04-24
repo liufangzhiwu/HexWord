@@ -268,13 +268,16 @@ public class FishItem : MonoBehaviour
     private void FishMove(out float waittime,bool isneedmove=true)
     {
         float point = 0, targetx = 0;
+        int round= GameDataManager.Instance.FishUserSave.curround;
+        FishaiInfoItem infoItem = FishInfoController.Instance.GetCurrFishItem(round);
+        int fishTargetWordCount = infoItem?.wordCount ?? AppGameSettings.FishTargetWordCount;
         if (fishaiSaveData != null)
         {
-            point= fishaiSaveData.Puzzleprogress /(float) AppGameSettings.FishTargetWordCount;
+            point= fishaiSaveData.Puzzleprogress /(float) fishTargetWordCount;
         }
         else
         {
-            point= GameDataManager.Instance.FishUserSave.Puzzleprogress /(float) AppGameSettings.FishTargetWordCount;
+            point= GameDataManager.Instance.FishUserSave.Puzzleprogress /(float) fishTargetWordCount;
         }
 
         if (point > 0&&isneedmove)

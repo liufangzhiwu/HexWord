@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,8 +8,11 @@ public class ModeSelect : UIWindow
     [Header("弹出窗组件")] 
     [SerializeField] private RectTransform popupPanel;
     [SerializeField] private Button backBtn;
+    [SerializeField] private Button wordBtn;
+    [SerializeField] private Button chessBtn;
+    [SerializeField] private Button hexaBtn;
     [SerializeField] private Text titleText;
-    [SerializeField] private RectTransform content;
+    //[SerializeField] private RectTransform content;
 
     private float slideDuration = 0.3f;
     private AnimationCurve sliderCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
@@ -34,6 +36,12 @@ public class ModeSelect : UIWindow
         
         //绑定背景点击事件
         backBtn.AddClickAction(ClosePopup);
+        
+        wordBtn.AddClickAction(()=> SelectMode((int)LevelType.BlockWord));
+        chessBtn.AddClickAction(()=> SelectMode((int)LevelType.ChessWord));
+        hexaBtn.AddClickAction(()=> SelectMode((int)LevelType.HexWord));
+
+        InitDefaulLevelType();
     }
 
     protected override void OnEnable()
@@ -43,54 +51,106 @@ public class ModeSelect : UIWindow
         OpenPopup();
     }
 
+    private void InitDefaulLevelType()
+    {
+        wordBtn.transform.GetChild(1).gameObject.SetActive(false);
+        chessBtn.transform.GetChild(1).gameObject.SetActive(false);
+        hexaBtn.transform.GetChild(1).gameObject.SetActive(false);
+        
+        if (GameDataManager.Instance.UserData.levelMode == (int)LevelType.BlockWord)
+        {
+            hexaBtn.transform.SetAsFirstSibling();
+        }
+        else if (GameDataManager.Instance.UserData.levelMode == (int)LevelType.ChessWord)
+        {
+            chessBtn.transform.SetAsFirstSibling();
+        }
+        else if (GameDataManager.Instance.UserData.levelMode == (int)LevelType.HexWord)
+        {
+            hexaBtn.transform.SetAsFirstSibling();
+        }
+        
+        int levelmode = GameDataManager.Instance.UserData.levelMode;
+        
+        switch ((LevelType)levelmode)
+        {
+            case LevelType.BlockWord:
+            case LevelType.HexWord:
+                hexaBtn.transform.GetChild(1).gameObject.SetActive(true);
+                break;
+            case LevelType.ChessWord:
+                chessBtn.transform.GetChild(1).gameObject.SetActive(true);
+                break;
+        }
+    }
+
     private void InitUI()
     {
-        // 数据驱动：模式配置
-        (string key, int stage)[] modes =
-        {
-            (MultilingualManager.Instance.GetString("EntranceUIName01"),        0),
-            (MultilingualManager.Instance.GetString("EntranceUIName02"),       GameDataManager.Instance.UserData.CurrentChessStage),
-            (MultilingualManager.Instance.GetString("EntranceUIName03"),        GameDataManager.Instance.UserData.CurrentHexStage)                           // 层层消无关卡号
-        };
-        
-        int currentMode = GameDataManager.Instance.UserData.levelMode -1;
-       
-        for (int i = 0; i < content.childCount; i++)
-        {
-            Transform child = content.GetChild(i);
-            if(i >= modes.Length) break;
-            
-            var (name,stage) = modes[i];
+        InitLevelType(LevelType.BlockWord);
+        InitLevelType(LevelType.ChessWord);
+        InitLevelType(LevelType.HexWord);
+    }
 
-            Transform modeName = child.GetChild(0);
-            Transform stageText = modeName.GetChild(0);
-            Transform select = child.GetChild(1);
-            
-            // 填文字
-            modeName.GetComponent<Text>().text = name;
+    private void InitLevelType(LevelType levelType)
+    {
+        Button LevelBtn = null;
+        int stage = 0;
+        
+        switch (levelType)
+        {
+            case LevelType.BlockWord:
+            case LevelType.HexWord:
+                LevelBtn = hexaBtn;
+                stage = GameDataManager.Instance.UserData.CurrentHexStage;
+                break;
+            case LevelType.ChessWord:
+                LevelBtn = chessBtn;
+                stage = GameDataManager.Instance.UserData.CurrentChessStage;
+                break;
+        }
+      
+       
+        Transform modeName = LevelBtn.transform.GetChild(0);
+        Transform stageText = modeName.GetChild(0);
+        
+        string levelName = MultilingualManager.Instance.GetString("EntranceUIName0"+(int)levelType);
+        
+        // 填文字
+        modeName.GetComponent<Text>().text = levelName;
+        if (levelType != LevelType.HexWord)
+        {
             stageText.GetComponent<Text>().text =
                 $"{MultilingualManager.Instance.GetString("Level")} {stage}";
-            
-            Button btn = child.GetComponent<Button>() ?? child.gameObject.AddComponent<Button>();
-            int modeId = i;
-            // Debug.Log("当前是第几个？" + modeId);
-            btn.AddClickAction(()=> SelectMode(modeId));
-            // 选中状态
-            select.gameObject.SetActive(i == currentMode);
         }
     }
 
     private void SelectMode(int mode)
     {
-        for (int i = 0; i < content.childCount; i++)
-        {
-            content.GetChild(i).GetChild(1).gameObject.SetActive(false);
-        }
-        content.GetChild(mode).GetChild(1).gameObject.SetActive(true);
         
-        // Debug.Log("当前选择的模式" + (mode+1));
-        GameDataManager.Instance.UserData.levelMode = mode + 1;
-        GameDataManager.Instance.UserData.SaveData();
+            Button LevelBtn = null;
+            Transform select = null;
+            int stage = 0;
+           
+            hexaBtn.transform.GetChild(1).gameObject.SetActive(false);
+            chessBtn.transform.GetChild(1).gameObject.SetActive(false);
+        
+            switch ((LevelType)mode)
+            {
+                case LevelType.BlockWord:
+                case LevelType.HexWord:
+                    LevelBtn = hexaBtn;
+                    break;
+                case LevelType.ChessWord:
+                    LevelBtn = chessBtn;
+                    break;
+            }
+            select= LevelBtn.transform.GetChild(1);
+            // Debug.Log("当前选择的模式" + (mode+1));
+            GameDataManager.Instance.UserData.levelMode = mode;
+            select.gameObject.SetActive(true);
+            GameDataManager.Instance.UserData.SaveData();
+      
+       
         ClosePopup();
     }
 
