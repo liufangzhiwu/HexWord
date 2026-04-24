@@ -41,16 +41,6 @@ public sealed class GameCoreManager: MonoBehaviour
         }
     }
 
-
-    /// <summary>
-    /// 显示游戏主界面
-    /// </summary>
-    public void ShowGamePanel()
-    {
-        StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
-        SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
-    }
-
     private void Start()
     {
         Game.self._uiRoot=SystemManager.Instance._uiRoot;
@@ -106,12 +96,11 @@ public sealed class GameCoreManager: MonoBehaviour
     {
         yield return new WaitForSeconds(0.2f);
         
-        StageHexController.Instance.CreateStageInfo(1);
-        
         if (GameDataManager.Instance.UserData.IsFirstLaunch)
         {
-            ShowGamePanel();
-            //ShowPrivacyScreen();
+            ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
+            yield return new WaitForSeconds(0.2f);
+            SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
             // 标记非首次进入
             GameDataManager.Instance.UserData.IsFirstLaunch = false;
             
