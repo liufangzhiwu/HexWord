@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,11 +38,9 @@ public class CompetitionStart : UIWindow
 
     private void InitUI()
     {
-        int round= GameDataManager.Instance.FishUserSave.curround+1;
-        List<FishaiInfoItem> fishaiInfos = FishInfoController.Instance.GetRoundFishaiItems(round);
-        AppGameSettings.FishTargetWordCount=fishaiInfos[0].wordCount;
-        string tipStr=MultilingualManager.Instance.GetString("CarpMatchStartDes");
-        wordtips.text=string.Format(tipStr, AppGameSettings.FishTargetWordCount); 
+        int round= GameDataManager.Instance.FishUserSave.curround;
+        FishaiInfoItem infoItem = FishInfoController.Instance.GetCurrFishItem(round);
+        wordtips.text = string.Format(MultilingualManager.Instance.GetString("CarpMatchStartDes"), infoItem?.wordCount ?? AppGameSettings.FishTargetWordCount );
         //wordtips.text = MultilingualManager.Instance.GetString("CarpMatchStartDes");
         startBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("CarpMatchStart");
     }

@@ -19,8 +19,8 @@ public class ButterflyData
     public int currGarden; // 当前选择的蝶园
     public int intervalLv;   // 经过的关卡
     
-    public HashSet<int> butterflies;  // 收集的蝴蝶
-    public HashSet<int> gardens;      // 开启的蝶园
+    public List<int> butterflies;  // 收集的蝴蝶
+    public List<int> gardens;      // 开启的蝶园
     
     public string gardensOpenTime;       // 蝶园开启时间
 
@@ -34,8 +34,8 @@ public class ButterflyData
         this.currPupa = 0;
         this.currGarden = 1;
         this.intervalLv = 0;
-        this.butterflies = new HashSet<int>();
-        this.gardens = new HashSet<int>();
+        this.butterflies = new List<int>();
+        this.gardens = new List<int>();
         IsOpenButterfly = false;
         gardens.Add(1);
         
@@ -132,13 +132,16 @@ public class ButterflyData
     public void AddGarden(int gardenId)
     {
         this.currGarden = gardenId;
-        gardens.Add(gardenId);
+        if(!gardens.Contains(gardenId))
+            gardens.Add(gardenId);
+        
         SaveData();
     }
 
     public void AddButterfly(int butterfly)
     {
-        this.butterflies.Add(butterfly);
+        if(!butterflies.Contains(butterfly))
+            this.butterflies.Add(butterfly);
         SaveData();
     }
 
