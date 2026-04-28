@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
-using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -26,13 +25,12 @@ public class ChessboardGrid : MonoBehaviour
     public ChessPlayArea GamePlayArea { get; private set; }
 
     // 存放棋盘的字块
-    private readonly Dictionary<(int row, int col), ChessView> GridList = new();
+    public readonly Dictionary<(int row, int col), ChessView> GridList = new();
     public bool GameOver { get; private set; }
     // 需要更新的字块
     //private readonly HashSet<ChessView> updateViews = new();
     // 当前选择的格子
     public ChessView selecteTile;
-    public ChessView preTile; // 上一个词
     private StringBuilder selectedPuzzle; // 完成词的收集
     private List<List<ChessView>> checkGroup = new ();  // 带改变状态的组
 
@@ -62,9 +60,29 @@ public class ChessboardGrid : MonoBehaviour
         var targetGroup = GetChessGroups(selecteTile.Row, selecteTile.Col)
             .OrderByDescending(g => g.direction) // 1 优先
             .FirstOrDefault(); // 只取一
-
+        
+        if (targetGroup == null) yield break;
+        // ==========================================
+        // 🔥 新增：收集目标词组的所有格子，准备跳跃！
+        // ==========================================
+        List<ChessView> jumpTargets = new List<ChessView>();
+        foreach (var p in targetGroup.chesspieces)
+        {
+            if (GridList.TryGetValue((p.row, p.col), out ChessView v))
+                jumpTargets.Add(v);
+        }
+        bool isJumping = true;
+        // 屏蔽点击，呼叫 UI 播放跳跃光效
+        EventDispatcher.instance.TriggerChangeTopRaycast(false);
+        GamePlayArea.PlayAutoCompleteJumpEffect(jumpTargets, () => {
+            isJumping = false; // 跳跃结束，放行协程
+        });
+        yield return new WaitUntil(() => !isJumping);
+        EventDispatcher.instance.TriggerChangeTopRaycast(true);
+        // ==========================================
+        
         selectedPuzzle.Clear();
-
+        float delay1 = 0f; // 增加延迟变量
         for (int i = 0; i < targetGroup?.chesspieces.Count; i++)
         {
             friendGroups.TryAdd(targetGroup.chesspieces[i],
@@ -93,16 +111,18 @@ public class ChessboardGrid : MonoBehaviour
                     GamePlayArea.AddCompleteCount(view2);
                 }
 
-                view2.SetTileState(TileState.Success);
+                view2.SetTileState(TileState.Success,false);
+                view2.IsOK = true;
+                view2.PlaySuccessAnimation(delay1, () => view2.UpdateTile(true));
+                delay1 += 0.08f;
                 selectedPuzzle.Append(view2.chesspiece?.letter);
+                GamePlayArea.CheckPupaChess(view2);
             }
 
             handledIds.Add(targetGroup.id);
         }
-
-        Debug.Log("在 CompletedPhrase1 填入词组" + targetGroup.id + " " + selectedPuzzle.ToString());
+        
         GamePlayArea.AddFoundPuzzle(selectedPuzzle.ToString());
-
 
         // 处理组内其他词的相关词组
         foreach (var kvp in friendGroups)
@@ -119,15 +139,19 @@ public class ChessboardGrid : MonoBehaviour
                 {
                     continue;
                 }
-
+                
+                float delay2 = 0f; // 增加延迟变量
                 // 都是正确的， 将格子状态设置成success，并添加找到的词
                 selectedPuzzle.Clear();
                 group.chesspieces.ForEach(g =>
                 {
                     if (GridList.TryGetValue((g.row, g.col), out ChessView v))
                     {
-                        v.SetTileState(TileState.Success);
+                        v.SetTileState(TileState.Success,false);
+                        v.IsOK = true;
                         // GamePlayArea.ButterWordAddIcon(v);
+                        v.PlaySuccessAnimation(delay2, () => v.UpdateTile(true));
+                        delay2 += 0.08f;
                     }
 
                     selectedPuzzle.Append(g.letter);
@@ -140,7 +164,6 @@ public class ChessboardGrid : MonoBehaviour
         yield return new WaitForEndOfFrame();
         AudioManager.Instance.PlaySoundEffect("ThemeCompleted");
         yield return CheckCompleted();
-        preTile = null;
         SearchNextTile();
     }
 
@@ -171,12 +194,10 @@ public class ChessboardGrid : MonoBehaviour
         {
             // 填入的旧词恢复正常
             GamePlayArea.puzzleTileTable.OnNotifyResult(data.chesspiece.bowl, 0);
+            data.chesspiece.bowl = null;
         }
 
         GamePlayArea.HandleGamePlayCall(data.gameObject, "ClickChess"); // 设置字块事件
-        // if(selecteTile != null) 
-        //     preTile = selecteTile;
-
         SetCheckView(data);
         CheckChessGroupState(data);
     }
@@ -276,28 +297,12 @@ public class ChessboardGrid : MonoBehaviour
                     (firendview.CurrState == TileState.Fill || firendview.CurrState == TileState.Error) 
                     && firendview != chessView)
                     firendview.SetTileState(firend.Value);
-                //    Debug.Log("查看朋友处理情况" + firend.Key.letter + " " + firend.Value);
-                //    //Debug.Log("当前朋友词 : "+view.Answer +" " + JsonConvert.SerializeObject(view.chesspiece));
-                //    if (firend.Value == false)
-                //    {
-                //        // 如果只有一个词组，且组内有CurrState == TileState.None , 那么这个词就恢复为fill状态
-                //        // 如果有2个以上的组，且其中一个是填满的不正确，那么就设置为error
-                //        if (view.CurrState == TileState.Fill)
-                //             view.SetTileState(TileState.Error);
-                //    }
-                //    if (friendGroups.TryGetValue(firend.Key, out var phraseGroups))
-                //    {
-                //        phraseGroups.All
-                //        Debug.Log("")
-                //        if ((chessView.CurrState == TileState.Check || chessView.CurrState == TileState.None) && view.CurrState == TileState.Error)
-                //            view.SetTileState(TileState.Fill);
-                //    }
             }
         }
     }
 
     // 处理点击设置字的操作
-    public IEnumerator HandleBolwViewState(BowlView puzzle)
+    public IEnumerator HandleBlowViewState(BowlView puzzle)
     {
         //if (!_handing)
         //{
@@ -336,15 +341,8 @@ public class ChessboardGrid : MonoBehaviour
             EventDispatcher.instance.TriggerChangeTopRaycast(false);
             puzzle.FlyToCell(curr, transform.parent, () =>
             {
-                //Debug.Log("飞完处理" + _handing + " " + puzzle.bowl.letter);
-                //Debug.Log("更新ui前：" + selecteTile.chesspiece.state + " " + selecteTile.chesspiece.bowl.letter);
                 curr.UpdateTile(true);
-                // StartCoroutine(CheckSuccessful(curr));
                 flyover = true;
-                // 处理格子更新
-                //UpdateViews();
-                // 新手引导检查
-                // Debug.Log("当前的" + curr.Answer + " 飞完后的" + selecteTile.chesspiece?.bowl?.letter);
                 if (curr.Answer != selecteTile.Answer)
                     GamePlayArea.HandleGamePlayCall(puzzle.gameObject, "SetChess"); // 设置字块事件
             });
@@ -355,13 +353,15 @@ public class ChessboardGrid : MonoBehaviour
             // Debug.Log($"[调用链] WaitUntil 通过 帧={Time.frameCount}  flyover={flyover}");
             yield return HandleChessUIState();
             // Debug.Log("执行2");
-            yield return new WaitForSeconds(0.8f);
-            yield return CheckCompleted();
+            // yield return new WaitUntil(() => checkGroup.Count == 0);
+            // yield return CheckCompleted();
             // Debug.Log("执行3");
             EventDispatcher.instance.TriggerChangeTopRaycast(flyover);
         }
         else
             yield return null;
+        
+        GamePlayArea.AutoPassLevel();
     }
 
     /// <summary>
@@ -393,13 +393,13 @@ public class ChessboardGrid : MonoBehaviour
     /// </summary>
     private IEnumerator CheckCompleted()
     {
-        GameDataManager.Instance.UpdateChessLevelProgress(CurrStageData);
+        GameDataManager.Instance.UpdateLevelProgress(CurrStageData);
 
         yield return new WaitForSeconds(0.1f);
         // Debug.Log("是否进入完成检查");
         if(GameOver) yield break;
         // 检查是否完成
-        if (GridList.Values.All(item => item.CurrState == TileState.Success))
+        if (GridList.Values.All(item => item.IsOK))
         {
             GameOver = true;
             Debug.Log("已全部完成，进行下一个关");
@@ -454,19 +454,18 @@ public class ChessboardGrid : MonoBehaviour
                     selectedPuzzle.Append(v.Answer);
                     // GamePlayArea.ButterWordAddIcon(v);
                     //StartCoroutine(v.PlayErrorAnimation(true));
-                   
+                 
                 });
                 // Debug.Log("添加的词组 " + string.Join(",", selectedPuzzle));
                 // Debug.Log($"[CheckSuccessful] 帧={Time.frameCount}");
                 checkGroup.Add(chessViews);
                 // Debug.Log("在CheckSuccessful 填入词组" + phraseGroup.id + " "+selectedPuzzle.ToString());
                 GamePlayArea.AddFoundPuzzle(selectedPuzzle.ToString());
-                preTile = null;
                 isPlaySound = true;
-                // Debug.Log("在处理组内正确时， 已经重置: " + preTile);
             }
             else
             {
+               // selectedPuzzle.Clear();
                 // 词组内的所有词都已填入，才判断是正确还是错误，正确设置绿色，错误设置红色，若词组内没有填完，则保持原色
                 // 有错 → 已填入的都变红
                 chessViews.Where(v => v.CurrState != TileState.Default && v.CurrState != TileState.Success)
@@ -474,9 +473,12 @@ public class ChessboardGrid : MonoBehaviour
                     .ForEach(v =>
                     {
                         v.SetTileState(TileState.Error, false);
-                        nexterr = v;
+                        if(nexterr == null)
+                            nexterr = v;
+                       // selectedPuzzle.Append(v.Answer);
                     });
                 checkGroup.Add(chessViews);
+                // Debug.Log("添加的词组 " + string.Join(",", selectedPuzzle));
                 GamePlayArea.AddWordError(1);
                 result.Add(phraseGroup.id, false);
             }
@@ -487,32 +489,33 @@ public class ChessboardGrid : MonoBehaviour
 
         if (result.Values.All(re => re == true))
         {
-            // Debug.Log("进入result 全对？"); 是否将这个当前字置为上一个待填字
+            // Debug.Log("进入result 全对？");  //是否将这个当前字置为上一个待填字
             SearchNextTile();
         }
         else
         {
-            // Debug.Log("有错误，当前状态: " + selecteTile.CurrState);
+            //     Debug.Log("有错误，当前状态: " + selecteTile.CurrState);
             AudioManager.Instance.PlaySoundEffect("ChoiceError_UI");
             if (selecteTile.CurrState == TileState.Success)
             {
-                // Debug.Log("是否有错误 " + nexterr);
+                //         Debug.Log("是否有错误 " + nexterr?.Answer);
                 if (nexterr != null) // 当前是正确的，但是组内其他是错误，让其被选择
                 {
                     selecteTile.SetChoose(false);
                     this.selecteTile = nexterr;
                     nexterr.SetChoose(true);
-                    ChessStageController.Instance.ModifyCursor(nexterr.Row, nexterr.Col);
+                    // ChessStageController.Instance.ModifyCursor(nexterr.Row, nexterr.Col);
                 }
-                else // 没有其他错误，找下一个
-                    SearchNextTile();
+                // else // 没有其他错误，找下一个
+                SearchNextTile();
             }
             else
             {
-                // 当前错误，让其选择
-                // Debug.Log("进来了吗？ ");
-                selecteTile.SetChoose(true);
-                // 首次错误触发，新手引导
+                //         // 当前错误，让其选择
+                //         Debug.Log("进来了吗？ ");
+                selecteTile.SetChoose(false);
+                SearchNextTile();
+                //         // 首次错误触发，新手引导
                 GamePlayArea.HandleGamePlayCall(selecteTile.gameObject, "ChessError"); // 字块错误事件
             }
         }
@@ -523,248 +526,252 @@ public class ChessboardGrid : MonoBehaviour
     private IEnumerator HandleChessUIState()
     {
         // Debug.Log("开始更新字块 " + checkGroup.Count);
-        // Debug.Log($"[HandleChessUIState] 帧={Time.frameCount}");
+        //Debug.Log($"开始更新字块 [HandleChessUIState] 帧={Time.frameCount}");
+        List<List<ChessView>> toRemove = new List<List<ChessView>>();
+        float maxDelay = 0f; // 记录最长的一波动画需要多久
         foreach (var chessList in checkGroup)
         {
+            float delay = 0f; // 波浪延迟计数器
             foreach (var chessView in chessList)
             {
-                chessView.UpdateTile(true);
-                // Debug.Log("更新的字块样式? " + chessView.Answer + " -> " + chessView.CurrState);
-                if(chessView.CurrState == TileState.Success)
-                    chessView.SetChoose(false);
+               // Debug.Log("更新的字块样式? " + chessView.Answer + " -> " + chessView.CurrState);
+               if (chessView.CurrState == TileState.Success)
+               {
+                   chessView.SetChoose(false);
+                   chessView.IsOK = true;
+                   GamePlayArea.CheckPupaChess(chessView);
+                   
+                   chessView.PlaySuccessAnimation(delay, () => chessView.UpdateTile(true));
+                   delay += 0.08f; // 每个字依次间隔 0.08 秒起跳
+               }
+               else if (chessView.CurrState is TileState.Error or TileState.Default)
+               {
+                    chessView.UpdateTile(true);
+                    chessView.PlayError(true);
+               }
             }
+            if (delay > maxDelay) maxDelay = delay;
+            toRemove.Add(chessList);
         }
-        checkGroup.Clear();
-        yield return new WaitForSeconds(0.3f);
+
+        for (int i = toRemove.Count - 1; i >= 0; i--)
+            checkGroup.Remove(toRemove[i]);
+        // Debug.Log("更新结束后, " + checkGroup.Count);
+        yield return new WaitForSeconds(maxDelay + 0.3f);
+        yield return CheckCompleted();
+    }
+    
+    /// <summary>
+    /// 交叉定义：
+    /// emptyGroups 中**任意组**的**第一个可用空格**（None/Error）
+    /// 空格子所在词组 与 选中词组 只要 共享过同一个字块（不论状态），就算交叉。
+    /// </summary>
+    public bool HasCrossWithSelected(ChessView candidate, List<PhraseGroup> emptyGroups, List<PhraseGroup> groups)
+    {
+        // ① 真正的交叉组：与选中组共享过字块
+        var crossGroups = emptyGroups
+            .Where(eg => eg.chesspieces.Any(ep => groups
+                .SelectMany(sg => sg.chesspieces)
+                .Contains(ep)))
+            .ToList();
+
+        // ② 在这些交叉组里，当前格子是否是第一个可用空格
+        return crossGroups.Any(g =>
+        {
+            int idx = g.chesspieces.FindIndex(p =>
+                GridList.TryGetValue((p.row, p.col), out var view) &&
+                view.CurrState is TileState.None or TileState.Error);
+            return idx >= 0 && g.chesspieces[idx].Equals(candidate.chesspiece);
+        });
+    }
+    /// <summary>
+    /// 计算空格子到选中格子的曼哈顿距离（|Δrow| + |Δcol|）
+    /// </summary>
+    public int ManhattanDistance(Chesspiece emptyPiece, Chesspiece selectedPiece)
+    {
+        return Mathf.Abs(emptyPiece.row - selectedPiece.row) +
+               Mathf.Abs(emptyPiece.col - selectedPiece.col);
     }
     /// <summary>
     /// 查找下一个空白格子
     /// </summary>
     public bool SearchNextTile()
     {
-        Debug.Log("prefTile.direction " + preTile?.chesspiece.letter + " " + preTile?.Direction);
-
         // 一. 查找当前字的组内关联
-        List<PhraseGroup> phraseGroups = GetChessGroups(selecteTile.Row, selecteTile.Col)
-            .OrderByDescending(g => g.direction == preTile?.Direction) // 同向优先
-            .ThenByDescending(g => g.direction) // 1>0 兜底
-            .ToList();
-
-        Debug.Log("查找结果？ " + JsonConvert.SerializeObject(phraseGroups));
-
-        foreach (var group in phraseGroups)
-        {
-            bool clickedTail = (selecteTile.Row, selecteTile.Col) ==
-                               (group.chesspieces.Last().row,
-                                   group.chesspieces.Last().col);
-            var sequence = clickedTail
-                ? group.chesspieces.AsEnumerable().Reverse()
-                : group.chesspieces;
-            foreach (var chess in sequence)
-            {
-                if (GridList.TryGetValue((chess.row, chess.col), out var chessView))
-                {
-                    if (chessView.CurrState == TileState.None && selecteTile != chessView)
-                    {
-                        preTile = selecteTile;
-                        SetCheckView(chessView);
-                        return true;
-                    }
-                }
-            }
-        }
-
-        // 二. 查找当前字组内所有字的关联,从左到右,从上到下, 看看哪个字是关联组有空格，并且空格是交叉空格优先
-        var allPieces = phraseGroups.SelectMany(g => g.chesspieces).Distinct().ToList();
-        var bestEmpty = allPieces
-            .SelectMany(cp => GetChessGroups(cp.row, cp.col))
-            .Distinct()
-            .SelectMany(g => g.chesspieces
-                .Select(cp => new
-                {
-                    cp.row,
-                    cp.col,
-                    view = GridList.TryGetValue((cp.row, cp.col), out var v) ? v : null,
-                    group = g
-                }))
-            .Where(x => x.view != null && x.view.CurrState == TileState.None)
-            .OrderByDescending(x => GetChessGroups(x.row, x.col).Count(gg => gg != x.group) > 1 ? 1 : 0)
-            .ThenBy(x => x.group.direction == 1 ? x.col : x.row)
-            .FirstOrDefault();
-        if (bestEmpty != null)
-        {
-            SetCheckView(bestEmpty.view);
-            return true;
-        }
-        //// 1.当前组内所有字的关联的组
-        // List<(ChessView, List<PhraseGroup>)> chessAllGroup = new();
+        List<PhraseGroup> phraseGroups = GetChessGroups(selecteTile.Row, selecteTile.Col).ToList();
+        
         // foreach (var group in phraseGroups)
         // {
-        //     foreach (var chess in group.chesspieces)
+        //     bool clickedTail = (selecteTile.Row, selecteTile.Col) ==
+        //                        (group.chesspieces.Last().row,
+        //                            group.chesspieces.Last().col);
+        //     var sequence = clickedTail
+        //         ? group.chesspieces.AsEnumerable().Reverse()
+        //         : group.chesspieces;
+        //     foreach (var chess in sequence)
         //     {
-        //         List<PhraseGroup> chessGroups = GetChessGroups(chess.row, chess.col).ToList();
         //         if (GridList.TryGetValue((chess.row, chess.col), out var chessView))
         //         {
-        //             chessAllGroup.Add((chessView, chessGroups));
-        //         }
-        //     }
-        // }
-        // //// 2. 从左到后查看哪个字的关联组内有空格
-        // foreach (var (chess2, phraseGroups2) in chessAllGroup)
-        // {
-        //     foreach (var group2 in phraseGroups2)
-        //     {
-        //         foreach (var chess22 in group2.chesspieces)
-        //         {
-        //             // 优先选择交叉字的空格, 没有则选择最左侧的空格
-        //             if (GridList.TryGetValue((chess22.row, chess22.col), out var chessView))
+        //             if (chessView.CurrState == TileState.None && selecteTile != chessView)
         //             {
-        //                 if (chessView.CurrState == TileState.None)
-        //                 {
-        //                     if (GetChessGroups(chessView.Row, chessView.Col).Count() > 2)
-        //                     {
-        //                         SetCheckView(chessView);
-        //                         return true;
-        //                     }
-        //                     else
-        //                     {
-        //                         SetCheckView(chessView);
-        //                     }
-        //                 }
-        //         
+        //                 SetCheckView(chessView);
+        //                 return true;
         //             }
         //         }
         //     }
         // }
-        // var targetGroup = phraseGroups.FirstOrDefault();
-        // bool isHorza = targetGroup.direction == 1;
-        // // 2. 顺序扫描
-        // var sequencee = isHorza
-        //     ? targetGroup.chesspieces.OrderBy(cp => cp.col)
-        //     : targetGroup.chesspieces.OrderBy(cp => cp.row);
-        // ChessView bestCross = null;   // 交叉优先
-        // ChessView firstNone = null;   // 兜底用
-        // foreach (var cp in sequencee)
+
+        // // 二. 查找当前字组内所有字的关联,从左到右,从上到下, 看看哪个字是关联组有空格，并且空格是交叉空格优先
+        // var allPieces = phraseGroups.SelectMany(g => g.chesspieces).Distinct().ToList();
+        // var bestEmpty = allPieces
+        //     .SelectMany(cp => GetChessGroups(cp.row, cp.col))
+        //     .Distinct()
+        //     .SelectMany(g => g.chesspieces
+        //         .Select(cp => new
+        //         {
+        //             cp.row,
+        //             cp.col,
+        //             view = GridList.TryGetValue((cp.row, cp.col), out var v) ? v : null,
+        //             group = g
+        //         }))
+        //     .Where(x => x.view != null && x.view.CurrState == TileState.None)
+        //     .OrderByDescending(x => GetChessGroups(x.row, x.col).Count(gg => gg != x.group) > 1 ? 1 : 0)
+        //     .ThenBy(x => x.group.direction == 1 ? x.col : x.row)
+        //     .FirstOrDefault();
+        // if (bestEmpty != null)
         // {
-        //     if (!GridList.TryGetValue((cp.row, cp.col), out var view) ||
-        //         view.CurrState != TileState.None)
-        //         continue;                          // 已填跳过
-        //
-        //     if (firstNone == null) firstNone = view; // 记录第一个空格
-        //
-        //     // 3. 计算“交叉空格数”
-        //     int crossEmptyCount = GetChessGroups(cp.row, cp.col)
-        //         .Where(g => g != targetGroup)        // 排除自己
-        //         .Sum(g => g.chesspieces.Count(c =>
-        //             GridList.TryGetValue((c.row, c.col), out var v) &&
-        //             v.CurrState == TileState.None));
-        //
-        //     if (crossEmptyCount > 0)                 // 找到交叉空格
-        //     {
-        //         bestCross = view;
-        //         break;                               // 立即返回
-        //     }
-        // }
-        //
-        // // 4. 优先交叉，没有就顺序第一个
-        // ChessView ret = bestCross ?? firstNone;
-        // if (ret != null)
-        // {
-        //     SetCheckView(ret);
+        //     SetCheckView(bestEmpty.view);
         //     return true;
         // }
-
-
         // 三. 全局搜索最近的一个空格, 查找这个空格组内有没有交叉空格, 如果有选取它,如果没有则组内按顺序选择空格，而非最近的它
         // 1. 全部未成功格子
-        var candidates = GridList.Keys
-            .Where(k => GridList[k].CurrState == TileState.None)
+        var candidates = GridList.Values
+            .Where(k => k.CurrState is TileState.None  or TileState.Error)
             .ToList();
-
+        // Debug.Log("这里进入了吗 " + candidates.Count);
         if (!candidates.Any()) return true;
 
-        // 2. 按距离排序（全局由近到远）
-        var orderedCells = candidates
-            .Select(k => new
-            {
-                k.row,
-                k.col,
-                dist = (k.row - selecteTile.Row) * (k.row - selecteTile.Row) +
-                       (k.col - selecteTile.Col) * (k.col - selecteTile.Col)
-            })
-            .OrderBy(x => x.dist);
-
-        // 3. 逐个“组”尝试，直到选中一个空格
-        foreach (var cell in orderedCells)
+        Dictionary<ChessView, float> chessWeight = new Dictionary<ChessView, float>();
+        foreach (var candidate in candidates)
         {
-            var targetGroup = GetChessGroups(cell.row, cell.col)
-                .OrderByDescending(g => g.direction == 1)
-                .FirstOrDefault();
-            if (targetGroup == null) continue;
-            bool isHorz = targetGroup.direction == 1;
-
-            ChessView best = targetGroup.chesspieces
-                .Select(cp => new
-                {
-                    cp.row,
-                    cp.col,
-                    view = GridList.TryGetValue((cp.row, cp.col), out var v) ? v : null
-                })
-                .Where(x => x.view != null && x.view.CurrState == TileState.None)
-                .OrderByDescending(x => GetChessGroups(x.row, x.col).Count(g => g != targetGroup) > 1 ? 1 : 0)
-                .ThenBy(x => isHorz ? x.col : x.row)
-                .FirstOrDefault()?.view;
-
-            if (best != null)
+            chessWeight[candidate] = 0;
+            if(candidate.Row == selecteTile.Row && candidate.Col == selecteTile.Col)
+                chessWeight[candidate] += 500;
+            
+            bool inGroup = phraseGroups.Any(g =>
             {
-                SetCheckView(best);
-                return true;
-            }
+                bool isIn = g.chesspieces.Contains(candidate.chesspiece);
+                int idx = g.chesspieces.FindIndex(p => GridList.TryGetValue((p.row, p.col), out var view) && view.CurrState is TileState.None or TileState.Error);
+                bool isFirst =  idx >= 0 && g.chesspieces[idx].Equals(candidate.chesspiece);
+                return isIn && isFirst;
+            });
+            // Debug.Log($" {candidate.Answer} 是否是首字" + inGroup);
+            if (inGroup)
+                chessWeight[candidate] += 200;
+            // bool ownFirst = phraseGroups.Any(g =>
+            // {
+            //     int idx = g.chesspieces.FindIndex(p => GridList.TryGetValue((p.row,p.col), out var view) && view.CurrState is TileState.None or TileState.Error);
+            //     return idx >= 0 && g.chesspieces[idx].Equals(candidate.chesspiece);
+            // });
+            // if(ownFirst)
+            //     chessWeight[candidate] += 80;
+            
+            // 空格子所属的所有组
+            List<PhraseGroup> emptyGroups = GetChessGroups(candidate.Row, candidate.Col).ToList();
+            // 判断空格子是否与选中格子存在交叉
+            if(HasCrossWithSelected(candidate, emptyGroups, phraseGroups))
+                chessWeight[candidate] += 100;
+            
+            // 空格和选中框是一个组, 那么比较组内的位置是否大于
+            bool greaterSelect = phraseGroups.Any(g => g.chesspieces.Contains(candidate.chesspiece) && 
+                                                       g.chesspieces.FindIndex(p=>p.Equals(selecteTile.chesspiece)) < g.chesspieces.FindIndex(p=>p.Equals(candidate.chesspiece)));
+            if (greaterSelect)
+                chessWeight[candidate] += 40;
+            
+            // 判断是否首个空位
+            bool hasFirst = emptyGroups.Any(g =>
+            {
+                int idx = g.chesspieces.FindIndex(p => GridList.TryGetValue((p.row,p.col), out var view) && view.CurrState is TileState.None or TileState.Error);
+                return idx >= 0 && g.chesspieces[idx].Equals(candidate.chesspiece);
+            });
+            // Debug.Log($"找到的是 {candidate.Answer} 位置:{candidate.Col} {candidate.Row}  首字: {hasFirst}");
+            if(hasFirst)
+                chessWeight[candidate] += 40;
+            
+            // 判断空格的词组有几个已填字
+            int defaultCount = emptyGroups.Max(g => g.chesspieces.Count(p =>
+                GridList.TryGetValue((p.row,p.col), out var view) && view.CurrState is TileState.Default or TileState.Fill or TileState.Success));
+            chessWeight[candidate] += defaultCount * 10;
+            // Debug.Log($"找到的是 {candidate.Answer} 位置:{candidate.Col} {candidate.Row}  交叉字: {defaultCount}");
+            // 空位在成语中第n位，d += n * 2
+            int maxIndex = EmptyIndexInGroup(candidate.chesspiece, emptyGroups) + 1;
+            chessWeight[candidate] += maxIndex * 2;
+            // 计算空格距离选中格子的距离
+            int dist = ManhattanDistance(candidate.chesspiece, selecteTile.chesspiece);
+            // Debug.Log($"找到的是 {candidate.Answer} 位置:{candidate.Col} {candidate.Row}  距离: {dist}");
+            chessWeight[candidate] += 2f / (dist + 1f);
+            // 空格是否有横向组
+            bool hasHorizontal = emptyGroups.Any(g => g.direction == 1);
+            if(hasHorizontal)
+                chessWeight[candidate] += 0.1f;
+            // 计算空格的Y轴分
+            chessWeight[candidate] += candidate.Col * 0.01f;
+            candidate.SetScore(chessWeight[candidate]);
         }
-
-        // var (nr, nc) = candidates
-        //     .OrderBy(k => (k.row - selecteTile.Row) * (k.row - selecteTile.Row) +
-        //                   (k.col - selecteTile.Col) * (k.col - selecteTile.Col))
-        //     .First();
-        // PhraseGroup selectPhraseGroups = GetChessGroups(nr, nc)
-        //     .OrderByDescending(g => g.direction == 1) // 同向优先
-        //     .ToList().FirstOrDefault();
-        // bool isHorz = selectPhraseGroups.direction == 1;
-        // ChessView best = selectPhraseGroups.chesspieces
-        //     .Select(cp => new
-        //     {
-        //         cp.row,
-        //         cp.col,
-        //         view = GridList.TryGetValue((cp.row, cp.col), out var v) ? v : null
-        //     })
-        //     .Where(x => x.view != null && x.view.CurrState == TileState.None)
-        //     .OrderByDescending(x => ChessStageController.Instance.CurrStageInfo.IsMultiGroup(x.row, x.col)) // 交叉优先
-        //     .ThenBy(x => isHorz ?  x.row : x.col )      // 横：左→右；纵：上→下
-        //     .FirstOrDefault()?.view;
-        // ChessView chessView2 = best;
-        // // 4. 设置检查状态
-        // if (chessView2 != null)
-        // {
-        //     SetCheckView(chessView2);
-        // }
-
+        if (chessWeight.Count == 0) return true;  
+        ChessView maxView = chessWeight.Aggregate((kvp1, kvp2) => kvp1.Value > kvp2.Value ? kvp1 : kvp2).Key;
+        if (maxView != null)
+        {
+            SetCheckView(maxView, maxView.CurrState is not TileState.Error);
+            // Debug.Log($"找到的是 {maxView.Answer} 状态{maxView.CurrState} 位置:{maxView.Col} {maxView.Row} {maxView.Direction}");
+        }
+            
+        
         return true;
     }
-
-    // 设置格子选择状态
-    private void SetCheckView(ChessView data)
+    /// <summary>
+    /// 返回空位在词组中的“从左到右”索引（0 起始）。
+    /// 若空位是交叉字且是 emptyGroups 中**任意一个**词组的**首次出现位置**，返回 该位置。
+    /// </summary>
+    public int EmptyIndexInGroup(Chesspiece emptyPiece, List<PhraseGroup> emptyGroups)
     {
-        foreach (var item in GridList.Values)
+        // 1. 普通索引（0 起始）
+        int normalIdx = emptyGroups
+            .Select(g => g.chesspieces.FindIndex(p => p.Equals(emptyPiece)))
+            .FirstOrDefault(i => i >= 0);
+
+        // 2. 交叉且首空 → 返回首空索引
+        var firstEmptyIdx = emptyGroups
+            .Select(g => new { g, idx = g.chesspieces.FindIndex(p =>
+                GridList.TryGetValue((p.row, p.col), out var v) &&
+                v.CurrState is TileState.None or TileState.Error) })
+            .Where(x => x.idx >= 0 && x.g.chesspieces[x.idx].Equals(emptyPiece))
+            .Select(x => x.idx)
+            .FirstOrDefault();
+        
+        return firstEmptyIdx != -1 ? firstEmptyIdx : normalIdx ;
+    }
+    // 设置格子选择状态
+    private void SetCheckView(ChessView data , bool clean = true)
+    {
+        if (clean)
         {
-            if (item.CurrState == TileState.Check)
+            foreach (var item in GridList.Values)
             {
-                item.SetTileState(TileState.None);
+                if (item.CurrState == TileState.Check)
+                {
+                    item.SetTileState(TileState.None);
+                }
+
+                item.SetChoose(false);
             }
 
-            item.SetChoose(false);
+            data.SetTileState(TileState.Check);
         }
-
-        data.SetTileState(TileState.Check);
+        else
+        {
+            data.SetChoose(true);
+        }
         selecteTile = data;
         ChessStageController.Instance.ModifyCursor(selecteTile.Row, selecteTile.Col);
     
@@ -793,7 +800,7 @@ public class ChessboardGrid : MonoBehaviour
     /// <param name="isResetAnim"></param>
     public void CreateChess(bool isAmin = true, bool isResetAnim = false)
     {
-        StartCoroutine(SetupGrid(isAmin, ShowTopPanel));
+        StartCoroutine(SetupGrid(isAmin));
     }
 
     private void ShowTopPanel()
@@ -806,12 +813,12 @@ public class ChessboardGrid : MonoBehaviour
     /// </summary>
     private IEnumerator SetupGrid(bool isAmin, Action call = null)
     {
+       
         checkGroup.Clear();
         HashSet<Chesspiece> boardData = CurrStageData.BoardSnapshot;
         // Debug.Log("棋盘数据 :" + JsonConvert.SerializeObject(boardData));
         yield return null;
         List<int> cousor = CurrStageData.Cousor;
-
         bool isSetDefault = false;
         foreach (Chesspiece ppp in boardData.ToList())
         {
@@ -819,10 +826,11 @@ public class ChessboardGrid : MonoBehaviour
             cell.SetInit(ppp);
             cell.OnSelectHandler += ReceiveData;
             SetCellPosition(cell);
+            cell.startPosition = cell.TileTransform.anchoredPosition;
             // 检查是否有初始光标
             if (cousor.Count > 0)
             {
-                if (ppp.row == cousor[0] && ppp.col == cousor[1])
+                if (ppp.row == cousor[0] && ppp.col == cousor[1] && ppp.state != TileState.Default)
                 {
                     if (ppp.bowl == null)
                         cell.SetTileState(TileState.Check);
@@ -837,10 +845,11 @@ public class ChessboardGrid : MonoBehaviour
             GridList.Add((ppp.row, ppp.col), cell);
             //SetCellPosition(cell.TileTransform, cell.row, cell.col);
         }
-
+        GameOver = false;
+        
         if (isSetDefault == false)
         {
-            ChessView topLeftCell = FindLetfTopCousor();
+            ChessView topLeftCell = FindLeftTopCursor();
             if (topLeftCell != null)
             {
                 topLeftCell.SetTileState(TileState.Check);
@@ -849,14 +858,13 @@ public class ChessboardGrid : MonoBehaviour
                 ChessStageController.Instance.ModifyCursor(selecteTile.Row, selecteTile.Col);
             }
         }
-
+        
         if (isAmin)
         {
-            yield return new WaitForSeconds(0.4f);
+            yield return new WaitForSeconds(0.8f);
             call?.Invoke();
         }
-
-        GameOver = false;
+    
     }
 
     /// <summary>
@@ -877,33 +885,22 @@ public class ChessboardGrid : MonoBehaviour
         cell.TileTransform.anchorMax = Vector2.zero;
         cell.TileTransform.anchorMin = Vector2.zero;
         cell.TileTransform.pivot = Vector2.zero;
-        cell.TileTransform.anchoredPosition = Vector2.zero;
+        // cell.TileTransform.anchoredPosition = Vector2.zero;
 
         // 2. 内边距 & 尺寸
         Vector2 spacing = new Vector2(4, 4);
         Vector2 cellSize = CurrStageData.ActiveSize;
-
-        // int rowCount = CurrStageData.MaxRow - CurrStageData.MinRow + 1;
         int colCount = CurrStageData.MaxCol - CurrStageData.MinCol + 1;
-        // Debug.Log("最大列 " + colCount);
-        // (int row,int col) MaxGrid = CurrStageData.GridSize; // 网格是(7,7)时，行列最大索引是(6,6)
-
-        int MinRow = CurrStageData.MinRow;
-
-        // 3. 行列坐标 →  anchoredPosition（左下增长） (row > col + 1 ? cell.Col + 1 :
-        // int currRow = MinRow >= 2  ? cell.Row - 1 : cell.Row;
-        // Debug.Log("最小行: " + MinRow + " 当前行 " + cell.Row + " 计算行 " + currRow);
-        float x = GamePlayArea.startLocation.row + (cell.Row - 0 - MinRow) * (cellSize.x + spacing.x);
-        // Debug.Log($"起始位 {GamePlayArea.startLocation.row}, 格子行 {cell.Row}, 尺寸宽 {cellSize.x}, 最终值 {x}");
-        // float y = GamePlayArea.startLocation.col + (cell.Col + (MaxGrid.col - 1 - MaxCol) )  * (cellSize.y + spacing.y);
-        float y = 17 + (cell.Col + colCount - CurrStageData.MaxCol - 1) * (cellSize.y + spacing.y) + spacing.y;
-        // Debug.Log("当前col:" + cell.Col + " 相加数" + (MaxGrid.col - CurrStageData.MaxCol-1) + " 网格最大GridMax " + (MaxGrid.col) + " 最大col" + CurrStageData.MaxCol +" 最终值"+ y);
+        int minRow = CurrStageData.MinRow;
+        //
+        float x = GamePlayArea.startLocation.row + cellSize.x / 2f + (cell.Row - minRow) * (cellSize.x + spacing.x);
+        float y = 17 + cellSize.y / 2f + (cell.Col + colCount - CurrStageData.MaxCol - 1) * (cellSize.y + spacing.y) + spacing.y;
+        
+        SetCellCenter(cell.TileTransform, cellSize);
         cell.TileTransform.anchoredPosition = new Vector2(x, y);
-
-        // 4. 尺寸
         cell.TileTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, cellSize.x);
         cell.TileTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, cellSize.y);
-
+        
         // 6. 【关键】把 Content 撑到含内边距的总尺寸
         //int rowCount = ChessStageController.Instance.CurrStageData.MaxRow;
         //int colCount = ChessStageController.Instance.CurrStageData.MaxCol;
@@ -914,13 +911,29 @@ public class ChessboardGrid : MonoBehaviour
         //GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, totalSize.x);
         //GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalSize.y);
     }
+    /// <summary>
+    /// 把格子 pivot 设成中心，并重新计算 anchoredPosition，视觉位置不动
+    /// </summary>
+    private void SetCellCenter(RectTransform rt, Vector2 cellSize)
+    {
+        // 存视觉中心
+        Vector3 worldCenter = rt.TransformPoint(rt.rect.center);
 
+        // 改轴心
+        rt.pivot = Vector2.one * 0.5f;
+
+        // 补偿位置（本地 anchored 空间）
+        Vector2 offset = cellSize * (Vector2.one * 0.5f - rt.pivot);
+        rt.anchoredPosition += offset;
+        // 确保世界中心不动
+        rt.SetPositionAndRotation(worldCenter, rt.rotation);
+    }
     #endregion
 
     /// <summary>
     /// 查找左上角的光标位置
     /// </summary>
-    private ChessView FindLetfTopCousor()
+    private ChessView FindLeftTopCursor()
     {
         return GridList.Values
             .Where(cell => cell.CurrState == TileState.None)
@@ -1019,5 +1032,34 @@ public class ChessboardGrid : MonoBehaviour
             .ThenBy(x => x.info.group.direction == 1 ? x.view.Col : x.view.Row)
             .First()
             .view;
+    }
+
+    /// <summary>
+    /// 重置格子中心点
+    /// </summary>
+    public void ResetTilePivot()
+    {
+        foreach (var cell in GridList.Values)
+        {
+            cell.TileTransform.pivot = new Vector2(0.5f, 0.5f);
+        }
+    }
+    /// <summary>
+    /// 修复可能出现的状态问题
+    /// </summary>
+    public void FixChessState()
+    {
+        foreach (var cell in GridList.Values)
+        {
+            if (cell.CurrState == TileState.Success)
+                cell.IsOK = true;
+        }
+        
+        if (GridList.Values.All(item => item.IsOK))
+        {
+            GameOver = true;
+            Debug.Log("已全部完成，进行下一个关");
+            GamePlayArea.GamePlayOver();
+        }
     }
 }

@@ -48,6 +48,9 @@ public class PanelType  // Renamed class
      public const string ChessPlayArea = "ChessPlayArea";
      public const string ChessLearningGuide = "ChessLearningGuide";
      public const string HardView = "HardView";
+     public const string ZenRankScreen = "ZenRankScreen";
+     public const string ZenRankHelpScreen = "ZenRankHelpScreen";
+     public const string ZenSettlementScreen = "ZenSettlementScreen";
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

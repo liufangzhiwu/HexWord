@@ -83,5 +83,10 @@ public class UserProfile
     public int uid;
     public string nickname;
     public string avatar;
+    public int zen_count;
     public string zen_level;
+    public bool has_settlement;
+    public string settlement_type;
+    public string old_zen_level;
+    public int old_rank;
 }

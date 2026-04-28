@@ -215,7 +215,7 @@ public class HeaderSection : UIWindow
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
         {
             //SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }

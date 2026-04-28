@@ -132,15 +132,35 @@ public class GetItemScreen : UIWindow
         
         if (limitRewordType == LimitRewordType.SingleTipsttool)
         {
-            SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
-                ?.ToolItemFirstLetter();
+            switch (GameDataManager.Instance.UserData.levelMode)
+            {
+                case 1:
+                case 3:
+                    SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                        ?.ToolItemFirstLetter();
+                    break;
+                case 2:
+                    SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
+                        ?.UseTips();
+                    break;
+            }
+            
         }else if (limitRewordType == LimitRewordType.Tipstool)
         {
-            SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
-                ?.UseTips();
+            switch (GameDataManager.Instance.UserData.levelMode)
+            {
+                case 1:
+                case 3:
+                    SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                        ?.UseTips();
+                    break;
+                case 2:
+                    SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
+                        ?.UseComplete();
+                    break;
+            }
         }
-        
-       
+      
         Close();
     }
 
@@ -149,8 +169,19 @@ public class GetItemScreen : UIWindow
         if (isShow)
         {
             GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"看广告获取"+title.text+"道具");
-            SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
-                ?.ToolItemFirstLetter();
+           
+            switch (GameDataManager.Instance.UserData.levelMode)
+            {
+                case 1:
+                case 3:
+                    SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                        ?.ToolItemFirstLetter();
+                    break;
+                case 2:
+                    SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
+                        ?.UseTips();
+                    break;
+            }
             
             AnalyticMgr.VideoAdSuccess(eventDes);
             Close();

@@ -156,7 +156,7 @@ public class HexGamePlayArea : UIWindow
 
     protected override void OnEnable()
     {
-        GameCoreManager.Instance.PanelState = PanelState.GamePanel;
+        GameCoreManager.Instance.PanelState = PanelState.GameHexPanel;
         InitUI();
         EventDispatcher.instance.OnLetterSelected += OnLetterSelected;
         //EventManager.OnComboTriggerButterfly +=UseButterfly;

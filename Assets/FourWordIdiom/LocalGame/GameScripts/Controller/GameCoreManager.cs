@@ -10,7 +10,7 @@ using UnityEngine.iOS;
 
 public enum PanelState
 {
-   Null,MainMenuPanel,FinishPanel,GamePanel,
+    Null,MainMenuPanel,FinishHexPanel,GameHexPanel,GamePingPanel,FinishPingPanel
 }
 
 /// <summary>

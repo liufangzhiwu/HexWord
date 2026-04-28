@@ -19,6 +19,7 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
     [SerializeField] private Image logo;       // 文字类型组件
     [SerializeField] private Text Stagetxt;           // 关卡文本
+    [SerializeField] private Button ZenRankBtn;         // 禅意排名按钮
     [Header("UI LimitTime")]
     [SerializeField] private Button LimitTimeBtn;
     [SerializeField] private GameObject LimitTimeObj;
@@ -156,7 +157,7 @@ public class PrimaryInterface : UIWindow
                 if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
                 {
                     SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-                }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+                }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
                 {
                     SystemManager.Instance.HidePanel(PanelType.StageFinishView);
                 }
@@ -267,7 +268,9 @@ public class PrimaryInterface : UIWindow
          {
              TaskClaim.gameObject.SetActive(false);
          }
-        TasksBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions);
+
+         int stage = Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage, GameDataManager.Instance.UserData.CurrentChessStage);
+        TasksBtn.gameObject.SetActive( stage>= AppGameSettings.UnlockRequirements.DailyMissions);
         TaskClaim.GetComponentInChildren<Text>().text= MultilingualManager.Instance.GetString("ADPopReceive");
     }
     
@@ -301,16 +304,19 @@ public class PrimaryInterface : UIWindow
 
     private void CheckButtonsIsOpen()
     {
-        HeadBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
-        TasksBtn.transform.parent.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage>= AppGameSettings.UnlockRequirements.DailyMissions);
+        int stage = Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage, GameDataManager.Instance.UserData.CurrentChessStage);
         
-        LimitTimeBtn.transform.parent.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
-        ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime));
+        HeadBtn.gameObject.SetActive(stage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
+        TasksBtn.transform.parent.gameObject.SetActive(stage>= AppGameSettings.UnlockRequirements.DailyMissions);
         
-        SignInBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.SignInRewards
-        ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.signOpenTime));
+        LimitTimeBtn.transform.parent.gameObject.SetActive(stage >= AppGameSettings.UnlockRequirements.TimeLimitMode
+                                                           ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime));
+        
+        SignInBtn.gameObject.SetActive(stage >= AppGameSettings.UnlockRequirements.SignInRewards
+                                       ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.signOpenTime));
         
         ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
+        ZenRankBtn.GetComponent<ZenRankButton>().CheckRankProgress();
     }
     
     private void UpdateTimeDisplay(string time)
@@ -444,18 +450,18 @@ public class PrimaryInterface : UIWindow
         Sprite sprite = null;
         switch (GameDataManager.Instance.UserData.levelMode)
         {
-            // case 1:
-            //     Stage = GameDataManager.Instance.UserData.CurrentStage != 0 ? 
-            //         GameDataManager.Instance.UserData.CurrentStage : 1;
-            //     sprite = LoadheadIcon("icon_xiao");
-            //     break;
+                // case 1:
+                //     Stage = GameDataManager.Instance.UserData.CurrentStage != 0 ? 
+                //         GameDataManager.Instance.UserData.CurrentStage : 1;
+                //     sprite = LoadheadIcon("icon_xiao");
+                // break;
             case 2:
                 Stage = GameDataManager.Instance.UserData.CurrentChessStage;
-                //sprite = LoadheadIcon("icon_pinzi");
+                sprite = LoadheadIcon("icon_pinzi");
                 break;
             case 3:
                 Stage = GameDataManager.Instance.UserData.CurrentHexStage;
-                //sprite = LoadheadIcon("icon_layer");
+                sprite = LoadheadIcon("icon_layer");
                 break;
         }
         
@@ -533,7 +539,7 @@ public class PrimaryInterface : UIWindow
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }
@@ -551,23 +557,6 @@ public class PrimaryInterface : UIWindow
     /// </summary>
     public void OnPlayClick()
     {
-        base.Close();
-        OnEnterStageClick();
-        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
-    }
-    
-    private Sprite LoadheadIcon(string showIcon)
-    {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
-    }
-
-    /// <summary>
-    /// 进入关卡回调
-    /// </summary>
-    private void OnEnterStageClick()
-    {
-        
         switch (GameDataManager.Instance.UserData.levelMode)
         {
             case 1:
@@ -580,7 +569,20 @@ public class PrimaryInterface : UIWindow
                 StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
                 break;
         }
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection, true, OnEnterStageClick);
+        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+    }
+    
+    private Sprite LoadheadIcon(string showIcon)
+    {
+        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+    }
 
+    /// <summary>
+    /// 进入关卡回调
+    /// </summary>
+    private void OnEnterStageClick()
+    {
         switch (GameDataManager.Instance.UserData.levelMode)
         {
             case 1:

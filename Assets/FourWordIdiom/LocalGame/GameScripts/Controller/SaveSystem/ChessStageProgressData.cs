@@ -32,6 +32,8 @@ public class ChessStageProgressData
     public Vector2 ActiveSize = new Vector2(126,125);
 
     public Dictionary<string, HashSet<PhraseGroup>> tempgroup = new();
+    
+    public Chesspiece PupaDatas = null;
     #endregion
 
     public string SaveFileName;
@@ -48,7 +50,10 @@ public class ChessStageProgressData
         MaxCol = stageInfo.MaxCol;
         MinRow = stageInfo.MinRow;
         MinCol = stageInfo.MinCol;
+        PupaDatas = stageInfo._pupaData;
         IsFirstEnter = true;
+        
+        //stageInfo.CreatePupaData();
     }
 
     public void InitializeFromExisting(ChessStageProgressData sourceData)
@@ -66,15 +71,17 @@ public class ChessStageProgressData
         this.MinRow = sourceData.MinRow;
         this.MinCol = sourceData.MinCol;
         this.IsFirstEnter = sourceData.IsFirstEnter;
+        this.PupaDatas=sourceData.PupaDatas;
 
-        ChessGroup.Clear();
-        foreach (var item in sourceData.tempgroup)
-        {
-            var parts = item.Key.Split('_');
-            int r = int.Parse(parts[0]);
-            int c = int.Parse(parts[1]);
-            ChessGroup[(r, c)] = item.Value;
-        }
+        this.ChessGroup.Clear();
+        this.ChessGroup=sourceData.ChessGroup;
+        // foreach (var item in sourceData.tempgroup)
+        // {
+        //     var parts = item.Key.Split('_');
+        //     int r = int.Parse(parts[0]);
+        //     int c = int.Parse(parts[1]);
+        //     ChessGroup[(r, c)] = item.Value;
+        // }
         
         this.FoundTargetPuzzles = sourceData.FoundTargetPuzzles != null ?
             new List<string>(sourceData.FoundTargetPuzzles) : new List<string>();
@@ -110,13 +117,22 @@ public class ChessStageProgressData
             }
 
             var loadedData = JsonConvert.DeserializeObject<ChessStageProgressData>(json);
-
-            if (loadedData.StageId <= 0) 
+            
+            // 数量不同直接返回
+            bool foundword = (stageInfo.CurrBoardData.Count == loadedData.BoardSnapshot.Count);
+                                       // 用 HashSet<T>.SetEquals 即可
+                                       stageInfo.CurrBoardData.SetEquals(loadedData.BoardSnapshot);
+            
+            if (loadedData.StageId <= 0 || !foundword) 
             {
                 InitializeFromStageInfo(stageInfo);
             }
             else
             {
+                if (loadedData.ChessGroup.Count <= 0)
+                {
+                    loadedData.ChessGroup=stageInfo.ChessGroup;
+                }
                 InitializeFromExisting(loadedData);
             }
         }
@@ -124,6 +140,7 @@ public class ChessStageProgressData
         {
             Debug.LogError($"加载关卡数据失败: {e.Message}");
             InitializeFromStageInfo(stageInfo);
+            AnalyticMgr.BugRecord("拼字关卡数据异常",e.Message);
         }
     }
     public void SaveToFile()
@@ -134,12 +151,12 @@ public class ChessStageProgressData
         try
         {
             // 转换数据
-            tempgroup = ChessGroup.ToDictionary(kv=> $"{kv.Key.row}_{kv.Key.col}", kv=>kv.Value);
+            //tempgroup = ChessGroup.ToDictionary(kv=> $"{kv.Key.row}_{kv.Key.col}", kv=>kv.Value);
             string json = JsonConvert.SerializeObject(this);
             string encryptedJson = SecurityProvider.ProtectData(json);
             File.WriteAllText(filePath, encryptedJson);
 
-            //Debug.Log($"关卡进度已保存：{filePath}");
+            Debug.Log($"拼字关卡进度已保存：{filePath}");
         }
         catch (System.Exception e)
         {

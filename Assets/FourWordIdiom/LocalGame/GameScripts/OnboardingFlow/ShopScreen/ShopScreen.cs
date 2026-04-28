@@ -246,7 +246,7 @@ public class ShopScreen : UIWindow
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
         {
             SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
-        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPanel)
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
         {
             SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
         }

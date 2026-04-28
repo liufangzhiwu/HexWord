@@ -73,6 +73,7 @@ public class StageHexController
     public PuzzleTile UpPuzzleGrid { get; set; }    // 字块矩阵中最上方字块
     private int _limitPuzzleCount = 0;            // 限时活动连词计数
     public int PuzzleComboCount = 0;            // 连击次数
+    public int PuzzleZenCount = 0;            // 词语禅意值
     
     public float lastActivityTime;
     

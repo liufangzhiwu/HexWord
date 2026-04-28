@@ -128,7 +128,7 @@ public class ChessDynamicHardManager : MonoBehaviour
         }    
     }
 
-    private bool IsOpenDynamicHard()
+    public bool IsOpenDynamicHard()
     {
         return DynamicHardIsOpen == 1;
     }

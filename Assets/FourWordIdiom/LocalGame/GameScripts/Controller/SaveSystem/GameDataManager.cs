@@ -211,7 +211,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
         }
     }
     
-    
     public StageProgressData RetrieveLevelProgress(StageInfo levelDetails)
     {
         string identifier = CreateLevelIdentifier(levelDetails.StageNumber);
@@ -223,6 +222,22 @@ public class GameDataManager : SingletonMono<GameDataManager>
 
         // 无用数据转换
         var tempData = LevelProgressDict[identifier];
+        return tempData;
+    }
+    
+    public ChessStageProgressData RetrieveLevelProgress(ChessStageInfo levelDetails)
+    {
+        string identifier = ChessStageProgressData.CreateLevelIdentifier(levelDetails.StageNumber);
+
+        if (!ChessLevelProgressDict.ContainsKey(identifier))
+        {
+            ChessStageProgressData progress = new ChessStageProgressData();
+            progress.LoadFromFile(levelDetails);
+            ChessLevelProgressDict[identifier] = progress;
+        }
+
+        // 无用数据转换
+        var tempData = ChessLevelProgressDict[identifier];
         return tempData;
     }
     
@@ -299,6 +314,17 @@ public class GameDataManager : SingletonMono<GameDataManager>
             Debug.Log($"更新了偶数关卡 {progressData.StageId}");
         }
     }
+    
+    // 更新拼字关卡进度
+    public void UpdateLevelProgress(ChessStageProgressData progressData)
+    {
+        string identifier = ChessStageProgressData.CreateLevelIdentifier(progressData.StageId);
+        if (ChessLevelProgressDict.ContainsKey(identifier))
+        {
+            ChessLevelProgressDict[identifier] = progressData;
+        }
+    }
+    
     #endregion
 
     #region 数据保存

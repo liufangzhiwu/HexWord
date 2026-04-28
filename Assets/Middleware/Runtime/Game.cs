@@ -32,7 +32,6 @@ namespace Middleware
             self = this;
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
-         
             
 #if UNITY_huawei&&!UNITY_EDITOR
             HuaweiGameService.AppInit();

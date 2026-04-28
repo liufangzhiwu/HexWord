@@ -20,7 +20,9 @@ public class StageFinishView : UIWindow
     
     [SerializeField] private GameObject hardStageTable;          // 困难模式
     [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
-    
+    [Header("禅意飞行特效")]
+    [SerializeField] private ZenRankButton _zenRankBtn;    // 🌟 这里把类型改成具体的脚本类型
+
     [SerializeField] private Button Content;
     [SerializeField] private Button _nextStageButton;
     [SerializeField] private GameObject Showlimiticon;
@@ -51,8 +53,8 @@ public class StageFinishView : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
-
-        GameCoreManager.Instance.PanelState = PanelState.FinishPanel;
+        _zenRankBtn.GetComponent<ZenRankButton>().CheckRankProgress();
+        GameCoreManager.Instance.PanelState = PanelState.FinishHexPanel;
         
         GameDataManager.Instance.UserData.curIsEnter = false;
         LimitTimeManager.Instance.OnDailyTimeUpdated += UpdateTimeDisplay; // 订阅事件
@@ -260,7 +262,13 @@ public class StageFinishView : UIWindow
     {
         _tasktable.taskEffect.gameObject.SetActive(false);
         //_matchFishtable.matchEffect.gameObject.SetActive(false);
-        
+        // ==========================================
+        // 🌟 新增：先播放莲花飞向禅意榜的动画！
+        // ==========================================
+        if (_zenRankBtn.gameObject.activeSelf)
+        {
+            yield return StartCoroutine(PlayZenLotusFlyAnim());
+        }
          if (!LimitTimeManager.Instance.IsComplete()&&_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
          {
              _limitBtnTable.CheckAndShowLimitedTimeEvent(Enlimiticon.transform);
@@ -303,7 +311,70 @@ public class StageFinishView : UIWindow
             _matchFishtable.UpdateFishRank();
         }
     }
-   
+    /// <summary>
+    /// 播放莲花飞向禅意排行榜的动画
+    /// </summary>
+    private IEnumerator PlayZenLotusFlyAnim()
+    {
+        // 1. 获取本局获得的禅意数量（替换为你实际增加的变量，比如这里测试用 +15）
+        int addZenCount = StageHexController.Instance.PuzzleZenCount; // 比如：GameDataManager.Instance.UserData.AddZenCount
+
+        // 如果增加了禅意，且排行榜按钮开启了，才播动画
+        if (addZenCount > 0 && _zenRankBtn != null && _zenRankBtn.gameObject.activeSelf)
+        {
+            // 初始化莲花状态（放在屏幕中央或者特定初始位置）
+            GameObject prefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "lotus_icon");
+            GameObject lotusInstance = Instantiate(prefab, transform,false);
+            
+            Canvas canvas = lotusInstance.GetComponent<Canvas>();
+            if (canvas == null) canvas = lotusInstance.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingLayerName = "PopPanel"; // 保持和你前面配置的一样
+            canvas.sortingOrder = 10;
+            GraphicRaycaster raycaster = lotusInstance.GetComponent<GraphicRaycaster>();
+            if (raycaster == null) raycaster = lotusInstance.AddComponent<GraphicRaycaster>();
+            raycaster.enabled = false;
+            CanvasGroup cg = lotusInstance.GetComponent<CanvasGroup>();
+            if (cg == null) cg = lotusInstance.AddComponent<CanvasGroup>();
+            cg.blocksRaycasts = false;
+            cg.alpha = 1f; // 如果你想稍微有点透明度，可以改成 0.9f
+            lotusInstance.SetActive(true);
+            Text textComponent = lotusInstance.GetComponentInChildren<Text>();
+            if (textComponent != null) textComponent.text = "+" + addZenCount;
+            
+            lotusInstance.transform.localPosition = Vector3.zero; 
+            lotusInstance.transform.localScale = Vector3.one;
+            // 2. 使用 DOTween 创建连续动画序列
+            Sequence seq = DOTween.Sequence();
+            seq.SetLink(lotusInstance);
+            // 动作1：向上浮现一段距离 (耗时 0.5秒，缓动输出)
+            seq.Append(lotusInstance.transform.DOLocalMoveY(100f, 0.5f).SetRelative(true).SetEase(Ease.OutQuad));
+            
+            // 动作2：停顿展示一下数字，让玩家看清楚加了多少 (耗时 0.3秒)
+            seq.AppendInterval(0.3f);
+            
+            // 动作3：朝排行榜按钮飞过去！
+            // 使用 DOMove 飞向目标的世界坐标，同时缩小莲花
+            seq.Append(lotusInstance.transform.DOMove(_zenRankBtn.transform.position, 0.6f).SetEase(Ease.InBack));
+            seq.Join(lotusInstance.transform.DOScale(0.3f, 0.6f)); // 边飞边缩小到 30%
+            
+            // 动作4：飞到目标后的回调
+            seq.OnComplete(() =>
+            {
+                // 1. 飞到了，把飞行道具隐藏
+                Destroy(lotusInstance);
+                
+                // 2. 通知目标按钮：“砸到你了，请播放你的震动特效和刷新逻辑！”
+                _zenRankBtn.PlayAbsorbEffect(addZenCount);
+                
+                // 🌟 (可选) 在这里调用刷新排行榜按钮文字/总数的逻辑
+               
+            });
+
+            // 阻塞等待动画大部分播完，再让结算界面去播下一个（比如灯笼）的动画
+            yield return new WaitForSeconds(1.5f);
+        }
+    }
     private void UnlockBtnsUI()
     {
         UnlockButton(_tasktable.TaskBtn,AppGameSettings.UnlockRequirements.DailyMissions,PanelType.DailyTasksScreen,
