@@ -1,0 +1,7 @@
+pond_amin.png
+size:1464,2048
+filter:Linear,Linear
+pma:true
+scale:0.738
+bj
+bounds:1,1,1461,2044

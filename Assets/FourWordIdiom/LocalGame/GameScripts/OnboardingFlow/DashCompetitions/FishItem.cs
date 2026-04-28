@@ -279,7 +279,7 @@ public class FishItem : MonoBehaviour
         {
             point= GameDataManager.Instance.FishUserSave.Puzzleprogress /(float) fishTargetWordCount;
         }
-        
+
         if (point > 0&&isneedmove)
         {
             targetx=distanceX*point+startx;

@@ -2,7 +2,7 @@ namespace Middleware
 {
     public partial class Define 
     {
-#if UNITY_ANDROID
+#if UNITY_ANDROID 
         public struct ConfigAndroid
         {
             public const string TestBannerAdId = "ca-app-pub-3940256099942544/6300978111";
@@ -18,8 +18,8 @@ namespace Middleware
         public struct ConfigHuaweiAndroid
         {
             public const string TestBannerAdId = "ca-app-pub-3940256099942544/6300978111";
-            public const string TestInterstitialAdId = "ca-app-pub-3940256099942544/1033173712";
-            public const string TestRewardAdId = "ca-app-pub-3940256099942544/5224354917";
+            public const string TestInterstitialAdId = "v8iv8ucy62";
+            public const string TestRewardAdId = "g76o3ir936";
         }
 #endif
 

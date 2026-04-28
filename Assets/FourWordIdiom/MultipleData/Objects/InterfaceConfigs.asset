@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18,6 +18,18 @@ MonoBehaviour:
     bundleName: RootCanvas
     spriteAtlasName: UI_MainBase
     prefab: {fileID: 3928016723604912977, guid: 121a649aa227684499243306c180f5a1,
+      type: 3}
+  - panelName: ChessPlayArea
+    panelLayer: UpPopPanel
+    bundleName: RootCanvas
+    spriteAtlasName: UI_MainBase
+    prefab: {fileID: 2746254273192117949, guid: 3bae9f41615a4af48af6168909469ec7,
+      type: 3}
+  - panelName: SelectMode
+    panelLayer: UpPopPanel
+    bundleName: RootCanvas
+    spriteAtlasName: UI_MainBase
+    prefab: {fileID: 2901091611323133692, guid: a626ff0c784c44c4687a2a412e3a682e,
       type: 3}
   - panelName: HeaderSection
     panelLayer: BasePanel
@@ -168,18 +180,6 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 4165248868016293823, guid: 3829a928e24ad4f408586c70e4f7a487,
       type: 3}
-  - panelName: SelectMode
-    panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 2901091611323133692, guid: a626ff0c784c44c4687a2a412e3a682e,
-      type: 3}
-  - panelName: ChessPlayArea
-    panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 2746254273192117949, guid: 47c9d0604f9e185459adf71fd94bf9da,
-      type: 3}
   - panelName: ChessLearningGuide
     panelLayer: UpPopPanel
     bundleName: OnboardingFlow
@@ -215,4 +215,22 @@ MonoBehaviour:
     bundleName: OnboardingFlow
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 2508230401924753788, guid: b5471a4703b43b9419889d9a9193c011,
+      type: 3}
+  - panelName: ZenRankScreen
+    panelLayer: BasePanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 1536064400745267663, guid: 06ca3c6e14d467742a99bcd735fa9c5b,
+      type: 3}
+  - panelName: ZenRankHelpScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 7191544230075983706, guid: ed74f484fd66653458fc59c2a8e608bc,
+      type: 3}
+  - panelName: ZenSettlementScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 6527089118256139734, guid: 76fb5de38df4bfe4e8f956ca99aca026,
       type: 3}

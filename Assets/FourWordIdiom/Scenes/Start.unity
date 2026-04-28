@@ -2994,7 +2994,6 @@ GameObject:
   - component: {fileID: 27063314}
   - component: {fileID: 27063313}
   - component: {fileID: 27063312}
-  - component: {fileID: 27063316}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -3086,22 +3085,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &27063316
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 27063311}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 792a9a6a3782166448fae37d8b509af0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bundleName: commonitem
-  prefabName: MessageWindow
-  topPosition: 0
-  bottomPosition: -700
 --- !u!1 &30394925
 GameObject:
   m_ObjectHideFlags: 0
@@ -36914,7 +36897,7 @@ PrefabInstance:
     - target: {fileID: 40593819569410530, guid: cb22c978b28879b42b9f46d14d733c69,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 374
+      value: 371.91306
       objectReference: {fileID: 0}
     - target: {fileID: 1763250562576917828, guid: cb22c978b28879b42b9f46d14d733c69,
         type: 3}
@@ -37039,7 +37022,7 @@ PrefabInstance:
     - target: {fileID: 5066839883382606432, guid: cb22c978b28879b42b9f46d14d733c69,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 769
+      value: 763.9581
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -61944,8 +61927,8 @@ GameObject:
   m_Component:
   - component: {fileID: 701668027}
   - component: {fileID: 701668029}
-  - component: {fileID: 701668033}
   - component: {fileID: 701668034}
+  - component: {fileID: 701668033}
   - component: {fileID: 701668035}
   - component: {fileID: 701668036}
   m_Layer: 0

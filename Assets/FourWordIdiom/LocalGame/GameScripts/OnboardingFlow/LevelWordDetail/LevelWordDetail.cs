@@ -24,7 +24,17 @@ public class LevelWordDetail : UIWindow
   
     protected override void OnEnable()
     {
-        if (StageHexController.Instance.PuzzleData.IsVocabularyPuzzle)
+        bool isEnter = false;
+        if (GameDataManager.Instance.UserData.levelMode is 1 or 3)
+        {
+            isEnter = StageHexController.Instance.PuzzleData.IsVocabularyPuzzle;
+        }
+        else
+        {
+            isEnter = ChessStageController.Instance.PuzzleData.IsVocabularyPuzzle;
+        }
+        Debug.LogWarning("是否进入 " + isEnter);
+        if (isEnter)
         {               
             ShowVocabularyWords();
             HeadTitle.text = MultilingualManager.Instance.GetString("LevelWord");                
@@ -34,7 +44,7 @@ public class LevelWordDetail : UIWindow
         EventDispatcher.instance.OnWordVocabularyStatus += UpdateWordVocabularyStatus;
         //EventDispatcher.instance.OnWordVocabularyStatus?.Invoke();
 
-        if (StageHexController.Instance.IsEnterPuzzle)
+        if (StageHexController.Instance.IsEnterPuzzle || ChessStageController.Instance.IsEnterPuzzle)
         {
             _windowAnimator.Play("levelShow");
         }
@@ -62,6 +72,7 @@ public class LevelWordDetail : UIWindow
     private void ShowWordVocabulary()
     {
         StageHexController.Instance.IsEnterVocabulary = false;
+        ChessStageController.Instance.IsEnterVocabulary = false;
         SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
         OnHideAnimationEnd();
     }
@@ -124,7 +135,15 @@ public class LevelWordDetail : UIWindow
     private void UpdateVisibleWords()
     {
         width = wordProfab.GetComponent<RectTransform>().rect.width;
-        curPage = StageHexController.Instance.PuzzleData.PageIndex;
+        switch (GameDataManager.Instance.UserData.levelMode)
+        {
+            case  1 or 3:
+                curPage = StageHexController.Instance.PuzzleData.PageIndex;
+                break;
+            case 2 :
+                curPage = ChessStageController.Instance.PuzzleData.PageIndex;
+                break;
+        }
         viewList.InitList(words);
         ParentMovePos(width * -(curPage-1),false);
         PageCount.text= curPage+"/"+ words.Count;            

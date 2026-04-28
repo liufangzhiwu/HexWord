@@ -29,6 +29,8 @@ public class WordVocabularyScreen : UIWindow
         ShowNoteBook();
         headTitle.text = MultilingualManager.Instance.GetString("WordNewIdioms");
         AudioManager.Instance.PlaySoundEffect("ShowUI");
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false);
     }
     
     protected override void InitializeUIComponents()
@@ -84,6 +86,7 @@ public class WordVocabularyScreen : UIWindow
     {
         base.OnDisable();
         EventDispatcher.instance.OnRemoveNotePuzzle -= RemoveBookWord;
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
         if (NoteBooks.Count > 0)
         {
             foreach (var word in NoteBooks.ToList())

@@ -58,7 +58,7 @@ public class NetErrorView : MonoBehaviour
     
     private void OnQuitGameClick()
     {
-       Application.Quit();
+        Application.Quit();
     }
 
     private void OnCancleClick()

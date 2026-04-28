@@ -32,6 +32,7 @@ namespace Middleware
             self = this;
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<UnityTimer>();
+         
             
 #if UNITY_huawei&&!UNITY_EDITOR
             HuaweiGameService.AppInit();
@@ -39,27 +40,26 @@ namespace Middleware
             // StartCoroutine(ShowLoadingScreen());
             StartCoroutine(CheckNetworkConnection());
             
-            CreateAnalytic();
+            
             InitManagers();
         }
         
 
         public void InitGame()
-        {
-#if UNITY_EDITOR
-            
-#elif UNITY_OPENHARMONY||UNITY_huawei
-            CreateAd();
+        { 
             CreateAccounts();
-#endif
            StartCoroutine(WaitLoginedCreateShop());
-           
         }
         
         private IEnumerator WaitLoginedCreateShop()
         {
             yield return new WaitUntil(()=>Accounts.IsLogin);
+#if UNITY_EDITOR
+#elif UNITY_OPENHARMONY||UNITY_huawei
+            CreateAnalytic();
+            CreateAd();
             CreateShop();
+#endif
         }
 
         // IEnumerator  ShowLoadingScreen()
@@ -75,21 +75,21 @@ namespace Middleware
 	        LimitTimeManager.Instance.Init();
             
             ChessStageController.Instance.Init();
+            #if UNITY_EDITOR
+            CreateAnalytic();
+            #endif
         }
         
         private void CreateAccounts()
         {
-            
-#if UNITY_ANDROID
             Accounts = new Account_android();
-#elif UNITY_huawei
+#if UNITY_huawei
             Accounts = new Account_huaweiandroid();
-            Accounts.Init(0.2f);
 #elif UNITY_OPENHARMONY
             Accounts = new Account_harmony();
-           
 #endif
-            Accounts.Init(0.2f);
+            Accounts.Init(0.001f);
+            Debug.LogWarning("CreateAccounts 创建完成");
         }
     
         private void CreateAd()
@@ -201,7 +201,7 @@ namespace Middleware
                 ping = null;
 
                 IsNetworkActive = isSuccess;
-                Debug.Log("网络状态: " + (IsNetworkActive ? "已连接" : "未连接"));
+                // Debug.Log("网络状态: " + (IsNetworkActive ? "已连接" : "未连接"));
 
                 yield return new WaitForSeconds(5);
             }

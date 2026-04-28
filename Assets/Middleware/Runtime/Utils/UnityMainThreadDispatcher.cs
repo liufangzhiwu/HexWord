@@ -39,7 +39,18 @@ public class UnityMainThreadDispatcher : MonoBehaviour
         {
             while (_executionQueue.Count > 0)
             {
-                _executionQueue.Dequeue().Invoke();
+                // 取出任务
+                Action action = _executionQueue.Dequeue();
+                try
+                {
+                    // 尝试执行，如果这里报错，捕获它，不要影响后续任务
+                    action.Invoke();
+                }
+                catch (Exception e)
+                {
+                    // 打印红色错误日志，方便在手机 Logcat 中看到
+                    Debug.LogError($"[Dispatcher Error] 执行任务时发生异常: {e.Message}\n{e.StackTrace}");
+                }
             }
         }
     }

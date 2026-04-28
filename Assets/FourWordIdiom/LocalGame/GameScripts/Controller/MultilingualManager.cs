@@ -31,10 +31,10 @@ public class MultilingualManager:MonoBehaviour
     public void LoadLocalization()
     {
         // 从AssetBundle中加载CSV文件
-        TextAsset defCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "multilingual");
+        TextAsset defCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "Multilingual");
         localizedStrings = ToolUtil.ReadCvsLanguage(defCsvFile,"multilingual");
-        TextAsset pinCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "config_pingzi_lang");
-        pinziLocalized = ToolUtil.ReadCvsLanguage(pinCsvFile,"pingzi_lang");
+        TextAsset pinCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "conifg_pingzi_lang");
+        pinziLocalized = ToolUtil.ReadCvsLanguage(pinCsvFile,"conifg_pingzi_lang");
         TextAsset hudieCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflyLocales");
         butterfliesLocalized = ToolUtil.ParseCvsLanguage(hudieCsvFile,"ButterflyLocales");
 

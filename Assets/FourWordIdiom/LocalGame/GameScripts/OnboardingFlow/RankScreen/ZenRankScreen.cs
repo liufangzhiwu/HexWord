@@ -149,15 +149,6 @@ public class ZenRankScreen : UIWindow
         CenterLevelItemImmediately(currrentState);
         RefreshHehuaDisplay(ZenRankManager.Instance.ZenStates.IndexOf(currrentState));
         
-        // 4. 让顶部的水平滑动列表跳到正确的段位页
-        // HorizontalScrollSnap snapScript = GetComponentInChildren<HorizontalScrollSnap>(true);
-        // if (snapScript != null)
-        // {
-        //     int targetIndex = zenStates.IndexOf(currrentState);
-        //     snapScript.SetCurrentIndex(targetIndex);
-        //     RefreshHehuaDisplay(targetIndex);
-        // }
-
         // 5. 正式请求排行榜详细数据并刷新条目
         StartCoroutine(UpdateRankItems());
         

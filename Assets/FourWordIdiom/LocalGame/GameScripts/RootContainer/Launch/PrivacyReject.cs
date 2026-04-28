@@ -11,7 +11,7 @@ public class PrivacyReject : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _descriptionText.text = MultilingualManager.Instance.GetString("PrivacyAgreement04");
+        _descriptionText.text = MultilingualManager.Instance.GetString("PrivacyAgreement07");
         _descriptionText.onHyperlinkClick = OnClickText;
         _callbackButton.AddClickAction(OnCallbackClick);
         _rejectButton.AddClickAction(OnRejectClick);

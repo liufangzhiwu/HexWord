@@ -41,6 +41,7 @@ public class LevelWordScreen : UIWindow
     private void ShowWordVocabulary()
     {
         StageHexController.Instance.IsEnterVocabulary = false;
+        ChessStageController.Instance.IsEnterVocabulary = false;
         SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
         OnHideAnimationEnd();
     }

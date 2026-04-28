@@ -302,7 +302,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         //检查是否有可放置的蚕蛹数据
         if (StageHexController.Instance.CurStageData.PupaDatas == null)
         {
-            Debug.LogError("没有可以放置蚕蛹2222");
+            // Debug.LogError("没有可以放置蚕蛹2222");
             return;
         } 
        

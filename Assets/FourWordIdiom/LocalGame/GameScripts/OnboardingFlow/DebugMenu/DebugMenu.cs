@@ -16,6 +16,8 @@ public class DebugMenu : UIWindow
 
     [SerializeField] private Button AddGoldBtn; //增加金币
     [SerializeField] private Button EnterStageBtn; // 跳关   
+    [SerializeField] private Button ChessStageBtn; // 跳关   
+    [SerializeField] private Button ChessEBtn; // 拼字E值   
     [SerializeField] private Button AddResetToolBtn; //重置道具
     [SerializeField] private Button AddHintToolBtn; //提示道具
     [SerializeField] private Button AddButterflyToolBtn; //蝴蝶道具
@@ -60,6 +62,7 @@ public class DebugMenu : UIWindow
         CloseBtn.AddClickAction(OnCloseBtn);
         MailBtn.AddClickAction(SendMail);
         EnterStageBtn.AddClickAction(OnEnterStageClick);
+        ChessStageBtn.AddClickAction(OnChessStageClick);
         AddGoldBtn.AddClickAction(OnAddGoldClick);
         AddResetToolBtn.AddClickAction(AddResetCountClick);
         AddHintToolBtn.AddClickAction(AddHintCountClick);
@@ -73,6 +76,7 @@ public class DebugMenu : UIWindow
         UseButterflyBtn.AddClickAction(OnUserButterflyClick);
         ShopBuyBtn.AddClickAction(OnShopBuyClick);
         AddPupaBtn.AddClickAction(OnAddPupaClick);
+        ChessEBtn.AddClickAction(OnChessEnergyClick);
     }
 
     private void InitUIData()
@@ -89,7 +93,10 @@ public class DebugMenu : UIWindow
         InitBtnData(UseButterflyBtn, "10");
         InitBtnData(ShopBuyBtn, "10");
         InitBtnData(AddPupaBtn, "10");
-        
+        ChessEBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue.ToString("0.00");
+        ChessStageBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.UserData.CurrentChessStage.ToString();
+        string bagName=GameDataManager.Instance.UserData.ABName=="1"?"B 包":"A 包";
+        logText.text = "拼字玩法当前为"+bagName+"\n 其中0为A包 1为B包"; // 清空 UI 文本
     }
 
     private void OnAutoToggleValueChanged(bool value)
@@ -156,7 +163,13 @@ public class DebugMenu : UIWindow
         LimitTimeManager.Instance.UpdateLimitProgress(value);
         //GameDataManager.instance.FishUserSave.UpdateFishProgress(value);
     }
-
+    private void OnChessEnergyClick()
+    {
+        InputField Stagenumtxt = ChessEBtn.GetComponentInChildren<InputField>();
+        float value = float.Parse(Stagenumtxt.text);
+        GameDataManager.Instance.ChessDynamicHardSave.SetEnergy(value);
+        GameDataManager.Instance.ChessDynamicHardSave.SaveData();
+    }
     private void OnPassStageClick()
     {
         GameDataManager.Instance.UserData.UpdateHexStage();
@@ -239,7 +252,29 @@ public class DebugMenu : UIWindow
         OnPlayClick();
         //EventManager.RequestChangeBack(true);
     }
-    
+    private void OnChessStageClick()
+    {
+        InputField Stagenumtxt = ChessStageBtn.GetComponentInChildren<InputField>();
+        int Stagenum = int.Parse(Stagenumtxt.text);
+        
+        if (Stagenum < 1)
+        {
+            MessageSystem.Instance.ShowTip("关卡编号无效");
+        }
+        
+        //设置关卡数据 向前跳转关卡后，进度需要跟关卡同步；向后跳关不需要同步
+        if (Stagenum > GameDataManager.Instance.UserData.CurrentChessStage)
+        {
+            GameDataManager.Instance.UserData.UpdateChessStage(Stagenum,true);
+        }
+        ChessStageController.Instance.SetStageData(Stagenum);
+        ChessStageController.Instance.IsGMEnterStage = true;
+
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection,true,()=> SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea));
+        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        Close();
+        //EventManager.RequestChangeBack(true);
+    }
     private void OnPlayClick()
     {
         SystemManager.Instance.HidePanel(PanelType.HeaderSection,true,EnterStageClick);
@@ -253,6 +288,7 @@ public class DebugMenu : UIWindow
         SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
         //EventManager.RequestChangeBack(true);
     }
+    
     
     private void HandleLog(string logString, string stackTrace, LogType type)
     {

@@ -53,8 +53,22 @@ public class HeaderSection : UIWindow
         InitPupaUI();
         InitUI();
         CustomFlyInManager.Instance.GoldObj=GoldImage.gameObject;
+        CheckUIEnable();
+        
+         EventDispatcher.instance.TriggerChangeTopRaycast(true);
+         EventDispatcher.instance.TriggerChangeGoldUI(0,false);       
 
-        if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
+        if (SystemManager.Instance != null)
+        {
+            // 启用时开始重复调用 (0秒延迟，每秒1次)
+            InvokeRepeating(nameof(CheckLevelPuzzleVisibility), 1f, 1f);
+        }
+        
+    }
+
+    private void CheckUIEnable()
+    {
+        if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) || SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
         {
             BackBtn.GetComponent<Image>().sprite =AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Home");
         }
@@ -62,12 +76,22 @@ public class HeaderSection : UIWindow
         {
             BackBtn.GetComponent<Image>().sprite =AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_back");
         }
+        LevelPuzzleBtn.gameObject.SetActive(SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) || SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView));
         
         if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
         {
             ShopBtn.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(StageHexController.Instance.CurStageData.PupaDatas!=null);
+            
             if (StageHexController.Instance.CurStageData.PupaDatas != null&&!GameDataManager.Instance.ButterflyData.IsOpenButterfly)
+            {
+                GameDataManager.Instance.ButterflyData.IsOpenButterfly = true;
+            }
+        }else if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        {
+            PupaTable.gameObject.SetActive(ChessStageController.Instance.pupaLetter != null);
+            ShopBtn.gameObject.SetActive(!PupaTable.gameObject.activeSelf);
+            if (ChessStageController.Instance.pupaLetter != null&&!GameDataManager.Instance.ButterflyData.IsOpenButterfly)
             {
                 GameDataManager.Instance.ButterflyData.IsOpenButterfly = true;
             }
@@ -77,18 +101,6 @@ public class HeaderSection : UIWindow
             ShopBtn.gameObject.SetActive(true);
             PupaTable.gameObject.SetActive(false);
         }
-        
-         EventDispatcher.instance.TriggerChangeTopRaycast(true);
-         EventDispatcher.instance.TriggerChangeGoldUI(0,false);       
-
-        LevelPuzzleBtn.gameObject.SetActive(SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView));
-
-        if (SystemManager.Instance != null)
-        {
-            // 启用时开始重复调用 (0秒延迟，每秒1次)
-            InvokeRepeating(nameof(CheckLevelPuzzleVisibility), 1f, 1f);
-        }
-        
     }
 
     private void InitPupaUI()
@@ -138,11 +150,13 @@ public class HeaderSection : UIWindow
     {
         if (SystemManager.Instance != null)
         {
-            bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea);
-    
-            if (isgameshow)
+            if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
             {
                 bool hasLevelWords = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count > 0;
+                LevelPuzzleBtn.gameObject.SetActive(hasLevelWords);
+            }else if(SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+            {
+                bool hasLevelWords = ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0;
                 LevelPuzzleBtn.gameObject.SetActive(hasLevelWords);
             }
         }
@@ -183,12 +197,14 @@ public class HeaderSection : UIWindow
     private void OnClickPuzzleVocabulary()
     {
         StageHexController.Instance.IsEnterVocabulary = false;
+        ChessStageController.Instance.IsEnterVocabulary = false;
         SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
     }
     
     private void OnClickStagePuzzleScreen()
     {
         StageHexController.Instance.IsEnterVocabulary = true;
+        ChessStageController.Instance.IsEnterVocabulary = true;
         SystemManager.Instance.ShowPanel(PanelType.LevelWordScreen);
     }
 
@@ -263,6 +279,7 @@ public class HeaderSection : UIWindow
             SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
             GameDataManager.Instance.UserData.UpdateOnlineStageTime();
         } 
+
     }
 
     public void ChangeBackBtnState(bool isshow)
@@ -289,8 +306,7 @@ public class HeaderSection : UIWindow
             GameDataManager.Instance.ButterflyData.AddPupa(pupa);
             Pupatxt.text = $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow.Count}";
         }, 1.3f));
-
-
+        
     }
 
     public override void OnHideAnimationEnd()

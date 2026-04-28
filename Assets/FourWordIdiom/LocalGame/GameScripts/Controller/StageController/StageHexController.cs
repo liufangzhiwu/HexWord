@@ -73,7 +73,7 @@ public class StageHexController
     public PuzzleTile UpPuzzleGrid { get; set; }    // 字块矩阵中最上方字块
     private int _limitPuzzleCount = 0;            // 限时活动连词计数
     public int PuzzleComboCount = 0;            // 连击次数
-    public int PuzzleZenCount = 0;            // 词语禅意值
+    public int PuzzleZenCount = 0;            // 连击次数
     
     public float lastActivityTime;
     
@@ -158,7 +158,7 @@ public class StageHexController
         
         // 记录关卡开始时间
         GameDataManager.Instance.UserData.curStageStartTime = DateTime.Now.ToString();
-        Debug.LogError("关卡id:"+StageIndex+"关卡开始时间"+GameDataManager.Instance.UserData.curStageStartTime);
+        Debug.Log("关卡id:"+StageIndex+"关卡开始时间"+GameDataManager.Instance.UserData.curStageStartTime);
         AnalyticMgr.SetCommonProperties();
 
         // 首次进入关卡的特殊处理
@@ -167,7 +167,8 @@ public class StageHexController
             IsFirstEnterStage = true;
             GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Clear();
             GameDataManager.Instance.UserData.curStageOnlineTime = 0;
-            PuzzleComboCount = 0;  
+            PuzzleComboCount = 0;
+            PuzzleZenCount = 0;
             // 可在此处添加分析事件...
             AnalyticMgr.LevelStart();
             GameDataManager.Instance.UserData.curIsEnter = true;

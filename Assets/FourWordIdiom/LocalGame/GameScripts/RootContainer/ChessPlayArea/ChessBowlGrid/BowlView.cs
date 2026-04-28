@@ -1,8 +1,8 @@
 using DG.Tweening;
-using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -71,16 +71,35 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         cloneRT.localScale = selfRT.localScale * 1.1f;
         clone.transform.position = selfRT.position;
         Vector3 endWorld = tile.TileTransform.TransformPoint(tile.TileTransform.rect.center);
-        float duration = 0.55f * (3f / 4f);
-        clone.transform.DOMove(endWorld, duration).SetEase(Ease.Linear);
+        float   duration = 0.4f;
+        float   switchDist = cloneRT.TransformVector(new Vector3(cloneRT.sizeDelta.x * 0.5f, 0, 0)).magnitude;    // 剩余 半格宽度 时换图
+        bool    hasSwitched = false;                // 只换一次
+        clone.transform.DOMove(endWorld, duration).SetEase(Ease.Linear)
+            .OnUpdate(() =>
+            {
+                if (hasSwitched || !clone) return;
+                float remain = Vector3.Distance(clone.transform.position, endWorld);
+                // Debug.Log($"当前距离 {remain} 检查距离 {switchDist} 当前位置{clone.transform.position} 目标位置{endWorld} ");
+                if (remain <= switchDist) 
+                {
+                    if (tile.CurrState == TileState.Success)
+                    {
+                        clone.transform.GetChild(0).GetComponent<Image>().sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
+                    }else if (tile.CurrState is TileState.Error or TileState.Fill)
+                    {
+                        clone.transform.GetChild(0).GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+                    }
+                    hasSwitched = true;
+                }
+            });
         clone.transform.DOScale(tile.TileTransform.localScale * 0.5f, duration).SetEase(Ease.Linear)
             .OnComplete(() =>
             {
                 Vector3 targetWorldScale = tile.TileTransform.lossyScale;
-                clone.transform.DOScale(targetWorldScale, 0.1f).SetEase(Ease.Linear)
+                clone.transform.DOScale(targetWorldScale, 0.01f).SetEase(Ease.Linear)
                     .OnComplete(() =>
                     {
-                        Destroy(clone);
+                        if(clone) Destroy(clone);
                         onComplete?.Invoke();
                     });
             });

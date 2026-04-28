@@ -126,6 +126,8 @@ public class RewardPuzzleManager : MonoBehaviour
            
         }
         StageHexController.Instance.PuzzleComboCount=correctPuzzleCount;
+        StageHexController.Instance.PuzzleZenCount += correctPuzzleCount;
+        GameDataManager.Instance.UserData.zenCount += correctPuzzleCount;
     }
 
     /// <summary>

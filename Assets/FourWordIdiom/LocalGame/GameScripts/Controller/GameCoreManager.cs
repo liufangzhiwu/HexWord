@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Middleware;
 using UnityEngine;
+using UnityEngine.HuaweiAppGallery;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 #if UNITY_IOS
@@ -10,7 +11,7 @@ using UnityEngine.iOS;
 
 public enum PanelState
 {
-    Null,MainMenuPanel,FinishHexPanel,GameHexPanel,GamePingPanel,FinishPingPanel
+   Null,MainMenuPanel,FinishHexPanel,GameHexPanel,GamePingPanel,FinishPingPanel
 }
 
 /// <summary>
@@ -40,9 +41,14 @@ public sealed class GameCoreManager: MonoBehaviour
             DontDestroyOnLoad(gameObject); // 保持广告管理器在场景切换时不销毁
         }
     }
+    
 
     private void Start()
     {
+#if UNITY_huawei && !UNITY_EDITOR
+        HuaweiGameService.ShowFloatWindow();
+        StartCoroutine(CheckOrderShipmentCompleted());
+#endif
         Game.self._uiRoot=SystemManager.Instance._uiRoot;
         StartCoroutine(InitializeGameRoutine());
         //StartCoroutine(CheckNetworkConnection());
@@ -119,6 +125,25 @@ public sealed class GameCoreManager: MonoBehaviour
     {
         SystemManager.Instance.ShowPanel(PanelType.PolicyView);
     }
-    
+
+    // 检查发货是否完成
+    private IEnumerator CheckOrderShipmentCompleted()
+    {
+        yield return new WaitForSeconds(2f);
+        Game.self.Shop.Restore((ok, items) =>
+        {
+            foreach (ProductItem item in items)
+            {
+                ShopManager.shopManager.OnPurchaseSuccess(item);
+            }
+        });
+    }
     #endregion
+
+    private void OnDisable()
+    {
+        #if UNITY_huawei && !UNITY_EDITOR
+        HuaweiGameService.HideFloatWindow();
+        #endif
+    }
 }

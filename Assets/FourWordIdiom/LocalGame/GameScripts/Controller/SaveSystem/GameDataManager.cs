@@ -180,7 +180,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         butterfly.LoadData();
         dynamicHard.LoadData();
         // chessDynamicHard.LoadData();
-        dataInitialized = true;
+        // dataInitialized = true;
     }
     #endregion
 
@@ -211,6 +211,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         }
     }
     
+    
     public StageProgressData RetrieveLevelProgress(StageInfo levelDetails)
     {
         string identifier = CreateLevelIdentifier(levelDetails.StageNumber);
@@ -223,6 +224,14 @@ public class GameDataManager : SingletonMono<GameDataManager>
         // 无用数据转换
         var tempData = LevelProgressDict[identifier];
         return tempData;
+    }
+    
+    private void FetchLevelProgress(StageInfo levelDetails)
+    {
+        StageProgressData progress = new StageProgressData();
+        progress.LoadFromFile(levelDetails);
+        string identifier = CreateLevelIdentifier(levelDetails.StageNumber);
+        LevelProgressDict[identifier] = progress;
     }
     
     public ChessStageProgressData RetrieveLevelProgress(ChessStageInfo levelDetails)
@@ -239,14 +248,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
         // 无用数据转换
         var tempData = ChessLevelProgressDict[identifier];
         return tempData;
-    }
-    
-    private void FetchLevelProgress(StageInfo levelDetails)
-    {
-        StageProgressData progress = new StageProgressData();
-        progress.LoadFromFile(levelDetails);
-        string identifier = CreateLevelIdentifier(levelDetails.StageNumber);
-        LevelProgressDict[identifier] = progress;
     }
 
     private string CreateLevelIdentifier(int levelId)
@@ -314,7 +315,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
             Debug.Log($"更新了偶数关卡 {progressData.StageId}");
         }
     }
-    
     // 更新拼字关卡进度
     public void UpdateLevelProgress(ChessStageProgressData progressData)
     {
@@ -324,7 +324,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
             ChessLevelProgressDict[identifier] = progressData;
         }
     }
-    
     #endregion
 
     #region 数据保存
@@ -344,11 +343,11 @@ public class GameDataManager : SingletonMono<GameDataManager>
              LevelProgressDict[currentLevelId].SaveToPlayerPrefs();
          }
          
-         // string chessCurrentLevelId = ChessStageProgressData.CreateLevelIdentifier(playerProfile.CurrentChessStage);
-         // if (ChessLevelProgressDict.ContainsKey(chessCurrentLevelId))
-         // {
-         //     ChessLevelProgressDict[chessCurrentLevelId].SaveToFile();
-         // }
+         string chessCurrentLevelId = ChessStageProgressData.CreateLevelIdentifier(playerProfile.CurrentChessStage);
+         if (ChessLevelProgressDict.ContainsKey(chessCurrentLevelId))
+         {
+             ChessLevelProgressDict[chessCurrentLevelId].SaveToFile();
+         }
     }
 
     public void CommitPushServerData(bool needLogout = false)
@@ -403,14 +402,17 @@ public class GameDataManager : SingletonMono<GameDataManager>
         {
             //初始化完成后才可以保存，不然保存的数据都为默认数值
             if (dataInitialized)
+            {
                 CommitGameData();
        
-            if(Game.self?.Ads?.IsPlaying == true) return; //播放广告中
-            AnalyticMgr.GameEnd();
+                if(Game.self?.Ads?.IsPlaying == true) return; //播放广告中
+                AnalyticMgr.GameEnd();
                 
-            StopTracking();
-            requireFocusCheck = true;
-            Debug.Log("应用进入后台，数据已保存");
+                StopTracking();
+                requireFocusCheck = true;
+                Debug.Log("应用进入后台，数据已保存");
+            }
+                
         }
         else if (requireFocusCheck)
         {

@@ -136,12 +136,12 @@ public class GetItemScreen : UIWindow
             {
                 case 1:
                 case 3:
-                    SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
-                        ?.ToolItemFirstLetter();
+                        SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                            ?.ToolItemFirstLetter();
                     break;
                 case 2:
                     SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
-                        ?.UseTips();
+                    ?.UseTips();
                     break;
             }
             
@@ -160,16 +160,16 @@ public class GetItemScreen : UIWindow
                     break;
             }
         }
-      
+        
         Close();
     }
 
     private void UpdateAdsRewardUI(bool isShow)
     {
+        MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
             GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"看广告获取"+title.text+"道具");
-           
             switch (GameDataManager.Instance.UserData.levelMode)
             {
                 case 1:
