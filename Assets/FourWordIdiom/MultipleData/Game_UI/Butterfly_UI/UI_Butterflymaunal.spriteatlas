@@ -7,10 +7,11 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: UI_Butterflymaunal
+  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 2
+      serializedVersion: 3
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -19,11 +20,13 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
+      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: DefaultTexturePlatform
       m_MaxTextureSize: 2048
+      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: -1
       m_TextureCompression: 1
@@ -37,6 +40,7 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 2048
+      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -50,6 +54,7 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: OpenHarmony
       m_MaxTextureSize: 2048
+      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -310,3 +315,4 @@ SpriteAtlas:
   m_RenderDataMap: {}
   m_Tag: UI_Butterflymaunal
   m_IsVariant: 0
+  m_IsPlaceholder: 0

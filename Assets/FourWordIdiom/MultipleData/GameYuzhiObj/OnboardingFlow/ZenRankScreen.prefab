@@ -6,13 +6,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 9162013507098772089}
   - component: {fileID: 2596729150772743222}
   - component: {fileID: 6830517304443857190}
   - component: {fileID: 1483306500333218431}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Scrollbar Vertical
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -132,13 +133,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2717491671339118937}
   - component: {fileID: 7200453603391028055}
   - component: {fileID: 373663668494312997}
   - component: {fileID: 5934124315918395535}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: 3_Midground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -219,12 +221,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6993999454912387064}
   - component: {fileID: 2504746336491674488}
   - component: {fileID: 3131220922366852503}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: TimeIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -294,11 +297,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6055624202711499937}
   - component: {fileID: 8186013085615591961}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Level
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -340,13 +344,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7978282252405280116}
   - component: {fileID: 4083803787632505369}
   - component: {fileID: 4918812204331635826}
   - component: {fileID: 5788484304560937447}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Viewport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -430,13 +435,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1386418443645122183}
   - component: {fileID: 8116048813123696491}
   - component: {fileID: 6411362886395718380}
   - component: {fileID: 1315876759659401800}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Ttitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -526,12 +532,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8725414926080504214}
   - component: {fileID: 5412103521060481245}
   - component: {fileID: 1882099165559794220}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -605,13 +612,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6569773583839977181}
   - component: {fileID: 4385873345979679618}
   - component: {fileID: 2294794562439346799}
   - component: {fileID: 6054289660704861357}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -700,11 +708,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6320412509539721549}
   - component: {fileID: 3578880370935073213}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -765,11 +774,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7119096694634863161}
   - component: {fileID: 1269466033312220741}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Gold
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -829,7 +839,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8282190802137120503}
   - component: {fileID: 7529284066763790510}
@@ -838,6 +848,7 @@ GameObject:
   - component: {fileID: 1037855296299943636}
   - component: {fileID: 8223008220293719804}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: ZenRankScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -984,12 +995,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6775729002539950298}
   - component: {fileID: 6213239539039141992}
   - component: {fileID: 1409060898004807088}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Atatar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1060,11 +1072,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5831289474262016426}
   - component: {fileID: 3366612939219404802}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: ParallaxBackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1115,13 +1128,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3824107186816684032}
   - component: {fileID: 3881098580391741920}
   - component: {fileID: 3749067696249561508}
   - component: {fileID: 7223703117967769102}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: EmptyStatePrompt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1210,13 +1224,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8610211185875901754}
   - component: {fileID: 5125805332413925436}
   - component: {fileID: 5897598124733382323}
   - component: {fileID: 4029000081798191315}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Viewport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1300,12 +1315,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1519621699010881259}
   - component: {fileID: 5200202073337360878}
   - component: {fileID: 9083501423556105983}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1375,12 +1391,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5681637051671494802}
   - component: {fileID: 6064452373195157891}
   - component: {fileID: 7903524815712402762}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: ListBg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1454,13 +1471,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3802241182969447065}
   - component: {fileID: 7463963020270690441}
   - component: {fileID: 2414489800593323661}
   - component: {fileID: 1767818297304203045}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1549,13 +1567,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4749337082385884904}
   - component: {fileID: 568818204419386774}
   - component: {fileID: 2384258226047398101}
   - component: {fileID: 8370373832403077012}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: 4_Water
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1636,12 +1655,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5209123751756916717}
   - component: {fileID: 5393280794301468070}
   - component: {fileID: 2496116811977477301}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Myitem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1716,7 +1736,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1591033188154578693}
   - component: {fileID: 8325928490873811051}
@@ -1724,6 +1744,7 @@ GameObject:
   - component: {fileID: 1021122487816206613}
   - component: {fileID: 7354481310288222433}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Content
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1833,12 +1854,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4875106442538932429}
   - component: {fileID: 5105269439034257914}
   - component: {fileID: 8775851024384208838}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Box
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1908,13 +1930,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7367201799129782607}
   - component: {fileID: 4513937959917812422}
   - component: {fileID: 1531966768331384302}
   - component: {fileID: 446190058149489063}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: 5_LotusLeaves
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1995,10 +2018,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4256545807379606675}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Sliding Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2031,13 +2055,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6979521596443374396}
   - component: {fileID: 4512841909786880434}
   - component: {fileID: 1253686403528067431}
   - component: {fileID: 9093236917180728961}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: CloseBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2151,12 +2176,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4676228156052196314}
   - component: {fileID: 6221560748074669209}
   - component: {fileID: 7740298555619959594}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: BottomLine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2226,12 +2252,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5265010442081875178}
   - component: {fileID: 1257549114437397927}
   - component: {fileID: 9002045613797507033}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: TimeText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2305,12 +2332,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3232578183783933619}
   - component: {fileID: 7063785223955895864}
   - component: {fileID: 2052886369974650756}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Content
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2382,13 +2410,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6271967159278334825}
   - component: {fileID: 4853550071219456510}
-  - component: {fileID: 1519180353985394571}
-  - component: {fileID: 6200166391493699529}
+  - component: {fileID: 8357675217360044070}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: 6_Foreground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2422,7 +2450,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5081679603450765892}
   m_CullTransparentMesh: 1
---- !u!114 &1519180353985394571
+--- !u!114 &8357675217360044070
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2431,7 +2459,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5081679603450765892}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
@@ -2442,39 +2470,29 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 446fec70d3f120648b1fcdef9813d939, type: 3}
-  m_UVRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
---- !u!114 &6200166391493699529
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5081679603450765892}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da0f740badb0fd847ad648f287b5c1fa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetScrollRect: {fileID: 5841075529503612023}
-  parallaxSpeed: 1.3
+  m_Sprite: {fileID: 21300000, guid: 446fec70d3f120648b1fcdef9813d939, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &5384127265264817843
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6554981181033447849}
   - component: {fileID: 934412850668098538}
   - component: {fileID: 5841075529503612023}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Leader Scroll View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2546,13 +2564,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5241412257603500505}
   - component: {fileID: 1684581056983209232}
   - component: {fileID: 7579277742958339966}
   - component: {fileID: 3381173700989212024}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: HelpBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2666,13 +2685,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5744596577384410125}
   - component: {fileID: 2554830808490069279}
   - component: {fileID: 1817060380120102310}
   - component: {fileID: 3509456602845922445}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Value
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2761,13 +2781,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4031605832145689880}
   - component: {fileID: 5101607461681200084}
   - component: {fileID: 6197431286557258286}
   - component: {fileID: 5884722099970001320}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Rank Scroll View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2869,12 +2890,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7141462422085398241}
   - component: {fileID: 8969006227242967447}
   - component: {fileID: 7791372197395868856}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: BG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2944,13 +2966,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1734742095143560269}
   - component: {fileID: 3787095656619945486}
   - component: {fileID: 5694550637737758339}
   - component: {fileID: 6654901122227605425}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: 2_Moon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3031,13 +3054,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6111798684419515207}
   - component: {fileID: 2465974274389042095}
   - component: {fileID: 6196873084734241439}
   - component: {fileID: 2457191555436935602}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: 1_Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3118,13 +3142,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2388010346733025125}
   - component: {fileID: 7025716057282600498}
   - component: {fileID: 98453467694958649}
   - component: {fileID: 8130333213486233349}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3213,10 +3238,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6672348382245306796}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: RealmTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3250,13 +3276,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 174751122989670185}
   - component: {fileID: 8775685905991602895}
   - component: {fileID: 3671211088112863019}
   - component: {fileID: 1448420921453318634}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: TimeBG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3354,12 +3381,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8373068888646722905}
   - component: {fileID: 3398074642536802882}
   - component: {fileID: 8928827080568019757}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Rank
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3413,12 +3441,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7974861130969428480}
   - component: {fileID: 4414129231803700746}
   - component: {fileID: 4313787392036438798}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Handle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3488,12 +3517,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6251056751571357310}
   - component: {fileID: 7346713955797607393}
   - component: {fileID: 5086834393580724861}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3563,12 +3593,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2820481015322336320}
   - component: {fileID: 7737677412511161611}
   - component: {fileID: 5949074119150856745}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
