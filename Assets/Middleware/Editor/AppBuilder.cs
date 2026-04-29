@@ -267,23 +267,23 @@ namespace Middleware
 			PlayerSettings.companyName = "HexaSpaceGames";
 			PlayerSettings.productName = "成语消:禅意之境";
 			PlayerSettings.applicationIdentifier = "chengyu.idiom.hexa.zen.huawei";
-			// PlayerSettings.OpenHarmony.useCustomKeystore = true;
-			// PlayerSettings.OpenHarmony.keystoreName =
-			// 	Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/word_huawei.p12");
-			// PlayerSettings.OpenHarmony.keystorePass = "word123456";
-			// PlayerSettings.OpenHarmony.keyaliasName = "word";
-			// PlayerSettings.OpenHarmony.keyaliasPass = "word123456";
-			// PlayerSettings.OpenHarmony.openHarmonyAppID = "6917574075102471091";
-			// PlayerSettings.OpenHarmony.openHarmonyClientID = "461323198429956566";
-			// var p7Name = buildParam.IsBuildRelease ? "profile01Release.p7b" : "profile02Debug.p7b";
-			// var cerName = buildParam.IsBuildRelease ? "release01.cer" : "debug01.cer";
-			// PlayerSettings.OpenHarmony.openHarmonyProfile =
-			// 	Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/{p7Name}");
-			// PlayerSettings.OpenHarmony.openHarmonyCertificate =
-			// 	Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/{cerName}");
-			//
-			// //打资源包
-			// AssetBundleBuilder.BuildAssetBundles(false);
+			PlayerSettings.OpenHarmony.useCustomKeystore = true;
+			PlayerSettings.OpenHarmony.keystoreName =
+				Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/hexa.p12");
+			PlayerSettings.OpenHarmony.keystorePass = "hexa123456";
+			PlayerSettings.OpenHarmony.keyaliasName = "hexa";
+			PlayerSettings.OpenHarmony.keyaliasPass = "hexa123456";
+			PlayerSettings.OpenHarmony.openHarmonyAppID = "6917590527000396765";
+			PlayerSettings.OpenHarmony.openHarmonyClientID = "6917590527000396765";
+			var p7Name = buildParam.IsBuildRelease ? "hexa_releaseRelease.p7b" : "hexa_DebugDebug.p7b";
+			var cerName = buildParam.IsBuildRelease ? "hexa_release.cer" : "hexa_debug.cer";
+			PlayerSettings.OpenHarmony.openHarmonyProfile =
+				Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/{p7Name}");
+			PlayerSettings.OpenHarmony.openHarmonyCertificate =
+				Path.GetFullPath($"{Application.dataPath}/../platform/Harmony/{cerName}");
+			
+			//打资源包
+			AssetBundleBuilder.BuildAssetBundles(false);
 			// //打版本包
 			// var outputDir = Path.GetFullPath($"{Application.dataPath}/../output/Harmony");
 			// if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
