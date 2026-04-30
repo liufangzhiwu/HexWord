@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using DG.Tweening;
-using HuaweiService.CloudStorage;
+//using HuaweiService.CloudStorage;
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -195,7 +195,8 @@ public class GetItemScreen : UIWindow
 
     private void UpdateCliamBtn(bool canClaimed)
     {
-        ClaimAdsBtn.gameObject.SetActive(canClaimed);
+        //ClaimAdsBtn.gameObject.SetActive(canClaimed);
+        ClaimAdsBtn.gameObject.SetActive(false);
         ClaimGoldBtn.gameObject.SetActive(true);
     }
     

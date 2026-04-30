@@ -100,13 +100,13 @@ public class AdsDiscountScreen : UIWindow
         {
 
 #if UNITY_IOS
-            decimal price = product.metadata.localizedPrice;
-            string currencyCode = product.metadata.isoCurrencyCode;
+            //decimal price = product.metadata.localizedPrice;
+            //string currencyCode = product.metadata.isoCurrencyCode;
 
-            Debug.Log($"商品价格: {price} ({currencyCode})");
+            //Debug.Log($"商品价格: {price} ({currencyCode})");
 
-            // 获取合适的文化信息
-            CultureInfo culture = UIUtilities.GetCultureForCurrency(currencyCode);
+            //// 获取合适的文化信息
+            //CultureInfo culture = UIUtilities.GetCultureForCurrency(currencyCode);
 #else
             float price = currentShopItem.price;
             // 获取合适的文化信息
@@ -114,25 +114,25 @@ public class AdsDiscountScreen : UIWindow
 #endif
             
             // 格式化价格
-            priceText.text = UIUtilities.FormatCurrency(price,culture );
+            //priceText.text = UIUtilities.FormatCurrency(price,culture );
 
-            // 处理折扣
-            if (needDiscount)
-            {
-                if (float.TryParse(currentShopItem.discount.TrimEnd('%'), out float discountPercent))
-                {
-                    decimal discountRate = (decimal)(discountPercent / 100f);
-                    decimal originalPrice = (decimal) price / discountRate;
-                    discountText.text = UIUtilities.FormatCurrency(originalPrice, culture);
-                    discountObj.GetComponentInChildren<Text>().text = $"{currentShopItem.discount}";
+            //// 处理折扣
+            //if (needDiscount)
+            //{
+            //    if (float.TryParse(currentShopItem.discount.TrimEnd('%'), out float discountPercent))
+            //    {
+            //        decimal discountRate = (decimal)(discountPercent / 100f);
+            //        decimal originalPrice = (decimal) price / discountRate;
+            //        discountText.text = UIUtilities.FormatCurrency(originalPrice, culture);
+            //        discountObj.GetComponentInChildren<Text>().text = $"{currentShopItem.discount}";
                    
-                }
-                else
-                {
-                    Debug.LogWarning($"折扣格式无效: {currentShopItem.discount}");
-                    discountText.text = "N/A";
-                }
-            }
+            //    }
+            //    else
+            //    {
+            //        Debug.LogWarning($"折扣格式无效: {currentShopItem.discount}");
+            //        discountText.text = "N/A";
+            //    }
+            //}
 
             ShowLoadingState(false);
         }

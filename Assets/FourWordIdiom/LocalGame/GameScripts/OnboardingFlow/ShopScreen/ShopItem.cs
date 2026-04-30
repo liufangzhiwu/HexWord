@@ -389,12 +389,12 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         {
 
 #if UNITY_IOS
-            decimal price = product.metadata.localizedPrice;
-            string currencyCode = product.metadata.isoCurrencyCode;
+            //decimal price = product.metadata.localizedPrice;
+            //string currencyCode = product.metadata.isoCurrencyCode;
 
-            Debug.Log($"商品价格: {price} ({currencyCode})");
+            //Debug.Log($"商品价格: {price} ({currencyCode})");
 
-            CultureInfo culture = UIExtension.GetCultureForCurrency(currencyCode);
+            //CultureInfo culture = UIExtension.GetCultureForCurrency(currencyCode);
 #else
             float price = data.price;
             // 获取合适的文化信息
@@ -406,7 +406,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             {
                 if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
                 {
-                    shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
+                    //shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
                 }
                 else
                 {
@@ -426,7 +426,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             }
             else
             {
-                shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
+                //shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
             }
            
 

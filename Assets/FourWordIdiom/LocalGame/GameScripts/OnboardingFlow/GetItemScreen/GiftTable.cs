@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using DG.Tweening;
-using HuaweiService.CloudStorage;
+//using HuaweiService.CloudStorage;
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -83,19 +83,19 @@ public class GiftTable : MonoBehaviour
         {
 
 #if UNITY_IOS
-            decimal price = product.metadata.localizedPrice;
-            string currencyCode = product.metadata.isoCurrencyCode;
+            //decimal price = product.metadata.localizedPrice;
+            //string currencyCode = product.metadata.isoCurrencyCode;
 
-            Debug.Log($"商品价格: {price} ({currencyCode})");
+            //Debug.Log($"商品价格: {price} ({currencyCode})");
 
-            CultureInfo culture = UIExtension.GetCultureForCurrency(currencyCode);
+            //CultureInfo culture = UIExtension.GetCultureForCurrency(currencyCode);
 #else
             float price = shopDataItem.price;
             // 获取合适的文化信息
             CultureInfo culture = UIUtilities.GetCultureForCurrency("");
 #endif
            
-            shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
+            //shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
         }
         catch (Exception ex)
         {

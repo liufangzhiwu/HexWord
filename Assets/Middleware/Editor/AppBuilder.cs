@@ -392,7 +392,7 @@ namespace Middleware
 			PlayerSettings.iOS.appleDeveloperTeamID = "xxx";
 			PlayerSettings.iOS.appleEnableAutomaticSigning = true;
 			PlayerSettings.iOS.appInBackgroundBehavior = iOSAppInBackgroundBehavior.Custom;
-			PlayerSettings.iOS.backgroundModes = iOSBackgroundMode.RemoteNotification | iOSBackgroundMode.Fetch;
+			PlayerSettings.iOS.backgroundModes = iOSBackgroundMode.RemoteNotifications | iOSBackgroundMode.BackgroundFetch;
 			//账户设置
 			//SetDefaultIcon(3);
 			PlayerSettings.companyName = "HexaSpace Games";

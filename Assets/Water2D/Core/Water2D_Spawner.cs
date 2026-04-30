@@ -483,7 +483,7 @@ namespace Water2D {
             {
                 WaterDropsObjects[i] = Instantiate(DropObject, gameObject.transform.position, new Quaternion(0, 0, 0, 0)) as GameObject;
                 WaterDropsObjects[i].GetComponent<MetaballParticleClass>().Active = false;
-                WaterDropsObjects[i].GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+                WaterDropsObjects[i].GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
                 WaterDropsObjects[i].transform.SetParent(_parent.transform);
                 WaterDropsObjects[i].transform.localScale = new Vector3(size, size, 1f);
                 WaterDropsObjects[i].layer = WaterDropsObjects[0].layer;
@@ -808,8 +808,8 @@ namespace Water2D {
 
                     Rigidbody2D rb = MetaBall.GetComponent<Rigidbody2D>();
                     rb.sharedMaterial = PhysicMat;
-                    rb.drag = LinearDrag;
-                    rb.drag = AngularDrag;
+                    rb.linearDamping = LinearDrag;
+                    rb.linearDamping = AngularDrag;
                     rb.gravityScale = GravityScale;
 
                     if (FreezeRotation)
@@ -843,7 +843,7 @@ namespace Water2D {
                 }
 
                 Vector2 dir = transform.up;
-                MetaBall.GetComponent<Rigidbody2D>().velocity = -dir * Speed;
+                MetaBall.GetComponent<Rigidbody2D>().linearVelocity = -dir * Speed;
 
 
                 DropsUsed++;
@@ -961,8 +961,8 @@ namespace Water2D {
 
                         Rigidbody2D rb = MetaBall.GetComponent<Rigidbody2D>();
                         rb.sharedMaterial = PhysicMat;
-                        rb.drag = LinearDrag;
-                        rb.angularDrag = AngularDrag;
+                        rb.linearDamping = LinearDrag;
+                        rb.angularDamping = AngularDrag;
                         rb.gravityScale = GravityScale;
 
                         if (FreezeRotation)
@@ -981,7 +981,7 @@ namespace Water2D {
 
                     //WaterDropsObjects [i].GetComponent<Rigidbody2D> ().velocity = _initSpeed;
                     Vector2 dir = transform.up;
-                    MetaBall.GetComponent<Rigidbody2D>().velocity = -dir * Speed;
+                    MetaBall.GetComponent<Rigidbody2D>().linearVelocity = -dir * Speed;
 
                     DropsUsed++;
                     _spawnedDrops++;
@@ -1072,7 +1072,7 @@ namespace Water2D {
 
                 }
 
-                WaterDropsObjects[i].GetComponent<Rigidbody2D>().velocity = _initSpeed;
+                WaterDropsObjects[i].GetComponent<Rigidbody2D>().linearVelocity = _initSpeed;
 
 
                     // Count limiter
@@ -1235,8 +1235,8 @@ namespace Water2D {
 
                     Rigidbody2D rb = MetaBall.GetComponent<Rigidbody2D>();
                     rb.sharedMaterial = PhysicMat;
-                    rb.drag = LinearDrag;
-                    rb.angularDrag = AngularDrag;
+                    rb.linearDamping = LinearDrag;
+                    rb.angularDamping = AngularDrag;
                     rb.gravityScale = GravityScale;
 
                     if (FreezeRotation)

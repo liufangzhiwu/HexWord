@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.HuaweiAppGallery;
+//using UnityEngine.HuaweiAppGallery;
 
 namespace Middleware
 {
@@ -46,21 +46,26 @@ namespace Middleware
         
 
         public void InitGame()
-        { 
-            CreateAccounts();
-           StartCoroutine(WaitLoginedCreateShop());
+        {
+            //CreateAccounts();
+            //StartCoroutine(WaitLoginedCreateShop());
+
+            CreateAnalytic();
         }
         
-        private IEnumerator WaitLoginedCreateShop()
-        {
-            yield return new WaitUntil(()=>Accounts.IsLogin);
-#if UNITY_EDITOR
-#elif UNITY_OPENHARMONY||UNITY_huawei
-            CreateAnalytic();
-            CreateAd();
-            CreateShop();
-#endif
-        }
+//        private IEnumerator WaitLoginedCreateShop()
+//        {
+//            yield return new WaitUntil(()=>Accounts.IsLogin);
+
+//            CreateAnalytic();
+
+//#if UNITY_EDITOR
+//#elif UNITY_OPENHARMONY||UNITY_huawei
+           
+//            CreateAd();
+//            CreateShop();
+//#endif
+//        }
 
         // IEnumerator  ShowLoadingScreen()
         // {
@@ -82,7 +87,7 @@ namespace Middleware
         
         private void CreateAccounts()
         {
-            Accounts = new Account_android();
+            //Accounts = new Account_android();
 #if UNITY_huawei
             Accounts = new Account_huaweiandroid();
 #elif UNITY_OPENHARMONY
@@ -98,7 +103,7 @@ namespace Middleware
             // Ads = new Ads_android();
             Ads = new Ads_huawei();
 #elif UNITY_IOS
-            Ads = new Ads_ios();
+            //Ads = new Ads_ios();
 #elif UNITY_OPENHARMONY
             Ads = new Ads_harmony();
 #endif
@@ -122,7 +127,7 @@ namespace Middleware
 #if UNITY_huawei
             Shop = new Shop_huawei();
 #elif UNITY_IOS
-            Shop = new Shop_ios();
+            //Shop = new Shop_ios();
 #elif UNITY_OPENHARMONY
             Shop = new Shop_harmony();
 #endif

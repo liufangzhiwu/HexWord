@@ -31,7 +31,7 @@ public class HeaderSection : UIWindow
     {       
         SetBtn.AddClickAction(OnSetClick);
         BackBtn.AddClickAction(OnBackClick);
-        ShopBtn.AddClickAction(OnShopClick);
+        //ShopBtn.AddClickAction(OnShopClick);
 #if Unity_ShowLog || UNITY_EDITOR
         GmBtn.AddClickAction(OnGmClick, "", false);
 #endif
@@ -42,6 +42,7 @@ public class HeaderSection : UIWindow
 
     protected override void OnEnable()
     {
+        addObj.gameObject.SetActive(false);
         EventDispatcher.instance.OnUpdateLayerCoin += UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
         EventDispatcher.instance.OnChangeTopRaycast += ChangeTopRaycast;
@@ -190,7 +191,7 @@ public class HeaderSection : UIWindow
             canvas.sortingOrder=0;
         }
         
-        addObj.gameObject.SetActive(isshopbtnEnable);
+        //addObj.gameObject.SetActive(isshopbtnEnable);
         ShopBtn.enabled = isshopbtnEnable;
     }
     

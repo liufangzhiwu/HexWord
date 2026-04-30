@@ -104,7 +104,7 @@ public class RateUsScreen : UIWindow
 #if UNITY_ANDROID || UNITY_huawei
         url = $"https://appgallery.huawei.com/#/app/C116093983";
 #elif UNITY_IOS
-        string appId = ConfigManager.Instance.GetString("Appid"); // 替换为你的App ID
+        string appId = "6764502146"; // 替换为你的App ID
         url = $"itms-apps://itunes.apple.com/app/id{appId}?action=write-review";
 #elif UNITY_OPENHARMONY 
         url = $"https://appgallery.huawei.com/app/detail?id={Application.identifier}";

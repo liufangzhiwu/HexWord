@@ -69,13 +69,13 @@ namespace Water2D
         {
             if (RequestAdd.IsCompleted)
             {
-                if (RequestAdd.Result.status == PackageStatus.Available)
-                {
-                    Debug.Log("Installed: " + RequestAdd.Result.packageId);
-                   // UpdateChecker();
-                }
-                else if (RequestAdd.Status >= StatusCode.Failure)
-                    Debug.Log(RequestAdd.Error.message);
+                //if (RequestAdd.Result.status == PackageStatus.Available)
+                //{
+                //    Debug.Log("Installed: " + RequestAdd.Result.packageId);
+                //   // UpdateChecker();
+                //}
+                //else if (RequestAdd.Status >= StatusCode.Failure)
+                //    Debug.Log(RequestAdd.Error.message);
 
 
 
@@ -108,14 +108,14 @@ namespace Water2D
             {
                 RenderPipelineAsset rpAsset = AssetDatabase.LoadAssetAtPath(Apptouch.EditorUtils.getMainRelativepath() + "Render Pipeline/LightweightRenderPipelineAsset.asset", typeof(RenderPipelineAsset)) as RenderPipelineAsset;
 
-                GraphicsSettings.renderPipelineAsset = rpAsset;
+                GraphicsSettings.defaultRenderPipeline = rpAsset;
                 Debug.Log("set rp asset");
                 isSetrp = true;
             }
 
             if (nowT > tick2)
             {
-                GraphicsSettings.renderPipelineAsset = null;
+                GraphicsSettings.defaultRenderPipeline = null;
                 EditorApplication.update -= UpdateChecker;
                 Debug.Log("NULL rp asset andd terminate");
                 EditorUtility.DisplayDialog("Water2D flip fix", "Flip patched!", "ok");

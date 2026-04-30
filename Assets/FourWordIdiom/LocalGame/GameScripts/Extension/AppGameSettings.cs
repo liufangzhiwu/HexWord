@@ -45,7 +45,7 @@ public static class AppGameSettings
     public static class UnlockRequirements 
     {
         public static int TimeLimitMode { get; } = 1;   
-        public static int SignInRewards { get; } = 11;   
+        public static int SignInRewards { get; } = 999999;   
         public static int DailyMissions { get; } = 16;   
         //30关卡进入结算界面时开启(鲤鱼跃龙门活动)
         public static int FishOpenLevel { get; } = 21;

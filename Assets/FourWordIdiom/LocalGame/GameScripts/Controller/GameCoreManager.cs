@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using Middleware;
 using UnityEngine;
-using UnityEngine.HuaweiAppGallery;
+//using UnityEngine.HuaweiAppGallery;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 #if UNITY_IOS

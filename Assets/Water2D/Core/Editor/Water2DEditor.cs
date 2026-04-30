@@ -466,7 +466,7 @@ namespace Water2D
             //TYPE &  VERSION //
             EditorGUILayout.BeginHorizontal();
 
-            WSpawner.Water2DRenderType = GraphicsSettings.renderPipelineAsset == null ? "Legacy" : "URP(LWRP)";
+            WSpawner.Water2DRenderType = GraphicsSettings.defaultRenderPipeline == null ? "Legacy" : "URP(LWRP)";
 
             EditorGUILayout.LabelField("Version:" + WSpawner.Water2DVersion + " | " + "Render pipeline:" + WSpawner.Water2DRenderType, textSubHeaderStyle3);
             EditorGUILayout.EndHorizontal();
