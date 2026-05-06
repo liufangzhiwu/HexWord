@@ -12,7 +12,7 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: HexaSpaceGames
+  companyName: HexaSpace Games
   productName: "\u6210\u8BED\u6D88\uFF1A\u7985\u610F\u4E4B\u5883"
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
@@ -60,7 +60,7 @@ PlayerSettings:
   m_StackTraceTypes: 010000000100000001000000010000000100000001000000
   iosShowActivityIndicatorOnLoading: -1
   androidShowActivityIndicatorOnLoading: -1
-  iosUseCustomAppBackgroundBehavior: 0
+  iosUseCustomAppBackgroundBehavior: 1
   allowedAutorotateToPortrait: 1
   allowedAutorotateToPortraitUpsideDown: 1
   allowedAutorotateToLandscapeRight: 1
@@ -172,7 +172,7 @@ PlayerSettings:
   buildNumber:
     Standalone: 0
     VisionOS: 0
-    iPhone: 103
+    iPhone: 26050650
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
   AndroidBundleVersionCode: 26042264
@@ -191,7 +191,7 @@ PlayerSettings:
   StripUnusedMeshComponents: 1
   strictShaderVariantMatching: 0
   VertexChannelCompressionMask: 4054
-  iPhoneSdkVersion: 989
+  iPhoneSdkVersion: 988
   iOSSimulatorArchitecture: 0
   iOSTargetOSVersionString: 13.0
   tvOSSdkVersion: 0
@@ -236,14 +236,14 @@ PlayerSettings:
   iOSDeviceRequirements: []
   iOSURLSchemes: []
   macOSURLSchemes: []
-  iOSBackgroundModes: 0
+  iOSBackgroundModes: 384
   iOSMetalForceHardShadows: 0
   metalEditorSupport: 1
   metalAPIValidation: 1
   metalCompileShaderBinary: 0
   iOSRenderExtraFrameOnPause: 0
   iosCopyPluginsCodeInsteadOfSymlink: 0
-  appleDeveloperTeamID: 
+  appleDeveloperTeamID: xxx
   iOSManualSigningProvisioningProfileID: 
   tvOSManualSigningProvisioningProfileID: 
   VisionOSManualSigningProvisioningProfileID: 
@@ -1058,7 +1058,7 @@ PlayerSettings:
     Standalone: UNITY_UOS_SECURITY
     WebGL: UNITY_UOS_SECURITY
     WeixinMiniGame: UNITY_UOS_SECURITY
-    iPhone: 
+    iPhone: Unity_Release
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
