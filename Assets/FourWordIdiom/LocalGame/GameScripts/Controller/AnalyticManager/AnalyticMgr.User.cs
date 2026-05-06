@@ -196,8 +196,8 @@ public partial class AnalyticMgr
             uid =Game.self.GetUniqueId();
 #else
             Debug.LogError("uid is empty");
+            uid = Game.self.GetUniqueId();
 #endif
-            //uid = Game.GetUniqueId();
         }
         
         var cacheUid = GameDataManager.Instance.UserData.UserId;

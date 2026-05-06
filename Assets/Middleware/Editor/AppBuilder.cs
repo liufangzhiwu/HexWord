@@ -396,8 +396,8 @@ namespace Middleware
 			//账户设置
 			//SetDefaultIcon(3);
 			PlayerSettings.companyName = "HexaSpace Games";
-			PlayerSettings.productName = "禅の熟語消し";
-			PlayerSettings.applicationIdentifier = "idiom.block.zen.tw";
+			PlayerSettings.productName = "成语消：禅意之境";
+			PlayerSettings.applicationIdentifier = "idiom.hexa.zen";
 			//打资源包
 			AssetBundleBuilder.BuildAssetBundles(false);
 			//打版本包

@@ -96,6 +96,7 @@ public class LoadingController : MonoBehaviour
         // 等待启动流程完成
         yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.LoggingIn);
         Debug.Log($"进入游戏流程 " + Launch.Instance.flowStatus);
+        AnalyticMgr.SetLoginUser(null);
 
         // 加载词库
         LoadWordVocabulary();

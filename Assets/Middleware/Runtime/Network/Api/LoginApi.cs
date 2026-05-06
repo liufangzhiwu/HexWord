@@ -37,12 +37,12 @@ public class LoginApi
      */
     public IEnumerator Login(Action<object> action)
     {
-        // string deviceId = Game.GetUniqueId();
-        // if(string.IsNullOrEmpty(deviceId))
-        // {
-        //     deviceId = SystemInfo.deviceUniqueIdentifier;
-        // }
-        
+        string deviceId = Game.self.GetUniqueId();
+        if (string.IsNullOrEmpty(deviceId))
+        {
+            deviceId = SystemInfo.deviceUniqueIdentifier;
+        }
+
         string openId = GameDataManager.Instance.UserData.UserId;
         string factory = GetCurrentFactory();
         
