@@ -7,8 +7,8 @@ public class VivoSDKManager : MonoBehaviour
 
     [Header("vivo开放平台配置")]
     public string vivoAppId = "106007769";
-    public string vivoAppKey = "你的支付AppKey";   // 43f**************************64d
-    public string vivoCpId = "你的CpId";           // 135f53f1caf68e8962e8
+    public string vivoAppKey = "43ff2a7f69c1b25117f067ba7084a64d";   // 43ff2a7f69c1b25117f067ba7084a64d
+    public string vivoCpId = "135f53f1caf68e8962e8";           // 135f53f1caf68e8962e8
 
     void Awake()
     {
