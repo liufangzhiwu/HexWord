@@ -82,6 +82,12 @@ public class LoadingController : MonoBehaviour
     {
         StartCoroutine(InitializeLoadingProcess());
     }
+    
+    public void OnClick()
+    {
+        VivoSDKManager.OnPrivacyAgreed();
+        VivoSDKManager.Login();
+    }
 
     /// <summary>
     /// 初始化加载流程
@@ -92,6 +98,8 @@ public class LoadingController : MonoBehaviour
 
         // iOS 平台直接开始模拟加载进度
         StartCoroutine(SimulateLoadingProgress());
+        
+        OnClick();
 
         // 等待启动流程完成
         yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.LoggingIn);

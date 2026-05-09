@@ -16,7 +16,7 @@ public class Mover : MonoBehaviour
     {
         for (int i = 0; i < Plates.Length; i++)
         {
-            vel = Plates[i].GetComponent<Rigidbody2D>().linearVelocity;
+            vel = Plates[i].GetComponent<Rigidbody2D>().velocity;
             pos = Plates[i].GetComponent<Rigidbody2D>().position;
 
             if (pos.x <= -10f)
@@ -28,7 +28,7 @@ public class Mover : MonoBehaviour
             else vel.x = -speed_Amount;
 
 
-            Plates[i].GetComponent<Rigidbody2D>().linearVelocity = vel;
+            Plates[i].GetComponent<Rigidbody2D>().velocity = vel;
             Plates[i].GetComponent<Rigidbody2D>().position = pos;
         }
 

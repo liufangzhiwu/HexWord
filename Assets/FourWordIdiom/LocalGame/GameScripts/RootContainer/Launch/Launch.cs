@@ -34,7 +34,7 @@ public class Launch : MonoBehaviour
 
         if (!GameDataManager.Instance.UserData.IsAgreePrivacy)
         {
-#if UNITY_IOS
+#if UNITY_IOS||UNITY_ANDROID
              GameDataManager.Instance.UserData.IsAgreePrivacy = true;
              isTiming = true;
 #elif UNITY_huawei

@@ -15,7 +15,7 @@ public class ApplyPhysicsForceManager : MonoBehaviour
 
     public void ApplyForceToBody(GameObject g1, GameObject g2)
     {
-        rb.AddForce(g2.GetComponent<Rigidbody2D>().linearVelocity * -.8f);
+        rb.AddForce(g2.GetComponent<Rigidbody2D>().velocity * -.8f);
     }
 
     public void Start()
@@ -65,7 +65,7 @@ public class ApplyPhysicsForceManager : MonoBehaviour
         {
             transform.position = initPOs;
             transform.localEulerAngles = Vector3.zero;
-            rb.linearVelocity = Vector2.zero;
+            rb.velocity = Vector2.zero;
         }
     }
 
@@ -83,7 +83,7 @@ public class ApplyPhysicsForceManager : MonoBehaviour
                     if (fx[i].isPlaying)
                         continue;
 
-                    fx[i].pitch = Mathf.Max(.5f,  rb.linearVelocity.sqrMagnitude*.002f);  
+                    fx[i].pitch = Mathf.Max(.5f,  rb.velocity.sqrMagnitude*.002f);  
                     fx[i].Play();
                     canPlay = false;
                     break;
