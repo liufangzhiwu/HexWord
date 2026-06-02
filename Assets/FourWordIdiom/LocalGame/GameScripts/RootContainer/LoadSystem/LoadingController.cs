@@ -54,6 +54,7 @@ public class LoadingController : MonoBehaviour
         // --- 4. 完成状态 ---
         Ready // 所有流程完成，游戏可以启动
     }
+    
     private GameFlowStatus _flowStatus = GameFlowStatus.NotStarted;
     private int _retryAttempt = 0;
     private const int MAX_RETRIES = 3; // 设置最大重试次数
@@ -115,12 +116,14 @@ public class LoadingController : MonoBehaviour
             StartCoroutine(SimulateLoadingProgress());
             //初始化商店、广告、登录
             Game.self.InitGame();
-            yield return new WaitUntil(()=>Game.self.Accounts.IsLogin);
+            yield return new WaitForSeconds(0.5f);
+            //yield return new WaitUntil(()=>Game.self.Accounts.IsLogin);
             //设置登录用户ID
             AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
-        }else{
-            StartCoroutine(SimulateLoadingProgress());}
-#elif UNITY_huawei || UNITY_EDITOR
+        }
+        else{
+             StartCoroutine(SimulateLoadingProgress());}
+#elif UNITY_huawei&&!UNITY_EDITOR
 
         if (!UIUtilities.isEditMode)
         {
@@ -141,6 +144,9 @@ public class LoadingController : MonoBehaviour
         {
             StartCoroutine(SimulateLoadingProgress());
         }
+#else 
+        StartCoroutine(SimulateLoadingProgress());
+        Game.self.InitGame();
 #endif
         yield return APIGateway.Instance.LoginApi.Login((res)=> 
         {
@@ -207,6 +213,8 @@ public class LoadingController : MonoBehaviour
         // 对比逻辑 (服务器 vs 本地)
         CompareAndSelectData();
     }
+    
+    
     // 抽离对比逻辑，保持代码整洁
     private void CompareAndSelectData()
     {

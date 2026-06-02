@@ -43,20 +43,19 @@ namespace Middleware
             
             InitManagers();
         }
-        
 
         public void InitGame()
         { 
             CreateAccounts();
-           StartCoroutine(WaitLoginedCreateShop());
+            StartCoroutine(WaitLoginedCreateShop());
         }
         
         private IEnumerator WaitLoginedCreateShop()
         {
+            CreateAnalytic();
             yield return new WaitUntil(()=>Accounts.IsLogin);
 #if UNITY_EDITOR
 #elif UNITY_OPENHARMONY||UNITY_huawei
-            CreateAnalytic();
             CreateAd();
             CreateShop();
 #endif

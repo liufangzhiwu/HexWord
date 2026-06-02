@@ -144,29 +144,6 @@ namespace Middleware
                 OnLoginComplete?.Invoke(true, authAccount);
             });
         }
-        
-        // public void getInfo()
-        // {
-        //     var token = mAuthAccount.getAccessToken();
-        //     var displayName = mAuthAccount.getDisplayName();
-        //     var account = mAuthAccount.getAccount(new Context());
-        //     var email = mAuthAccount.getEmail();
-        //     var fName = mAuthAccount.getFamilyName();
-        //     var gName = mAuthAccount.getGivenName();
-        //     var scope = mAuthAccount.getAuthorizedScopes();
-        //     var idToken = mAuthAccount.getIdToken();
-        //     var avatarUri =mAuthAccount.getAvatarUri();
-        //     var authorizationCode =mAuthAccount.getAuthorizationCode();
-        //     var serviceCountryCode = mAuthAccount.getServiceCountryCode();
-        //     var unionId =mAuthAccount.getUnionId();
-        //     var openId =mAuthAccount.getOpenId();
-        //     var uid =mAuthAccount.getUid();
-        //     
-        //     var accountFlag =mAuthAccount.getAccountFlag();
-        //     var carrierId =mAuthAccount.getCarrierId();
-        //     string msg = ($"getInfo :\n token{token}\n displayName{displayName}\n account{account}\n email{email}\n fName{fName}\n gName{gName}\n scope{scope}\n idToken{idToken}\n" +
-        //                           $" avatarUri{avatarUri}\n authorizationCode{authorizationCode}\n serviceCountryCode{serviceCountryCode}\n unionId{unionId}\n openId{openId}\n uid{uid}\n accountFlag{accountFlag}\n carrierId{carrierId}\n");
-        // }
     }
     
     public class HmsSuccessListener<T>:OnSuccessListener{
