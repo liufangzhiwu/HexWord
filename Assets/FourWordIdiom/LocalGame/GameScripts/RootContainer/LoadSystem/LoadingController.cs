@@ -117,7 +117,7 @@ public class LoadingController : MonoBehaviour
             //初始化商店、广告、登录
             Game.self.InitGame();
             yield return new WaitForSeconds(0.5f);
-            //yield return new WaitUntil(()=>Game.self.Accounts.IsLogin);
+            yield return new WaitUntil(()=>Game.self.Accounts.IsLogin);
             //设置登录用户ID
             AnalyticMgr.SetLoginUser(Game.self.Accounts.UserId);
         }

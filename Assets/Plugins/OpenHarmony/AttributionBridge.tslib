@@ -1,0 +1,27 @@
+import { attributionManager } from '@kit.StoreKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+
+export class AttributionBridge {
+    // 方法名与C#调用的方法名一致
+    reportConversion(eventCode: number): void {
+        const triggerInfo: attributionManager.AdTriggerInfo = {
+            businessScene: 5,
+            triggerData: eventCode,
+            timestamp: Date.now(),
+        };
+        attributionManager.registerTrigger(triggerInfo)
+            .then(() => {
+                console.info(`Attribution event ${eventCode} reported successfully`);
+            })
+            .catch((err: BusinessError) => {
+                console.error(`Failed to report event ${eventCode}: ${err.message}`);
+            });
+    }
+}
+
+// 按照官方规范：注册函数名为 "Register" + 类名，返回一个对象，键为类名，值为实例
+export function RegisterAttributionBridge() {
+    let register = {}
+   register["AttributionBridge"] = new AttributionBridge();
+    return register;
+}

@@ -96,6 +96,8 @@ public partial class AnalyticMgr
         Game.self?.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
         
         Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
+        
+        Game.self.Attributes.ReportConversion(133054104);
     }
 
     /// <summary>
@@ -156,6 +158,11 @@ public partial class AnalyticMgr
             DateTime.TryParse(userData.firstLoginTime, out var firstLoginDate))
         {
             lifeDays = (DateTime.Now.Date - firstLoginDate.Date).Days+ 1; // +1 表示第1天
+        }
+        
+        if (lifeDays == 2)
+        {
+            Game.self.Attributes.ReportConversion(133054105);
         }
      
         var properties = new Dictionary<string, object>

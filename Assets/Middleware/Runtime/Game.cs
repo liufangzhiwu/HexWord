@@ -18,6 +18,7 @@ namespace Middleware
     {
         public static Game self;
         public IAds Ads { private set; get; }
+        public IAttribute Attributes { private set; get; }
         public IAccounts Accounts { private set; get; }
         public IAnalytics Analytics { private set; get; }
         public IShop Shop { private set; get; }
@@ -58,6 +59,7 @@ namespace Middleware
 #elif UNITY_OPENHARMONY||UNITY_huawei
             CreateAd();
             CreateShop();
+            CreateAttribute();
 #endif
         }
 
@@ -105,6 +107,18 @@ namespace Middleware
             Ads.Init(0.2f);
         }
     
+        private void CreateAttribute()
+        {
+#if UNITY_ANDROID
+            Attributes = new HuaWeiAttribution();
+#elif UNITY_IOS
+            Attributes = new Analytics_ios();
+#elif UNITY_OPENHARMONY
+            Attributes = new Analytics_harmony();
+#endif
+            Attributes.Init(1f);
+        }
+        
         private void CreateAnalytic()
         {
 #if UNITY_ANDROID
