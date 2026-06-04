@@ -16,11 +16,11 @@ dependencies {
 //     implementation 'com.google.firebase:firebase-common:21.0.0' // Packages/com.liufangzhiwu.google-ext/Firebase/Editor/AppDependencies.xml:13
 // Android Resolver Dependencies End
 
-//     implementation 'com.huawei.hms:hianalytics:6.3.2.300'
+    implementation 'com.huawei.hms:hianalytics:6.3.2.300'    
     implementation 'com.huawei.agconnect:agconnect-core:1.6.1.300'
     implementation 'com.huawei.hms:hwid:6.1.0.303'
     implementation 'com.huawei.hms:game:6.1.0.301'
-    implementation 'com.huawei.hms:iap:6.13.0.300'
+    implementation 'com.huawei.hms:iap:6.13.0.300'    
 **DEPS**}
 
 // Android Resolver Exclusions Start

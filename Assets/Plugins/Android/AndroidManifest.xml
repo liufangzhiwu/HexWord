@@ -26,5 +26,8 @@
                   android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
                   android:exported="false">
         </activity>
+        <meta-data
+                android:name="com.huawei.hms.client.appid"
+        android:value="6917590527000396765"/>
     </application>
 </manifest>
