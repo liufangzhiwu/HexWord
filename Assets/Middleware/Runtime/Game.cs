@@ -112,11 +112,11 @@ namespace Middleware
 #if UNITY_ANDROID
             Attributes = new HuaWeiAttribution();
 #elif UNITY_IOS
-            Attributes = new Analytics_ios();
+            Attributes = new AndoridAttribution();
 #elif UNITY_OPENHARMONY
-            Attributes = new Analytics_harmony();
+            Attributes = new HuaweiHarAttribution();
 #endif
-            Attributes.Init(1f);
+            Attributes.Init(0.5f);
         }
         
         private void CreateAnalytic()

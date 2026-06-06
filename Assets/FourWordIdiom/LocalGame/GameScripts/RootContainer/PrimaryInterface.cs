@@ -80,7 +80,7 @@ public class PrimaryInterface : UIWindow
     {
         GameCoreManager.Instance.PanelState = PanelState.MainMenuPanel;
         
-        EnhancedVideoController.Instance.PlayVideo();
+        //EnhancedVideoController.Instance.PlayVideo();
         LimitTimeManager.Instance.OnLimitTimeBtnUI += InitLimtBtnUI;
         DailyTaskManager.Instance.OnDailyTaskBtnUI += UpdateDailyTaskBtnUI;
         DailyTaskManager.Instance.OnDailyButterflyTaskUI += UpdateButterflyTime;

@@ -315,15 +315,15 @@ public class ChessStageController
         }
 
         yield return new WaitForSeconds(0.8f);
-        // 播放过关视频
-        try
-        {
-            EnhancedVideoController.Instance.PlayVideo();
-        }
-        catch (Exception e)
-        {
-            Debug.Log($"播放视频错误？ {e.Message} " + e.ToString());
-        }
+        // // 播放过关视频
+        // try
+        // {
+        //     EnhancedVideoController.Instance.PlayVideo();
+        // }
+        // catch (Exception e)
+        // {
+        //     Debug.Log($"播放视频错误？ {e.Message} " + e.ToString());
+        // }
         
         // UI切换
         SystemManager.Instance.HidePanel(PanelType.HeaderSection);

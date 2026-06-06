@@ -311,7 +311,7 @@ public class StageHexController
         yield return new WaitForSeconds(1f);
 
         // 播放过关视频
-        EnhancedVideoController.Instance.PlayVideo();
+        //EnhancedVideoController.Instance.PlayVideo();
 
         // UI切换
         SystemManager.Instance.HidePanel(PanelType.HeaderSection);

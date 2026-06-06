@@ -3033,7 +3033,7 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1316, y: 2832}
+  m_ReferenceResolution: {x: 1242, y: 2688}
   m_ScreenMatchMode: 1
   m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
@@ -37024,6 +37024,12 @@ PrefabInstance:
       propertyPath: m_SizeDelta.x
       value: 763.9581
       objectReference: {fileID: 0}
+    - target: {fileID: 6794317505025645532, guid: cb22c978b28879b42b9f46d14d733c69,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: cf5997e5dad381348926b73d62e0a5ad,
+        type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

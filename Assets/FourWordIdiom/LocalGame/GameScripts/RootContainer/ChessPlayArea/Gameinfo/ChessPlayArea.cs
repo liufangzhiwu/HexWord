@@ -111,7 +111,7 @@ public class ChessPlayArea : UIWindow
 
         wordStartTime = DateTime.Now;
         
-        EnhancedVideoController.Instance.TogglePause();
+        //EnhancedVideoController.Instance.TogglePause();
         // bool hasLevelWords = ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0;
         // if (hasLevelWords)
         // {

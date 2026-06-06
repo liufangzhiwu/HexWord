@@ -115,7 +115,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 
     IEnumerator ShowPuzzleTitle()
     {
-        EnhancedVideoController.Instance.TogglePause();
+        //EnhancedVideoController.Instance.TogglePause();
         yield return new WaitForSeconds(0.3f); 
         PuzzleTitle.DOFade(1, 0.3f);
         InitHintPuzzles();

@@ -46,8 +46,8 @@ public class EnhancedVideoController : MonoBehaviour
     /// </summary>
     public void PlayVideo()
     {
-         StopAllPlayback();       // 先停止当前播放
-        StartCoroutine(PlayRoutine(videoPlayer.clip)); // 启动播放协程
+        //  StopAllPlayback();       // 先停止当前播放
+        // StartCoroutine(PlayRoutine(videoPlayer.clip)); // 启动播放协程
     }
 
     /// <summary>

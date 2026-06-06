@@ -154,6 +154,7 @@ public partial class AnalyticMgr
 
         // 计算生命周期天数（基于首次登录时间）
         int lifeDays = 0;
+        
         if (!string.IsNullOrEmpty(userData.firstLoginTime) &&
             DateTime.TryParse(userData.firstLoginTime, out var firstLoginDate))
         {
