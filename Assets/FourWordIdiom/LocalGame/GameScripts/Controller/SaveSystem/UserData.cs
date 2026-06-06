@@ -31,6 +31,18 @@ public class UserData
     public string showRateusTime;       // 好评界面显示时间
     public bool isChangeUserName;       // 是否更改过用户名称
     public string Zenlevel;             // 禅模式当前关卡
+    
+    // 👇 新增：体力系统基础字段
+    public int Energy;                       // 当前体力值
+    public string LastEnergyUpdateTime;      // 上次体力恢复的结算时间
+    public bool hasUsedFreeRevive = false;
+    
+    public int GoldLeaf;            // 金箔数量
+    public List<ThemeSaveItem> ThemeSaveItems=new List<ThemeSaveItem>();
+    public Dictionary<int, int> ThemeItemUses;   // 单个主题累计使用次数
+    public int userthemeid = 0;
+    public bool ischangetheme = false;
+    
     #endregion
 
     #region 系统设置数据
@@ -331,6 +343,16 @@ public class UserData
         lastLoginDay = user.lastLoginDay;
         firstPayTime = user.firstPayTime;
         lastPayTime = user.lastPayTime;
+        
+        ThemeSaveItems=new List<ThemeSaveItem>{
+            new(){id = 0,isGet = true},
+            new(){id = 1,isGet = true},
+        };
+        ThemeItemUses=new Dictionary<int,int>(){{0,1}};
+        GoldLeaf = 0;
+        userthemeid = 0;
+        ischangetheme = false;
+        
         isChangeUserName = user.isChangeUserName;
         // 评价界面显示次数
         showRateusCount = user.showRateusCount;
@@ -360,6 +382,16 @@ public class UserData
         ChessTutorialProgress = user.ChessTutorialProgress ?? new Dictionary<int,bool> {{1,false},{2,false},{3,false},{4,false},{5,false}};
         IsFirstLaunch = user.IsFirstLaunch;
         isShowVocabulary = user.isShowVocabulary;
+        
+        ThemeSaveItems=new List<ThemeSaveItem>{
+            new(){id = 0,isGet = true},
+            new(){id = 1,isGet = true},
+        };
+        ThemeItemUses=new Dictionary<int,int>(){{0,1}};
+        GoldLeaf = 0;
+        userthemeid = 0;
+        ischangetheme = false;
+        
         // 时间数据
         logoutTime = user.logoutTime;
         curIsEnter = user.curIsEnter;
@@ -579,6 +611,49 @@ public class UserData
     #endregion
 
     #region 游戏数据操作方法
+    
+    
+    /// <summary>
+    /// 更新指定主题使用次数
+    /// </summary>
+    /// <param name="themeid"></param>
+    public void UpdateThemeUseTimes(int themeid)
+    {
+        if (ThemeItemUses.Keys.Contains(themeid))
+        {
+            ThemeItemUses[themeid]++;
+        }
+        else
+        {
+            ThemeItemUses.Add(themeid, 1);
+        }
+    }
+    
+     
+    /// <summary>
+    /// 更新金箔数量
+    /// </summary>
+    /// <param name="value">变化值</param>
+    /// <param name="isanim">是否显示动画</param>
+    /// <param name="updateui">是否更新UI</param>
+    public void UpdateGoldLeaf(int value, string message = "")
+    {
+        GoldLeaf += value;
+
+        if (value <= 0)
+        {
+            SendCurrencyEvent(value, "金箔", message); // 消耗金币事件
+        }
+        else
+        {
+            SendCurrencyEvent(value, "金箔", message); // 获得金币事件
+        }
+
+        Debug.Log($"金箔{(value > 0 ? "增加" : "减少")}: {Math.Abs(value)}, 当前金箔: {GoldLeaf}");
+        
+        // 金箔数量变化后，重新检查皮肤入口红点状态
+        ThemeManager.Instance.CheckAndUpdateSkinRedPoint();
+    }
     
     /// <summary>
     /// 获得道具消耗总数

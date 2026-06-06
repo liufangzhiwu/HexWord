@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 9da8fd409e3e42a41a6391ca0d241cac
+guid: b29b7978df932d1419c66dbea1ea19ba
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7990882573615699393
-    second: "\u5FA1\u5B883_0"
+      213: -2577572403125562787
+    second: "\uFF1F_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,23 +126,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Mintool
+      name: "\uFF1F_0"
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 122
-        height: 165
+        width: 110
+        height: 110
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f3ae6c503aeaa1190800000000000000
-      internalID: -7990882573615699393
+      spriteID: d52d9d05e8f9a3cd0800000000000000
+      internalID: -2577572403125562787
       vertices: []
       indices: 
       edges: []
@@ -151,7 +151,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 6d2a636301861c448a510296d4200863
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Mintool: -7990882573615699393
+      "\uFF1F_0": -2577572403125562787
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

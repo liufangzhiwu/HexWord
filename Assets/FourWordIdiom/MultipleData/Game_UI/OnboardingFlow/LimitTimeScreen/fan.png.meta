@@ -1,10 +1,22 @@
 fileFormatVersion: 2
-guid: 9da8fd409e3e42a41a6391ca0d241cac
+guid: c4de751fa2bb7cb418ea520b6a949101
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7990882573615699393
-    second: "\u5FA1\u5B883_0"
+      213: 1710981365271166214
+    second: fan_0
+  - first:
+      213: -6140194772216550832
+    second: fan_1
+  - first:
+      213: 4582241135641587252
+    second: fan_2
+  - first:
+      213: -1275865699971971614
+    second: fan_3
+  - first:
+      213: -4490565764861516063
+    second: fan_4
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +112,7 @@ TextureImporter:
     buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: 48
+    textureFormat: 65
     textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
@@ -113,7 +125,7 @@ TextureImporter:
     buildTarget: iOS
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: 48
+    textureFormat: 50
     textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
@@ -126,23 +138,111 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Mintool
+      name: fan_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 122
-        height: 165
+        y: 2
+        width: 102
+        height: 98
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f3ae6c503aeaa1190800000000000000
-      internalID: -7990882573615699393
+      spriteID: 60dfc4e8c70aeb710800000000000000
+      internalID: 1710981365271166214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fan_1
+      rect:
+        serializedVersion: 2
+        x: 109
+        y: 2
+        width: 85
+        height: 98
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05a62560365a9caa0800000000000000
+      internalID: -6140194772216550832
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fan_2
+      rect:
+        serializedVersion: 2
+        x: 204
+        y: 5
+        width: 98
+        height: 72
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43e691df804679f30800000000000000
+      internalID: 4582241135641587252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fan_3
+      rect:
+        serializedVersion: 2
+        x: 238
+        y: 65
+        width: 34
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e5c01cd7e63b4ee0800000000000000
+      internalID: -1275865699971971614
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fan_4
+      rect:
+        serializedVersion: 2
+        x: 302
+        y: 0
+        width: 98
+        height: 100
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e626e89a3e4ea1c0800000000000000
+      internalID: -4490565764861516063
       vertices: []
       indices: 
       edges: []
@@ -151,7 +251,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 6d2a636301861c448a510296d4200863
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -161,7 +261,11 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Mintool: -7990882573615699393
+      fan_0: 1710981365271166214
+      fan_1: -6140194772216550832
+      fan_2: 4582241135641587252
+      fan_3: -1275865699971971614
+      fan_4: -4490565764861516063
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

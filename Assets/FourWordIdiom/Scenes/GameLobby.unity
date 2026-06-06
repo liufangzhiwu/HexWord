@@ -85209,6 +85209,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a2637f610a494c4da49236adc134ebd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  backgroundImage: {fileID: 73885347}
+  blurMaterial: {fileID: 0}
+  downSample: 4
+  blurIterations: 3
   IsTrueAuto: 0
   AutoLevelTalbe: {fileID: 1369706649}
   PanelState: 0

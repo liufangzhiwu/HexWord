@@ -40,29 +40,68 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
         {
             Debug.LogError("Failed to load CSV data.");
         }
-
-
-        UnityTimer.Loop(1f, TickTime);
+    }
+    
+    public void StartTickTimer()
+    {
+        CheckLimtEvent();
+        GameCoreManager.Instance.StartCoroutine(TickTime());
     }
     
     
-    private void TickTime()
+    IEnumerator TickTime()
     {
-        // 假设 logoutTime 是用户的登出时间
-        DateTime logoutTime = DateTime.Now; // 将字符串转换为 DateTime
-        DateTime midnight = logoutTime.Date.AddDays(1); // 获取当天的 00:00
 
-        // 计算剩余时间
-        TimeSpan timeRemaining = midnight - logoutTime;
-        if (timeRemaining.TotalMinutes > 0)
+        while (true)
         {
-            if (timeRemaining.Hours == 24)
+            yield return new WaitForSeconds(1f);
+            
+            // 假设 logoutTime 是用户的登出时间
+            DateTime nDateTime = DateTime.Now;
+            DateTime midnight = nDateTime.Date.AddDays(1); // 获取当天的 00:00
+
+            // 计算剩余时间
+            TimeSpan timeRemaining = midnight - nDateTime;
+        
+            // Debug.Log("判断时间："+midnight+" "+timeRemaining);
+        
+            if (timeRemaining.TotalMinutes >= 0)
             {
-                GameDataManager.Instance.UserData.CheckResetDailyTime();
+                // 如果上次打开时间为空，则初始化为当前时间
+                if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime))
+                {
+                    GameDataManager.Instance.UserData.limitOpenTime = DateTime.Now.ToString();
+                }
+                else
+                {
+                    // 解析上次打开时间
+                    DateTime lastTime = DateTime.Parse(GameDataManager.Instance.UserData.limitOpenTime);
+    
+                    // Debug.Log("判断时间： 上次开启时间"+lastTime+"  今天： "+DateTime.Today);
+                    
+                    // 判断上次打开日期与今天是否为同一天
+                    if (lastTime.Date != DateTime.Today)
+                    {
+                        // 不是同一天，执行每日重置逻辑
+                        GameDataManager.Instance.UserData.CheckResetDailyTime();
+                        // 重置后，将上次打开时间更新为当前时间
+                        CheckLimtEvent();
+                    }
+                }
+                string time = UIUtilities.FormatTimeRemaining(timeRemaining);
+                OnLimitTimeUpdated?.Invoke(time); // 触发事件，通知所有订阅者
+                OnDailyTimeUpdated?.Invoke(time); // 触发事件，通知所有订阅者
             }
-            string time = UIUtilities.FormatTimeRemaining(timeRemaining);
-            OnLimitTimeUpdated?.Invoke(time); // 触发事件，通知所有订阅者
-            OnDailyTimeUpdated?.Invoke(time); // 触发事件，通知所有订阅者
+        }
+    }
+ 
+    
+    private void CheckLimtEvent()
+    {
+        if (GameDataManager.Instance.UserData.isDayEnterLimint)
+        {      
+            AnalyticMgr.ActivityBegin("限时活动");
+            GameDataManager.Instance.UserData.EveryDayOpenLimit();
         }
     }
  
@@ -74,6 +113,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
         // 现在limitItems列表中包含所有商品
         Debug.Log("Limit items loaded: " + limitItems.Count);
     }
+   
     
     /// <summary>
     /// 获取当前连词数量

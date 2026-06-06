@@ -73,7 +73,8 @@ namespace Middleware
         {
 	        GameDataManager.Instance.Init();
 	        //AudioManager.Instance.Init();
-	        LimitTimeManager.Instance.Init();
+            LimitTimeManager.Instance.Init();
+            ThemeManager.Instance.Init();
             
             ChessStageController.Instance.Init();
             #if UNITY_EDITOR
