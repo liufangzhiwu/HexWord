@@ -28,7 +28,7 @@ public class ModeSelect : UIWindow
     {
         base.InitializeUIComponents();
         hiddenPosition = new Vector2(0, -2254f);
-        shownPosition =  new Vector2(0f, -1000f);
+        shownPosition =  new Vector2(0f, -850f);
         
         // 设置初始状态
         popupPanel.anchoredPosition = hiddenPosition;
@@ -37,9 +37,9 @@ public class ModeSelect : UIWindow
         //绑定背景点击事件
         backBtn.AddClickAction(ClosePopup);
         
-        wordBtn.AddClickAction(()=> SelectMode((int)LevelType.BlockWord));
-        chessBtn.AddClickAction(()=> SelectMode((int)LevelType.ChessWord));
-        hexaBtn.AddClickAction(()=> SelectMode((int)LevelType.HexWord));
+        wordBtn.AddClickAction(()=> SelectMode((int)LevelType.BlockWord),"",false);
+        chessBtn.AddClickAction(()=> SelectMode((int)LevelType.ChessWord),"",false);
+        hexaBtn.AddClickAction(()=> SelectMode((int)LevelType.HexWord),"",false);
 
         InitDefaulLevelType();
     }
@@ -53,9 +53,9 @@ public class ModeSelect : UIWindow
 
     private void InitDefaulLevelType()
     {
-        wordBtn.transform.GetChild(1).gameObject.SetActive(false);
-        chessBtn.transform.GetChild(1).gameObject.SetActive(false);
-        hexaBtn.transform.GetChild(1).gameObject.SetActive(false);
+        // wordBtn.transform.GetChild(1).gameObject.SetActive(false);
+        // chessBtn.transform.GetChild(1).gameObject.SetActive(false);
+        // hexaBtn.transform.GetChild(1).gameObject.SetActive(false);
         
         if (GameDataManager.Instance.UserData.levelMode == (int)LevelType.BlockWord)
         {
@@ -89,12 +89,15 @@ public class ModeSelect : UIWindow
         InitLevelType(LevelType.BlockWord);
         InitLevelType(LevelType.ChessWord);
         InitLevelType(LevelType.HexWord);
+        
+        GameCoreManager.Instance.ToggleBackgroundBlur(true);
     }
 
     private void InitLevelType(LevelType levelType)
     {
         Button LevelBtn = null;
         int stage = 0;
+        LevelModes levelMode = LevelModes.Normal;
         
         switch (levelType)
         {
@@ -102,16 +105,18 @@ public class ModeSelect : UIWindow
             case LevelType.HexWord:
                 LevelBtn = hexaBtn;
                 stage = GameDataManager.Instance.UserData.CurrentHexStage;
+                levelMode = ChessStageController.Instance.GetLevelDifficultyMode(stage);
                 break;
             case LevelType.ChessWord:
                 LevelBtn = chessBtn;
                 stage = GameDataManager.Instance.UserData.CurrentChessStage;
+                levelMode = ChessStageController.Instance.GetLevelDifficultyMode(stage);
                 break;
         }
       
        
-        Transform modeName = LevelBtn.transform.GetChild(0);
-        Transform stageText = modeName.GetChild(0);
+        Transform modeName = LevelBtn.transform.GetChild(1);
+        Transform stageText = LevelBtn.transform.GetChild(2);
         
         string levelName = MultilingualManager.Instance.GetString("EntranceUIName0"+(int)levelType);
         
@@ -121,6 +126,31 @@ public class ModeSelect : UIWindow
         {
             stageText.GetComponent<Text>().text =
                 $"{MultilingualManager.Instance.GetString("Level")} {stage}";
+            
+            SetDiffMode(levelMode, stageText.GetChild(0));
+
+        }
+    }
+    
+    private void SetDiffMode(LevelModes levelMode, Transform diffObj )
+    {
+        Image dmg = diffObj.GetComponent<Image>();
+        Text diffText = diffObj.GetComponentInChildren<Text>(true);
+        switch (levelMode)
+        {
+            case LevelModes.Normal:
+                dmg.gameObject.SetActive(false);
+                break;
+            case LevelModes.Hard:
+                dmg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Difficulty1","UI_MainBase");
+                diffText.text = "潜心破局";
+                dmg.gameObject.SetActive(true);
+                break;
+            case LevelModes.ExtraHard:
+                dmg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Difficulty2","UI_MainBase");
+                diffText.text = "极限巅峰";
+                dmg.gameObject.SetActive(true);
+                break;
         }
     }
 
@@ -131,8 +161,8 @@ public class ModeSelect : UIWindow
             Transform select = null;
             int stage = 0;
            
-            hexaBtn.transform.GetChild(1).gameObject.SetActive(false);
-            chessBtn.transform.GetChild(1).gameObject.SetActive(false);
+            hexaBtn.transform.GetChild(3).gameObject.SetActive(false);
+            chessBtn.transform.GetChild(3).gameObject.SetActive(false);
         
             switch ((LevelType)mode)
             {
@@ -144,7 +174,7 @@ public class ModeSelect : UIWindow
                     LevelBtn = chessBtn;
                     break;
             }
-            select= LevelBtn.transform.GetChild(1);
+            select= LevelBtn.transform.GetChild(3);
             // Debug.Log("当前选择的模式" + (mode+1));
             GameDataManager.Instance.UserData.levelMode = mode;
             select.gameObject.SetActive(true);
@@ -167,6 +197,8 @@ public class ModeSelect : UIWindow
 
     private IEnumerator SlidePopup(bool isOpen)
     {
+        yield return new WaitForSeconds(0.2f);
+        
         Vector2 startPos = popupPanel.anchoredPosition;
         Vector2 targetPos = isOpen ? shownPosition : hiddenPosition;
 
@@ -193,5 +225,11 @@ public class ModeSelect : UIWindow
             uiWindow.InitUI();
             SystemManager.Instance.HidePanel(PanelType.SelectMode);
         }
+    }
+    
+    protected override void OnDisable()
+    {
+        GameCoreManager.Instance.ToggleBackgroundBlur(false);
+        base.OnDisable();
     }
 }

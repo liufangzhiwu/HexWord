@@ -371,6 +371,18 @@ public class ChessStageController
     #endregion
 
     #region 游戏逻辑
+    
+    /// <summary>
+    /// 辅助方法：获取关卡难度枚举 (从 UI 抽离到底层计算)
+    /// </summary>
+    public LevelModes GetLevelDifficultyMode(int levelNumber) 
+    {
+        if (levelNumber % 5 == 0) {
+            if ((levelNumber / 5) % 2 == 1) return LevelModes.Hard;
+            else return LevelModes.ExtraHard;
+        }
+        return LevelModes.Normal;
+    }
 
     public int LimitPuzzleCount
     {

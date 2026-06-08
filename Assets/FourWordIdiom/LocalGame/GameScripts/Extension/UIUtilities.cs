@@ -24,6 +24,10 @@ public static class UIUtilities
             {
                 AudioManager.Instance.PlaySoundEffect(soundName);
             }
+            else
+            {
+                AudioManager.Instance.PlaySoundEffect("Button");
+            }
 
             if (includeAnimation)
             {

@@ -4240,7 +4240,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 270, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &73885347
 MonoBehaviour:
@@ -85210,7 +85210,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   backgroundImage: {fileID: 73885347}
-  blurMaterial: {fileID: 0}
+  blurMaterial: {fileID: 2100000, guid: d4d82a3c178583b44b5c1cbbd42f0727, type: 2}
   downSample: 4
   blurIterations: 3
   IsTrueAuto: 0
