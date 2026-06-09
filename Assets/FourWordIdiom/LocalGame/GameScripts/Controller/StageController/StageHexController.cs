@@ -170,7 +170,8 @@ public class StageHexController
             PuzzleComboCount = 0;
             PuzzleZenCount = 0;
             // 可在此处添加分析事件...
-            AnalyticMgr.LevelStart();
+            float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
+            AnalyticMgr.LevelStart(energy);
             GameDataManager.Instance.UserData.curIsEnter = true;
             GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
         }
@@ -277,9 +278,10 @@ public class StageHexController
                          GameDataManager.Instance.UserData.curStageOnlineTime;
         
         Debug.LogError("关卡id:"+StageNumber+"关卡进行时间(秒)"+duration);
-            
-        // 发送分析事件（示例）
-        AnalyticMgr.LevelCompleted(duration);
+        // ---- 修复：统一封存最后一段在线时长 ----
+        GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+        float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
+        AnalyticMgr.LevelCompleted(duration,energy,0,0);
         
         GameDataManager.Instance.UserData.UpdateLevelUseTimes(StageNumber,(int)duration);
         

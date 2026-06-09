@@ -170,6 +170,22 @@ public class StageFinishView : UIWindow
         UpdateProgress();
     }
     
+    /// <summary>
+    /// 无动画同步更新进度（用于事件回调）
+    /// </summary>
+    private void UpdateProgress()
+    {
+        if (LimitTimeManager.Instance == null) return;
+
+        int wordCount =  LimitTimeManager.Instance.GetCurWordCount();
+        LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
+        if (limitData == null) return;
+
+        _progressSlider.value = Mathf.Clamp01((float)wordCount / limitData.num);
+        _progressText.text = $"{wordCount}/{limitData.num}";
+    }
+    
+    
     private void UpdateProgress(bool isanim=true)
     {
         _progressSlider.transform.parent.gameObject.SetActive(true);

@@ -198,7 +198,7 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = AddResetToolBtn.GetComponentInChildren<InputField>();
         int value = int.Parse(Stagenumtxt.text);
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, value);
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, value);
         //EventManager.OnChangeLanguageUpdateUI?.Invoke();
         MessageSystem.Instance.ShowTip("重置道具增加成功！");
     }
@@ -268,7 +268,6 @@ public class DebugMenu : UIWindow
             GameDataManager.Instance.UserData.UpdateChessStage(Stagenum,true);
         }
         ChessStageController.Instance.SetStageData(Stagenum);
-        ChessStageController.Instance.IsGMEnterStage = true;
 
         SystemManager.Instance.HidePanel(PanelType.HeaderSection,true,()=> SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea));
         SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);

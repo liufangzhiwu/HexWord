@@ -9,15 +9,20 @@ public class ChessBowlGrid : MonoBehaviour
 {
     [SerializeField] private GameObject PuzzleItemObj; // 预制体
     private ObjectPool LetterTilePool;
+    // 🌟 专门用来存放飞行幻影的对象池
+    public ObjectPool PhantomPool { get; private set; }
+    private ChessStageProgressData CurrStageData
+    {
+        get => ChessStageController.Instance.CurrStageData;
+    }
 
-    private ChessStageProgressData CurrStageData { get => ChessStageController.Instance.CurrStageData; }
     public ChessPlayArea GamePlayArea { get; private set; }
 
-    [SerializeField] public  List<BowlView> GridList = new();    // 存放词语的字块堆
+    [SerializeField] public List<BowlView> GridList = new(); // 存放词语的字块堆
 
-    public BowlView CurrPuzzle { get; private set; }    // 当前选择的词
+    public BowlView CurrPuzzle { get; private set; } // 当前选择的词
 
-    public static bool _isProcessing;                  // 全局处理状态锁
+    public static bool _isProcessing; // 全局处理状态锁
 
 
     public void Initialize(ChessPlayArea play)
@@ -28,6 +33,7 @@ public class ChessBowlGrid : MonoBehaviour
         }
 
         LetterTilePool = new ObjectPool(PuzzleItemObj.gameObject, transform, 3, PoolBehaviour.CanvasGroup);
+        PhantomPool = new ObjectPool(PuzzleItemObj.gameObject, ObjectPool.CreatePoolContainer(transform.parent.parent, "PhantomPool"), 5, PoolBehaviour.CanvasGroup);
         GamePlayArea = play;
     }
 
@@ -38,35 +44,27 @@ public class ChessBowlGrid : MonoBehaviour
 
     private IEnumerator SetupGrid()
     {
-        HashSet<Bowl> puzzles = CurrStageData.Puzzles;
+        List<Bowl> puzzles = CurrStageData.Puzzles.ToList();
+        // System.Globalization.CultureInfo zhCulture = new System.Globalization.CultureInfo("zh-CN");
+        if (ChessStageController.Instance.CurrStageData.StageId != 1)
+        {
+            // 第一关：不打乱，保持原样（或者按成语原本的顺序排序）
+            // 如果原本 Puzzles 里的数据就是按顺序的，这里什么都不用做
+            puzzles.Sort((a, b) => string.Compare(a.pinyin, b.pinyin, StringComparison.OrdinalIgnoreCase));
+        }
         yield return new WaitForEndOfFrame();
 
         foreach (Bowl puzzle in puzzles)
         {
-            if(puzzle.status == 2)
+            if (puzzle.status == 2)
                 continue;
 
             BowlView view = LetterTilePool.GetObject<BowlView>();
             view.Setup(puzzle, this);
-          
+
             view.OnClickHandler += OnPuzzleSelected;
             GridList.Add(view);
         }
-    }
-    // 清理
-    public Bowl CleanBowlView(Chesspiece chesspieces)
-    {
-        // 找出要删的 BowlView
-        BowlView hitBowl = GridList
-            .FirstOrDefault(bowl => bowl.letter == chesspieces.letter);
-        if (hitBowl == null) return default;
-        hitBowl.bowl.status = 2;
-        Bowl retBowl = hitBowl.bowl;
-
-        ChessStageController.Instance.ModifyBowl(retBowl);
-        GridList.Remove(hitBowl);
-        LetterTilePool.ReturnObjectToPool(hitBowl.GetComponent<PoolObject>());
-        return retBowl;
     }
 
     /// <summary>
@@ -75,38 +73,91 @@ public class ChessBowlGrid : MonoBehaviour
     public Bowl OnNotifyResult(Bowl bowl, int status)
     {
         // 检查是销毁还是锁定
-        // Debug.Log($"移除字块前 {bowl.id}");
-        BowlView hit = GridList.FirstOrDefault(bv => bv.bowl.id == bowl.id);
-        if (hit == null) {
-            // Debug.LogWarning($"没有找到对应的字块 {bowl.id} ");
-            // foreach (var item in GridList)
-            // {
-            //     Debug.Log($"当前字块有 {item.letter} "+ JsonConvert.SerializeObject(item.bowl));
-            // }
-            return bowl;
-        }
-        // Debug.Log($"移除字块后 {hit.bowl.id}  {status}");
-        hit.bowl.status = status;
-        ChessStageController.Instance.ModifyBowl(hit.bowl);
-        if (status == 2) // 销毁
+        BowlView hit = GridList.FirstOrDefault(bv => bv.letter == bowl.letter);
+        Bowl archiveBowl = CurrStageData.Puzzles.FirstOrDefault(b => b.letter == bowl.letter);
+        if (archiveBowl == null)
         {
-            // Debug.Log($"移除字块 {hit.letter}");
-            if(hit.GetComponent<Canvas>() != null)
+            archiveBowl = new Bowl { id = "b_" + Guid.NewGuid().ToString("N")[..8], letter = bowl.letter, status = 0, count = 1 };
+            CurrStageData.Puzzles.Add(archiveBowl);
+        }
+        
+        // ==========================================
+        // 操作 A：恢复（解锁）到字盘
+        // ==========================================
+        if (status == 0)
+        {
+            if (hit != null)
             {
-                Destroy(hit.GetComponent<GraphicRaycaster>());
-                Destroy(hit.GetComponent<Canvas>());
+                hit.bowl.count++;
+                hit.UpdateBadge();
+                hit.bowl.status = 0;
+                hit.Unlock();
             }
-            GridList.Remove(hit);
-            LetterTilePool.ReturnObjectToPool(hit.GetComponent<PoolObject>());
+            else
+            {
+                archiveBowl.count = 1;
+                archiveBowl.status = 0;
+                BowlView view = LetterTilePool.GetObject<BowlView>();
+                view.Setup(archiveBowl, this);
+                view.OnClickHandler -= OnPuzzleSelected;
+                view.OnClickHandler += OnPuzzleSelected;
+                GridList.Add(view);
+                hit = view; // 关联上
+            }
         }
-        else if(status == 1)
+        // ==========================================
+        // 操作 B：销毁（成语通关）
+        // ==========================================
+        else if (status == 2) 
         {
-            hit.Lock();
-        }else if(status == 0)
-        {
-            hit.Unlock();
+            if (hit != null && hit.bowl.count <= 0) // 注意这里原代码的逻辑：库存空了才销毁
+            {
+                hit.bowl.status = 2;
+                hit.bowl.count = 0;
+                if (hit.GetComponent<Canvas>() != null)
+                {
+                    Destroy(hit.GetComponent<GraphicRaycaster>());
+                    Destroy(hit.GetComponent<Canvas>());
+                }
+                GridList.Remove(hit);
+                LetterTilePool.ReturnObjectToPool(hit.GetComponent<PoolObject>());
+            }
+            else if (hit != null)
+            {
+                // 如果字还有库存，说明虽然销毁了一个，但字盘上还该有，不管它
+                hit.UpdateBadge();
+            }
         }
-        return hit.bowl;
+        // ==========================================
+        // 操作 C：锁定（玩家点击飞入棋盘）
+        // ==========================================
+        else if (status == 1) 
+        {
+            if (hit != null)
+            {
+                hit.bowl.count--;
+                hit.UpdateBadge();
+                
+                if (hit.bowl.count > 0)
+                {
+                    hit.bowl.status = 0; // 还有库存，继续解锁
+                }
+                else
+                {
+                    hit.bowl.status = 1; // 用光了，老老实实锁定
+                    hit.Lock();
+                }
+            }
+        }
+        // 🌟 核心修复：更新底层存档状态！用同一个内存引用！
+        if (hit != null)
+        {
+            archiveBowl.status = hit.bowl.status;
+            archiveBowl.count = hit.bowl.count;
+            ChessStageController.Instance.ModifyBowl(archiveBowl);
+            return archiveBowl;
+        }
+        return bowl;
     }
 
     /// <summary>
@@ -119,11 +170,10 @@ public class ChessBowlGrid : MonoBehaviour
         StartCoroutine(GamePlayArea.chessboardGrid.HandleBlowViewState(puzzle));
     }
 
-    public  void Clear()
+    public void Clear()
     {
         GridList.Clear();
         LetterTilePool.ReturnAllObjectsToPool();
+        PhantomPool?.ReturnAllObjectsToPool();
     }
-
-  
 }

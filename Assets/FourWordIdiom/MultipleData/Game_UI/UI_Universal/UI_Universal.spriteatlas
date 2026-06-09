@@ -71,7 +71,6 @@ SpriteAtlas:
     - 5fa340a0ca35ece4cbd3a4d226c487ff: 21300000
     - a9a27ad0cec7579488a144dc765a96b5: 21300000
     - 63bea301a791a434593210466b6e7d76: 21300000
-    - 4122e6115fb1c5c4b86f0b105d7337c3: 21300000
     - 61f77b21bac833a4cb7fd208bbcbd08f: 21300000
     - 82ffe731da3e96b489d89a3ce35ee78f: 21300000
     - d5c1d051131074801a72a360a59188ee: 21300000
@@ -94,6 +93,7 @@ SpriteAtlas:
     - fe47eac231fed474dae6f37932bd2747: 21300000
     - cd340ec2b18fd4148afd56dfd24e853f: 21300000
     - 05b2c6d2f1f6818418f762d6ad4a6f5d: 21300000
+    - bc423523e1087ad49b5a263d55d57a58: 21300000
     - f0a7df23624f84489991481722517908: 21300000
     - 0526f3837c1ece949aee3e4a00dba353: 21300000
     - d70c34e3a648b0947aefe7c5856a2760: 21300000
@@ -250,7 +250,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 5fa340a0ca35ece4cbd3a4d226c487ff, type: 3}
   - {fileID: 21300000, guid: a9a27ad0cec7579488a144dc765a96b5, type: 3}
   - {fileID: 21300000, guid: 63bea301a791a434593210466b6e7d76, type: 3}
-  - {fileID: 21300000, guid: 4122e6115fb1c5c4b86f0b105d7337c3, type: 3}
   - {fileID: 21300000, guid: 61f77b21bac833a4cb7fd208bbcbd08f, type: 3}
   - {fileID: 21300000, guid: 82ffe731da3e96b489d89a3ce35ee78f, type: 3}
   - {fileID: 21300000, guid: d5c1d051131074801a72a360a59188ee, type: 3}
@@ -273,6 +272,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: fe47eac231fed474dae6f37932bd2747, type: 3}
   - {fileID: 21300000, guid: cd340ec2b18fd4148afd56dfd24e853f, type: 3}
   - {fileID: 21300000, guid: 05b2c6d2f1f6818418f762d6ad4a6f5d, type: 3}
+  - {fileID: 21300000, guid: bc423523e1087ad49b5a263d55d57a58, type: 3}
   - {fileID: 21300000, guid: f0a7df23624f84489991481722517908, type: 3}
   - {fileID: 21300000, guid: 0526f3837c1ece949aee3e4a00dba353, type: 3}
   - {fileID: 21300000, guid: d70c34e3a648b0947aefe7c5856a2760, type: 3}
@@ -428,7 +428,6 @@ SpriteAtlas:
   - ads
   - twoBox
   - hehua_5
-  - Reset
   - giftgold
   - error_bg
   - rank1
@@ -451,6 +450,7 @@ SpriteAtlas:
   - threeBox
   - tag_up
   - zenicon_1
+  - Reset
   - targetblue
   - icon_xiao
   - Highlight_162

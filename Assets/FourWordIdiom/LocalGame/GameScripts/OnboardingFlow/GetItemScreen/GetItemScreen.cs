@@ -63,7 +63,7 @@ public class GetItemScreen : UIWindow
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
                 eventDes=title.text+"弹窗广告";
                 break;
-            case LimitRewordType.SingleTipsttool:
+            case LimitRewordType.HexWordTipsttool:
                 UpdateCliamBtn(true);
                 title.text = "提示灯";
                 tips.text = "提示一个成语的首字";
@@ -111,7 +111,7 @@ public class GetItemScreen : UIWindow
     private void ClickClaimGoldBtn()
     {
         ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
-        if (limitRewordType == LimitRewordType.SingleTipsttool)
+        if (limitRewordType == LimitRewordType.HexWordTipsttool)
         {
             toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
         }else if (limitRewordType == LimitRewordType.Tipstool)
@@ -130,7 +130,7 @@ public class GetItemScreen : UIWindow
         GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"金币购买道具");
         
         
-        if (limitRewordType == LimitRewordType.SingleTipsttool)
+        if (limitRewordType == LimitRewordType.HexWordTipsttool)
         {
             switch (GameDataManager.Instance.UserData.levelMode)
             {
@@ -169,7 +169,7 @@ public class GetItemScreen : UIWindow
         MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"看广告获取"+title.text+"道具");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, 1,"看广告获取"+title.text+"道具");
             switch (GameDataManager.Instance.UserData.levelMode)
             {
                 case 1:

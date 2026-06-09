@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Unity.VisualScripting.Antlr3.Runtime.Collections;
 using UnityEngine;
 /**
  * 蝴蝶养成数据
@@ -13,11 +12,13 @@ using UnityEngine;
 public class ButterflyData
 {
     public int pupa = 0;   // 蛹的总数量
-    public bool IsOpenButterfly = false;   // 是否开启蝶园
+    public bool IsOpenButterfly = true;   // 是否开启蝶园
 
     public int currPupa;  // 当前蝶园收集的蛹
     public int currGarden; // 当前选择的蝶园
     public int intervalLv;   // 经过的关卡
+    // 🌟【持久化修复】：新增树叶叶子关通关累积计数，随蝶园存档一同持久化加密并同步云端
+    public int leafSkinCounter = 0;
     
     public List<int> butterflies;  // 收集的蝴蝶
     public List<int> gardens;      // 开启的蝶园
@@ -34,11 +35,11 @@ public class ButterflyData
         this.currPupa = 0;
         this.currGarden = 1;
         this.intervalLv = 0;
+        this.leafSkinCounter = 0;
         this.butterflies = new List<int>();
         this.gardens = new List<int>();
-        IsOpenButterfly = false;
+        IsOpenButterfly = true;
         gardens.Add(1);
-        
         gardensOpenTime=DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
     }
 
@@ -48,6 +49,7 @@ public class ButterflyData
         currPupa = data.currPupa;
         currGarden = data.currGarden;
         intervalLv = data.intervalLv;
+        leafSkinCounter = data.leafSkinCounter;
         butterflies = data.butterflies;
         gardens = data.gardens;
         IsOpenButterfly=data.IsOpenButterfly;
@@ -96,7 +98,6 @@ public class ButterflyData
 
     public void SaveData()
     { 
-        GameDataManager.Instance.CommitPushServerData();
        string oldJson = JsonConvert.SerializeObject(this, Formatting.Indented);
        string json = SecurityProvider.ProtectData(oldJson);
        File.WriteAllText(Getfilepath, json);
@@ -132,14 +133,15 @@ public class ButterflyData
     public void AddGarden(int gardenId)
     {
         this.currGarden = gardenId;
+        //gardens.Add(gardenId);
         if(!gardens.Contains(gardenId))
-            gardens.Add(gardenId);
-        
+            this.gardens.Add(gardenId);
         SaveData();
     }
 
     public void AddButterfly(int butterfly)
     {
+        //this.butterflies.Add(butterfly);
         if(!butterflies.Contains(butterfly))
             this.butterflies.Add(butterfly);
         SaveData();

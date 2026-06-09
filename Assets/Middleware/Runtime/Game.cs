@@ -56,6 +56,7 @@ namespace Middleware
             CreateAnalytic();
             yield return new WaitUntil(()=>Accounts.IsLogin);
 #if UNITY_EDITOR
+            CreateAd();
 #elif UNITY_OPENHARMONY||UNITY_huawei
             CreateAd();
             CreateShop();
@@ -76,7 +77,7 @@ namespace Middleware
             LimitTimeManager.Instance.Init();
             ThemeManager.Instance.Init();
             
-            ChessStageController.Instance.Init();
+            StartCoroutine(ChessStageController.Instance.Init());
             #if UNITY_EDITOR
             CreateAnalytic();
             #endif
@@ -97,8 +98,9 @@ namespace Middleware
     
         private void CreateAd()
         {
-#if UNITY_huawei
-            // Ads = new Ads_android();
+#if UNITY_EDITOR
+            Ads = new Ads_android();
+#elif UNITY_huawei
             Ads = new Ads_huawei();
 #elif UNITY_IOS
             Ads = new Ads_ios();

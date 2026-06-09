@@ -73,6 +73,20 @@ public class UserData
     public float TotalOnlineMinutes;    // 累计在线总时长（分钟）
     public Dictionary<string, bool> ReportedLifecycleEvents; // 已上报的生命周期事件
     
+  
+    // --- 广告策略存档数据 ---
+    public int AdFatigueScore;            // 疲劳分数
+    public float TotalPlayTimeSeconds;   // 累计游戏时长 (G2)
+    public long LastPayTimeTicks;         // 上次付费时间 (Ticks) (G3)
+    public long LastRewardAdTimeTicks;    // 上次看激励视频的时间 (G1)
+    public long LastInterstitialTimeTicks; // 上次看插屏的时间 (G5)
+    // 👇 新增：D规则（每日首关插屏概率）状态记录
+    public bool isDayFirstLevelAdChecked;              // 今日首关是否已进行过插屏概率判定
+    public bool isDayFirstLevelAdAllowed;              // 今日首关插屏概率判定的结果
+    
+    public int HighestZenScore = 0; // 历史最高禅意分
+    public Dictionary<int, float> BestClearTimes = new Dictionary<int, float>(); // 极速通关记录字典
+ 
     /// <summary>
     /// 词库数据
     /// </summary>   
@@ -128,6 +142,7 @@ public class UserData
     /// 完成任务id
     public List<CompleteTaskData> completeTaskList=new List<CompleteTaskData>();
     public bool butterflyTaskIsOpen;        // 每日任务无限蝴蝶任务是否开启
+    public string butterflyTaskOpenTime;                            // 每日任务无限蝴蝶任务开启时间
     public int taskButterflyUseMinutes;             // 每日任务无限蝴蝶任务使用分钟
     public bool isAllCompleteTask;      // 每日任务活动是否全部完成
     /// 任务数据
@@ -293,6 +308,7 @@ public class UserData
         isDayEnterSign = true;
         butterflyTaskIsOpen = false;
         taskButterflyUseMinutes = 0;
+        butterflyTaskOpenTime = null;
         
         //显示奖励数据
         timerePuzzleid = 0;
@@ -378,6 +394,7 @@ public class UserData
         TutorialProgress = user.TutorialProgress;
         butterflyTaskIsOpen = user.butterflyTaskIsOpen;
         taskButterflyUseMinutes = user.taskButterflyUseMinutes;
+        butterflyTaskOpenTime = user.butterflyTaskOpenTime;
         passLevelUseTime = user.passLevelUseTime;
         ChessTutorialProgress = user.ChessTutorialProgress ?? new Dictionary<int,bool> {{1,false},{2,false},{3,false},{4,false},{5,false}};
         IsFirstLaunch = user.IsFirstLaunch;
@@ -488,6 +505,7 @@ public class UserData
         butterflyTaskIsOpen=false;
         completeTaskList = new List<CompleteTaskData>();
         taskButterflyUseMinutes = 0;
+        butterflyTaskOpenTime = null;
         taskSaveDatas=new List<TaskSaveData>();
         isAllCompleteTask = false;
         //每日任务重置
@@ -566,6 +584,19 @@ public class UserData
                 }
             }
         }
+    }
+    
+    public float GetBestClearTime(int wordCount)
+    {
+        if (BestClearTimes != null && BestClearTimes.TryGetValue(wordCount, out float time))
+            return time;
+        return 0f;
+    }
+
+    public void SetBestClearTime(int wordCount, float time)
+    {
+        if (BestClearTimes == null) BestClearTimes = new Dictionary<int, float>();
+        BestClearTimes[wordCount] = time;
     }
 
     #endregion
@@ -812,17 +843,16 @@ public class UserData
     /// <summary>
     /// 发送货币事件（用于统计）
     /// </summary>
-    public void SendCurrencyEvent(int value, string currencyName,string message = "")
+    public void SendCurrencyEvent(int value, string currencyName, string message = "", string word = "")
     {
         AnalyticMgr.SetCommonProperties();
-        
         if (value <= 0)
         {
-            AnalyticMgr.ResourceReduce(currencyName,Mathf.Abs(value),message);
+            AnalyticMgr.ResourceReduce(currencyName, Mathf.Abs(value), message,word);
         }
         else
         {
-            AnalyticMgr.ResourceGet(currencyName,value,message);
+            AnalyticMgr.ResourceGet(currencyName, value, message,word);
         }
     }
     
@@ -887,15 +917,66 @@ public class UserData
         limitMinPeriod = minutes;
     }
 
+    // /// <summary>
+    // /// 更新道具数量
+    // /// </summary>
+    // /// <param name="type">道具类型</param>
+    // /// <param name="value">变化值</param>
+    // public void UpdateTool(LimitRewordType type, int value,string message = "")
+    // {
+    //     int toolId = GetToolIdByType(type);
+    //     
+    //     if (toolInfo.ContainsKey(toolId))
+    //     {
+    //         toolInfo[toolId].count += value;
+    //         Debug.Log($"{type}道具{(value > 0 ? "增加" : "减少")}: {Math.Abs(value)}, 当前数量: {toolInfo[toolId].count}");
+    //         if (value > 0)
+    //         {
+    //             toolInfo[toolId].addcount += value;
+    //         }
+    //         else
+    //         {
+    //             toolInfo[toolId].reducecount += Mathf.Abs(value);
+    //         }
+    //
+    //         string toolName = null;
+    //
+    //         switch (type)
+    //         {
+    //             case LimitRewordType.SingleTipsttool:
+    //                 toolName = "重置(提示灯)道具";
+    //                 break;
+    //             case LimitRewordType.Tipstool:
+    //                 toolName = "提示（放大镜）道具";
+    //                 break;
+    //             case LimitRewordType.Butterfly:
+    //                 toolName = "蝴蝶道具";
+    //                 break;
+    //             case LimitRewordType.AutoComplete:
+    //                 toolName = "自动拼字";
+    //                 break;
+    //         }
+    //         
+    //         // 发送道具统计事件
+    //         SendCurrencyEvent(value, toolName,message); // 假设货币类型从1开始
+    //         
+    //         //刷新道具
+    //         EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+    //         
+    //         GameDataManager.Instance.CommitGameData();
+    //     }
+    // }
+    
+    
     /// <summary>
     /// 更新道具数量
     /// </summary>
     /// <param name="type">道具类型</param>
     /// <param name="value">变化值</param>
-    public void UpdateTool(LimitRewordType type, int value,string message = "")
+    public void UpdateTool(LimitRewordType type, int value, string message = "", string word= "")
     {
         int toolId = GetToolIdByType(type);
-        
+
         if (toolInfo.ContainsKey(toolId))
         {
             toolInfo[toolId].count += value;
@@ -913,11 +994,11 @@ public class UserData
 
             switch (type)
             {
-                case LimitRewordType.SingleTipsttool:
-                    toolName = "重置(提示灯)道具";
+                case LimitRewordType.HexWordTipsttool:
+                    toolName = "六边形玩法词语提示道具";
                     break;
                 case LimitRewordType.Tipstool:
-                    toolName = "提示（放大镜）道具";
+                    toolName = "提示道具";
                     break;
                 case LimitRewordType.Butterfly:
                     toolName = "蝴蝶道具";
@@ -926,14 +1007,9 @@ public class UserData
                     toolName = "自动拼字";
                     break;
             }
-            
+
             // 发送道具统计事件
-            SendCurrencyEvent(value, toolName,message); // 假设货币类型从1开始
-            
-            //刷新道具
-            EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-            
-            GameDataManager.Instance.CommitGameData();
+            SendCurrencyEvent(value, toolName, message, word);
         }
     }
 
@@ -945,7 +1021,7 @@ public class UserData
     {
         return type switch
         {
-            LimitRewordType.SingleTipsttool => 101,
+            LimitRewordType.HexWordTipsttool => 101,
             LimitRewordType.Tipstool => 102,
             LimitRewordType.Butterfly => 103,
             _ => 0
@@ -1155,6 +1231,107 @@ public class UserData
         vocabulary.LevelWords.Clear();
     }
 
+    #endregion
+    
+        #region 体力系统核心逻辑
+    [JsonIgnore] public const int MAX_NATURAL_ENERGY = 5;       // 自然恢复上限
+    [JsonIgnore] public const int ENERGY_REGEN_MINUTES = 30;    // 恢复1点所需分钟数
+
+    /// <summary>
+    /// 计算并执行体力自然恢复 (支持离线、切后台)
+    /// </summary>
+    public void CalculateEnergyRegen()
+    {
+        // 如果体力超出或等于上限，不自然恢复，且把计时器锚点重置到当前，防止一跌下5点就瞬间恢复
+        if (Energy >= MAX_NATURAL_ENERGY)
+        {
+            LastEnergyUpdateTime = DateTime.Now.ToString();
+            return;
+        }
+        if (string.IsNullOrEmpty(LastEnergyUpdateTime))
+        {
+            LastEnergyUpdateTime = DateTime.Now.ToString();
+            return;
+        }
+        
+        DateTime lastTime = DateTime.Parse(LastEnergyUpdateTime);
+        TimeSpan passedTime = DateTime.Now - lastTime;
+        
+        // 计算过去的时间里，够恢复几个30分钟？
+        int recoveredPoints = (int)(passedTime.TotalMinutes / ENERGY_REGEN_MINUTES);
+        if (recoveredPoints > 0)
+        {
+            Energy += recoveredPoints;
+            
+            if (Energy >= MAX_NATURAL_ENERGY)
+            {
+                Energy = MAX_NATURAL_ENERGY;
+                LastEnergyUpdateTime = DateTime.Now.ToString(); // 满了，重置计时器
+            }
+            else
+            {
+                // 没满，把用掉的时间加到上次计算时间上，保留剩余的零头（例如过去35分钟，加回30分钟，剩余5分钟进度保留）
+                LastEnergyUpdateTime = lastTime.AddMinutes(recoveredPoints * ENERGY_REGEN_MINUTES).ToString();
+            }
+            SendCurrencyEvent(recoveredPoints, "体力", "时间自然恢复");
+            // 通知UI刷新 (需要在EventDispatcher里加上这行，如果你有的话)
+            // EventDispatcher.instance?.TriggerEnergyUIChange(); 
+        }
+    }
+    /// <summary>
+    /// 消耗体力
+    /// </summary>
+    /// <param name="stageId">当前关卡ID，用于判断第1关免体力</param>
+    /// <param name="amount">消耗数量，默认1</param>
+    /// <returns>是否消耗成功（体力是否足够）</returns>
+    public bool ConsumeEnergy(int stageId, int amount = 1, string message = "进入关卡消耗")
+    {
+        // 规则1：第一关体力无限
+        if (stageId == 1) return true;
+
+        if (Energy >= amount)
+        {
+            bool wasFull = Energy >= MAX_NATURAL_ENERGY;
+            Energy -= amount;
+            
+            // 如果原本是满的(>=5)，现在扣到5以下了，马上启动自然恢复计时器！
+            if (wasFull && Energy < MAX_NATURAL_ENERGY)
+            {
+                LastEnergyUpdateTime = DateTime.Now.ToString();
+            }
+            SendCurrencyEvent(-amount, "体力", message);
+            return true;
+        }
+        return false; // 体力不足
+    }
+    /// <summary>
+    /// 活动奖励增加体力 (无上限叠加)
+    /// </summary>
+    public void AddBonusEnergy(int amount, string message = "奖励获取")
+    {
+        Energy += amount;
+        SendCurrencyEvent(amount, "体力", message);
+        // EventDispatcher.instance?.TriggerEnergyUIChange();
+    }
+    /// <summary>
+    /// UI显示辅助：获取体力展示文本
+    /// </summary>
+    public string GetEnergyDisplayString()
+    {
+        if (CurrentChessStage == 1) return "充足"; // 第一关特权
+        return Energy.ToString();
+    }
+    /// <summary>
+    /// UI显示辅助：获取距离恢复下1点体力还剩多少秒 (用于UI倒计时)
+    /// </summary>
+    public int GetNextEnergyRegenSeconds()
+    {
+        if (Energy >= MAX_NATURAL_ENERGY) return 0;
+        
+        DateTime lastTime = DateTime.Parse(LastEnergyUpdateTime);
+        DateTime nextRegenTime = lastTime.AddMinutes(ENERGY_REGEN_MINUTES);
+        return Mathf.Max(0, (int)(nextRegenTime - DateTime.Now).TotalSeconds);
+    }
     #endregion
 
     #region 辅助方法

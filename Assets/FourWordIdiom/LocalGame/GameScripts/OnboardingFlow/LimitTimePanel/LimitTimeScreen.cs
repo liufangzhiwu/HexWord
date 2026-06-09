@@ -28,12 +28,10 @@ public class LimitTimeScreen : UIWindow
     {
         base.OnEnable();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
-        CheckLimtEvent();
         LimitTimeManager.Instance.OnLimitTimeUpdated += UpdateTimeDisplay; // 订阅事件
         InitLightItems();
         StartCoroutine(InitUI());
-
+        slider.transform.parent.gameObject.SetActive(!LimitTimeManager.Instance.IsComplete());
         // if (SaveSystem.Instance.UserData.LanguageCode == "ChineseTraditional")
         // {
         //     fantitleImage.gameObject.SetActive(true);
@@ -43,16 +41,9 @@ public class LimitTimeScreen : UIWindow
         // {
         //     fantitleImage.gameObject.SetActive(false);
         //     titleImage.gameObject.SetActive(true);
-        // }           
-    }
-
-    private void CheckLimtEvent()
-    {
-        if (GameDataManager.Instance.UserData.isDayEnterLimint)
-        {      
-            AnalyticMgr.ActivityBegin("限时活动");
-            GameDataManager.Instance.UserData.EveryDayOpenLimit();
-        }
+        // }      
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false,true);
     }
 
     IEnumerator InitUI()
@@ -70,11 +61,12 @@ public class LimitTimeScreen : UIWindow
             txttips.text = string.Format(MultilingualManager.Instance.GetString("limitedRewardsDes06"), limitData.num - wordcount);
         }
         
-        // if (GameDataManager.instance.UserData.isNeedShowHelp)
+        // if (GameDataManager.MainInstance.UserData.isNeedShowHelp)
         //     closeBtn.enabled = false;
         
         UpdateMinTimeDisplay();
         yield return new WaitForSeconds(1.2f);
+        
         UpdateProgress();
         
         yield return new WaitForSeconds(0.5f);
@@ -94,10 +86,18 @@ public class LimitTimeScreen : UIWindow
             LightItem lightItem = LightItems[i];
             lightItem.SetUI(tDataItem);
         }
+
+        if (GameDataManager.Instance.UserData.timerePuzzleid > 10)
+        {
+            LimitDataItem tDataItem=items[11];
+            LightItem lightItem = LightItems[10];
+            lightItem.SetUI(tDataItem);
+        }
     }
 
     private void UpdateProgress(bool isreset=false)
     {
+        if (LimitTimeManager.Instance.IsComplete()) return;
         int wordcount = LimitTimeManager.Instance.GetCurWordCount();
         limitData = LimitTimeManager.Instance.CurlimitData;
         float durtime = wordcount==0?0.1f:0.5f;
@@ -106,16 +106,22 @@ public class LimitTimeScreen : UIWindow
         
         float progress = (float)wordcount/limitData.num;
         
-        if(progress>0&&progress <=0.04f)
-            progress=Mathf.Max(progress,0.04f);
-        
         slider.DOValue(progress,durtime).OnComplete(() =>
         {
             //重新获取一下当前限时奖励id对应的限时任务；（避免重复叠加数值）
             wordcount = LimitTimeManager.Instance.GetCurWordCount();
             if (wordcount >= limitData.num)
             {
-                LightItems[GameDataManager.Instance.UserData.timerePuzzleid].UpdateRewardValue();
+                
+                if (GameDataManager.Instance.UserData.timerePuzzleid >= LightItems.Count)
+                {
+                    int index = LightItems.Count-1;
+                    LightItems[index].UpdateRewardValue();
+                }
+                else
+                {
+                    LightItems[GameDataManager.Instance.UserData.timerePuzzleid].UpdateRewardValue();
+                }
                 slider.transform.DOScaleZ(1, 0.2f).OnComplete(() =>
                 {
                     UpdateProgress(true);
@@ -132,20 +138,31 @@ public class LimitTimeScreen : UIWindow
 
     private void QuickComplete()
     {
-        if(LimitTimeManager.Instance.IsComplete()) return;
+        if (LimitTimeManager.Instance.IsComplete()) return;
         
         int wordcount = LimitTimeManager.Instance.GetCurWordCount();
         limitData = LimitTimeManager.Instance.CurlimitData;
-        slider.DOValue((float)wordcount / limitData.num, 0);
+        // slider.DOValue((float)wordcount / limitData.num, 0);
+        if (limitData == null) return;
         
         if (wordcount >= limitData.num)
         {
-            LightItems[GameDataManager.Instance.UserData.timerePuzzleid].UpdateRewardValue();
+            if (GameDataManager.Instance.UserData.timerePuzzleid >= LightItems.Count)
+            {
+                int index = LightItems.Count-1;
+                LightItems[index].UpdateRewardValue();
+            }
+            else
+            {
+                LightItems[GameDataManager.Instance.UserData.timerePuzzleid].UpdateRewardValue();
+            }
+           
             GameDataManager.Instance.UserData.UpdateLImitid();
             DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedLightLimit,1);
             
             QuickComplete();
         }
+        //txtprogress.text = wordcount + "/" + limitData.num;
     }
 
     private void UpdateMinTimeDisplay()
@@ -174,8 +191,8 @@ public class LimitTimeScreen : UIWindow
     
     protected override void InitializeUIComponents()
     {
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
-        hideBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        hideBtn.onClick.AddListener(OnCloseBtn); // 绑定关闭按钮事件
+        closeBtn.onClick.AddListener(OnCloseBtn); // 绑定关闭按钮事件
         helpBtn.AddClickAction(OnHelpBtn);
     }
     
@@ -198,11 +215,11 @@ public class LimitTimeScreen : UIWindow
 
     protected override void OnDisable()
     {
-        LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true, true);
-        LimitTimeManager.Instance.OnLimitTimeUpdated -= UpdateTimeDisplay; // 订阅事件
         base.OnDisable();
-       
+        LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
+
+        LimitTimeManager.Instance.OnLimitTimeUpdated -= UpdateTimeDisplay; // 订阅事件
     }
 }
 

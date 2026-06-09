@@ -51,6 +51,8 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private Button ButterflyBtn;
     [Header("配置参数")]
     [SerializeField] private float topPanelDelay = 0.01f; // 顶部面板显示延迟时间
+    [SerializeField] private Button myThemeBtn; // 服务协议按钮
+    public GameObject GoldLeafredpoint;
        
 
     /// <summary>
@@ -66,6 +68,7 @@ public class PrimaryInterface : UIWindow
         HeadBtn.AddClickAction(OnHeadClick);
         FishBtn.AddClickAction(OnFishClick);
         ButterflyBtn.AddClickAction(OnButterflyClick);
+        myThemeBtn.AddClickAction(OnClickMyThemeBtn);
     }
 
     private void Start()
@@ -91,6 +94,11 @@ public class PrimaryInterface : UIWindow
         UpdateGameLobbyUI();
         UpdateHeadBtnUI();
         StartCoroutine(UpdateFishRankUI());
+        
+        DailyTaskManager.Instance.UpdateMaxButterflyTime();
+        
+        GoldLeafredpoint?.SetActive(ThemeManager.Instance.IsSkinRedPointActive);
+        ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
     }
 
     private void UpdateGameLobbyUI()
@@ -116,6 +124,17 @@ public class PrimaryInterface : UIWindow
             FishInfoController.Instance.RoundResultFishRank();
             UpdateFishRank();
         }
+    }
+    
+    private void OnRedPointChanged(bool show)
+    {
+        if (GoldLeafredpoint != null)
+            GoldLeafredpoint.SetActive(show);
+    }
+    
+    private void OnClickMyThemeBtn()
+    {
+        SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
     }
     
     private void CheckFishBtn()
@@ -363,9 +382,9 @@ public class PrimaryInterface : UIWindow
         }
     }
 
-    private void InitLimtBtnUI(bool isanim=true)
+    private void InitLimtBtnUI()
     {
-        //LimitTimeObj.gameObject.SetActive(!LimitTimeManager.Instance.IsClaim());
+        LimitTimeObj.gameObject.SetActive(!LimitTimeManager.Instance.IsClaim());
         LimitClaim.gameObject.SetActive(LimitTimeManager.Instance.IsClaim());
     
         if (!LimitTimeManager.Instance.IsComplete())
@@ -426,6 +445,9 @@ public class PrimaryInterface : UIWindow
          EventDispatcher.instance.OnUpdateGameLobbyUI -=UpdateGameLobbyUI ;
          FishInfoController.Instance.OnFishTimeUpdated -= UpdateFishTime;
          EventDispatcher.instance.OnChangeHeadIconUpdateUI -= UpdateHeadBtnUI;
+         
+         if (ThemeManager.Instance != null)
+             ThemeManager.Instance.OnSkinRedPointChanged -= OnRedPointChanged;
         
          if (!LimitTimeManager.Instance.IsComplete())
          {

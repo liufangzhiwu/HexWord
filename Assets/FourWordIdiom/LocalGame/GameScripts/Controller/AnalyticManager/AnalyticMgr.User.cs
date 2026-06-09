@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Middleware;
 using UnityEngine;
 
@@ -266,9 +267,13 @@ public partial class AnalyticMgr
         Game.self.Analytics.LogEvent("guide_complete", properties, Define.DataTarget.Think);
     }
     
-    public static void LevelStart()
+    public static void LevelStart(float energy)
     {
-        Game.self.Analytics.LogEvent("level_start",Define.DataTarget.Think);
+        var properties = new Dictionary<string, object>
+        {
+            { "level_difficulty_e", energy.ToString("0.00", CultureInfo.InvariantCulture) }
+        };
+        Game.self.Analytics.LogEvent("level_start", properties, Define.DataTarget.Think);
     }
     
     public static void LevelProgress(int wordIndex,string word,float duration,int errorCount,int combo,int userToolCount)
@@ -295,13 +300,38 @@ public partial class AnalyticMgr
         Game.self.Analytics.LogEvent("level_progress", properties, Define.DataTarget.Think);
     }
     
-    public static void LevelCompleted(float duration)
+    public static void LevelProgress(int wordIndex, string word, float duration, int errorCount, int combo, int userToolCount, float energy)
     {
-        var thproperties = new Dictionary<string, object>
+        if (GameDataManager.Instance.UserData.CurrentChessStage > 100) return;
+
+        var contentItem = new Dictionary<string, object>
         {
-            {"lv_duration", duration}
+            { "WordIndex", wordIndex },
+            { "WordContent", word },
+            { "WordDuration", duration },
+            { "WordErrorNum", errorCount },
+            { "WordComboLv", combo },
+            { "WordItemNum", userToolCount },
+            { "level_e", energy.ToString("0.00", CultureInfo.InvariantCulture) }
         };
-        Game.self.Analytics.LogEvent("level_completed",thproperties,Define.DataTarget.Think);
+
+        var properties = new Dictionary<string, object>
+        {
+            { "lv_content", new List<Dictionary<string, object>> { contentItem } }
+        };
+        Game.self.Analytics.LogEvent("level_progress", properties, Define.DataTarget.Think);
+    }
+    
+    public static void LevelCompleted(float duration, float energy, float zenScore = 0f, int maxCombo = 0)
+    {
+        var thinkProps = new Dictionary<string, object>
+        {
+            { "lv_duration", duration },
+            { "level_difficulty_e", energy.ToString("0.00", CultureInfo.InvariantCulture) },
+            { "zen_score", zenScore },
+            { "max_combo", maxCombo}
+        };
+        Game.self.Analytics.LogEvent("level_completed", thinkProps, Define.DataTarget.Think);
     }
     
     
@@ -357,21 +387,35 @@ public partial class AnalyticMgr
         }; 
         Game.self.Analytics.LogEvent("resource_change", properties, Define.DataTarget.Think);
     }
+  
     
     /// <summary>
-    /// 减少资源与道具
+    /// 资源变化（获得或消耗）
     /// </summary>
-    public static void ResourceReduce(string resId,int changeNum,string reason)
+    /// <param name="resId">资源ID（如 "gold"、"tipItem"）</param>
+    /// <param name="changeNum">变化数量（正数为获得，负数为消耗）</param>
+    /// <param name="reason">变化原因</param>
+    public static void ResourceChange(string resId, int changeNum, string reason, string word)
     {
+        string changeType = changeNum >= 0 ? "获得" : "消耗";
         var properties = new Dictionary<string, object>
         {
-            {"resource_id",resId},
-            {"change_type","消耗"},
-            {"change_num",changeNum},
-            {"change_reason",reason},
-        }; 
+            { "resource_id", resId },
+            { "change_type", changeType },
+            { "change_num", Math.Abs(changeNum) },
+            { "change_reason", reason },
+            { "tip_word", word }
+        };
         Game.self.Analytics.LogEvent("resource_change", properties, Define.DataTarget.Think);
     }
+
+    // 保留原有方法便于调用，内部调用统一方法
+    public static void ResourceGet(string resName, int changeNum, string reason, string word)
+        => ResourceChange(resName, changeNum, reason, word);
+
+    public static void ResourceReduce(string resId, int changeNum, string reason, string word)
+        => ResourceChange(resId, -changeNum, reason, word);
+    
     #endregion
     
     

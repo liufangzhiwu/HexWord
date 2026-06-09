@@ -17,7 +17,7 @@ public class EventDispatcher:MonoBehaviour
     private Action _onFakeBonusEvent;
     private Action<string> _onRemoveNotePuzzle;
     private Action<bool> _onUpdateRewardPuzzle;
-    private Action<bool, bool> _onUpdateLayerCoin;
+    private Action<bool, bool,bool> _onUpdateLayerCoin;
     
     private Action _onCheckShowChessTutorial; // 填字教程检查
     private Action _onAutoPassLevel; // 自动通过关卡事件
@@ -45,6 +45,10 @@ public class EventDispatcher:MonoBehaviour
     
     /// <summary>蝶园改变</summary>
     private Action _onButterflyGardenChange;
+    private Action<int, int> _onChessScoreChanged;
+    // 在 EventDispatcher.cs 中添加： 改变体力和蝶蛹
+    private Action<bool> _onHighlightHeaderUI;
+    private Action<bool> _onHighlightGoldAndEnergy;
     #endregion
 
     private void Awake()
@@ -103,7 +107,7 @@ public class EventDispatcher:MonoBehaviour
     }
 
     /// <summary>更新金币层级事件</summary>
-    public event Action<bool, bool> OnUpdateLayerCoin
+    public event Action<bool, bool,bool> OnUpdateLayerCoin
     {
         add => _onUpdateLayerCoin += value;
         remove => _onUpdateLayerCoin -= value;
@@ -178,6 +182,27 @@ public class EventDispatcher:MonoBehaviour
         remove => _onChangeFreeTipsPanel -= value;
     }
     
+    /// <summary>禅意分事件</summary>
+    public event Action<int,int> OnChessScoreChanged
+    {
+        add => _onChessScoreChanged += value;
+        remove => _onChessScoreChanged -= value;
+    }
+    
+    /// <summary>退出事件</summary>
+    public event Action<bool> OnHighlightHeaderUI
+    {
+        add => _onHighlightHeaderUI += value;
+        remove => _onHighlightHeaderUI -= value;
+    }
+    
+    /// <summary>体力事件</summary>
+    public event Action<bool> OnHighlightGoldAndEnergy
+    {
+        add => _onHighlightGoldAndEnergy += value;
+        remove => _onHighlightGoldAndEnergy -= value;
+    }
+    
     #endregion
 
     #region 事件触发方法
@@ -202,8 +227,8 @@ public class EventDispatcher:MonoBehaviour
     public void TriggerUpdateRewardPuzzle(bool state)
         => _onUpdateRewardPuzzle?.Invoke(state);
 
-    public void TriggerUpdateLayerCoin(bool immediate, bool animate)
-        => _onUpdateLayerCoin?.Invoke(immediate, animate);
+    public void TriggerUpdateLayerCoin(bool immediate, bool animate,bool isshowpupa=false)
+        => _onUpdateLayerCoin?.Invoke(immediate, animate,isshowpupa);
 
     public void TriggerChoicePuzzleSetStatus(bool visible)
         => _onChoicePuzzleSetStatus?.Invoke(visible);
@@ -240,6 +265,15 @@ public class EventDispatcher:MonoBehaviour
     
     public void TriggerChangeFreeTipsPanel()
         => _onChangeFreeTipsPanel?.Invoke();
+    
+    
+    public void TriggerChessScoreChanged(int currentScore,int diff)
+        => _onChessScoreChanged?.Invoke(currentScore, diff);
+    public void TriggerHighlightHeaderUI(bool isHighlight)
+        => _onHighlightHeaderUI?.Invoke(isHighlight);
+    public void TriggerHighlightGoldAndEnergy(bool isHighlight)
+        =>_onHighlightGoldAndEnergy?.Invoke(isHighlight);
+
     
     #endregion
 }

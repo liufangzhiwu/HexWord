@@ -13,7 +13,7 @@ namespace Middleware
     public class Account_android : IAccounts
     {
         public string UserId { get; set; }
-        public bool IsLogin { get; set; } = false;
+        public bool IsLogin { get; set; } = true;
         string teamPlayerId = string.Empty;
         string thirdOpenId = "";
 

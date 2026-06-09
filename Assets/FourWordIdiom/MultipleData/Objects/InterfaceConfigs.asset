@@ -234,3 +234,44 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 6527089118256139734, guid: 76fb5de38df4bfe4e8f956ca99aca026,
       type: 3}
+  - panelName: EnergyScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2078426036942281601, guid: 69b1e98bc6c170242885ee91f3097134,
+      type: 3}
+  - panelName: MyThemeScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 4be0a2db25be8ac45941818ea54e16c1,
+      type: 3}
+  - panelName: PauseGameScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 4107600638951091987, guid: 88398b37ed3e2b3448678244daab0965,
+      type: 3}
+  - panelName: ContinueGameWindow
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 109776434852036357, guid: 0669d18e41b8a8a488982a06f2092cb6, type: 3}
+  - panelName: FailGameScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 9074646983445839004, guid: 1945c3900c0556c4681b880d361f30d0,
+      type: 3}
+  - panelName: ThemeHelpScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: d0d8531f4ebdf8a42bc600132f7999a9,
+      type: 3}
+  - panelName: NewThemeScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 97d2b4821d222894ca3787aec41c4a87,
+      type: 3}

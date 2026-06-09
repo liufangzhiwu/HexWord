@@ -455,5 +455,64 @@ namespace Middleware
             list.Add(cur.ToString().Trim());
             return list.ToArray();
         }
+        
+        /// <summary>
+        /// 智能解析 CSV 文本，完美识别单元格内的换行符
+        /// </summary>
+        public static List<string> SplitCsvLines(string csvText)
+        {
+            List<string> lines = new List<string>();
+            if (string.IsNullOrEmpty(csvText)) return lines;
+
+            StringBuilder currentLine = new StringBuilder();
+            bool inQuotes = false;
+
+            for (int i = 0; i < csvText.Length; i++)
+            {
+                char c = csvText[i];
+
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes; // 切换双引号状态
+                    currentLine.Append(c);
+                }
+                else if (c == '\r' || c == '\n')
+                {
+                    if (inQuotes)
+                    {
+                        // 在双引号内，属于单元格内换行，保留
+                        currentLine.Append(c);
+                    }
+                    else
+                    {
+                        // 在双引号外，说明是一行的真正结束
+                        if (currentLine.Length > 0)
+                        {
+                            lines.Add(currentLine.ToString());
+                            currentLine.Clear();
+                        }
+
+                        // 兼容 \r\n 的情况，Windows 换行防重叠拦截
+                        if (c == '\r' && i + 1 < csvText.Length && csvText[i + 1] == '\n')
+                        {
+                            i++;
+                        }
+                    }
+                }
+                else
+                {
+                    currentLine.Append(c);
+                }
+            }
+
+            // 别忘了最后一行没以回车结尾的数据
+            if (currentLine.Length > 0)
+            {
+                lines.Add(currentLine.ToString());
+            }
+
+            return lines;
+        }
+        
     }
 }

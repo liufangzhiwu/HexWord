@@ -54,25 +54,55 @@ public class DailyTaskManager : MonoBehaviour
         }       
     }
 
-    void Start()
+    private IEnumerator Start()
     {
-        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "dailytask");
-        if (data != null)
+        yield return new WaitForSeconds(0.5f);
+        string csvData = null;
+        bool isCsvDone = false;
+        StartCoroutine( APIGateway.Instance.GameConfigApi.GetGameConfig("dailytask",
+            onSuccess: (response) => { csvData = response.CsvString; isCsvDone = true;},
+            onError:   (error) => { isCsvDone = true; Debug.Log("服务器拉取 dailytask 配置失败，准备兜底"); }
+        ));
+        
+        float timeout = 5f;
+        while (!isCsvDone && timeout > 0)
         {
-            ParseLimitItems(data.text);
+            timeout -= Time.deltaTime;
+            yield return null;
+        }
+        
+        if (string.IsNullOrEmpty(csvData))
+        {     
+            TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "dailytask");
+            csvData = csvFile?.text;
+        }
+        if (!string.IsNullOrEmpty(csvData))
+        {
+            ParseLimitItems(csvData);
         }
         else
         {
             Debug.LogError("Failed to load CSV data.");
         }
-
+       
+        yield return new WaitForSeconds(0.5f);
         StartCoroutine(CheckSaveTaskOnline());
+        StartCoroutine(StartDailyTask());
+    }
+    
+    IEnumerator StartDailyTask()
+    {
+        yield return new WaitForSeconds(1f);
+        if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
+        {
+            int leftminutes =AppGameSettings.TaskButterflyUseTime- GameDataManager.Instance.UserData.taskButterflyUseMinutes;
+            StartCoroutine(OnMaxButterlfyTask(leftminutes));
+        }
     }
 
     IEnumerator CheckSaveTaskOnline()
     {
-        yield return new WaitForEndOfFrame();
-        if(taskItems==null) yield break;
+        yield return new WaitForSeconds(1f);
         
         // 从用户数据中读取
         foreach (TaskSaveData taskSave in GameDataManager.Instance.UserData.taskSaveDatas)
@@ -84,11 +114,7 @@ public class DailyTaskManager : MonoBehaviour
             }
         }
         
-        // if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
-        // {
-        //     int leftminutes =AppGameSettings.TaskButterflyUseTime- GameDataManager.Instance.UserData.taskButterflyUseMinutes;
-        //     StartCoroutine(OnMaxButterlfyTask(leftminutes));
-        // }
+      
     }
     
     public void UpdateDailyTaskBtnUI()
@@ -197,34 +223,61 @@ public class DailyTaskManager : MonoBehaviour
             }
         }
     }
+
+    public void UpdateMaxButterflyTime()
+    {
+        if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
+        {
+            int leftminutes =AppGameSettings.TaskButterflyUseTime- GameDataManager.Instance.UserData.taskButterflyUseMinutes;
+        
+            DateTime endTime = DateTime.Now.AddMinutes(leftminutes);
+            TimeSpan timeSpan = endTime.Subtract(DateTime.Now);
+            string fen=MultilingualManager.Instance.GetString("TimeM");
+            string time = timeSpan.TotalMinutes.ToString("#")+fen;
+            if(timeSpan.TotalMinutes > 0)
+                OnDailyButterflyTaskUI?.Invoke(time);
+        }
+    }
     
     IEnumerator OnMaxButterlfyTask(int minutes)
     {
         DateTime endTime = DateTime.Now.AddMinutes(minutes);
         TimeSpan timeSpan = endTime.Subtract(DateTime.Now);
-        yield return new WaitForSeconds(60);
         string fen=MultilingualManager.Instance.GetString("TimeM");
         string time = timeSpan.TotalMinutes.ToString("#")+fen;
         if(timeSpan.TotalMinutes > 0)
             OnDailyButterflyTaskUI?.Invoke(time);
 
-        while (timeSpan.TotalMinutes>0)
+        while (true)
         {
             yield return new WaitForSeconds(60);
 
             timeSpan = endTime.Subtract(DateTime.Now);
-            //GameDataManager.Instance.UserData.taskButterflyUseMinutes++;
+            GameDataManager.Instance.UserData.taskButterflyUseMinutes++;
             time = timeSpan.TotalMinutes.ToString("#")+fen;
+            Debug.Log("使用多少分钟:"+GameDataManager.Instance.UserData.taskButterflyUseMinutes+"  剩余多少分钟："+time);
             if (timeSpan.TotalMinutes <= 0)
             {
-                // if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
-                // {
-                //     GameDataManager.Instance.UserData.butterflyTaskIsOpen=false;
-                // } 
+                if (GameDataManager.Instance.UserData.butterflyTaskIsOpen)
+                {
+                    GameDataManager.Instance.UserData.butterflyTaskIsOpen=false;
+                    OnDailyButterflyTaskUI?.Invoke(time);
+                } 
                 yield break;
             }
             OnDailyButterflyTaskUI?.Invoke(time);
         }
+    }
+
+    public void UpateButterflyTaskUI()
+    {
+        int minutes =AppGameSettings.TaskButterflyUseTime- GameDataManager.Instance.UserData.taskButterflyUseMinutes;
+        DateTime endTime = DateTime.Now.AddMinutes(minutes);
+        TimeSpan timeSpan = endTime.Subtract(DateTime.Now);
+        string fen=MultilingualManager.Instance.GetString("TimeM");
+        string time = timeSpan.TotalMinutes.ToString("#")+fen;
+        if(timeSpan.TotalMinutes > 0)
+            OnDailyButterflyTaskUI?.Invoke(time);
     }
 
     /// <summary>
@@ -239,7 +292,7 @@ public class DailyTaskManager : MonoBehaviour
         {
             // 获取所有满足解锁条件的任务
             List<TaskDataItem> eligibleTasks = taskItems
-                .Where(t => GameDataManager.Instance.UserData.CurrentHexStage >= t.unlocklv)
+                .Where(t => GameDataManager.Instance.UserData.CurrentHexStage >= t.unlocklv ||  GameDataManager.Instance.UserData.CurrentChessStage >= t.unlocklv )
                 .ToList();
 
             // 随机打乱任务顺序
@@ -263,8 +316,7 @@ public class DailyTaskManager : MonoBehaviour
                             typeid = 0, 
                             progressvalue = 0
                         };
-                        
-                        GameDataManager.Instance.UserData.UpdateDailyTaskData(taskSave);
+                        taskSaveDatas.Add(taskSave);
 
                         if (!UpdatetaskItem.Contains((TaskEvent)taskItem.id))
                         {
@@ -289,7 +341,8 @@ public class DailyTaskManager : MonoBehaviour
         
         // 获取所有满足解锁条件的任务
         List<TaskDataItem> eligibleTasks = taskItems
-            .Where(t => GameDataManager.Instance.UserData.CurrentHexStage >= t.unlocklv)
+            .Where(t => GameDataManager.Instance.UserData.CurrentHexStage >= t.unlocklv || 
+                        GameDataManager.Instance.UserData.CurrentChessStage >= t.unlocklv)
             .ToList();
         
         // 随机打乱任务顺序
@@ -338,7 +391,7 @@ public class DailyTaskManager : MonoBehaviour
                     iscliam = false,
                 };
                 
-                GameDataManager.Instance.UserData.UpdateDailyTaskData(taskSave);
+                taskSaveDatas.Add(taskSave);
                 
                 if (!UpdatetaskItem.Contains((TaskEvent)taskItem.id))
                 {
@@ -360,11 +413,12 @@ public class DailyTaskManager : MonoBehaviour
     
     public void CheckOpenButterflyTask()
     {
-        // if (!GameDataManager.Instance.UserData.butterflyTaskIsOpen)
-        // {
-        //     GameDataManager.Instance.UserData.butterflyTaskIsOpen = true;
-        //     StartCoroutine(OnMaxButterlfyTask(AppGameSettings.TaskButterflyUseTime));
-        // }
+        if (!GameDataManager.Instance.UserData.butterflyTaskIsOpen&&string.IsNullOrEmpty(GameDataManager.Instance.UserData.butterflyTaskOpenTime))
+        {
+            GameDataManager.Instance.UserData.butterflyTaskIsOpen = true;
+            GameDataManager.Instance.UserData.butterflyTaskOpenTime = DateTime.Today.ToString();
+            StartCoroutine(OnMaxButterlfyTask(AppGameSettings.TaskButterflyUseTime));
+        }
     }
     
     /// <summary>
@@ -373,7 +427,9 @@ public class DailyTaskManager : MonoBehaviour
     /// <returns></returns>
     public bool IsOpen()
     {
-        return GameDataManager.Instance.UserData.CurrentHexStage>=AppGameSettings.UnlockRequirements.DailyMissions;
+        return GameDataManager.Instance.UserData.CurrentHexStage>=AppGameSettings.UnlockRequirements.DailyMissions
+            || GameDataManager.Instance.UserData.CurrentChessStage>=AppGameSettings.UnlockRequirements.DailyMissions
+            ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime);
     }
 
     /// <summary>
@@ -382,14 +438,15 @@ public class DailyTaskManager : MonoBehaviour
     /// <returns></returns>
     public bool IsAllComplete()
     {
+        if(GameDataManager.Instance==null)  return false;
+        
         bool isallover = false;
         int count = 0;
-        
-        if(taskItems==null||GameDataManager.Instance ==null) return false;
-        
         foreach (TaskDataItem dataItem in taskItems)
         {
-            if(GameDataManager.Instance.UserData.CurrentHexStage >= dataItem.unlocklv)
+            if(GameDataManager.Instance.UserData.CurrentHexStage >= dataItem.unlocklv
+               || GameDataManager.Instance.UserData.CurrentChessStage >= dataItem.unlocklv
+               ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
                 count+=dataItem.values.Count;
         }
 
@@ -401,7 +458,9 @@ public class DailyTaskManager : MonoBehaviour
             GameDataManager.Instance.UserData.UpdateAllCompleteTask();           
             TimeSpan ts = DateTime.Now.Subtract(DateTime.Today);
             AnalyticMgr.ActivityComplete("每日任务",  (int)ts.TotalSeconds);
+            //FirebaseManager.Instance.ActivityComplete("每日任务", DateTime.Now.ToString(), (int)ts.TotalSeconds);
         }
+
         return isallover;
     }
     
@@ -459,8 +518,6 @@ public class DailyTaskManager : MonoBehaviour
                 UpdatetaskItem.Add(taskevent);
             }
         }
-        
-        //GameDataManager.Instance.UserData.SaveTaskData();
     }
 
     public TaskDataItem GetTaskItem(int limitItemID)

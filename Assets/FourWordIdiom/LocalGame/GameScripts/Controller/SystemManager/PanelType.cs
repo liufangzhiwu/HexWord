@@ -52,6 +52,13 @@ public class PanelType  // Renamed class
      public const string ChessPlayArea = "ChessPlayArea";
      public const string ChessLearningGuide = "ChessLearningGuide";
      public const string HardView = "HardView";
+     public const string EnergyScreen = "EnergyScreen";
+     public const string MyThemeScreen = "MyThemeScreen";
+     public const string PauseGameScreen = "PauseGameScreen";
+     public const string ContinueGameWindow = "ContinueGameWindow";
+     public const string FailGameScreen = "FailGameScreen";
+     public const string ThemeHelpScreen = "ThemeHelpScreen";
+     public const string NewThemeScreen = "NewThemeScreen";
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

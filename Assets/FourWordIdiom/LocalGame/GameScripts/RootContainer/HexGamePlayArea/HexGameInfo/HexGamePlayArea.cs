@@ -8,13 +8,6 @@ using DG.Tweening;
 using Middleware;
 using Random = System.Random;
 
-public enum LevelModes
-{
-    Normal,
-    Hard,
-    ExtraHard,
-}
-
 public class HexGamePlayArea : UIWindow
 {
     [SerializeField] private GameObject GameBase;   
@@ -447,7 +440,7 @@ public class HexGamePlayArea : UIWindow
         
         if(CurStageData.PupaDatas.breakProgress>=4)
         {
-            ButterfliesManager.Instance.AddObtainedPupaOnHexGamePanel(crossPuzzleGrid.PupatileView.transform);
+            ButterfliesManager.Instance.AddObtainedPupaOnGamePanel(crossPuzzleGrid.PupatileView.transform);
 
             CurStageData.PupaDatas = null;
             yield return new WaitForSeconds(0.5f);
@@ -753,7 +746,7 @@ public class HexGamePlayArea : UIWindow
             // }
             // else
             // {
-            GetItemScreen.limitRewordType = LimitRewordType.SingleTipsttool;
+            GetItemScreen.limitRewordType = LimitRewordType.HexWordTipsttool;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
                 
 // #if UNITY_OPENHARMONY&&!UNITY_EDITOR
@@ -775,12 +768,12 @@ public class HexGamePlayArea : UIWindow
             if (useCoins) 
             {
                 GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, -1,"关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, 1,"购买道具");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, -1,"关卡内使用");
             }
             else
             {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, -1, "关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, -1, "关卡内使用");
                 InitToolUI();
             }
             
@@ -808,12 +801,12 @@ public class HexGamePlayArea : UIWindow
         if (isShow)
         {
             usetoolCount++;
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, 1,"看广告获取提示灯道具");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, 1,"看广告获取提示灯道具");
             
             string Str = GetRandomTipsPuzzle();
             if (!string.IsNullOrEmpty(Str))
             {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool, -1, "关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, -1, "关卡内使用");
                 InitToolUI();
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipAllWordTool,1);
                 AudioManager.Instance.PlaySoundEffect("chongzhidaoju");

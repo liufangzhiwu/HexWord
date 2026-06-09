@@ -81,7 +81,7 @@ public class LimitBtnTable : MonoBehaviour
         }
     }
     
-    public void InitLimtBtnUI(bool isanim=true)
+    public void InitLimtBtnUI()
     {
         TimeObj.gameObject.SetActive(!LimitTimeManager.Instance.IsClaim());
         if (!LimitTimeManager.Instance.IsComplete())
@@ -90,7 +90,7 @@ public class LimitBtnTable : MonoBehaviour
             {
                 Worddouble.gameObject.SetActive(LimitTimeManager.Instance.LimitTimeCanShow());
                 int wordcount = LimitTimeManager.Instance.GetCurWordCount();
-                //txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
+                txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
                 if (LimitClaim.activeSelf)
                 {
                     LimitClaim.gameObject.SetActive(false);
@@ -99,9 +99,9 @@ public class LimitBtnTable : MonoBehaviour
             }
             else
             {
-                //LimitClaim.gameObject.SetActive(true);
+                LimitClaim.gameObject.SetActive(true);
                 Worddouble.gameObject.SetActive(false);
-                //LimitClaim.GetComponent<CanvasGroup>().DOFade(1,0.2f);
+                LimitClaim.GetComponent<CanvasGroup>().DOFade(1,0.2f);
             }
             limitOver.gameObject.SetActive(false);
         }

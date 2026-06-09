@@ -255,22 +255,13 @@ public class GameDataManager : SingletonMono<GameDataManager>
         return $"StageProgress_{levelId}.json";
     }
 
-    public bool IsNewLevelEntry(int StageNumber)
+    public bool IsNewLevelEntry(int StageNumber, bool isChessStage = false)
     {
-        string saveFileName=null;
-
-        switch ((LevelType)UserData.levelMode)
-        {
-            case LevelType.BlockWord:
-                saveFileName= CreateLevelIdentifier(StageNumber);
-                break;
-            case LevelType.ChessWord:
-                saveFileName = ChessStageProgressData.CreateLevelIdentifier(StageNumber);
-                break;
-            case LevelType.HexWord:
-                saveFileName= CreateLevelIdentifier(StageNumber);
-                break;
-        }
+        string saveFileName;
+        if (isChessStage)
+            saveFileName = ChessStageProgressData.CreateLevelIdentifier(StageNumber);
+        else
+            saveFileName= CreateLevelIdentifier(StageNumber);
 
         string filePath = Path.Combine(Application.persistentDataPath, saveFileName);
 
@@ -481,5 +472,19 @@ public class GameDataManager : SingletonMono<GameDataManager>
             }
         }
     }
+    
+    /// <summary>
+    /// 🌟 新增：彻底清除某个关卡在内存中的残局缓存
+    /// </summary>
+    public void ClearChessLevelCache(int stageNumber)
+    {
+        string identifier = ChessStageProgressData.CreateLevelIdentifier(stageNumber);
+        if (ChessLevelProgressDict.ContainsKey(identifier))
+        {
+            ChessLevelProgressDict.Remove(identifier);
+            Debug.Log($"[GameDataManager] 已清理关卡 {stageNumber} 的内存字典缓存！");
+        }
+    }
+    
     #endregion
 }

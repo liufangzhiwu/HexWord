@@ -49,7 +49,7 @@ public class GiftTable : MonoBehaviour
             case LimitRewordType.Tipstool:
                 giftNameText.text ="放大镜礼包";
                 break;
-            case LimitRewordType.SingleTipsttool:
+            case LimitRewordType.HexWordTipsttool:
                 giftNameText.text ="提示灯礼包";
                 break;
         }
@@ -157,8 +157,8 @@ public class GiftTable : MonoBehaviour
                     case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,giftNameText+"商店购买放大镜");
                         break;
-                    case (int)LimitRewordType.SingleTipsttool://提示灯道具，单个字符提示
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool,count,giftNameText+"商店购买提示灯");
+                    case (int)LimitRewordType.HexWordTipsttool://提示灯道具，单个字符提示
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool,count,giftNameText+"商店购买提示灯");
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:

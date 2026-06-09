@@ -146,14 +146,14 @@ public class ChessDynamicHardManager : MonoBehaviour
         // ==========================================
         StartCoroutine( APIGateway.Instance.GameConfigApi.GetGameConfig("cypz_dynamicConfig",
             onSuccess: (response) => { dynamicCsvData = response.CsvString; isDynamicDone = true;},
-            onError:   (error) => {isDynamicDone = true; Debug.LogWarning("服务器拉取 cypz_dynamicConfig 配置失败，准备兜底"); }
+            onError:   (error) => {isDynamicDone = true; Debug.Log("服务器拉取 cypz_dynamicConfig 配置失败，准备兜底"); }
         ));
         // ==========================================
         // 2. 获取关卡难度配置 (cypz_levelDifficultyChange)
         // ==========================================
         StartCoroutine(  APIGateway.Instance.GameConfigApi.GetGameConfig("cypz_levelDifficultyChange",
             onSuccess: (response) => { levelCsvData = response.CsvString; isLevelDone = true;},
-            onError:   (error) => {isLevelDone = true; Debug.LogWarning("服务器拉取 cypz_levelDifficultyChange 难度配置失败，准备兜底"); }
+            onError:   (error) => {isLevelDone = true; Debug.Log("服务器拉取 cypz_levelDifficultyChange 难度配置失败，准备兜底"); }
         ));
         
         float timeout = 5f;

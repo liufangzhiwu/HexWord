@@ -17,7 +17,7 @@ public class LimitDataItem
 //对应限时奖励配置表中奖励配置批准中的奖励索引表示的类型
 public enum LimitRewordType
 {
-    Coins,Resettool,SingleTipsttool,Tipstool,Butterfly,Min5Double,Min15Double,RemoveAds,Remove7DayAds,AutoComplete
+    Coins,Butterfly,HexWordTipsttool,Tipstool,Min5Double,Min15Double,RemoveAds,Remove7DayAds,AutoComplete,Pupas=11
 }
 
 public class LimitTimeManager : Singleton<LimitTimeManager>
@@ -25,7 +25,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     private List<LimitDataItem> limitItems;
     public event Action<string> OnLimitTimeUpdated; // 定义事件
     public event Action<string> OnDailyTimeUpdated; // 定义事件
-    public event Action<bool> OnLimitTimeBtnUI; // 定义事件
+    public event Action OnLimitTimeBtnUI; // 定义事件
     public LimitDataItem CurlimitData;
     
 
@@ -41,7 +41,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
             Debug.LogError("Failed to load CSV data.");
         }
     }
-    
+
     public void StartTickTimer()
     {
         CheckLimtEvent();
@@ -104,16 +104,15 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
             GameDataManager.Instance.UserData.EveryDayOpenLimit();
         }
     }
- 
+    
     void ParseLimitItems(string data)
     {
         // 将 CSV 数据转换为 JSON 格式
         ConvertCSVToJSON(data);
 
         // 现在limitItems列表中包含所有商品
-        Debug.Log("Limit items loaded: " + limitItems.Count);
+        // Debug.Log("Limit items loaded: " + limitItems.Count);
     }
-   
     
     /// <summary>
     /// 获取当前连词数量
@@ -210,7 +209,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     {
         if(GameDataManager.Instance==null) return false;
         
-        return GameDataManager.Instance.UserData.timerePuzzleid>=limitItems.Count;
+        return GameDataManager.Instance.UserData.timerePuzzleid>limitItems.Count;
     }
     
     /// <summary>
@@ -244,7 +243,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
 
     public void UpdateLimitTimeBtnUI()
     {
-        OnLimitTimeBtnUI?.Invoke(false);
+        OnLimitTimeBtnUI?.Invoke();
     }
 
     public void UpdateLimitProgress(int value)

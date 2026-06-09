@@ -1055,7 +1055,7 @@ MonoBehaviour:
   _tasktable: {fileID: 4702468257007861619}
   hardStageTable: {fileID: 3686823383354572527}
   extrahardStageTable: {fileID: 8928268146540192794}
-  _zenRankBtn: {fileID: 0}
+  _zenRankBtn: {fileID: 1119232566291671508}
   Content: {fileID: 1499769812402863208}
   _nextStageButton: {fileID: 8379068596404640020}
   Showlimiticon: {fileID: 5004602386354373299}
@@ -1994,7 +1994,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: cb7046e3252d37f4698dbb3cf6f0be98, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 8ed28d18532455e458e7c696f3cb8311, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -2649,6 +2649,18 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b571aae95f895f442a2bee904a3cb345, type: 3}
+--- !u!114 &1119232566291671508 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2343764946138106368, guid: b571aae95f895f442a2bee904a3cb345,
+    type: 3}
+  m_PrefabInstance: {fileID: 3390904692863017940}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8293eb154b473c14881b6f48342c9586, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &3832366085033780662 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1882968073342764642, guid: b571aae95f895f442a2bee904a3cb345,

@@ -209,6 +209,7 @@ MonoBehaviour:
   gouImage: {fileID: 3071962160835018985}
   jianImage: {fileID: 738440068299428340}
   effect: {fileID: 6496574082956357368}
+  huanObject: {fileID: 0}
 --- !u!1 &354164102384835443
 GameObject:
   m_ObjectHideFlags: 0
@@ -5253,6 +5254,7 @@ MonoBehaviour:
   gouImage: {fileID: 6060878720065023574}
   jianImage: {fileID: 8474800171246082367}
   effect: {fileID: 4866283335685026475}
+  huanObject: {fileID: 0}
 --- !u!1 &457552790889116950
 GameObject:
   m_ObjectHideFlags: 0
@@ -10267,6 +10269,7 @@ MonoBehaviour:
   gouImage: {fileID: 6162380311623338386}
   jianImage: {fileID: 9056808120385371793}
   effect: {fileID: 565805861072717543}
+  huanObject: {fileID: 0}
 --- !u!1 &524471501250224753
 GameObject:
   m_ObjectHideFlags: 0
@@ -46146,6 +46149,7 @@ MonoBehaviour:
   gouImage: {fileID: 6603102163661598982}
   jianImage: {fileID: 3442155772686210454}
   effect: {fileID: 8192226981404960492}
+  huanObject: {fileID: 0}
 --- !u!1 &1868549640693521259
 GameObject:
   m_ObjectHideFlags: 0
@@ -46707,6 +46711,7 @@ MonoBehaviour:
   gouImage: {fileID: 2273466002323172155}
   jianImage: {fileID: 7426153641050231241}
   effect: {fileID: 6617794673989628292}
+  huanObject: {fileID: 0}
 --- !u!1 &2415915330774755535
 GameObject:
   m_ObjectHideFlags: 0
@@ -73125,6 +73130,7 @@ MonoBehaviour:
   gouImage: {fileID: 4608055307462216421}
   jianImage: {fileID: 318658167460960818}
   effect: {fileID: 8565933335912889956}
+  huanObject: {fileID: 0}
 --- !u!1 &4252481092010583527
 GameObject:
   m_ObjectHideFlags: 0
@@ -110284,6 +110290,7 @@ MonoBehaviour:
   gouImage: {fileID: 9167531442343671997}
   jianImage: {fileID: 4905369134333196106}
   effect: {fileID: 3180523246629551077}
+  huanObject: {fileID: 0}
 --- !u!1 &6959943193847230119
 GameObject:
   m_ObjectHideFlags: 0
@@ -115670,6 +115677,7 @@ MonoBehaviour:
   gouImage: {fileID: 6569185948525777737}
   jianImage: {fileID: 5382089404865002590}
   effect: {fileID: 0}
+  huanObject: {fileID: 0}
 --- !u!1 &7978258833127379350
 GameObject:
   m_ObjectHideFlags: 0
@@ -137172,6 +137180,7 @@ MonoBehaviour:
   gouImage: {fileID: 8094961569684717314}
   jianImage: {fileID: 7557042129020949241}
   effect: {fileID: 4031216229155963616}
+  huanObject: {fileID: 2606301528003321929}
 --- !u!1 &9076647433187787119
 GameObject:
   m_ObjectHideFlags: 0
@@ -137306,6 +137315,7 @@ MonoBehaviour:
   gouImage: {fileID: 2600509736561157943}
   jianImage: {fileID: 0}
   effect: {fileID: 1104827870893904448}
+  huanObject: {fileID: 0}
 --- !u!1 &9136700912150425523
 GameObject:
   m_ObjectHideFlags: 0
@@ -137365,3 +137375,4 @@ MonoBehaviour:
   gouImage: {fileID: 4515866419962780161}
   jianImage: {fileID: 595231157912206166}
   effect: {fileID: 8161541231929902186}
+  huanObject: {fileID: 0}

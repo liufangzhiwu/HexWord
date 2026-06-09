@@ -31,7 +31,11 @@ public class Chesspiece: IEquatable<Chesspiece> //Chess piece
     public TileState state;  // 格子当前的状态
     public bool tip = false; // 格子是否提示词
     public Bowl bowl; // 填入字
-    public bool isUsed;  
+    public bool isUsed;
+    public bool isGoldLeaf;
+    public bool hasIce = false; // 是否被冰块覆盖
+    public bool hasFlower = false; // 是否被花朵覆盖 (仅限 Default 初始字)
+    public bool hasLeaf = false;   // 是否有树叶标记 (跟随光标移动)
     public bool Equals(Chesspiece other) => other != null && row == other.row && col == other.col;
     public override bool Equals(object obj) => Equals(obj as Chesspiece);
     public override int GetHashCode() => row * 1000 + col;
@@ -43,6 +47,10 @@ public class Bowl
     public string letter;
     public int status;  
     public bool isUsed;  
+    public bool isGoldLeaf; 
+    public int count = 1; // 👇 新增：记录该字块的数量，默认为1
+    public int totalcount = 1; // 👇 新增：记录该字块的数量，默认为1
+    public string pinyin;
 }
 /// <summary>
 /// 关卡信息类 - 负责加载、解析和提供关卡数据
@@ -65,7 +73,7 @@ public class ChessStageInfo
     private List<int> _cursor;             // 初始光标位置
     
     private List<PhraseGroup> _phraseGroups;   // 组列表
-
+ 
     #endregion
 
     #region 公有属性
@@ -117,6 +125,8 @@ public class ChessStageInfo
                 this._cursor.Add(cpp.col);
             }
         }
+
+        InitMechanics();
     }
 
     #endregion
@@ -126,7 +136,21 @@ public class ChessStageInfo
     private void DynamicHardLevelChange(int wordCount)
     {
         if (_puzzles.Count >= 32) return;
+        // 👇 核心拦截：检测当前关卡是否包含特殊玩法（算法生成或固定 elem 配置）
+        bool hasIce = ChessStageController.Instance.CheckIceMechanic(_StageNumber, out _, out _);
+        bool hasFlower = ChessStageController.Instance.CheckFlowerMechanic(_StageNumber, out _, out _);
+        bool hasLeaf = ChessStageController.Instance.CheckLeafMechanic(_StageNumber, out _);
+        bool hasFixedIceOrFlower = _StageConf != null && !string.IsNullOrEmpty(_StageConf.elem) && 
+                                   (_StageConf.elem.Contains(",8") || _StageConf.elem.Contains(",3"));
 
+        if (hasIce || hasFlower || hasLeaf|| hasFixedIceOrFlower)
+        {
+            Debug.Log($"[动态难度机制] 关卡 {_StageNumber} 为冰块/花朵特殊关卡，彻底不触发动态难度调整（字数保持原设）。");
+            // 即使不做难度调整，依然建议执行一次基础数据终态校准，防止配置源文件本身存在全显词组或数量不一致
+            VerifyAndSyncPuzzles();
+            return; // 💥 直接中断，不往下走任何加减字的逻辑
+        }
+        
         if (wordCount > 0)   // 变简单，增加可见字
         {
             Debug.Log($"开始增加 {wordCount} 个可见字");
@@ -218,40 +242,46 @@ public class ChessStageInfo
         {
             string letter = kvp.Key;
             int reqCount = kvp.Value;
-            int currCount = currentCounts.ContainsKey(letter) ? currentCounts[letter] : 0;
-
-            while (currCount < reqCount)
+            Bowl existingBowl = _puzzles.FirstOrDefault(b => b.letter == letter);
+            // int currCount = currentCounts.ContainsKey(letter) ? currentCounts[letter] : 0;
+            int currCount = existingBowl?.count ?? 0;
+            if (currCount < reqCount)
             {
-                _puzzles.Add(new Bowl
+                if (existingBowl != null)
                 {
-                    id = "b_" + Guid.NewGuid().ToString("N").Substring(0, 8),
-                    letter = letter,
-                    status = 0
-                });
-                currCount++;
-                Debug.Log($"[数据校验] 字盘缺少字 '{letter}'，已自动补充。");
+                    existingBowl.count = reqCount; // 更新数量
+                }
+                else
+                {
+                    _puzzles.Add(new Bowl
+                    {
+                        id = "b_" + Guid.NewGuid().ToString("N").Substring(0, 8),
+                        letter = letter,
+                        status = 0,
+                        count = reqCount, // 初始数量
+                        totalcount = reqCount // 初始数量
+                    });
+                }
             }
         }
 
         // 4.2 移除多余的字
-        foreach (var kvp in currentCounts)
+        List<Bowl> bowlsToRemove = new List<Bowl>();
+        foreach (var bowl in _puzzles)
         {
-            string letter = kvp.Key;
-            int currCount = kvp.Value;
-            int reqCount = requiredCounts.ContainsKey(letter) ? requiredCounts[letter] : 0;
+            int reqCount = requiredCounts.ContainsKey(bowl.letter) ? requiredCounts[bowl.letter] : 0;
 
-            while (currCount > reqCount)
+            if (bowl.count > reqCount)
             {
-                // 找到第一个该字母的 Bowl 移除
-                var bowlToRemove = _puzzles.FirstOrDefault(b => b.letter == letter);
-                if (bowlToRemove != null)
+                bowl.count = reqCount;
+                bowl.totalcount = reqCount;
+                if (bowl.count <= 0)
                 {
-                    _puzzles.Remove(bowlToRemove);
-                    currCount--;
-                    Debug.Log($"[数据校验] 字盘多余字 '{letter}'，已自动移除。");
+                    bowlsToRemove.Add(bowl); // 记录需要彻底删除的 Bowl
                 }
             }
         }
+        foreach(var b in bowlsToRemove) _puzzles.Remove(b);
     }
     /// <summary>
     /// 增加可见字，小幅度简单
@@ -312,11 +342,11 @@ public class ChessStageInfo
         }
         
         // 批量从 HashSet 移除
-        foreach (var letter in changedLetters)
-        {
-            var bowl = _puzzles.FirstOrDefault(b => b.letter == letter);
-            if (bowl != null) _puzzles.Remove(bowl);
-        }
+        // foreach (var letter in changedLetters)
+        // {
+        //     var bowl = _puzzles.FirstOrDefault(b => b.letter == letter);
+        //     if (bowl != null) _puzzles.Remove(bowl);
+        // }
         
         RandomlySetOneDefaultToNone();
         if (_cursor.Count < 2 || usedPos.Contains((_cursor[0], _cursor[1])))
@@ -396,12 +426,11 @@ public class ChessStageInfo
 
         Debug.Log("增加可见字完成, 关卡内容" + JsonConvert.SerializeObject(_chesspiece));
         // ---------- 5. 从池子里移除已揭示字母 ----------
-        foreach (var letter in changedLetters)
-        {
-            var bowl = _puzzles.FirstOrDefault(b => b.letter == letter);
-            if (bowl != null) _puzzles.Remove(bowl);
-            
-        }
+        // foreach (var letter in changedLetters)
+        // {
+        //     var bowl = _puzzles.FirstOrDefault(b => b.letter == letter);
+        //     if (bowl != null) _puzzles.Remove(bowl);
+        // }
         // ---------- 6. 光标移到下一个交叉未填字 ----------
         RandomlySetOneDefaultToNone();
         if (_cursor.Count < 2 || usedPos.Contains((_cursor[0], _cursor[1])))
@@ -435,6 +464,9 @@ public class ChessStageInfo
             var candidates = new List<(Chesspiece piece, PhraseGroup group, int index)>();
             foreach (var g in _phraseGroups)
             {
+                bool isIsolatedGroup = !g.chesspieces.Any(p => IsMultiGroup(p.row, p.col));
+                if (isIsolatedGroup) continue;
+                
                 for (int i = 0; i < g.chesspieces.Count; i++)
                 {
                     var cp = g.chesspieces[i];
@@ -444,7 +476,11 @@ public class ChessStageInfo
                     }
                 }
             }
-       
+            if (candidates.Count == 0)
+            {
+                Debug.Log("没有符合条件的关联组可供减少显示字，提前结束。");
+                break;
+            }
             // 2. 排序：① 多组交叉放最后 ② 0 最少 → 最多 ③ 1 最多 → 最少
             candidates.Sort((a, b) =>
             {
@@ -531,15 +567,15 @@ public class ChessStageInfo
             if (_puzzles.Count >= 32) break;
             
             Chesspiece findpize = _chesspiece.FirstOrDefault(p => p.row == piece.row && p.col == piece.col);
-            if (findpize.state != TileState.None)
+            if (findpize != null && findpize.state != TileState.None)
                 findpize.state = TileState.None;
             
-            _puzzles.Add(new Bowl
-            {
-                id = "b_" + Guid.NewGuid().ToString("N")[..8],
-                letter = piece.letter,
-                status = 0,
-            });
+            // _puzzles.Add(new Bowl
+            // {
+            //     id = "b_" + Guid.NewGuid().ToString("N")[..8],
+            //     letter = piece.letter,
+            //     status = 0,
+            // });
         }
         GroupWeightSort();
         Chesspiece newCp = FindMinRowNonePiece();
@@ -693,13 +729,12 @@ public class ChessStageInfo
     /// <param name="stageConf"></param>
     private void ParseStageContent(ChessLevelConf stageConf)
     {
-        Debug.Log($"关卡文本内容 : 对应的目标词处理："+ JsonConvert.SerializeObject(stageConf));
         List<PhraseGroup> tempGroup = new List<PhraseGroup>();
         int maxRow = 0;
         int maxCol = 0;
         int minRow = int.MaxValue;
         int minCol = int.MaxValue;
-
+      
         string[] chunks = stageConf.pass.Split('#');
 
         int chunkIndex = 0; // chunk 序号
@@ -759,19 +794,31 @@ public class ChessStageInfo
         // 添加词堆字
         int idCounter = 0;
         string[] chessBowls = stageConf.russ.Split('#');
-        if (_StageNumber != 1)
-        {
-            chessBowls.Shuffle();
-        }
+        // if (_StageNumber != 1)
+        // {
+        //     chessBowls.Shuffle();
+        // }
         
         foreach(var chessbowl in chessBowls)
         {
-            _puzzles.Add(new Bowl
+            Bowl existingBowl = _puzzles.FirstOrDefault(b => b.letter == chessbowl);
+            if (existingBowl != null)
             {
-                id = "b_" + Guid.NewGuid().ToString("N")[..8],
-                letter = chessbowl ,
-                status = 0,
-            });
+                existingBowl.count++; // 存在则数量+1
+            }
+            else
+            {
+                _puzzles.Add(new Bowl
+                {
+                    id = "b_" + Guid.NewGuid().ToString("N")[..8],
+                    letter = chessbowl ,
+                    status = 0,
+                    count = 1,
+                    totalcount = 1,
+                    pinyin = WordVocabularyManager.Instance.GetCharPinyin(chessbowl)
+                });
+            }
+         
         }
         
         // 处理光标
@@ -836,4 +883,281 @@ public class ChessStageInfo
     }
 
     #endregion
+    
+    /// <summary>
+    /// 初始化特殊玩法（冰块、花朵）
+    /// 必须在棋盘基础结构和动态难度调整完毕后调用
+    /// </summary>
+    private void InitMechanics()
+    {
+        int stageId = _StageNumber;
+        // ==========================================
+        // 🌟 核心拦截：如果 elem 有数据，优先解析固定配置，并绝对跳过算法生成
+        // ==========================================
+        bool hasTargetFixedMechanics = _StageConf != null && !string.IsNullOrEmpty(_StageConf.elem) && 
+                                       (_StageConf.elem.Contains(",3") || _StageConf.elem.Contains(",8") || _StageConf.elem.Contains(",9"));
+        if (hasTargetFixedMechanics)
+        {
+            Debug.Log($"[玩法配置] 关卡 {stageId} 检测到固定玩法数据 (elem): {_StageConf.elem}，切换为固定配置模式。");
+            ParseAndApplyElemData(_StageConf.elem);
+            return; // 💥 只有真正配了 3, 8, 9 时，才绝对不再执行下方的算法生成
+        }
+        if (_StageConf != null && !string.IsNullOrEmpty(_StageConf.elem))
+        {
+            // 如果有 elem 数据（比如 67,4），但不是冰花机制，先解析它（让其他系统处理类型4），但不 return，允许继续往下走随机冰花算法
+            ParseAndApplyElemData(_StageConf.elem);
+            Debug.Log($"[玩法配置] 关卡 {stageId} 的 elem ({_StageConf.elem}) 不包含冰花机制，已解析并放行随机算法。");
+        }
+        
+        // ==========================================
+        // 1. 冰块玩法生成逻辑
+        // ==========================================
+        if (ChessStageController.Instance.CheckIceMechanic(stageId, out _, out int iceDegree))
+        {
+         
+            var iceConfig = ChessStageController.Instance.IceConfig;
+            int m_ice = iceConfig.Degree.ContainsKey(iceDegree) ? iceConfig.Degree[iceDegree] : 0;
+            int n_groups = _phraseGroups.Count;
+            int safeCount = n_groups - m_ice;
+            Debug.Log($"<color=#FFA500><b>[玩法数据源: 动态算法分配]</b></color> 关卡 {stageId} 触发冰块算法。计算难度级别: <b>{iceDegree}</b>，期望生成冰块: <b>{m_ice}</b>个，安全余量: {safeCount}组。");
+            // 规则：若 n-M <= 2，不出现冰块
+            if (safeCount > 2 && m_ice > 0)
+            {
+                // 获取初始光标所在的成语
+                var cursorGroups = new HashSet<PhraseGroup>();
+                if (_cursor.Count >= 2 && _chessGroup.TryGetValue((_cursor[0], _cursor[1]), out var cg))
+                {
+                    foreach(var g in cg) cursorGroups.Add(g);
+                }
+
+                // 按安全优先级降序排序 (越安全的排在越前面)
+                var sortedForIce = _phraseGroups.OrderByDescending(g => 
+                {
+                    // 优先级1：孤岛词 (不与其他词组交叉) -> 最高安全权重
+                    bool isIsolated = !g.chesspieces.Any(p => IsMultiGroup(p.row, p.col));
+                    if (isIsolated) return -100;
+                    
+                    // 优先级2：初始光标所在的词 -> 次高安全权重
+                    if (cursorGroups.Contains(g)) return -50;
+                    
+                    return g.chesspieces.Count(p => p.state == TileState.Default);
+                })
+                // 优先级3：初始字数量更多的优先
+                // .ThenByDescending(g => g.chesspieces.Count(p => p.state == TileState.Default)) 
+                // 优先级4：同等条件随机打乱
+                .ThenBy(g => Guid.NewGuid()) 
+                .ToList();
+                
+                List<PhraseGroup> selectedIceGroups = new List<PhraseGroup>();
+                // 1. 第一轮贪心筛选：只挑选绝对不交叉的词组
+                foreach (var g in sortedForIce)
+                {
+                    if (selectedIceGroups.Count >= m_ice) break;
+                    bool isCrossWithCursor = g.chesspieces.Any(p => cursorGroups.Any(cg => cg.chesspieces.Any(cp => cp.row == p.row && cp.col == p.col)));
+                    if (isCrossWithCursor) continue; // 如果和光标组有任何交叉，直接跳过，不给它盖冰块
+
+                    bool hasIntersection = false;
+                    // 拿当前成语去跟已经选中的成语逐一比对坐标
+                    foreach (var selected in selectedIceGroups)
+                    {
+                        // 如果有任何一格的行和列完全重合，说明这两个成语交叉了
+                        if (g.chesspieces.Any(p => selected.chesspieces.Any(sp => sp.row == p.row && sp.col == p.col)))
+                        {
+                            hasIntersection = true;
+                            break;
+                        }
+                    }
+
+                    // 只有完全不交叉的成语，才被选入冰块阵营
+                    if (!hasIntersection)
+                    {
+                        selectedIceGroups.Add(g);
+                    }
+                }
+                // 2. 🌟 容错兜底：如果关卡太密（比如一共就3个成语挤在一起），第一轮选不够 m_ice 个，
+                // 那么第二轮放宽条件，允许交叉，把数量补齐，绝对不让游戏崩溃或少生成冰块
+                if (selectedIceGroups.Count < m_ice)
+                {
+                    foreach (var g in sortedForIce)
+                    {
+                        if (selectedIceGroups.Count >= m_ice) break;
+                        if (!selectedIceGroups.Contains(g))
+                        {
+                            selectedIceGroups.Add(g);
+                        }
+                    }
+                }
+                // 3. 第三步：对最终敲定的这几组词全面覆盖冰块
+                foreach (var iceGroup in selectedIceGroups)
+                {
+                    foreach (var p in iceGroup.chesspieces)
+                    {
+                        // 同步击穿修改所有交叉实例（防止阶段4渲染丢失）
+                        if (_chessGroup.TryGetValue((p.row, p.col), out var crossGroups))
+                        {
+                            foreach (var cg1 in crossGroups)
+                            {
+                                var targetPiece = cg1.chesspieces.FirstOrDefault(cp => cp.row == p.row && cp.col == p.col);
+                                if (targetPiece != null) targetPiece.hasIce = true;
+                            }
+                        }
+                    
+                        // 同步更新主唯一源
+                        var hashPiece = _chesspiece.FirstOrDefault(cp => cp.row == p.row && cp.col == p.col);
+                        if (hashPiece != null) hashPiece.hasIce = true;
+                    }
+                }
+                // 🌟 [加在冰块生成逻辑大括号结束前的最后一行]
+                string icePieces = string.Join(", ", _chesspiece.Where(p => p.hasIce).Select(p => $"({p.row},{p.col})-{p.letter}"));
+                Debug.Log($"<color=#00FF00>[冰块生成-算法结束]</color> 关卡:{stageId} | 来源:<color=#FFA500>算法随机分配</color> | 难度:{iceDegree} | 目标:{m_ice}个 | 实际激活: [{icePieces}] ");
+            }
+            else if (m_ice > 0)
+            {
+                // 🌟 加上提示，让你在 Unity 控制台能直接看到原因！
+                Debug.Log($"<color=#FF0000>[冰块未生成]</color> 关卡:{stageId} | 词组总数 {n_groups} - 冰块数 {m_ice} = {safeCount} (<=2)。触发保护规则，不生成！");
+            }
+        }
+        // ==========================================
+        // 2. 花朵玩法生成逻辑
+        // ==========================================
+        if (ChessStageController.Instance.CheckFlowerMechanic(stageId, out _, out int flowerDegree))
+        {
+            var flowerConfig = ChessStageController.Instance.FlowerConfig;
+            int m_flower = flowerConfig.Degree.ContainsKey(flowerDegree) ? flowerConfig.Degree[flowerDegree] : 0;
+            var defaultTiles = _chesspiece.Where(p => p.state == TileState.Default).ToList();
+            int n_chars = defaultTiles.Count;
+            Debug.Log($"<color=#FFA500><b>[玩法数据源: 动态算法分配]</b></color> 关卡 {stageId} 触发花朵算法。计算难度级别: <b>{flowerDegree}</b>，期望生成花朵: <b>{m_flower}</b>个，当前全盘初始字: {n_chars}个。");
+            // 规则：若初始字 n - m <= 3，不出现花骨朵
+            if (n_chars - m_flower > 3 && m_flower > 0)
+            {
+                // 获取初始光标组
+                var cursorGroups = new HashSet<PhraseGroup>();
+                if (_cursor.Count >= 2 && _chessGroup.TryGetValue((_cursor[0], _cursor[1]), out var cg))
+                {
+                    foreach(var g in cg) cursorGroups.Add(g);
+                }
+                var forbiddenCoordinates = new HashSet<(int row, int col)>();
+                foreach (var cg2 in cursorGroups)
+                {
+                    foreach (var cp2 in cg2.chesspieces)
+                    {
+                        forbiddenCoordinates.Add((cp2.row, cp2.col));
+                    }
+                }
+                // 筛选候选成语：排除光标所在的成语，并按初始字数量升序 (初始字少的优先)
+                var flowerCandidates = _phraseGroups
+                    .Where(g => !cursorGroups.Contains(g))
+                    .OrderBy(g => g.chesspieces.Count(p => p.state == TileState.Default))
+                    .ToList();
+
+                // 规则：如果是固定关卡配置，主动抹除光标组身上可能已有的花朵 (容错)
+                foreach(var g in cursorGroups) {
+                    foreach(var p in g.chesspieces) p.hasFlower = false;
+                }
+
+                int placedFlowers = 0;
+                foreach (var g in flowerCandidates)
+                {
+                    foreach (var p in g.chesspieces)
+                    {
+                        if (p.state == TileState.Default && !p.hasFlower && !forbiddenCoordinates.Contains((p.row, p.col)))
+                        {
+                            if (_chessGroup.TryGetValue((p.row, p.col), out var crossGroups))
+                            {
+                                foreach (var crossG in crossGroups)
+                                {
+                                    var targetPiece = crossG.chesspieces.FirstOrDefault(cp => cp.row == p.row && cp.col == p.col);
+                                    if (targetPiece != null) targetPiece.hasFlower = true;
+                                }
+                            }
+                            // 🌟【核心修复】：同步更新主数据源 _chesspiece，确保能通过校验成功存入存档并渲染
+                            var hashPiece = _chesspiece.FirstOrDefault(cp => cp.row == p.row && cp.col == p.col);
+                            if (hashPiece != null) hashPiece.hasFlower = true;
+                   
+                            placedFlowers++;
+                            if (placedFlowers >= m_flower) break;
+                        }
+                    }
+                    if (placedFlowers >= m_flower) break;
+                }
+                // 🌟 [加在花朵生成逻辑大括号结束前的最后一行]
+                string flowerPieces = string.Join(", ", _chesspiece.Where(p => p.hasFlower).Select(p => $"({p.row},{p.col})-{p.letter}"));
+                Debug.Log($"<color=#00FF00>[花朵生成-算法结束]</color> 关卡:{stageId} | 来源:<color=#FFA500>算法随机分配</color> | 难度:{flowerDegree} | 目标:{m_flower}个 | 实际激活: [{flowerPieces}] ");
+            }
+            else if (m_flower > 0)
+            {
+                // 🌟 加上提示，让你在 Unity 控制台能直接看到原因！
+                Debug.LogWarning($"<color=#FF0000>[花朵未生成]</color> 关卡:{stageId} | 初始字数 {n_chars} - 需生成数 {m_flower} = {n_chars - m_flower} (<=3)。触发保护规则，不生成！");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 🌟 新增辅助方法：精准解构并应用格式为 "41,8#62,3" 的固定玩法数据
+    /// </summary>
+    private void ParseAndApplyElemData(string elemStr)
+    {
+        // 1. 使用 '#' 拆分出独立的格子数据块
+        string[] items = elemStr.Split('#', StringSplitOptions.RemoveEmptyEntries);
+        
+        foreach (string item in items)
+        {
+            // 2. 使用 ',' 拆分坐标与类型
+            string[] parts = item.Split(',');
+            if (parts.Length < 2) continue;
+
+            string coordStr = parts[0].Trim();
+            if (coordStr.Length < 2) continue;
+
+            // 3. 严格遵循 pass 的双位数解析约定：第一位为行(r)，第二位为列(c)
+            int row = int.Parse(coordStr[0].ToString());
+            int col = int.Parse(coordStr[1].ToString());
+            if (!int.TryParse(parts[1], out int mechanicType)) continue;
+
+            // 4. 点对点检索棋盘中的具体字块对象进行状态写入
+         
+            if (_chessGroup.TryGetValue((row, col), out var groups))
+            {
+                bool isApplied = false;
+                foreach (var group in groups)
+                {
+                    // 找到每个词组中属于这个坐标的字块实例
+                    var piece = group.chesspieces.FirstOrDefault(p => p.row == row && p.col == col);
+                    if (piece != null)
+                    {
+                        if ((mechanicType is 8 or 9) && ChessStageController.Instance.IceConfig != null && ChessStageController.Instance.IceConfig.IsOpen)
+                        {
+                            piece.hasIce = true;
+                            isApplied = true;
+                        }
+                        else if (mechanicType == 3 && ChessStageController.Instance.FlowerConfig != null && ChessStageController.Instance.FlowerConfig.IsOpen)
+                        {
+                            piece.hasFlower = true;
+                            isApplied = true;
+                        }
+                    }
+                }
+                // 兜底同步修改 _chesspiece 里的实例（保持全盘数据一致性）
+                var hashPiece = _chesspiece.FirstOrDefault(p => p.row == row && p.col == col);
+                if (hashPiece != null)
+                {
+                    if (mechanicType == 8 && isApplied) hashPiece.hasIce = true;
+                    if (mechanicType == 3 && isApplied) hashPiece.hasFlower = true;
+                }
+                if (isApplied)
+                {
+                    Debug.Log($"[固定玩法注入] 坐标 ({row}, {col}) 成功覆盖！类型代码: {mechanicType}");
+                }
+                else
+                {
+                    Debug.Log($"[固定玩法拦截] 坐标 ({row}, {col}) 玩法开关未开启，已忽略。");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[固定玩法失效] 配置了坐标 ({row}, {col})，但当前棋盘网格中不存在该格子！");
+            }
+        }
+
+    }
 }

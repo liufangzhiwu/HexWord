@@ -58,6 +58,29 @@ public partial class AnalyticMgr
 
     }
     
+    
+    ///  主题界面进入
+    /// </summary>
+    public static void ThemeEnter() 
+    {
+        Game.self.Analytics.LogEvent("theme_enter", Define.DataTarget.Think);
+
+    }
+    
+    ///  皮肤使用（每次通关时触发，首次触发在更换一次主题后）
+    /// </summary>
+    public static void ThemeUse(int themeid,int usertimes) 
+    {
+        var properties = new Dictionary<string, object>()
+        {
+            {"theme_id",themeid},
+            //{"theme_usetimes",usertimes},
+        }; 
+        
+        Game.self.Analytics.LogEvent("theme_use", properties,Define.DataTarget.Think);
+    }
+    
+    
     /// <summary>
     /// 单个任务完成
     /// </summary>
