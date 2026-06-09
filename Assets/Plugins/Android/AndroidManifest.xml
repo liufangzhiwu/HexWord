@@ -1,33 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.unity3d.player"
-        xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.unity3d.player">
 
-    <!-- 通用权限（保留） -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
-    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- vivo SDK 所需权限 -->
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- 已移除华为特定权限：com.huawei.hms.permission.ACTIVITY_RECOGNITION -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application>
-        <!-- vivo Union SDK Provider -->
+        <activity android:name="com.unity3d.player.UnityPlayerActivity"
+                  android:theme="@style/UnityThemeSelector">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+        </activity>
+
+        <!-- vivo SDK 配置（与 activity 平级） -->
         <provider
                 android:name="com.vivo.unionsdk.VivoUnionProvider"
                 android:authorities="${applicationId}.VivoUnionProvider"
                 android:enabled="true"
                 android:exported="true" />
 
-        <!-- 你的 AppID，请替换为真实值 -->
         <meta-data
                 android:name="vivoUnionAppId"
                 android:value="106007769" />
     </application>
-    
 </manifest>

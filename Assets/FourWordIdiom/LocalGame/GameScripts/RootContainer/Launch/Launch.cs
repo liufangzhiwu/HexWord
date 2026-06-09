@@ -34,10 +34,10 @@ public class Launch : MonoBehaviour
 
         if (!GameDataManager.Instance.UserData.IsAgreePrivacy)
         {
-#if UNITY_IOS||UNITY_ANDROID
+#if UNITY_IOS
              GameDataManager.Instance.UserData.IsAgreePrivacy = true;
              isTiming = true;
-#elif UNITY_huawei
+#elif UNITY_huawei||UNITY_ANDROID
             GameObject pg = Resources.Load<GameObject>("Privacy/PrivacyGuidance");
             GameObject ps = Instantiate(pg, transform);
             ps.SetActive(true);
