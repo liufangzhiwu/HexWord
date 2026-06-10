@@ -184,6 +184,7 @@ SpriteAtlas:
     - f3fdbabab2adbe94788bb0d25b9820a2: 21300000
     - 520b66caa053288488e819ac18e1e73b: 21300000
     - ebb060fa1d921c847af15ff961c0789a: 21300000
+    - 4bebbc0bcb751a84ea4ee10fc9d8a722: 21300000
     - 78d94a2b2400b4a4c9177f3f9be6c0f6: 21300000
     - 2005776b30a080a4cb279547b7dd3465: 21300000
     - 10e4777b4f2aada4a90c2ae490aa719c: 21300000
@@ -363,6 +364,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: f3fdbabab2adbe94788bb0d25b9820a2, type: 3}
   - {fileID: 21300000, guid: 520b66caa053288488e819ac18e1e73b, type: 3}
   - {fileID: 21300000, guid: ebb060fa1d921c847af15ff961c0789a, type: 3}
+  - {fileID: 21300000, guid: 4bebbc0bcb751a84ea4ee10fc9d8a722, type: 3}
   - {fileID: 21300000, guid: 78d94a2b2400b4a4c9177f3f9be6c0f6, type: 3}
   - {fileID: 21300000, guid: 2005776b30a080a4cb279547b7dd3465, type: 3}
   - {fileID: 21300000, guid: 10e4777b4f2aada4a90c2ae490aa719c, type: 3}
@@ -541,6 +543,7 @@ SpriteAtlas:
   - UI_Icon_PingSeleWord
   - head12
   - itemgift
+  - GoldLeaf
   - zenicon_2
   - zenicon_6
   - give_2
