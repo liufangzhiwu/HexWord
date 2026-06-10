@@ -7,11 +7,10 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: trailAltas
-  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 3
+      serializedVersion: 2
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -20,13 +19,11 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
-      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 2048
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -76,6 +73,7 @@ SpriteAtlas:
     - c8aaa95b660795a43a03c808caa1e4fd: 21300000
     - 60b7bd5b135cc1441959a8ed0d5f494f: 21300000
     - c837e86b2f997f64a821ce1fc4da14f4: 21300000
+    - ed04396b3d59b1442a3df7a0a11a016c: 21300000
     - a9e2211cc2169e5438e70f4d0b8a79ce: 21300000
     - 5472548cf6d2f8c439cc32cadf51ef8c: 21300000
     - 85d2cfbde0ae89c49896cb0a980315be: 21300000
@@ -107,6 +105,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: c8aaa95b660795a43a03c808caa1e4fd, type: 3}
   - {fileID: 21300000, guid: 60b7bd5b135cc1441959a8ed0d5f494f, type: 3}
   - {fileID: 21300000, guid: c837e86b2f997f64a821ce1fc4da14f4, type: 3}
+  - {fileID: 21300000, guid: ed04396b3d59b1442a3df7a0a11a016c, type: 3}
   - {fileID: 21300000, guid: a9e2211cc2169e5438e70f4d0b8a79ce, type: 3}
   - {fileID: 21300000, guid: 5472548cf6d2f8c439cc32cadf51ef8c, type: 3}
   - {fileID: 21300000, guid: 85d2cfbde0ae89c49896cb0a980315be, type: 3}
@@ -137,6 +136,7 @@ SpriteAtlas:
   - Butterfly01
   - ytuytuyjtjn
   - light3
+  - white
   - light
   - UI_01
   - Finish_01
@@ -146,4 +146,3 @@ SpriteAtlas:
   m_RenderDataMap: {}
   m_Tag: trailAltas
   m_IsVariant: 0
-  m_IsPlaceholder: 0
