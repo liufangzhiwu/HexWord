@@ -334,6 +334,17 @@ public partial class AnalyticMgr
         Game.self.Analytics.LogEvent("level_completed", thinkProps, Define.DataTarget.Think);
     }
     
+    public static void LevelFailed()
+    {
+        //var properties = new Dictionary<string, object> { };
+        Game.self.Analytics.LogEvent("level_fail", Define.DataTarget.Think);
+    }
+    public static void LevelExit()
+    {
+        //var properties = new Dictionary<string, object> { };
+        Game.self.Analytics.LogEvent("level_quit", Define.DataTarget.Think);
+    }
+    
     
     /// <summary>
     /// 上报生命周期事件

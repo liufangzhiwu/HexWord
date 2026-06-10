@@ -111,6 +111,7 @@ SpriteAtlas:
     - f98cb01544bf7a141aed9a82b3b94819: 21300000
     - 4f43f32565a75d546bbcaa2f848243b7: 21300000
     - 09a0a5357878d314faf472b74df7de43: 21300000
+    - 1cae76358b8af564ca259d1f501991ec: 21300000
     - 741d8945a4594a34a8904c76c833fcfb: 21300000
     - cf55ab557d8499a42a1321791de46da1: 21300000
     - 3bed017534b4ae546bf7a467a3f8ab78: 21300000
@@ -122,6 +123,7 @@ SpriteAtlas:
     - 53c9c9d59227e8a4693359f1993fb1c1: 21300000
     - 5864a9064d99ea64bb620a77ef8df3ac: 21300000
     - 6b61421603460774ba285289d2c66971: 21300000
+    - 39280e36c4ee42d4dab2e2b51e9e9e3f: 21300000
     - 0b8e35468cb38b24a9429e3c768f9002: 21300000
     - 436a9f46ff4d3f34d936b35ca6230dbd: 21300000
     - eb019256be774e94baf6ac60babe8577: 21300000
@@ -141,7 +143,6 @@ SpriteAtlas:
     - b500a44746692c44cba60eafbf908004: 21300000
     - 7027c647428744313ae6f397a7fb692f: 21300000
     - 98843457947614be9ac3e100aa3bd5e6: 21300000
-    - 1017df67d45706d42a848fe42b502ec7: 21300000
     - c8b0e2972dbf82a4bbf3891491b32813: 21300000
     - 5dc0e1a7b50f5e844aebcf6ebc8b41c9: 21300000
     - 9da672a7efae64c5085c15c9e3f97922: 21300000
@@ -160,6 +161,7 @@ SpriteAtlas:
     - fd804e88747b549e2af4ae573f28459e: 21300000
     - 8ba012a8effc5f04593473242834b468: 21300000
     - b17c8ea85ebcc034192922b881cb5a81: 21300000
+    - 6e29fdb829a73f843893e7dbca52774c: 21300000
     - 7a7a40c867e4d594ba4102bc7621cc42: 21300000
     - d7818bc85bcd070489f7ecd558529faa: 21300000
     - 18373ec83ff964343af0b4246ec17b17: 21300000
@@ -175,8 +177,10 @@ SpriteAtlas:
     - 290b82d9f124d274db714642933b4d71: 21300000
     - 94e1bbe94e7d2f14d8ff0c8a6af6015b: 21300000
     - 2640faf9b568b4a4590e9cded9f04c54: 21300000
+    - 2df10a0aa3bf3fb49ad8edb48991268e: 21300000
     - d07ef42a8ed7a7148a359b538fd79cd9: 21300000
     - 9d40e54a603f44e4b835c3574000932f: 21300000
+    - 46d4645a16900a54fbc54b73bc747ff9: 21300000
     - c90dc58a1eb0bdd409df3060f961f094: 21300000
     - 70a05a9ab6606954f90f4e6509cf8eb0: 21300000
     - bed72eaac5ea32347a345b23919b4747: 21300000
@@ -207,6 +211,7 @@ SpriteAtlas:
     - d9ce46acc0b5c6d4e8aedeffdc5a7908: 21300000
     - fbbe57bcbeea2a34bb9296c77bf50d76: 21300000
     - 6e37c9bcdba6cc546b7c412a93f5afd1: 21300000
+    - 52f106fc0a9c51b47be046b413110611: 21300000
     - c0c99ffcadf965645ad53456bda1aae3: 21300000
     - 0481131d8e02e4543bd383574c6c56f7: 21300000
     - a62db62d32c14c64b9efd04a1a844075: 21300000
@@ -291,6 +296,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: f98cb01544bf7a141aed9a82b3b94819, type: 3}
   - {fileID: 21300000, guid: 4f43f32565a75d546bbcaa2f848243b7, type: 3}
   - {fileID: 21300000, guid: 09a0a5357878d314faf472b74df7de43, type: 3}
+  - {fileID: 21300000, guid: 1cae76358b8af564ca259d1f501991ec, type: 3}
   - {fileID: 21300000, guid: 741d8945a4594a34a8904c76c833fcfb, type: 3}
   - {fileID: 21300000, guid: cf55ab557d8499a42a1321791de46da1, type: 3}
   - {fileID: 21300000, guid: 3bed017534b4ae546bf7a467a3f8ab78, type: 3}
@@ -302,6 +308,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 53c9c9d59227e8a4693359f1993fb1c1, type: 3}
   - {fileID: 21300000, guid: 5864a9064d99ea64bb620a77ef8df3ac, type: 3}
   - {fileID: 21300000, guid: 6b61421603460774ba285289d2c66971, type: 3}
+  - {fileID: 21300000, guid: 39280e36c4ee42d4dab2e2b51e9e9e3f, type: 3}
   - {fileID: 21300000, guid: 0b8e35468cb38b24a9429e3c768f9002, type: 3}
   - {fileID: 21300000, guid: 436a9f46ff4d3f34d936b35ca6230dbd, type: 3}
   - {fileID: 21300000, guid: eb019256be774e94baf6ac60babe8577, type: 3}
@@ -321,7 +328,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: b500a44746692c44cba60eafbf908004, type: 3}
   - {fileID: 21300000, guid: 7027c647428744313ae6f397a7fb692f, type: 3}
   - {fileID: 21300000, guid: 98843457947614be9ac3e100aa3bd5e6, type: 3}
-  - {fileID: 21300000, guid: 1017df67d45706d42a848fe42b502ec7, type: 3}
   - {fileID: 21300000, guid: c8b0e2972dbf82a4bbf3891491b32813, type: 3}
   - {fileID: 21300000, guid: 5dc0e1a7b50f5e844aebcf6ebc8b41c9, type: 3}
   - {fileID: 21300000, guid: 9da672a7efae64c5085c15c9e3f97922, type: 3}
@@ -340,6 +346,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: fd804e88747b549e2af4ae573f28459e, type: 3}
   - {fileID: 21300000, guid: 8ba012a8effc5f04593473242834b468, type: 3}
   - {fileID: 21300000, guid: b17c8ea85ebcc034192922b881cb5a81, type: 3}
+  - {fileID: 21300000, guid: 6e29fdb829a73f843893e7dbca52774c, type: 3}
   - {fileID: 21300000, guid: 7a7a40c867e4d594ba4102bc7621cc42, type: 3}
   - {fileID: 21300000, guid: d7818bc85bcd070489f7ecd558529faa, type: 3}
   - {fileID: 21300000, guid: 18373ec83ff964343af0b4246ec17b17, type: 3}
@@ -355,8 +362,10 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 290b82d9f124d274db714642933b4d71, type: 3}
   - {fileID: 21300000, guid: 94e1bbe94e7d2f14d8ff0c8a6af6015b, type: 3}
   - {fileID: 21300000, guid: 2640faf9b568b4a4590e9cded9f04c54, type: 3}
+  - {fileID: 21300000, guid: 2df10a0aa3bf3fb49ad8edb48991268e, type: 3}
   - {fileID: 21300000, guid: d07ef42a8ed7a7148a359b538fd79cd9, type: 3}
   - {fileID: 21300000, guid: 9d40e54a603f44e4b835c3574000932f, type: 3}
+  - {fileID: 21300000, guid: 46d4645a16900a54fbc54b73bc747ff9, type: 3}
   - {fileID: 21300000, guid: c90dc58a1eb0bdd409df3060f961f094, type: 3}
   - {fileID: 21300000, guid: 70a05a9ab6606954f90f4e6509cf8eb0, type: 3}
   - {fileID: 21300000, guid: bed72eaac5ea32347a345b23919b4747, type: 3}
@@ -387,6 +396,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: d9ce46acc0b5c6d4e8aedeffdc5a7908, type: 3}
   - {fileID: 21300000, guid: fbbe57bcbeea2a34bb9296c77bf50d76, type: 3}
   - {fileID: 21300000, guid: 6e37c9bcdba6cc546b7c412a93f5afd1, type: 3}
+  - {fileID: 21300000, guid: 52f106fc0a9c51b47be046b413110611, type: 3}
   - {fileID: 21300000, guid: c0c99ffcadf965645ad53456bda1aae3, type: 3}
   - {fileID: 21300000, guid: 0481131d8e02e4543bd383574c6c56f7, type: 3}
   - {fileID: 21300000, guid: a62db62d32c14c64b9efd04a1a844075, type: 3}
@@ -470,6 +480,7 @@ SpriteAtlas:
   - Tips
   - riMatchFail
   - hehua_10
+  - leaf_skin_03
   - giftdi13
   - zenicon_3
   - head10
@@ -481,6 +492,7 @@ SpriteAtlas:
   - UI_Icon_PingWord
   - head0
   - tipicon
+  - goldLeaf
   - UI_Icon_gold
   - zenicon_10
   - oneBox
@@ -500,7 +512,6 @@ SpriteAtlas:
   - itemdi7
   - fishbtnred
   - fishbtnblue
-  - success_bg
   - timeicon
   - tag_down
   - targetgreen
@@ -519,6 +530,7 @@ SpriteAtlas:
   - targetred
   - fishline
   - gold2
+  - success_bg
   - icon_layer
   - shopads
   - UI_Icon_Butterfly
@@ -534,8 +546,10 @@ SpriteAtlas:
   - freeitembg
   - hehua_6
   - UI_Icon_Home
+  - leaf_skin_02
   - limit_pupas
   - rank2
+  - leaf_skin_01
   - UI_Icon_claim
   - Coin1
   - itemdi15
@@ -566,6 +580,7 @@ SpriteAtlas:
   - levelPuzzle
   - zenicon_4
   - head2
+  - leaf_skin_04
   - UI_Icon_back
   - UI_Icon_JianSeleWord
   - limiticon

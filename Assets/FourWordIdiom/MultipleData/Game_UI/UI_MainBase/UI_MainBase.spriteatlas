@@ -130,6 +130,7 @@ SpriteAtlas:
     - ab153b784d36e2f49a9d7b0fc194ed14: 21300000
     - eaac0398f2ddd8648a1a014c8a83446b: 21300000
     - 8ea8cfa8d33ab784695012c5bccc547e: 21300000
+    - d544e5b8c6d5bde498ff9eb70b1f93f3: 21300000
     - 4b7913e83f194ba4a8357852eb8f22e3: 21300000
     - 5a8d88f8803371043aa43f0e62654c1e: 21300000
     - 6390971926d49ee498ea87bf93ddee4d: 21300000
@@ -137,6 +138,7 @@ SpriteAtlas:
     - eda66bb933869d44387704ca297137c6: 21300000
     - 7b7965e9bed9f5946a9d35729763e0f6: 21300000
     - 09f2b4f9dc2fa554cafc996dd79fdff8: 21300000
+    - 2a4cab5a69d722b4ba921a501da61e19: 21300000
     - 84192f5a5cf60af4aa4c5d05845d10a7: 21300000
     - 1b75416aa63296e44a7738f739ed2201: 21300000
     - d45a8b7aa446d8b4a80bf183b89af158: 21300000
@@ -161,6 +163,7 @@ SpriteAtlas:
     - e439266dcc0c6a04799e9aea03280db8: 21300000
     - 74eae07d550874d4ba8e6d5035a67b22: 21300000
     - b193e79d45d059b4398506897df823c1: 21300000
+    - 4416dcddd5a83f342993678e14618c5e: 21300000
     - 81c3cc1ec36dd2748823b3ffae61b185: 21300000
     - 9513e54ed1e37fa4880e17a6a7dc7321: 21300000
     - 6e7b1e5ee7760f842a53b245800b11bd: 21300000
@@ -244,6 +247,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: ab153b784d36e2f49a9d7b0fc194ed14, type: 3}
   - {fileID: 21300000, guid: eaac0398f2ddd8648a1a014c8a83446b, type: 3}
   - {fileID: 21300000, guid: 8ea8cfa8d33ab784695012c5bccc547e, type: 3}
+  - {fileID: 21300000, guid: d544e5b8c6d5bde498ff9eb70b1f93f3, type: 3}
   - {fileID: 21300000, guid: 4b7913e83f194ba4a8357852eb8f22e3, type: 3}
   - {fileID: 21300000, guid: 5a8d88f8803371043aa43f0e62654c1e, type: 3}
   - {fileID: 21300000, guid: 6390971926d49ee498ea87bf93ddee4d, type: 3}
@@ -251,6 +255,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: eda66bb933869d44387704ca297137c6, type: 3}
   - {fileID: 21300000, guid: 7b7965e9bed9f5946a9d35729763e0f6, type: 3}
   - {fileID: 21300000, guid: 09f2b4f9dc2fa554cafc996dd79fdff8, type: 3}
+  - {fileID: 21300000, guid: 2a4cab5a69d722b4ba921a501da61e19, type: 3}
   - {fileID: 21300000, guid: 84192f5a5cf60af4aa4c5d05845d10a7, type: 3}
   - {fileID: 21300000, guid: 1b75416aa63296e44a7738f739ed2201, type: 3}
   - {fileID: 21300000, guid: d45a8b7aa446d8b4a80bf183b89af158, type: 3}
@@ -275,6 +280,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: e439266dcc0c6a04799e9aea03280db8, type: 3}
   - {fileID: 21300000, guid: 74eae07d550874d4ba8e6d5035a67b22, type: 3}
   - {fileID: 21300000, guid: b193e79d45d059b4398506897df823c1, type: 3}
+  - {fileID: 21300000, guid: 4416dcddd5a83f342993678e14618c5e, type: 3}
   - {fileID: 21300000, guid: 81c3cc1ec36dd2748823b3ffae61b185, type: 3}
   - {fileID: 21300000, guid: 9513e54ed1e37fa4880e17a6a7dc7321, type: 3}
   - {fileID: 21300000, guid: 6e7b1e5ee7760f842a53b245800b11bd, type: 3}
@@ -357,6 +363,7 @@ SpriteAtlas:
   - time_icon
   - bowl_bg
   - UI_Icon_level
+  - UI_pause_di
   - uI_dd
   - puzzlielie
   - tehardanniu
@@ -364,6 +371,7 @@ SpriteAtlas:
   - di
   - levelPuzzle
   - soace_bg
+  - UI_exit_btn
   - UI_Icon_claim
   - UI_yezi_ibg
   - time_bg
@@ -388,6 +396,7 @@ SpriteAtlas:
   - number
   - pupa_progress
   - tehardbg
+  - UI_jump_btn
   - puzzle_bg
   - time_bg
   - UI_btn_pupa
