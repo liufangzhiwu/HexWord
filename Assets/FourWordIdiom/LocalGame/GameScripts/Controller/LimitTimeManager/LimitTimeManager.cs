@@ -131,7 +131,18 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
                     CurlimitData = TemplimitData;
                     if (GameDataManager.Instance.UserData.timePuzzlecount >= needword + CurlimitData.num)
                         return CurlimitData.num;
-                    return GameDataManager.Instance.UserData.timePuzzlecount - needword;
+                    if (GameDataManager.Instance.UserData.timePuzzlecount - needword < 0)
+                    {
+                        int count=needword - GameDataManager.Instance.UserData.timePuzzlecount;
+                        int value = CurlimitData.num - count;
+                        
+                        GameDataManager.Instance.UserData.timePuzzlecount=needword+value;
+                        return value;
+                    }
+                    else
+                    {
+                        return GameDataManager.Instance.UserData.timePuzzlecount - needword;
+                    }
                 }
                 needword += TemplimitData.num;
             }         

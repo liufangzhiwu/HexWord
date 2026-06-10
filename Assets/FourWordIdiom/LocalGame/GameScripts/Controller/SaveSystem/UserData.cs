@@ -882,6 +882,7 @@ public class UserData
     public void UpdateLImitid()
     {
         timerePuzzleid++;
+        LimitTimeManager.Instance.GetCurWordCount();
         if (string.IsNullOrEmpty(limitOpenTime)) limitOpenTime = DateTime.Now.ToString();
         TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(limitOpenTime));
         AnalyticMgr.ActivityProgress("限时活动",timerePuzzleid,(int)ts.TotalSeconds);
