@@ -5,6 +5,7 @@ using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.HuaweiAppGallery;
+using UnityEngine.Networking;
 
 namespace Middleware
 {
@@ -193,33 +194,31 @@ namespace Middleware
             while (true)
             {
                 bool isSuccess = false;
-                Ping ping = new Ping("8.8.8.8");
-                float timeout = 3.0f;
-                float startTime = Time.time;
-
-                // 等待Ping完成或超时
-                while (!ping.isDone && Time.time - startTime < timeout)
+                using (UnityWebRequest request = UnityWebRequest.Head("https://www.apple.com/library/test/success.html"))
                 {
-                    yield return null;
-                }
+                    // 设置超时 5 秒
+                    request.timeout = 5;
+                    request.SendWebRequest();
 
-                // 关键修改：明确超时和成功的条件
-                if (ping.isDone && ping.time > 0 && ping.time < 2000)
-                {
-                    isSuccess = true;
-                }
-                else
-                {
-                    isSuccess = false;
-                }
+                    float startTime = Time.time;
+                    while (!request.isDone && Time.time - startTime < 5.5f)
+                    {
+                        yield return null;
+                    }
 
-                // 释放Ping资源（Unity需手动销毁）
-                ping.DestroyPing();
-                ping = null;
+                    // 成功条件：没有网络错误且 HTTP 状态码为 2xx 或 3xx
+                    if (!request.isNetworkError && !request.isHttpError)
+                    {
+                        isSuccess = true;
+                    }
+                    else
+                    {
+                        // 可选：记录错误码便于调试
+                        Debug.Log($"网络检测失败: {request.error}");
+                    }
+                }
 
                 IsNetworkActive = isSuccess;
-                // Debug.Log("网络状态: " + (IsNetworkActive ? "已连接" : "未连接"));
-
                 yield return new WaitForSeconds(5);
             }
         }

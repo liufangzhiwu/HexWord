@@ -200,6 +200,7 @@ SpriteAtlas:
     - 384a99db7dd798d44af84316e57191bc: 21300000
     - b9935cdbe9478264a8233f290a5dd0a6: 21300000
     - b7b0141c7affd8347affa4e3f6a0c17a: 21300000
+    - 1921b71c5af9b8244a8dc86de0ab9d34: 21300000
     - 8c1e292cb7b63fe429c0ba800596be51: 21300000
     - e2f2af5c2870a5646b48fd789f7c9d09: 21300000
     - 58b0d46c04c0d4e4a83e0de611d8d61f: 21300000
@@ -385,6 +386,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 384a99db7dd798d44af84316e57191bc, type: 3}
   - {fileID: 21300000, guid: b9935cdbe9478264a8233f290a5dd0a6, type: 3}
   - {fileID: 21300000, guid: b7b0141c7affd8347affa4e3f6a0c17a, type: 3}
+  - {fileID: 21300000, guid: 1921b71c5af9b8244a8dc86de0ab9d34, type: 3}
   - {fileID: 21300000, guid: 8c1e292cb7b63fe429c0ba800596be51, type: 3}
   - {fileID: 21300000, guid: e2f2af5c2870a5646b48fd789f7c9d09, type: 3}
   - {fileID: 21300000, guid: 58b0d46c04c0d4e4a83e0de611d8d61f, type: 3}
@@ -569,6 +571,7 @@ SpriteAtlas:
   - Rankdi1
   - Highlight_142
   - head9
+  - ranktitle_c
   - give_coin_0
   - head19
   - give_coin_2

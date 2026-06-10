@@ -64,7 +64,6 @@ public sealed class GameCoreManager: MonoBehaviour
 #endif
         Game.self._uiRoot=SystemManager.Instance._uiRoot;
         StartCoroutine(InitializeGameRoutine());
-        //StartCoroutine(CheckNetworkConnection());
         AutoLevelTalbe.GetComponent<Toggle>().onValueChanged.AddListener(OnAutoLevelTalbeValueChanged);
         
 #if Unity_ShowLog || UNITY_EDITOR

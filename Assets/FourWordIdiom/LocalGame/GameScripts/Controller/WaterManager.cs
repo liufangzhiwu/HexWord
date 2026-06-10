@@ -188,7 +188,7 @@ public class WaterManager : MonoBehaviour
     }
 
     
-    public void PlayerWater(bool isenter=false,int value=0)
+    public void PlayerWater(bool isenter=false,int type=0,int value=0)
     {
         if (isenter)
         {
@@ -197,7 +197,6 @@ public class WaterManager : MonoBehaviour
         else
         {
             GameDataManager.Instance.UserData.UpdateSignid();
-            GameDataManager.Instance.UserData.UpdateGold(value, false, false,"签到广告获得");
 
             hu.transform.DOLocalRotate(new Vector3(0f, 0f, 35f), 1.2f, RotateMode.Fast).OnComplete(() =>
             {
@@ -205,7 +204,7 @@ public class WaterManager : MonoBehaviour
                 ShowDaoWater(true);
                 water.gameObject.SetActive(false);
                 Water2DSpawner.Spawn(isenter);
-                AudioManager.Instance.PlaySoundEffect("SignWater");                
+                AudioManager.Instance.PlaySoundEffect("SignWater");     
             });
         }
             

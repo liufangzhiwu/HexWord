@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class ZenRankScreen : UIWindow
 {
-    [SerializeField] private Text title;
+    //[SerializeField] private Text title;
     [SerializeField] private RectTransform LeaderView;
     [SerializeField] private RectTransform RankView;
     [SerializeField] private Transform LevelParent;
@@ -74,7 +74,7 @@ public class ZenRankScreen : UIWindow
     
     private IEnumerator Start()
     {
-        title.text = MultilingualManager.Instance.GetString("MeditationList");
+        //title.text = MultilingualManager.Instance.GetString("MeditationList");
         ZenTitle.text = MultilingualManager.Instance.GetString("ZenValue");
    
         

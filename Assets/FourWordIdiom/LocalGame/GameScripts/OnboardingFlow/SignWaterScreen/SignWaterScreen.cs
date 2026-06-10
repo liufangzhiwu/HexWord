@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using DG.Tweening;
 using Middleware;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
 public class SignWaterScreen : UIWindow
@@ -11,6 +14,7 @@ public class SignWaterScreen : UIWindow
     [SerializeField] private Button closeBtn; // 关闭按钮
     [SerializeField] private Button StartBtn; // 隐私条款按钮
     [SerializeField] private Button HideBtn; // 隐私条款按钮
+    [SerializeField] private GameObject parent; // 隐私条款按钮
     [SerializeField] private GameObject[] CoinsObjs; // 隐私条款按钮
     [SerializeField] private Image huObj; // 隐私条款按钮
     [SerializeField] private Text title; // 隐私条款按钮
@@ -25,7 +29,8 @@ public class SignWaterScreen : UIWindow
 
     private int minutes = 10;
 
-    private int[] AwardValues = { 15,35,50,100};
+    private int[] AwardValues = { 15,1,50,1};
+    private int[] AwardTypes = { 0,11,0,11};
    
     void Start()
     {
@@ -43,12 +48,12 @@ public class SignWaterScreen : UIWindow
         CheckSignEvent();
         StartCoroutine(ShowWaterAnim());
 
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false,true);
     }
 
     private void InitUI()
     {
-        title.text = MultilingualManager.Instance.GetString("SignTile");
+        //title.text = MultilingualManager.Instance.GetString("SignTile");
         int signid = GameDataManager.Instance.UserData.signid + 1;
         WaitTimeText.text = MultilingualManager.Instance.GetString("SignPourTea0" +signid);
         
@@ -65,7 +70,7 @@ public class SignWaterScreen : UIWindow
         if(GameDataManager.Instance.UserData.signid > 0&&GameDataManager.Instance.UserData.signid <= 3)
         {
             //StartBtn.interactable = false;
-            //StartCoroutine(CheckIsReadyToShowAd());
+            StartCoroutine(CheckIsReadyToShowAd());
             //StartCoroutine(WaitTime());
         }
 
@@ -135,51 +140,49 @@ public class SignWaterScreen : UIWindow
         const float checkInterval = 2f;
         const int maxAttempts = 10; // 防止无限循环
         
-        yield return new WaitForSeconds(0.1f);
-        
         // 初始状态检查
-        // bool isReady = Game.Ads.IsReady(GetAdKey());
-        // bool isConnected = GameCoreManager.Instance.IsNetworkActive;
-        //
-        // // 立即更新UI状态
-        // adsIcon.gameObject.SetActive(isReady);
-        // adsloading.gameObject.SetActive(!isReady);
-        //
-        // // 如果没有网络连接，直接退出
-        // if (!isConnected)
-        // {
-        //     yield break;
-        // }
-        //
-        // // 轮询检查
-        // int attempt = 0;
-        // while (attempt < maxAttempts && isConnected&&!isReady)
-        // {
-        //     yield return new WaitForSeconds(checkInterval);
-        //
-        //     attempt++;
-        //     isReady = Game.Ads.IsReady(GetAdKey());
-        //     isConnected = GameCoreManager.Instance.IsNetworkActive;
-        //
-        //     // 状态变化处理
-        //     if (isReady&&isConnected)
-        //     {
-        //         adsloading.gameObject.SetActive(false);
-        //         adsIcon.gameObject.SetActive(true);                   
-        //         yield break;
-        //     }
-        // }
-        //
-        // // 立即更新UI状态
-        // adsIcon.gameObject.SetActive(isReady);
-        // adsloading.gameObject.SetActive(!isReady);
-        //
-        // // 可选：超过最大尝试次数的处理
-        // if (!isReady)
-        // {
-        //     Debug.LogWarning($"广告加载超时，最大尝试次数 {maxAttempts} 次");
-        //     // 可以在这里触发备用广告加载或错误处理
-        // }
+        bool isReady = Game.self.Ads.IsReady(GetAdKey());
+        bool isConnected = Game.IsNetworkActive;
+
+        // 立即更新UI状态
+        adsIcon.gameObject.SetActive(isReady);
+        adsloading.gameObject.SetActive(!isReady);
+
+        // 如果没有网络连接，直接退出
+        if (!isConnected)
+        {
+            yield break;
+        }
+
+        // 轮询检查
+        int attempt = 0;
+        while (attempt < maxAttempts && isConnected&&!isReady)
+        {
+            yield return new WaitForSeconds(checkInterval);
+    
+            attempt++;
+            isReady = Game.self.Ads.IsReady(GetAdKey());
+            isConnected = Game.IsNetworkActive;
+    
+            // 状态变化处理
+            if (isReady&&isConnected)
+            {
+                adsloading.gameObject.SetActive(false);
+                adsIcon.gameObject.SetActive(true);                   
+                yield break;
+            }
+        }
+
+        // 立即更新UI状态
+        adsIcon.gameObject.SetActive(isReady);
+        adsloading.gameObject.SetActive(!isReady);
+
+        // 可选：超过最大尝试次数的处理
+        if (!isReady)
+        {
+            Debug.LogWarning($"广告加载超时，最大尝试次数 {maxAttempts} 次");
+            // 可以在这里触发备用广告加载或错误处理
+        }
     }
    
     protected override void InitializeUIComponents()
@@ -210,28 +213,15 @@ public class SignWaterScreen : UIWindow
         Define.AdKey key;
         var sign = GameDataManager.Instance.UserData.signid;
         AnalyticMgr.VideoAdClick("签到"+sign);
-        
-//#if UNITY_OPENHARMONY
         StartCoroutine(ShowAdsRewardUI());
-// #elif Unity_ShowLog
-//         iswater = true;
-//         AdsStartBtn.enabled = false;
-//         closeBtn.enabled = false;
-//         HideBtn.enabled = false;
-//         int value = AwardValues[sign];
-//         WaterManager.instance.PlayerWater(false, value);
-//         StartCoroutine(CheckIsReadyToShowAd());
-//         AnalyticMgr.VideoAdSuccess("签到"+sign);
-//         GameDataManager.Instance.UserData.totalSeeAds++;
-//         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedSeeAds,1);
-// #endif
     }
     
     IEnumerator ShowAdsRewardUI()
     {
         yield return new WaitForSeconds(0.05f);
         var sign = GameDataManager.Instance.UserData.signid;
-        Game.self.Ads.ShowReward(GetAdKey(),success => {
+        AdRuleManager.Instance.TryShowRewardVideo(GetAdKey(),success => {
+            MessageSystem.Instance.HideLoadingAnimation();
             if (!success)
             {
                 AnalyticMgr.VideoAdFail("签到"+sign);
@@ -243,7 +233,8 @@ public class SignWaterScreen : UIWindow
                 closeBtn.enabled = false;
                 HideBtn.enabled = false;
                 int value = AwardValues[sign];
-                WaterManager.instance.PlayerWater(false, value);
+                int type = AwardTypes[sign];
+                WaterManager.instance.PlayerWater(false,type,value);
                 StartCoroutine(CheckIsReadyToShowAd());
                 AnalyticMgr.VideoAdSuccess("签到"+sign);
                 GameDataManager.Instance.UserData.totalSeeAds++;
@@ -251,7 +242,7 @@ public class SignWaterScreen : UIWindow
             }
         });
     }
-
+    
 
     public void OnStartBtn()
     {
@@ -300,16 +291,35 @@ public class SignWaterScreen : UIWindow
     private void GetAward(int id)
     {
         int value= AwardValues[id];
-        CustomFlyInManager.Instance.FlyInGold(CoinsObjs[id].transform,() =>
+        int type= AwardTypes[id];
+        
+        if ((LimitRewordType)type == LimitRewordType.Coins)
         {
-            EventDispatcher.instance.TriggerChangeGoldUI(value,true);
-            //GameDataManager.MainInstance.UserData.UpdateGold(value,true);
-            //NextLevelBtn.gameObject.SetActive(true);
-        });
+            CustomFlyInManager.Instance.FlyInGold(CoinsObjs[id].transform,() =>
+            {
+                GameDataManager.Instance.UserData.UpdateGold(value,true);
+                //NextLevelBtn.gameObject.SetActive(true);
+            });
+        }
+        if ((LimitRewordType)type ==LimitRewordType.Pupas)
+        {
+            // GameDataManager.Instance.ButterflyData.AddPupa(value);
+            ButterfliesManager.Instance.AddObtainedPupaOnGamePanel(CoinsObjs[id].gameObject.transform,1);
+        }
+        
+        DisCoinsTable(id);
         HideBtn.enabled = true;
         closeBtn.enabled = true;
     }
-   
+
+    private void DisCoinsTable(int id)
+    {
+        // CoinsObjs[id].GetComponent<Animator>().enabled = false;
+        // CoinsObjs[id].GetComponent<CanvasGroup>().DOFade(0, 0.3f).OnComplete(() =>
+        // {
+        //     CoinsObjs[id].gameObject.SetActive(false);
+        // });
+    }
 
     private void WaterPause(int progressid)
     {
@@ -344,7 +354,7 @@ public class SignWaterScreen : UIWindow
     protected override void OnDisable()
     {
         base.OnDisable();
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true,true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
         WaterManager.instance.OnWaterProgress -= ShowWaterProgress;
     }
 }
