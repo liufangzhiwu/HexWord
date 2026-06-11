@@ -25494,7 +25494,7 @@ MonoBehaviour:
   extrahardStageTable: {fileID: 2276472365151529544}
   zenScoreText: {fileID: 7818380088808031356}
   _zenRankBtn: {fileID: 4607705319676502527}
-  _centerLotusImage: {fileID: 0}
+  _centerLotusImage: {fileID: 3164451396432359528}
   Content: {fileID: 5972038460822632039}
   nextBtn: {fileID: 3550607149674913449}
   progressSlider: {fileID: 974993057847591136}
@@ -27125,6 +27125,11 @@ PrefabInstance:
     - target: {fileID: 1226542939178664146, guid: 548ea765d47fa0740a5b06b0b87a6dba,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1712616792017566289, guid: 548ea765d47fa0740a5b06b0b87a6dba,
+        type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6115085362379890090, guid: 548ea765d47fa0740a5b06b0b87a6dba,
