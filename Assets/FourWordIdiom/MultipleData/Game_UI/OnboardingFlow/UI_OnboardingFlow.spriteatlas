@@ -71,7 +71,6 @@ SpriteAtlas:
     - 04870780dae12da468eaef9da5209bcf: 21300000
     - b4f971b0da3e2ff48a10323c8a5d42ca: 21300000
     - e94e32b01463d794b9124791a81d926c: 21300000
-    - 4e003db0fccf9654d93ab7d34103fa15: 21300000
     - 5db30ae05243c5949a0e67a42018951e: 21300000
     - fbd3401172b1a764cb20578aede87d99: 21300000
     - 09353f41cb6689744a2266217cf9c7c0: 21300000
@@ -185,6 +184,7 @@ SpriteAtlas:
     - febc312cee8110e4684e3e8c0ede57fa: 21300000
     - 2e55cc5cdde54c94eaeaa6acf58a5d24: 21300000
     - 91c1216cd0d015247b158130ab6d52f7: 21300000
+    - 180afc9cf92c3384a80037b887648185: 21300000
     - 377a67bcb5b44534b8f77e959a6b536c: 21300000
     - 05a0352d076d2694a849941a8dcc5f1c: 21300000
     - 5bed353da9797ac409c3715d54a7ff43: 21300000
@@ -233,7 +233,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 04870780dae12da468eaef9da5209bcf, type: 3}
   - {fileID: 21300000, guid: b4f971b0da3e2ff48a10323c8a5d42ca, type: 3}
   - {fileID: 21300000, guid: e94e32b01463d794b9124791a81d926c, type: 3}
-  - {fileID: 21300000, guid: 4e003db0fccf9654d93ab7d34103fa15, type: 3}
   - {fileID: 21300000, guid: 5db30ae05243c5949a0e67a42018951e, type: 3}
   - {fileID: 21300000, guid: fbd3401172b1a764cb20578aede87d99, type: 3}
   - {fileID: 21300000, guid: 09353f41cb6689744a2266217cf9c7c0, type: 3}
@@ -347,6 +346,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: febc312cee8110e4684e3e8c0ede57fa, type: 3}
   - {fileID: 21300000, guid: 2e55cc5cdde54c94eaeaa6acf58a5d24, type: 3}
   - {fileID: 21300000, guid: 91c1216cd0d015247b158130ab6d52f7, type: 3}
+  - {fileID: 21300000, guid: 180afc9cf92c3384a80037b887648185, type: 3}
   - {fileID: 21300000, guid: 377a67bcb5b44534b8f77e959a6b536c, type: 3}
   - {fileID: 21300000, guid: 05a0352d076d2694a849941a8dcc5f1c, type: 3}
   - {fileID: 21300000, guid: 5bed353da9797ac409c3715d54a7ff43, type: 3}
@@ -394,7 +394,6 @@ SpriteAtlas:
   - anniubg
   - right
   - minbg
-  - dailytitle
   - wordbg
   - endeng
   - line
@@ -508,6 +507,7 @@ SpriteAtlas:
   - tag
   - UI_Icon_vibrate
   - selecticon
+  - dailytitle
   - dailytaskdi
   - Min
   - qian
