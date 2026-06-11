@@ -687,8 +687,8 @@ public class PrimaryInterface : UIWindow
             GameDataManager.Instance.CommitGameData();
         }
         
-        try
-        {
+        // try
+        // {
             switch (GameDataManager.Instance.UserData.levelMode)
             {
                 case 3:
@@ -698,11 +698,11 @@ public class PrimaryInterface : UIWindow
                     ChessStageController.Instance.SetStageData(ChessStageController.Instance.CurrentStage);
                     break;
             }
-           
-        }catch (System.Exception e)
-        {
-            Debug.LogError("设置关卡数据失败: " + e);
-        }
+        //    
+        // }catch (System.Exception e)
+        // {
+        //     Debug.LogError("设置关卡数据失败: " + e);
+        // }
         
         SystemManager.Instance.HidePanel(PanelType.HeaderSection,true, OnEnterStageClick);
         SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
