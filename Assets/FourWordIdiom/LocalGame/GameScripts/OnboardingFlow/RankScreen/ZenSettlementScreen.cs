@@ -313,7 +313,7 @@ public class ZenSettlementScreen : UIWindow
     {
         return id switch
         {
-            3 => LimitRewordType.HexWordTipsttool,     // 六边形词语提示道具
+            3 => LimitRewordType.SingleWordTipsttool,     // 六边形词语提示道具
             2 => LimitRewordType.Tipstool,      // 提示
             1 => LimitRewordType.Butterfly,     // 蝴蝶
             4 => LimitRewordType.AutoComplete,  // 自动拼字

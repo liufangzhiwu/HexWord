@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using DG.Tweening;
-using HuaweiService.CloudStorage;
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -22,7 +21,8 @@ public class GetItemScreen : UIWindow
     public static LimitRewordType limitRewordType;
 
     private string eventDes;
-
+    public static string targetWord; // 🌟 新增：用于存储当前目标词组
+    //bool isshowpupa;
     private ShopDataItem shopDataItem;
  
     protected override void OnEnable()
@@ -31,7 +31,17 @@ public class GetItemScreen : UIWindow
         InitUI();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
         //EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
+        
+        // if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
+        // {
+        //     isshowpupa=StageController.Instance.CurStageData.PupaDatas!=null;
+        // }
+        // else if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        // {
+        //     isshowpupa=ChessStageController.Instance.CurrStageData.PupaDatas!=null;
+        // }
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false,false);
     }
 
     private void InitUI()
@@ -55,26 +65,42 @@ public class GetItemScreen : UIWindow
                 AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
                 break;
             case LimitRewordType.Tipstool:
-                title.text = "放大镜";
-                UpdateCliamBtn(false);
+                title.text = MultilingualManager.Instance.GetString("ItemName01","pingzi");
+                UpdateCliamBtn(true);
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
-                tips.text = "提示一个成语中的所有字";
-                AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_tip");
-                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
+                tips.text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
+                if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
+                {
+                    AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("tipligh");
+                }
+                
+                if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+                {
+                    AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("tipligh");
+                }
+                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
                 eventDes=title.text+"弹窗广告";
                 break;
-            case LimitRewordType.HexWordTipsttool:
-                UpdateCliamBtn(true);
+            case LimitRewordType.SingleWordTipsttool:
+                UpdateCliamBtn(false);
                 title.text = "提示灯";
-                tips.text = "提示一个成语的首字";
+                tips.text = "提示一个词语的首字";
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
                 AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_reset");
+                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
+                eventDes=title.text+"弹窗广告";
+                AnalyticMgr.VideoAdShow(eventDes);
+                break;
+            case LimitRewordType.AutoComplete:
+                UpdateCliamBtn(false);
+                title.text = MultilingualManager.Instance.GetString("ItemName02","pingzi");
+                tips.text = MultilingualManager.Instance.GetString("ItemDes02","pingzi");
+                ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
+                AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
                 eventDes=title.text+"弹窗广告";
                 AnalyticMgr.VideoAdShow(eventDes);
                 break;
-            // case LimitRewordType.Min5Double:
-            //     return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
             // case LimitRewordType.Min15Double:
             //     return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
         }
@@ -105,18 +131,21 @@ public class GetItemScreen : UIWindow
     IEnumerator ShowAdsRewardUI()
     {
         yield return new WaitForSeconds(0.05f);
-        Game.self.Ads?.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+        AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
     }
 
     private void ClickClaimGoldBtn()
     {
         ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
-        if (limitRewordType == LimitRewordType.HexWordTipsttool)
+        if (limitRewordType == LimitRewordType.SingleWordTipsttool)
         {
             toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
         }else if (limitRewordType == LimitRewordType.Tipstool)
         {
             toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
+        }else if (limitRewordType == LimitRewordType.AutoComplete)
+        {
+            toolInfo = GameDataManager.Instance.UserData.toolInfo[104];
         }
         
        
@@ -127,40 +156,40 @@ public class GetItemScreen : UIWindow
         }
         
         GameDataManager.Instance.UserData.UpdateTool(limitRewordType, 1,"金币购买道具");
-        GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"金币购买道具");
+        GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,true,true,"金币购买道具");
         
         
-        if (limitRewordType == LimitRewordType.HexWordTipsttool)
+        if (limitRewordType == LimitRewordType.SingleWordTipsttool)
         {
-            switch (GameDataManager.Instance.UserData.levelMode)
+            if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
             {
-                case 1:
-                case 3:
-                        SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
-                            ?.ToolItemFirstLetter();
-                    break;
-                case 2:
-                    SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
-                    ?.UseTips();
-                    break;
+                SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                    ?.ToolItemFirstLetter();
             }
             
+            if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+            {
+                SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
+                    ?.UseTips();
+            }
+          
         }else if (limitRewordType == LimitRewordType.Tipstool)
         {
-            switch (GameDataManager.Instance.UserData.levelMode)
+            if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
             {
-                case 1:
-                case 3:
-                    SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
-                        ?.UseTips();
-                    break;
-                case 2:
-                    SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
-                        ?.UseComplete();
-                    break;
+                SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                    ?.UseTips();
+            }
+            
+        }else if (limitRewordType == LimitRewordType.AutoComplete)
+        {
+            if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+            {
+                SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
+                    ?.UseComplete();
             }
         }
-        
+       
         Close();
     }
 
@@ -169,21 +198,24 @@ public class GetItemScreen : UIWindow
         MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, 1,"看广告获取"+title.text+"道具");
-            switch (GameDataManager.Instance.UserData.levelMode)
-            {
-                case 1:
-                case 3:
-                    SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
-                        ?.ToolItemFirstLetter();
-                    break;
-                case 2:
-                    SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
-                        ?.UseTips();
-                    break;
-            }
+            Debug.LogError("上报的词语2" + targetWord);
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1,"看广告获取"+title.text+"道具");
             
+            if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
+            {
+                SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                    ?.UseTips();
+            }
+
+            if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+            {
+                SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
+                    ?.UseTips();
+            }
             AnalyticMgr.VideoAdSuccess(eventDes);
+            
+            //EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+            
             Close();
         }
         else
@@ -213,8 +245,9 @@ public class GetItemScreen : UIWindow
     protected override void OnDisable()
     {
         base.OnDisable();
+        targetWord = ""; // 🌟 每次关闭弹窗清空目标词
         ClaimGoldBtn.interactable = true;
         closeBtn.interactable = true;
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
     }
 }

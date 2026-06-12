@@ -123,8 +123,8 @@ public class MatchSuccess : UIWindow
                 case LimitRewordType.Tipstool:
                     GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, award[1],message);
                     break;
-                case LimitRewordType.HexWordTipsttool:
-                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, award[1],message);
+                case LimitRewordType.SingleWordTipsttool:
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, award[1],message);
                     break;
             }
         }
@@ -160,7 +160,7 @@ public class MatchSuccess : UIWindow
                 case LimitRewordType.Tipstool:
                     awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
                     break;
-                case LimitRewordType.HexWordTipsttool:
+                case LimitRewordType.SingleWordTipsttool:
                     awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
                     break;
             }                

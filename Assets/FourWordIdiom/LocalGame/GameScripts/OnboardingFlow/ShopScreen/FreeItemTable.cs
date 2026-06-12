@@ -59,7 +59,7 @@ public class FreeItemTable : MonoBehaviour
             case (int)LimitRewordType.Tipstool:
                 spritename = "tipicon";
                 break;
-            case (int)LimitRewordType.HexWordTipsttool:
+            case (int)LimitRewordType.SingleWordTipsttool:
                 spritename = "shop_reset";
                 break;
             case (int)LimitRewordType.RemoveAds:

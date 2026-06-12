@@ -577,8 +577,8 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                     case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,"商店购买"+item.ItemName);
                         break;
-                    case (int)LimitRewordType.HexWordTipsttool://提示灯道具，单个字符提示
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool,count,"商店购买"+item.ItemName);
+                    case (int)LimitRewordType.SingleWordTipsttool://提示灯道具，单个字符提示
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool,count,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:

@@ -104,7 +104,7 @@ public class LightItem : MonoBehaviour
                 return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
             case LimitRewordType.Tipstool:
                 return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
-            case LimitRewordType.HexWordTipsttool:
+            case LimitRewordType.SingleWordTipsttool:
                 return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
             case LimitRewordType.Min5Double:
                 return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
@@ -264,9 +264,9 @@ public class LightItem : MonoBehaviour
                 //GameDataManager.instance.UserData.toolInfo[102].count+=rlist[1];
                 GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist[1],message);
                 break;
-            case LimitRewordType.HexWordTipsttool:
+            case LimitRewordType.SingleWordTipsttool:
                 //GameDataManager.instance.UserData.toolInfo[101].count+=rlist[1];
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, rlist[1],message);
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, rlist[1],message);
                 break;
             case LimitRewordType.Min5Double:
                 GameDataManager.Instance.UserData.UpdateLimitEndTime(5);

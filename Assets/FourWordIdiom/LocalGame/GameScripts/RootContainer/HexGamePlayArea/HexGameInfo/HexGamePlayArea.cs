@@ -746,7 +746,7 @@ public class HexGamePlayArea : UIWindow
             // }
             // else
             // {
-            GetItemScreen.limitRewordType = LimitRewordType.HexWordTipsttool;
+            GetItemScreen.limitRewordType = LimitRewordType.SingleWordTipsttool;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
                 
 // #if UNITY_OPENHARMONY&&!UNITY_EDITOR
@@ -768,12 +768,12 @@ public class HexGamePlayArea : UIWindow
             if (useCoins) 
             {
                 GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, 1,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, -1,"关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1,"购买道具");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1,"关卡内使用");
             }
             else
             {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, -1, "关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用");
                 InitToolUI();
             }
             
@@ -801,12 +801,12 @@ public class HexGamePlayArea : UIWindow
         if (isShow)
         {
             usetoolCount++;
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, 1,"看广告获取提示灯道具");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1,"看广告获取提示灯道具");
             
             string Str = GetRandomTipsPuzzle();
             if (!string.IsNullOrEmpty(Str))
             {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool, -1, "关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用");
                 InitToolUI();
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipAllWordTool,1);
                 AudioManager.Instance.PlaySoundEffect("chongzhidaoju");

@@ -17,7 +17,7 @@ public class LimitDataItem
 //对应限时奖励配置表中奖励配置批准中的奖励索引表示的类型
 public enum LimitRewordType
 {
-    Coins,Butterfly,HexWordTipsttool,Tipstool,Min5Double,Min15Double,RemoveAds,Remove7DayAds,AutoComplete,Pupas=11
+    Coins,Butterfly,SingleWordTipsttool,Tipstool,Min5Double,Min15Double,RemoveAds,Remove7DayAds,AutoComplete,Pupas=11
 }
 
 public class LimitTimeManager : Singleton<LimitTimeManager>

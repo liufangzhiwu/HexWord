@@ -995,8 +995,8 @@ public class UserData
 
             switch (type)
             {
-                case LimitRewordType.HexWordTipsttool:
-                    toolName = "六边形玩法词语提示道具";
+                case LimitRewordType.SingleWordTipsttool:
+                    toolName = "单字词语提示道具";
                     break;
                 case LimitRewordType.Tipstool:
                     toolName = "提示道具";
@@ -1022,9 +1022,10 @@ public class UserData
     {
         return type switch
         {
-            LimitRewordType.HexWordTipsttool => 101,
+            LimitRewordType.SingleWordTipsttool => 101,
             LimitRewordType.Tipstool => 102,
             LimitRewordType.Butterfly => 103,
+            LimitRewordType.AutoComplete => 104,
             _ => 0
         };
     }

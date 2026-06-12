@@ -447,8 +447,8 @@ public class ShopManager : MonoBehaviour
                     case (int)LimitRewordType.Tipstool:
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count);
                         break;
-                    case (int)LimitRewordType.HexWordTipsttool:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.HexWordTipsttool,count);
+                    case (int)LimitRewordType.SingleWordTipsttool:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool,count);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:

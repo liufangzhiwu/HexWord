@@ -489,10 +489,10 @@ public class ChessPlayArea : UIWindow
         Transform HintCount = HitsBtn.transform.GetChild(1);
         Transform hintText = HintCount.GetChild(0);
         Transform hintAdd = HintCount.GetChild(1);
-        if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
+        if (GameDataManager.Instance.UserData.toolInfo[101].count > 0)
         {
             HintCount.gameObject.SetActive(true);
-            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
+            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
             hintText.gameObject.SetActive(true);
             hintAdd.gameObject.SetActive(false);
             // HintCost.gameObject.SetActive(false);
@@ -1573,7 +1573,7 @@ public class ChessPlayArea : UIWindow
     public void UseTips()
     {
         NotifyPlayerInteraction(); // 🌟 触发唤醒计时
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
+        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
 
         if (toolInfo == null || chessboardGrid.GameOver)
         {
@@ -1590,7 +1590,7 @@ public class ChessPlayArea : UIWindow
         bool useCoins = false;
         if(toolInfo.count <= 0)
         {
-            GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
+            GetItemScreen.limitRewordType = LimitRewordType.SingleWordTipsttool;
             // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             return;
@@ -1615,12 +1615,12 @@ public class ChessPlayArea : UIWindow
         {
             // 更新道具
             GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, false, true, "购买道具");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "道具购买");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1, "道具购买");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用");
         }
         else
         {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用",GetCurrentSelectedPhrase());
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用",GetCurrentSelectedPhrase());
             InitToolUI();
         }
         // chessboardGrid.SetSelectTip();
