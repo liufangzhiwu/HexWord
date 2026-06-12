@@ -184,7 +184,6 @@ MonoBehaviour:
   ModeBtn: {fileID: 5163577584110021461}
   ModeIndicator: {fileID: 5484725950398969954}
   ZenRankBtn: {fileID: 8042502132340368905}
-  HexaBtn: {fileID: 0}
   ScoreboardBtn: {fileID: 3045963491285489532}
   LimitTimeBtn: {fileID: 1121447457861956769}
   LimitTimeObj: {fileID: 5549771546023348262}
@@ -1720,9 +1719,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: 467c17a4f8b876f4c99996b3d45944ef, type: 3}
     m_FontSize: 38
-    m_FontStyle: 1
+    m_FontStyle: 0
     m_BestFit: 1
     m_MinSize: 3
     m_MaxSize: 40
@@ -2404,7 +2403,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8366526678569453104
 RectTransform:
   m_ObjectHideFlags: 0

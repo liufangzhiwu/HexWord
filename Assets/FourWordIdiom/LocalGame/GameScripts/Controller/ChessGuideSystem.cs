@@ -45,7 +45,11 @@ public class ChessGuideSystem : MonoBehaviour
     [HideInInspector]
     [Tooltip("当前使用的教学工具来源名称")]
     public string toolSourceName;
-
+    [HideInInspector]
+    public GameObject collectionPointObject; // 新增：用于在第一步中跨界面传递需要高亮的树叶收集进度条
+    [HideInInspector]
+    public string targetPhrase = ""; // 新增：用于存储当前树叶引导的目标成语
+    
     public int currentTutorial  = 1;
     #endregion
     
@@ -97,13 +101,12 @@ public class ChessGuideSystem : MonoBehaviour
     #region 辅助方法
     public void CleanCurrentTutorial()
     {
-        if (activeToolObject != null)
-        {
-            activeToolObject = null;
-        }
+        activeToolObject = null;
         toolSourceName = null;
         ChesspieceList.Clear();
         TargetPuzzle.Clear();
+        collectionPointObject = null; // 确保清理干净，防止内存留存
+        targetPhrase = ""; // 确保清理干净
     }
     #endregion
     #region 生命周期

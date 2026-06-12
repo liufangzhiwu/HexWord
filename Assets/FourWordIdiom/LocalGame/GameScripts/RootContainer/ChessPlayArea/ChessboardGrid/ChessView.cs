@@ -59,7 +59,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     private RectTransform _rectTrans;
     private bool _isProcessingInteraction; 
     public bool _isGoldLeaf=false; 
-    
+    public bool iceLogicBroken;        // 🌟 新增：冰块逻辑已破，但动画可能还在播
     // 是否锁定
     public bool IsLocked
     {
@@ -87,7 +87,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         {
             _isGoldLeaf= chesspiece.isGoldLeaf;
         }
-       
+        iceLogicBroken = false;
         _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
         //Debug.Log($"当前词： {Answer} {CurrState}");
         // 设置选择框尺寸
@@ -173,7 +173,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         else
         {
             _score.text = score.ToString(CultureInfo.InvariantCulture);
-            _score.gameObject.SetActive(GameCoreManager.Instance.IsTrueAuto);
+            _score.gameObject.SetActive(GameCoreManager.Instance.AutoLevelTalbe.activeSelf);
         }
 #else
     _score.gameObject.SetActive(false);
@@ -313,7 +313,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         if(chesspiece.tip)
         {
             _tipText.text = Answer.ToString();
-            _tipText.gameObject.SetActive(true);
+            _tipText.gameObject.SetActive(CurrState is TileState.Check or TileState.None);
         }
         if (chesspiece.hasFlower)
         {
@@ -326,10 +326,11 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         // 如果有冰块，可能需要让背景变灰或者显示冰层
         _iceObj.transform.localScale = Vector3.one;
         _iceObj.SetActive(chesspiece.hasIce);
-        
+        _iceObj.GetComponent<Image>().enabled = true;
         if (chesspiece.hasLeaf)
         {
             _leafObj.SetActive(true);
+            _leafObj.GetComponent<Image>().enabled = true;
             CanvasGroup leafCG = _leafObj.GetComponent<CanvasGroup>() ?? _leafObj.AddComponent<CanvasGroup>();
             bool hasText = CurrState == TileState.Fill || CurrState == TileState.Error || CurrState == TileState.Success;
             leafCG.alpha = hasText ? 0.35f : 1.0f; // 核心规则：有字半透明，无字全亮
@@ -476,6 +477,8 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         lastClickTime = -1f;
         _successParticle.Stop();
         _successParticle.gameObject.SetActive(false);
+        if (_iceObj != null) _iceObj.transform.DOKill();
+        if (_flowerObj != null) _flowerObj.transform.DOKill();
     }
     
     /// <summary>
@@ -571,27 +574,29 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     // 1. 冰块逻辑
     public IEnumerator PlayIceBreakAnim()
     {
+        if (_iceObj == null || !_iceObj.activeInHierarchy) yield break;
+        _iceObj.transform.DOKill();
         chesspiece.hasIce = false;
+        _iceObj.GetComponent<Image>().enabled = false;
         // 播放碎冰粒子特效，然后隐藏冰块
-        _iceObj.transform.DOScale(1.2f, 0.1f).SetEase(Ease.OutBack);
+        // _iceObj.transform.DOScale(1.2f, 0.1f).SetEase(Ease.OutBack);
         _iceObj.GetComponentInChildren<ParticleSystem>(true).Play();
-        yield return new WaitForSeconds(0.3f);
-        _iceObj.SetActive(false);
+        yield return new WaitForSeconds(1.2f);
         UpdateTile();
+        _iceObj?.SetActive(false);
     }
     
     // 2. 花朵逻辑
     public IEnumerator PlayFlowerBloomAnim()
     {
         chesspiece.hasFlower = false;
+        _flowerObj.GetComponent<Image>().enabled = false;
         // 播放花朵绽放、消失的动画
-        _flowerObj.transform.DOScale(1.2f, 0.3f).SetEase(Ease.OutBack);
+        // _flowerObj.transform.DOScale(1.2f, 0.3f).SetEase(Ease.OutBack);
         _flowerObj.GetComponentInChildren<ParticleSystem>(true).Play();
-        yield return new WaitForSeconds(0.3f);
-        _flowerObj.SetActive(false);
-        
-        // 花朵消失后，刷新字块让文字显现出来
+        yield return new WaitForSeconds(1.2f);
         UpdateTile(true); 
+        _flowerObj.SetActive(false);
     }
     
     // 3. 树叶逻辑

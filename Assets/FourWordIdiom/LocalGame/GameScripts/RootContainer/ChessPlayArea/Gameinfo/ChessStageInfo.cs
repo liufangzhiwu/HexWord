@@ -900,6 +900,7 @@ public class ChessStageInfo
         {
             Debug.Log($"[玩法配置] 关卡 {stageId} 检测到固定玩法数据 (elem): {_StageConf.elem}，切换为固定配置模式。");
             ParseAndApplyElemData(_StageConf.elem);
+            RemoveFlowerFromCursorGroup();
             return; // 💥 只有真正配了 3, 8, 9 时，才绝对不再执行下方的算法生成
         }
         if (_StageConf != null && !string.IsNullOrEmpty(_StageConf.elem))
@@ -931,20 +932,20 @@ public class ChessStageInfo
                 }
 
                 // 按安全优先级降序排序 (越安全的排在越前面)
-                var sortedForIce = _phraseGroups.OrderByDescending(g => 
+                var sortedForIce = _phraseGroups.OrderBy(g => 
                 {
-                    // 优先级1：孤岛词 (不与其他词组交叉) -> 最高安全权重
+                    // 优先级3：孤岛词 (不与其他词组交叉) -> 最高安全权重
                     bool isIsolated = !g.chesspieces.Any(p => IsMultiGroup(p.row, p.col));
-                    if (isIsolated) return -100;
+                    if (isIsolated) return 1000; 
                     
                     // 优先级2：初始光标所在的词 -> 次高安全权重
-                    if (cursorGroups.Contains(g)) return -50;
+                    if (cursorGroups.Contains(g)) return 500;
                     
-                    return g.chesspieces.Count(p => p.state == TileState.Default);
+                    return -g.chesspieces.Count(p => p.state == TileState.Default);
                 })
-                // 优先级3：初始字数量更多的优先
+                // 优先级1：初始字数量更多的优先
                 // .ThenByDescending(g => g.chesspieces.Count(p => p.state == TileState.Default)) 
-                // 优先级4：同等条件随机打乱
+                // 优先级0：同等条件随机打乱
                 .ThenBy(g => Guid.NewGuid()) 
                 .ToList();
                 
@@ -953,26 +954,34 @@ public class ChessStageInfo
                 foreach (var g in sortedForIce)
                 {
                     if (selectedIceGroups.Count >= m_ice) break;
-                    bool isCrossWithCursor = g.chesspieces.Any(p => cursorGroups.Any(cg => cg.chesspieces.Any(cp => cp.row == p.row && cp.col == p.col)));
-                    if (isCrossWithCursor) continue; // 如果和光标组有任何交叉，直接跳过，不给它盖冰块
-
-                    bool hasIntersection = false;
-                    // 拿当前成语去跟已经选中的成语逐一比对坐标
-                    foreach (var selected in selectedIceGroups)
-                    {
-                        // 如果有任何一格的行和列完全重合，说明这两个成语交叉了
-                        if (g.chesspieces.Any(p => selected.chesspieces.Any(sp => sp.row == p.row && sp.col == p.col)))
-                        {
-                            hasIntersection = true;
-                            break;
-                        }
-                    }
-
-                    // 只有完全不交叉的成语，才被选入冰块阵营
-                    if (!hasIntersection)
-                    {
+                    if (cursorGroups.Contains(g)) continue; 
+                    if (!g.chesspieces.Any(p => IsMultiGroup(p.row, p.col))) continue; // 孤岛词
+                    // 检查是否与已选中的词组交叉（不与已选词组共享格子）
+                    bool intersects = selectedIceGroups.Any(sel =>
+                        g.chesspieces.Any(p => sel.chesspieces.Any(sp => sp.row == p.row && sp.col == p.col)));
+                    if (!intersects)
                         selectedIceGroups.Add(g);
-                    }
+                    
+                    // bool isCrossWithCursor = g.chesspieces.Any(p => cursorGroups.Any(cg => cg.chesspieces.Any(cp => cp.row == p.row && cp.col == p.col)));
+                    // if (isCrossWithCursor) continue; // 如果和光标组有任何交叉，直接跳过，不给它盖冰块
+
+                    // bool hasIntersection = false;
+                    // // 拿当前成语去跟已经选中的成语逐一比对坐标
+                    // foreach (var selected in selectedIceGroups)
+                    // {
+                    //     // 如果有任何一格的行和列完全重合，说明这两个成语交叉了
+                    //     if (g.chesspieces.Any(p => selected.chesspieces.Any(sp => sp.row == p.row && sp.col == p.col)))
+                    //     {
+                    //         hasIntersection = true;
+                    //         break;
+                    //     }
+                    // }
+                    //
+                    // // 只有完全不交叉的成语，才被选入冰块阵营
+                    // if (!hasIntersection)
+                    // {
+                    //     selectedIceGroups.Add(g);
+                    // }
                 }
                 // 2. 🌟 容错兜底：如果关卡太密（比如一共就3个成语挤在一起），第一轮选不够 m_ice 个，
                 // 那么第二轮放宽条件，允许交叉，把数量补齐，绝对不让游戏崩溃或少生成冰块
@@ -981,6 +990,8 @@ public class ChessStageInfo
                     foreach (var g in sortedForIce)
                     {
                         if (selectedIceGroups.Count >= m_ice) break;
+                        if (cursorGroups.Contains(g)) continue;
+                        if (!g.chesspieces.Any(p => IsMultiGroup(p.row, p.col))) continue;
                         if (!selectedIceGroups.Contains(g))
                         {
                             selectedIceGroups.Add(g);
@@ -1090,6 +1101,7 @@ public class ChessStageInfo
                 Debug.LogWarning($"<color=#FF0000>[花朵未生成]</color> 关卡:{stageId} | 初始字数 {n_chars} - 需生成数 {m_flower} = {n_chars - m_flower} (<=3)。触发保护规则，不生成！");
             }
         }
+        RemoveFlowerFromCursorGroup();
     }
     
     /// <summary>
@@ -1159,5 +1171,47 @@ public class ChessStageInfo
             }
         }
 
+    }
+    
+    /// <summary>
+    /// 🌟 强制安全校验：剔除初始光标所在词组的所有花朵
+    /// </summary>
+    private void RemoveFlowerFromCursorGroup()
+    {
+        // 1. 确保光标坐标有效，并获取光标所在的所有词组
+        if (_cursor.Count >= 2 && _chessGroup.TryGetValue((_cursor[0], _cursor[1]), out var cursorGroups))
+        {
+            bool hasCleaned = false;
+            foreach (var group in cursorGroups)
+            {
+                foreach (var p in group.chesspieces)
+                {
+                    if (p.hasFlower)
+                    {
+                        p.hasFlower = false; // 清除组内配置
+                        
+                        // 🌟 核心：必须同步清理全局主集合中的数据，防止渲染和存档残留！
+                        var hashPiece = _chesspiece.FirstOrDefault(cp => cp.row == p.row && cp.col == p.col);
+                        if (hashPiece != null) hashPiece.hasFlower = false;
+                        
+                        hasCleaned = true;
+                    }
+                    if (p.hasIce)
+                    {
+                        p.hasIce = false; // 清除组内配置
+                        
+                        // 🌟 核心：必须同步清理全局主集合中的数据，防止渲染和存档残留！
+                        var hashPiece = _chesspiece.FirstOrDefault(cp => cp.row == p.row && cp.col == p.col);
+                        if (hashPiece != null) hashPiece.hasIce = false;
+                        
+                        hasCleaned = true;
+                    }
+                }
+            }
+            if (hasCleaned)
+            {
+                Debug.Log($"[机制安全拦截] 初始光标({_cursor[0]},{_cursor[1]})所在词组存在花朵与冰块，已强制剔除以防卡死！");
+            }
+        }
     }
 }
