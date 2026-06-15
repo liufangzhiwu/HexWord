@@ -73,7 +73,6 @@ public class GetItemScreen : UIWindow
                 {
                     AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("tipligh");
                 }
-                
                 if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
                 {
                     AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("tipligh");
