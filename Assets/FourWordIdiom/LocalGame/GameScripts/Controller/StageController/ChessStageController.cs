@@ -157,7 +157,9 @@ public class ChessStageController
     } 
     public StimulateRuleConfig CurrentMatchedRule { get; private set; }
     public int CurrentBannerStyle { get; private set; }
-    public float BeyondPercent { get; private set; }
+    public float LinearZenPercent { get; private set; }
+    public float DisplayZenPercent { get; private set; }  // 展示用超越百分比（0~99.98）
+
     // 🌟 新增：标记当前关卡是否是被跳过的
     public bool IsCurrentStageSkipped { get; set; } = false;
     #endregion
@@ -276,7 +278,7 @@ public class ChessStageController
         {
             GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Clear();
             GameDataManager.Instance.UserData.curStageOnlineTime = 0;
-            IsLeafDeadThisLevel = false;
+            // IsLeafDeadThisLevel = false;
             MaxComboCount = 0; // 🌟 首次进入关卡，最高连击清零
             ComboErrorCount = 0;
             UseCompleteCount = 0;
@@ -524,12 +526,12 @@ public class ChessStageController
         // 1. 计算树叶附带的【禅意分】奖励
         int collectedLeaves = CurrStageData.CollectedLeaves;
         int leafZenReward = 0;
-        if (collectedLeaves > 0 && CheckLeafMechanic(CurrStageData.StageId, out _))
+        if (collectedLeaves > 0 && LeafConfig != null && LeafConfig.IsOpen)
         {
             List<LeafReward> earnedRewards = GetAllLeafRewards(collectedLeaves);
             foreach (var reward in earnedRewards)
             {
-                if (reward.Type == 12) leafZenReward = reward.Value; // 莲花大满贯
+                if (reward.Type == 12) leafZenReward += reward.Value; // 莲花大满贯
             }
         }
 
@@ -572,6 +574,7 @@ public class ChessStageController
 
         if (!isJump)
         {
+            bool isButterflyFinished = ButterfliesManager.Instance.IsAllButterfliesCollected();
             // 1. 【优先计算树叶奖励】
             int collectedLeaves = CurrStageData.CollectedLeaves;
             int leafGoldReward = 0;
@@ -582,14 +585,14 @@ public class ChessStageController
                 foreach (var reward in earnedRewards)
                 {
                     if (reward.Type == 0) leafGoldReward = reward.Value;
-                    else if (reward.Type == 11) leafPupaReward = reward.Value;
+                    else if (reward.Type == 11 && !isButterflyFinished) leafPupaReward = reward.Value;
                     // else if (reward.Type == 12) leafZenReward = reward.Value; // 莲花大满贯
                 }
             }
             // 蝶蛹计算
             int basePupa = 0;
             int threshold = ButterfliesManager.Instance.GetScoreThresholdForPupa();
-            if (ButterfliesManager.Instance.CanShowPupaProgressBarThisLevel(OptimalTotalScore))
+            if (!isButterflyFinished && ButterfliesManager.Instance.CanShowPupaProgressBarThisLevel(OptimalTotalScore))
             {
                 basePupa = CurrentTotalScore >= threshold ? 1 : 0;
             }
@@ -703,12 +706,14 @@ public class ChessStageController
 
     public int LimitPuzzleCount
     {
-        get
-        {
-            bool canshow = LimitTimeManager.Instance.LimitTimeCanShow();
-            return _limitPuzzleCount * (canshow ? 2 : 1);
-        }
-        set { _limitPuzzleCount = value; }
+        get => _limitPuzzleCount;
+        set => _limitPuzzleCount = value; 
+    }
+    // 2. 专门提供一个获取“翻倍后奖励”的方法
+    public int GetDoubleRewardedPuzzleCount()
+    {
+        bool canshow = LimitTimeManager.Instance.LimitTimeCanShow();
+        return LimitPuzzleCount * (canshow ? 2 : 1);
     }
 
     /// <summary>
@@ -729,7 +734,10 @@ public class ChessStageController
     /// </summary>
     public void ModifyChreepiece(Chesspiece chesspiece)
     {
-        CurrStageData.BoardSnapshot.Remove(chesspiece);
+        // CurrStageData.BoardSnapshot.Remove(chesspiece);
+        // CurrStageData.BoardSnapshot.Add(chesspiece);
+        CurrStageData.BoardSnapshot.RemoveWhere(p => p.row == chesspiece.row && p.col == chesspiece.col);
+        
         CurrStageData.BoardSnapshot.Add(chesspiece);
     }
     /// <summary>
@@ -1001,34 +1009,51 @@ public class ChessStageController
             {
                 LeafConfig.CycleLevels.Add(int.Parse(cycles[i]));
             }
-            string[] rewards = cols[6].Split(';');
-            for (int i = 0; i < rewards.Length; i++)
+            string[] rewardGroups = cols[6].Split('_');
+            HashSet<(string NumberRaw, int Type)> seen = new HashSet<(string, int)>();
+            foreach (string groupStr in rewardGroups)
             {
-                
-                string[] numbers = rewards[i].Split('#');
-                string[] reward = numbers[1].Split('*');
-                
-                LeafReward leafReward = new LeafReward
+                if (string.IsNullOrWhiteSpace(groupStr)) continue;
+                string[] rewards = groupStr.Split(';');
+
+                foreach (string r in rewards)
                 {
-                    Type = int.Parse(reward[1]),
-                    Value = int.Parse(reward[0]),
-                };
-                // 解析 Number：如果是 "n" 或 "n-1" 之类，存为特殊标记，运行时再计算
-                if (int.TryParse(numbers[0], out int num))
-                {
-                    leafReward.Number = num;
-                }
-                else
-                {
-                    // 存储特殊标记，例如 -1 代表 n，-2 代表 n-1
-                    if (numbers[0] == "n")
+                    string[] parts = r.Split('#');
+                    if (parts.Length < 2) continue;
+
+                    string[] rewardValue = parts[1].Split('*');
+                    if (rewardValue.Length < 2) continue;
+
+                    int type = int.Parse(rewardValue[1]);
+                    LeafReward leafReward = new LeafReward
+                    {
+                        Type = type,
+                        Value = int.Parse(rewardValue[0])
+                    };
+
+                    // 解析 Number 字段（支持 n、n-1 等）
+                    string numStr = parts[0];
+                    if (int.TryParse(numStr, out int num))
+                    {
+                        leafReward.Number = num;
+                    }
+                    else if (numStr == "n")
+                    {
                         leafReward.Number = -1;
-                    else if (numbers[0].StartsWith("n-") && int.TryParse(numbers[0].Substring(2), out int delta))
-                        leafReward.Number = -delta; // 或者自定义一个数据结构存储 delta
+                    }
+                    else if (numStr.StartsWith("n-") && int.TryParse(numStr.Substring(2), out int delta))
+                    {
+                        leafReward.Number = -delta;
+                    }
                     else
-                        throw new FormatException($"无法解析的数量: {numbers[0]}");
+                    {
+                        throw new FormatException($"无法解析的数量: {numStr}");
+                    }
+                    var key = (numStr, type);
+                    if (seen.Contains(key)) continue;
+                    seen.Add(key);
+                    LeafConfig.Rewards.Add(leafReward);
                 }
-                LeafConfig.Rewards.Add(leafReward);
             }
             Debug.LogWarning("解析完成后的树叶配置: "+ JsonConvert.SerializeObject(LeafConfig));
         }
@@ -1218,6 +1243,10 @@ public class ChessStageController
     {
         isFirstTime = false;
         if (LeafConfig == null || !LeafConfig.IsOpen) return false;
+        if (CurrStageData != null && CurrStageData.CollectedLeaves >= 10)
+        {
+            return false;
+        }
         if (stageIndex < LeafConfig.FirstLevel) return false;
         
         bool hasMechanic = false;
@@ -1247,53 +1276,26 @@ public class ChessStageController
     }
     
     /// <summary>
-    /// 根据玩家本局收集的树叶数量，匹配并发放奖励配置
-    /// </summary>
-    /// <param name="collectedCount">本局打到的树叶总数</param>
-    public LeafReward GetLeafReward(int collectedCount)
-    {
-        if (LeafConfig == null || LeafConfig.Rewards == null || LeafConfig.Rewards.Count == 0) 
-            return null;
-
-        // 🌟 动态获取本关真正的“最大可收集数 (n)”
-        // 这里假设最大可收集树叶数 = 关卡的词组总数
-        int maxLeavesInStage = CurrStageInfo.PhraseGroups.Count; 
-
-        return LeafConfig.Rewards
-            .OrderByDescending(r => 
-            {
-                // 把 -1 替换为真正的 n，把 -2 替换为 n-1 进行排序和比较
-                if (r.Number == -1) return maxLeavesInStage;
-                if (r.Number < -1) return maxLeavesInStage + (r.Number + 1); // 例如 -2 代表 n-1
-                return r.Number;
-            })
-            .FirstOrDefault(r => 
-            {
-                int requireNum = r.Number;
-                if (r.Number == -1) requireNum = maxLeavesInStage;
-                if (r.Number < -1) requireNum = maxLeavesInStage + (r.Number + 1);
-                
-                return requireNum <= collectedCount;
-            });
-    }
-    /// <summary>
     /// 🌟 修复：获取玩家当前收集数量下，所有已解锁的树叶奖励（累加机制）
     /// </summary>
     public List<LeafReward> GetAllLeafRewards(int collectedCount)
     {
         if (LeafConfig == null || LeafConfig.Rewards == null || LeafConfig.Rewards.Count == 0) 
             return new List<LeafReward>();
-
+        bool isButterflyFinished = ButterfliesManager.Instance.IsAllButterfliesCollected();
         int maxLeavesInStage = CurrStageInfo.PhraseGroups.Count; 
+        Debug.Log($"[树叶奖励] 当前收集叶子数: {collectedCount}，本关成语总数 n = {maxLeavesInStage}");
 
         return LeafConfig.Rewards.Where(r => 
         {
             int requireNum = r.Number;
-            if (r.Number == -1) requireNum = maxLeavesInStage;
+            if (r.Number == -1) requireNum = maxLeavesInStage - 1;
             if (r.Number < -1) requireNum = maxLeavesInStage + (r.Number + 1);
-        
+            Debug.Log($"[树叶奖励] 配置：NumberRaw={r.Number}, Type={r.Type}, Value={r.Value}, 解析后需要数量={requireNum}, 是否满足={requireNum <= collectedCount}");
+            if (requireNum > collectedCount) return false;
+            if (isButterflyFinished && r.Type == 11) return false;
             // 核心修复：只要目标需求量 <= 当前收集量，全都要！
-            return requireNum <= collectedCount;
+            return true;
         }).ToList();
     }
     #endregion
@@ -1304,7 +1306,6 @@ public class ChessStageController
     {
         StimulateRules.Clear();
         List<string> lines  = ToolUtil.SplitCsvLines(assetText);
-        Debug.Log("sas"+ JsonConvert.SerializeObject(lines, Formatting.Indented));
         for (int i = 2; i < lines.Count; i++)
         {
             string[] fields = ParseCsvLineAndCleanQuotes(lines[i]);
@@ -1437,18 +1438,20 @@ public class ChessStageController
         int stageIndex = stageData.StageId; // 当前关卡ID
         // 🌟【核心修复】：在算百分比时，先确认并当场加上还没来得及加的树叶禅意分，确保绝对同步
         int collectedLeaves = stageData.CollectedLeaves;
+        Debug.Log("收集的叶子数量" + collectedLeaves);
         int pendingLeafZenReward = 0;
-        if (collectedLeaves > 0 && CheckLeafMechanic(stageIndex, out _))
+        if (collectedLeaves > 0 && LeafConfig != null && LeafConfig.IsOpen)
         {
             var earnedRewards = GetAllLeafRewards(collectedLeaves);
+            Debug.Log("查看所有的叶子奖励" + JsonConvert.SerializeObject(earnedRewards));
             foreach (var reward in earnedRewards)
             {
-                if (reward.Type == 12) pendingLeafZenReward = reward.Value; // 莲花大满贯禅意分
+                if (reward.Type == 12) pendingLeafZenReward += reward.Value; // 莲花大满贯禅意分
             }
         }
-        // 实际总分 = 游戏得分 + 树叶得分
-        int actualScore = CurrentTotalScore;
-        
+        // 实际总分 = 游戏得分 - 树叶得分
+        int pureGameScore = CurrentTotalScore - pendingLeafZenReward;
+        Debug.Log($"当前计算的实际分数： {pureGameScore} , 总分{CurrentTotalScore}, 树叶分{pendingLeafZenReward}");
         float timeSpent = stageData.TotalActiveSeconds;
 
         // 1. 理论极值与禅意百分比计算
@@ -1459,55 +1462,36 @@ public class ChessStageController
         {
             sMax += GetComboScoreReward(i);
         }
-        // 如果本关有树叶玩法，理论最大满分也需要加上大满贯的 50 分
-        if (CheckLeafMechanic(stageIndex, out _))
+        LinearZenPercent = (sMax > sMin) ? Mathf.Max(0, (float)(pureGameScore - sMin) / (sMax - sMin) * 100f) : 100f;
+        if (sMax > 0)
         {
-            sMax += pendingLeafZenReward; // 对应大满贯加分
-        }
-        
-        if (sMax > 0 && actualScore > 0)
-        {
-            // 先算出得分与理论满分的比值
-            float scoreRatio = (float)actualScore / sMax;
-            // 防御性编程：限制在 0~1 之间，防止开出虚数或超标
-            scoreRatio = Mathf.Clamp01(scoreRatio); 
-            // 🌟 核心修改：大厂真实的百分比波动算法
-            if (scoreRatio >= 0.99f)
-            {
-                // 满分或接近满分时，给予 99.1% ~ 99.9% 的随机波动，显得更真实
-                BeyondPercent = UnityEngine.Random.Range(99.1f, 99.9f);
-            }
-            else
-            {
-                // 开根号并乘以100
-                float rawPercent = Mathf.Sqrt(scoreRatio) * 100f;
-                // 取 99.98 和计算结果的最小值
-                BeyondPercent = Mathf.Min(99.98f, rawPercent);
-            }
+            //计算时用的是 pureGameScore / Smax，并非 (pureGameScore - Smin) / (Smax - Smin)，完全符合规则描述。
+            float ratio = Mathf.Clamp01((float)pureGameScore / sMax);
+            float sqrtPercent = Mathf.Sqrt(ratio) * 100f;
+            DisplayZenPercent = Mathf.Min(99.98f, sqrtPercent);
         }
         else
         {
-            // 🌟 防御：如果实际有得分但 sMax 异常，给个合理的兜底超越值，绝不显示 0%
-            // BeyondPercent = actualScore > 0 ? 85.5f : 0f;
-            BeyondPercent = 0f;
+            DisplayZenPercent = 99.98f;
         }
-        float zenPercent = BeyondPercent;
-        
+
+        float zenPercent = LinearZenPercent;   // 用于激励匹配
         // 2. 本地记录判定：破纪录与极速通关
-        bool isNewRecord = actualScore > userData.HighestZenScore;
+        bool isNewRecord = pureGameScore > userData.HighestZenScore;
         if (isNewRecord)
         {
-            userData.HighestZenScore = actualScore; // 刷新最高分记录
+            userData.HighestZenScore = pureGameScore; // 刷新最高分记录
         }
 
         bool isNewBestTime = false;
-        if (n >= 8) // 是否添加大于20关才记录
+        if (n >= 8 && stageIndex > 20) // 是否添加大于20关才记录
         {
             float currentBest = userData.GetBestClearTime(n);
             if (currentBest <= 0 || timeSpent < currentBest)
             {
                 isNewBestTime = true;
                 userData.SetBestClearTime(n, timeSpent); // 刷新极速记录
+                Debug.Log($"[极速记录核对] 关卡: {stageIndex} 规格: {n}个词 | 本局耗时: {timeSpent:F2}秒 已保存");
             }
         }
 
@@ -1515,7 +1499,7 @@ public class ChessStageController
         // 【Type 2】：叶子全部收集
         bool isAllLeavesCollected = stageData.CollectedLeaves >= n; 
         // 【Type 4】：不仅百分百禅意分(超越比达99.98或分数达max)，还需获取叶子最后一档奖励(通常为10片)
-        bool isMaxZenAndLastLeaf = (BeyondPercent >= 99.98f || actualScore >= sMax) && (stageData.CollectedLeaves >= 10);
+        bool isMaxZenAndLastLeaf = (LinearZenPercent >= 99.98f || pureGameScore >= sMax) && (stageData.CollectedLeaves >= 10);
         // 【Type 6】：没有使用任何提示或完成工具，且通过了困难/极难关卡
         bool isHardOrExtraLevel = (CurLevelMode == LevelModes.Hard || CurLevelMode == LevelModes.ExtraHard);
         bool noAnyToolsUsed = (UseTipToolCount == 0 && UseCompleteCount == 0);
@@ -1527,21 +1511,40 @@ public class ChessStageController
             bool match = false;
             switch (rule.Type)
             {
+                case 0: // 🌟 处理 1-10 关以内的禅意分
+                    if (stageIndex <= 9 && rule.ZenPercent != null && rule.ZenPercent.Length >= 2)
+                    {
+                        // 处理 100_100 等右区间闭合的情况
+                        if (rule.ZenPercent[1] >= 100)
+                            match = (zenPercent >= rule.ZenPercent[0] && zenPercent <= rule.ZenPercent[1]);
+                        else
+                            match = (zenPercent >= rule.ZenPercent[0] && zenPercent < rule.ZenPercent[1]);
+                    }
+                    break;
                 case 1: // 禅意百分比
-                    if (rule.ZenPercent != null && rule.ZenPercent.Length >= 2 &&
-                        zenPercent >= rule.ZenPercent[0] && zenPercent < rule.ZenPercent[1]) match = true;
+                    if (stageIndex > 9 && rule.ZenPercent != null && rule.ZenPercent.Length >= 2)
+                    {
+                        if (rule.ZenPercent[1] >= 100) // 右边界包含100
+                            match = (zenPercent >= rule.ZenPercent[0] && zenPercent <= rule.ZenPercent[1]);
+                        else
+                            match = (zenPercent >= rule.ZenPercent[0] && zenPercent < rule.ZenPercent[1]);
+                    }
                     break;
                 case 2: if (isAllLeavesCollected) match = true; break; // 2-叶子全收集
                 case 3: if (isNewBestTime) match = true; break; // 3-极速通关 (8个词以上, 20关以后且刷新时间)
                 case 4: if (isMaxZenAndLastLeaf) match = true; break;
-                case 5: if (isNewRecord) match = true; break;
+                case 5: if (isNewRecord && stageIndex > 20) match = true; break;
                 case 6: if (isHardLevelNoPressure) match = true; break;
             }
             if (match) validRules.Add(rule);
         }
 
         // 4. 优先级仲裁与表现层概率抽卡
-        CurrentMatchedRule = validRules.OrderByDescending(r => r.Priority).FirstOrDefault();
+        CurrentMatchedRule = validRules.OrderBy(r => r.Priority)
+            .ThenBy(r => 
+            (r.Type == 0 || r.Type == 1) && r.ZenPercent != null && r.ZenPercent.Length >= 2 
+                ? r.ZenPercent[1] - r.ZenPercent[0]   // 区间越小越靠前
+                : int.MaxValue).FirstOrDefault();
 
         if (CurrentMatchedRule != null)
         {
@@ -1551,6 +1554,45 @@ public class ChessStageController
         {
             CurrentBannerStyle = 1; // 兜底标准样式
         }
+        // =========================================================================
+        // 🌟 新增：详细日志打印区
+        // =========================================================================
+        System.Text.StringBuilder log = new System.Text.StringBuilder();
+        log.AppendLine($"<color=#00FFFF>【激励横幅结算报告】当前关卡: {stageIndex}</color>");
+        log.AppendLine($"<color=#00FF00>[关卡统计] 词组总数(N): {n} 个 | 通关实际耗时: {timeSpent:F2} 秒</color>");
+        log.AppendLine($"最低分(全基础): {sMin}  最高分(全连击): {sMax}  差值: {sMax - sMin}");
+        log.AppendLine($"[核心数据] 实际得分: {pureGameScore} | 理论满分: {sMax} | 原始得分比: {LinearZenPercent:F4}");
+        log.AppendLine($"[禅意进度] 最终展示超越百分比 (BeyondPercent): <color=#00FF00>{DisplayZenPercent:F2}%</color>");
+        log.AppendLine($"[触发状态] 叶子全收集:{isAllLeavesCollected} | 极速通关:{isNewBestTime} | 完美通关:{isMaxZenAndLastLeaf} | 新纪录:{isNewRecord} | 困难无压力:{isHardLevelNoPressure}");
+        
+        log.Append("[合格规则池] ");
+        if (validRules.Count > 0)
+        {
+            foreach (var r in validRules)
+            {
+                log.Append($"<Type:{r.Type}, 优先级Priority:{r.Priority}> ");
+            }
+        }
+        else
+        {
+            log.Append("无");
+        }
+        log.AppendLine();
+
+        if (CurrentMatchedRule != null)
+        {
+            log.AppendLine($"<color=#FFFF00>[最终仲裁] 胜出规则 -> Type: {CurrentMatchedRule.Type} | Priority: {CurrentMatchedRule.Priority}</color>");
+            log.AppendLine($"标题Key:{CurrentMatchedRule.TitleKey}  文案Key:{CurrentMatchedRule.PhraseKey}  表情Key:{CurrentMatchedRule.EmojiKey}");
+            log.AppendLine($"长文案Key:{CurrentMatchedRule.LongTextKey}  撒花:{CurrentMatchedRule.ScatterFlowers}");
+            log.AppendLine($"[样式抽取] 最终抽取的 BannerStyle: {CurrentBannerStyle}");
+            log.AppendLine($"[配置抽取] 最终抽取的规则配置: {JsonConvert.SerializeObject(CurrentMatchedRule)}");
+        }
+        else
+        {
+            log.AppendLine("<color=#FF0000>[异常兜底] 没有匹配到任何规则！使用默认兜底样式: 1</color>");
+        }
+        
+        Debug.Log(log.ToString());
     }
     
     #endregion

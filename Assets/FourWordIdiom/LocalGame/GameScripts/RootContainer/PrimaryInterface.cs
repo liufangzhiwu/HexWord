@@ -61,6 +61,7 @@ public class PrimaryInterface : UIWindow
     [Header("配置参数")]
     [SerializeField] private float topPanelDelay = 0.01f; // 顶部面板显示延迟时间
     
+    
     private void Start()
     {
         //logo.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_logo");
@@ -113,7 +114,7 @@ public class PrimaryInterface : UIWindow
         
         Game.self.Ads?.HideBanner();
         
-        //StartCoroutine(CheckLobbyPopupsRoutine());
+        StartCoroutine(CheckLobbyPopupsRoutine());
 
         DailyTaskManager.Instance.UpdateMaxButterflyTime();
         
@@ -131,7 +132,21 @@ public class PrimaryInterface : UIWindow
     
     private void OnClickMyThemeBtn()
     {
-        SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.GamePingPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.GameHexPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
+        }
+        
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
+        });
     }
     
     // ==========================================
@@ -146,12 +161,10 @@ public class PrimaryInterface : UIWindow
         
         //更改为15关之后出现（16开始出现）
         // HexaBtn.gameObject.SetActive(ChessStageController.Instance.CurrentStage>15||StageController.Instance.CurrentStage>15 );
-      
         
         // 1. 优先检查并弹出“排行榜赛季结算”
         // 这里会阻塞：如果有结算，它会等玩家领完奖励、关掉弹窗后，才往下走
         yield return StartCoroutine(ZenRankManager.Instance.CheckAndShowSettlementRoutine());
-        
 
         // ==========================================
         // 💡 架构扩展示例：

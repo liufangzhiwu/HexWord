@@ -55,6 +55,8 @@ public class ChessFinishView : UIWindow
     private GameObject _treasureBoxEffect;
     private int _currentProgressSegment = 0;
     private float sliderProgress;
+    // 🌟 新增：防御数据双重累加的标记
+    private bool _isWordsExtracted = false;
     
     protected override void InitializeUIComponents()
     {
@@ -118,26 +120,89 @@ public class ChessFinishView : UIWindow
         }
 #endif
     }
-    
+    /// <summary>
+    /// 动态刷新顶部过关文本（处理限时活动“还差一关”的精准预判）
+    /// </summary>
+    private void UpdateLimitEventText()
+    {
+
+        int currStage = GameDataManager.Instance.UserData.CurrentChessStage;
+        // 默认显示：普通关卡号
+        string rawText = MultilingualManager.Instance.GetString("ScheduleLess", "pingzi");
+        reachLevelText.text = rawText.Replace("X", currStage.ToString());
+
+        if (LimitTimeManager.Instance == null || LimitTimeManager.Instance.CurlimitData == null)
+            return;
+        if (!_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
+            return;
+        int pendingWords = _isWordsExtracted ? 0 : ChessStageController.Instance.LimitPuzzleCount;
+        int totalDone = GetCompletedWordCount()+ pendingWords;  // 现在是总词数
+        int totalTarget = LimitTimeManager.Instance.CurlimitData.num; 
+        int remainWords = totalTarget - totalDone;
+
+        // 已经完成或超额，保留默认文本
+        if (remainWords <= 0) return;
+        
+        bool isDoubleTimeActive = LimitTimeManager.Instance.LimitTimeCanShow();
+        // 逐关累加后续关卡词组数，直到满足剩余词数
+        int need = remainWords;
+        int nextStage = currStage;
+        int maxStage = currStage + 50; // 安全边界，防止无限循环
+        while (need > 0 && nextStage < maxStage)
+        {
+            // 获取下一关的词组数（按 pass 中的 '#' 分割计数）
+            int wordCount = 5; // 默认兜底
+            try
+            {
+                var conf = ChessStageController.Instance.PackInfos.Get(nextStage);
+                if (conf != null && !string.IsNullOrEmpty(conf.pass))
+                {
+                    wordCount = conf.pass.Split('#').Length;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[UI预判] 获取关卡 {nextStage} 配置失败，使用兜底数量 5。原因: {e.Message}");
+            }
+            if (isDoubleTimeActive)
+            {
+                wordCount *= 2;
+            }
+            need -= wordCount;
+            if (need > 0)
+            {
+                nextStage++;   // 如果扣完还是不够，再推入下一关
+            }
+        }
+
+        // 修复：因为顺序调整了，现在 nextStage == currStage 就代表“只需要打接下来的这一关”
+        if (nextStage == currStage) 
+        {
+            reachLevelText.text = MultilingualManager.Instance.GetString("OneMore", "pingzi");
+        }
+        else
+        {
+            // 需要多关，替换文本中的占位符
+            reachLevelText.text = rawText.Replace("X", nextStage.ToString());
+        }
+    }
     
     private void InitializeUI()
     {
+        _isWordsExtracted = false; // 🌟 每次打开面板，重置提取标记
         // _centerLotusImage.gameObject.SetActive(true);
+        if (progressText != null) progressText.gameObject.SetActive(false);
         _centerLotusImage.color = new Color32(255, 255, 255, 0);
         _currentProgressSegment = 0;
         
-        // 设置关卡文本
-        int Stage = GameDataManager.Instance.UserData.CurrentChessStage;
-        string rawText = MultilingualManager.Instance.GetString("ScheduleLess", "pingzi");
-        reachLevelText.text = rawText.Replace("X", Stage.ToString());
-        
+        UpdateLimitEventText();
         if (LimitTimeManager.Instance.IsComplete())
             progressSlider.transform.parent.gameObject.SetActive(false);
         else 
             progressSlider.transform.parent.gameObject.SetActive(true);
-
-      
         
+        // 设置关卡文本
+        int Stage = GameDataManager.Instance.UserData.CurrentChessStage;
         ChessStageController.Instance.CurLevelMode = ChessStageController.Instance.GetLevelDifficultyMode(Stage);
         
         switch (ChessStageController.Instance.CurLevelMode)
@@ -167,8 +232,17 @@ public class ChessFinishView : UIWindow
         {
             Content.gameObject.SetActive(false);
         }
+
+        if (ChessStageController.Instance.IsCurrentStageSkipped)
+        {
+            _encourageTitleText.text = "";
+            _encouragePhraseText.text = "";
+        }
+        else
+        {
+            RenderEncouragementTexts();
+        }
         
-        RenderEncouragementTexts();
         StartCoroutine(PlayRewardSequence());
         DailyTaskManager.Instance.UpdateMaxButterflyTime();
     }
@@ -186,11 +260,7 @@ public class ChessFinishView : UIWindow
         if (_encouragePhraseRoot != null) _encouragePhraseRoot.SetActive(false);
 
         if (rule == null) return;
-        if (bannerStyle != 1 && bannerStyle != 2)
-        {
-            Debug.Log($"当前横幅类型为 {bannerStyle}，不满足结算页文案展示条件 (需为 1 或 2)，强制隐藏。");
-            return; 
-        }
+      
         // 2. 扔骰子 (0-99)，根据你的配置表概率控制显示
         int rollTitle = UnityEngine.Random.Range(0, 100);
         int rollPhrase = UnityEngine.Random.Range(0, 100);
@@ -201,7 +271,7 @@ public class ChessFinishView : UIWindow
             if (_encourageTitleRoot != null)
             {
                 _encourageTitleRoot.SetActive(true);
-                _encourageTitleText.text = MultilingualManager.Instance.GetString(rule.LongTextKey,"pingzi");
+                _encourageTitleText.text = MultilingualManager.Instance.GetString(rule.TitleKey,"pingzi");
                 // 进场小动画（可选）
                 _encourageTitleRoot.transform.DOPunchScale(Vector3.one * 0.1f, 0.4f);
             }
@@ -217,12 +287,8 @@ public class ChessFinishView : UIWindow
                 // 组装文本（优先读长文案，没有长文案读短文案）
                 string rawText = MultilingualManager.Instance.GetString(rule.LongTextKey, "pingzi");
                 string phraseText = MultilingualManager.Instance.GetString(rule.PhraseKey, "pingzi");
-                string formattedX = ChessStageController.Instance.BeyondPercent.ToString("F2");
-                // if (rawText.Contains("{0}"))
-                // {
-                //     rawText = rawText.Replace("{0}", formattedX);
-                // }
-                _encouragePhraseText.text = "\ud83c\udf1f" +  phraseText + string.Format(rawText, formattedX);
+                float formattedX = ChessStageController.Instance.DisplayZenPercent;
+                _encouragePhraseText.text = "\ud83c\udf1f" + string.Format(rawText, formattedX.ToString("F2"))  +  phraseText;
                 // 加载表情 Emoji
                 if (_encourageEmojiIcon != null && !string.IsNullOrEmpty(rule.EmojiKey))
                 {
@@ -230,6 +296,12 @@ public class ChessFinishView : UIWindow
                     if (emojiSprite != null) _encourageEmojiIcon.sprite = emojiSprite;
                 }
             }
+        }
+        if (bannerStyle != 1 && bannerStyle != 2)
+        {
+            Debug.Log($"当前横幅类型为 {bannerStyle}，不满足结算页文案展示条件 (需为 1 或 2)，强制隐藏。");
+            _encouragePhraseRoot.SetActive(false);
+            return; 
         }
     }
     
@@ -307,25 +379,27 @@ public class ChessFinishView : UIWindow
         UpdateSliderProgress();
         yield return new WaitForSeconds(1f);
         
-        if (LimitTimeManager.Instance == null) yield return null;
+        if (LimitTimeManager.Instance == null) yield break;
 
         progressSlider.transform.parent.gameObject.SetActive(true);
         int wordCount = GetCompletedWordCount();
         LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
-        if (limitData == null) yield return null;
+        if (limitData == null) yield break;
 
         float targetProgress = Mathf.Clamp01((float)wordCount / limitData.num);
-        progressText.text = $"{wordCount}/{limitData.num}";
+        // progressText.text = $"{wordCount}/{limitData.num}";
 
         // 如果目标进度与当前值差异极小，直接赋值，避免无意义动画
         if (Mathf.Abs(progressSlider.value - targetProgress) < 0.01f)
         {
             progressSlider.value = targetProgress;
-            yield return null;;
+            UpdateLimitEventText(); // 确保文字同步
+            yield return null;
         }
 
         // 平滑动画
-        progressSlider.DOValue(targetProgress, 0.8f).SetEase(Ease.OutQuad);
+        progressSlider.DOValue(targetProgress, 0.8f).SetEase(Ease.OutQuad)
+            .OnComplete(UpdateLimitEventText);
     }
     
     private void UpdateSliderProgress()
@@ -337,8 +411,8 @@ public class ChessFinishView : UIWindow
         if (limitData == null) return;
 
         progressSlider.value = Mathf.Clamp01((float)wordCount / limitData.num);
-        progressText.text = $"{wordCount}/{limitData.num}";
-       
+        // progressText.text = $"{wordCount}/{limitData.num}";
+        UpdateLimitEventText();
     }
     
     
@@ -347,8 +421,7 @@ public class ChessFinishView : UIWindow
     /// </summary>
     private int GetCompletedWordCount()
     {
-        if (LimitTimeManager.Instance == null)
-            return 0;
+        if (LimitTimeManager.Instance == null) return 0;
         return LimitTimeManager.Instance.GetCurWordCount();
     }
     
@@ -358,6 +431,7 @@ public class ChessFinishView : UIWindow
     /// </summary>
     private IEnumerator PlayRewardSequence()
     {
+        int cachedLimitCount = ChessStageController.Instance.LimitPuzzleCount;
         int leafCollected = ChessStageController.Instance.CurrStageData.CollectedLeaves;
         if (leafCollected > 0)
         {
@@ -369,6 +443,7 @@ public class ChessFinishView : UIWindow
         if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
         {
             _limitBtnTable.CheckAndShowLimitedTimeEvent(Enlimiticon.transform);
+            _isWordsExtracted = true; // 锁住预判文案
             yield return new WaitForSeconds(0.5f);
             
             // 根据进度决定是否自动弹出限时活动面板
@@ -413,13 +488,13 @@ public class ChessFinishView : UIWindow
             });
             yield return new WaitForSeconds(0.5f);
         }
-        
+        ChessStageController.Instance.LimitPuzzleCount = cachedLimitCount;
         if (!GameDataManager.Instance.UserData.isAllCompleteTask && _tasktable.TaskBtn.gameObject.activeSelf)
         {
             _tasktable.CheckTasksScreen();
             yield return new WaitForSeconds(1.5f);
         }
-
+        ChessStageController.Instance.LimitPuzzleCount = 0;
         if (FishInfoController.Instance.IsShowFishProgressAnim() && _matchFishtable.FishBtn.gameObject.activeSelf)
         {
             _matchFishtable.ShowFishWordAnim();
@@ -734,7 +809,7 @@ public class ChessFinishView : UIWindow
         
         GameDataManager.Instance?.UserData.ClearPuzzleVocabulary();
      
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false,false);
+        // EventDispatcher.instance.TriggerUpdateLayerCoin(false,false,false);
         EventDispatcher.instance.TriggerChangeGoldUI(AppGameSettings.LevelCompleteBonus, false);
         if(_treasureBoxEffect != null)
             _treasureBoxEffect.gameObject.SetActive(false);

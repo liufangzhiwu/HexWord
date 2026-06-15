@@ -16,7 +16,15 @@ public class CustomFlyInManager : MonoBehaviour
     
     private void Awake()
     {
-        Instance = this;
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void Start()
@@ -24,14 +32,50 @@ public class CustomFlyInManager : MonoBehaviour
         GoldPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "GameGole");
     }
     
+    /// <summary>
+    /// 自定义起终点的金币飞行方法 (用于关卡内结算等特殊需求)
+    /// </summary>
+    /// <param name="start">起飞点</param>
+    /// <param name="target">终点</param>
+    public void FlyInGoldToTarget(Transform start, Transform target, Action call = null, int count = 5)
+    {
+        Vector3 scale = start.localScale;
+        bool isaudio = true;
+        if (count >= 5) scale = new Vector3(0.85f, 0.85f, 0.85f);
+        if (count == 1)
+        {
+            scale = new Vector3(0.65f, 0.65f, 0.65f);
+            isaudio = false;
+        }
+        
+        // 开启一个传入了自定义 target 的协程
+        StartCoroutine(FlyInValueGoldWithTarget(start, target, count, scale, call, isaudio));
+    }
+
+    private IEnumerator FlyInValueGoldWithTarget(Transform start, Transform target, int count, Vector3 scale, Action call, bool isaudio)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            float s = 0.55f - i * 0.01f;
+            yield return new WaitForSeconds(0.085f);
+            if (i < 4 && isaudio)
+                AudioManager.Instance.PlaySoundEffect("filyGold");
+            
+            // 🌟 重点：这里把 target 传给了底层的飞行逻辑，而不是写死的 GoldObj
+            StartCoroutine(FlyInGoldCoroutine(start, target, GoldPrefab, true, null, scale, s));
+        }
+        yield return new WaitForSeconds(0.35f);
+        call?.Invoke();
+    }
+    
     public void FlyInGold(Transform start,Action call=null,int count=5)
     {
         Vector3 scale = start.localScale;
         bool isaudio=true;
-        if(count>=5) scale=Vector3.one;
+        if(count>=5) scale=new Vector3(0.85f,0.85f,0.85f);
         if (count == 1)
         {
-            scale=Vector3.one;
+            scale=new Vector3(0.65f,0.65f,0.65f);
             isaudio = false;
         }
         //BizerValue = Random.Range(1.3f, 4.5f);
@@ -42,7 +86,7 @@ public class CustomFlyInManager : MonoBehaviour
     {
         for (int i = 0; i < count; i++)
         {
-            float s = 0.85f - i * 0.01f;
+            float s = 0.55f - i * 0.01f;
             yield return new WaitForSeconds(0.085f);
             if (i<4&&isaudio)
                 AudioManager.Instance.PlaySoundEffect("filyGold");
@@ -111,10 +155,9 @@ public class CustomFlyInManager : MonoBehaviour
         float distance = Vector3.Distance(start.position, endPosition);
         float speed = 20.0f; // 例如：每秒移动2个单位
         duration = distance / speed;
-        if(duration<0.6f) duration = 0.6f;
+        if(duration<0.45f) duration = 0.45f;
         
         // 根据距离计算移动时长
-        Debug.LogWarning("金币运动 距离："+distance+"时长"+duration);
         Color color = Gold.GetComponent<Image>().color; // 获取当前颜色
         color.a = 0; // 设置透明度为 0
         Gold.GetComponent<Image>().color = color;
@@ -123,7 +166,7 @@ public class CustomFlyInManager : MonoBehaviour
         if (isCurve)
         {
             var midPos = (endPosition + start.position) / 2;
-            var BezierMidPos = (midPos + start.position) / 2 + Vector3.right * 2;
+            var BezierMidPos = (midPos + start.position) / 2 + Vector3.up * 2;
             //var MidEndPos = (midPos + endPosition) / 2 + Vector3.right *0.78f;
             Vector3[] MovePoints = CreatTwoBezierCurve(start.position,endPosition,BezierMidPos).ToArray();
             Gold.transform.DOPath(MovePoints, duration).SetEase(Ease.Linear).OnComplete(() =>
@@ -141,7 +184,7 @@ public class CustomFlyInManager : MonoBehaviour
             });
         }
         
-        Gold.transform.DOScale(Vector3.one, duration);
+        Gold.transform.DOScale(new Vector3(0.78f,0.78f,0), duration);
         yield return new WaitForSeconds(0.2f);
         AudioManager.Instance.TriggerVibration();
         AudioManager.Instance.PlaySoundEffect("filyGold");

@@ -172,7 +172,7 @@ public class MyThemeScreen : UIWindow
     
     protected override void InitializeUIComponents()
     {
-        HideButton.AddClickAction(OnHideButton); 
+        HideButton.AddClickAction(()=>Close()); 
         drawButton.AddClickAction(OnClickDrawButton);
         helpButton.AddClickAction(OnClickHelpButton);
     }
@@ -258,9 +258,28 @@ public class MyThemeScreen : UIWindow
     }
 
 
-    private void OnHideButton()
+    public override void Close(CloseMethod method = CloseMethod.Default)
     {
-        base.Close(); // 隐藏面板
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        }
+        else if (GameCoreManager.Instance.PanelState == PanelState.GameHexPanel)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
+        }
+        else if (GameCoreManager.Instance.PanelState == PanelState.GamePingPanel)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
+        } 
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankScreen))
+        {
+            Debug.Log("是否存在？" + PanelType.ZenRankScreen);
+            SystemManager.Instance.HidePanel(PanelType.ZenRankScreen);
+        }
+        
+        base.Close(method); // 隐藏面板
     }
+
 
 }

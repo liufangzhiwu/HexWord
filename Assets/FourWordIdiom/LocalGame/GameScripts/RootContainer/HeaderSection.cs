@@ -223,6 +223,7 @@ public class HeaderSection : UIWindow
         }
         else
         {
+            addObj.gameObject.SetActive(true);
             ShopBtn.gameObject.SetActive(true);
             PupaTable.gameObject.SetActive(false);
             pupaObj.SetActive(false);
@@ -382,6 +383,8 @@ public class HeaderSection : UIWindow
 
         if (!isFinish)
         {
+            bool isLobby = SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface);
+            
             addObj.gameObject.SetActive(isshopbtnEnable);
             ShopBtn.enabled = isshopbtnEnable;
         }
@@ -793,7 +796,22 @@ public class HeaderSection : UIWindow
 
     private void OnClickMyThemeBtn()
     {
-        SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.GamePingPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.GameHexPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
+        }
+        
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
+        });
+        //SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
     }
     
     public void ChangeBackBtnState(bool isshow)

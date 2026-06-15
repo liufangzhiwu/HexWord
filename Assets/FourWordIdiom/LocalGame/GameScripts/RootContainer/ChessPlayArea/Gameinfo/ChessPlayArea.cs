@@ -489,10 +489,10 @@ public class ChessPlayArea : UIWindow
         Transform HintCount = HitsBtn.transform.GetChild(1);
         Transform hintText = HintCount.GetChild(0);
         Transform hintAdd = HintCount.GetChild(1);
-        if (GameDataManager.Instance.UserData.toolInfo[101].count > 0)
+        if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
         {
             HintCount.gameObject.SetActive(true);
-            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
+            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
             hintText.gameObject.SetActive(true);
             hintAdd.gameObject.SetActive(false);
             // HintCost.gameObject.SetActive(false);
@@ -779,52 +779,6 @@ public class ChessPlayArea : UIWindow
             Debug.Log(string.Format("{0} 关，金箔生成数量 {1}",CurrStageData.StageId, CurrStageData.GoldLeafCount));
         }
     }
-    
-    /// <summary>
-    /// 重置UI状态，清理旧动画，并强制隐藏所有元素防止“走光”
-    /// </summary>
-    private void PrepareEnterAnimation()
-    {
-        // ==========================================
-        // 1. 杀掉残余动画
-        // ==========================================
-        if (Stagetxt != null) { DOTween.Kill(Stagetxt.rectTransform); DOTween.Kill(Stagetxt); }
-        if (chessboardGrid != null) DOTween.Kill(chessboardGrid.transform);
-        if (puzzleTileTable != null) 
-        {
-            DOTween.Kill(puzzleTileTable.transform);
-            if (puzzleTileTable.TryGetComponent<CanvasGroup>(out var cg)) DOTween.Kill(cg);
-        }
-        if (HitsBtn != null) DOTween.Kill(HitsBtn.transform);
-        if (CompleteBtn != null) DOTween.Kill(CompleteBtn.transform);
-
-        // ==========================================
-        // 2. 🔥 核心修复：强行把所有元素设为“隐藏/缩小”的初始状态！
-        // ==========================================
-        // 顶部文字变透明
-        if (Stagetxt != null) 
-        {
-            Color c = Stagetxt.color;
-            c.a = 0f;
-            Stagetxt.color = c;
-        }
-
-        // 棋盘强行缩为 0
-        if (chessboardGrid != null) 
-        {
-            chessboardGrid.transform.localScale = Vector3.zero;
-        }
-
-        // 下方字库强行变透明
-        if (puzzleTileTable != null && puzzleTileTable.TryGetComponent<CanvasGroup>(out var tableCG))
-        {
-            tableCG.alpha = 0f; 
-        }
-
-        // 按钮强行缩为 0
-        if (HitsBtn != null) HitsBtn.transform.localScale = Vector3.zero;
-        if (CompleteBtn != null) CompleteBtn.transform.localScale = Vector3.zero;
-    }
     /// <summary>
     /// 播放入场动画, 建议在面板打开/初始化完成时调用这个方法
     /// </summary> 
@@ -1052,80 +1006,81 @@ public class ChessPlayArea : UIWindow
             int stageId = CurrStageData.StageId;
 
             // 冰块新手引导
-            if (ChessStageController.Instance.CheckIceMechanic(stageId, out bool isIceFirst, out _))
+            bool hasIceInBoard = chessboardGrid.GridList.Values.Any(v => v.chesspiece != null && v.chesspiece.hasIce);
+            if (hasIceInBoard && (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(6) ||
+                                  !GameDataManager.Instance.UserData.ChessTutorialProgress[6]))
             {
-                if (isIceFirst && (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(6) || !GameDataManager.Instance.UserData.ChessTutorialProgress[6]))
-                {
-                    Debug.Log("🌟 [引导注入] 正式弹窗展示冰块新手引导");
-                    // 寻找棋盘上第一个被冰块冻住的格子，作为小手指向的目标
-                    var allIceTiles = chessboardGrid.GridList.Values.Where(v => v.chesspiece.hasIce).ToList();
-                    if (allIceTiles.Count <= 0) yield break;
-                    ChessGuideSystem.Instance.ChesspieceList = allIceTiles;
-                    ChessGuideSystem.Instance.activeToolObject = null;
-                    ChessGuideSystem.Instance.currentTutorial = 6;
-                    ChessGuideSystem.Instance.toolSourceName = "IceTutorial";
-                    ChessGuideSystem.Instance.DisplayGuide();
-                    yield break; // 强行拦截一维时间轴，一次只弹一个引导
-                }
+                Debug.Log("🌟 [引导注入] 正式弹窗展示冰块新手引导");
+                // 寻找棋盘上第一个被冰块冻住的格子，作为小手指向的目标
+                var allIceTiles = chessboardGrid.GridList.Values.Where(v => v.chesspiece.hasIce).ToList();
+                if (allIceTiles.Count <= 0) yield break;
+                ChessGuideSystem.Instance.ChesspieceList = allIceTiles;
+                ChessGuideSystem.Instance.activeToolObject = null;
+                ChessGuideSystem.Instance.currentTutorial = 6;
+                ChessGuideSystem.Instance.toolSourceName = "IceTutorial";
+                ChessGuideSystem.Instance.DisplayGuide();
+                yield break; // 强行拦截一维时间轴，一次只弹一个引导
             }
-
+            
             // 花朵新手引导
-            if (ChessStageController.Instance.CheckFlowerMechanic(stageId, out bool isFlowerFirst, out _))
+            bool hasFlowerInBoard = chessboardGrid.GridList.Values.Any(v => v.chesspiece != null && v.chesspiece.hasFlower);
+            if (hasFlowerInBoard && (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(7) ||
+                                     !GameDataManager.Instance.UserData.ChessTutorialProgress[7]))
             {
-                if (isFlowerFirst && (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(7) || !GameDataManager.Instance.UserData.ChessTutorialProgress[7]))
-                {
-                    Debug.Log("🌟 [引导注入] 正式弹窗展示花朵新手引导");
-                    var allFlowerTiles = chessboardGrid.GridList.Values.Where(v => v.chesspiece.hasFlower).ToList();
-                    if(allFlowerTiles.Count <= 0) yield break;
-                    ChessGuideSystem.Instance.ChesspieceList = allFlowerTiles;
-                    ChessGuideSystem.Instance.activeToolObject = null;
-                    ChessGuideSystem.Instance.currentTutorial = 7;
-                    ChessGuideSystem.Instance.toolSourceName = "FlowerTutorial";
-                    ChessGuideSystem.Instance.DisplayGuide();
-                    yield break;
-                }
+                Debug.Log("🌟 [引导注入] 正式弹窗展示花朵新手引导");
+                var allFlowerTiles = chessboardGrid.GridList.Values.Where(v => v.chesspiece.hasFlower).ToList();
+                if (allFlowerTiles.Count <= 0) yield break;
+                ChessGuideSystem.Instance.ChesspieceList = allFlowerTiles;
+                ChessGuideSystem.Instance.activeToolObject = null;
+                ChessGuideSystem.Instance.currentTutorial = 7;
+                ChessGuideSystem.Instance.toolSourceName = "FlowerTutorial";
+                ChessGuideSystem.Instance.DisplayGuide();
+                yield break;
             }
-
             // 树叶新手引导
-            if (ChessStageController.Instance.CheckLeafMechanic(stageId, out bool isLeafFirst))
+            // if (ChessStageController.Instance.CheckLeafMechanic(stageId, out bool isLeafFirst))
+            bool isLeafGameplayActive = leafSlider != null && leafSlider.transform.parent.gameObject.activeInHierarchy;
+            if (isLeafGameplayActive && (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(8) ||
+                                         !GameDataManager.Instance.UserData.ChessTutorialProgress[8]))
             {
-                if (isLeafFirst && (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(8) || !GameDataManager.Instance.UserData.ChessTutorialProgress[8]))
+                Debug.Log("🌟 [引导注入] 正式开启树叶新机制两步引导：进入第一步");
+                List<ChessView> allRelatedGroups = chessboardGrid.GetCurrentSelectGroup2();
+                ChessGuideSystem.Instance.ChesspieceList = allRelatedGroups;
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                foreach (var tile in allRelatedGroups)
                 {
-                    Debug.Log("🌟 [引导注入] 正式开启树叶新机制两步引导：进入第一步");
-                    List<ChessView> allRelatedGroups = chessboardGrid.GetCurrentSelectGroup2();
-                    ChessGuideSystem.Instance.ChesspieceList = allRelatedGroups;
-                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
-                    foreach (var tile in allRelatedGroups)
-                    {
-                        sb.Append(tile.Answer); // 获取正确答案的字
-                    }
-                    ChessGuideSystem.Instance.targetPhrase = sb.ToString();
-                        // 3. 筛选该词组内所有未填写的格子，并在下方字盘中找出对应的待填字块
-                        // ChessGuideSystem.Instance.TargetPuzzle.Clear();
-                    foreach (var tile in allRelatedGroups)
-                    {
-                            if (tile.CurrState is TileState.None or TileState.Check)
-                            {
-                                BowlView matchingBowl = puzzleTileTable.GridList.FirstOrDefault(b => 
-                                    b.letter == tile.chesspiece.letter && 
-                                    b.bowl.status == 0 && 
-                                    !ChessGuideSystem.Instance.TargetPuzzle.Contains(b));
-                                
-                                if (matchingBowl != null && !ChessGuideSystem.Instance.TargetPuzzle.Contains(matchingBowl))
-                                {
-                                    ChessGuideSystem.Instance.TargetPuzzle.Add(matchingBowl);
-                                }
-                            }
-                        
-                    }
-                    ChessGuideSystem.Instance.collectionPointObject = leafSlider.transform.parent.gameObject;
-                    ChessGuideSystem.Instance.activeToolObject = ChessGuideSystem.Instance.TargetPuzzle.Count > 0 ? ChessGuideSystem.Instance.TargetPuzzle[0].gameObject : null;
-                    ChessGuideSystem.Instance.activeToolObject = null;
-                    ChessGuideSystem.Instance.currentTutorial = 8;
-                    ChessGuideSystem.Instance.toolSourceName = "LeafTutorialStep1";
-                    ChessGuideSystem.Instance.DisplayGuide();
-                    yield break;
+                    sb.Append(tile.Answer); // 获取正确答案的字
                 }
+
+                ChessGuideSystem.Instance.targetPhrase = sb.ToString();
+                // 3. 筛选该词组内所有未填写的格子，并在下方字盘中找出对应的待填字块
+                // ChessGuideSystem.Instance.TargetPuzzle.Clear();
+                foreach (var tile in allRelatedGroups)
+                {
+                    if (tile.CurrState is TileState.None or TileState.Check)
+                    {
+                        BowlView matchingBowl = puzzleTileTable.GridList.FirstOrDefault(b =>
+                            b.letter == tile.chesspiece.letter &&
+                            b.bowl.status == 0 &&
+                            !ChessGuideSystem.Instance.TargetPuzzle.Contains(b));
+
+                        if (matchingBowl != null && !ChessGuideSystem.Instance.TargetPuzzle.Contains(matchingBowl))
+                        {
+                            ChessGuideSystem.Instance.TargetPuzzle.Add(matchingBowl);
+                        }
+                    }
+
+                }
+
+                ChessGuideSystem.Instance.collectionPointObject = leafSlider.transform.parent.gameObject;
+                ChessGuideSystem.Instance.activeToolObject = ChessGuideSystem.Instance.TargetPuzzle.Count > 0
+                    ? ChessGuideSystem.Instance.TargetPuzzle[0].gameObject
+                    : null;
+                ChessGuideSystem.Instance.activeToolObject = null;
+                ChessGuideSystem.Instance.currentTutorial = 8;
+                ChessGuideSystem.Instance.toolSourceName = "LeafTutorialStep1";
+                ChessGuideSystem.Instance.DisplayGuide();
+                yield break;
             }
         }
     }
@@ -1235,6 +1190,12 @@ public class ChessPlayArea : UIWindow
         yield return null;
         if (!isJump)
         {
+            // 👇 🌟 新增：如果是树叶关卡，先播放奖励结算飞行动画，等飞完再继续
+            if (CurrStageData.CollectedLeaves > 0)
+            {
+                
+                yield return StartCoroutine(PlayLeafRewardsFlyOutFlow());
+            }
             bool isBannerFinished = false;
             // 4选1动态加载横幅预制体，内部带有 2.5 秒的展示时常生命周期
             StartCoroutine( PlayZenToCenterBannerFlow(() => isBannerFinished = true));
@@ -1266,8 +1227,6 @@ public class ChessPlayArea : UIWindow
         // 1. 获取控制器刚才算好的数据
         var rule = ChessStageController.Instance.CurrentMatchedRule;
         int styleNumber = ChessStageController.Instance.CurrentBannerStyle; // 这应该是 1, 2, 3, 4
-        float beyondPercent = ChessStageController.Instance.BeyondPercent;
-
         // 2. 动态加载对于的预制体 (假设预制体名字叫 UIEffect_Banner_1 等)
         GameObject activeBanner = null;
         if (_bannerCachePool.TryGetValue(styleNumber, out activeBanner) && activeBanner != null)
@@ -1315,13 +1274,12 @@ public class ChessPlayArea : UIWindow
                     Text titleText = activeBanner.transform.Find("Text01")?.GetComponent<Text>();
                     
                     // 写入百分比 (这里处理 0% 防护，大厂通常会做个假的最低限度)
-                    float displayPercent = beyondPercent <= 0 ? 88.5f : beyondPercent;
+                    float displayPercent = ChessStageController.Instance.DisplayZenPercent;
                     string percentStr = string.Format(desc, displayPercent.ToString("F2"));
                     Text percentText = activeBanner.transform.Find("Text02")?.GetComponent<Text>();
                     if (percentText != null)
                     {
                         percentText.text = percentStr;
-                        
                     }
                     Debug.Log($"🌟 [横幅准备完毕] 标题: {title} | 鼓励词: {percentStr} | 超越: {displayPercent:F2}%");
                     // if (rule.ScatterFlowers) MessageSystem.Instance.ShowTip($"{title} \n {percentStr} \n 撒花！");
@@ -1366,52 +1324,60 @@ public class ChessPlayArea : UIWindow
         Vector3 endLocal = transform.position;
         if (_bannerLiziCache != null)
         {
+            _bannerLiziCache.SetActive(false);
+            _bannerLiziCache.transform.SetAsLastSibling();
+            
+            Transform effectLightTrans = _bannerLiziCache.transform.Find("EffectLight");
+            Transform lightYeTrans = _bannerLiziCache.transform.Find("EffectLight/Light_ye");
+            Transform effectPointTrans = _bannerLiziCache.transform.Find("EffectPoint"); // ✨ 新增：找到 EffectPoint
+            // ParticleSystem lightYePs = lightYeTrans != null ? lightYeTrans.GetComponent<ParticleSystem>() : null;
+            if (lightYeTrans != null) 
+            {
+                lightYeTrans.gameObject.SetActive(false);  // ✨ 核心修复：前 0.5 秒强制它隐藏！绝对不准发光！
+            }
+            
+            RectTransform liziRect = _bannerLiziCache.GetComponent<RectTransform>();
+            Vector3 startWorld = zentable != null ? zentable.transform.position : transform.position;
+            Vector3 startLocal = transform.InverseTransformPoint(startWorld);
+            startLocal.z = 0f; // 强行抹平 Z 轴，防止受相机深度影响乱飞
+            liziRect.localPosition = startLocal;
+            
+            // 净化物理残留
+            var trails = _bannerLiziCache.GetComponentsInChildren<TrailRenderer>(true);
+            foreach (var t in trails) t.Clear();
+            var pss = _bannerLiziCache.GetComponentsInChildren<ParticleSystem>(true);
+            foreach (var p in pss) { p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); }
+           
             _bannerLiziCache.SetActive(true);
-            // _bannerLiziCache.transform.SetAsLastSibling();
-            // RectTransform liziRect = _bannerLiziCache.GetComponent<RectTransform>();
-            // Vector3 startWorld = zentable != null ? zentable.transform.position : transform.position;
-            // Vector3 startLocal = transform.InverseTransformPoint(startWorld);
-            // startLocal.z = 0f; // 强行抹平 Z 轴，防止受相机深度影响乱飞
-            // liziRect.localPosition = startLocal;
-            // _bannerLiziCache.SetActive(true);
-            // // 净化物理残留
-            // var trails = _bannerLiziCache.GetComponentsInChildren<TrailRenderer>(true);
-            // foreach (var t in trails) t.Clear();
-            // var pss = _bannerLiziCache.GetComponentsInChildren<ParticleSystem>(true);
-            // foreach (var p in pss) { p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); }
-            // // 假设预制体的层级顺序是：第一个 ParticleSystem 是光点，后面的是飞行拖尾
-            // if (pss.Length > 0)
-            // {
-            //     // 第一步：先单独播放光点粒子
-            //     pss[0].Play();
-            // }
-            yield return new WaitForSeconds(1.5f);
-            // // 第二步：播放飞行粒子
-            // if (pss.Length > 1)
-            // {
-            //     // 遍历剩下的所有粒子系统（飞行拖尾可能有多个子层级）并播放
-            //     for (int i = 1; i < pss.Length; i++)
-            //     {
-            //         pss[i].Play();
-            //     }
-            // }
-         
-            // RectTransform gridRect = chessboardGrid.GetComponent<RectTransform>();
-            // Vector3[] corners = new Vector3[4];
-            // gridRect.GetWorldCorners(corners);
-            // Vector3 endWorld = (corners[0] + corners[3]) / 2f;
-            // endLocal = transform.InverseTransformPoint(endWorld);
-            // endLocal.z = 0f; // 再次抹平 Z 轴防抖
-            // // float yOffset = 80f; 
-            // endLocal.y += 200f;
-            // bool isFlyDone = false;
-            // // 飞行动画：平滑向中心聚拢
-            // liziRect.DOLocalMove(endLocal, 0.65f).SetEase(Ease.InOutSine).OnComplete(() => {
-            //     isFlyDone = true;
-            // });
+            effectPointTrans.gameObject.SetActive(true);
+            yield return new WaitForSeconds(1.25f);
+            AudioManager.Instance.PlaySoundEffect("result_chest_open");
+            lightYeTrans.gameObject.SetActive(true);
+            effectPointTrans.gameObject.SetActive(false);
+            
+            RectTransform gridRect = chessboardGrid.GetComponent<RectTransform>();
+            Vector3[] corners = new Vector3[4];
+            gridRect.GetWorldCorners(corners);
+            Vector3 endWorld = (corners[0] + corners[3]) / 2f;
+            endLocal = transform.InverseTransformPoint(endWorld);
+            endLocal.z = 0f; // 再次抹平 Z 轴防抖
+            // float yOffset = 80f; 
+            endLocal.y += 155f;
+            bool isFlyDone = false;
+            // 飞行动画：平滑向中心聚拢
+            liziRect.DOLocalMove(endLocal, 0.75f).SetEase(Ease.InOutSine).OnComplete(() => {
+                isFlyDone = true;
+            });
 
-            //yield return new WaitUntil(() => isFlyDone);
-            _bannerLiziCache.SetActive(false); // 抵达中心瞬间彻底消失
+            yield return new WaitUntil(() => isFlyDone);
+            DOVirtual.DelayedCall(0.5f, () => 
+            {
+                if (_bannerLiziCache != null) 
+                {
+                    _bannerLiziCache.SetActive(false);
+                }
+            });
+            // _bannerLiziCache.SetActive(false); // 抵达中心瞬间彻底消失
         }
 
         // 2. 粒子消失的刹那，原地无缝唤醒无蒙版高性能过关横幅
@@ -1420,6 +1386,109 @@ public class ChessPlayArea : UIWindow
         yield return new WaitUntil(() => isBannerFinished);
 
         onComplete?.Invoke();
+    }
+    /// <summary>
+    /// 🌟 新增：处理树叶关卡结束时，将收集到的奖励飞向对应的顶部目标
+    /// </summary>
+    private IEnumerator PlayLeafRewardsFlyOutFlow()
+    {
+        // Debug.Log("<color=#FF5500>[飞行排查] 1. 进入飞行结算流水线</color>");
+        float flyDuration = 1.2f; // ✈️ 飞行时间，可根据美术节奏自由调整
+        bool hasAnyFly = false;
+        
+        int curLeaves = ChessStageController.Instance.CurrStageData.CollectedLeaves;
+        bool isButterflyTaskFinished = ButterfliesManager.Instance.IsAllButterfliesCollected();
+        
+        // Debug.Log($"<color=#FF5500>[飞行排查] 2. 当前树叶: {curLeaves}, 蝴蝶任务是否完成: {isButterflyTaskFinished}</color>");
+        HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
+        if (header == null) yield break;
+
+        // 获取终点坐标
+        Vector3 pauseBtnPos = header.pauseBtn.transform.position;        // 金币终点（关卡暂停时间按钮处）
+        Vector3 pupaPos = header.pupaProgressBar.transform.position;     // 蝶蛹终点
+        Vector3 zenPos = _zenScoreText.transform.position;               // 禅意分/莲花终点
+
+        // 1. 金币（2片叶子解锁）
+        if (curLeaves >= 2 && leafGold != null)
+        {
+            // Debug.Log("<color=#FF5500>[飞行排查] 3. 准备起飞：金币</color>");
+            hasAnyFly = true;
+            // FlyRewardNodeToTarget(leafGold, pauseBtnPos, flyDuration);
+            CustomFlyInManager.Instance.FlyInGoldToTarget(leafGold.transform, header.pauseBtn.transform);
+        }
+
+        // 2. 蝶蛹 或 禅意分（5片叶子解锁）
+        if (curLeaves >= 5)
+        {
+            if (!isButterflyTaskFinished && leafPupa != null)
+            {
+                // Debug.Log("<color=#FF5500>[飞行排查] 3. 准备起飞：阶段5蝶蛹</color>");
+                hasAnyFly = true;
+                FlyRewardNodeToTarget(leafPupa, pupaPos, flyDuration);
+            }
+            else if (isButterflyTaskFinished && leafZenReplacement != null)
+            {
+                if (curLeaves < 10)
+                {
+                    hasAnyFly = true;
+                    FlyRewardNodeToTarget(leafZenReplacement, zenPos, flyDuration);
+                }
+            }
+        }
+
+        // 3. 莲花/禅意大奖（10片叶子解锁）
+        if (curLeaves >= 10 && leafLotus != null)
+        {
+            // Debug.Log("<color=#FF5500>[飞行排查] 3. 准备起飞：阶段10莲花</color>");
+            hasAnyFly = true;
+            FlyRewardNodeToTarget(leafLotus, zenPos, flyDuration);
+        }
+
+        // 如果触发了任何飞行，挂起协程，等待动画播完再让流水线往下走（弹出过关横幅）
+        if (hasAnyFly)
+        {
+            // TODO: 如果有统一的起飞音效，可以在这里播放
+            // AudioManager.Instance.PlaySoundEffect("RewardsFlyOut");
+
+            // 等待飞行时间结束，加上 0.1 秒的缓冲容错时间
+            yield return new WaitForSeconds(flyDuration + 0.1f);
+            // Debug.Log("<color=#FF5500>[飞行排查] 5. 飞行结束，允许横幅弹出</color>");
+        }
+        else
+        {
+            // Debug.Log("<color=#FF5500>[飞行排查] 未满足任何起飞条件，直接跳过</color>");
+        }
+    }
+    /// <summary>
+    /// 🌟 内部复用工具：克隆奖励图标并让其沿着贝塞尔曲线飞向目标点
+    /// </summary>
+    private void FlyRewardNodeToTarget(GameObject sourceNode, Vector3 targetPos, float duration)
+    {
+        // 1. 克隆物体，保证在最顶层飞行，这样就不会破坏原 UI 进度条的状态结构
+        GameObject flyObj = Instantiate(sourceNode, this.transform);
+        flyObj.transform.position = sourceNode.transform.position;
+        flyObj.transform.localScale = sourceNode.transform.localScale;
+        flyObj.transform.SetAsLastSibling();
+
+        // 确保克隆体是可见的
+        flyObj.SetActive(true);
+
+        // 如果原节点正在执行果冻弹跳动画，强制清除克隆体上的残余动画防抖
+        flyObj.transform.DOKill();
+        
+        // 2. 使用现有的贝塞尔曲线生成器（带有 0.3f 的自然弧度）
+        Vector3[] pathPoints = CreateBezierPath(flyObj.transform.position, targetPos, 0.3f, 15);
+
+        // 3. 编排飞行与缩小消失的交响乐
+        Sequence seq = DOTween.Sequence();
+        seq.Append(flyObj.transform.DOPath(pathPoints, duration, PathType.Linear).SetEase(Ease.InOutSine));
+        // 飞行的同时慢慢缩小到0，产生被对应UI“吸入”的感觉
+        seq.Join(flyObj.transform.DOScale(Vector3.zero, duration).SetEase(Ease.InQuad));
+        seq.OnComplete(() =>
+        {
+            // 到达目标后彻底销毁克隆体
+            Destroy(flyObj);
+        });
     }
     #endregion
     private void ClickLevelPuzzle()
@@ -1573,7 +1642,7 @@ public class ChessPlayArea : UIWindow
     public void UseTips()
     {
         NotifyPlayerInteraction(); // 🌟 触发唤醒计时
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
+        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
 
         if (toolInfo == null || chessboardGrid.GameOver)
         {
@@ -1590,7 +1659,7 @@ public class ChessPlayArea : UIWindow
         bool useCoins = false;
         if(toolInfo.count <= 0)
         {
-            GetItemScreen.limitRewordType = LimitRewordType.SingleWordTipsttool;
+            GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
             // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             return;
@@ -1615,12 +1684,12 @@ public class ChessPlayArea : UIWindow
         {
             // 更新道具
             GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, false, true, "购买道具");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1, "道具购买");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "道具购买");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用");
         }
         else
         {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用",GetCurrentSelectedPhrase());
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用",GetCurrentSelectedPhrase());
             InitToolUI();
         }
         // chessboardGrid.SetSelectTip();
@@ -1909,10 +1978,21 @@ public class ChessPlayArea : UIWindow
                 StartCoroutine(PlayHintReminderEffectDelay());
             }
         }
+        // 👇 🌟 核心修改点：记录扣分前后的差值
+        int oldScore = ChessStageController.Instance.CurrentTotalScore;
         
         bool wasPunished = ChessStageController.Instance.OnUpdateRewardPuzzle(false, tileErrorCount);
         if (wasPunished)
         {
+            // 获取实际扣除的负数分数 (例如 -5)
+            int scoreDiff = ChessStageController.Instance.CurrentTotalScore - oldScore;
+            
+            // 触发棋盘上的减分飘字
+            if (scoreDiff < 0)
+            {
+                ShowBoardDeductionFloatingScore(tile.transform, scoreDiff);
+            }
+            
             // 🌟 既然已经扣过分、飞过粒子了，这波错误就“翻篇”了，计数重置！
             chessboardGrid.TileErrorCounts[tile] = 0;
         }
@@ -2454,7 +2534,111 @@ public class ChessPlayArea : UIWindow
             _floatingScorePool.ReturnObjectToPool(floatObj.GetComponent<PoolObject>());
         });
     }
-    
+    /// <summary>
+    /// 🌟 新增：在棋盘错误格子上显示减分飘字（复用原禅意分位置的缓动特效样式）
+    /// </summary>
+    public void ShowBoardDeductionFloatingScore(Transform targetTile, int scoreDiff)
+    {
+        // 1. 生成在 this.transform (PlayArea) 下，保证层级在最顶端
+        GameObject floatObj = _floatingScorePool.GetObject(this.transform); 
+        floatObj.transform.SetAsLastSibling();
+        
+        Text floatText = floatObj.GetComponent<Text>();
+        CanvasGroup floatCG = floatObj.GetComponent<CanvasGroup>();
+        if (floatCG == null) floatCG = floatObj.AddComponent<CanvasGroup>();
+        
+        // 2. 杀掉旧动画，重置状态
+        floatCG.DOKill(false);
+        floatText.rectTransform.DOKill(false);
+        floatObj.transform.DOKill(false);
+        floatObj.transform.localScale = Vector3.one;
+        
+        // 3. 设置初始位置为目标错误格子的世界坐标
+        floatObj.transform.position = targetTile.position;
+
+        // 4. 关闭材质的渐变效果，使用纯色
+        ChessView chessView = targetTile.GetComponent<ChessView>();
+        int curRow = chessView.chesspiece.row;
+        int curCol = chessView.chesspiece.col;
+        int targetDir = 1;
+        // 1. 先将 col+1 查找上方是否存在格子
+        if (IsTileOccupied(curRow, curCol + 1))
+        {
+            // 2. 上方存在格子，再将 row+1 判断右边是否存在格子
+            if (!IsTileOccupied(curRow + 1, curCol))
+            {
+                // 右方不存在格子，改为向右飘
+                targetDir = 2;
+            }
+            // 3. 若右方也存在格子，targetDir 依然保持为 1 (还是向上飘)
+        }
+        RectTransform floatRT = floatObj.GetComponent<RectTransform>();
+        Vector2 flyDir;
+        if (targetDir == 1) // 决定在上方飘
+        {
+            floatRT.anchoredPosition += new Vector2(0, 60f); 
+            flyDir = new Vector2(UnityEngine.Random.Range(-15f, 15f), 100f); 
+        }
+        else // 决定在右方飘
+        {
+            floatRT.anchoredPosition += new Vector2(60f, 0); 
+            flyDir = new Vector2(100f, UnityEngine.Random.Range(-15f, 15f)); 
+        }
+        floatRT.anchoredPosition += new Vector2(0f, 60f); // 初始Y轴向上偏移 60 像素
+        var meshEffects = floatObj.GetComponents<UnityEngine.UI.BaseMeshEffect>();
+        foreach (var effect in meshEffects)
+        {
+            if (effect.GetType().Name.Contains("Gradient")) effect.enabled = false;
+        }
+
+        // 5. 设置纯红颜色和具体的负数文本 (例如 "-5")
+        floatText.color = Color.red; 
+        floatText.text = scoreDiff.ToString();
+        floatText.SetAllDirty();
+        
+        // 初始透明度设为0
+        floatCG.alpha = 0f;
+        
+        // 6. 执行动画（完全复原废弃的禅意分飘字参数）
+        Sequence floatSeq = DOTween.Sequence();
+        floatSeq.SetTarget(floatObj);
+        
+        // 轻微的左右随机偏移，让连续扣分时文字不会完全重叠死板
+        float randomX = UnityEngine.Random.Range(-25f, 25f); 
+        
+        // 相对移动 + 淡入淡出 (向上飘 60 像素)
+        floatSeq.Join(floatText.rectTransform.DOAnchorPos(new Vector2(randomX, 60f), 1.2f).SetRelative(true).SetEase(Ease.OutQuad));
+        floatSeq.Join(floatCG.DOFade(1f, 0.2f));             // 0.2秒快速淡入显现
+        floatSeq.Join(floatText.rectTransform.DOAnchorPos(flyDir, 1.2f).SetRelative(true).SetEase(Ease.OutQuad));
+        floatSeq.Insert(0.8f, floatCG.DOFade(0f, 0.4f));     // 停留后，在0.8秒处开始用0.4秒淡出
+        floatSeq.Insert(0.8f, floatObj.transform.DOScale(1f, 0.4f));
+        floatSeq.OnComplete(() =>
+        {
+            _floatingScorePool.ReturnObjectToPool(floatObj.GetComponent<PoolObject>());
+        });
+    }
+    /// <summary>
+    /// 辅助方法：检测指定行列是否被其他未消除的格子挡住
+    /// </summary>
+    private bool IsTileOccupied(int row, int col)
+    {
+        if (chessboardGrid == null || chessboardGrid.GridList == null) return false;
+
+        // 遍历当前棋盘上存活的格子
+        foreach (var tile in chessboardGrid.GridList.Values)
+        {
+            // 找到对应坐标的格子
+            if (tile.chesspiece.row == row && tile.chesspiece.col == col)
+            {
+                // 如果这个格子存在，且不是已经被消除的空白状态（根据你的状态枚举调整）
+                if (tile.CurrState != TileState.None) 
+                {
+                    return true; // 报告：前方有障碍物！
+                }
+            }
+        }
+        return false; // 前方畅通无阻
+    }
     /// <summary>
     /// 🌟 新增：处理成功消除时，树叶划过贝塞尔弧线飞向收集点的华丽动效
     /// </summary>
@@ -2552,12 +2736,12 @@ public class ChessPlayArea : UIWindow
         }
 
         // ③ 禅意分平滑发放
-        if (zenBonus > 0)
-        {
-            int nextScore = ChessStageController.Instance.CurrentTotalScore + zenBonus;
-            // 呼叫你的分数变动机制，飞出黄色能量拖尾线
-            OnChessScoreChanged(nextScore, zenBonus);
-        }
+        // if (zenBonus > 0)
+        // {
+        //     int nextScore = ChessStageController.Instance.CurrentTotalScore + zenBonus;
+        //     // 呼叫你的分数变动机制，飞出黄色能量拖尾线
+        //     OnChessScoreChanged(nextScore, zenBonus);
+        // }
         
         // AudioManager.Instance.PlaySoundEffect("RewardNode_Unlock");
     }
@@ -2569,6 +2753,8 @@ public class ChessPlayArea : UIWindow
     {
         bool isLeafLevel = ChessStageController.Instance.CheckLeafMechanic(ChessStageController.Instance.CurrentStage, out _);
         
+        int maxLeavesInStage = 10; // 安全兜底默认值
+        
         if (leafSlider != null)
         {
             leafSlider.transform.parent.gameObject.SetActive(isLeafLevel);
@@ -2578,14 +2764,16 @@ public class ChessPlayArea : UIWindow
             leafSlider.transform.localScale = Vector3.one;
             if (ChessStageController.Instance.CurrStageInfo != null)
             {
-                leafSlider.maxValue = ChessStageController.Instance.CurrStageInfo.PhraseGroups.Count;
+                maxLeavesInStage = ChessStageController.Instance.CurrStageInfo.PhraseGroups.Count;
             }
-            else
-            {
-                // 最大值动态同步关卡成语总数
-                leafSlider.maxValue = 10; // 安全兜底
-            }
+            // 最大值动态同步关卡成语总数
+            leafSlider.maxValue = maxLeavesInStage; // 安全兜底
             leafSlider.value = ChessStageController.Instance.CurrStageData.CollectedLeaves;
+        }
+        // 如果达不到，则从根节点彻底隐藏莲花奖励（图标及所有粒子都会随之隐藏）
+        if (leafLotus != null)
+        {
+            leafLotus.SetActive(maxLeavesInStage >= 10);
         }
         Image leafImg = leafFlyPoint.transform.GetChild(0).GetComponent<Image>();
         if (leafImg != null)
