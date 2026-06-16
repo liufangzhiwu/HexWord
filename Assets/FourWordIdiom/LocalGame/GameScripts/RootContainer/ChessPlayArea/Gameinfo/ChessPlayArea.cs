@@ -244,6 +244,7 @@ public class ChessPlayArea : UIWindow
         EventDispatcher.instance.OnAutoPassLevel += AutoPassLevel;
         // 👇 新增：监听分数变化事件，并初始化当前分数
         EventDispatcher.instance.OnChessScoreChanged += OnChessScoreChanged;
+        EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
         _lastZenScore = ChessStageController.Instance.CurrentTotalScore;
         _zenScoreText.text = _lastZenScore.ToString();
         
@@ -1924,7 +1925,7 @@ public class ChessPlayArea : UIWindow
        
         if(EventDispatcher.instance != null)
         {
-            // EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
+            EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
             EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
             EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
             EventDispatcher.instance.OnChessScoreChanged -= OnChessScoreChanged;

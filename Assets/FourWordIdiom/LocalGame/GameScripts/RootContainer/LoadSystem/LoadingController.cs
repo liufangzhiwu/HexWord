@@ -92,8 +92,24 @@ public class LoadingController : MonoBehaviour
 
     private void OnEnable()
     {
+        StartCoroutine(InitBg());
         UnityMainThreadDispatcher.Instance();
         StartCoroutine(InitializeLoadingProcess());
+    }
+
+    private IEnumerator InitBg()
+    {
+        GameDataManager.Instance.LoadPlayerProfile();
+        this.transform.GetComponent<Image>().color = Color.black;
+        yield return AssetBundleLoader.SharedInstance.LoadAtlas(
+            "ui_theme",
+            "UI_Theme");
+        yield return null;
+        
+        ThemeDataItem curDataItem=ThemeManager.Instance.GetThemeDataItem(GameDataManager.Instance.UserData.userthemeid);
+        Sprite sprite = GetSprite(curDataItem.iconName);
+        this.transform.GetComponent<Image>().sprite = sprite;
+        this.transform.GetComponent<Image>().color = Color.white;
     }
 
     private void Start()
@@ -458,6 +474,11 @@ public class LoadingController : MonoBehaviour
          StageHexController.Instance.LoadPackInfos();
         // 开始场景加载
         yield return LoadMainSceneAsync();
+    }
+    
+    private Sprite GetSprite(string spriteName)
+    {
+        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(spriteName,"UI_Theme");
     }
 
     private IEnumerator LoadHuaweiGameLogin()

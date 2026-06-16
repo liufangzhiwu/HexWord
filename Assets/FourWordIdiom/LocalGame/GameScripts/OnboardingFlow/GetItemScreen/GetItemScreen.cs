@@ -96,15 +96,26 @@ public class GetItemScreen : UIWindow
                 tips.text = MultilingualManager.Instance.GetString("ItemDes02","pingzi");
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
                 AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
-                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
+                //shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
+                shopDataItem = null;
                 eventDes=title.text+"弹窗广告";
                 AnalyticMgr.VideoAdShow(eventDes);
                 break;
             // case LimitRewordType.Min15Double:
             //     return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
         }
+
+        if (shopDataItem != null)
+        {
+            giftTable.gameObject.SetActive(true);
+            giftTable.InitUI(limitRewordType,shopDataItem);
+        }
+        else
+        {
+            giftTable.gameObject.SetActive(false);
+        }
        
-        giftTable.InitUI(limitRewordType,shopDataItem);
+        
     }
 
     protected override void InitializeUIComponents()

@@ -343,7 +343,7 @@ SpriteAtlas:
   - UI_Icon_goldbg
   - UI_btn_autoover
   - add
-  - "\u8027\u6597\u83DC\u82B1\u82DE"
+  - zicaihua
   - UI_btn_huojian
   - fly-body
   - zentable_light
@@ -353,7 +353,7 @@ SpriteAtlas:
   - Triangle
   - UI_btn_pupa_fill
   - themeBtn
-  - "\u8027\u6597\u83DC\u82B1"
+  - ciahua
   - redpoint
   - UI_Icon_DownLine
   - zen_bg
@@ -361,7 +361,7 @@ SpriteAtlas:
   - energy
   - UI_Icon_tips
   - wifi
-  - "\u6B63\u5E38\u51B0\u5757"
+  - bing
   - countbg_0
   - time_icon
   - bowl_bg

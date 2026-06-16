@@ -247,6 +247,9 @@ public class UserData
         IsSoundOn = true;
         IsAgreePrivacy = false;
         Zenlevel = "ZenState01";
+        Energy = 5;
+        LastEnergyUpdateTime = DateTime.Now.ToString();
+        hasUsedFreeRevive = false;
         // 评价界面显示次数
         showRateusCount = 0;
         // 评价界面显示时间
@@ -360,6 +363,21 @@ public class UserData
         firstPayTime = user.firstPayTime;
         lastPayTime = user.lastPayTime;
         
+        // 👇 🌟 核心修复：通过时间戳是否存在，来精准判断是不是老玩家首次更新
+        if (string.IsNullOrEmpty(user.LastEnergyUpdateTime))
+        {
+            // 老玩家首次更新到新版本，作为福利直接送满体力，并初始化时间！
+            Energy = 5; 
+            LastEnergyUpdateTime = DateTime.Now.ToString();
+        }
+        else
+        {
+            // 正常玩家（新玩家或已经有体力系统的玩家），直接继承存档里的值
+            Energy = user.Energy;
+            LastEnergyUpdateTime = user.LastEnergyUpdateTime;
+        }
+        hasUsedFreeRevive = user.hasUsedFreeRevive;
+        
         ThemeSaveItems=new List<ThemeSaveItem>{
             new(){id = 0,isGet = true},
             new(){id = 1,isGet = true},
@@ -400,14 +418,13 @@ public class UserData
         IsFirstLaunch = user.IsFirstLaunch;
         isShowVocabulary = user.isShowVocabulary;
         
-        ThemeSaveItems=new List<ThemeSaveItem>{
-            new(){id = 0,isGet = true},
-            new(){id = 1,isGet = true},
-        };
-        ThemeItemUses=new Dictionary<int,int>(){{0,1}};
-        GoldLeaf = 0;
-        userthemeid = 0;
-        ischangetheme = false;
+        ThemeSaveItems=user.ThemeSaveItems.Count<=0?new List<ThemeSaveItem>{
+            new() {id = 0,isGet = true},
+            new() {id = 1,isGet = true},
+        }:user.ThemeSaveItems;
+        ThemeItemUses=user.ThemeItemUses??new Dictionary<int,int>(){{0,1}};
+        userthemeid = user.userthemeid;
+        ischangetheme=user.ischangetheme;
         
         // 时间数据
         logoutTime = user.logoutTime;

@@ -86,11 +86,8 @@ SpriteAtlas:
     - 3e6a7049ff86b9649a4ee38c190d6bbe: 21300000
     - f4904bc9ebc496a40bc16a025063a239: 21300000
     - 7f58480ae60ede24e950943a27cc9210: 21300000
-    - 47d30eda7ebfec440889a13163822b59: 21300000
-    - d37a1cfaf859acb47b3d0f7e404ba55b: 21300000
     - be79119bacfa9ba4fac4ef674378a420: 21300000
     - a1f0823c87e969947bb3d369bb67b0ee: 21300000
-    - ea8e254c86c384440af0f54134718e8d: 21300000
     - 5eecfaad464725c4c993681ea313f3ad: 21300000
     - 47a96ced293b5b1409cced96246533de: 21300000
     - b4de4dfd99367e64b9280aba8d6b0546: 21300000
@@ -98,7 +95,6 @@ SpriteAtlas:
     - b805709ee10c3474a9538d12aace4932: 21300000
     - d190b5eec6c9737478e9fdc3e759de8c: 21300000
     - 47a55d5fcd80a8047a234e1c79704b99: 21300000
-    - d44393cf4340e9647920b408dc940baf: 21300000
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
   - {fileID: 21300000, guid: fe8b1cc0753d8a7448d26a03f63d6693, type: 3}
@@ -124,11 +120,8 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 3e6a7049ff86b9649a4ee38c190d6bbe, type: 3}
   - {fileID: 21300000, guid: f4904bc9ebc496a40bc16a025063a239, type: 3}
   - {fileID: 21300000, guid: 7f58480ae60ede24e950943a27cc9210, type: 3}
-  - {fileID: 21300000, guid: 47d30eda7ebfec440889a13163822b59, type: 3}
-  - {fileID: 21300000, guid: d37a1cfaf859acb47b3d0f7e404ba55b, type: 3}
   - {fileID: 21300000, guid: be79119bacfa9ba4fac4ef674378a420, type: 3}
   - {fileID: 21300000, guid: a1f0823c87e969947bb3d369bb67b0ee, type: 3}
-  - {fileID: 21300000, guid: ea8e254c86c384440af0f54134718e8d, type: 3}
   - {fileID: 21300000, guid: 5eecfaad464725c4c993681ea313f3ad, type: 3}
   - {fileID: 21300000, guid: 47a96ced293b5b1409cced96246533de, type: 3}
   - {fileID: 21300000, guid: b4de4dfd99367e64b9280aba8d6b0546, type: 3}
@@ -136,7 +129,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: b805709ee10c3474a9538d12aace4932, type: 3}
   - {fileID: 21300000, guid: d190b5eec6c9737478e9fdc3e759de8c, type: 3}
   - {fileID: 21300000, guid: 47a55d5fcd80a8047a234e1c79704b99, type: 3}
-  - {fileID: 21300000, guid: d44393cf4340e9647920b408dc940baf, type: 3}
   m_PackedSpriteNamesToIndex:
   - locktheme
   - wordtip
@@ -161,11 +153,8 @@ SpriteAtlas:
   - theme14
   - whiteTexture
   - point3
-  - "\u7ED3\u675F\u9875"
-  - "\u5B8C\u6574\u5546\u5E971"
   - theme03
   - theme06
-  - newthemetip
   - theme11
   - theme13
   - theme09
@@ -173,7 +162,6 @@ SpriteAtlas:
   - theme12
   - wordlight
   - theme07
-  - "\u5F00\u59CB\u98751"
   m_RenderDataMap: {}
   m_Tag: UI_Theme
   m_IsVariant: 0

@@ -420,7 +420,7 @@ public class PrimaryInterface : UIWindow
             ButterflyGrow butterflyGrow = ButterfliesManager.Instance.GetCurrentGrow();
             if (pupaText != null) 
             {
-                pupaText.text =  $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow?.Count.ToString() ?? "&"}"; 
+                pupaText.text =  $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow?.Count.ToString() ?? "10"}"; 
             }
             float progressValue = 0f;
             if (butterflyGrow != null && butterflyGrow.Count > 0)

@@ -473,12 +473,12 @@ public class HeaderSection : UIWindow
         {
             // 双双提层到弹窗同一级
             energyCanvas.overrideSorting = true;
-            energyCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
+            energyCanvas.sortingLayerName = UIPanelLayer.RewardPanel;
             energyCanvas.sortingOrder = 101;
             energyBtn.interactable = false;
 
             goldCanvas.overrideSorting = true;
-            goldCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
+            goldCanvas.sortingLayerName = UIPanelLayer.RewardPanel;
             goldCanvas.sortingOrder = 101;
             ShopBtn.interactable = false;
             

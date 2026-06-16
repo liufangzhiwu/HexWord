@@ -665,7 +665,7 @@ public class ChessStageController
     {
         if (!isJump) AudioManager.Instance.PlaySoundEffect("success");
 
-        yield return new WaitForSeconds(0.4f);
+        //yield return new WaitForSeconds(0.4f);
         
         // ---- 修复：统一封存最后一段在线时长 ----
         GameDataManager.Instance.UserData.UpdateOnlineStageTime();
@@ -691,7 +691,7 @@ public class ChessStageController
                 AnalyticMgr.InsetAdFail("关卡插屏");
             }
         });
-        yield return new WaitForSeconds(0.4f);
+        //yield return new WaitForSeconds(0.4f);
         
         // UI切换
         SystemManager.Instance.HidePanel(PanelType.HeaderSection);
