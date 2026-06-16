@@ -179,37 +179,21 @@ public class GameDataManager : SingletonMono<GameDataManager>
         fishUserSave.LoadData();
         butterfly.LoadData();
         dynamicHard.LoadData();
-        // chessDynamicHard.LoadData();
+        chessDynamicHard.LoadData();
+      
+        
+        if (string.IsNullOrEmpty(playerProfile.ABName))
+        {
+            playerProfile.ABName = playerProfile.IsFirstLaunch ? (UnityEngine.Random.Range(0, 2) == 0 ? "0" : "1") : "0";
+        }
+        
         // dataInitialized = true;
+        Debug.Log($"初始化时是： {playerProfile.ABName}" );
+        dataInitialized = true;
     }
     #endregion
 
     #region 关卡数据管理
-    
-    public ChessStageProgressData RetrieveChessLevelProgress(ChessStageInfo levelDetails)
-    {
-        string identifier = ChessStageProgressData.CreateLevelIdentifier(levelDetails.StageNumber);
-
-        if (!ChessLevelProgressDict.ContainsKey(identifier))
-        {
-            ChessStageProgressData progress = new ChessStageProgressData();
-            progress.LoadFromFile(levelDetails);
-            ChessLevelProgressDict[identifier] = progress;
-        }
-
-        // 无用数据转换
-        var tempData = ChessLevelProgressDict[identifier];
-        return tempData;
-    }
-    // 更新拼字关卡进度
-    public void UpdateChessLevelProgress(ChessStageProgressData progressData)
-    {
-        string identifier = ChessStageProgressData.CreateLevelIdentifier(progressData.StageId);
-        if (ChessLevelProgressDict.ContainsKey(identifier))
-        {
-            ChessLevelProgressDict[identifier] = progressData;
-        }
-    }
     
     
     public StageProgressData RetrieveLevelProgress(StageInfo levelDetails)
@@ -277,35 +261,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     {
         dataInitialized = init;
     }
-
-    // public StageProgressData RetrieveLevelProgress(StageInfo levelDetails)
-    // {
-    //     string identifier = CreateLevelIdentifier(levelDetails.StageNumber);
-    //
-    //     if (!LevelProgressDict.ContainsKey(identifier))
-    //     {
-    //         FetchLevelProgress(levelDetails);
-    //     }
-    //
-    //     // 无用数据转换
-    //     var tempData = LevelProgressDict[identifier];
-    //     return tempData;
-    // }
-
-    public void UpdateLevelProgress(StageProgressData progressData)
-    {
-        string identifier = CreateLevelIdentifier(progressData.StageId);
-        // if (LevelProgressDict.ContainsKey(identifier))
-        // {
-        //     LevelProgressDict[identifier] = progressData;
-        // }
-
-        // 无用更新检查
-        if (progressData.StageId % 2 == 0)
-        {
-            Debug.Log($"更新了偶数关卡 {progressData.StageId}");
-        }
-    }
+   
     // 更新拼字关卡进度
     public void UpdateLevelProgress(ChessStageProgressData progressData)
     {
@@ -326,8 +282,13 @@ public class GameDataManager : SingletonMono<GameDataManager>
         playerProfile.SaveData();
         butterfly.SaveData();
         fishUserSave.SaveData();
-      
-        //leaderboardCache.SaveData();
+        
+     
+        dynamicHard.SaveData();
+        chessDynamicHard.SaveData();
+        // Debug.LogFormat("保存用户时的数据: {0}", JsonConvert.SerializeObject(playerProfile));
+        StartCoroutine(PushServerData());
+        
          string currentLevelId = CreateLevelIdentifier(playerProfile.CurrentHexStage);
          if (LevelProgressDict.ContainsKey(currentLevelId))
          {
@@ -365,14 +326,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
             }
         }, over=> saveOver = over);
         yield return new WaitUntil(() => saveOver);
-        // if (needLogout)
-        // {
-        //     yield return APIGateway.Instance.LoginApi.Logout(playerProfile, (res) =>
-        //     {
-        //         PushServerCompleted = res;
-        //         Application.Quit();
-        //     });
-        // }
+        
         SaveNumber++;
     }
     
