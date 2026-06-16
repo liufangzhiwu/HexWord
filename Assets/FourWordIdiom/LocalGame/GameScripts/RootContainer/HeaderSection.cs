@@ -686,6 +686,19 @@ public class HeaderSection : UIWindow
                 .OnComplete(()=>{ gameTimeBg.gameObject.SetActive(false); });
         }
     }
+    
+    /// <summary>
+    /// x显示游戏时间面板
+    /// </summary>
+    public void ShowGameTimeBg()
+    {
+        if (gameTimeBg != null)
+        {
+            gameTimeBg.transform.localScale = Vector3.one;
+            gameTimeBg.gameObject.SetActive(true);
+        }
+    }
+    
     /// <summary>
     /// 重置时间表现（恢复正常背景）
     /// </summary>

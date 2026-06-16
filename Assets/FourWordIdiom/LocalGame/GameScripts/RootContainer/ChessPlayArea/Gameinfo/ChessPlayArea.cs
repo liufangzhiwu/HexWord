@@ -649,6 +649,12 @@ public class ChessPlayArea : UIWindow
         _remainingTime = CurrStageData.RemainingTime;
         _isTimerRunning = false;
         UpdateTimerUI();
+        HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
+        if (header != null)
+        {
+            header.ShowGameTimeBg();
+        }
+       
         // bool gotoNext = false;
         // if (!ChessStageController.Instance.IsFirstEnterStage)
         // {
