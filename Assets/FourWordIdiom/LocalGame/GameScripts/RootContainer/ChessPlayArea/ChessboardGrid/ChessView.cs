@@ -60,6 +60,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     private bool _isProcessingInteraction; 
     public bool _isGoldLeaf=false; 
     public bool iceLogicBroken;        // 🌟 新增：冰块逻辑已破，但动画可能还在播
+    public bool flowerLogicBroken;     // 🌟 新增：花朵逻辑已破，但动画可能还在播
     // 是否锁定
     public bool IsLocked
     {
@@ -88,6 +89,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             _isGoldLeaf= chesspiece.isGoldLeaf;
         }
         iceLogicBroken = false;
+        flowerLogicBroken = false; // 🌟 每次初始化格子时重置
         _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
         //Debug.Log($"当前词： {Answer} {CurrState}");
         // 设置选择框尺寸
@@ -317,6 +319,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         }
         if (chesspiece.hasFlower)
         {
+            _flowerObj.GetComponent<Image>().enabled = true;
             _textDisplay.text = "";
             _flowerObj.transform.localScale = Vector3.one;
             _flowerObj.SetActive(true);
@@ -509,6 +512,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         
         // 2. 悬停在这个大小，等待粒子和发光框播完 (耗时 = 总时长 - 放大和缩回的 0.3 秒)
         float holdTime = Mathf.Max(0f, duration - 0.3f);
+        // Debug.Log("发光框播完时间是 " + holdTime);
         seq.AppendInterval(holdTime);
         
         // 3. 完美缩回原状 (耗时 0.15秒)
@@ -584,6 +588,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         yield return new WaitForSeconds(1.2f);
         UpdateTile();
         _iceObj?.SetActive(false);
+        iceLogicBroken = false;   // 🌟 动画结束，清除逻辑标记
     }
     
     // 2. 花朵逻辑
@@ -597,6 +602,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         yield return new WaitForSeconds(1.2f);
         UpdateTile(true); 
         _flowerObj.SetActive(false);
+        flowerLogicBroken = false;   // 🌟 动画结束，清除逻辑标记
     }
     
     // 3. 树叶逻辑

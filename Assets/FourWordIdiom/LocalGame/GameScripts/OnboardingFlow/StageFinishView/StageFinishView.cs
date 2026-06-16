@@ -13,7 +13,7 @@ public class StageFinishView : UIWindow
 {
     [Header("UI References")]
     [SerializeField] private Button SignBtn;
-    //[SerializeField] private Button HeadBtn;
+    [SerializeField] private Button butterflyBtn;
     [SerializeField] private LimitBtnTable _limitBtnTable;
     [SerializeField] private MatchFishTable _matchFishtable;
     [SerializeField] private TaskTable _tasktable;
@@ -48,6 +48,7 @@ public class StageFinishView : UIWindow
             SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
             
         });
+        butterflyBtn.AddClickAction(OnButterflyClick);
     }
 
     protected override void OnEnable()
@@ -270,6 +271,26 @@ public class StageFinishView : UIWindow
     //         headImage.transform.gameObject.SetActive(false);
     //     }
     // }
+    
+    private void OnButterflyClick()
+    {
+        
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.StageFinishView);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPingPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.ChessFinishView);
+        }
+        
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
+        });
+    }
 
     /// <summary>
     /// 播放奖励获取序列动画

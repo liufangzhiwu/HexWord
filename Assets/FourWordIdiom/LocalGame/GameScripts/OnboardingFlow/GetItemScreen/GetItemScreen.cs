@@ -71,22 +71,22 @@ public class GetItemScreen : UIWindow
                 tips.text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
                 if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
                 {
-                    AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("tipligh");
+                    AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_tip");
                 }
                 if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
                 {
-                    AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("tipligh");
+                    AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_tip");
                 }
-                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
+                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
                 eventDes=title.text+"弹窗广告";
                 break;
             case LimitRewordType.SingleWordTipsttool:
                 UpdateCliamBtn(false);
-                title.text = "提示灯";
-                tips.text = "提示一个词语的首字";
+                title.text = MultilingualManager.Instance.GetString("ItemName01","pingzi");
+                tips.text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
                 AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_reset");
-                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
+                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
                 eventDes=title.text+"弹窗广告";
                 AnalyticMgr.VideoAdShow(eventDes);
                 break;
@@ -96,7 +96,7 @@ public class GetItemScreen : UIWindow
                 tips.text = MultilingualManager.Instance.GetString("ItemDes02","pingzi");
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
                 AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
-                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
+                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
                 eventDes=title.text+"弹窗广告";
                 AnalyticMgr.VideoAdShow(eventDes);
                 break;
@@ -214,7 +214,6 @@ public class GetItemScreen : UIWindow
             AnalyticMgr.VideoAdSuccess(eventDes);
             
             //EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-            
             Close();
         }
         else

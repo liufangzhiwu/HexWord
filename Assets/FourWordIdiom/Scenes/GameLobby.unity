@@ -70111,7 +70111,7 @@ RenderTexture:
   m_TextureSettings:
     serializedVersion: 2
     m_FilterMode: 1
-    m_Aniso: 1
+    m_Aniso: 0
     m_MipBias: 0
     m_WrapU: 1
     m_WrapV: 1
@@ -127304,6 +127304,8 @@ MonoBehaviour:
   TargetPuzzle: []
   activeToolObject: {fileID: 0}
   toolSourceName: 
+  collectionPointObject: {fileID: 0}
+  targetPhrase: 
   currentTutorial: 1
 --- !u!1 &1491595608
 GameObject:
@@ -165300,7 +165302,7 @@ RenderTexture:
   m_TextureSettings:
     serializedVersion: 2
     m_FilterMode: 1
-    m_Aniso: 1
+    m_Aniso: 0
     m_MipBias: 0
     m_WrapU: 1
     m_WrapV: 1

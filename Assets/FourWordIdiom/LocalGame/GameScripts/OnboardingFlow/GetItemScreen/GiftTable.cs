@@ -47,6 +47,7 @@ public class GiftTable : MonoBehaviour
                 //AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
                 break;
             case LimitRewordType.Tipstool:
+            case LimitRewordType.AutoComplete:
                 giftNameText.text ="放大镜礼包";
                 break;
             case LimitRewordType.SingleWordTipsttool:
@@ -188,6 +189,8 @@ public class GiftTable : MonoBehaviour
         
         MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
+        
+        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
     }
     
     private void OnPurchaseFailed(string error)

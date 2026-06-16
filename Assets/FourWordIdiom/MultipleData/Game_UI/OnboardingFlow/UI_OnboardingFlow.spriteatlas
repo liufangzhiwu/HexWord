@@ -72,6 +72,7 @@ SpriteAtlas:
     - 04870780dae12da468eaef9da5209bcf: 21300000
     - b4f971b0da3e2ff48a10323c8a5d42ca: 21300000
     - e94e32b01463d794b9124791a81d926c: 21300000
+    - 519723d096d138d4b98de4f6b5ab2a0e: 21300000
     - 5db30ae05243c5949a0e67a42018951e: 21300000
     - fbd3401172b1a764cb20578aede87d99: 21300000
     - 09353f41cb6689744a2266217cf9c7c0: 21300000
@@ -241,6 +242,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 04870780dae12da468eaef9da5209bcf, type: 3}
   - {fileID: 21300000, guid: b4f971b0da3e2ff48a10323c8a5d42ca, type: 3}
   - {fileID: 21300000, guid: e94e32b01463d794b9124791a81d926c, type: 3}
+  - {fileID: 21300000, guid: 519723d096d138d4b98de4f6b5ab2a0e, type: 3}
   - {fileID: 21300000, guid: 5db30ae05243c5949a0e67a42018951e, type: 3}
   - {fileID: 21300000, guid: fbd3401172b1a764cb20578aede87d99, type: 3}
   - {fileID: 21300000, guid: 09353f41cb6689744a2266217cf9c7c0, type: 3}
@@ -409,6 +411,7 @@ SpriteAtlas:
   - anniubg
   - right
   - minbg
+  - di
   - wordbg
   - endeng
   - line

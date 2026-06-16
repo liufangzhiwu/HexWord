@@ -109,7 +109,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5398282511758168731
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1050,6 +1050,7 @@ MonoBehaviour:
   _openDuration: 0.3
   _closeDuration: 0.3
   SignBtn: {fileID: 4755590166503019287}
+  butterflyBtn: {fileID: 25888424925311381}
   _limitBtnTable: {fileID: 5703809966732626482}
   _matchFishtable: {fileID: 7774908310360483016}
   _tasktable: {fileID: 4702468257007861619}
@@ -2283,6 +2284,18 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e4c6744777ecb064fa68842135a23c15, type: 3}
+--- !u!114 &25888424925311381 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1418962298152088815, guid: e4c6744777ecb064fa68842135a23c15,
+    type: 3}
+  m_PrefabInstance: {fileID: 1435192336885826938}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &6507242228966344151 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5306521871985180845, guid: e4c6744777ecb064fa68842135a23c15,

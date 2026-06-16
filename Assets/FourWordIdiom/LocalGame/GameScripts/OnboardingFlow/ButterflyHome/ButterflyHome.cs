@@ -171,12 +171,33 @@ public class ButterflyHome : UIWindow
     #region 按钮事件
     private void OnBackHomeClick()
     {
-        SystemManager.Instance.HidePanel(PanelType.ButterflyHome);
-        
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
         {
-            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
         }
+        else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.StageFinishView);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPingPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.ChessFinishView);
+        }else if (GameCoreManager.Instance.PanelState == PanelState.GameHexPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
+        }
+        else if (GameCoreManager.Instance.PanelState == PanelState.GamePingPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
+        } 
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankScreen))
+        {
+            Debug.Log("是否存在？" + PanelType.ZenRankScreen);
+            SystemManager.Instance.HidePanel(PanelType.ZenRankScreen);
+        }
+        SystemManager.Instance.HidePanel(PanelType.ButterflyHome, true, () =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
+        });
     }
 
     private void OnHelpClick()

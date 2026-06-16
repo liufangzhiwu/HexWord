@@ -21,7 +21,7 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button AddResetToolBtn; //重置道具
     [SerializeField] private Button AddHintToolBtn; //提示道具
     [SerializeField] private Button AddButterflyToolBtn; //蝴蝶道具
-    [SerializeField] private Button LanguageBtn; //蝴蝶道具
+    [SerializeField] private Button setAbBtButton; //设置AB包
     [SerializeField] private Button SeeAdsBtn; //蝴蝶道具
     [SerializeField] private Button FindPuzzleBtn; //蝴蝶道具
     [SerializeField] private Button OnlineTimeBtn; //蝴蝶道具
@@ -29,12 +29,14 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button UseButterflyBtn; //蝴蝶道具
     [SerializeField] private Button ShopBuyBtn;
     [SerializeField] private Button AddPupaBtn;
+    [SerializeField] private Button AddGoldLeafBtn;
     [SerializeField] private Toggle AutoToggle;
 
     public InputField EmailText; 
     public Text FPSText; 
     public Text logText; // 用于显示日志信息的 UI 文本 
     private bool isRebuilding = false;
+    private string ABName;
 
 
     // private float deltaTime;
@@ -77,6 +79,8 @@ public class DebugMenu : UIWindow
         ShopBuyBtn.AddClickAction(OnShopBuyClick);
         AddPupaBtn.AddClickAction(OnAddPupaClick);
         ChessEBtn.AddClickAction(OnChessEnergyClick);
+        setAbBtButton.AddClickAction(OnSetABBtnClick);
+        AddGoldLeafBtn.AddClickAction(OnAddGoldLeafClick);
     }
 
     private void InitUIData()
@@ -93,8 +97,10 @@ public class DebugMenu : UIWindow
         InitBtnData(UseButterflyBtn, "10");
         InitBtnData(ShopBuyBtn, "10");
         InitBtnData(AddPupaBtn, "10");
+        InitBtnData(AddGoldLeafBtn, "10");
         ChessEBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue.ToString("0.00");
         ChessStageBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.UserData.CurrentChessStage.ToString();
+        
         string bagName=GameDataManager.Instance.UserData.ABName=="1"?"B 包":"A 包";
         logText.text = "拼字玩法当前为"+bagName+"\n 其中0为A包 1为B包"; // 清空 UI 文本
     }
@@ -102,6 +108,29 @@ public class DebugMenu : UIWindow
     private void OnAutoToggleValueChanged(bool value)
     {
         GameCoreManager.Instance.SetAutoLevelTalbe(value);
+    }
+    
+    
+    private void OnSetABBtnClick()
+    {
+        if (GameDataManager.Instance.UserData.ABName == "1")
+        {
+            GameDataManager.Instance.UserData.ABName = "0";
+        }else 
+            GameDataManager.Instance.UserData.ABName = "1";
+        
+        string bagName=GameDataManager.Instance.UserData.ABName=="1"?"B 包":"A 包";
+        ChessStageController.Instance.Initialized();
+        ABName = GameDataManager.Instance.UserData.ABName;
+        logText.text = "拼字玩法当前为"+bagName+"\n 其中0为A包 1为B包"; // 清空 UI 文本
+    }
+    
+    private void OnAddGoldLeafClick()
+    {
+        InputField Stagenumtxt = AddGoldLeafBtn.GetComponentInChildren<InputField>();
+        int value = int.Parse(Stagenumtxt.text);
+        GameDataManager.Instance.UserData.UpdateGoldLeaf(value);
+        MessageSystem.Instance.ShowTip($"添加成功 {value} 个");
     }
 
     private void InitBtnData(Button button, string count)

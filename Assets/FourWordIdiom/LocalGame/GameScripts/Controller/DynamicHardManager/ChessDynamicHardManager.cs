@@ -120,7 +120,7 @@ public class ChessDynamicHardManager : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    private void Start()
+    public void Initialized()
     {
          StartCoroutine(LoadDynamicConfig());
     }
@@ -134,8 +134,6 @@ public class ChessDynamicHardManager : MonoBehaviour
     /// </summary>
     private IEnumerator LoadDynamicConfig()
     {
-        yield return new WaitForSeconds(1.5f);
-   
         string dynamicCsvData = null;
         string levelCsvData = null;
         // 🌟 1. 定义两把锁

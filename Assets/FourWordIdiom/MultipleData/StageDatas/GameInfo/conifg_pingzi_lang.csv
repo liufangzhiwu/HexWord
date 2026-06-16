@@ -1,32 +1,117 @@
-﻿key,ChineseSimplified,English,Japanese,ChineseTraditional
-GuidingTips01,点击“水”，组成一个成语,Tap "Water" to form an word,「水」をタップし、成語を作りましょう,點擊「水」，組成一個成語
-GuidingTips02,完成剩下成语吧！,Finish the remaining word!,残りの成語を完成しよう！,完成剩下的成語吧！
-GuidingTips03,点击提示指定空格,Tap Hint to select the target blank,ヒントをタップし、指定された空欄を選択,點擊提示指定空格
-GuidingTips04,点击错误字块撤回,Tap the wrong character block to undo,誤った漢字ブロックをタップして取り消し,點擊錯誤字塊撤回
-GuidingTips05,点击即可完成整个成语,Tap the wrong character block to undo,誤った漢字ブロックをタップして取り消し,點擊錯誤字塊撤回
-Level,关卡,LEVEL,レベル,關卡
-Music,音乐,Music,音楽,音樂
-Sounds,音效,Sounds,音響,音效
-Vibrate,振动,Vibration,振動,振動
-Settings,设定,Settings,設定,設定
-PrivacyPolicy,隐私政策,Privacy Policy,プライバシーポリシー,隱私權政策
-TermsAndService,用户协议,Terms of Service,利用規約,使用者協定
-TipGoldInsufficient,金币不足！,Not enough coins!,コインが足りません！,金幣不足！
-Victory,挑战成功！,Victory,に勝利を得る！,挑戰成功！
-ButtonGotIt,了解,Got it,コレクション,了解
-LanguageSelection,语言选择,Language Selection,言語,語言選擇
-TipGoldInsufficient,金币不足！,Not enough gold coins!,金貨が足りない！,金幣不足！
-TipAllWordPrompted,所有词都已被提示！,All words have been prompted!,すべての単語が提示されました！,所有詞都已被提示！
-LevelWord,关内成语,Idioms,関内熟語,關內成語
-WordNewIdioms,生词本,Vocabulary book,熟語新帳,生詞本
-Interpretation,释义,Definition,意味,釋義
-ExampleSentence,例句,Example Sentence,用例,例句
-Synonym,近义词,Synonyms,類義語,近義
-Collect,收藏,Favorite,集める,收藏
-ShopTips01,购买成功！,Purchase successful!,購入が完了しました！,購買成功！
-ShopTips02,购买失败！,Purchase failed！,購入に失敗しました！,購買失敗！
-Shop,商店,Shop,ショップ,商店
-ADLoadingTips,广告加载中,Ad loading in progress,広告読み込み中,廣告加載中
-ADPopTitle,获取金币,Get coins,コインを獲得する,獲取金幣
-ADPopWatch,观看视频,Watch the video,動画を見る,觀看視頻
-ADPopReceive,领取,receive,受け取る,領取
+﻿key,ChineseSimplified,English,Japanese,ChineseTraditional,,,,,,,,,,,,,,
+CarpMatchDes,完成相邻成语，就能消除冰块！,,,,,,,,,,,,,,,,,
+GuidingTips01,点击“水”，组成一个成语,"Tap ""Water"" to form an word",「水」をタップし、成語を作りましょう,點擊「水」，組成一個成語,,,,,,,,,,,,,,
+GuidingTips02,完成剩下成语吧！,Finish the remaining word!,残りの成語を完成しよう！,完成剩下的成語吧！,,,,,,,,,,,,,,
+GuidingTips03,点击提示指定空格,Tap Hint to select the target blank,ヒントをタップし、指定された空欄を選択,點擊提示指定空格,,,,,,,,,,,,,,
+GuidingTips04,点击错误字块撤回,Tap the wrong character block to undo,誤った漢字ブロックをタップして取り消し,點擊錯誤字塊撤回,,,,,,,,,,,,,,
+GuidingTips05,点击即可完成整个成语,Tap to complete the entire phrase,タップすると四字熟語が完成します,點擊即可完成整個成語,,,,,,,,,,,,,,
+Level,关卡,LEVEL,レベル,關卡,,,,,,,,,,,,,,
+Music,音乐,Music,音楽,音樂,,,,,,,,,,,,,,
+Sounds,音效,Sounds,音響,音效,,,,,,,,,,,,,,
+Vibrate,振动,Vibration,振動,振動,,,,,,,,,,,,,,
+Settings,设定,Settings,設定,設定,,,,,,,,,,,,,,
+PrivacyPolicy,隐私政策,Privacy Policy,プライバシーポリシー,隱私權政策,,,,,,,,,,,,,,
+TermsAndService,用户协议,Terms of Service,利用規約,使用者協定,,,,,,,,,,,,,,
+TipGoldInsufficient,金币不足！,Not enough coins!,コインが足りません！,金幣不足！,,,,,,,,,,,,,,
+Victory,挑战成功！,Victory,に勝利を得る！,挑戰成功！,,,,,,,,,,,,,,
+ButtonGotIt,了解,Got it,コレクション,了解,,,,,,,,,,,,,,
+LanguageSelection,语言选择,Language Selection,言語,語言選擇,,,,,,,,,,,,,,
+TipGoldInsufficient,金币不足！,Not enough gold coins!,金貨が足りない！,金幣不足！,,,,,,,,,,,,,,
+TipAllWordPrompted,所有词都已被提示！,All words have been prompted!,すべての単語が提示されました！,所有詞都已被提示！,,,,,,,,,,,,,,
+LevelWord,关内成语,Idioms,関内熟語,關內成語,,,,,,,,,,,,,,
+WordNewIdioms,生词本,Vocabulary book,熟語新帳,生詞本,,,,,,,,,,,,,,
+Interpretation,释义,Definition,意味,釋義,,,,,,,,,,,,,,
+ExampleSentence,例句,Example Sentence,用例,例句,,,,,,,,,,,,,,
+Synonym,近义词,Synonyms,類義語,近義,,,,,,,,,,,,,,
+Collect,收藏,Favorite,集める,收藏,,,,,,,,,,,,,,
+ShopTips01,购买成功！,Purchase successful!,購入が完了しました！,購買成功！,,,,,,,,,,,,,,
+ShopTips02,购买失败！,Purchase failed！,購入に失敗しました！,購買失敗！,,,,,,,,,,,,,,
+Shop,商店,Shop,ショップ,商店,,,,,,,,,,,,,,
+ADLoadingTips,广告加载中,Ad loading in progress,広告読み込み中,廣告加載中,,,,,,,,,,,,,,
+ADPopTitle,获取金币,Get coins,コインを獲得する,獲取金幣,,,,,,,,,,,,,,
+ADPopWatch,观看视频,Watch the video,動画を見る,觀看視頻,,,,,,,,,,,,,,
+ADPopReceive,领取,receive,受け取る,領取,,,,,,,,,,,,,,
+NewRecord!,新纪录！,,,,,,,,,,,,,,,,,
+Combo,连击,,,,,,,,,,,,,,,,,
+ContinueFinal,继续你的最后一关,,,,,,,,,,,,,,,,,
+ZenLose,禅意不足,,,,,,,,,,,,,,,,,
+RecoverZen,你可以恢复 {0} 点禅意,,,,,,,,,,,,,,,,,
+FreeZen,免费 +{0} 点禅意,,,,,,,,,,,,,,,,,
+LongPress,长按可以查看题目,,,,,,,,,,,,,,,,,
+ButterflyRule,完成 {0} 这个成语从而获得叶子！,,,,,,,,,,,,,,,,,
+ButterflyPraise,太棒了！尽可能收集到更多的叶子吧！,,,,,,,,,,,,,,,,,
+ClearIceRule,完成相邻成语，就能消除冰块！,,,,,,,,,,,,,,,,,
+ClearFlowerRule,完成成语，可消除字块上的花朵！,,,,,,,,,,,,,,,,,
+ItemName01,提示灯,,,,,,,,,,,,,,,,,
+ItemName02,火箭,,,,,,,,,,,,,,,,,
+ItemDes01,提示一个字,,,,,,,,,,,,,,,,,
+ItemDes02,直接完成整个成语,,,,,,,,,,,,,,,,,
+T1,初出茅庐,,,,,,,,,,,,,,,,,
+P1,继续加油,,,,,,,,,,,,,,,,,
+LT1,百尺竿头，更进一步！,,,,,,,,,,,,,,,,,
+T2,驾轻就熟,,,,,,,,,,,,,,,,,
+P2,继续保持！,,,,,,,,,,,,,,,,,
+LT2,过关就是实力！,,,,,,,,,,,,,,,,,
+T3,心领神会,,,,,,,,,,,,,,,,,
+P3,出类拔萃！,,,,,,,,,,,,,,,,,
+LT3,你超过了{0}%的玩家！,,,,,,,,,,,,,,,,,
+T4,才华横溢,,,,,,,,,,,,,,,,,
+P4,卓尔不群！,,,,,,,,,,,,,,,,,
+T5,炉火纯青,,,,,,,,,,,,,,,,,
+P5,叹为观止！,,,,,,,,,,,,,,,,,
+T6,出神入化,,,,,,,,,,,,,,,,,
+P6,登峰造极！,,,,,,,,,,,,,,,,,
+T7,超凡入圣,,,,,,,,,,,,,,,,,
+P7,神乎其技！,,,,,,,,,,,,,,,,,
+LT7,你的每一步都是正确的！,,,,,,,,,,,,,,,,,
+T8,独具匠心,,,,,,,,,,,,,,,,,
+P8,收获满满，不虚此行！,,,,,,,,,,,,,,,,,
+LT8,每片叶子都找到了！,,,,,,,,,,,,,,,,,
+T9,行云流水,,,,,,,,,,,,,,,,,
+P9,才思敏捷，一气呵成！,,,,,,,,,,,,,,,,,
+LT9,这一关被你轻松拿下！,,,,,,,,,,,,,,,,,
+T10,一代宗师,,,,,,,,,,,,,,,,,
+P10,无与伦比！,,,,,,,,,,,,,,,,,
+LT10,你收集了全部的叶子！,,,,,,,,,,,,,,,,,
+T11,新的记录！,,,,,,,,,,,,,,,,,
+P11,再接再励！,,,,,,,,,,,,,,,,,
+LT11,创造新的历史！,,,,,,,,,,,,,,,,,
+T12,处变不惊,,,,,,,,,,,,,,,,,
+P12,游刃有余！,,,,,,,,,,,,,,,,,
+LT12,你可以面对任何困难！,,,,,,,,,,,,,,,,,
+RocketDescription,自动完成一个成语,,,,,,,,,,,,,,,,,
+BulbInstructions,提示一个成语中的字符,,,,,,,,,,,,,,,,,
+Rocket,火箭,,,,,,,,,,,,,,,,,
+Praise1,小试牛刀,,,,,,,,,,,,,,,,,
+Praise2,有点厉害！,,,,,,,,,,,,,,,,,
+Praise3,难不住你,,,,,,,,,,,,,,,,,
+Praise4,初窥门径,,,,,,,,,,,,,,,,,
+Praise5,手感到位！,,,,,,,,,,,,,,,,,
+Praise6,初战告捷,,,,,,,,,,,,,,,,,
+Praise7,出手不凡,,,,,,,,,,,,,,,,,
+Praise8,起手见真章,,,,,,,,,,,,,,,,,
+Praise9,玉汝于成,,,,,,,,,,,,,,,,,
+Praise10,你做到了！,,,,,,,,,,,,,,,,,
+Praise11,苦尽甘来,,,,,,,,,,,,,,,,,
+Praise12,渐入佳境,,,,,,,,,,,,,,,,,
+Praise13,融会贯通,,,,,,,,,,,,,,,,,
+Praise14,势如破竹,,,,,,,,,,,,,,,,,
+Praise15,一气呵成,,,,,,,,,,,,,,,,,
+Praise16,如有神助,,,,,,,,,,,,,,,,,
+Praise17,不可思议,,,,,,,,,,,,,,,,,
+Praise18,举世无双,,,,,,,,,,,,,,,,,
+Praise19,惊世骇俗,,,,,,,,,,,,,,,,,
+Praise20,空前绝后,,,,,,,,,,,,,,,,,
+Praise21,惊为天人,,,,,,,,,,,,,,,,,
+Praise22,天人合一,,,,,,,,,,,,,,,,,
+Praise23,火眼金睛,,,,,,,,,,,,,,,,,
+Praise24,"一个字，绝！
+",,,,,,,,,,,,,,,,,
+Praise25,"神操作！
+",,,,,,,,,,,,,,,,,
+Praise26,胜利在望,,,,,,,,,,,,,,,,,
+Praise27,守得见云开,,,,,,,,,,,,,,,,,
+Praise28,通关在即,,,,,,,,,,,,,,,,,
+Praise29,花开自有时,,,,,,,,,,,,,,,,,
+ScheduleLess,完成第X关,,,,,,,,,,,,,,,,,
+OneMore,只差1关,,,,,,,,,,,,,,,,,

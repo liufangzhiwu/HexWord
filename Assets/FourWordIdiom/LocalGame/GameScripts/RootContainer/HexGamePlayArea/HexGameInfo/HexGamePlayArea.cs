@@ -494,7 +494,7 @@ public class HexGamePlayArea : UIWindow
     {       
         StageHexController.Instance.CompleteStage(CurStageInfo.StageNumber);
 
-        yield return new WaitForSeconds(1.2f);
+        yield return new WaitForSeconds(0.2f);
         
         _windowAnimator.Play("StageOver");
         StageOverObj.gameObject.SetActive(true);

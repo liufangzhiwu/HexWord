@@ -489,10 +489,10 @@ public class ChessPlayArea : UIWindow
         Transform HintCount = HitsBtn.transform.GetChild(1);
         Transform hintText = HintCount.GetChild(0);
         Transform hintAdd = HintCount.GetChild(1);
-        if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
+        if (GameDataManager.Instance.UserData.toolInfo[101].count > 0)
         {
             HintCount.gameObject.SetActive(true);
-            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
+            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
             hintText.gameObject.SetActive(true);
             hintAdd.gameObject.SetActive(false);
             // HintCost.gameObject.SetActive(false);
@@ -1324,60 +1324,60 @@ public class ChessPlayArea : UIWindow
         Vector3 endLocal = transform.position;
         if (_bannerLiziCache != null)
         {
-            _bannerLiziCache.SetActive(false);
-            _bannerLiziCache.transform.SetAsLastSibling();
-            
-            Transform effectLightTrans = _bannerLiziCache.transform.Find("EffectLight");
-            Transform lightYeTrans = _bannerLiziCache.transform.Find("EffectLight/Light_ye");
-            Transform effectPointTrans = _bannerLiziCache.transform.Find("EffectPoint"); // ✨ 新增：找到 EffectPoint
-            // ParticleSystem lightYePs = lightYeTrans != null ? lightYeTrans.GetComponent<ParticleSystem>() : null;
-            if (lightYeTrans != null) 
-            {
-                lightYeTrans.gameObject.SetActive(false);  // ✨ 核心修复：前 0.5 秒强制它隐藏！绝对不准发光！
-            }
-            
-            RectTransform liziRect = _bannerLiziCache.GetComponent<RectTransform>();
-            Vector3 startWorld = zentable != null ? zentable.transform.position : transform.position;
-            Vector3 startLocal = transform.InverseTransformPoint(startWorld);
-            startLocal.z = 0f; // 强行抹平 Z 轴，防止受相机深度影响乱飞
-            liziRect.localPosition = startLocal;
-            
-            // 净化物理残留
-            var trails = _bannerLiziCache.GetComponentsInChildren<TrailRenderer>(true);
-            foreach (var t in trails) t.Clear();
-            var pss = _bannerLiziCache.GetComponentsInChildren<ParticleSystem>(true);
-            foreach (var p in pss) { p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); }
-           
             _bannerLiziCache.SetActive(true);
-            effectPointTrans.gameObject.SetActive(true);
-            yield return new WaitForSeconds(1.25f);
-            AudioManager.Instance.PlaySoundEffect("result_chest_open");
-            lightYeTrans.gameObject.SetActive(true);
-            effectPointTrans.gameObject.SetActive(false);
-            
-            RectTransform gridRect = chessboardGrid.GetComponent<RectTransform>();
-            Vector3[] corners = new Vector3[4];
-            gridRect.GetWorldCorners(corners);
-            Vector3 endWorld = (corners[0] + corners[3]) / 2f;
-            endLocal = transform.InverseTransformPoint(endWorld);
-            endLocal.z = 0f; // 再次抹平 Z 轴防抖
-            // float yOffset = 80f; 
-            endLocal.y += 155f;
-            bool isFlyDone = false;
-            // 飞行动画：平滑向中心聚拢
-            liziRect.DOLocalMove(endLocal, 0.75f).SetEase(Ease.InOutSine).OnComplete(() => {
-                isFlyDone = true;
-            });
-
-            yield return new WaitUntil(() => isFlyDone);
-            DOVirtual.DelayedCall(0.5f, () => 
-            {
-                if (_bannerLiziCache != null) 
-                {
-                    _bannerLiziCache.SetActive(false);
-                }
-            });
-            // _bannerLiziCache.SetActive(false); // 抵达中心瞬间彻底消失
+            // _bannerLiziCache.transform.SetAsLastSibling();
+            //
+            // Transform effectLightTrans = _bannerLiziCache.transform.Find("EffectLight");
+            // Transform lightYeTrans = _bannerLiziCache.transform.Find("EffectLight/Light_ye");
+            // Transform effectPointTrans = _bannerLiziCache.transform.Find("EffectPoint"); // ✨ 新增：找到 EffectPoint
+            // // ParticleSystem lightYePs = lightYeTrans != null ? lightYeTrans.GetComponent<ParticleSystem>() : null;
+            // if (lightYeTrans != null) 
+            // {
+            //     lightYeTrans.gameObject.SetActive(false);  // ✨ 核心修复：前 0.5 秒强制它隐藏！绝对不准发光！
+            // }
+            //
+            // RectTransform liziRect = _bannerLiziCache.GetComponent<RectTransform>();
+            // Vector3 startWorld = zentable != null ? zentable.transform.position : transform.position;
+            // Vector3 startLocal = transform.InverseTransformPoint(startWorld);
+            // startLocal.z = 0f; // 强行抹平 Z 轴，防止受相机深度影响乱飞
+            // liziRect.localPosition = startLocal;
+            //
+            // // 净化物理残留
+            // var trails = _bannerLiziCache.GetComponentsInChildren<TrailRenderer>(true);
+            // foreach (var t in trails) t.Clear();
+            // var pss = _bannerLiziCache.GetComponentsInChildren<ParticleSystem>(true);
+            // foreach (var p in pss) { p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); }
+            //
+            // _bannerLiziCache.SetActive(true);
+            // effectPointTrans.gameObject.SetActive(true);
+            yield return new WaitForSeconds(1.5f);
+            // AudioManager.Instance.PlaySoundEffect("result_chest_open");
+            // lightYeTrans.gameObject.SetActive(true);
+            // effectPointTrans.gameObject.SetActive(false);
+            //
+            // RectTransform gridRect = chessboardGrid.GetComponent<RectTransform>();
+            // Vector3[] corners = new Vector3[4];
+            // gridRect.GetWorldCorners(corners);
+            // Vector3 endWorld = (corners[0] + corners[3]) / 2f;
+            // endLocal = transform.InverseTransformPoint(endWorld);
+            // endLocal.z = 0f; // 再次抹平 Z 轴防抖
+            // // float yOffset = 80f; 
+            // endLocal.y += 155f;
+            // bool isFlyDone = false;
+            // // 飞行动画：平滑向中心聚拢
+            // liziRect.DOLocalMove(endLocal, 0.75f).SetEase(Ease.InOutSine).OnComplete(() => {
+            //     isFlyDone = true;
+            // });
+            //
+            // yield return new WaitUntil(() => isFlyDone);
+            // DOVirtual.DelayedCall(0.5f, () => 
+            // {
+            //     if (_bannerLiziCache != null) 
+            //     {
+            //         _bannerLiziCache.SetActive(false);
+            //     }
+            // });
+             _bannerLiziCache.SetActive(false); // 抵达中心瞬间彻底消失
         }
 
         // 2. 粒子消失的刹那，原地无缝唤醒无蒙版高性能过关横幅
@@ -1642,7 +1642,7 @@ public class ChessPlayArea : UIWindow
     public void UseTips()
     {
         NotifyPlayerInteraction(); // 🌟 触发唤醒计时
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
+        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
 
         if (toolInfo == null || chessboardGrid.GameOver)
         {
@@ -1659,7 +1659,7 @@ public class ChessPlayArea : UIWindow
         bool useCoins = false;
         if(toolInfo.count <= 0)
         {
-            GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
+            GetItemScreen.limitRewordType = LimitRewordType.SingleWordTipsttool;
             // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             return;
@@ -1684,12 +1684,12 @@ public class ChessPlayArea : UIWindow
         {
             // 更新道具
             GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, false, true, "购买道具");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "道具购买");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1, "道具购买");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用");
         }
         else
         {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用",GetCurrentSelectedPhrase());
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用",GetCurrentSelectedPhrase());
             InitToolUI();
         }
         // chessboardGrid.SetSelectTip();

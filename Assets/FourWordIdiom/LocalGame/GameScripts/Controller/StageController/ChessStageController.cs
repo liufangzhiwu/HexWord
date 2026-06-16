@@ -173,10 +173,15 @@ public class ChessStageController
     }
     #endregion
     #region 初始化方法
+
+    public void Initialized()
+    {
+        CoroutineRunner.StartCoroutine(LoadDynamicConfig());
+    }
     /// <summary>
     /// 加载当前语言的关卡配置
     /// </summary>
-    public IEnumerator Init()
+    private IEnumerator LoadDynamicConfig()
     {
         string levelConfigName = GameDataManager.Instance.UserData.ABName == "1" ? "ChessPackInfo_B" : "ChessPackInfo_A";   
         
@@ -186,46 +191,82 @@ public class ChessStageController
             StagePackInfo = AssetBundleLoader.SharedInstance.LoadScriptableObject("chinesesimplified", levelConfigName) as ChessPackInfo;
         }
         Debug.LogWarning("当前初始化的关卡包是 " +levelConfigName);
-        TextAsset mechainCsvObj = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "Mechanics");
-        if (mechainCsvObj != null)
-        {
-            LoadMechainConfig(mechainCsvObj.text);
-        }
-        TextAsset stimulateCsvObj = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "Stimulate");
-        if (stimulateCsvObj != null)
-        {
-            LoadStimulateRuleConfig(stimulateCsvObj.text);
-        }
-        
-        string csvData = null;
-        bool isCsvDone = false;
-        CoroutineRunner.StartCoroutine( APIGateway.Instance.GameConfigApi.GetGameConfig("cypz_ComboConfig",
-            onSuccess: (response) => { csvData = response.CsvString; isCsvDone = true;},
-            onError:   (error) => { isCsvDone = true; Debug.Log("服务器拉取 cypz_ComboConfig 配置失败，准备兜底 " + error); }
+        // 🌟 1. 各个在线配置的异步状态与账本数据准备
+        bool isComboDone = false;
+        bool isMechanicsDone = false;
+        bool isStimulateDone = false;
+
+        string comboCsvData = null;
+        string mechanicsCsvData = null;
+        string stimulateCsvData = null;
+        // 🌟 2. 并发拉取机制：每个配置独立分配 Key，同时向服务器发出请求，不互相阻塞
+        // A. 拉取连击配置
+        CoroutineRunner.StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("ComboConfig",
+            onSuccess: (response) => { comboCsvData = response.CsvString; isComboDone = true; },
+            onError: (error) => { isComboDone = true; Debug.Log("⚠️ 服务器拉取 ComboConfig 失败，准备使用本地资源兜底: " + error); }
         ));
+        // B. 拉取核心机制配置 (冰块、花朵、树叶)
+        CoroutineRunner.StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("Mechanics",
+            onSuccess: (response) => { mechanicsCsvData = response.CsvString; isMechanicsDone = true; },
+            onError: (error) => { isMechanicsDone = true; Debug.Log("⚠️ 服务器拉取 Mechanics 失败，准备使用本地资源兜底: " + error); }
+        ));
+        // C. 拉取关卡完结横幅与鼓励词配置
+        CoroutineRunner.StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("Stimulate",
+            onSuccess: (response) => { stimulateCsvData = response.CsvString; isStimulateDone = true; },
+            onError: (error) => { isStimulateDone = true; Debug.Log("⚠️ 服务器拉取 Stimulate 失败，准备使用本地资源兜底: " + error); }
+        ));
+        // 🌟 3. 统一收网守候：用最大时间窗口安全等待所有线上的数据结账
         float timeout = 5f;
-        while (!isCsvDone && timeout > 0)
+        while ((!isComboDone || !isMechanicsDone || !isStimulateDone) && timeout > 0)
         {
             timeout -= Time.deltaTime;
             yield return null;
         }
-
-        if (string.IsNullOrEmpty(csvData))
+        // 🌟 4. 数据落地清算与安全退路（Fallbacks）
+        // ======= A. 结算连击配置 =======
+        if (string.IsNullOrEmpty(comboCsvData))
         {
-            // 👇 新增：加载连击配置表 CSV
             TextAsset comboCsvObj = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_ComboConfig");
-            csvData = comboCsvObj?.text;
+            comboCsvData = comboCsvObj?.text;
         }
-        if (!string.IsNullOrEmpty(csvData))
+        if (!string.IsNullOrEmpty(comboCsvData))
         {
-            LoadComboConfig(csvData);
+            LoadComboConfig(comboCsvData);
         }
         else
         {
-            Debug.LogError("连击配置表 CSV 加载失败，请检查 Bundle 或路径名！");
+            Debug.LogError("严重错误：连击配置表（在线/本地）全部加载失败，请核对资源名！");
         }
-
+        // ======= B. 结算核心游戏机制（冰/花/叶） =======
+        if (string.IsNullOrEmpty(mechanicsCsvData))
+        {
+            TextAsset mechainCsvObj = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_Mechanics");
+            mechanicsCsvData = mechainCsvObj?.text;
+        }
+        if (!string.IsNullOrEmpty(mechanicsCsvData))
+        {
+            LoadMechainConfig(mechanicsCsvData);
+        }
+        else
+        {
+            Debug.LogError("严重错误：游戏机制配置（冰/花/叶）（在线/本地）全部加载失败！");
+        }
+        // ======= C. 结算结算横幅与鼓励词 =======
+        if (string.IsNullOrEmpty(stimulateCsvData))
+        {
+            TextAsset stimulateCsvObj = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_Stimulate");
+            stimulateCsvData = stimulateCsvObj?.text;
+        }
+        if (!string.IsNullOrEmpty(stimulateCsvData))
+        {
+            LoadStimulateRuleConfig(stimulateCsvData);
+        }
+        else
+        {
+            Debug.LogError("严重错误：关卡完成鼓励词配置（在线/本地）全部加载失败！");
+        }
         yield return null;
+        // 5. 组装完毕，拉起当前进度的关卡沙盒数据
         SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
     }
     #endregion
@@ -809,7 +850,7 @@ public class ChessStageController
                 else if (state is "reduce" or "sub") _reduceConfigDict[combo] = config;
             }
         }
-        // Debug.LogError($"连击配置表加载成功，共加载 {JsonConvert.SerializeObject(_comboConfigDict)} 条数据！");
+        Debug.Log($"连击配置解析完成后: {JsonConvert.SerializeObject(_comboConfigDict)}");
     }
     
     /// <summary>
@@ -992,7 +1033,7 @@ public class ChessStageController
                 IceConfig.CycleLevels.Add(interval);
             }
             
-            Debug.LogWarning("解析完成后的冰块配置: "+ JsonConvert.SerializeObject(IceConfig));
+            Debug.Log("解析完成后的冰块配置: "+ JsonConvert.SerializeObject(IceConfig));
         }
 
         if (cols.Length >= 5)
@@ -1055,7 +1096,7 @@ public class ChessStageController
                     LeafConfig.Rewards.Add(leafReward);
                 }
             }
-            Debug.LogWarning("解析完成后的树叶配置: "+ JsonConvert.SerializeObject(LeafConfig));
+            Debug.Log("解析完成后的树叶配置: "+ JsonConvert.SerializeObject(LeafConfig));
         }
 
         if (cols.Length >= 9)
@@ -1102,7 +1143,7 @@ public class ChessStageController
                 
                 FlowerConfig.CycleLevels.Add(interval);
             }
-            Debug.LogWarning("解析完成后的花朵配置: "+ JsonConvert.SerializeObject(FlowerConfig));
+            Debug.Log("解析完成后的花朵配置: "+ JsonConvert.SerializeObject(FlowerConfig));
         }
     }
     /// <summary>

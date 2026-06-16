@@ -325,6 +325,7 @@ public class LoadingController : MonoBehaviour
     {
         Debug.Log("开始加载词库资源");
         await WordVocabularyManager.Instance.LoadEntriesAsync();
+        ChessDynamicHardManager.Instance.Initialized();
         Debug.Log("完成加载词库资源");
     }
 

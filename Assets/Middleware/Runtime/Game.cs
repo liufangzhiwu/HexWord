@@ -77,8 +77,7 @@ namespace Middleware
 	        //AudioManager.Instance.Init();
             LimitTimeManager.Instance.Init();
             ThemeManager.Instance.Init();
-            
-            StartCoroutine(ChessStageController.Instance.Init());
+            ChessStageController.Instance.Initialized();
             #if UNITY_EDITOR
             CreateAnalytic();
             #endif
