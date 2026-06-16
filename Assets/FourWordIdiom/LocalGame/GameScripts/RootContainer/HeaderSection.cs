@@ -332,7 +332,7 @@ public class HeaderSection : UIWindow
         // 2. 如果没有活动界面，且底部是结算界面，才执行隐藏
         else if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
         {
-                coinObj.gameObject.SetActive(false);
+                coinObj.gameObject.SetActive(true);
                 PupaTable.gameObject.SetActive(false);
         }
             // 3. 游戏内默认隐藏
@@ -341,11 +341,6 @@ public class HeaderSection : UIWindow
             coinObj.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(StageHexController.Instance.CurStageData.PupaDatas != null);
         }
-        // else if( SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
-        // {
-        //         coinObj.gameObject.SetActive(false);
-        //         PupaTable.gameObject.SetActive(false);
-        // }
         else if (SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
         {
             coinObj.gameObject.SetActive(true);

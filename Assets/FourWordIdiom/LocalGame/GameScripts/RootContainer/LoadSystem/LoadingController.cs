@@ -518,8 +518,6 @@ public class LoadingController : MonoBehaviour
     {
         sceneLoadOperation = SceneManager.LoadSceneAsync("GameLobby");
         sceneLoadOperation.allowSceneActivation = false;
-        ChessDynamicHardManager.Instance.Initialized();
-        ChessStageController.Instance.Initialized();
         Debug.Log("开始加载主场景");
         yield return new WaitUntil(() => sceneLoadOperation.progress >= 0.9f&&progressSlider.value>=1f&&isLogined);
         Debug.Log("主场景加载完成");

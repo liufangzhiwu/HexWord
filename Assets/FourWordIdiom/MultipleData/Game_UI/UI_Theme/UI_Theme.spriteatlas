@@ -74,6 +74,7 @@ SpriteAtlas:
     - 41eeb96355affe146994259b958b3cd1: 21300000
     - 20698bb3b2b06b94f852bb5dbe72e95d: 21300000
     - cbf282542f431ec4aa137e7ec831771f: 21300000
+    - 8b2e4d940b0939a4e901b30b0ae4a277: 21300000
     - 343e90b4db08ecd4eab4a5435ffff585: 21300000
     - 5731f625f9afe12408a4891d42b7c41f: 21300000
     - 6eb626a5b77a26f4a9eb3cbdc194c865: 21300000
@@ -108,6 +109,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 41eeb96355affe146994259b958b3cd1, type: 3}
   - {fileID: 21300000, guid: 20698bb3b2b06b94f852bb5dbe72e95d, type: 3}
   - {fileID: 21300000, guid: cbf282542f431ec4aa137e7ec831771f, type: 3}
+  - {fileID: 21300000, guid: 8b2e4d940b0939a4e901b30b0ae4a277, type: 3}
   - {fileID: 21300000, guid: 343e90b4db08ecd4eab4a5435ffff585, type: 3}
   - {fileID: 21300000, guid: 5731f625f9afe12408a4891d42b7c41f, type: 3}
   - {fileID: 21300000, guid: 6eb626a5b77a26f4a9eb3cbdc194c865, type: 3}
@@ -141,6 +143,7 @@ SpriteAtlas:
   - Leaflight
   - theme05
   - namebg
+  - namebg2
   - newtittle
   - themeup
   - theme02

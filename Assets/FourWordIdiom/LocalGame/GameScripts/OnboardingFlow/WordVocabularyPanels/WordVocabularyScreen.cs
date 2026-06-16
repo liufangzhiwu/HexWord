@@ -86,7 +86,14 @@ public class WordVocabularyScreen : UIWindow
     {
         base.OnDisable();
         EventDispatcher.instance.OnRemoveNotePuzzle -= RemoveBookWord;
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
+        
+        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel||
+            GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel||
+            GameCoreManager.Instance.PanelState == PanelState.FinishPingPanel)
+        {
+            EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
+        }
+       
         if (NoteBooks.Count > 0)
         {
             foreach (var word in NoteBooks.ToList())

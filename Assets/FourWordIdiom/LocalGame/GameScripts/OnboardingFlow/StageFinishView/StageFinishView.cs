@@ -73,7 +73,7 @@ public class StageFinishView : UIWindow
         
         SetUIInteractable(true);
         
-      
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
     }
 
     /// <summary>

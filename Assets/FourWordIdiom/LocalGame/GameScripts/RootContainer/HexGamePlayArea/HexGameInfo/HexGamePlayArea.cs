@@ -499,7 +499,6 @@ public class HexGamePlayArea : UIWindow
         _windowAnimator.Play("StageOver");
         StageOverObj.gameObject.SetActive(true);
         StageHexController.Instance.ActiveTileSize = 0;
-        //EventDispatcher.instance.TriggerChangeTopRaycast(false);
     }
     
     private void ChoicePuzzleSetStatus(bool status)

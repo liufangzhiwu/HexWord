@@ -290,27 +290,27 @@ public class StageHexController
 
 #if UNITY_OPENHARMONY || UNITY_huawei
 
-            // AnalyticMgr.InsetAdStart("关卡插屏");
-            // // 显示插屏广告
-            // Game.Ads.ShowInterstitial((bool issuccess) => 
-            // {
-            //     if (issuccess)
-            //     {
-            //         AnalyticMgr.InsetAdSuccess("关卡插屏");
-            //         GameDataManager.Instance.UserData.totalSeeAds++;
-            //     }
-            //     else
-            //     {
-            //         AnalyticMgr.InsetAdFail("关卡插屏");
-            //     }
-            // });
+            AnalyticMgr.InsetAdStart("关卡插屏");
+            // 显示插屏广告
+            Game.self.Ads.ShowInterstitial((bool issuccess) => 
+            {
+                if (issuccess)
+                {
+                    AnalyticMgr.InsetAdSuccess("关卡插屏");
+                    GameDataManager.Instance.UserData.totalSeeAds++;
+                }
+                else
+                {
+                    AnalyticMgr.InsetAdFail("关卡插屏");
+                }
+            });
 #endif
         }
 
         // 更新每日计数
         GameDataManager.Instance.UserData.dayPassStageCount++;
 
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.5f);
 
         // 播放过关视频
         //EnhancedVideoController.Instance.PlayVideo();
@@ -321,8 +321,9 @@ public class StageHexController
 
         yield return new WaitForSeconds(0.8f);
 
-        SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
+        
       
     }
     

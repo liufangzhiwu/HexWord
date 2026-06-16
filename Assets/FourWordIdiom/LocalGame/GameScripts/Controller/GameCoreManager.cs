@@ -54,10 +54,13 @@ public sealed class GameCoreManager: MonoBehaviour
             DontDestroyOnLoad(gameObject); // 保持广告管理器在场景切换时不销毁
         }
     }
-    
 
     private void Start()
     {
+        
+        ChessDynamicHardManager.Instance.Initialized();
+        ChessStageController.Instance.Initialized();
+        
 #if UNITY_huawei && !UNITY_EDITOR
         HuaweiGameService.ShowFloatWindow();
         StartCoroutine(CheckOrderShipmentCompleted());

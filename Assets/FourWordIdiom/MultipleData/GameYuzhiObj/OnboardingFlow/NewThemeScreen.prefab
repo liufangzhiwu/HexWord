@@ -5247,6 +5247,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c440bc808c6a83d4f9ea74b61a492a44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _openDuration: 0.3
+  _closeDuration: 0.3
   useButton: {fileID: 2155818589597346071}
   HideButton: {fileID: 8329525062518873283}
   themeImage: {fileID: 1772388021730836447}
@@ -10153,7 +10155,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: 467c17a4f8b876f4c99996b3d45944ef, type: 3}
     m_FontSize: 78
     m_FontStyle: 0
     m_BestFit: 0
@@ -15524,7 +15526,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 12800000, guid: 467c17a4f8b876f4c99996b3d45944ef, type: 3}
     m_FontSize: 78
     m_FontStyle: 0
     m_BestFit: 0

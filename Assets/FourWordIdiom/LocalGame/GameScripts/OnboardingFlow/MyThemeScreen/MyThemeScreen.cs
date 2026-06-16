@@ -253,7 +253,7 @@ public class MyThemeScreen : UIWindow
 
         if (SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface))
         {
-            EventDispatcher.instance.TriggerHighlightHeaderUI(true);
+            //EventDispatcher.instance.TriggerHighlightHeaderUI(true);
         }
     }
 
