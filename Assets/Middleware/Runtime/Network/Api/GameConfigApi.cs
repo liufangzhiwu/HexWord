@@ -19,11 +19,15 @@ public class GameConfigApi
     public IEnumerator GetGameConfig(string moduleName, Action<GameConfigResponse> onSuccess, Action<string> onError = null)
     {
         // 获取设备唯一码，用于服务器的 A/B 测试分流
-        string userId = GameDataManager.Instance.UserData.UserId;
-        
+        string userId = Game.self.GetUniqueId();
+        // 🌟 安全获取客户端内存中的 ABName (分包属性)
+        string abGroup = "";
+        if (GameDataManager.Instance != null && GameDataManager.Instance.UserData != null)
+        {
+            abGroup = GameDataManager.Instance.UserData.ABName ?? "";
+        }
         // 拼接 GET 请求的 URL 参数
-        string endpoint = $"configs/module?module_name={moduleName}&user_id={userId}";
-
+        string endpoint = $"configs/module?module_name={moduleName}&user_id={userId}&ab_group={abGroup}";
         yield return httpClient.Get<GameConfigResponse>(endpoint,
             response =>
             {
@@ -32,7 +36,7 @@ public class GameConfigApi
             },
             error =>
             {
-                Debug.LogWarning($"[Config] 获取配置失败: {error}");
+                // Debug.LogWarning($"[Config] 获取配置失败: {error}");
                 onError?.Invoke(error);
             });
     }
