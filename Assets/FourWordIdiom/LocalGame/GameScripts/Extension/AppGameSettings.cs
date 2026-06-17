@@ -17,7 +17,7 @@ public static class AppGameSettings
     public static class ShopItems 
     {
         public static int SingleHintCost { get; } = 80;     
-        public static int SingleHintCount { get; } = 3;   
+        public static int SingleHintCount { get; } = 1;   
         
         public static int WordHintCount { get; } = 1;   
         public static int WordHintCost { get; } = 150;       

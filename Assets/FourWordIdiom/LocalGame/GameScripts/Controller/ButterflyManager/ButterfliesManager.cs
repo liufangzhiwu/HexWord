@@ -414,7 +414,14 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     
     public int GetStageLimitTimer()
     {
-        return pupaConfig?.TimeLimit ?? 300;
+        int seconds=pupaConfig?.TimeLimit ?? 300;
+
+        if (seconds <= 0)
+        {
+            seconds = 300;
+        }
+        
+        return seconds;
     }
     /// <summary>
     /// 判断是否可以展示蚕蛹

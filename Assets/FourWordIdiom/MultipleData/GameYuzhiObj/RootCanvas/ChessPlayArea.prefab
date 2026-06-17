@@ -5435,8 +5435,8 @@ GameObject:
   - component: {fileID: 7531985379101331783}
   - component: {fileID: 8625030383299182784}
   - component: {fileID: 8232598810915449190}
-  - component: {fileID: 4662234950305747303}
   - component: {fileID: 5988855311412978376}
+  - component: {fileID: 2045343360483768370}
   m_Layer: 5
   m_Name: LevelPuzzleBtn
   m_TagString: Untagged
@@ -5460,7 +5460,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 132, y: 0}
+  m_AnchoredPosition: {x: 132, y: -3}
   m_SizeDelta: {x: 164, y: 164}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7531985379101331783
@@ -5545,7 +5545,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4662234950305747303
+--- !u!225 &5988855311412978376
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1267188894677044697}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &2045343360483768370
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5560,23 +5572,11 @@ MonoBehaviour:
   m_IgnoreLayout: 1
   m_MinWidth: -1
   m_MinHeight: -1
-  m_PreferredWidth: 1000
+  m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!225 &5988855311412978376
-CanvasGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1267188894677044697}
-  m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
 --- !u!1 &1331732460988210139
 GameObject:
   m_ObjectHideFlags: 0
@@ -44679,6 +44679,7 @@ MonoBehaviour:
   leafGold: {fileID: 2726400081911295563}
   leafPupa: {fileID: 9125691568215810390}
   leafLotus: {fileID: 3513937402126937464}
+  leafZenReplacement: {fileID: 0}
   _comboScreenFX: {fileID: 5575842612605215020}
   _pupaTrailPrefab: {fileID: 8925451686148220919, guid: 077bf16edefa8e64399a857e43a20588,
     type: 3}
@@ -69797,7 +69798,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
+    m_Font: {fileID: 12800000, guid: 467c17a4f8b876f4c99996b3d45944ef, type: 3}
     m_FontSize: 54
     m_FontStyle: 0
     m_BestFit: 1
@@ -115249,7 +115250,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
+    m_Font: {fileID: 12800000, guid: 467c17a4f8b876f4c99996b3d45944ef, type: 3}
     m_FontSize: 54
     m_FontStyle: 0
     m_BestFit: 1

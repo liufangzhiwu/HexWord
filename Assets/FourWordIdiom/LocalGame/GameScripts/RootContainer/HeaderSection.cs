@@ -40,7 +40,7 @@ public class HeaderSection : UIWindow
     [Header("游戏内控制")]
     public Button pauseBtn;
     public Text gameTimeTxt;
-    public Image gameTimeBg;             // 时间的背景图组件
+    public Image redTimeBg;             // 时间的背景图组件
     
     // 蝶蛹进度
     [Header("游戏内专属：蝶蛹圆形进度条")]
@@ -206,6 +206,13 @@ public class HeaderSection : UIWindow
             }
             
             bool showPupaProgress = ButterfliesManager.Instance.CanShowPupaProgressBarThisLevel(ChessStageController.Instance.OptimalTotalScore);
+
+            if (GameDataManager.Instance.UserData.CurrentChessStage <= 1)
+            {
+                showPupaProgress = false;
+            }
+            
+            Debug.Log("蚕蛹是否显示"+showPupaProgress);
             
             pupaObj.SetActive(showPupaProgress);
             ChangeLayoutAlignment(true);
@@ -675,26 +682,25 @@ public class HeaderSection : UIWindow
     /// </summary>
     public void ShowTimeWarning()
     {
-        if (gameTimeBg != null)
+        if (redTimeBg != null)
         {
-            gameTimeBg.gameObject.SetActive(true);
-            gameTimeBg.color = new Color(gameTimeBg.color.r, gameTimeBg.color.g, gameTimeBg.color.b, 1f);
+            redTimeBg.gameObject.SetActive(true);
+            redTimeBg.color = new Color(redTimeBg.color.r, redTimeBg.color.g, redTimeBg.color.b, 1f);
             // 2. 杀掉旧动画，执行一次呼吸效果 (变大再缩回)
-            gameTimeBg.transform.DOKill();
-            gameTimeBg.DOFade(.15f, 1.5f).SetEase(Ease.InOutSine).SetLoops(4, LoopType.Yoyo)
-                .OnComplete(()=>{ gameTimeBg.gameObject.SetActive(false); });
+            redTimeBg.transform.DOKill();
+            redTimeBg.DOFade(.15f, 1.5f).SetEase(Ease.InOutSine).SetLoops(4, LoopType.Yoyo)
+                .OnComplete(()=>{ redTimeBg.gameObject.SetActive(true); });
         }
     }
     
     /// <summary>
     /// x显示游戏时间面板
     /// </summary>
-    public void ShowGameTimeBg()
+    public void ShowGameTimeBg(bool show)
     {
-        if (gameTimeBg != null)
+        if (gameTimeTxt != null)
         {
-            gameTimeBg.transform.localScale = Vector3.one;
-            gameTimeBg.gameObject.SetActive(true);
+            gameTimeTxt.transform.parent.gameObject.SetActive(show);
         }
     }
     
@@ -703,12 +709,12 @@ public class HeaderSection : UIWindow
     /// </summary>
     public void ResetTimeWarning()
     {
-        if (gameTimeBg != null)
+        if (redTimeBg != null)
         {
             // 停止动画，恢复缩放
-            gameTimeBg.transform.DOKill();
-            gameTimeBg.transform.localScale = new Vector3(0.9f,0.9f,0.9f);
-            gameTimeBg.gameObject.SetActive(false);
+            redTimeBg.transform.DOKill();
+            redTimeBg.transform.localScale = new Vector3(0.9f,0.9f,0.9f);
+            redTimeBg.gameObject.SetActive(false);
         }
     }
     private void OnClickPuzzleVocabulary()
@@ -861,7 +867,7 @@ public class HeaderSection : UIWindow
         LevelPuzzleBtn.gameObject.SetActive(false);
         // 禁用时取消调用
         CancelInvoke(nameof(CheckLevelPuzzleVisibility));
-        gameTimeBg.transform.DOKill();
+        redTimeBg.transform.DOKill();
         if(_energyCoroutine != null) StopCoroutine(_energyCoroutine);
         base.OnDisable();
     }

@@ -322,7 +322,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19b7e2285c104f6ca47d583f3e5444f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_EffectFactor: 1
+  m_EffectFactor: 0.24649741
   m_Width: 0.161
   m_Rotation: 149.6
   m_Softness: 1
@@ -432,7 +432,7 @@ MonoBehaviour:
   m_Gloss: 1
   m_EffectArea: 0
   m_Player:
-    play: 1
+    play: 0
     initialPlayDelay: 3
     duration: 2
     loop: 0
@@ -1487,7 +1487,7 @@ MonoBehaviour:
   LevelPuzzleBtn: {fileID: 5630930173523307680}
   pauseBtn: {fileID: 1916382787631545778}
   gameTimeTxt: {fileID: 2112180333509760252}
-  gameTimeBg: {fileID: 6368888199345257630}
+  redTimeBg: {fileID: 3461762246917076080}
   pupaObj: {fileID: 3301680741078807852}
   pupaProgressBar: {fileID: 6736838406702467322}
   _pupaCompleteEffectNode: {fileID: 7899560695894817057}
@@ -3505,7 +3505,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19b7e2285c104f6ca47d583f3e5444f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_EffectFactor: 1
+  m_EffectFactor: 0.24649741
   m_Width: 0.161
   m_Rotation: 149.6
   m_Softness: 1

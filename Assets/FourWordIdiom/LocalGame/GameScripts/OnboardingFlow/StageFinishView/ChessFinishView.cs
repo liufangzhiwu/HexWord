@@ -288,13 +288,13 @@ public class ChessFinishView : UIWindow
                 string rawText = MultilingualManager.Instance.GetString(rule.LongTextKey, "pingzi");
                 string phraseText = MultilingualManager.Instance.GetString(rule.PhraseKey, "pingzi");
                 float formattedX = ChessStageController.Instance.DisplayZenPercent;
-                _encouragePhraseText.text = "\ud83c\udf1f" + string.Format(rawText, formattedX.ToString("F2"))  +  phraseText;
+                _encouragePhraseText.text = "\u2615" + string.Format(rawText, formattedX.ToString("F2"))  +  phraseText;
                 // 加载表情 Emoji
-                if (_encourageEmojiIcon != null && !string.IsNullOrEmpty(rule.EmojiKey))
-                {
-                    var emojiSprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("commonitem", rule.EmojiKey);
-                    if (emojiSprite != null) _encourageEmojiIcon.sprite = emojiSprite;
-                }
+                // if (_encourageEmojiIcon != null && !string.IsNullOrEmpty(rule.EmojiKey))
+                // {
+                //     var emojiSprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("commonitem", rule.EmojiKey);
+                //     if (emojiSprite != null) _encourageEmojiIcon.sprite = emojiSprite;
+                // }
             }
         }
         if (bannerStyle != 1 && bannerStyle != 2)

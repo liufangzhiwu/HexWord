@@ -298,7 +298,7 @@ SpriteAtlas:
   m_PackedSpriteNamesToIndex:
   - Difficulty2
   - add
-  - tehardtitle
+  - hardtitle
   - UI_Icon_gou
   - whitekuang
   - "\u82B1\u82DE\u56FE\u6807"
@@ -387,7 +387,7 @@ SpriteAtlas:
   - "\u91D1\u5E01 (1)"
   - name_pinzi
   - UI_yezi_icon
-  - title
+  - tehardtitle
   - UI_Icon_selebg
   - tipLight
   - UI_Icon_circle

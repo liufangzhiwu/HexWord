@@ -18,17 +18,37 @@ public class HardView : UIWindow
 
     private void InitUI()
     {
-        switch (StageHexController.Instance.CurLevelMode)
+        switch (GameDataManager.Instance.UserData.levelMode)
         {
-            case LevelModes.Normal:
+            case 1:
+                switch (StageHexController.Instance.CurLevelMode)
+                {
+                    case LevelModes.Normal:
+                        break;
+                    case LevelModes.Hard:
+                        hardStageTable.SetActive(true);
+                        extrahardStageTable.SetActive(false);
+                        break;
+                    case LevelModes.ExtraHard:
+                        hardStageTable.SetActive(false);
+                        extrahardStageTable.SetActive(true);
+                        break;
+                }
                 break;
-            case LevelModes.Hard:
-                hardStageTable.SetActive(true);
-                extrahardStageTable.SetActive(false);
-                break;
-            case LevelModes.ExtraHard:
-                hardStageTable.SetActive(false);
-                extrahardStageTable.SetActive(true);
+            case 2:
+                switch (ChessStageController.Instance.CurLevelMode)
+                {
+                    case LevelModes.Normal:
+                        break;
+                    case LevelModes.Hard:
+                        hardStageTable.SetActive(true);
+                        extrahardStageTable.SetActive(false);
+                        break;
+                    case LevelModes.ExtraHard:
+                        hardStageTable.SetActive(false);
+                        extrahardStageTable.SetActive(true);
+                        break;
+                }
                 break;
         }
     }

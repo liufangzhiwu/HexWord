@@ -135,7 +135,7 @@ public class ChessPlayArea : UIWindow
     {
         HitsBtn.AddClickAction(UseTips, "");
         CompleteBtn.AddClickAction(() => UseComplete(), "");
-        PuzzleBtn.AddClickAction(ClickLevelPuzzle);
+        PuzzleBtn.onClick.AddListener(ClickLevelPuzzle);
         BoardInitialize();
     }
     /// <summary>
@@ -642,8 +642,7 @@ public class ChessPlayArea : UIWindow
             isAnimFinished = true; // 动画播完，标记设为 true
         });
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
-        // 协程在这里暂停，直到 isAnimFinished 变成 true 才往下走
-        yield return new WaitUntil(() => isAnimFinished);
+        
         _currentWordActiveSeconds = 0f;
         wordUserSeconds = 0;
         ResetTimeWarning();
@@ -653,8 +652,16 @@ public class ChessPlayArea : UIWindow
         HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
         if (header != null)
         {
-            header.ShowGameTimeBg();
+            // if (CurrStageData.StageId == 1 && _remainingTime <= 0)
+            // {
+            //     _remainingTime=300;
+            // }
+            
+            header.ShowGameTimeBg(_remainingTime > 0);
         }
+        
+        // 协程在这里暂停，直到 isAnimFinished 变成 true 才往下走
+        yield return new WaitUntil(() => isAnimFinished);
        
         ChessStageController.Instance.CurLevelMode= ChessStageController.Instance.GetLevelDifficultyMode(CurrStageData.StageId);
 
@@ -1181,6 +1188,7 @@ public class ChessPlayArea : UIWindow
         }
         HitsBtn.interactable = true;
         CompleteBtn.interactable = true;
+        PuzzleBtn.interactable = true;
         ChessStageController.Instance.CompleteStage(CurrStageInfo.StageNumber, wordErrorCount, isJump);
     }
      /// <summary>

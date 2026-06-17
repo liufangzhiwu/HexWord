@@ -679,6 +679,7 @@ public class ChessStageController
             if(ChessDynamicHardManager.Instance.IsOpenDynamicHard())
                 CheckDynamicDifficultyIntervention(stageNumber,ComboErrorCount, duration);
         }
+        
         AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
         {
             if (issuccess)
