@@ -58,7 +58,7 @@ public class Bowl
 public class ChessStageInfo
 {
     #region 私有字段
-    private ChessLevelConf _StageConf;      // 关卡文本资源
+    public ChessLevelConf _StageConf;      // 关卡文本资源
     private readonly int _StageNumber; // 关卡编号
     private readonly int _StageInfoId; // 关卡配置ID
     //private bool _IsStageFileLoaded;   // 文件加载状态

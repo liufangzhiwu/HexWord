@@ -75,11 +75,20 @@ public class ChessLearningGuide : UIWindow
         {
             case "FirstStage":
                 string word = MultilingualManager.Instance.GetString($"GuidingTips0" + 1 , "pingzi");
-                TipText.GetComponentInChildren<Text>().text =
-                    GameDataManager.Instance.UserData.ABName == "1" ? word.Replace('水', '益') : word;
+
+                if (ChessStageController.Instance.CurrStageInfo._StageConf.russ.Contains("益"))
+                {
+                    TipText.GetComponentInChildren<Text>().text = word.Replace('水', '益');
+                }
+                else
+                {
+                    TipText.GetComponentInChildren<Text>().text = word;
+                }
+               
                 TipText.SetActive(true);
                 Background.SetActive(true);
                 PropText.SetActive(false);
+                DianShouTable.SetActive(true);
                 break;
             case "SetChess":
                 TipText.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString($"GuidingTips0" + 2 , "pingzi");

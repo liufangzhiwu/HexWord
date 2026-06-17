@@ -483,7 +483,8 @@ public class ChessboardGrid : MonoBehaviour
     public IEnumerator CancelPuzzleBoardState(BowlView puzzle)
     {
         GamePlayArea.puzzleTileTable.OnNotifyResult(puzzle.bowl, 0);
-        ChessView view = GridList.Values.FirstOrDefault(grid => grid.chesspiece?.bowl?.id == puzzle.bowl.id);
+        ChessView view = GridList.Values.FirstOrDefault(grid => grid.chesspiece?.bowl?.id == puzzle.bowl.id
+        &&grid.CurrState != TileState.Success);
         if (view == null)
         {
             view = GridList.Values.LastOrDefault(grid => 

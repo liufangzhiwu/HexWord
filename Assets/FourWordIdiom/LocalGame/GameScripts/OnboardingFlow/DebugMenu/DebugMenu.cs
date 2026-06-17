@@ -221,6 +221,9 @@ public class DebugMenu : UIWindow
 
         //同步到服务器
         GameDataManager.Instance.CommitGameData();
+       
+        GameDataManager.Instance.UserData.ABName = ABName;
+        ChessStageController.Instance.ClearCurrentLevelSave();
     }
 
     private void AddResetCountClick()
