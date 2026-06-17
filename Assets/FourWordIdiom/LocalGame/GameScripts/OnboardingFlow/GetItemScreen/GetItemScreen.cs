@@ -67,7 +67,7 @@ public class GetItemScreen : UIWindow
             case LimitRewordType.Tipstool:
                 title.text = "放大镜";
                 tips.text = "提示一个成语中的所有字";
-                UpdateCliamBtn(true);
+                UpdateCliamBtn(false);
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
                 if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
                 {
@@ -81,7 +81,7 @@ public class GetItemScreen : UIWindow
                 eventDes=title.text+"弹窗广告";
                 break;
             case LimitRewordType.SingleWordTipsttool:
-                UpdateCliamBtn(false);
+                UpdateCliamBtn(true);
                 title.text = MultilingualManager.Instance.GetString("ItemName01","pingzi");
                 tips.text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
@@ -209,16 +209,19 @@ public class GetItemScreen : UIWindow
         if (isShow)
         {
             Debug.LogError("上报的词语2" + targetWord);
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1,"看广告获取"+title.text+"道具");
             
             if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
             {
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1,"看广告获取"+title.text+"道具");
+                
                 SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
                     ?.UseTips();
             }
 
             if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
             {
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1,"看广告获取"+title.text+"道具");
+                
                 SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
                     ?.UseTips();
             }
