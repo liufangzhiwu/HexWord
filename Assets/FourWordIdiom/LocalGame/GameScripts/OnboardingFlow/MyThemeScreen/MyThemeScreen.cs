@@ -270,6 +270,7 @@ public class MyThemeScreen : UIWindow
         }
         else if (GameCoreManager.Instance.PanelState == PanelState.GamePingPanel)
         {
+            ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
             SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
         } 
         if (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankScreen))

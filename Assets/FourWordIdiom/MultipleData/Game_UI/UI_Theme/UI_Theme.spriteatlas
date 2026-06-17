@@ -89,6 +89,7 @@ SpriteAtlas:
     - 7f58480ae60ede24e950943a27cc9210: 21300000
     - be79119bacfa9ba4fac4ef674378a420: 21300000
     - a1f0823c87e969947bb3d369bb67b0ee: 21300000
+    - ea8e254c86c384440af0f54134718e8d: 21300000
     - 5eecfaad464725c4c993681ea313f3ad: 21300000
     - 47a96ced293b5b1409cced96246533de: 21300000
     - b4de4dfd99367e64b9280aba8d6b0546: 21300000
@@ -124,6 +125,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 7f58480ae60ede24e950943a27cc9210, type: 3}
   - {fileID: 21300000, guid: be79119bacfa9ba4fac4ef674378a420, type: 3}
   - {fileID: 21300000, guid: a1f0823c87e969947bb3d369bb67b0ee, type: 3}
+  - {fileID: 21300000, guid: ea8e254c86c384440af0f54134718e8d, type: 3}
   - {fileID: 21300000, guid: 5eecfaad464725c4c993681ea313f3ad, type: 3}
   - {fileID: 21300000, guid: 47a96ced293b5b1409cced96246533de, type: 3}
   - {fileID: 21300000, guid: b4de4dfd99367e64b9280aba8d6b0546, type: 3}
@@ -158,6 +160,7 @@ SpriteAtlas:
   - point3
   - theme03
   - theme06
+  - newthemetip
   - theme11
   - theme13
   - theme09

@@ -291,8 +291,8 @@ public class StageHexController
 #if UNITY_OPENHARMONY || UNITY_huawei
 
             AnalyticMgr.InsetAdStart("关卡插屏");
-            // 显示插屏广告
-            Game.self.Ads.ShowInterstitial((bool issuccess) => 
+            
+            AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
             {
                 if (issuccess)
                 {
@@ -304,6 +304,20 @@ public class StageHexController
                     AnalyticMgr.InsetAdFail("关卡插屏");
                 }
             });
+            
+            // // 显示插屏广告
+            // Game.self.Ads.ShowInterstitial((bool issuccess) => 
+            // {
+            //     if (issuccess)
+            //     {
+            //         AnalyticMgr.InsetAdSuccess("关卡插屏");
+            //         GameDataManager.Instance.UserData.totalSeeAds++;
+            //     }
+            //     else
+            //     {
+            //         AnalyticMgr.InsetAdFail("关卡插屏");
+            //     }
+            // });
 #endif
         }
 

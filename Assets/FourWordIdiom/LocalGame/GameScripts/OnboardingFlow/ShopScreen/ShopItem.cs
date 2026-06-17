@@ -149,7 +149,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     IEnumerator ShowAdsRewardUI()
     {
         yield return new WaitForSeconds(0.05f);
-        Game.self.Ads?.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+        AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
     }
     
     private void UpdateAdsRewardUI(bool isShow)

@@ -22,7 +22,7 @@ public class SignWaterScreen : UIWindow
     [SerializeField] private Text WaitTimeText; // 等待时长文本
     [SerializeField] private Text closetips;
     [SerializeField] private Text AdsAnniuDes;
-    [SerializeField] private Image adsloading;
+    //[SerializeField] private Image adsloading;
     [SerializeField] private Image adsIcon;
     //[SerializeField] private Image coins; // 隐私条款按钮
     bool iswater = false;
@@ -66,7 +66,7 @@ public class SignWaterScreen : UIWindow
         StartBtn.interactable = true;
         //WaitTimeText.gameObject.SetActive(false);
         adsIcon.gameObject.SetActive(true);
-        adsloading.gameObject.SetActive(false);
+        //adsloading.gameObject.SetActive(false);
         if(GameDataManager.Instance.UserData.signid > 0&&GameDataManager.Instance.UserData.signid <= 3)
         {
             //StartBtn.interactable = false;
@@ -145,8 +145,8 @@ public class SignWaterScreen : UIWindow
         bool isConnected = Game.IsNetworkActive;
 
         // 立即更新UI状态
-        adsIcon.gameObject.SetActive(isReady);
-        adsloading.gameObject.SetActive(!isReady);
+        adsIcon.gameObject.SetActive(true);
+        //adsloading.gameObject.SetActive(!isReady);
 
         // 如果没有网络连接，直接退出
         if (!isConnected)
@@ -167,15 +167,15 @@ public class SignWaterScreen : UIWindow
             // 状态变化处理
             if (isReady&&isConnected)
             {
-                adsloading.gameObject.SetActive(false);
+                //adsloading.gameObject.SetActive(false);
                 adsIcon.gameObject.SetActive(true);                   
                 yield break;
             }
         }
 
         // 立即更新UI状态
-        adsIcon.gameObject.SetActive(isReady);
-        adsloading.gameObject.SetActive(!isReady);
+        adsIcon.gameObject.SetActive(true);
+        //adsloading.gameObject.SetActive(!isReady);
 
         // 可选：超过最大尝试次数的处理
         if (!isReady)

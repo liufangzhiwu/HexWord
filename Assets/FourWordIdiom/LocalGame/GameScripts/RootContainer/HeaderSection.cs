@@ -88,7 +88,7 @@ public class HeaderSection : UIWindow
         float duration = 0.35f; // 动画持续时间
         float elapsed = 0f;
         // 记录原本的缩放大小（防止多次调用导致大小错乱）
-        Vector3 originalScale = Goldtxt.transform.localScale;
+        Vector3 originalScale = Vector3.one;
         // 设置最大放大倍数（比如 0.5f 代表最大会放大到 1.5 倍）
         float maxScaleAmount = 0.5f;
         
@@ -100,8 +100,12 @@ public class HeaderSection : UIWindow
             int currentValue = Mathf.RoundToInt(Mathf.Lerp(startValue, targetValue, t));
             Goldtxt.text = currentValue.ToString();
             // 2. 🔥 处理心跳式缩放放大缩小
-            float scaleCurve = Mathf.Sin(t * Mathf.PI); 
-            Goldtxt.transform.localScale = originalScale * (1f + scaleCurve * maxScaleAmount);
+            //float scaleCurve = Mathf.Sin(t * Mathf.PI); 
+            Goldtxt.transform.DOScale(new Vector3(1.2f,1.2f,1.2f),duration).OnComplete(() =>
+            {
+                Goldtxt.text = targetValue.ToString(); // 确保最终值正确显示
+                Goldtxt.transform.localScale = originalScale;
+            });
             yield return null;
         }
         Goldtxt.text = targetValue.ToString(); // 确保最终值正确显示

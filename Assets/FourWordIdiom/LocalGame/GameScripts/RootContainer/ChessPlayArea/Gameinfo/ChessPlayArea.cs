@@ -656,62 +656,27 @@ public class ChessPlayArea : UIWindow
             header.ShowGameTimeBg();
         }
        
-        // bool gotoNext = false;
-        // if (!ChessStageController.Instance.IsFirstEnterStage)
-        // {
-        //     _isTimerRunning = false;
-        //     yield return new WaitForSeconds(0.1f);
-        //     // 1. 先冻结时间，屏蔽底下的棋盘点击
-        //     // EventDispatcher.instance.TriggerChangeTopRaycast(false);
-        //     RectTransform captureArea = chessboardGrid.GetComponent<RectTransform>();
-        //     Sprite snapshot = null;
-        //     yield return CaptureBoardSnapshot(captureArea, (sprite) => {
-        //         snapshot = sprite;
-        //     });
-        //     
-        //     // 2. 呼出重连弹窗
-        //     SystemManager.Instance.ShowPanel(PanelType.ContinueGameWindow);
-        //     var continueWindow = SystemManager.Instance.GetPanel(PanelType.ContinueGameWindow).GetComponent<ContinueGameWindow>();
-        //     continueWindow.Init(
-        //         remainTime: _remainingTime, // 传入刚才恢复的剩余时间
-        //         boardSnapshot: snapshot, // 传给弹窗脚本
-        //         onContinue: () => 
-        //         {
-        //             // 玩家点击【继续】：时间开始流逝，解除屏幕屏蔽
-        //             _isTimerRunning = true;
-        //             gotoNext = true;
-        //             // EventDispatcher.instance.TriggerChangeTopRaycast(true);
-        //         },
-        //         onQuit: () =>
-        //         {
-        //             QuitGameAndDeductEnergy();
-        //         }
-        //     );
-        // }
-        // else
-        // {
-        //     // 如果是全新开局，没有任何阻挡，直接让时间开跑
-        //     _isTimerRunning = false;
-        //     gotoNext = true;
-        // }
-        // yield return new WaitUntil(() => gotoNext);
         ChessStageController.Instance.CurLevelMode= ChessStageController.Instance.GetLevelDifficultyMode(CurrStageData.StageId);
-        
-        switch (ChessStageController.Instance.CurLevelMode)
+
+        if (ChessStageController.Instance.IsFirstEnterStage)
         {
-            case LevelModes.Normal:
-                break;
-            case LevelModes.Hard:
-                SystemManager.Instance.ShowPanel(PanelType.HardView);
-                yield return new WaitForSeconds(0.8f);
-                SystemManager.Instance.HidePanel(PanelType.HardView);
-                break;
-            case LevelModes.ExtraHard:
-                SystemManager.Instance.ShowPanel(PanelType.HardView);
-                yield return new WaitForSeconds(0.8f);
-                SystemManager.Instance.HidePanel(PanelType.HardView);
-                break;
+            switch (ChessStageController.Instance.CurLevelMode)
+            {
+                case LevelModes.Normal:
+                    break;
+                case LevelModes.Hard:
+                    SystemManager.Instance.ShowPanel(PanelType.HardView);
+                    yield return new WaitForSeconds(0.8f);
+                    SystemManager.Instance.HidePanel(PanelType.HardView);
+                    break;
+                case LevelModes.ExtraHard:
+                    SystemManager.Instance.ShowPanel(PanelType.HardView);
+                    yield return new WaitForSeconds(0.8f);
+                    SystemManager.Instance.HidePanel(PanelType.HardView);
+                    break;
+            }
         }
+        
         yield return null;
         // 检查一下是否存在错误的成功状态
         chessboardGrid.FixChessState();

@@ -65,10 +65,10 @@ public class GetItemScreen : UIWindow
                 AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
                 break;
             case LimitRewordType.Tipstool:
-                title.text = MultilingualManager.Instance.GetString("ItemName01","pingzi");
+                title.text = "放大镜";
+                tips.text = "提示一个成语中的所有字";
                 UpdateCliamBtn(true);
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
-                tips.text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
                 if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
                 {
                     AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_tip");
