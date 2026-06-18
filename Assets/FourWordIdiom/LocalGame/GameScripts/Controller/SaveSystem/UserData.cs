@@ -180,6 +180,25 @@ public class UserData
 
     #region 数据初始化方法
     
+    public bool LocalDataIsNull()
+    {
+        bool IsNull = false;
+        string filePath = Getfilepath;
+
+       
+        if (File.Exists(filePath))
+        {
+            IsNull = false;
+        }
+        else
+        {
+            IsNull = true;
+        } 
+        
+        return IsNull;
+       
+    }
+    
     /// <summary>
     /// 加载用户数据
     /// </summary>
@@ -327,6 +346,17 @@ public class UserData
         isAllCompleteTask = false;
         wordVocabularyChinSim = new WordVocabulary<string>();
         
+        AdFatigueScore = 0;
+        TotalPlayTimeSeconds = 0f;
+        LastPayTimeTicks = 0;
+        LastRewardAdTimeTicks = 0;
+        LastInterstitialTimeTicks = 0;
+        isDayFirstLevelAdChecked = false;
+        isDayFirstLevelAdAllowed = false;
+        
+        HighestZenScore = 0;
+        BestClearTimes = new Dictionary<int, float>();
+        
         #endregion
     }
     
@@ -455,6 +485,17 @@ public class UserData
         TotalOnlineMinutes = user.TotalOnlineMinutes;
         ReportedLifecycleEvents = user.ReportedLifecycleEvents ?? new Dictionary<string, bool>();
         
+        AdFatigueScore = user.AdFatigueScore;
+        TotalPlayTimeSeconds = user.TotalPlayTimeSeconds;
+        LastPayTimeTicks = user.LastPayTimeTicks;
+        LastRewardAdTimeTicks = user.LastRewardAdTimeTicks;
+        LastInterstitialTimeTicks = user.LastInterstitialTimeTicks;
+        isDayFirstLevelAdChecked = user.isDayFirstLevelAdChecked;
+        isDayFirstLevelAdAllowed = user.isDayFirstLevelAdAllowed;
+
+        HighestZenScore = user.HighestZenScore;
+        BestClearTimes = user.BestClearTimes ?? new Dictionary<int, float>();
+        
         // 检查并初始化缺失的生命周期事件
         InitializeLifecycleEvents();
         
@@ -546,6 +587,9 @@ public class UserData
         //每日通过数据
         dayPassStageCount = 0;
         // 可在此添加其他需要每日重置的数据
+        // 👇 新增：每日重置首关插屏判定状态
+        isDayFirstLevelAdChecked = false;
+        isDayFirstLevelAdAllowed = false;
     }
     
     private void UpdatePanelUI()

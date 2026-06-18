@@ -153,7 +153,7 @@ public class FishUserSaveData
         aiSaveDatas.Clear();
         rank = 0;
         updatePuzzleusetime = 0;
-    }        
+    }
    
     
     /// <summary>

@@ -21,6 +21,7 @@ namespace Middleware
         //independent sign in
         public static  int REQUEST_SIGN_IN_LOGIN_INDEPENDENT = 1004;
     }
+    
     public class Account_huaweiandroid : IAccounts
     {
         public string UserId { get; set; }
@@ -138,7 +139,7 @@ namespace Middleware
                 CurrentAuthAccount = authAccount;
                 UserId = authAccount.getOpenId();
                 IsLogin = true;
-                
+                GameDataManager.Instance.UserData.UserId = UserId;
                 Debug.Log($"ID Token: {authAccount.getIdToken()}");
                 
                 OnLoginComplete?.Invoke(true, authAccount);

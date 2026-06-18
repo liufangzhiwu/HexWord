@@ -83,6 +83,7 @@ public class LoadingController : MonoBehaviour
     private UserData serverUserData;          // 解析后的主数据
     private FishUserSaveData serverFishData;      // 解析后的鱼数据 (假设你的类名叫 FishSaveData)
     private ButterflyData serverButterflyData;// 解析后的蝴蝶数据 (假设你的类名叫 ButterflyData)
+    private bool IsLocalDataNull;// 本地数据是否为空
 
     private void Awake()
     {
@@ -99,6 +100,7 @@ public class LoadingController : MonoBehaviour
 
     private IEnumerator InitBg()
     {
+        IsLocalDataNull = GameDataManager.Instance.UserData.LocalDataIsNull();
         GameDataManager.Instance.LoadPlayerProfile();
         this.transform.GetComponent<Image>().color = Color.black;
         yield return AssetBundleLoader.SharedInstance.LoadAtlas(
@@ -233,8 +235,27 @@ public class LoadingController : MonoBehaviour
     // 抽离对比逻辑，保持代码整洁
     private void CompareAndSelectData()
     {
+        if (IsLocalDataNull)
+        {
+            UserServerData();
+            Debug.Log("本地用户数据为空，直接使用服务器数据, 服务器数据同步完成！");
+        }
+        
         // A. 优先比对关卡进度
-        if (serverUserData.CurrentHexStage != GameDataManager.Instance.UserData.CurrentHexStage)
+        if (serverUserData.CurrentChessStage != GameDataManager.Instance.UserData.CurrentChessStage)
+        {
+            if (serverUserData.CurrentChessStage > GameDataManager.Instance.UserData.CurrentChessStage)
+            {
+                UserServerData();
+                Debug.Log("服务器关卡进度更优，使用服务器数据, 服务器数据同步完成！");
+            }
+            else 
+            {
+                UserLocalData();
+                Debug.Log("本地关卡进度更优，使用本地数据");
+            }
+        }
+        else if (serverUserData.CurrentHexStage != GameDataManager.Instance.UserData.CurrentHexStage)
         {
             if (serverUserData.CurrentHexStage > GameDataManager.Instance.UserData.CurrentHexStage)
             {
@@ -253,7 +274,7 @@ public class LoadingController : MonoBehaviour
             DateTime.TryParse(GameDataManager.Instance.UserData.logoutTime, out DateTime localTime);
             DateTime.TryParse(serverUserData.logoutTime, out DateTime serverTime);
             Debug.Log($"本地时间: {localTime}  <--> 服务器时间: {serverTime}");
-            if (localTime < serverTime)
+            if (localTime <= serverTime)
             {
                 Debug.Log("服务器存档时间更新，使用服务器数据");
                 UserServerData();
@@ -291,6 +312,7 @@ public class LoadingController : MonoBehaviour
         UserData user = GameDataManager.Instance.UserData;
         user.PlayerId = loginResponse.uid;
         user.ABName = (string)loginResponse.abtest.GetValueOrDefault("pack_name", null);
+        //user.ABName = "1";
         try
         {
             Dictionary<string, object> parameterValues = new Dictionary<string, object>();

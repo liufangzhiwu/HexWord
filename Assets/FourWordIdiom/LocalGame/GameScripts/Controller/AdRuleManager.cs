@@ -148,6 +148,7 @@ public class AdRuleManager : MonoBehaviour
         // 1. 先问大脑让不让播
         if (!CanShowInterstitial())
         {
+            Debug.Log($"[AdRule] 插屏拦截掉了");
             onComplete?.Invoke(false); // 拦截掉了，直接执行回调，让游戏继续
             return;
         }
@@ -196,6 +197,8 @@ public class AdRuleManager : MonoBehaviour
     {
         var userData = GameDataManager.Instance.UserData;
         DateTime now = DateTime.Now;
+        
+        Debug.Log($"[AdRule] 进入插屏拦截逻辑");
         
         // 👇 新增：【D规则】每日首关插屏概率保护
         // 依据 dayPassStageCount == 0 代表玩家今天一关都还没通关，处于“每日第一个关卡”状态
