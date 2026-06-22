@@ -122,7 +122,7 @@ public class HeaderSection : UIWindow
 #endif
         PuzzlebookBtn.AddClickAction(OnClickPuzzleVocabulary);
         LevelPuzzleBtn.AddClickAction(OnClickStagePuzzleScreen);
-        PupaTable.AddClickAction(()=>SystemManager.Instance.ShowPanel(PanelType.ButterflyHome));
+        PupaTable.AddClickAction(ClickPupaButton);
         energyBtn.AddClickAction(()=>
         {
             // var userData = GameDataManager.Instance.UserData;
@@ -250,6 +250,20 @@ public class HeaderSection : UIWindow
         GoldLeafredpoint?.SetActive(ThemeManager.Instance.IsSkinRedPointActive);
         ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
     }
+
+
+    private void ClickPupaButton()
+    {
+
+        if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea)||
+            SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        {
+            SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
+        }
+        
+        
+    }
+    
     /// <summary>
     /// 动态改变顶部资产区域的对齐方式
     /// </summary>

@@ -84,9 +84,11 @@ namespace Middleware
         
         private void CreateAccounts()
         {
-#if UNITY_ANDROID
+#if UNITY_EDITOR&&!UNITY_OPENHARMONY
             Accounts = new Account_android();
-#elif UNITY_huawei
+#elif UNITY_ANDROID&&!UNITY_huawei
+            Accounts = new Account_android();
+#elif UNITY_huawei&&!UNITY_EDITOR
             Accounts = new Account_huaweiandroid();
 #elif UNITY_OPENHARMONY
             Accounts = new Account_harmony();

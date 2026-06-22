@@ -46,12 +46,12 @@ public class LoginApi
         string openId = GameDataManager.Instance.UserData.UserId;
         string factory = GetCurrentFactory();
         
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         if (string.IsNullOrEmpty(openId))
         {
             openId = SystemInfo.deviceUniqueIdentifier;
         }
-        #endif
+#endif
         
         var data = new LoginRequest
         {

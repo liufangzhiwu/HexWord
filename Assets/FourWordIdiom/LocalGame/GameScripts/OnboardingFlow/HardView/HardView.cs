@@ -21,6 +21,7 @@ public class HardView : UIWindow
         switch (GameDataManager.Instance.UserData.levelMode)
         {
             case 1:
+            case 3:
                 switch (StageHexController.Instance.CurLevelMode)
                 {
                     case LevelModes.Normal:

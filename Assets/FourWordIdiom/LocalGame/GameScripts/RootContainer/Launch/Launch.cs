@@ -26,7 +26,7 @@ public class Launch : MonoBehaviour
 
         if (!GameDataManager.Instance.UserData.IsAgreePrivacy)
         {
-#if UNITY_OPENHARMONY
+#if UNITY_OPENHARMONY||UNITY_huawei
              GameDataManager.Instance.UserData.IsAgreePrivacy = true;
              isTiming = true;
 #else
