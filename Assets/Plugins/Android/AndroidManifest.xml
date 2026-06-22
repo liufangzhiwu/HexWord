@@ -37,6 +37,12 @@
             <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
         </activity>
 
+        <activity android:name="com.unity.hms.iap.HmsIapActivity"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                  android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
+                  android:exported="false">
+        </activity>      
+
         <!-- 华为 HMS 应用 ID（用于定位等服务） -->
         <meta-data android:name="com.huawei.hms.client.appid" android:value="116093983"/>
         <!-- 禁用华为应用市场渠道检查 -->
