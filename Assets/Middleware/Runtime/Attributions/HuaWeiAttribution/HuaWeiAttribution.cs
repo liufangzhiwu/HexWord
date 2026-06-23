@@ -191,8 +191,6 @@ namespace Middleware
                 // 以客户端事件 "$AppLaunch" 上报归因参数（客户端埋点）
                 string paramsJson = ConvertToJson(dict);
                 ReportConversion("$AppLaunch", paramsJson);
-                long snow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                ReportStart(snow);
                 Debug.Log("[HuaweiAttr] Attribution reported via $AppLaunch (client).");
 
                 // ★ 如果 callBack 和 oaid 都已获取，且尚未上报激活，则自动上报激活（服务端）
@@ -274,6 +272,9 @@ namespace Middleware
                     accessToken = token;
                     isTokenFetching = false;
                     Debug.Log("[HuaweiAttr] Access Token obtained.");
+                    
+                    long snow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    ReportStart(snow);
                 },
                 (error) =>
                 {
