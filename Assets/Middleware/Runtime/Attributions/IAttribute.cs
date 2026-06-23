@@ -11,5 +11,8 @@ namespace Middleware
         //public bool Is { get; set; }
         void Init(float delay);
         void ReportConversion(int eventCode);
+
+        void ReportPurchase(long actionTime, decimal amount, string currency = "CNY");
+        void ReportRetention(long actionTime);
     }
 }

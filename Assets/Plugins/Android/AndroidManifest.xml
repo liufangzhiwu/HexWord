@@ -14,6 +14,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- 前台服务权限（若需要在后台持续定位时显示通知） -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="com.huawei.hms.permission.AD_ID" />
 
     <application>
 

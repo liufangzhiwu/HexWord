@@ -41,6 +41,16 @@ namespace Middleware
             
             Debug.Log($"安卓环境，模拟上报事件: {eventCode}");
         }
+
+        public void ReportPurchase(long actionTime, decimal amount, string currency = "CNY")
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ReportRetention(long actionTime)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
 #endif

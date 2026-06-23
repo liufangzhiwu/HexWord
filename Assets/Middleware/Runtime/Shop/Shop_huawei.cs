@@ -149,6 +149,18 @@ namespace Middleware
                         
                         if (inAppPurchaseDataBean.getPurchaseState() == 0)
                         {
+                            // ---- 获取付费信息 ----
+                            long priceInFen = inAppPurchaseDataBean.getPrice();    // 单位：分
+                            string currency = inAppPurchaseDataBean.getCurrency(); // 如 "CNY"
+                            long actionTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+                            // ---- 调用华为归因付费回传 ----
+                            // 注意：如果内购回调不在 Unity 主线程，需要调度到主线程执行
+                            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                            {
+                                Game.self?.Attributes?.ReportPurchase(actionTime, priceInFen, currency);
+                            });
+                            
                             ProductItem productItem = new ProductItem
                             {
                                 IsoCurrencyCode = inAppPurchaseDataBean.getCurrency(),
@@ -178,6 +190,7 @@ namespace Middleware
                                 _successAction?.Invoke(productItem);
                             });
                         }
+                        
                         break;
                     default:  
                         UnityMainThreadDispatcher.Instance().Enqueue(() =>
