@@ -26,7 +26,7 @@ namespace Middleware
 
         // ---------- 归参与设备信息 ----------
         private string appId = "116093983";      // ⚠️ 替换
-        private string clientId = "116093983";           // ⚠️ 替换
+        private string clientId = "1979065602840486336";           // ⚠️ 替换
         private string oaid;
         private string callBack;                           // 归因系统返回的 callback
 
@@ -261,7 +261,7 @@ namespace Middleware
                 {
                     accessToken = token;
                     isTokenFetching = false;
-                    Debug.Log("[HuaweiAttr] Access Token obtained.");
+                    Debug.Log("[HuaweiAttr] Access Token obtained."+accessToken);
                     
                     // 6. 获取归因信息并上报（客户端事件 $AppLaunch）
                     string json = GetAttributionInfo();
@@ -334,10 +334,19 @@ namespace Middleware
 
         private void SendServerEvent(string actionType, long actionTime, decimal? amount = null, string currency = null)
         {
-            // 前置检查
+            
+#if Unity_ShowLog //方便测试
+            if (string.IsNullOrEmpty(callBack))
+            {
+                callBack =
+                    "security:4053FFBAAE7109AE51C6DF9A:D0A9FB392680FE8F2BD82C1215873DF84A6C5F5EEE3CBCCA4D56F65F8A08E9DC481BC0BBBDAA0666FD30B8D07CD21A";
+            }
+#endif
+            
+            // 前置检查（不变）
             if (string.IsNullOrEmpty(accessToken))
             {
-                Debug.LogWarning("[HuaweiAttr] No access token, event will not be sent."+actionType);
+                Debug.LogWarning("[HuaweiAttr] No access token, event will not be sent. " + actionType);
                 return;
             }
             if (string.IsNullOrEmpty(callBack) || string.IsNullOrEmpty(oaid))
@@ -346,7 +355,6 @@ namespace Middleware
                 return;
             }
 
-            // 构造 JSON（手工拼接，保证格式准确）
             var sb = new StringBuilder();
             sb.Append("{");
             sb.Append($"\"actionType\":\"{actionType}\",");
@@ -355,17 +363,29 @@ namespace Middleware
             sb.Append($"\"appId\":\"{appId}\",");
             sb.Append($"\"callBack\":\"{callBack}\",");
             sb.Append($"\"deviceId\":\"{oaid}\"");
-            if (amount.HasValue)
+
+            // ★ 付费事件特殊处理：使用 actionParam，金额单位为元
+            if (actionType == "4" && amount.HasValue)
             {
+                // 金额从分转换为元（保留两位小数）
+                decimal amountInYuan = amount.Value / 100m;
+                // 构造 actionParam 数组字符串
+                string actionParam = $"[{{\"name\":\"付费金额\",\"value\":{amountInYuan}}}]";
+                // 注意：actionParam 的值必须是 JSON 字符串，因此需要转义引号（但 UnityWebRequest 会自动处理）
+                sb.Append($",\"actionParam\":\"{actionParam}\"");
+                // 不添加顶层 amount 和 currency
+            }
+            else if (amount.HasValue)
+            {
+                // 其他事件（如留存）若需要金额，可保留（但通常留存不需要）
                 sb.Append($",\"amount\":{amount.Value}");
                 sb.Append($",\"currency\":\"{currency ?? "CNY"}\"");
             }
+
             sb.Append("}");
             string json = sb.ToString();
 
             Debug.Log($"[HuaweiAttr] Sending server event: {json}");
-
-            // 启动协程发送
             CoroutineRunner.StartCoroutine(SendServerEventCoroutine(json));
         }
 
