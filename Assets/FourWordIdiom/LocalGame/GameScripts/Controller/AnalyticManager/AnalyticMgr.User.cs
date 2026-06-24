@@ -98,7 +98,7 @@ public partial class AnalyticMgr
         
         Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
         
-        Game.self?.Attributes?.ReportConversion(133054104);
+        //Game.self?.Attributes?.ReportConversion(2);
     }
 
     /// <summary>
@@ -164,7 +164,8 @@ public partial class AnalyticMgr
         
         if (lifeDays == 2)
         {
-            Game.self.Attributes?.ReportConversion(133054105);
+            long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            Game.self.Attributes?.ReportRetention(now);
         }
      
         var properties = new Dictionary<string, object>

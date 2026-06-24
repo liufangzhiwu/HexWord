@@ -90,21 +90,11 @@ namespace Middleware
                     }
                     pendingActions.Clear();
                 }
-
-                // 6. 获取归因信息并上报（客户端事件 $AppLaunch）
-                string json = GetAttributionInfo();
-                if (!string.IsNullOrEmpty(json))
-                {
-                    Debug.Log("[HuaweiAttr] Attribution data: " + json);
-                    ReportAttribution(json);   // 内部会解析 callBack 并自动上报激活（服务端）
-                }
-                else
-                {
-                    Debug.LogWarning("[HuaweiAttr] No attribution data received.");
-                }
-
+                
                 // 7. 异步获取 Access Token（供服务端 API 使用）
                 FetchAccessToken();
+
+                
             });
         }
 
@@ -273,6 +263,18 @@ namespace Middleware
                     isTokenFetching = false;
                     Debug.Log("[HuaweiAttr] Access Token obtained.");
                     
+                    // 6. 获取归因信息并上报（客户端事件 $AppLaunch）
+                    string json = GetAttributionInfo();
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        Debug.Log("[HuaweiAttr] Attribution data: " + json);
+                        ReportAttribution(json);   // 内部会解析 callBack 并自动上报激活（服务端）
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[HuaweiAttr] No attribution data received.");
+                    }
+                    
                     long snow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     ReportStart(snow);
                 },
@@ -335,7 +337,7 @@ namespace Middleware
             // 前置检查
             if (string.IsNullOrEmpty(accessToken))
             {
-                Debug.LogWarning("[HuaweiAttr] No access token, event will not be sent.");
+                Debug.LogWarning("[HuaweiAttr] No access token, event will not be sent."+actionType);
                 return;
             }
             if (string.IsNullOrEmpty(callBack) || string.IsNullOrEmpty(oaid))
