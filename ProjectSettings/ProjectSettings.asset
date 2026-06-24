@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: HexaSpaceGames
-  productName: "\u6210\u8BED\u6D88:\u7985\u610F\u4E4B\u5883"
+  productName: "\u6210\u8BED\u6D88\uFF1A\u7985\u610F\u4E4B\u5883"
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0, g: 0, b: 0, a: 1}
@@ -141,7 +141,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 1.2.6
+  bundleVersion: 1.2.0
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -173,7 +173,7 @@ PlayerSettings:
     iPhone: 103
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
-  AndroidBundleVersionCode: 26052068
+  AndroidBundleVersionCode: 26062236
   AndroidMinSdkVersion: 24
   AndroidTargetSdkVersion: 35
   AndroidPreferredInstallLocation: 1
@@ -1039,7 +1039,7 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: Unity_ShowLog;Unity_ResourceAb;UNITY_huawei
+    Android: Unity_ShowLog;UNITY_huawei
     HMIAndroid: UNITY_UOS_SECURITY
     OpenHarmony: Unity_Release
     Server: 
