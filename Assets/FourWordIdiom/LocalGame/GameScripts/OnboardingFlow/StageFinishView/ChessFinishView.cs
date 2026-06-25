@@ -288,11 +288,11 @@ public class ChessFinishView : UIWindow
                 string rawText = MultilingualManager.Instance.GetString(rule.LongTextKey, "pingzi");
                 string phraseText = MultilingualManager.Instance.GetString(rule.PhraseKey, "pingzi");
                 float formattedX = ChessStageController.Instance.DisplayZenPercent;
-                _encouragePhraseText.text = "\u2615" + string.Format(rawText, formattedX.ToString("F2"))  +  phraseText;
+                _encouragePhraseText.text = "\ud83c\udf1f" + string.Format(rawText, formattedX.ToString("F2"))  +  phraseText;
                 // 加载表情 Emoji
                 // if (_encourageEmojiIcon != null && !string.IsNullOrEmpty(rule.EmojiKey))
                 // {
-                //     var emojiSprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("commonitem", rule.EmojiKey);
+                //     var emojiSprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("commonitem", rule.EmojiKey);
                 //     if (emojiSprite != null) _encourageEmojiIcon.sprite = emojiSprite;
                 // }
             }
@@ -673,6 +673,7 @@ public class ChessFinishView : UIWindow
             // 2. 使用 DOTween 创建连续动画序列
             Sequence seq = DOTween.Sequence();
             seq.SetLink(lotusInstance);
+            seq.AppendCallback(() => AudioManager.Instance.PlaySoundEffect("LotusPop",0,1));
             // 动作1：在起点瞬间弹出来，稍微悬浮一下给玩家看清楚
             seq.Append(lotusInstance.transform.DOScale(1.2f, 0.3f).SetEase(Ease.OutBack));            
             // 动作2：停顿展示一下数字，让玩家看清楚加了多少 (耗时 0.3秒)

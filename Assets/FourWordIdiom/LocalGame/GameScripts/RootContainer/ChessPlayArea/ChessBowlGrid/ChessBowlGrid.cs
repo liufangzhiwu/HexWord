@@ -19,11 +19,8 @@ public class ChessBowlGrid : MonoBehaviour
     public ChessPlayArea GamePlayArea { get; private set; }
 
     [SerializeField] public List<BowlView> GridList = new(); // 存放词语的字块堆
-
-    public BowlView CurrPuzzle { get; private set; } // 当前选择的词
-
-    public static bool _isProcessing; // 全局处理状态锁
-
+    
+    public static bool IsTutorialBlocking = false; // 🌟 引导拦截闸门
 
     public void Initialize(ChessPlayArea play)
     {
@@ -166,7 +163,7 @@ public class ChessBowlGrid : MonoBehaviour
     /// <param name="puzzle"></param>
     public void OnPuzzleSelected(BowlView puzzle)
     {
-        CurrPuzzle = puzzle;
+        if (IsTutorialBlocking) return;
         StartCoroutine(GamePlayArea.chessboardGrid.HandleBlowViewState(puzzle));
     }
 
@@ -175,5 +172,11 @@ public class ChessBowlGrid : MonoBehaviour
         GridList.Clear();
         LetterTilePool.ReturnAllObjectsToPool();
         PhantomPool?.ReturnAllObjectsToPool();
+        IsTutorialBlocking = false;
+    }
+    private void OnDisable()
+    {
+        // 🌟 修复点 2：隐藏界面时必定开闸！
+        IsTutorialBlocking = false;
     }
 }

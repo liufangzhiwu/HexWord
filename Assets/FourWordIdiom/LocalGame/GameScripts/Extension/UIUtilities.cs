@@ -389,5 +389,48 @@ public static class UIUtilities
     }
     
     public static bool isEditMode => Application.isEditor;
+    
+    
+    /// <summary>
+    /// 处理中英文标点符号“避头”排版问题，防止标点单独掉到下一行
+    /// </summary>
+    public static string ApplyKinsokuShori(Text textComponent, string text)
+    {
+        if (string.IsNullOrEmpty(text) || textComponent == null) return text;
+
+        // 1. 先把干净的纯文字丢给 Text 组件，让它底层进行一次假渲染计算
+        textComponent.text = text;
+        Canvas.ForceUpdateCanvases(); // 强制 UGUI 刷新并生成渲染矩阵
+
+        // 2. 获取底层的排版生成数据
+        var lines = textComponent.cachedTextGenerator.lines;
+        
+        // 如果只有一行，说明根本没有发生换行，直接原样返回
+        if (lines.Count <= 1) return text;
+
+        // 避头标点符号库（绝对不能出现在行首的符号）
+        string punctuations = "！？。，、；：”’）】》!?,.";
+        
+        System.Text.StringBuilder sb = new System.Text.StringBuilder(text);
+        int offset = 0; // 记录因为插入 \n 导致字符串长度增加的偏移量
+
+        // 3. 从第二行开始遍历，检查 UGUI 切断每一行的第一个字符是什么
+        for (int i = 1; i < lines.Count; i++)
+        {
+            // 拿到这一行第一个字符在原始字符串中的索引位置
+            int startCharIdx = lines[i].startCharIdx + offset;
+            
+            // 检查：如果这一行的开头刚好命中了一个标点符号！
+            if (startCharIdx > 0 && startCharIdx < sb.Length && punctuations.Contains(sb[startCharIdx].ToString()))
+            {
+                // 核心：强行在标点符号的【前一个汉字】前面，插入一个真实的物理换行符 \n
+                // 这样就能把“前一个字”和“标点”一起拽到下一行
+                sb.Insert(startCharIdx - 1, '\n');
+                offset++; // 字符串长度增加了1，后续的断行点索引需要偏移
+            }
+        }
+
+        return sb.ToString();
+    }
   
 }

@@ -358,6 +358,6 @@ public class DashCompetition : UIWindow
         FishInfoController.Instance.OnFishTimeUpdated -= UpdateFishTime;
         FishInfoController.Instance.OnFishMatchOver -= OnClosePanel;
         
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true,true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
     }
 }

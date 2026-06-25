@@ -41,7 +41,7 @@ public class GetItemScreen : UIWindow
         //     isshowpupa=ChessStageController.Instance.CurrStageData.PupaDatas!=null;
         // }
         
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false,false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,true,false);
     }
 
     private void InitUI()
@@ -162,6 +162,9 @@ public class GetItemScreen : UIWindow
         if (toolInfo.cost > GameDataManager.Instance.UserData.Gold)
         {        
             MessageSystem.Instance.ShowTip("TipGoldInsufficient");
+            // 直接跳转到商店
+            SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
+            Close();
             return;
         }
         
@@ -208,7 +211,7 @@ public class GetItemScreen : UIWindow
         MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
-            Debug.LogError("上报的词语2" + targetWord);
+            Debug.Log("上报的词语2" + targetWord);
             
             if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
             {

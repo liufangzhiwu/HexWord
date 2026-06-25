@@ -188,6 +188,7 @@ public class ChessDynamicHardManager : MonoBehaviour
         else
             Debug.LogError("Failed to load cypz_levelDifficultyChange csv data.");
     }
+    
     #region  解析能力参数
     /// <summary>
     /// 读取关卡难度配置
@@ -409,44 +410,6 @@ public class ChessDynamicHardManager : MonoBehaviour
         }
          // 兜底用最后一档
         return LevelDifficultyDatas[^1];
-        
-        // for (int i = 0; i < LevelDifficultyDatas.Count; i++)
-        // {
-        //     if (level <= LevelBounds[0])   // 0-10关
-        //     {
-        //         if (currentEValue <= LevelDifficultyDatas[i].intervalE01)
-        //         {
-        //             return LevelDifficultyDatas[i];
-        //         }
-        //     }else if (level <= LevelBounds[1])
-        //     {
-        //         if (currentEValue <= LevelDifficultyDatas[i].intervalE02)
-        //         {
-        //             return LevelDifficultyDatas[i];
-        //         }
-        //     }else if (level <= LevelBounds[2])
-        //     {
-        //         if (currentEValue <= LevelDifficultyDatas[i].intervalE03)
-        //         {
-        //             return LevelDifficultyDatas[i];
-        //         }
-        //     }else if(level <= LevelBounds[3])
-        //     {
-        //         if (currentEValue <= LevelDifficultyDatas[i].intervalE04)
-        //         {
-        //             return LevelDifficultyDatas[i];
-        //         }
-        //     }
-        //     else
-        //     {
-        //         if (currentEValue <= LevelDifficultyDatas[i].intervalE05)
-        //         {
-        //             return LevelDifficultyDatas[i];
-        //         }
-        //     }
-        // }
-        //
-        // return LevelDifficultyDatas[LevelDifficultyDatas.Count - 1];
     }
     
     /// <summary>
@@ -461,57 +424,67 @@ public class ChessDynamicHardManager : MonoBehaviour
 
         if (!GameDataManager.Instance.ChessDynamicHardSave.IsEnergy) return change;
         
-        Debug.Log($"在 {level} 关前的位置时E值： "+ GameDataManager.Instance.ChessDynamicHardSave.EnergyValue);
         float playerEValue = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
-     
+        Debug.Log($"<color=#00FFFF>[动态难度-开局判定]</color> 正在进入关卡 <b>{level}</b> | 玩家当前E值: <color=#FFD700>{playerEValue}</color>");
         LevelDifficultyData levelDiff = GetLevelDifficultyDataByEValue(playerEValue, level);
-        Debug.Log($" 在关卡 {level} 找到的匹配难度： " + JsonConvert.SerializeObject(levelDiff));
         if (levelDiff == null)
         {
+            Debug.Log($"<color=#FF4500>[动态难度-异常]</color> 关卡 {level} 未能匹配到难度配置，E值: {playerEValue}");
             return change;
         }
-
+        Debug.Log($"<color=#00FFFF>[动态难度-配置匹配]</color> 命中难度组 Group: <b>{JsonConvert.SerializeObject(levelDiff)}</b> | 预设目标增减字数: <color=#FFD700>{levelDiff.wordChange}</color>");
+        // 更新最高/当前的E值分组（如果发生了变化）
         if (levelDiff.groupId != GameDataManager.Instance.ChessDynamicHardSave.MaxEnergyLevel)
         {
             GameDataManager.Instance.ChessDynamicHardSave.UpdateMaxEnergyLevel(levelDiff.groupId);
-            change = levelDiff.wordChange;
         }
-        else
+        // 初始赋予正常的配置字数增减量
+        change = levelDiff.wordChange;
+        //  如果是新进入一个关卡（非重玩当前关卡），才进行每日减负特权判断
+        if (level != GameDataManager.Instance.ChessDynamicHardSave.StageIndex)
         {
-            bool canR = CanReduce(levelDiff.wordChange);
-            Debug.Log($"在是否减少之前--- {change}   {levelDiff.wordChange}");
-            Debug.Log($" 当前检查等级{level} 存储的等级" + GameDataManager.Instance.ChessDynamicHardSave.StageIndex + $" 是否可以减少 {canR}" );
-            if (level != GameDataManager.Instance.ChessDynamicHardSave.StageIndex && canR)
+            if (CanReduce(change, playerEValue))
             {
-                change = levelDiff.wordChange + 1;
+                change += 1;
+                Debug.Log($"<color=#00FF00>[动态难度-每日减负]</color> 判定生效！玩家E值(<color=#FFD700>{playerEValue}</color>) >= 门槛({dayEValue})。特权抵消1个难度字。最终实际变动字数: <color=#FFD700>{change}</color>");
             }
             else
             {
-                change = levelDiff.wordChange;
+                Debug.Log($"<color=#00FFFF>[动态难度-正常执行]</color> 减负特权未生效或次数已尽，按配置正常执行。最终实际变动字数: <color=#FFD700>{change}</color>");
             }
-        }
-        if (GameDataManager.Instance.ChessDynamicHardSave.StageIndex != level)
-        {
             GameDataManager.Instance.ChessDynamicHardSave.StageIndex = level;
+            GameDataManager.Instance.ChessDynamicHardSave.SaveData();
         }
-        Debug.Log($"拼字关卡动态难度 玩家E值 {playerEValue} 对应的目标词处理: {change}");
         return change;
     }
 
     /// <summary>
-    /// 能否减少一个
+    /// 判断是否满足每日降低一次难度的条件（恢复1个初始字）
     /// </summary>
-    /// <returns></returns>
-    private bool CanReduce(int count)
+    /// <param name="wordChange">当前原本应当改变的字数配置</param>
+    /// <param name="playerEValue">玩家当前的E值</param>
+    private bool CanReduce(int wordChange, float playerEValue)
     {
-        if (count > 0) return false;
-        Debug.Log($"检查是否达到 {dayEValue} E值要求:  "+ GameDataManager.Instance.ChessDynamicHardSave.EnergyValue +" 还剩次数："+GameDataManager.Instance.ChessDynamicHardSave.ReduceWord);
-        if (dayEValue <= GameDataManager.Instance.ChessDynamicHardSave.EnergyValue)
+        if (wordChange > 0) return false;
+        
+        // Debug.Log($"检查是否达到 {dayEValue} E值要求: 当前E值 {playerEValue}"+" 前三关剩余减负特权次数："+GameDataManager.Instance.ChessDynamicHardSave.ReduceWord);
+        // 如果每日的“前3关”特权次数还有剩余
+        if (GameDataManager.Instance.ChessDynamicHardSave.ReduceWord > 0)
         {
-            if (GameDataManager.Instance.ChessDynamicHardSave.ReduceWord > 0)
+            GameDataManager.Instance.ChessDynamicHardSave.ReduceWord--;
+            // 核心需求判断：若当前 E值 >= 设定的门槛值(如32)，则特权生效，恢复1个字
+            if (playerEValue >= dayEValue)
             {
-                GameDataManager.Instance.ChessDynamicHardSave.ReduceWord--;
+                // 🌟 核心修改：只有特权真正生效时，才扣除特权次数！
+                // GameDataManager.Instance.ChessDynamicHardSave.ReduceWord--;
+                Debug.Log($"<color=#00FF00>[动态难度-特权触发]</color> E值{playerEValue} 达标 {dayEValue}，消耗1次特权。剩余特权次数：{GameDataManager.Instance.ChessDynamicHardSave.ReduceWord}");
                 return true;
+            }
+            else
+            {
+                // 未达到门槛：不减字，也不扣除特权次数
+                Debug.Log($"<color=#FFA500>[动态难度-门槛未达]</color> 玩家E值({playerEValue})不足({dayEValue})，特权保留，按正常难度正常扣字。");
+                return false;
             }
         }
         return false;
@@ -607,9 +580,9 @@ public class ChessDynamicHardManager : MonoBehaviour
             GameDataManager.Instance.ChessDynamicHardSave.SaveData();
             handle = true;
         }
-        // if(handle)
-        //     MessageSystem.Instance.ShowTip($"关卡动态难度 第{level}关 触发E值介入，E值设置为 {eV}");
-        // Debug.LogError($"是否进入修改： {handle} " + GameDataManager.Instance.ChessDynamicHardSave.IsEnergy);
+        if(handle)
+            Debug.Log($"<color=#00FFFF>[动态难度-系统介入]</color> 第 <b>{level}</b> 关达到特定要求，强制激活并重置E值为: <color=#FFD700>{eV}</color>");
+     
         if (!handle && GameDataManager.Instance.ChessDynamicHardSave.IsEnergy)
         {
             AdjustEnergyValue(level, clearTime, usedProps, propsWordCount);
@@ -637,11 +610,16 @@ public class ChessDynamicHardManager : MonoBehaviour
         {
             energyChange = CalculateEnergyIncrease(level, clearTime);
         }
-        Debug.Log($"拼字是否使用道具 {usedProps} 值：{energyChange} 道具字数{propsWordCount}");
         float oldEnergy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
         GameDataManager.Instance.ChessDynamicHardSave.UpdateEnergy(energyChange, false);
         var ability = GetLevelDifficultyDataByEValue(GameDataManager.Instance.ChessDynamicHardSave.EnergyValue, level);
-        Debug.Log($"在关卡 {level} 找到的难度： " +JsonConvert.SerializeObject(ability));
+        
+        // 结构化打印结算信息
+        string propStatus = usedProps ? $"<color=#DDA0DD>已使用 (字数:{propsWordCount})</color>" : "未使用";
+        string energyColor = energyChange >= 0 ? "#00FF00" : "#FF8C00";
+        string sign = energyChange >= 0 ? "+" : "";
+        Debug.Log($"<color=#00FFFF>[动态难度-关卡结算]</color> 关卡 <b>{level}</b> 结束。耗时: <b>{clearTime:F1}s</b> | 道具: {propStatus} | E值变动: <color={energyColor}>{sign}{energyChange}</color>");
+        
         float DescA = 0;
         if (usedProps && GameDataManager.Instance.ChessDynamicHardSave.IsDecrA && ability.groupId is >= 5 and <= 9) 
         {
@@ -662,13 +640,13 @@ public class ChessDynamicHardManager : MonoBehaviour
         }
         GameDataManager.Instance.ChessDynamicHardSave.SaveData();
         
-        // string changeType = usedProps ? "减少" : "增加";
-        // if(DescA != 0)
-        //     MessageSystem.Instance.ShowTip($"在关卡{level} 结束时发生减A {DescA} 当前E值:" + GameDataManager.Instance.ChessDynamicHardSave.EnergyValue);
-        // else
-        // {
-        //     MessageSystem.Instance.ShowTip($"第{level}关通关，时长{clearTime}秒，E值{changeType}: {oldEnergy} -> {GameDataManager.Instance.ChessDynamicHardSave.EnergyValue}");
-        // }
+        float finalEnergy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
+        float netChange = finalEnergy - oldEnergy;
+        string changeDirLog = netChange >= 0 ? $"<color=#00FF00>增加 (+{netChange})</color>" : $"<color=#FF8C00>减少 ({netChange})</color>";
+        // 动态构建减A状态的彩色日志文本
+        string descALog = DescA != 0 ? $"<color=#FF8C00>已触发 (-{DescA})</color>" : "<color=#A9A9A9>未触发</color>";
+        // 将【变动方向】和【净差值】明确加入结账打印中
+        Debug.Log($"<color=#00FFFF>[动态难度-数据结账]</color> E值轨迹: <color=#FFD700>{oldEnergy}</color> -> <color=#FFD700>{finalEnergy}</color> | 净结果: {changeDirLog} | 所属Group: <b>{ability?.groupId}</b> | 减A机制: {descALog}");
     }
     
     /// <summary>

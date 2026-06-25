@@ -377,6 +377,8 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         cloneRT.localScale = selfRT.localScale * 0.9f;
         clone.transform.position = selfRT.position;
     
+        AudioManager.Instance.PlaySoundEffect("GoldLeafFly",0,1); // ⚠️ 请替换为金箔起飞真实音效名
+        
         Vector3 endWorld = TargetBtn.GetComponent<RectTransform>().position;
         Vector3 startPos = clone.transform.position;
         // 计算向上偏移10像素的点（世界坐标系，向上即Y轴增加）
@@ -494,7 +496,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         TileTransform.DOKill();
         
         Sequence seq = DOTween.Sequence();
-        
+        seq.SetLink(gameObject); // 🌟 添加防报错护盾
         seq.OnStart(() => {
             // 瞬间变绿！
             onStart?.Invoke(); 
@@ -541,7 +543,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
 
         // 5. 文字显示动画序列
         var sequence = DOTween.Sequence();
-
+        sequence.SetLink(gameObject);
         // 第一阶段：特效展示期间
         sequence.AppendInterval(0.2f); // 比原版稍短的等待
 
@@ -557,13 +559,17 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
 
         // 7. 特效自动销毁计时器
         sequence.AppendInterval(3.5f); // 比原版更早销毁特效
-        sequence.AppendCallback(() => {
-            if (effectInstance != null)
-            {
-                effectInstance.transform.DOScale(Vector3.zero, 0.2f)
-                    .OnComplete(() => Destroy(effectInstance));
-            }
-        });
+        // sequence.AppendCallback(() => {
+        //     if (effectInstance != null)
+        //     {
+        //         effectInstance.transform.DOScale(Vector3.zero, 0.2f)
+        //             .OnComplete(() => Destroy(effectInstance));
+        //     }
+        // });
+        if (effectInstance != null)
+        {
+            sequence.Append(effectInstance.transform.DOScale(Vector3.zero, 0.2f));
+        }
 
         yield return sequence.WaitForCompletion();
 
@@ -626,7 +632,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             if (leafImg != null)
             {
                 int skinIndex = (ChessStageController.Instance.LeafGenCounter % 4) + 1; // 1, 2, 3 循环
-                // 从你的图集Atlas或AdvancedBundleLoader中加载对应的叶子切图
+                // 从你的图集Atlas或AssetBundleLoader中加载对应的叶子切图
                 leafImg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas($"leaf_skin_0{skinIndex}");
             }
             

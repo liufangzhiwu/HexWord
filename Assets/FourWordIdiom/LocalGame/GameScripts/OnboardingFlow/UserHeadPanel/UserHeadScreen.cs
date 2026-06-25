@@ -145,7 +145,9 @@ public class UserHeadScreen : UIWindow
  
     private void OnCloseBtn()
     {
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
         EventDispatcher.instance.TriggerChangeHeadIconUpdateEvent();
+        
         base.Close(); // 隐藏面板
     }
     

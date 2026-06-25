@@ -50,13 +50,13 @@ public class AudioManager : MonoBehaviour
     }
     
     // 播放音效（支持并发）
-    public void PlaySoundEffect(string soundName)
+    public void PlaySoundEffect(string clipName, float time = 0, float volume = 0.25f)
     {
-        if (!soundClipCache.TryGetValue(soundName, out AudioClip clip))
+        if (!soundClipCache.TryGetValue(clipName, out AudioClip clip))
         {
             //Debug.LogWarning($"音效未预加载: {soundName}");
-            clip = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", soundName);
-            soundClipCache.Add(soundName, clip);
+            clip = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", clipName);
+            soundClipCache.Add(clipName, clip);
             //return;
         }
         
@@ -70,7 +70,7 @@ public class AudioManager : MonoBehaviour
         
         // 设置并播放
         source.clip = clip;
-        source.volume = GameDataManager.Instance.UserData.IsSoundOn ? normalVolume : 0;
+        source.volume = GameDataManager.Instance.UserData.IsSoundOn ? volume : 0;
         source.pitch = 1;
         source.loop = false;
         source.Play();

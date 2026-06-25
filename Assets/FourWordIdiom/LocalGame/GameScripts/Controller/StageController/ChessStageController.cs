@@ -32,6 +32,7 @@ public class Interval
     public int Start;   // 开始关卡
     public int End;     // 结束关卡, 叹号表示后续所有关卡
 }
+
 /// <summary>
 /// 冰块玩法配置
 /// </summary>
@@ -184,6 +185,7 @@ public class ChessStageController
     private IEnumerator LoadDynamicConfig()
     {
         string levelConfigName = GameDataManager.Instance.UserData.ABName == "1" ? "ChessPackInfo_B" : "ChessPackInfo_A";   
+        // string levelConfigName = "ChessPackInfo_A";   
         
         StagePackInfo = AssetBundleLoader.SharedInstance.LoadScriptableObject(ToolUtil.GetLanguageBundle(), levelConfigName) as ChessPackInfo;
         if (StagePackInfo == null)
@@ -665,7 +667,7 @@ public class ChessStageController
     {
         if (!isJump) AudioManager.Instance.PlaySoundEffect("success");
 
-        //yield return new WaitForSeconds(0.4f);
+        yield return new WaitForSeconds(0.4f);
         
         // ---- 修复：统一封存最后一段在线时长 ----
         GameDataManager.Instance.UserData.UpdateOnlineStageTime();
@@ -679,7 +681,6 @@ public class ChessStageController
             if(ChessDynamicHardManager.Instance.IsOpenDynamicHard())
                 CheckDynamicDifficultyIntervention(stageNumber,ComboErrorCount, duration);
         }
-        
         AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
         {
             if (issuccess)
@@ -692,7 +693,7 @@ public class ChessStageController
                 AnalyticMgr.InsetAdFail("关卡插屏");
             }
         });
-        //yield return new WaitForSeconds(0.4f);
+        yield return new WaitForSeconds(0.4f);
         
         // UI切换
         SystemManager.Instance.HidePanel(PanelType.HeaderSection);
@@ -1504,19 +1505,21 @@ public class ChessStageController
         {
             sMax += GetComboScoreReward(i);
         }
+        
         LinearZenPercent = (sMax > sMin) ? Mathf.Max(0, (float)(pureGameScore - sMin) / (sMax - sMin) * 100f) : 100f;
         if (sMax > 0)
         {
             //计算时用的是 pureGameScore / Smax，并非 (pureGameScore - Smin) / (Smax - Smin)，完全符合规则描述。
             float ratio = Mathf.Clamp01((float)pureGameScore / sMax);
-            float sqrtPercent = Mathf.Sqrt(ratio) * 100f;
-            DisplayZenPercent = Mathf.Min(99.98f, sqrtPercent);
+            // float sqrtPercent = Mathf.Sqrt(ratio) * 100f;
+            float quadPercent = Mathf.Pow(ratio, 0.25f) * 100f;
+            DisplayZenPercent = Mathf.Min(99.98f, quadPercent);
         }
         else
         {
             DisplayZenPercent = 99.98f;
         }
-
+        
         float zenPercent = LinearZenPercent;   // 用于激励匹配
         // 2. 本地记录判定：破纪录与极速通关
         bool isNewRecord = pureGameScore > userData.HighestZenScore;
@@ -1526,11 +1529,19 @@ public class ChessStageController
         }
 
         bool isNewBestTime = false;
-        if (n >= 8 && stageIndex > 20) // 是否添加大于20关才记录
+        if (n >= 9 && stageIndex > 20) // 是否添加大于20关才记录
         {
             float currentBest = userData.GetBestClearTime(n);
-            if (currentBest <= 0 || timeSpent < currentBest)
+            if (currentBest <= 0)
             {
+                isNewBestTime = false;
+                userData.SetBestClearTime(n, timeSpent); // 首次进入该规格关卡，仅作为基准时长录入，不触发破纪录表现
+                Debug.Log($"[极速记录核对] 首次完成 {n} 个词关卡: {stageIndex} | 建立基准耗时: {timeSpent:F2}秒 已保存");
+                
+            }
+            else if (timeSpent < currentBest)
+            {
+                // 真正打破了已有的旧记录
                 isNewBestTime = true;
                 userData.SetBestClearTime(n, timeSpent); // 刷新极速记录
                 Debug.Log($"[极速记录核对] 关卡: {stageIndex} 规格: {n}个词 | 本局耗时: {timeSpent:F2}秒 已保存");

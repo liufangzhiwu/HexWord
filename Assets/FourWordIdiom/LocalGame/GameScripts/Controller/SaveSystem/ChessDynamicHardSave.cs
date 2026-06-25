@@ -109,13 +109,13 @@ public class ChessDynamicHardSave
         if(decrA)
             this.IsDecrA = !decrA;
         
-        Debug.Log($" 拼字关卡 {StageIndex} 动态难度 更新E值后: {EnergyValue} 增加的E值为{value}");
+        // Debug.Log($" 拼字关卡 {StageIndex} 动态难度 更新E值后: {EnergyValue} 增加的E值为{value}");
     }
 
     public void SetEnergy(float value)
     {
         EnergyValue = value;
-        Debug.Log($" 拼字关卡 {StageIndex} 动态难度 设置E值: {EnergyValue}");
+        // Debug.Log($" 拼字关卡 {StageIndex} 动态难度 设置E值: {EnergyValue}");
     }
     /// <summary>
     /// 更新最大等级
@@ -129,7 +129,7 @@ public class ChessDynamicHardSave
             ReduceWord = 0;
         }
         MaxEnergyLevel = value;
-        Debug.Log($" 关卡动态难度 更新最大等级后: {MaxEnergyLevel}");
+        //Debug.Log($" 关卡动态难度 更新最大等级后: {MaxEnergyLevel}");
     }
     
     /// <summary>
@@ -250,7 +250,7 @@ public class ChessDynamicHardSave
         string oldjson = JsonConvert.SerializeObject(this, Formatting.Indented); // 转换为 JSON 格式          
         string json = SecurityProvider.ProtectData(oldjson); //加密
         File.WriteAllText(filePath, json); // 写入文件
-        Debug.Log("关卡动态数据已保存: " + json);
+        // Debug.Log("关卡动态数据已保存: " + json);
     }
     
     /// <summary>

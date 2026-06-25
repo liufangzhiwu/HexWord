@@ -184,7 +184,7 @@ public class CustomFlyInManager : MonoBehaviour
             });
         }
         
-        Gold.transform.DOScale(new Vector3(0.78f,0.78f,0), duration);
+        Gold.transform.DOScale(new Vector3(0.78f,0.78f,1f), duration);
         yield return new WaitForSeconds(0.2f);
         AudioManager.Instance.TriggerVibration();
         AudioManager.Instance.PlaySoundEffect("filyGold");

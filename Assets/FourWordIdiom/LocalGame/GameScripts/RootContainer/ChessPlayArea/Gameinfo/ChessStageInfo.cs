@@ -20,6 +20,7 @@ public class PhraseGroup // phrase group
     public int quadrant; // 象限位置
     public List<Chesspiece> chesspieces; // 字块列表 
 }
+
 [Serializable]  
 public class Chesspiece: IEquatable<Chesspiece> //Chess piece
 {
@@ -58,7 +59,7 @@ public class Bowl
 public class ChessStageInfo
 {
     #region 私有字段
-    public ChessLevelConf _StageConf;      // 关卡文本资源
+    private ChessLevelConf _StageConf;      // 关卡文本资源
     private readonly int _StageNumber; // 关卡编号
     private readonly int _StageInfoId; // 关卡配置ID
     //private bool _IsStageFileLoaded;   // 文件加载状态
@@ -115,17 +116,24 @@ public class ChessStageInfo
         
         if (wordCount != 0)
             DynamicHardLevelChange(wordCount);
-        else if(_cursor.Count < 2)
+        
+        if (_cursor.Count < 2)
         {
-            GroupWeightSort();
-            Chesspiece cpp = FindMinRowNonePiece();
-            if (cpp != null)
+            RegenerateCursorPosition();
+            
+            // 极限兜底：如果象限算法因为满盘或其他异常没能生成光标，使用权重排位兜底
+            if (_cursor.Count < 2)
             {
-                this._cursor.Add(cpp.row);
-                this._cursor.Add(cpp.col);
+                GroupWeightSort();
+                Chesspiece cpp = FindMinRowNonePiece();
+                if (cpp != null)
+                {
+                    this._cursor.Add(cpp.row);
+                    this._cursor.Add(cpp.col);
+                }
             }
         }
-
+        
         InitMechanics();
     }
 
@@ -145,7 +153,7 @@ public class ChessStageInfo
 
         if (hasIce || hasFlower || hasLeaf|| hasFixedIceOrFlower)
         {
-            Debug.Log($"[动态难度机制] 关卡 {_StageNumber} 为冰块/花朵特殊关卡，彻底不触发动态难度调整（字数保持原设）。");
+            Debug.Log($"<color=#FF4500>[动态难度-特殊拦截]</color> 关卡 {_StageNumber} 包含冰/花/树叶/固定机制，本次放弃动态干预，字数保持原设。");
             // 即使不做难度调整，依然建议执行一次基础数据终态校准，防止配置源文件本身存在全显词组或数量不一致
             VerifyAndSyncPuzzles();
             return; // 💥 直接中断，不往下走任何加减字的逻辑
@@ -153,23 +161,24 @@ public class ChessStageInfo
         
         if (wordCount > 0)   // 变简单，增加可见字
         {
-            Debug.Log($"开始增加 {wordCount} 个可见字");
             if (ChessDynamicHardManager.Instance.GetHardMode(_StageNumber) == 1)
             {
-                Debug.Log("进入小幅度简单---------------");
+                Debug.Log($"<color=#00FF00>[动态难度-执行动作]</color> 进入 <b>小幅度简单</b> 模式，准备点亮字数: {wordCount}");
                 IncreaseShowWord1(wordCount);
             }
             else
             {
-                Debug.Log("进入大幅度简单---------------");
+                Debug.Log($"<color=#00FF00>[动态难度-执行动作]</color> 进入 <b>大幅度简单</b> 模式，准备点亮交叉字数: {wordCount}");
                 IncreaseShowWord2(wordCount);
             }
         }
         else // 变难, 减少可见字
-        {
+        {   
+            Debug.Log($"<color=#FF8C00>[动态难度-执行动作]</color> 进入 <b>变难</b> 模式，准备隐藏字数: {Mathf.Abs(wordCount)}");
             DecreaseShowWord(wordCount);
         }
-
+        
+        // RegenerateCursorPosition();
         VerifyAndSyncPuzzles();
     }
     /// <summary>
@@ -179,6 +188,10 @@ public class ChessStageInfo
     /// </summary>
     public void VerifyAndSyncPuzzles()
     {
+        System.Text.StringBuilder logSb = new System.Text.StringBuilder();
+        bool hasModifications = false; // 记录是否发生了纠正动作
+        logSb.AppendLine("<color=#00FFFF>[动态难度-安全校验]</color> 开始执行终态数据对齐与字盘(Bowl)同步...");
+        
         // ==========================================
         // 1. 检查每组内是否全部为 Default
         // ==========================================
@@ -194,15 +207,9 @@ public class ChessStageInfo
                 // 找一个合适的字隐藏：优先找不与其他组交叉的字，如果没有，就取第一个字
                 Chesspiece targetToHide = group.chesspieces.FirstOrDefault(p => !IsMultiGroup(p.row, p.col)) 
                                        ?? group.chesspieces.First();
-                
-                targetToHide.state = TileState.None;
-                
-                // 同步更新 HashSet 中引用的对象状态 (安全起见)
-                var origConfig = _chesspiece.FirstOrDefault(cp => cp.row == targetToHide.row && cp.col == targetToHide.col);
-                if (origConfig != null) origConfig.state = TileState.None;
-
-                Debug.Log($"[数据校验] 发现全显词组 {group.id}，强制隐藏字: '{targetToHide.letter}' ({targetToHide.row}, {targetToHide.col})");
-                Debug.Log($"[数据校验] 发现全显词组 " + JsonConvert.SerializeObject(group.chesspieces));
+                SyncPieceState(targetToHide.row, targetToHide.col, TileState.None);
+                logSb.AppendLine($"  <color=#FF8C00>[触发底线保护]</color> 发现全显词组 <b>{JsonConvert.SerializeObject(group.chesspieces)}</b>，已强制隐藏字块: <color=#FFD700>'{targetToHide.letter}'</color> 坐标:({targetToHide.row}, {targetToHide.col})");
+                hasModifications = true;
             }
         }
 
@@ -210,6 +217,7 @@ public class ChessStageInfo
         // 2. 统计棋盘上真实需要的隐藏字 (state == None)
         // ==========================================
         Dictionary<string, int> requiredCounts = new Dictionary<string, int>();
+        int totalRequired = 0;
         foreach (var piece in _chesspiece)
         {
             if (piece.state is TileState.None or TileState.Check)
@@ -218,6 +226,7 @@ public class ChessStageInfo
                     requiredCounts[piece.letter] = 0;
                 
                 requiredCounts[piece.letter]++;
+                totalRequired++;
             }
         }
 
@@ -250,6 +259,8 @@ public class ChessStageInfo
                 if (existingBowl != null)
                 {
                     existingBowl.count = reqCount; // 更新数量
+                    existingBowl.totalcount = reqCount;
+                    logSb.AppendLine($"  <color=#00FF00>[字盘增补]</color> 汉字 <color=#FFD700>'{letter}'</color> 存量不足，数量调整: <b>{currCount} -> {reqCount}</b>");
                 }
                 else
                 {
@@ -261,7 +272,9 @@ public class ChessStageInfo
                         count = reqCount, // 初始数量
                         totalcount = reqCount // 初始数量
                     });
+                    logSb.AppendLine($"  <color=#00FF00>[字盘新增]</color> 汉字 <color=#FFD700>'{letter}'</color> 完全缺失，已生成新字块，需求数量: <b>{reqCount}</b>");
                 }
+                hasModifications = true;
             }
         }
 
@@ -273,321 +286,458 @@ public class ChessStageInfo
 
             if (bowl.count > reqCount)
             {
+                int oldCount = bowl.count;
                 bowl.count = reqCount;
                 bowl.totalcount = reqCount;
                 if (bowl.count <= 0)
                 {
                     bowlsToRemove.Add(bowl); // 记录需要彻底删除的 Bowl
+                    logSb.AppendLine($"  <color=#FF8C00>[字盘剔除]</color> 汉字 <color=#FFD700>'{bowl.letter}'</color> 棋盘已不需要，彻底移除。");
                 }
+                else
+                {
+                    logSb.AppendLine($"  <color=#FF8C00>[字盘扣减]</color> 汉字 <color=#FFD700>'{bowl.letter}'</color> 数量冗余，数量调整: <b>{oldCount} -> {reqCount}</b>");
+                }
+                hasModifications = true;
             }
         }
         foreach(var b in bowlsToRemove) _puzzles.Remove(b);
+        
+        if (hasModifications)
+        {
+            logSb.AppendLine($"<color=#00FFFF>[动态难度-安全校验结束]</color> 字盘纠正执行完毕。最终棋盘待填挖空总数: <color=#FFD700>{totalRequired}</color>");
+            Debug.Log(logSb.ToString());
+        }
+        else
+        {
+            Debug.Log($"<color=#00FFFF>[动态难度-安全校验]</color> 完美对齐，无任何异常。最终棋盘待填挖空总数: <color=#FFD700>{totalRequired}</color>");
+        }
     }
+    
     /// <summary>
-    /// 增加可见字，小幅度简单
+    /// 增加可见字，小幅度简单 (减少待填的空格)
     /// </summary>
-    /// <param name="number">数量</param>
+    /// <param name="number">计划增加的可见字数量 (正数)</param>
     private void IncreaseShowWord1(int number)
     {
-        var usedPos = new HashSet<(int row, int col)>();
-        var changedLetters = new List<string>();
-        do
+        int originalTarget = number; // 记录计划增加的数量，用于排查日志
+        var changedPieces = new List<Chesspiece>();
+
+        // ==========================================
+        // 【规则1】：获取并保护初始光标所在的词组 (一定不减字/不操作)
+        // ==========================================
+        // var protectedGroups = new HashSet<PhraseGroup>();
+        // if (_cursor != null && _cursor.Count >= 2)
+        // {
+        //     // 获取光标所在的坐标，若有对应词组，将其全部加入保护名单
+        //     if (_chessGroup.TryGetValue((_cursor[0], _cursor[1]), out var cursorGroups))
+        //     {
+        //         foreach (var cg in cursorGroups)
+        //         {
+        //             protectedGroups.Add(cg);
+        //         }
+        //     }
+        // }
+        var protectedGroups = GetProtectedCursorGroups();
+        while (number > 0)
         {
-            number--;
-            var candidates = new List<(Chesspiece piece, PhraseGroup group, int index)>();
-            foreach (var g in _phraseGroups)
+            // ==========================================
+            // 规则1 & 规则3 预处理：
+            // 1. 剔除受光标保护的词组
+            // 2. 必须包含至少一个“待填(None)”且“非交叉”的字，才具备操作资格
+            // ==========================================
+            var validGroups = _phraseGroups.Where(g => 
+                !protectedGroups.Contains(g) && !IsSimpleLShapeGroup(g) &&
+                g.chesspieces.Count(p => p.state == TileState.None) >= 2 &&
+                g.chesspieces.Any(p => p.state == TileState.None && !IsMultiGroup(p.row, p.col))
+            ).ToList();
+
+            
+            if (validGroups.Count == 0)
             {
-                if (g.chesspieces.Count(cp => cp.state == TileState.None) < 3) continue;
-                for (int i = 0; i < g.chesspieces.Count; i++)
+                Debug.Log("[动态难度] 没有符合规则的词组可供增加显示字 (或剩余待填字皆为交叉字/皆受光标保护)，提前结束。");
+                break;
+            }
+
+            // ==========================================
+            // 规则2：待填字(None)最少的词里随机选一个
+            // ==========================================
+            // 计算当前所有合法词组中，包含 None 状态最少的数量
+            int minNoneCount = validGroups.Min(g => g.chesspieces.Count(p => p.state == TileState.None));
+            // 筛选出所有拥有这个最小数量的词组
+            var minNoneGroups = validGroups.Where(g => g.chesspieces.Count(p => p.state == TileState.None) == minNoneCount).ToList();
+            // 随机选中一个词组
+            PhraseGroup selectedGroup = minNoneGroups[UnityEngine.Random.Range(0, minNoneGroups.Count)];
+
+            // ==========================================
+            // 规则4：选好词组后，优先在组内从后向前选择 (4号位优先，1号位最后)
+            // ==========================================
+            Chesspiece targetPiece = null;
+            // 从尾到头倒序遍历
+            for (int i = selectedGroup.chesspieces.Count - 1; i >= 0; i--)
+            {
+                var cp = selectedGroup.chesspieces[i];
+                
+                // ==========================================
+                // 规则3：不加交叉字，遇到交叉字跳过
+                // ==========================================
+                if (cp.state == TileState.None && !IsMultiGroup(cp.row, cp.col))
                 {
-                    var cp = g.chesspieces[i];
-                    if(cp.state == TileState.None && !usedPos.Contains((cp.row, cp.col)))
-                        candidates.Add((cp, g,i));
+                    targetPiece = cp; // 找到了倒数第一个符合条件的待填非交叉字
+                    break;
                 }
             }
 
-            var filtered = candidates.Where(c =>
+            if (targetPiece != null)
             {
-                int row = c.piece.row, col = c.piece.col;
-                bool selfHeadTail = c.index == 0 || c.index == c.group.chesspieces.Count - 1;
-                bool crossHeadTail = IsHeadOrTailOfAnyGroup(row, col, _chessGroup);
-                return !(selfHeadTail && crossHeadTail);
-            }).ToList();
-            
-            if(filtered.Count == 0) break;
-            
-            filtered.Sort((a, b) =>
+                SyncPieceState(targetPiece.row, targetPiece.col, TileState.Default);
+                // 3. 记录日志与计数
+                changedPieces.Add(targetPiece);
+                number--; 
+            }
+            else
             {
-                int hiddenA = a.group.chesspieces.Count(p => p.state == TileState.None);
-                int hiddenB = b.group.chesspieces.Count(p => p.state == TileState.None);
-                return hiddenB.CompareTo(hiddenA);
-            });
-            
-            filtered.Reverse();   // ← 新增：倒序
-            var targetPiece =  filtered[0].piece;
-            Debug.Log($"准备写回：{targetPiece?.letter} ({targetPiece?.row},{targetPiece?.col})  原state={targetPiece?.state}");
-            targetPiece!.state = TileState.Default;
-            var origConfig = _chesspiece.First(cp => cp.row == targetPiece.row && cp.col == targetPiece.col);
-            origConfig.state  = TileState.Default;
-            
-            changedLetters.Add(targetPiece.letter);
-            usedPos.Add((targetPiece.row, targetPiece.col));
-            Debug.Log($"已点亮：{origConfig.letter}  state={origConfig.state}");
-        }while (number > 0);
-
-        foreach (var key in usedPos)
-        {
-            var origConfig = _chesspiece.First(cp => cp.row == key.row && cp.col == key.col);
-            Debug.Log($"检查棋盘显示： {origConfig.letter} state={origConfig.state}");
-        }
-        
-        // 批量从 HashSet 移除
-        // foreach (var letter in changedLetters)
-        // {
-        //     var bowl = _puzzles.FirstOrDefault(b => b.letter == letter);
-        //     if (bowl != null) _puzzles.Remove(bowl);
-        // }
-        
-        RandomlySetOneDefaultToNone();
-        if (_cursor.Count < 2 || usedPos.Contains((_cursor[0], _cursor[1])))
-        {
-            GroupWeightSort();
-            Chesspiece nextCross  = FindMinRowNonePiece();
-            if (nextCross  != null)
-            {
-                _cursor.Clear();
-                _cursor.Add(nextCross .row);
-                _cursor.Add(nextCross .col);
+                // 理论上有 validGroups 的前置筛选，不应该走到这里，作为安全兜底
+                Debug.LogWarning("[动态难度] 异常：选中词组中未能找到可点亮的字！");
+                break; 
             }
         }
 
-        Debug.Log("增加可见字完成—— " + string.Join(", ", changedLetters));
+        // ==========================================
+        // 【排查打印】：详细输出本次难度调整的操作明细
+        // ==========================================
+        if (changedPieces.Count > 0)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendLine($"<color=#00FF00>[动态难度-小幅变简单]</color> 增加可见字执行完毕！计划点亮: <b>{originalTarget}</b> 个，实际点亮: <b>{changedPieces.Count}</b> 个。");
+            sb.AppendLine("被点亮(变为初始字)的字块明细如下：");
+            
+            for (int i = 0; i < changedPieces.Count; i++)
+            {
+                var p = changedPieces[i];
+                sb.AppendLine($"  {i + 1}. 汉字: <color=#00FF00>'{p.letter}'</color> | 坐标: (行: {p.row}, 列: {p.col}) | 格子ID: {p.id}");
+            }
+            
+            Debug.Log(sb.ToString());
+        }
+        else
+        {
+            Debug.Log($"<color=#00FF00>[动态难度-小幅变简单]</color> 执行完毕！本次未能点亮任何字 (可能是棋盘已满或受光标/交叉限制)。");
+        }
     }
 
-    /// <summary>
-    /// 增加可见字，大幅度简单
+ /// <summary>
+    /// 增加可见字，大幅度简单 (减少待填空格，优先点亮交叉字)
     /// </summary>
-    /// <param name="number">数量</param>
+    /// <param name="number">计划增加的可见字数量 (正数)</param>
     private void IncreaseShowWord2(int number)
     {
-        // 物理去重：记录已处理的坐标
-        var usedPos = new HashSet<(int row, int col)>();
-        var changedLetters = new List<string>();
-        do
+        int originalTarget = number; // 记录计划增加的数量，用于排查日志
+        var changedPieces = new List<Chesspiece>();
+        var litSet = new HashSet<Chesspiece>(); // 防止同一个字被重复点亮
+        
+        // ==========================================
+        // 【规则2】：获取并保护初始光标所在的词组 (一定不减字/不操作)
+        // ==========================================
+        // var protectedGroups = new HashSet<PhraseGroup>();
+        // if (_cursor != null && _cursor.Count >= 2)
+        // {
+        //     if (_chessGroup.TryGetValue((_cursor[0], _cursor[1]), out var cursorGroups))
+        //     {
+        //         foreach (var cg in cursorGroups) protectedGroups.Add(cg);
+        //     }
+        // }
+        var protectedGroups = GetProtectedCursorGroups();
+        // 辅助函数：判断某个字是否符合【规则3】(交叉字 且 另一个词初始字数量 != 3)
+        bool IsValidCrossPiece(Chesspiece cp, PhraseGroup currentGroup)
         {
-            number--;
-            var qualifiedGroups = _phraseGroups
-                .Where(g => g.chesspieces.Count(cp => cp.state == TileState.None) >= 2)
-                .OrderByDescending(g => g.chesspieces.Count(cp => cp.state == TileState.None))
-                .ThenBy(g => g.direction)
-                .ToList();
-            
-            if(!qualifiedGroups.Any()) break;
-
-            Chesspiece selected = null;
-            foreach (var g in qualifiedGroups)
+            if (cp.state != TileState.None) return false;
+            if (!IsMultiGroup(cp.row, cp.col)) return false; // 必须是交叉字
+            if (litSet.Any(lit => lit.row == cp.row && lit.col == cp.col)) return false;
+            // 👇 新增：确保当前组点亮该交叉字后，不会变成全显 (即点亮前空格必须 >= 2)
+            if (currentGroup.chesspieces.Count(p => p.state == TileState.None) < 2) return false;
+            // 检查与之交叉的“其他词组”
+            if (_chessGroup.TryGetValue((cp.row, cp.col), out var crossGroups))
             {
-                bool isHorz = g.direction == 1;
-                var sequence = isHorz ? g.chesspieces.OrderBy(cp=>cp.row) : g.chesspieces.OrderBy(cp=>cp.col);
-
-                foreach (var cp in sequence)
+                foreach (var otherGroup in crossGroups)
                 {
-                    if(cp.state != TileState.None || usedPos.Contains((cp.row, cp.col)))
-                        continue;
-                    
-                    bool isCross = _chessGroup.TryGetValue((cp.row, cp.col), out var c) && c.Count >= 2;
-                    if (isCross)
+                    if (otherGroup == currentGroup) continue; // 排除自己
+                    if (otherGroup.chesspieces.Count(p => p.state == TileState.None) < 2) return false;
+                    // 统计另一个词当前的初始可见字数量
+                    int defaultCount = otherGroup.chesspieces.Count(p => p.state == TileState.Default);
+                    if (defaultCount == 3) 
                     {
-                        selected = cp;
+                        return false; // 如果另一个词初始字数量等于3，则否决该交叉字
+                    }
+                }
+            }
+            return true;
+        }
+
+        while (number > 0)
+        {
+            bool isFallbackMode = false; // 是否触发了降级兜底模式
+
+            // ==========================================
+            // 【规则1 & 规则3】预处理：筛选出有资格操作的词组
+            // ==========================================
+            var validGroups = _phraseGroups.Where(g => 
+                !protectedGroups.Contains(g) && 
+                !IsSimpleLShapeGroup(g) &&  
+                g.chesspieces.Any(p => IsValidCrossPiece(p, g)) // 必须包含至少一个符合规则3的交叉字
+            ).ToList();
+
+            // 🌟 补充方案：如果严格符合规则的交叉字被耗尽了，启动降级模式找普通空格，防止死锁
+            if (validGroups.Count == 0)
+            {
+                validGroups = _phraseGroups.Where(g => 
+                    !protectedGroups.Contains(g) && 
+                    g.chesspieces.Count(p => p.state == TileState.None) >= 2 &&
+                    g.chesspieces.Any(p => p.state == TileState.None && !IsMultiGroup(p.row, p.col) // 找普通的待填字
+                    && !litSet.Any(lit => lit.row == p.row && lit.col == p.col))
+                ).ToList();
+
+                if (validGroups.Count == 0)
+                {
+                    Debug.Log("[动态难度] 棋盘已满或所有待填字皆受光标保护，提前结束大幅变简单。");
+                    break;
+                }
+                isFallbackMode = true; // 标记进入兜底模式
+            }
+
+            // ==========================================
+            // 【规则1】：待填字最多的词里随机选一个
+            // ==========================================
+            // 找到包含最多 None 的数量
+            int maxNoneCount = validGroups.Max(g => g.chesspieces.Count(p => p.state == TileState.None));
+            // 筛选出所有拥有此最大值的词组
+            var maxNoneGroups = validGroups.Where(g => g.chesspieces.Count(p => p.state == TileState.None) == maxNoneCount).ToList();
+            // 随机选中一个词组
+            PhraseGroup selectedGroup = maxNoneGroups[UnityEngine.Random.Range(0, maxNoneGroups.Count)];
+
+            // ==========================================
+            // 【规则4】：优先选取首位，从1号位到末尾选取 (正序遍历)
+            // ==========================================
+            Chesspiece targetPiece = null;
+            for (int i = 0; i < selectedGroup.chesspieces.Count; i++)
+            {
+                var cp = selectedGroup.chesspieces[i];
+                
+                if (isFallbackMode)
+                {
+                    // 兜底模式下，只要是个非交叉的空格就行
+                    if (cp.state == TileState.None && !IsMultiGroup(cp.row, cp.col))
+                    {
+                        targetPiece = cp;
                         break;
                     }
                 }
-                if(selected != null) break;
-                foreach (var cp in sequence)
+                else
                 {
-                    if(cp.state != TileState.None || usedPos.Contains((cp.row, cp.col)))
-                        continue;
-                    selected = cp;
-                    break;
-                }
-
-                if (selected != null) break;
-            }
-            
-            if(selected == null) break;
-            Debug.Log($"准备写回：{selected?.letter} ({selected?.row},{selected?.col})  原state={selected?.state}");
-            selected.state = TileState.Default;
-            usedPos.Add((selected.row, selected.col));
-            changedLetters.Add(selected.letter);
-            var origConfig = _chesspiece.First(cp => cp.row == selected.row && cp.col == selected.col);
-            origConfig.state = TileState.Default;
-            Debug.Log($"已点亮：{origConfig.letter}  state={origConfig.state}");
-        }while (number > 0);
-
-        Debug.Log("增加可见字完成, 关卡内容" + JsonConvert.SerializeObject(_chesspiece));
-        // ---------- 5. 从池子里移除已揭示字母 ----------
-        // foreach (var letter in changedLetters)
-        // {
-        //     var bowl = _puzzles.FirstOrDefault(b => b.letter == letter);
-        //     if (bowl != null) _puzzles.Remove(bowl);
-        // }
-        // ---------- 6. 光标移到下一个交叉未填字 ----------
-        RandomlySetOneDefaultToNone();
-        if (_cursor.Count < 2 || usedPos.Contains((_cursor[0], _cursor[1])))
-        {
-            GroupWeightSort();
-            Chesspiece nextCross  = FindMinRowNonePiece();
-            _cursor.Clear();
-            Debug.Log("初始字为: " + JsonConvert.SerializeObject(nextCross));
-            if (nextCross  != null)
-            {
-                _cursor.Add(nextCross .row);
-                _cursor.Add(nextCross .col);
-            }
-        }
-       
-        Debug.Log("增加可见字完成== " + string.Join(", ", changedLetters));
-    }
-    
-    /// <summary>
-    /// 减少可见字
-    /// </summary>
-    /// <param name="number">数量</param>
-    private void DecreaseShowWord(int number)
-    {
-        int minShow = 3; // 最少留 3 个显示字
-        var changedPieces = new List<Chesspiece>();
-        do
-        {
-            number++;
-            // 1. 收集所有未用且显示的位置
-            var candidates = new List<(Chesspiece piece, PhraseGroup group, int index)>();
-            foreach (var g in _phraseGroups)
-            {
-                bool isIsolatedGroup = !g.chesspieces.Any(p => IsMultiGroup(p.row, p.col));
-                if (isIsolatedGroup) continue;
-                
-                for (int i = 0; i < g.chesspieces.Count; i++)
-                {
-                    var cp = g.chesspieces[i];
-                    if (cp.state == TileState.Default)
+                    // 严格模式下，校验【规则3】
+                    if (IsValidCrossPiece(cp, selectedGroup))
                     {
-                        candidates.Add((cp, g, i));
+                        targetPiece = cp;
+                        break;
                     }
                 }
             }
-            if (candidates.Count == 0)
+
+            if (targetPiece != null)
             {
-                Debug.Log("没有符合条件的关联组可供减少显示字，提前结束。");
-                break;
+              
+                SyncPieceState(targetPiece.row, targetPiece.col, TileState.Default);
+                litSet.Add(targetPiece); // 👇 新增：切实记录到集合中
+                // 3. 记录日志与计数
+                changedPieces.Add(targetPiece);
+                number--; 
             }
-            // 2. 排序：① 多组交叉放最后 ② 0 最少 → 最多 ③ 1 最多 → 最少
-            candidates.Sort((a, b) =>
+            else
             {
-                // ① 非交叉优先（非交叉在前）
-                bool multiA = IsMultiGroup(a.piece.row, a.piece.col);
-                bool multiB = IsMultiGroup(b.piece.row, b.piece.col);
-                int crossCmp = multiA.CompareTo(multiB);   // false < true
-                if (crossCmp != 0) return crossCmp;
-                
-                // ② 交叉字且存在另一个交叉显示字 → 提升优先级（放前面）
-                bool hasA = multiA && HasCrossSibling(a.piece.row, a.piece.col, _phraseGroups);
-                bool hasB = multiB && HasCrossSibling(b.piece.row, b.piece.col, _phraseGroups);
-                int siblingCmp = hasB.CompareTo(hasA);   // 有 sibling 的放前面
-                if (siblingCmp != 0) return siblingCmp;
-                
-                // ③ 展示字数多优先（降序）
-                int onesA = a.group.chesspieces.Count(p => p.state == TileState.Default);
-                int onesB = b.group.chesspieces.Count(p => p.state == TileState.Default);
-                int onesCmp = onesB.CompareTo(onesA);      // 降序
-                if (onesCmp != 0) return onesCmp;
-                
-                // ④ 组内倒序（index 降序）
-                return b.index.CompareTo(a.index);             // 尾部在前
-            });
+                Debug.LogWarning("[动态难度] 异常：选中词组中未能找到可点亮的字！");
+                break; 
+            }
+        }
+
+        // ==========================================
+        // 【排查打印】：详细输出大幅变简单的操作明细
+        // ==========================================
+        if (changedPieces.Count > 0)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendLine($"<color=#00FFFF>[动态难度-大幅变简单]</color> 执行完毕！计划点亮: <b>{originalTarget}</b> 个，实际点亮: <b>{changedPieces.Count}</b> 个。");
+            sb.AppendLine("被点亮的字块明细如下：");
             
-            // 3. 正序取第一个未用
-            var target = candidates.FirstOrDefault();
-            if (target == default) break; // 无候选
-            var targetPiece = target.piece;
-            targetPiece.state = TileState.None;
-            changedPieces.Add(targetPiece);
-            // // 4. 首/尾均显示 → 可去尾；若尾关联其他组 → 去首；**若首尾皆不关联其他组，则任去一端**
-            // bool isHead = target.index == 0;
-            // bool isTail = target.index == target.group.chesspieces.Count - 1;
-            // if (isHead || isTail)                       // 本身是首或尾
-            // {
-            //     bool headShow = target.group.chesspieces[0].state == TileState.Default;
-            //     bool tailShow = target.group.chesspieces[^1].state == TileState.Default;
-            //
-            //     if (headShow && tailShow)               // 首尾均显示
-            //     {
-            //         bool headMulti = IsMultiGroup(target.group.chesspieces[0].row,
-            //             target.group.chesspieces[0].col);
-            //         bool tailMulti = IsMultiGroup(target.group.chesspieces[^1].row,
-            //             target.group.chesspieces[^1].col);
-            //
-            //         // 先挑无关联端
-            //         if (!headMulti || !tailMulti)
-            //         {
-            //             // 无关联端直接隐藏
-            //             targetPiece.isUsed = true;
-            //             changedPieces.Add(targetPiece);
-            //
-            //             // 同字母全部标记为已用
-            //             foreach (var same in candidates.Where(c => c.piece.letter == targetPiece.letter))
-            //                 same.piece.isUsed = true;
-            //
-            //             number++;
-            //             continue;   // 本轮结束
-            //         }
-            //
-            //         // 两端都关联 → 强制去首（可改成随机）
-            //         targetPiece.isUsed = true;
-            //         changedPieces.Add(targetPiece);
-            //
-            //         foreach (var same in candidates.Where(c => c.piece.letter == targetPiece.letter))
-            //             same.piece.isUsed = true;
-            //
-            //         number++;
-            //         continue;   // 本轮结束
-            //     }
-            // }
-          
-            // 5. 保证棋盘 ≥ 3 个显示字
-            if (ShowCount() <= minShow) break;
+            for (int i = 0; i < changedPieces.Count; i++)
+            {
+                var p = changedPieces[i];
+                string crossInfo = IsMultiGroup(p.row, p.col) ? "<color=#FFA500>(交叉字)</color>" : "<color=#808080>(普通字-兜底降级)</color>";
+                sb.AppendLine($"  {i + 1}. 汉字: <color=#00FFFF>'{p.letter}'</color> {crossInfo} | 坐标: ({p.row}, {p.col}) | ID: {p.id}");
+            }
             
-            // 6. 隐藏并标记
-     
-  
-        } while (number < 0);
+            Debug.Log(sb.ToString());
+        }
+        else
+        {
+            Debug.Log($"<color=#00FFFF>[动态难度-大幅变简单]</color> 执行完毕！本次未能点亮任何字。");
+        }
         
-        foreach (var piece in changedPieces)
-        {
-            if (_puzzles.Count >= 32) break;
-            
-            Chesspiece findpize = _chesspiece.FirstOrDefault(p => p.row == piece.row && p.col == piece.col);
-            if (findpize != null && findpize.state != TileState.None)
-                findpize.state = TileState.None;
-            
-            // _puzzles.Add(new Bowl
-            // {
-            //     id = "b_" + Guid.NewGuid().ToString("N")[..8],
-            //     letter = piece.letter,
-            //     status = 0,
-            // });
-        }
-        GroupWeightSort();
-        Chesspiece newCp = FindMinRowNonePiece();
-        if (newCp != null)
-        {
-            _cursor.Clear();
-            _cursor.Add(newCp.row);
-            _cursor.Add(newCp.col);
-        }
-        Debug.Log("钱少可见字完成--> " + JsonConvert.SerializeObject(changedPieces));
+        // (注：后续的字盘整理(Bowl逻辑)交由统一的 VerifyAndSyncPuzzles() 自动执行多退少补)
     }
     
+   /// <summary>
+    /// 减少可见字 (增加难度)
+    /// </summary>
+    /// <param name="number">数量 (负数)</param>
+    private void DecreaseShowWord(int number)
+    {
+        int originalTarget = Mathf.Abs(number); // 记录计划减少的数量，用于排查日志
+        int minShow = 3; // 整个棋盘最少留 3 个显示字
+        int maxBowlSlots = 32;// 👇 修改：明确这是 Bowl UI 的槽位上
+        var changedPieces = new List<Chesspiece>();
+        var hiddenSet = new HashSet<Chesspiece>(); // 🔧 防止同一个字被反复隐藏
+
+        // ==========================================
+        // 【规则】：获取并保护初始光标所在的词组
+        // ==========================================
+        // var protectedGroups = new HashSet<PhraseGroup>();
+        // if (_cursor != null && _cursor.Count >= 2)
+        // {
+        //     // 如果光标坐标有对应的词组，将其全部加入保护名单
+        //     if (_chessGroup.TryGetValue((_cursor[0], _cursor[1]), out var cursorGroups))
+        //     {
+        //         foreach (var cg in cursorGroups)
+        //         {
+        //             protectedGroups.Add(cg);
+        //         }
+        //     }
+        // }
+        var protectedGroups = GetProtectedCursorGroups();
+        // number 是负数，每次成功隐藏一个字就 number++，直到完成指定数量
+        while (number < 0)
+        {
+            if (ShowCount() <= minShow)
+            {
+                Debug.Log($"[动态难度] 当前可见字已达到最低安全底线({minShow}个)，停止增加难度。");
+                break;
+            }
+            // 👇 修改：使用去重后的汉字种类数来判断是否溢出屏幕
+            if (UniqueNoneLetterCount() >= maxBowlSlots)
+            {
+                Debug.Log($"<color=#FF0000>[动态难度-UI保护]</color> 底部字盘所需种类已达上限({maxBowlSlots}种)，强制停止隐藏以防 UI 溢出。");
+                break;
+            }
+            // ==========================================
+            // 规则1 & 规则3 & 光标保护：
+            // 1. 过滤掉受光标保护的词组
+            // 2. 过滤出“至少包含一个非交叉的可见字(Default)”的词组。
+            // ==========================================
+            var validGroups = _phraseGroups.Where(g => 
+                !protectedGroups.Contains(g) && // 核心：如果是光标所在的组，直接一票否决
+                g.chesspieces.Any(p => p.state == TileState.Default && !IsMultiGroup(p.row, p.col) 
+                                                                    && !hiddenSet.Any(h => h.row == p.row && h.col == p.col) && !IsSimpleLShapeGroup(g))
+            ).ToList();
+
+            if (validGroups.Count == 0)
+            {
+                Debug.Log("[动态难度] 没有符合规则的词组可供减少显示字 (或剩余词组均受光标保护)，提前结束。");
+                break;
+            }
+
+            // ==========================================
+            // 规则2：待填字(None)最少的词里随机选一个
+            // ==========================================
+            int minNoneCount = validGroups.Min(g => g.chesspieces.Count(p => p.state == TileState.None));
+            var minNoneGroups = validGroups.Where(g => g.chesspieces.Count(p => p.state == TileState.None) == minNoneCount).ToList();
+            PhraseGroup selectedGroup = minNoneGroups[UnityEngine.Random.Range(0, minNoneGroups.Count)];
+
+            // ==========================================
+            // 规则4：选好词组后，优先在组内从后向前选择 (4号位优先，1号位最后)
+            // ==========================================
+            Chesspiece targetPiece = null;
+            // 倒序遍历：i 从 Count - 1 递减到 0
+            for (int i = selectedGroup.chesspieces.Count - 1; i >= 0; i--)
+            {
+                var cp = selectedGroup.chesspieces[i];
+                
+                // ==========================================
+                // 规则3：不删交叉字，遇到交叉字跳过
+                // ==========================================
+                if (cp.state == TileState.Default && !IsMultiGroup(cp.row, cp.col) 
+                                                  && !hiddenSet.Any(h => h.row == cp.row && h.col == cp.col))
+                {
+                    targetPiece = cp; // 找到了符合条件的倒数第一个非交叉可见字
+                    break;
+                }
+            }
+
+            if (targetPiece != null)
+            {
+                SyncPieceState(targetPiece.row, targetPiece.col, TileState.None);
+                hiddenSet.Add(targetPiece);
+                changedPieces.Add(targetPiece);
+                number++; 
+            }
+            else
+            {
+                Debug.LogWarning("[动态难度] 异常：选中词组中未能找到可隐藏的字！");
+                break; 
+            }
+        }
+        
+        // ==========================================
+        // 【新增】：详细的控制台排查打印
+        // ==========================================
+        if (changedPieces.Count > 0)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendLine($"<color=#FF8C00>[动态难度-变难隐藏]</color> 减少可见字执行完毕！计划隐藏: <b>{originalTarget}</b> 个，实际隐藏: <b>{changedPieces.Count}</b> 个。");
+            sb.AppendLine("被隐藏的字块明细如下：");
+            
+            for (int i = 0; i < changedPieces.Count; i++)
+            {
+                var p = changedPieces[i];
+                sb.AppendLine($"  {i + 1}. 汉字: <color=#00FF00>'{p.letter}'</color> | 坐标: (行: {p.row}, 列: {p.col}) | 格子ID: {p.id}");
+            }
+            
+            Debug.Log(sb.ToString());
+        }
+        else
+        {
+            Debug.Log($"<color=#FF8C00>[动态难度-变难隐藏]</color> 执行完毕！本次未隐藏任何字 (可能是达到了最低显示限制或均受光标保护)。");
+        }
+    }
+    /// <summary>
+    /// 获取动态难度中需要保护的光标词组（若光标在交叉字上，只保留空格最少的一个组）
+    /// </summary>
+    private HashSet<PhraseGroup> GetProtectedCursorGroups()
+    {
+        var protectedGroups = new HashSet<PhraseGroup>();
+        if (_cursor == null || _cursor.Count < 2) return protectedGroups;
+
+        if (_chessGroup.TryGetValue((_cursor[0], _cursor[1]), out var cursorGroups))
+        {
+            // 如果光标是交叉字（关联多个组），排除空格最多的那个组
+            if (cursorGroups.Count > 1)
+            {
+                // 找出空格最多的组
+                var maxNoneGroup = cursorGroups
+                    .OrderByDescending(g => g.chesspieces.Count(p => p.state == TileState.None))
+                    .First();
+                // 把除了它之外的组加入保护列表
+                foreach (var g in cursorGroups)
+                {
+                    if (g != maxNoneGroup) protectedGroups.Add(g);
+                }
+            }
+            else
+            {
+                // 只有一个组，正常保护
+                foreach (var g in cursorGroups) protectedGroups.Add(g);
+            }
+        }
+        return protectedGroups;
+    }
     /// <summary>
     /// 判断 (r,c) 是否是任意词组的首或尾格子
     /// </summary>
@@ -617,9 +767,54 @@ public class ChessStageInfo
         return false;                     // 所有词组 1 都=3，淘汰
     }
     
+    /// <summary>
+    /// 👇 新增：统一同步指定坐标上所有字块实例的状态，解决交叉字多实例导致的逻辑不同步和反复抽中问题
+    /// </summary>
+    private void SyncPieceState(int row, int col, TileState newState)
+    {
+        // 1. 同步全盘 HashSet 数据源
+        var hashPiece = _chesspiece.FirstOrDefault(p => p.row == row && p.col == col);
+        if (hashPiece != null) hashPiece.state = newState;
+
+        // 2. 同步所有包含该坐标的词组中的实例 (重要：修复交叉字两端状态不一致的核心)
+        if (_chessGroup.TryGetValue((row, col), out var groups))
+        {
+            foreach (var g in groups)
+            {
+                var piece = g.chesspieces.FirstOrDefault(p => p.row == row && p.col == col);
+                if (piece != null) piece.state = newState;
+            }
+        }
+    }
+    
     /// <summary> 该格子是否被多个词组共享 </summary>
     public bool IsMultiGroup(int r, int c) =>
         _chessGroup.TryGetValue((r, c), out var set) && set.Count > 1;
+    
+    /// <summary>
+    /// 判断一个词组是否为“简单L型”——仅通过唯一交叉字与另一个词组相连，且该交叉字只属于这两个词组
+    /// </summary>
+    private bool IsSimpleLShapeGroup(PhraseGroup group)
+    {
+        // 1. 本词组必须恰好有 1 个交叉字
+        var crossCells = group.chesspieces.Where(p => IsMultiGroup(p.row, p.col)).ToList();
+        if (crossCells.Count != 1) return false;
+    
+        var crossCell = crossCells[0];
+        if (_chessGroup.TryGetValue((crossCell.row, crossCell.col), out var groupsAtCell))
+        {
+            // 2. 该交叉字必须恰好属于两个词组（本组 + 另一组）
+            if (groupsAtCell.Count == 2 && groupsAtCell.Contains(group))
+            {
+                // 3. 取出另一个词组
+                var otherGroup = groupsAtCell.First(g => g != group);
+                // 4. 另一个词组也必须只有这一个交叉字（即当前格子）
+                int otherCrossCount = otherGroup.chesspieces.Count(p => IsMultiGroup(p.row, p.col));
+                return otherCrossCount == 1;
+            }
+        }
+        return false;
+    }
     
     /// <summary>
     /// 该交叉字所在的所有组中，是否存在另一个**也关联其他组**的显示字
@@ -647,7 +842,9 @@ public class ChessStageInfo
     /// <summary> 整个棋盘显示字数量 </summary>
     private int ShowCount() =>
         _chesspiece.Count(p => p.state == TileState.Default);
-    
+    // 👇 新增：获取当前棋盘上待填的【不同汉字的种类数】 (完美对应底部 Bowl UI 的实际占用槽位数)
+    private int UniqueNoneLetterCount() =>
+        _chesspiece.Where(p => p.state == TileState.None).Select(p => p.letter).Distinct().Count();
     private void LoadStageData()
     {
         if (_StageConf == null)
@@ -712,16 +909,141 @@ public class ChessStageInfo
                     .First())        // 按首次出现空格的最小row和最大col排序
                 .ThenByDescending(g => g.direction)
                 .ToList(); // 同权重时方向值大优先 高→低
-            
-        Debug.Log("看看所有组的分数: " + JsonConvert.SerializeObject(sortedGroups));
   
         var representative = sortedGroups[0].chesspieces
                     .Where(p => p.state == TileState.None)
                     .OrderBy(p => p.row)   // 组内 row 最小
                     .ThenByDescending(p=>p.col)    // 组内col最大
                     .FirstOrDefault();     // 本组代表
-       
+        
+        Debug.Log("看看所有组的分数: " + JsonConvert.SerializeObject(sortedGroups));
         return representative;
+    }
+    
+    /// <summary>
+    /// 【象限空格数算法】：仅在关卡配置没有初始光标时触发，用于寻找最佳开局光标位置。
+    /// </summary>
+    public void RegenerateCursorPosition()
+    {
+        // 节点：是否有定义初始光标 -> 有 -> 受动态难度影响 -> 废除当前光标
+        _cursor.Clear();
+
+        // 计算矩阵的中心分割线 (结合原代码中的象限逻辑)
+        // row 实际上代表 X 轴（横坐标，从左向右递增）。
+        // col 实际上代表 Y 轴（纵坐标，从下向上递增）。
+        // 上方（一二象限）即 row < horizontal
+        // 左侧（二三象限）即 col < vertical
+        int horizontal = Mathf.FloorToInt((_MaxRow + 1) / 2f); 
+        int vertical = Mathf.FloorToInt((_MaxCol + 1) / 2f);   
+
+        // 局部辅助函数：获取词组中所有空格(None)的数量
+        int GetEmptyCount(PhraseGroup g) => g.chesspieces.Count(p => p.state == TileState.None);
+        // 局部辅助函数：获取词组中首个空格的索引（找不到返回-1）
+        int GetFirstEmptyIndex(PhraseGroup g) => g.chesspieces.FindIndex(p => p.state == TileState.None);
+
+        // 局部辅助函数：处理 Noah 批注的特殊情况（如果词跨象限，至少一半落在一、二象限）
+        bool IsInTopHalf(PhraseGroup g)
+        {
+            if (g.chesspieces.Count == 0) return false;
+            if (g.direction == 1) // 1为横向
+            {
+                // 情况1：词语的所有字高度，整体≤h' (在实际坐标系中，上方即 col >= v_prime)
+                return g.chesspieces.All(p => p.col >= vertical);
+            }
+            else // 0为纵向
+            {
+                // 情况2：若词语纵向，则需要该成语前两个字的高度≤h'
+                if (g.chesspieces.Count >= 2)
+                {
+                    return g.chesspieces[0].col >= vertical && g.chesspieces[1].col >= vertical;
+                }
+                else
+                {
+                    return g.chesspieces.All(p => p.col >= vertical);
+                }
+            }
+        }
+
+        // 节点：从矩阵上方（一二象限）寻找“空格数≤2”的成语（包含 Noah 的特殊情况批注）
+        var candidates = _phraseGroups.Where(g => 
+            GetEmptyCount(g) > 0 && 
+            GetEmptyCount(g) <= 2 && 
+            IsInTopHalf(g)
+        ).ToList();
+
+        // 节点：如果没有 -> 从矩阵中寻找空格最少的成语
+        if (candidates.Count == 0)
+        {
+            var allWithEmpty = _phraseGroups.Where(g => GetEmptyCount(g) > 0).ToList();
+            if (allWithEmpty.Count == 0) return; // 容错：全盘已满，无空格
+
+            int minEmpty = allWithEmpty.Min(g => GetEmptyCount(g));
+            candidates = allWithEmpty.Where(g => GetEmptyCount(g) == minEmpty).ToList();
+        }
+
+        PhraseGroup selectedGroup = null;
+
+        if (candidates.Count == 1)
+        {
+            // 节点：只有1个
+            selectedGroup = candidates[0];
+        }
+        else if (candidates.Count > 1)
+        {
+            // 辅助判断：是否在第二象限 (上方[col >= v_prime] 且 左侧[row < h_prime])
+            bool IsInQuadrant2(PhraseGroup g)
+            {
+                int q2Count = g.chesspieces.Count(p => p.col >= vertical && p.row < horizontal);
+                return q2Count >= (g.chesspieces.Count / 2f);
+            }
+            
+            // 节点：有多个 -> 进入层级排序筛选
+            var sortedCandidates = candidates.OrderByDescending(g => 
+            {
+                // 筛选 1：非交叉字的成语优先 (true 优先)
+                int firstEmptyIdx = GetFirstEmptyIndex(g);
+                var firstPiece = g.chesspieces[firstEmptyIdx];
+                bool isNotCross = !IsMultiGroup(firstPiece.row, firstPiece.col);
+                return isNotCross ? 1 : 0;
+            })
+            .ThenByDescending(g => GetFirstEmptyIndex(g)) // 筛选 2：优先首个空格在成语中靠后 (Index越大越靠后)
+            .ThenBy(g => GetEmptyCount(g))                // 筛选 3：若有多个，优先空格少的 (升序)
+            .ThenByDescending(g => IsInQuadrant2(g) ? 1 : 0) // 筛选 4：优先左侧区域（第二象限）
+            .ThenByDescending(g => g.direction == 1 ? 1 : 0) // 筛选 5：优先横向成语 (横向 direction == 1)
+            .ToList();
+
+            // 提取排序第一名的所有特征，构建“并列第一”池，以实现节点中的“如果多个，随机一个 / 否则随机纵向”
+            var best = sortedCandidates.First();
+            int bestFirstIdx = GetFirstEmptyIndex(best);
+            bool bestNotCross = !IsMultiGroup(best.chesspieces[bestFirstIdx].row, best.chesspieces[bestFirstIdx].col);
+            int bestEmptyCount = GetEmptyCount(best);
+            bool bestInQ2 = IsInQuadrant2(best);
+            bool bestIsHoriz = best.direction == 1;
+
+            var finalPool = sortedCandidates.Where(g => 
+                (!IsMultiGroup(g.chesspieces[GetFirstEmptyIndex(g)].row, g.chesspieces[GetFirstEmptyIndex(g)].col)) == bestNotCross &&
+                GetFirstEmptyIndex(g) == bestFirstIdx &&
+                GetEmptyCount(g) == bestEmptyCount &&
+                IsInQuadrant2(g) == bestInQ2 &&
+                (g.direction == 1) == bestIsHoriz
+            ).ToList();
+
+            // 随机选取最终赢家
+            selectedGroup = finalPool[UnityEngine.Random.Range(0, finalPool.Count)];
+        }
+
+        // 节点：确定该成语的首个空格作为光标初始位置
+        if (selectedGroup != null)
+        {
+            int idx = GetFirstEmptyIndex(selectedGroup);
+            if (idx != -1)
+            {
+                var targetPiece = selectedGroup.chesspieces[idx];
+                _cursor.Add(targetPiece.row);
+                _cursor.Add(targetPiece.col);
+                Debug.Log($"[动态难度-光标重置] 遵循流程图选中词组 {selectedGroup.id}，光标位置设为: ({targetPiece.row}, {targetPiece.col})");
+            }
+        }
     }
     /// <summary>
     /// 解析关卡文件内容
