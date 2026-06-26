@@ -244,6 +244,8 @@ public class ChessPlayArea : UIWindow
         EventDispatcher.instance.OnAutoPassLevel += AutoPassLevel;
         // 👇 新增：监听分数变化事件，并初始化当前分数
         EventDispatcher.instance.OnChessScoreChanged += OnChessScoreChanged;
+        EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
+        
         _lastZenScore = ChessStageController.Instance.CurrentTotalScore;
         _zenScoreText.text = _lastZenScore.ToString();
         
@@ -484,18 +486,18 @@ public class ChessPlayArea : UIWindow
             CompCount.gameObject.SetActive(false);
             // CompCost.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
             // CompCost.gameObject.SetActive(true);
-            // compAdd.gameObject.SetActive(true);
-            // compText.gameObject.SetActive(false);
+            compAdd.gameObject.SetActive(true);
+            compText.gameObject.SetActive(false);
         }
 
         // Transform HintCost = HitsBtn.transform.GetChild(0);
         Transform HintCount = HitsBtn.transform.GetChild(1);
         Transform hintText = HintCount.GetChild(0);
         Transform hintAdd = HintCount.GetChild(1);
-        if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
+        if (GameDataManager.Instance.UserData.toolInfo[101].count > 0)
         {
             HintCount.gameObject.SetActive(true);
-            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
+            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
             hintText.gameObject.SetActive(true);
             hintAdd.gameObject.SetActive(false);
             // HintCost.gameObject.SetActive(false);
@@ -505,8 +507,8 @@ public class ChessPlayArea : UIWindow
             HintCount.gameObject.SetActive(false);
             // HintCost.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
             // HintCost.gameObject.SetActive(true);
-            // hintText.gameObject.SetActive(false);
-            // hintAdd.gameObject.SetActive(true);
+            hintText.gameObject.SetActive(false);
+            hintAdd.gameObject.SetActive(true);
         }
     }
     #endregion
@@ -1663,7 +1665,7 @@ public class ChessPlayArea : UIWindow
     public void UseTips()
     {
         NotifyPlayerInteraction(); // 🌟 触发唤醒计时
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
+        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
 
         if (toolInfo == null || chessboardGrid.GameOver)
         {
@@ -1939,7 +1941,7 @@ public class ChessPlayArea : UIWindow
        
         // if(EventDispatcher.instance != null)
         // {
-            // EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
+            EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
             EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
             EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
             EventDispatcher.instance.OnChessScoreChanged -= OnChessScoreChanged;
