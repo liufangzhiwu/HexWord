@@ -312,6 +312,13 @@ public class ShopScreen : UIWindow
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         ShopManager.shopManager.UpdateAdsBtnUI -= InitAdsBtnUI;
         ShowBanner();
+
+        if (SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea) ||
+            SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea))
+        {
+            EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
+        }
+        
         // if(!ShopManager.shopManager.paysuccess) 
         //     AdsManager.Instance.ShowRewardedPanel("store_gold");
         OnPanelClosed();

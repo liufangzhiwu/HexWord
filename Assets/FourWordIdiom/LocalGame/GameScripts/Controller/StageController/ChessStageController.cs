@@ -173,6 +173,7 @@ public class ChessStageController
         set => GameDataManager.Instance.UserData.CurrentChessStage = value;
     }
     #endregion
+    
     #region 初始化方法
 
     public void Initialized()
@@ -193,6 +194,7 @@ public class ChessStageController
             StagePackInfo = AssetBundleLoader.SharedInstance.LoadScriptableObject("chinesesimplified", levelConfigName) as ChessPackInfo;
         }
         Debug.LogWarning("当前初始化的关卡包是 " +levelConfigName);
+        
         // 🌟 1. 各个在线配置的异步状态与账本数据准备
         bool isComboDone = false;
         bool isMechanicsDone = false;
@@ -217,6 +219,7 @@ public class ChessStageController
             onSuccess: (response) => { stimulateCsvData = response.CsvString; isStimulateDone = true; },
             onError: (error) => { isStimulateDone = true; Debug.Log("⚠️ 服务器拉取 Stimulate 失败，准备使用本地资源兜底: " + error); }
         ));
+        
         // 🌟 3. 统一收网守候：用最大时间窗口安全等待所有线上的数据结账
         float timeout = 5f;
         while ((!isComboDone || !isMechanicsDone || !isStimulateDone) && timeout > 0)

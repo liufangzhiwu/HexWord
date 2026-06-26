@@ -152,7 +152,7 @@ public class ChessPlayArea : UIWindow
         }
         if (_pupaTrailPrefab != null) 
         {
-            _pupaTrailPool = new ObjectPool(_pupaTrailPrefab, ObjectPool.CreatePoolContainer(transform,"pupaTrailPool"), 3, PoolBehaviour.GameObject);
+            _pupaTrailPool = new ObjectPool(_pupaTrailPrefab, ObjectPool.CreatePoolContainer(transform,"pupaTrailPool"), 1, PoolBehaviour.GameObject);
         }
         else 
         {
@@ -168,7 +168,7 @@ public class ChessPlayArea : UIWindow
         }
         if (_zenCorrectTrailPrefab != null)
         {
-            _zenCorrectTrailPool = new ObjectPool(_zenCorrectTrailPrefab, ObjectPool.CreatePoolContainer(transform,"zenCorrectTrailPool"), 3, PoolBehaviour.GameObject);
+            _zenCorrectTrailPool = new ObjectPool(_zenCorrectTrailPrefab, ObjectPool.CreatePoolContainer(transform,"zenCorrectTrailPool"), 1, PoolBehaviour.GameObject);
         }
         else 
         {
@@ -1680,7 +1680,7 @@ public class ChessPlayArea : UIWindow
         bool useCoins = false;
         if(toolInfo.count <= 0)
         {
-            GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
+            GetItemScreen.limitRewordType = LimitRewordType.SingleWordTipsttool;
             // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             return;
@@ -1705,12 +1705,12 @@ public class ChessPlayArea : UIWindow
         {
             // 更新道具
             GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, false, true, "购买道具");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "道具购买");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1, "道具购买");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用");
         }
         else
         {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用",GetCurrentSelectedPhrase());
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用",GetCurrentSelectedPhrase());
             InitToolUI();
         }
         // chessboardGrid.SetSelectTip();
@@ -1937,13 +1937,13 @@ public class ChessPlayArea : UIWindow
         chessboardGrid.Clear();
         puzzleTileTable.Clear();
        
-        if(EventDispatcher.instance != null)
-        {
+        // if(EventDispatcher.instance != null)
+        // {
             // EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
             EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
             EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
             EventDispatcher.instance.OnChessScoreChanged -= OnChessScoreChanged;
-        }
+        //}
 
         if (EffectButterFlays.Count > 0)
         {
