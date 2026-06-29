@@ -161,7 +161,7 @@ public class GetItemScreen : UIWindow
        
         if (toolInfo.cost > GameDataManager.Instance.UserData.Gold)
         {        
-            MessageSystem.Instance.ShowTip("TipGoldInsufficient");
+            //MessageSystem.Instance.ShowTip("TipGoldInsufficient");
             // 直接跳转到商店
             SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
             Close();

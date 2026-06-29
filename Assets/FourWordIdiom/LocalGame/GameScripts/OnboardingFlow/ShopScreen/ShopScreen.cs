@@ -313,8 +313,8 @@ public class ShopScreen : UIWindow
         ShopManager.shopManager.UpdateAdsBtnUI -= InitAdsBtnUI;
         ShowBanner();
 
-        if (SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea) ||
-            SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea))
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea) ||
+            SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
         {
             EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
         }

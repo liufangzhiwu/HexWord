@@ -5447,7 +5447,7 @@ PrefabInstance:
     - target: {fileID: 2843265663438443059, guid: 553e2789b62711749b5a345f0faa97f6,
         type: 3}
       propertyPath: m_Name
-      value: ButterflyGarden
+      value: ButterfalyGraden
       objectReference: {fileID: 0}
     - target: {fileID: 7798042885103711886, guid: 553e2789b62711749b5a345f0faa97f6,
         type: 3}
@@ -5527,7 +5527,7 @@ PrefabInstance:
     - target: {fileID: 7798042885103711886, guid: 553e2789b62711749b5a345f0faa97f6,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -446
+      value: -440
       objectReference: {fileID: 0}
     - target: {fileID: 7798042885103711886, guid: 553e2789b62711749b5a345f0faa97f6,
         type: 3}

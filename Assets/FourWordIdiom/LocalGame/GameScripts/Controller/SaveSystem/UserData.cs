@@ -30,7 +30,7 @@ public class UserData
     public int showRateusCount;         // 好评界面显示次数
     public string showRateusTime;       // 好评界面显示时间
     public bool isChangeUserName;       // 是否更改过用户名称
-    public string Zenlevel;             // 禅模式当前关卡
+    public string Zenlevel;             // 禅修榜等级
     
     // 👇 新增：体力系统基础字段
     public int Energy;                       // 当前体力值

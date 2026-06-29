@@ -143,9 +143,10 @@ public class PrimaryInterface : UIWindow
             SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
         }
 
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
-        
-        SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
+        });
     }
     
     // ==========================================
