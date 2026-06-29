@@ -73,6 +73,9 @@ public class ChessStageProgressData
         TotalActiveSeconds = 0f;
         //stageInfo.CreatePupaData();
         IsPausedOrFailed = false; // 🌟 新关卡默认安全
+        this.CollectedLeaves = 0;
+        this.FlowerActionCount = 0;
+        this.GoldLeafCount = 0;
     }
 
     public void InitializeFromExisting(ChessStageProgressData sourceData)
@@ -177,7 +180,10 @@ public class ChessStageProgressData
         this.MaxCombo = sourceData.MaxCombo;         // 🌟 恢复
         this.EarnedPupaCount = sourceData.EarnedPupaCount; // 🌟 恢复
         this.PupaDatas=sourceData.PupaDatas;
-
+        this.CollectedLeaves = sourceData.CollectedLeaves;
+        this.FlowerActionCount = sourceData.FlowerActionCount;
+        this.GoldLeafCount = sourceData.GoldLeafCount;
+        
         this.ChessGroup.Clear();
         this.ChessGroup=sourceData.ChessGroup;
         

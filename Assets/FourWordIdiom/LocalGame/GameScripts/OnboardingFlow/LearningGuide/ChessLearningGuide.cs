@@ -412,8 +412,8 @@ public class ChessLearningGuide : UIWindow
             this.Close();
         }else if (ChessGuideSystem.Instance.toolSourceName == "UseTips")
         {
-            DianShouTable.SetActive(true);
-            MoveHandToTile(ChessGuideSystem.Instance.activeToolObject.transform);
+            //DianShouTable.SetActive(true);
+            //MoveHandToTile(ChessGuideSystem.Instance.activeToolObject.transform);
         }
     }
 

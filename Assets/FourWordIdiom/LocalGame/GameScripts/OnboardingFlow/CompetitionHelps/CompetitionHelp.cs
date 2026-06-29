@@ -22,9 +22,9 @@ public class CompetitionHelp : UIWindow
             case "JS":
                 titleImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("dashJantitle");
                 break;  
-            case "CT":
-                titleImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fanDashTitle");
-                break;
+            // case "CT":
+            //     titleImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fanDashTitle");
+            //     break;
         }
 
         InitButton();

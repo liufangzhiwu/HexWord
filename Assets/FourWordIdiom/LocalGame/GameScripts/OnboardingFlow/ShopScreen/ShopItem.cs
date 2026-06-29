@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Coffee.UIEffects;
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -27,6 +28,9 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     [SerializeField] private Transform giftsParent;
     [SerializeField] private GiftItem giftItemPrefab;
     [SerializeField] private GameObject tipBtnPrefab;
+    
+    [SerializeField] private UIShiny adsShiny;
+    
     private ShopLimitData _shopLimitData=null;
     private Button tipBtn;
     
@@ -34,28 +38,153 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     public float pressedScale = 0.9f; // 按下时的缩放比例
     public float scaleSpeed = 10f;    // 缩放速度
     
+    [Header("广告状态动画设置")]
+    public float breathSpeed = 3f;           // 按钮呼吸速度
+    public float breathAmplitude = 0.03f;    // 按钮呼吸幅度
+    public float shakeSpeed = 15f;           // 抖动频率（频率调高，抖动更剧烈） 广告Icon晃动速度
+    public float shakeAmplitude = 8f;        // 抖动幅度（角度）广告Icon晃动角度
+    public float shakeInterval = 2.0f;       // 每次抖动的间隔时间（比如每2秒抖动一次）
+    public float shakeDuration = 0.5f;       // 每次抖动的持续时间（比如持续抖动0.5秒）
+    
+    private float shakeTimer = 0f;           // 内部计时器
+    private Vector3 originalIconPosition;    // 广告Icon原始坐标（防止位移）
+    private Vector3 originalIconAngles; // 广告Icon原始旋转（防止角度漂移）
+    
     private Vector3 originalScale;    // 原始大小
     private bool isPressed = false;   // 是否按下
     private bool isDragging = false;  // 是否正在拖动
+    private bool isAdStateActive = false;    // 是否处于看广告领取的动画状态
     private RectTransform rectTransform;
     private Vector2 pressPosition;     // 按下时的屏幕坐标
     
-    void Start()
+    private bool isTransformCached = false; // 标记是否已缓存初始坐标
+    
+    private void Awake()
     {
+        InitTransformCache();
+    }
+
+    private void OnEnable()
+    {
+        isPressed = false;
+        InitTransformCache(true);
+        // 每次打开界面时，检查是否需要播放广告动画
+        CheckAdAnimationState();
+    }
+    
+    /// <summary>
+    /// 缓存原始坐标和缩放，确保在对象池或频繁刷新下绝对不会偏移
+    /// </summary>
+    private void InitTransformCache(bool forceRefresh = false)
+    {
+        if (!forceRefresh && isTransformCached) return;
+        
         rectTransform = GetComponent<RectTransform>();
         originalScale = transform.localScale;
+        
+        if (btntagicon != null)
+        {
+            originalIconPosition = btntagicon.transform.localPosition;
+            originalIconAngles = btntagicon.transform.localEulerAngles;
+        }
+        
+        isTransformCached = true;
+    }
+    
+    /// <summary>
+    /// 核心动画状态机：检查当前按钮是否处于广告状态，并控制组件启停
+    /// </summary>
+    public void CheckAdAnimationState()
+    {
+        if (shopDataItem == null) return;
+
+        // 如果商品是"免费/广告"商品，并且今天的免费次数已经用过了，说明进入了广告模式
+        if (shopDataItem.produceNameId == "FreeGoods" && GameDataManager.Instance.UserData.isDayFreeGet)
+        {
+            if (!isAdStateActive)
+            {
+                shakeTimer = 0f; // 刚切进入广告状态时，重置计时器
+            }
+            isAdStateActive = true;
+            if (adsShiny != null) adsShiny.enabled = true; // 开启流光
+            if (btntagicon != null) btntagicon.gameObject.SetActive(true); // 确保广告图标显示
+        }
+        else
+        {
+            // 免费模式或付费模式：关闭动画和特效，并强行复位坐标
+            isAdStateActive = false;
+            if (adsShiny != null) adsShiny.enabled = false;
+            
+            if (isTransformCached)
+            {
+                if (rectTransform != null) rectTransform.localScale = originalScale;
+                if (btntagicon != null)
+                {
+                    btntagicon.transform.localPosition = originalIconPosition;
+                    btntagicon.transform.localEulerAngles = originalIconAngles;
+                }
+            }
+        }
     }
     
     void Update()
     {
-        // 持续更新缩放状态
-        var targetScale = isPressed ? originalScale * pressedScale : originalScale;
+        if (!isTransformCached) return;
+        
+        // 1. 处理按钮整体的呼吸与缩放
+        Vector3 targetScale = originalScale;
+
+        if (isPressed)
+        {
+            // 如果被按下，目标缩放为按下状态
+            targetScale = originalScale * pressedScale;
+        }
+        // else if (isAdStateActive)
+        // {
+        //     // 如果处于广告状态且未被按下，执行基于正弦波的呼吸效果
+        //     float breath = Mathf.Sin(Time.time * breathSpeed) * breathAmplitude;
+        //     targetScale = originalScale * (1f + breath); 
+        //     // 注意：这里永远基于 originalScale 计算，绝对不会产生逐渐变大或变小的漂移
+        // }
+
+        // 平滑过渡到目标缩放
         rectTransform.localScale = Vector3.Lerp(
             rectTransform.localScale,
             targetScale,
             Time.deltaTime * scaleSpeed
         );
+
+        // 2. 处理广告Icon的轻微晃动
+        if (isAdStateActive && btntagicon != null)
+        {
+            // 累加计时器，使用 unscaledTime 防止受游戏暂停影响
+            shakeTimer += Time.unscaledDeltaTime;
+            // 计算当前处于哪个周期（通过取余操作）
+            float currentCycleTime = shakeTimer % (shakeInterval + shakeDuration);
+            // 如果在“抖动持续时间”内，执行正弦波晃动
+            if (currentCycleTime < shakeDuration)
+            {
+
+                // 计算Z轴的旋转晃动量
+                float shakeZ = Mathf.Sin(currentCycleTime * shakeSpeed) * shakeAmplitude;
+
+                // 基于原始旋转进行赋值，绝对不会产生角度偏移积累
+                btntagicon.transform.localEulerAngles = new Vector3(
+                    originalIconAngles.x,
+                    originalIconAngles.y,
+                    originalIconAngles.z + shakeZ
+                );
+            }
+            else
+            {
+                // 在“非抖动的间隔时间”内，强行复位角度，保持绝对静止
+                btntagicon.transform.localEulerAngles = originalIconAngles;
+            }
+            // 强行锁死原始坐标，确保在动画过程中任何层级刷新都不会导致位移
+            // btntagicon.transform.localPosition = originalIconPosition; 
+        }
     }
+
 
     public void OnPointerDown(PointerEventData eventData)
     {
@@ -185,6 +314,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         shopDataItem = data;   
         
+        InitTransformCache(); // 确保数据填充前已缓存，防止对象池报错
         SetShopIcon();
         HandleTimeLimitedItems(data);
         HandleDiscountDisplay(data);
