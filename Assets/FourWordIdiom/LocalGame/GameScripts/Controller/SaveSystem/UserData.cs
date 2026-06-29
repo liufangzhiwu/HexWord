@@ -307,6 +307,15 @@ public class UserData
         isDayMoneyBuy = false;
         isHideShopRedPoint=false;
         
+        ThemeSaveItems=new List<ThemeSaveItem>{
+            new(){id = 0,isGet = true},
+            new(){id = 1,isGet = true},
+        };
+        ThemeItemUses=new Dictionary<int,int>(){{0,1}};
+        GoldLeaf = 0;
+        userthemeid = 0;
+        ischangetheme = false;
+        
         // 生命周期事件相关数据初始化
         TotalOnlineMinutes = 0f;
         ReportedLifecycleEvents = new Dictionary<string, bool>();
@@ -408,14 +417,15 @@ public class UserData
         }
         hasUsedFreeRevive = user.hasUsedFreeRevive;
         
-        ThemeSaveItems=new List<ThemeSaveItem>{
-            new(){id = 0,isGet = true},
-            new(){id = 1,isGet = true},
-        };
-        ThemeItemUses=new Dictionary<int,int>(){{0,1}};
-        GoldLeaf = 0;
-        userthemeid = 0;
-        ischangetheme = false;
+        GoldLeaf=user.GoldLeaf;
+        
+        ThemeSaveItems=user.ThemeSaveItems.Count<=0?new List<ThemeSaveItem>{
+            new() {id = 0,isGet = true},
+            new() {id = 1,isGet = true},
+        }:user.ThemeSaveItems;
+        ThemeItemUses=user.ThemeItemUses??new Dictionary<int,int>(){{0,1}};
+        userthemeid = user.userthemeid;
+        ischangetheme=user.ischangetheme;
         
         isChangeUserName = user.isChangeUserName;
         // 评价界面显示次数
