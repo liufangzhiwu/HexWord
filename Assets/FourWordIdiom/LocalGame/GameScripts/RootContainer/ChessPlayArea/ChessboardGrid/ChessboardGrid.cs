@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Coffee.UIEffects;
 using DG.Tweening;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -41,6 +42,10 @@ public class ChessboardGrid : MonoBehaviour
     // 🌟 新增变量：用于缓存等待触发报错引导的格子
     public ChessView pendingErrorTutorialTile;
     
+    // 🌟 新增：记录当前这条连击链是否已经触发过激活音效
+    [HideInInspector] public bool hasPlayedComboSoundThisChain = false;
+    // 🌟 新增：全局输入阻断锁（当协程、道具动画播放时，绝对禁止玩家物理交互）
+    [HideInInspector] public bool IsBlockInput = false;
     public void Initialize(ChessPlayArea play)
     {
         if (PuzzleItemObj == null)
@@ -63,7 +68,7 @@ public class ChessboardGrid : MonoBehaviour
     /// <summary>
     /// 直接完成选中的成语, 道具操作
     /// </summary>
-    public IEnumerator CompletedPhrase()
+    public IEnumerator CompletedPhrase2()
     {
         Dictionary<Chesspiece, List<PhraseGroup>> friendGroups = new();
         HashSet<string> handledIds = new HashSet<string>();
@@ -240,7 +245,362 @@ public class ChessboardGrid : MonoBehaviour
         EventDispatcher.instance.TriggerChangeTopRaycast(true);
         // SearchNextTile();
     }
-    
+    /// <summary>
+    /// 直接完成选中的成语 (直接物理填入 + 5秒扫光 + 完美交叉判定)
+    /// </summary>
+    public IEnumerator CompletedPhrase()
+    {
+        // ========================================================================
+        // 步骤一：提取关卡所有成语词组并检索当前盘面的实时空格数与冰块状态
+        // ========================================================================
+        var allGroupsInStage = GamePlayArea.CurrStageInfo.PhraseGroups;
+
+        // 筛选符合主干条件的组：没有被冰块覆盖，总空格 >= 2，且【至少包含1个未提示的空格】
+        var primaryCandidateGroups = allGroupsInStage.Where(g => 
+        {
+            bool hasIce = g.chesspieces.Any(p => GridList.TryGetValue((p.row, p.col), out var v) && v.chesspiece.hasIce && !v.iceLogicBroken);
+            
+            int totalEmptyCount = g.chesspieces.Count(p => GridList.TryGetValue((p.row, p.col), out var v) && 
+                v.CurrState != TileState.Success && v.CurrState != TileState.Default);
+                
+            int untippedEmptyCount = g.chesspieces.Count(p => GridList.TryGetValue((p.row, p.col), out var v) && 
+                v.CurrState != TileState.Success && v.CurrState != TileState.Default && !v.chesspiece.tip);
+            
+            return !hasIce && totalEmptyCount >= 2 && untippedEmptyCount >= 1;
+        }).ToList();
+
+        // ========================================================================
+        // 核心分支 A：满足条件的干净词组达到或超过 3 个 -> 启动多组随机单字【直接填入并扫光】
+        // ========================================================================
+        if (primaryCandidateGroups.Count >= 3)
+        {
+            EventDispatcher.instance.TriggerChangeTopRaycast(false);
+
+            var selected3Groups = primaryCandidateGroups.OrderBy(x => Random.value).Take(3).ToList();
+            List<ChessView> jumpTargets = new List<ChessView>();
+
+            // 抽取跳跃目标
+            foreach (var group in selected3Groups)
+            {
+                var untippedEmptyTilesInGroup = group.chesspieces
+                    .Select(p => GridList.GetValueOrDefault((p.row, p.col)))
+                    .Where(v => v != null && v.CurrState != TileState.Success && v.CurrState != TileState.Default && !v.chesspiece.tip)
+                    .ToList();
+
+                if (untippedEmptyTilesInGroup.Count == 0) continue; 
+                ChessView targetTile = untippedEmptyTilesInGroup[Random.Range(0, untippedEmptyTilesInGroup.Count)];
+                jumpTargets.Add(targetTile);
+            }
+
+            if (jumpTargets.Count > 0)
+            {
+                // 播放青蛙跳跃路径光效
+                bool isJumping = true;
+                GamePlayArea.PlayAutoCompleteJumpEffect(jumpTargets, () => {
+                    isJumping = false; 
+                });
+                yield return new WaitUntil(() => !isJumping);
+
+                List<List<ChessView>> correctGroups = new List<List<ChessView>>();
+                List<List<ChessView>> errorGroups = new List<List<ChessView>>();
+
+                // 🌟 修复 1：记录填入前，哪些相关组已经提前完成了（防止重复播通关动画）
+                HashSet<string> previouslyCompletedIds = new HashSet<string>();
+                HashSet<PhraseGroup> affectedGroups = new HashSet<PhraseGroup>();
+                foreach (var targetTile in jumpTargets)
+                {
+                    var groups = GetChessGroups(targetTile.Row, targetTile.Col);
+                    foreach (var g in groups)
+                    {
+                        affectedGroups.Add(g);
+                        if (g.chesspieces.All(p => GridList.TryGetValue((p.row, p.col), out var v) && v.CurrState == TileState.Success))
+                        {
+                            previouslyCompletedIds.Add(g.id);
+                        }
+                    }
+                }
+
+                // 直接物理填入并触发扫光！
+                foreach (var targetTile in jumpTargets)
+                {
+                    // 1. 清理错字/临时字
+                    if (targetTile.CurrState == TileState.Fill || targetTile.CurrState == TileState.Error)
+                    {
+                        Bowl dummyBowl = targetTile.chesspiece.bowl ?? new Bowl { letter = targetTile.chesspiece.letter };
+                        GamePlayArea.puzzleTileTable.OnNotifyResult(dummyBowl, 0);
+                        targetTile.chesspiece.bowl = null;
+                    }
+
+                    // 2. 从下方字盘扣除库存并销毁
+                    BowlView matchingBowl = GamePlayArea.puzzleTileTable.GridList.FirstOrDefault(v => 
+                        v.letter == targetTile.Answer && v.bowl.status == 0);
+
+                    if (matchingBowl != null)
+                    {
+                        targetTile.SetPuzzle(matchingBowl.bowl);
+                        GamePlayArea.puzzleTileTable.OnNotifyResult(matchingBowl.bowl, 1); 
+                        GamePlayArea.puzzleTileTable.OnNotifyResult(matchingBowl.bowl, 2); 
+                    }
+                    else
+                    {
+                        Bowl fallbackBowl = new Bowl { letter = targetTile.Answer, status = 2, count = 0 };
+                        targetTile.SetPuzzle(fallbackBowl);
+                    }
+
+                    // 3. 设为成功并处理树叶
+                    targetTile.SetTileState(TileState.Success, false);
+                    if (targetTile.chesspiece != null && targetTile.chesspiece.hasLeaf)
+                    {
+                        targetTile.isPendingLeafFlight = true;
+                        targetTile.chesspiece.hasLeaf = false;
+                        ChessStageController.Instance.CurrStageData.CollectedLeaves++;
+                    }
+
+                    // 4. 触发弹跳变绿和 5 秒扫光特效！
+                    targetTile.PlaySuccessAnimation(0.5f, () => {
+                        targetTile.UpdateTile(true);
+                    });
+                    targetTile.PlayHintShiny(5f);
+                }
+
+                // 🌟 修复 2：统一检查所有受影响的词组（包含交叉组），看看有没有刚好被连带凑齐的
+                foreach (var group in affectedGroups)
+                {
+                    if (previouslyCompletedIds.Contains(group.id)) continue;
+
+                    bool groupSuccess = group.chesspieces.All(p => 
+                        GridList.TryGetValue((p.row, p.col), out ChessView v) && v.Correct);
+                    bool hasIceInGroup = group.chesspieces.Any(p => 
+                        GridList.TryGetValue((p.row, p.col), out ChessView v) && v.chesspiece.hasIce && !v.iceLogicBroken);
+                    
+                    if (groupSuccess && !hasIceInGroup)
+                    {
+                        List<ChessView> groupViews = new List<ChessView>();
+                        group.chesspieces.ForEach(g =>
+                        {
+                            if (GridList.TryGetValue((g.row, g.col), out ChessView v))
+                            {
+                                if (v.CurrState != TileState.Success)
+                                {
+                                    if (v.chesspiece.bowl != null) GamePlayArea.puzzleTileTable.OnNotifyResult(v.chesspiece.bowl, 2);
+                                    v.SetTileState(TileState.Success, false);
+                                }
+                                if (v.chesspiece.hasLeaf)
+                                {
+                                    v.isPendingLeafFlight = true;
+                                    v.chesspiece.hasLeaf = false;
+                                    ChessStageController.Instance.CurrStageData.CollectedLeaves++;
+                                }
+                                groupViews.Add(v); 
+                            }
+                        });
+                        correctGroups.Add(groupViews);
+                    }
+                }
+
+                // 如果有整组完成，播放大满贯表现
+                if (correctGroups.Count > 0)
+                {
+                    yield return PlayGroupSuccessSequence(correctGroups, errorGroups);
+                }
+
+                // 🌟 修复 3：防乱跳保护。只有在当前光标所在的格子被刚好填满变绿时，才执行重定向寻找下一个空格
+                if (selecteTile == null || selecteTile.CurrState == TileState.Success || selecteTile.CurrState == TileState.Default)
+                {
+                    ChessView lastHintedTile = jumpTargets.LastOrDefault();
+                    if (lastHintedTile != null) selecteTile = lastHintedTile;
+                    SearchNextTile();
+                }
+            }
+
+            EventDispatcher.instance.TriggerChangeTopRaycast(true);
+            IsBlockInput = false;
+        }
+        // ========================================================================
+        // 核心分支 B：无法凑齐 3 个理想词组 -> 降级为寻找全盘空格子最多的非冰冻成语，执行整组直接通关
+        // ========================================================================
+        else
+        {
+            var fallbackGroupRank = allGroupsInStage.Select(g => 
+            {
+                bool hasIce = g.chesspieces.Any(p => GridList.TryGetValue((p.row, p.col), out var v) && v.chesspiece.hasIce && !v.iceLogicBroken);
+                int emptyCount = g.chesspieces.Count(p => GridList.TryGetValue((p.row, p.col), out var v) && 
+                    v.CurrState != TileState.Success && v.CurrState != TileState.Default);
+                return new { Group = g, HasIce = hasIce, EmptyCount = emptyCount };
+            })
+            .Where(x => x.EmptyCount > 0)
+            .OrderByDescending(x => x.HasIce ? 0 : 1) 
+            .ThenByDescending(x => x.EmptyCount)
+            .ToList();
+
+            if (fallbackGroupRank.Count == 0)
+            {
+                MessageSystem.Instance.ShowTip("全盘已全部解答完毕，无符合要求的词组！");
+                yield break;
+            }
+
+            if (fallbackGroupRank[0].HasIce)
+            {
+                MessageSystem.Instance.ShowTip("其余成语均被冰块冻住了，请先破冰！");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1, "冰块拦截退还");
+                GamePlayArea.InitToolUI();
+                yield break; 
+            }
+
+            int maxEmpties = fallbackGroupRank[0].EmptyCount;
+            var finalCandidates = fallbackGroupRank
+                .Where(x => x.EmptyCount == maxEmpties && !x.HasIce)
+                .Select(x => x.Group)
+                .ToList();
+            
+            PhraseGroup targetGroup = finalCandidates[Random.Range(0, finalCandidates.Count)];
+
+            List<ChessView> jumpTargets = new List<ChessView>();
+            foreach (var p in targetGroup.chesspieces)
+            {
+                if (GridList.TryGetValue((p.row, p.col), out ChessView v)) jumpTargets.Add(v);
+            }
+            bool isJumping = true;
+            EventDispatcher.instance.TriggerChangeTopRaycast(false);
+            GamePlayArea.PlayAutoCompleteJumpEffect(jumpTargets, () => {
+                isJumping = false; 
+            });
+            yield return new WaitUntil(() => !isJumping);
+
+            selectedPuzzle.Clear();
+            List<ChessView> mainGroupViews = new List<ChessView>();
+            Dictionary<Chesspiece, List<PhraseGroup>> friendGroups = new Dictionary<Chesspiece, List<PhraseGroup>>();
+            HashSet<string> handledIds = new HashSet<string>();
+            HashSet<string> previouslyCompletedIds = new HashSet<string>();
+
+            if (targetGroup.chesspieces.All(p => GridList.TryGetValue((p.row, p.col), out var v) && v.CurrState == TileState.Success))
+            {
+                previouslyCompletedIds.Add(targetGroup.id);
+            }
+            for (int i = 0; i < targetGroup.chesspieces.Count; i++)
+            {
+                var piece = targetGroup.chesspieces[i];
+                var fGroups = GetChessGroups(piece.row, piece.col).ToList();
+                friendGroups.TryAdd(piece, fGroups);
+
+                foreach (var fg in fGroups)
+                {
+                    if (fg.chesspieces.All(p => GridList.TryGetValue((p.row, p.col), out var v) && v.CurrState == TileState.Success))
+                    {
+                        previouslyCompletedIds.Add(fg.id);
+                    }
+                }
+            }
+
+            for (int i = 0; i < targetGroup.chesspieces.Count; i++)
+            {
+                var piece = targetGroup.chesspieces[i];
+                if (GridList.TryGetValue((piece.row, piece.col), out ChessView view2))
+                {
+                    if (view2.CurrState != TileState.Success)
+                    {
+                        if (view2.chesspiece?.bowl != null)
+                        {
+                            GamePlayArea.puzzleTileTable.OnNotifyResult(view2.chesspiece.bowl, 0);
+                            view2.chesspiece.bowl = null;
+                        }
+                        else if (view2.CurrState == TileState.Fill || view2.CurrState == TileState.Error)
+                        {
+                            GamePlayArea.puzzleTileTable.OnNotifyResult(new Bowl { letter = view2.chesspiece?.letter }, 0);
+                        }
+
+                        if (view2.CurrState != TileState.Default)
+                        {
+                            BowlView targetBowlView = GamePlayArea.puzzleTileTable.GridList.FirstOrDefault(b => b.letter == view2.chesspiece.letter);
+                            if (targetBowlView != null) 
+                            {
+                                Bowl rb = targetBowlView.bowl;
+                                view2.chesspiece!.bowl = rb;
+                                GamePlayArea.puzzleTileTable.OnNotifyResult(rb, 1); 
+                                GamePlayArea.puzzleTileTable.OnNotifyResult(rb, 2); 
+                            }
+                        }
+
+                        if (view2.CurrState is not TileState.Default and not TileState.Success)
+                            GamePlayArea.AddCompleteCount(view2);
+
+                        if (view2.chesspiece?.bowl != null)
+                        {
+                            view2._isGoldLeaf = view2.chesspiece.bowl.isGoldLeaf;
+                        }
+
+                        view2.SetTileState(TileState.Success, false);
+                    }
+                    if (view2.chesspiece != null && view2.chesspiece.hasLeaf)
+                    {
+                        view2.isPendingLeafFlight = true;
+                        view2.chesspiece.hasLeaf = false; 
+                        ChessStageController.Instance.CurrStageData.CollectedLeaves++;
+                    }
+                    mainGroupViews.Add(view2);
+                    selectedPuzzle.Append(view2.chesspiece?.letter);
+                }
+                handledIds.Add(targetGroup.id);
+            }
+
+            List<List<ChessView>> fallbackCorrectGroups = new List<List<ChessView>>();
+            List<List<ChessView>> fallbackErrorGroups = new List<List<ChessView>>(); 
+            if (!previouslyCompletedIds.Contains(targetGroup.id))
+            {
+                fallbackCorrectGroups.Add(mainGroupViews);
+            }
+
+            foreach (var kvp in friendGroups)
+            {
+                foreach (PhraseGroup group in kvp.Value)
+                {
+                    if (handledIds.Contains(group.id)) continue;
+                    if (previouslyCompletedIds.Contains(group.id)) continue;
+
+                    bool groupSuccess = group.chesspieces.All(p => GridList.TryGetValue((p.row, p.col), out ChessView v) && v.Correct);
+                    bool hasIceInFriendGroup = group.chesspieces.Any(p => GridList.TryGetValue((p.row, p.col), out ChessView v) && v.chesspiece.hasIce);
+                    if (!groupSuccess || hasIceInFriendGroup) continue;
+
+                    selectedPuzzle.Clear();
+                    List<ChessView> friendViews = new List<ChessView>();
+
+                    group.chesspieces.ForEach(g =>
+                    {
+                        if (GridList.TryGetValue((g.row, g.col), out ChessView v))
+                        {
+                            if (v.CurrState != TileState.Success)
+                            {
+                                if (v.chesspiece.bowl != null) GamePlayArea.puzzleTileTable.OnNotifyResult(v.chesspiece.bowl, 2);
+                                v.SetTileState(TileState.Success, false);
+                            }
+                            if (v.chesspiece.hasLeaf)
+                            {
+                                v.isPendingLeafFlight = true;
+                                v.chesspiece.hasLeaf = false;
+                                ChessStageController.Instance.CurrStageData.CollectedLeaves++;
+                            }
+                            friendViews.Add(v); 
+                        }
+                        selectedPuzzle.Append(g.letter);
+                    });
+                    fallbackCorrectGroups.Add(friendViews);
+                    handledIds.Add(group.id);
+                }
+            }
+
+            yield return PlayGroupSuccessSequence(fallbackCorrectGroups, fallbackErrorGroups);
+            
+            // 🌟 修复 4：兜底分支的防乱跳保护。同样，如果光标本就在别处看戏，它不需要挪窝。
+            if (selecteTile == null || selecteTile.CurrState == TileState.Success || selecteTile.CurrState == TileState.Default)
+            {
+                if (mainGroupViews.Count > 0) selecteTile = mainGroupViews.Last();
+                SearchNextTile();
+            }
+            
+            EventDispatcher.instance.TriggerChangeTopRaycast(true);
+            IsBlockInput = false;
+        }
+    }
     /// <summary>
     /// 是否已经提示过
     /// </summary>
@@ -368,6 +728,11 @@ public class ChessboardGrid : MonoBehaviour
     // 处理点击设置字的操作
     public IEnumerator HandleBlowViewState(BowlView puzzle)
     {
+        if (selecteTile != null && selecteTile.CurrState == TileState.Success)
+        {
+            yield break; // 直接丢弃本次非法点击
+        }
+        
         if (puzzle.bowl.status == 0)
             yield return SetPuzzleBoardState(puzzle);
         else
@@ -518,7 +883,7 @@ public class ChessboardGrid : MonoBehaviour
                 .Where(v => v != null)
                 .ToList();
             
-            if (chessViews.All(v => v.CurrState == TileState.Success || 
+            if (chessViews.All(v => (v.CurrState == TileState.Success && v.IsOK) || 
                                     correctGroups.Any(cg => cg.Contains(v)))) continue;      
             
             // 2. 只要有空格（未填）→ 全部正常色 + 跳过
@@ -708,22 +1073,22 @@ public class ChessboardGrid : MonoBehaviour
                 // StringBuilder sb = new StringBuilder();
                 // foreach (var v in viewsInGroup) sb.Append(v.Answer);
                 // 🌟 无条件处理花朵（破冰和花朵各自独立）
-                bool hasBloomingFlower = ProcessFlowerBlooming(viewsInGroup);
-                
-                bool hasIceBroken = BreakAdjacentIce(viewsInGroup);
-                bool hasDeadlockIceBroken = false;
-                if (!hasIceBroken)
-                {
-                    hasDeadlockIceBroken = CheckAndBreakDeadlockIce();
-                }
-                if (hasDeadlockIceBroken) hasIceBroken = true;
-             
-             
-                // 如果有花朵，等待花朵绽放动画播完，再进行后续的闪光框和飘分！
-                if (hasBloomingFlower || hasIceBroken)
-                {
-                    yield return new WaitForSeconds(0.6f); 
-                }
+                // bool hasBloomingFlower = ProcessFlowerBlooming(viewsInGroup);
+                //
+                // bool hasIceBroken = BreakAdjacentIce(viewsInGroup);
+                // bool hasDeadlockIceBroken = false;
+                // if (!hasIceBroken)
+                // {
+                //     hasDeadlockIceBroken = CheckAndBreakDeadlockIce();
+                // }
+                // if (hasDeadlockIceBroken) hasIceBroken = true;
+                //
+                //
+                // // 如果有花朵，等待花朵绽放动画播完，再进行后续的闪光框和飘分！
+                // if (hasBloomingFlower || hasIceBroken)
+                // {
+                //     yield return new WaitForSeconds(0.6f); 
+                // }
                 // ==========================================
                 // 【正确表现】：底框闪烁、瞬间放大、喷发粒子
                 // ==========================================
@@ -855,11 +1220,29 @@ public class ChessboardGrid : MonoBehaviour
                         });
                 }
                 yield return new WaitForSeconds(0.3f);
-                if (currentComboInSystem >= 2)
+                // 🌟 【重构点】：在能量爆发的高潮，触发周围的冰块碎裂和花朵绽放！
+                bool hasBloomingFlower = ProcessFlowerBlooming(viewsInGroup);
+                bool hasIceBroken = BreakAdjacentIce(viewsInGroup);
+                bool hasDeadlockIceBroken = false;
+            
+                if (!hasIceBroken)
+                {
+                    hasDeadlockIceBroken = CheckAndBreakDeadlockIce();
+                }
+                if (hasDeadlockIceBroken) hasIceBroken = true;
+
+                // 如果有冰块破碎或花朵绽放，稍微延长等待时间，让附加特效飞一会儿
+                if (hasBloomingFlower || hasIceBroken)
+                {
+                    yield return new WaitForSeconds(0.25f); 
+                }
+                
+                if (currentComboInSystem >= 2 && !hasPlayedComboSoundThisChain)
                 {
                     // ⚠️ 请将 "ComboHit" 替换为你工程中的真实连击音效名称
                     // 如果你有不同阶段的连击音效，也可以写成：$"ComboHit_{currentComboInSystem}"
-                    AudioManager.Instance.PlaySoundEffect("ComboHit"); 
+                    AudioManager.Instance.PlaySoundEffect("ComboHit",0,1); 
+                    hasPlayedComboSoundThisChain = true; // 马上上锁，在本次连击持续时间内绝对不再播
                 }
         }
         // ==========================================
@@ -1191,15 +1574,6 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
    /// - C4 (CoordinateScore): 【绝对视觉归位】大局已定后，光标无条件、强制吸附到选定词组最左上方 (视觉序最小) 的空格！彻底抹杀因抄近道而落点在交叉点的 Bug！
    /// =========================================================================================
    /// </summary>
-/// <summary>
-    /// 核心算法：基于场景梯队与严格决策树的智能寻路引擎（流向防扭转 + L型寻顶版）
-    /// </summary>
-   /// <summary>
-    /// 核心算法：基于场景梯队与严格决策树的智能寻路引擎（横向距离优先版）
-    /// </summary>
-   /// <summary>
-    /// 核心算法：基于场景梯队与严格决策树的智能寻路引擎（绝对交叉优先 + 精确决策链版）
-    /// </summary>
     private ChessView GetBestNextTile(out PhraseGroup chosenGroup)
     {
         chosenGroup = null;
@@ -1277,7 +1651,7 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
                 (v.CurrState == TileState.None || v.CurrState == TileState.Error) &&
                 (!v.chesspiece.hasIce || v.iceLogicBroken)
             ).ToList();
-
+            
             int minEmptySpaces = emptyPiecesInEval.Count;
 
             int firstEmptyIndexInGroup = -1;
@@ -1288,7 +1662,19 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
             int candidateIndex = sortedPieces.FindIndex(p => p.Equals(candidateTile.chesspiece));
             bool isFirstEmptyInGroup = firstEmptyIndexInGroup != -1 && candidateIndex == firstEmptyIndexInGroup;
 
-            if (active打字组 != null && evalGroup == active打字组 && !isActiveGroupFull)
+            // 🌟 [层级 A2：词组级死路拦截] 
+            // 如果这个候选词组里，有任何一个格子被冰块冻住且尚未破冰，直接淘汰！
+            bool hasUnbrokenIceInGroup = sortedPieces.Any(p => 
+                GridList.TryGetValue((p.row, p.col), out var v) && 
+                v.chesspiece.hasIce && !v.iceLogicBroken
+            );
+            // 直接作为最高优先级的 if 判断，拦截梯队分配！
+            if (hasUnbrokenIceInGroup)
+            {
+                tier = 99; 
+                reason = "过滤：包含未破冰格子，死路拦截";
+            }
+            else if (active打字组 != null && evalGroup == active打字组 && !isActiveGroupFull)
             {
                 // [情况 A：当前主词未填满] 锁死顺延心流，防拐弯
                 int currentIndexInActive = active打字组.chesspieces.OrderBy(p => (100 - p.col) * 1000 + p.row).ToList().FindIndex(p => p.Equals(selecteTile.chesspiece));
@@ -1385,8 +1771,8 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
             chosenGroup = winner.EvalGroup;
         }
 
-        return winner?.View;
-    }
+       return winner?.View;
+   }
     /// <summary>
     /// 🌟 规范新增：事件驱动型全局树叶自适应刷新器
     /// 只有在开局、消除成功起飞、填满失败枯萎时，才会被精准调用一次！
@@ -1707,6 +2093,8 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
         GridList.Clear();
         TileErrorCounts.Clear(); // 🌟 清理错误记录
         LetterTilePool.ReturnAllObjectsToPool();
+        hasPlayedComboSoundThisChain = false;
+        IsBlockInput = false;
     }
 
     /// <summary>
@@ -1807,14 +2195,21 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
     /// 2. ChessPiece.Tip == false
     /// 的字块；若无满足条件的字块则返回 null。
     /// </summary>
+    /// <summary>
+    /// 在 GridList 中随机返回一个满足：
+    /// 1. 当前状态为 None
+    /// 2. ChessPiece.Tip == false
+    /// 的字块；若无满足条件的字块则返回 null。
+    /// </summary>
     public ChessView GetRandomNoneNonTipChess()
     {
-        // 0. 基础过滤
+        // 0. 基础过滤（只找空的、没被冻住的、自身没被提示过的）
         var candidates = GridList.Values
             .Where(v => v.CurrState == TileState.None &&
                         v.chesspiece is { tip: false } &&
                         !v.chesspiece.hasIce)
             .ToList();
+            
         if (candidates.Count == 0) return null;
 
         // 统一 helper：该格所属任意组存在 tip=true → 直接淘汰
@@ -1847,12 +2242,12 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
             .Where(x => x.info.group != null)
             .OrderByDescending(x => x.info.noneCount) // 剩余空格降序
             .ThenBy(x => x.info.group.direction == 1 ? x.view.Col : x.view.Row)
-            .FirstOrDefault();
+            .FirstOrDefault(); // 🌟 安全调用
 
         if (crossFirst != null) return crossFirst.view;
 
         // 2. 无交叉 → 同样剔 tip 组后排序
-        return candidates
+        var noCrossFirst = candidates
             .Where(v => GetChessGroups(v.Row, v.Col).Count() < 2 &&
                         !HasTipInAnyGroup(v.Row, v.Col))
             .Select(v => new
@@ -1874,8 +2269,14 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
             .Where(x => x.info.group != null)
             .OrderByDescending(x => x.info.noneCount)
             .ThenBy(x => x.info.group.direction == 1 ? x.view.Col : x.view.Row)
-            .First()
-            .view;
+            .FirstOrDefault(); // 🌟 修复点：将 First() 改为 FirstOrDefault()
+
+        if (noCrossFirst != null) return noCrossFirst.view;
+
+        // 🌟 3. 终极防崩溃兜底方案：
+        // 如果代码执行到这里，说明盘面上所有剩下的空格子，它们所在的成语都已经有被提示过的字了。
+        // 这时候我们放宽要求，无视 "HasTipInAnyGroup" 的限制，直接从最基础的 candidates 里随便挑一个返回给蝴蝶道具！
+        return candidates.OrderBy(x => Random.value).FirstOrDefault();
     }
     
     /// <summary>
@@ -2021,8 +2422,86 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
         }
         return hasBlooming;
     }
-    
-    
+        /// <summary>
+    /// 🌟 大厂规范重构：提示/蝴蝶道具独立核心填入与寻路驱动流水线
+    /// 完整解决：1. 下方字块未能同步消除扣除；2. 智能寻路引擎失效，光标无法自动跳转至下一个有效空格。
+    /// </summary>
+    public IEnumerator ExecuteHintFillFlow(ChessView targetTile)
+    {
+        if (targetTile == null) targetTile = selecteTile;
+        if (targetTile == null || GameOver) yield break;
+
+        // ------------------------------------------------------------------
+        // 流程一：安全回滚目标格子已存在的临时/错误字块
+        // ------------------------------------------------------------------
+        if (targetTile.CurrState == TileState.Fill || targetTile.CurrState == TileState.Error)
+        {
+            Bowl dummyBowl = targetTile.chesspiece.bowl ?? new Bowl { letter = targetTile.chesspiece.letter };
+            GamePlayArea.puzzleTileTable.OnNotifyResult(dummyBowl, 0); // 归还库存
+            targetTile.chesspiece.bowl = null;
+        }
+
+        // ------------------------------------------------------------------
+        // 流程二：双向绑定并彻底消除下方待填字盘中的对应字块
+        // ------------------------------------------------------------------
+        // 从字盘搜寻匹配当前格子正确答案、且未被用光的有效字块
+        BowlView matchingBowl = GamePlayArea.puzzleTileTable.GridList.FirstOrDefault(v => 
+            v.letter == targetTile.Answer && v.bowl.status == 0);
+
+        if (matchingBowl != null)
+        {
+            targetTile.SetPuzzle(matchingBowl.bowl); // 数据链绑定
+            GamePlayArea.puzzleTileTable.OnNotifyResult(matchingBowl.bowl, 1); // 第一步：发 1 模拟使用，扣除一个库存 (count--) / 变灰锁定
+            GamePlayArea.puzzleTileTable.OnNotifyResult(matchingBowl.bowl, 2); // 第二步：发 2 系统核验，若 count <= 0 则彻底从 GridList 卸载消除并回收
+        }
+        else
+        {
+            // 极端边界兜底：若外部字块因异常无库存，虚构一个匹配的Bowl资产进行静默消除，确保逻辑不卡死
+            Bowl fallbackBowl = new Bowl { letter = targetTile.Answer, status = 1, count = 0 };
+            targetTile.SetPuzzle(fallbackBowl);
+        }
+
+        // ------------------------------------------------------------------
+        // 流程三：物理状态转产与单格华丽粒子爆发
+        // ------------------------------------------------------------------
+        // 强制变更为绝对绿色的 Success 状态（此状态在 ChessView 中天然具备不可点击、不可撤回权）
+        targetTile.SetTileState(TileState.Success, false);
+        
+        // 唤醒单格常驻绿色底板、Q弹缩放及完成粒子爆发
+        targetTile.PlaySuccessAnimation(0.5f, () => {
+            targetTile.UpdateTile(true);
+        });
+        targetTile.PlayHintShiny(5f);
+        // ------------------------------------------------------------------
+        // 流程四：强控始发锚点，规整时序合流判定
+        // ------------------------------------------------------------------
+        // 必须让寻路引擎知道当前触发成功的始发格子是谁
+        selecteTile = targetTile;
+
+        List<List<ChessView>> correctGroups = new List<List<ChessView>>();
+        List<List<ChessView>> errorGroups = new List<List<ChessView>>();
+        
+        // 检查本次提示填入是否恰好促成了某个或多个成语词组的“大满贯”通关
+        yield return CheckSuccessful(targetTile, correctGroups, errorGroups);
+        
+        // ------------------------------------------------------------------
+        // 流程五：驱动智能寻路引擎，强制执行下一光标重定向自动跳转
+        // ------------------------------------------------------------------
+        if (correctGroups.Count > 0)
+        {
+            // 触发了成语整组通关，合流进入华丽闪光包裹框、加分、飞叶子、碎冰机制
+            yield return PlayGroupSuccessSequence(correctGroups, errorGroups);
+        }
+        else
+        {
+            // 未触发整组通关，CheckSuccessful 内部在 else 块虽有寻路，
+            // 但为了对抗多线程及物理缓动迟滞，此处显式强控进行二次终审重定向跳转
+            // SearchNextTile();
+        }
+
+        yield return null;
+        yield return CheckCompleted();
+    }
     
      #region 金箔相关逻辑
     

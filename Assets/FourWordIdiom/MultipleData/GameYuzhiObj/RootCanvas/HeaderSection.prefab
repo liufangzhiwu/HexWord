@@ -1468,6 +1468,7 @@ MonoBehaviour:
   SetBtn: {fileID: 5673532709782126288}
   BackBtn: {fileID: 9012465876597540794}
   centerLayoutGroup: {fileID: 4845236352661089388}
+  middleLayoutGroup: {fileID: 6136270707379810612}
   ShopBtn: {fileID: 4927206535414759359}
   GoldImage: {fileID: 7992085125228282348}
   Goldtxt: {fileID: 6267269574116299687}
@@ -1487,7 +1488,7 @@ MonoBehaviour:
   LevelPuzzleBtn: {fileID: 5630930173523307680}
   pauseBtn: {fileID: 1916382787631545778}
   gameTimeTxt: {fileID: 2112180333509760252}
-  redTimeBg: {fileID: 3461762246917076080}
+  gameTimeBg: {fileID: 3461762246917076080}
   pupaObj: {fileID: 3301680741078807852}
   pupaProgressBar: {fileID: 6736838406702467322}
   _pupaCompleteEffectNode: {fileID: 7899560695894817057}

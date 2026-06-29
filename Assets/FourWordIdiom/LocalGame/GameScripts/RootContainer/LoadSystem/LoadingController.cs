@@ -72,7 +72,6 @@ public class LoadingController : MonoBehaviour
     private IEnumerator InitBg()
     {
         IsLocalDataNull = GameDataManager.Instance.UserData.LocalDataIsNull();
-        GameDataManager.Instance.LoadPlayerProfile();
         this.transform.GetComponent<Image>().color = Color.black;
         yield return AssetBundleLoader.SharedInstance.LoadAtlas(
             "ui_theme",

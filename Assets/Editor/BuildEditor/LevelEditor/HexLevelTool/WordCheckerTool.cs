@@ -9,7 +9,7 @@ using System.Linq;
 public class WordCheckerTool : EditorWindow
 {
     // 文件路径配置
-    private static string bankWordsPath = "Assets/FourWordIdiom/MultipleData/StageDatas/GameInfo/ChinSimWordBan.txt";
+    private static string bankWordsPath = "Assets/FourWordIdiom/MultipleData/StageDatas/Localization/ChineseSimplified/config_wordBan.txt";
     private static string stagesFolderPath = "Assets/FourWordIdiom/MultipleData/StageDatas/StageInfos/chineseStage";
     private static string outputPath = "Assets/MissingWordsReport.txt";
 

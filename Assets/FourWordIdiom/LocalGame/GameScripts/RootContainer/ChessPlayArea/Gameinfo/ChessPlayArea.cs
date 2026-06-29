@@ -152,7 +152,7 @@ public class ChessPlayArea : UIWindow
         }
         if (_pupaTrailPrefab != null) 
         {
-            _pupaTrailPool = new ObjectPool(_pupaTrailPrefab, ObjectPool.CreatePoolContainer(transform,"pupaTrailPool"), 1, PoolBehaviour.GameObject);
+            _pupaTrailPool = new ObjectPool(_pupaTrailPrefab, ObjectPool.CreatePoolContainer(transform,"pupaTrailPool"), 3, PoolBehaviour.GameObject);
         }
         else 
         {
@@ -168,7 +168,7 @@ public class ChessPlayArea : UIWindow
         }
         if (_zenCorrectTrailPrefab != null)
         {
-            _zenCorrectTrailPool = new ObjectPool(_zenCorrectTrailPrefab, ObjectPool.CreatePoolContainer(transform,"zenCorrectTrailPool"), 1, PoolBehaviour.GameObject);
+            _zenCorrectTrailPool = new ObjectPool(_zenCorrectTrailPrefab, ObjectPool.CreatePoolContainer(transform,"zenCorrectTrailPool"), 3, PoolBehaviour.GameObject);
         }
         else 
         {
@@ -240,12 +240,11 @@ public class ChessPlayArea : UIWindow
         UpdateUI();
         _remainingTime = CurrStageData.RemainingTime;
         GameCoreManager.Instance.PanelState = PanelState.GamePingPanel;
+        EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
         EventDispatcher.instance.OnCheckShowChessTutorial += CheckShowChessTutorialEvent;
         EventDispatcher.instance.OnAutoPassLevel += AutoPassLevel;
         // 👇 新增：监听分数变化事件，并初始化当前分数
         EventDispatcher.instance.OnChessScoreChanged += OnChessScoreChanged;
-        EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
-        
         _lastZenScore = ChessStageController.Instance.CurrentTotalScore;
         _zenScoreText.text = _lastZenScore.ToString();
         
@@ -268,7 +267,6 @@ public class ChessPlayArea : UIWindow
     }
     #endregion
     #region 计时与生命周期更新
-    
     /// <summary>
     /// 🌟 核心拦截器：检查是否有阻挡计时的弹窗，或者广告正在播放
     /// </summary>
@@ -289,7 +287,6 @@ public class ChessPlayArea : UIWindow
         
         return isPopShowing || isAdPlaying;
     }
-    
     private void Update()
     {
         // 防抖：限制单帧最大时间流逝为 0.5 秒，防止切后台回来瞬间蒸发大量时间
@@ -348,10 +345,11 @@ public class ChessPlayArea : UIWindow
         if (ChessStageController.Instance.PuzzleComboCount > 0)
         {
             ChessStageController.Instance.CheckAndResetComboOnIdle();
-            float comboProgress = ChessStageController.Instance.GetComboTimeProgress();
+            // float comboProgress = ChessStageController.Instance.GetComboTimeProgress();
             if (ChessStageController.Instance.PuzzleComboCount <= 0)
             {
                 if (_comboScreenFX != null) _comboScreenFX.SetActive(false);
+                if (chessboardGrid != null) chessboardGrid.hasPlayedComboSoundThisChain = false;
             }
         }
         if (ChessStageController.Instance.PuzzleComboCount <= 0)
@@ -360,6 +358,7 @@ public class ChessPlayArea : UIWindow
             {
                 _comboScreenFX.SetActive(false);
             }
+            if (chessboardGrid != null) chessboardGrid.hasPlayedComboSoundThisChain = false;
         }
     }
     /// <summary>
@@ -397,6 +396,7 @@ public class ChessPlayArea : UIWindow
         if (hasLevelWords && !PuzzleBtn.gameObject.activeSelf)
         {
             PuzzleBtn.gameObject.SetActive(true);
+            PuzzleBtn.interactable = true;
             CanvasGroup pbcg = PuzzleBtn.GetComponent<CanvasGroup>();
             if (pbcg != null)
             {
@@ -486,8 +486,8 @@ public class ChessPlayArea : UIWindow
             CompCount.gameObject.SetActive(false);
             // CompCost.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
             // CompCost.gameObject.SetActive(true);
-            compAdd.gameObject.SetActive(true);
-            compText.gameObject.SetActive(false);
+            // compAdd.gameObject.SetActive(true);
+            // compText.gameObject.SetActive(false);
         }
 
         // Transform HintCost = HitsBtn.transform.GetChild(0);
@@ -507,8 +507,8 @@ public class ChessPlayArea : UIWindow
             HintCount.gameObject.SetActive(false);
             // HintCost.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
             // HintCost.gameObject.SetActive(true);
-            hintText.gameObject.SetActive(false);
-            hintAdd.gameObject.SetActive(true);
+            // hintText.gameObject.SetActive(false);
+            // hintAdd.gameObject.SetActive(true);
         }
     }
     #endregion
@@ -519,13 +519,12 @@ public class ChessPlayArea : UIWindow
         _hasTriggeredHintReminderThisLevel = false;
         _isStuckTimerRunning = false;
         _stuckTimer = 0f;
-        
+    
         //清理一下棋盘
         chessboardGrid.Clear();
         puzzleTileTable.Clear();
         yield return new WaitForEndOfFrame();
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
-        
         
         IsClickAuto = false;
         // ==========================================
@@ -693,23 +692,28 @@ public class ChessPlayArea : UIWindow
         //     gotoNext = true;
         // }
         // yield return new WaitUntil(() => gotoNext);
-        ChessStageController.Instance.CurLevelMode= ChessStageController.Instance.GetLevelDifficultyMode(CurrStageData.StageId);
-        
-        switch (ChessStageController.Instance.CurLevelMode)
+        if (ChessStageController.Instance.IsFirstEnterStage)
         {
-            case LevelModes.Normal:
-                break;
-            case LevelModes.Hard:
-                SystemManager.Instance.ShowPanel(PanelType.HardView);
-                yield return new WaitForSeconds(0.8f);
-                SystemManager.Instance.HidePanel(PanelType.HardView);
-                break;
-            case LevelModes.ExtraHard:
-                SystemManager.Instance.ShowPanel(PanelType.HardView);
-                yield return new WaitForSeconds(0.8f);
-                SystemManager.Instance.HidePanel(PanelType.HardView);
-                break;
+            ChessStageController.Instance.CurLevelMode =
+                ChessStageController.Instance.GetLevelDifficultyMode(CurrStageData.StageId);
+
+            switch (ChessStageController.Instance.CurLevelMode)
+            {
+                case LevelModes.Normal:
+                    break;
+                case LevelModes.Hard:
+                    SystemManager.Instance.ShowPanel(PanelType.HardView);
+                    yield return new WaitForSeconds(0.8f);
+                    SystemManager.Instance.HidePanel(PanelType.HardView);
+                    break;
+                case LevelModes.ExtraHard:
+                    SystemManager.Instance.ShowPanel(PanelType.HardView);
+                    yield return new WaitForSeconds(0.8f);
+                    SystemManager.Instance.HidePanel(PanelType.HardView);
+                    break;
+            }
         }
+
         yield return null;
         // 检查一下是否存在错误的成功状态
         chessboardGrid.FixChessState();
@@ -1373,7 +1377,7 @@ public class ChessPlayArea : UIWindow
             //
             // _bannerLiziCache.SetActive(true);
             // effectPointTrans.gameObject.SetActive(true);
-            yield return new WaitForSeconds(1.5f);
+              yield return new WaitForSeconds(1.5f);
             // AudioManager.Instance.PlaySoundEffect("result_chest_open",0,1);
             // lightYeTrans.gameObject.SetActive(true);
             // effectPointTrans.gameObject.SetActive(false);
@@ -1420,7 +1424,7 @@ public class ChessPlayArea : UIWindow
         bool hasAnyFly = false;
         
         int curLeaves = ChessStageController.Instance.CurrStageData.CollectedLeaves;
-        bool isButterflyTaskFinished = ButterfliesManager.Instance.IsAllButterfliesCollected();
+        bool isButterflyTaskFinished = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining();
         
         // Debug.Log($"<color=#FF5500>[飞行排查] 2. 当前树叶: {curLeaves}, 蝴蝶任务是否完成: {isButterflyTaskFinished}</color>");
         HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
@@ -1531,8 +1535,6 @@ public class ChessPlayArea : UIWindow
             return;
         }
 
-        bool useCoins = false;
-
         if(toolInfo.count <= 0)
         {
             GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
@@ -1557,19 +1559,9 @@ public class ChessPlayArea : UIWindow
         {
             usetoolCount++;
         }
-
-        if (useCoins)
-        {
-            // 更新道具
-            GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, false, true, "购买道具");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1, "购买道具");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用");
-        }
-        else
-        {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用", GetCurrentSelectedPhrase());
-            InitToolUI();
-        }
+        chessboardGrid.IsBlockInput = true;
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用", GetCurrentSelectedPhrase());
+        InitToolUI();
 
         AudioManager.Instance.PlaySoundEffect("ItemUSe02");
         // 实现业务
@@ -1679,7 +1671,6 @@ public class ChessPlayArea : UIWindow
             return;
         }
         
-        bool useCoins = false;
         if(toolInfo.count <= 0)
         {
             GetItemScreen.limitRewordType = LimitRewordType.SingleWordTipsttool;
@@ -1702,19 +1693,10 @@ public class ChessPlayArea : UIWindow
             usetoolCount++;
             ChessStageController.Instance.UseTipToolCount++;
         }
+        chessboardGrid.IsBlockInput = true;
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用",GetCurrentSelectedPhrase());
+        InitToolUI();
         
-        if (useCoins)
-        {
-            // 更新道具
-            GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, false, true, "购买道具");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1, "道具购买");
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用");
-        }
-        else
-        {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用",GetCurrentSelectedPhrase());
-            InitToolUI();
-        }
         // chessboardGrid.SetSelectTip();
         
         AudioManager.Instance.PlaySoundEffect("ItemUSe01");
@@ -1780,14 +1762,10 @@ public class ChessPlayArea : UIWindow
         
         // 3. 到达目标！销毁粒子
         _lightParticlePool.ReturnObjectToPool(particle.GetComponent<PoolObject>());
-        
-        // 4. 显示提示字
-        targetTile.SetTipMessage();
-        
-        // 5. 触发边缘高亮动画
-        StartCoroutine(  targetTile.PlayRevealAnimation(targetTile.transform));
+        yield return StartCoroutine(chessboardGrid.ExecuteHintFillFlow(targetTile));
         
         EventDispatcher.instance.TriggerChangeTopRaycast(true);
+        chessboardGrid.IsBlockInput = false;
     }
     /// <summary>
     /// 生成二阶贝塞尔曲线路径点 (完美适配任意分辨率和Canvas缩放)
@@ -1939,13 +1917,13 @@ public class ChessPlayArea : UIWindow
         chessboardGrid.Clear();
         puzzleTileTable.Clear();
        
-        // if(EventDispatcher.instance != null)
-        // {
+        //if(EventDispatcher.instance != null)
+        {
             EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
             EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
             EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
             EventDispatcher.instance.OnChessScoreChanged -= OnChessScoreChanged;
-        //}
+        }
 
         if (EffectButterFlays.Count > 0)
         {
@@ -2022,6 +2000,10 @@ public class ChessPlayArea : UIWindow
         if (_comboScreenFX != null) 
         {
             _comboScreenFX.SetActive(false);
+        }
+        if (chessboardGrid != null) 
+        {
+            chessboardGrid.hasPlayedComboSoundThisChain = false;
         }
     }
     
@@ -2717,7 +2699,6 @@ public class ChessPlayArea : UIWindow
                 leafSlider.DOValue(targetSliderValue, 0.2f).SetEase(Ease.OutQuad).OnComplete(() => {
                     TriggerRewardNodeFeedback(curCollected);
                 });
-                TriggerRewardNodeFeedback(curCollected);
             });
         });
     }
@@ -2730,7 +2711,7 @@ public class ChessPlayArea : UIWindow
         GameObject targetNode = null;
         int zenBonus = 0;
 
-        bool isButterflyTaskFinished = ButterfliesManager.Instance.IsAllButterfliesCollected();
+        bool isButterflyTaskFinished = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining();
         
         if (currentCount == 2) targetNode = leafGold;
         else if (currentCount == 5)
@@ -2753,16 +2734,17 @@ public class ChessPlayArea : UIWindow
         // ① 大厂标配 Q 弹缓动：通过 Punch 产生极强的肉感和果冻敲击感
         targetNode.transform.DOKill(true);
         targetNode.transform.SetAsLastSibling(); // 提层防遮挡
-        targetNode.transform.DOPunchScale(new Vector3(0.45f, 0.45f, 0f), 0.55f, 12, 0.5f);
+        // targetNode.transform.DOPunchScale(new Vector3(0.45f, 0.45f, 0f), 0.55f, 12, 0.5f);
 
         // ② 子物体粒子爆发
-        var pss = targetNode.GetComponentsInChildren<ParticleSystem>(true);
-        foreach (var ps in pss)
-        {
-            ps.gameObject.SetActive(true);
-            ps.Clear(true);
-            ps.Play(true);
-        }
+        // var pss = targetNode.GetComponentInChildren<ParticleSystem>(true);
+        var pss = targetNode.transform.GetChild(0);
+        // foreach (var ps in pss)
+        // {
+        pss.gameObject.SetActive(true);
+        // pss.Clear();
+        // pss.Play();
+        // }
 
         // ③ 禅意分平滑发放
         // if (zenBonus > 0)
@@ -2812,11 +2794,11 @@ public class ChessPlayArea : UIWindow
         if (leafImg != null)
         {
             int skinIndex = (ChessStageController.Instance.LeafGenCounter % 4) + 1; // 1, 2, 3 循环
-            // 从你的图集Atlas或AdvancedBundleLoader中加载对应的叶子切图
+            // 从你的图集Atlas或AssetBundleLoader中加载对应的叶子切图
             leafImg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas($"leaf_skin_0{skinIndex}");
         }
 
-        bool isButterflyTaskFinished = ButterfliesManager.Instance.IsAllButterfliesCollected();
+        bool isButterflyTaskFinished = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining();
         if (leafPupa != null) leafPupa.SetActive(!isButterflyTaskFinished);
         if (leafZenReplacement != null) leafZenReplacement.SetActive(isButterflyTaskFinished);
         
@@ -2829,8 +2811,9 @@ public class ChessPlayArea : UIWindow
                 node.transform.DOKill();
                 node.transform.localScale = Vector3.one;
                 // 默认强制停火子物体挂载的所有粒子，打扫干净战场
-                var pss = node.GetComponentsInChildren<ParticleSystem>(true);
-                foreach (var ps in pss) { ps.Stop(); ps.gameObject.SetActive(false); }
+                var pss = node.GetComponentInChildren<ParticleSystem>(true);
+                pss.Stop(); pss.gameObject.SetActive(false);
+                // foreach (var ps in pss) { ps.Stop(); ps.gameObject.SetActive(false); }
             }
         }
         int curLeaves = ChessStageController.Instance.CurrStageData.CollectedLeaves;

@@ -180,7 +180,7 @@ MonoBehaviour:
   Stagetxt: {fileID: 8001958750307638611}
   hardStageTable: {fileID: 3701007691449829327}
   extrahardStageTable: {fileID: 1641547331664095661}
-  ButterflyBtn: {fileID: 182671443543765833}
+  ButterflyBtn: {fileID: 9130990164886510911}
   ModeBtn: {fileID: 5163577584110021461}
   ModeIndicator: {fileID: 5484725950398969954}
   ZenRankBtn: {fileID: 8042502132340368905}
@@ -3792,7 +3792,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 3029033198017642310}
+  - {fileID: 6212284942246285616}
   - {fileID: 3192899742595710172}
   - {fileID: 3875728220608841709}
   m_Father: {fileID: 8291320748782769776}
@@ -5426,7 +5426,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!1001 &5057963584842795464
+--- !u!1001 &4183367473649117118
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -5447,7 +5447,7 @@ PrefabInstance:
     - target: {fileID: 2843265663438443059, guid: 553e2789b62711749b5a345f0faa97f6,
         type: 3}
       propertyPath: m_Name
-      value: ButterfalyGraden
+      value: ButterflyGarden
       objectReference: {fileID: 0}
     - target: {fileID: 7798042885103711886, guid: 553e2789b62711749b5a345f0faa97f6,
         type: 3}
@@ -5554,11 +5554,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 553e2789b62711749b5a345f0faa97f6, type: 3}
---- !u!114 &182671443543765833 stripped
+--- !u!224 &6212284942246285616 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 7798042885103711886, guid: 553e2789b62711749b5a345f0faa97f6,
+    type: 3}
+  m_PrefabInstance: {fileID: 4183367473649117118}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9130990164886510911 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4952136190974376577, guid: 553e2789b62711749b5a345f0faa97f6,
     type: 3}
-  m_PrefabInstance: {fileID: 5057963584842795464}
+  m_PrefabInstance: {fileID: 4183367473649117118}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
@@ -5566,12 +5572,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!224 &3029033198017642310 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 7798042885103711886, guid: 553e2789b62711749b5a345f0faa97f6,
-    type: 3}
-  m_PrefabInstance: {fileID: 5057963584842795464}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7622930110873867478
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -390,15 +390,15 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// </summary>
     public int GetScoreThresholdForPupa()
     {
-        //// 1. 获取当前正在玩的蝶园里的所有蝴蝶配置
-        // List<ButterflyInfo> currentGardenButterflies = GetCurrentGardenButterflies();
-        //
-        // // 2. 检查玩家收集的蝴蝶列表里，是否包含了当前蝶园里的任意一只
-        // bool hasUnlockedAnyInCurrentGarden = currentGardenButterflies.Any(b => 
-        //     GameDataManager.Instance.ButterflyData.butterflies.Contains(b.Id));
+        // 1. 获取当前正在玩的蝶园里的所有蝴蝶配置
+         List<ButterflyInfo> currentGardenButterflies = GetCurrentGardenButterflies();
+        
+         // 2. 检查玩家收集的蝴蝶列表里，是否包含了当前蝶园里的任意一只
+         bool hasUnlockedAnyInCurrentGarden = currentGardenButterflies.Any(b => 
+             GameDataManager.Instance.ButterflyData.butterflies.Contains(b.Id));
         
         // 3. 没解锁过就是 60 分，解锁过就是 120 分
-        return GameDataManager.Instance.ButterflyData.currPupa > 10 ? pupaConfig.LaterPupa : pupaConfig.FirstPupa;
+        return hasUnlockedAnyInCurrentGarden ? pupaConfig.LaterPupa : pupaConfig.FirstPupa;
     }
     /// <summary>
     /// 判断当前关卡是否有资格展示“圆形蝶蛹进度条”
@@ -407,21 +407,14 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     public bool CanShowPupaProgressBarThisLevel(int optimalTotalScore)
     {
         if (!IsOpen) return false;
-        
+        if (IsPupaSufficientForAllRemaining()) return false;
         int threshold = GetScoreThresholdForPupa();
         return optimalTotalScore >= threshold;
     }
     
     public int GetStageLimitTimer()
     {
-        int seconds=pupaConfig?.TimeLimit ?? 300;
-
-        if (seconds <= 0)
-        {
-            seconds = 300;
-        }
-        
-        return seconds;
+        return pupaConfig?.TimeLimit ?? 300;
     }
     /// <summary>
     /// 判断是否可以展示蚕蛹
@@ -429,6 +422,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// <returns></returns>
     public bool CanObtainedPupa()
     {
+        if (IsPupaSufficientForAllRemaining()) return false;
         //return true;
         int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
         switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
@@ -616,14 +610,57 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     }
     
     /// <summary>
-    /// 检查是否游戏内【所有】配置的蝴蝶都已经收集完毕
+    /// 蛹是否已经满足解锁所有剩余蝴蝶的需求（包括全解锁的情况）
     /// </summary>
-    public bool IsAllButterfliesCollected()
+    public bool IsPupaSufficientForAllRemaining()
     {
         // 防御性判断：如果配置表还没加载完，先默认没收集满
         if (ButterfliesInfo == null || ButterfliesInfo.Count == 0) return false;
         
         // 判断配置表里所有的蝴蝶ID，是否都在玩家的已收集列表中
+        if (ButterfliesInfo.All(b => GameDataManager.Instance.ButterflyData.butterflies.Contains(b.Id)))
+        {
+            return true;
+        }
+        
+        int totalNeeded = GetTotalPupaNeededForRemainingButterflies();
+        return GameDataManager.Instance.ButterflyData.currPupa >= totalNeeded;
+    }
+    
+    private int _cachedTotalPupaNeeded = -1;
+    private int _cachedPupaCount = -1;
+    private int _cachedButterflyCount = -1;
+    
+    /// <summary>
+    /// 计算解锁所有剩余蝴蝶还需要的蛹数总和（跨所有蝶园）
+    /// </summary>
+    private int GetTotalPupaNeededForRemainingButterflies()
+    {
+        if (ButterfliesInfo == null || ButterfliesGrow == null) return 0;
+        int currPupa = GameDataManager.Instance.ButterflyData.currPupa;
+        int currButterflyCount = GameDataManager.Instance.ButterflyData.butterflies.Count;
+
+        if (_cachedPupaCount == currPupa && _cachedButterflyCount == currButterflyCount)
+            return _cachedTotalPupaNeeded;
+
+        int totalNeeded = 0;
+        foreach (var butterfly in ButterfliesInfo)
+        {
+            if (GameDataManager.Instance.ButterflyData.butterflies.Contains(butterfly.Id))
+                continue;
+            ButterflyGrow grow = ButterfliesGrow.Find(g => g.Id == butterfly.SceneID);
+            if (grow != null)
+                totalNeeded += grow.Count;
+        }
+        _cachedTotalPupaNeeded = totalNeeded;
+        _cachedPupaCount = currPupa;
+        _cachedButterflyCount = currButterflyCount;
+        return totalNeeded;
+    }
+    
+    public bool IsAllButterfliesCollected()
+    {
+        if (ButterfliesInfo == null || ButterfliesInfo.Count == 0) return false;
         return ButterfliesInfo.All(b => GameDataManager.Instance.ButterflyData.butterflies.Contains(b.Id));
     }
     #endregion

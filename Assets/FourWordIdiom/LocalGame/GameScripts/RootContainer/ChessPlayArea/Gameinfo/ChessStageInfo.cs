@@ -20,7 +20,6 @@ public class PhraseGroup // phrase group
     public int quadrant; // 象限位置
     public List<Chesspiece> chesspieces; // 字块列表 
 }
-
 [Serializable]  
 public class Chesspiece: IEquatable<Chesspiece> //Chess piece
 {
@@ -1235,16 +1234,36 @@ public class ChessStageInfo
         // ==========================================
         // 1. 冰块玩法生成逻辑
         // ==========================================
-        if (ChessStageController.Instance.CheckIceMechanic(stageId, out _, out int iceDegree))
+        if (ChessStageController.Instance.CheckIceMechanic(stageId, out _, out int initialIceDegree))
         {
          
             var iceConfig = ChessStageController.Instance.IceConfig;
-            int m_ice = iceConfig.Degree.ContainsKey(iceDegree) ? iceConfig.Degree[iceDegree] : 0;
             int n_groups = _phraseGroups.Count;
-            int safeCount = n_groups - m_ice;
-            Debug.Log($"<color=#FFA500><b>[玩法数据源: 动态算法分配]</b></color> 关卡 {stageId} 触发冰块算法。计算难度级别: <b>{iceDegree}</b>，期望生成冰块: <b>{m_ice}</b>个，安全余量: {safeCount}组。");
+            int currentDegree = initialIceDegree;
+            int m_ice = 0;
+            int safeCount = 0;
+            // 👇 新增：难度降级循环验证
+            while (currentDegree >= 0)
+            {
+                m_ice = iceConfig.Degree.ContainsKey(currentDegree) ? iceConfig.Degree[currentDegree] : 0;
+                safeCount = n_groups - m_ice;
+
+                // 规则：若 n-M > 2 且配置数量大于0，则满足条件
+                if (safeCount > 2 && m_ice > 0)
+                {
+                    if (currentDegree != initialIceDegree)
+                    {
+                        Debug.Log($"<color=#FFA500>[冰块难度降级]</color> 初始难度 {initialIceDegree} 余量不足，已降级至难度 <b>{currentDegree}</b>，生成数量调整为 <b>{m_ice}</b>。");
+                    }
+                    break; // 满足条件，跳出降级循环
+                }
+                currentDegree--; // 不满足，尝试降级
+            }
+            if (currentDegree < 0) m_ice = 0; // 即使降到0也不行，彻底归零
+            Debug.Log($"<color=#FFA500><b>[玩法数据源: 冰块动态算法分配]</b></color> 关卡 {stageId} 触发冰块算法。计算难度级别: <b>{currentDegree}</b>(初始:{initialIceDegree})，期望生成冰块: <b>{m_ice}</b>个，安全余量: {safeCount}组。");
+    
             // 规则：若 n-M <= 2，不出现冰块
-            if (safeCount > 2 && m_ice > 0)
+            if (m_ice > 0)
             {
                 // 获取初始光标所在的成语
                 var cursorGroups = new HashSet<PhraseGroup>();
@@ -1283,29 +1302,8 @@ public class ChessStageInfo
                         g.chesspieces.Any(p => sel.chesspieces.Any(sp => sp.row == p.row && sp.col == p.col)));
                     if (!intersects)
                         selectedIceGroups.Add(g);
-                    
-                    // bool isCrossWithCursor = g.chesspieces.Any(p => cursorGroups.Any(cg => cg.chesspieces.Any(cp => cp.row == p.row && cp.col == p.col)));
-                    // if (isCrossWithCursor) continue; // 如果和光标组有任何交叉，直接跳过，不给它盖冰块
-
-                    // bool hasIntersection = false;
-                    // // 拿当前成语去跟已经选中的成语逐一比对坐标
-                    // foreach (var selected in selectedIceGroups)
-                    // {
-                    //     // 如果有任何一格的行和列完全重合，说明这两个成语交叉了
-                    //     if (g.chesspieces.Any(p => selected.chesspieces.Any(sp => sp.row == p.row && sp.col == p.col)))
-                    //     {
-                    //         hasIntersection = true;
-                    //         break;
-                    //     }
-                    // }
-                    //
-                    // // 只有完全不交叉的成语，才被选入冰块阵营
-                    // if (!hasIntersection)
-                    // {
-                    //     selectedIceGroups.Add(g);
-                    // }
                 }
-                // 2. 🌟 容错兜底：如果关卡太密（比如一共就3个成语挤在一起），第一轮选不够 m_ice 个，
+                // 2. 容错兜底：如果关卡太密（比如一共就3个成语挤在一起），第一轮选不够 m_ice 个，
                 // 那么第二轮放宽条件，允许交叉，把数量补齐，绝对不让游戏崩溃或少生成冰块
                 if (selectedIceGroups.Count < m_ice)
                 {
@@ -1342,26 +1340,46 @@ public class ChessStageInfo
                 }
                 // 🌟 [加在冰块生成逻辑大括号结束前的最后一行]
                 string icePieces = string.Join(", ", _chesspiece.Where(p => p.hasIce).Select(p => $"({p.row},{p.col})-{p.letter}"));
-                Debug.Log($"<color=#00FF00>[冰块生成-算法结束]</color> 关卡:{stageId} | 来源:<color=#FFA500>算法随机分配</color> | 难度:{iceDegree} | 目标:{m_ice}个 | 实际激活: [{icePieces}] ");
+                Debug.Log($"<color=#00FF00>[冰块生成-算法结束]</color> 关卡:{stageId} | 来源:<color=#FFA500>算法随机分配</color> | 最终难度:{currentDegree} | 目标:{m_ice}个 | 实际激活: [{icePieces}] ");
             }
-            else if (m_ice > 0)
+            else
             {
                 // 🌟 加上提示，让你在 Unity 控制台能直接看到原因！
-                Debug.Log($"<color=#FF0000>[冰块未生成]</color> 关卡:{stageId} | 词组总数 {n_groups} - 冰块数 {m_ice} = {safeCount} (<=2)。触发保护规则，不生成！");
+                Debug.Log($"<color=#FF0000>[冰块未生成]</color> 关卡:{stageId} | 词组总数 {n_groups}，即使降至0级也无法满足 safeCount > 2。触发绝对保护规则！");
             }
         }
         // ==========================================
         // 2. 花朵玩法生成逻辑
         // ==========================================
-        if (ChessStageController.Instance.CheckFlowerMechanic(stageId, out _, out int flowerDegree))
+        if (ChessStageController.Instance.CheckFlowerMechanic(stageId, out _, out int initialFlowerDegree))
         {
             var flowerConfig = ChessStageController.Instance.FlowerConfig;
-            int m_flower = flowerConfig.Degree.ContainsKey(flowerDegree) ? flowerConfig.Degree[flowerDegree] : 0;
             var defaultTiles = _chesspiece.Where(p => p.state == TileState.Default).ToList();
+            int m_flower = 0;
             int n_chars = defaultTiles.Count;
-            Debug.Log($"<color=#FFA500><b>[玩法数据源: 动态算法分配]</b></color> 关卡 {stageId} 触发花朵算法。计算难度级别: <b>{flowerDegree}</b>，期望生成花朵: <b>{m_flower}</b>个，当前全盘初始字: {n_chars}个。");
+            int currentDegree = initialFlowerDegree;
+            // 👇 新增：难度降级循环验证
+            while (currentDegree >= 0)
+            {
+                m_flower = flowerConfig.Degree.ContainsKey(currentDegree) ? flowerConfig.Degree[currentDegree] : 0;
+                
+                // 规则：若初始字 n - m > 3 且配置数量大于0，则满足条件
+                if (n_chars - m_flower > 3 && m_flower > 0)
+                {
+                    if (currentDegree != initialFlowerDegree)
+                    {
+                        Debug.Log($"<color=#FFA500>[花朵难度降级]</color> 初始难度 {initialFlowerDegree} 初始字不足，已降级至难度 <b>{currentDegree}</b>，生成数量调整为 <b>{m_flower}</b>。");
+                    }
+                    break;
+                }
+                currentDegree--;
+            }
+
+            if (currentDegree < 0) m_flower = 0;
+            Debug.Log($"<color=#FFA500><b>[玩法数据源: 花朵动态算法分配]</b></color> 关卡 {stageId} 触发花朵算法。计算难度级别: <b>{currentDegree}</b>(初始:{initialFlowerDegree})，期望生成花朵: <b>{m_flower}</b>个，当前全盘初始字: {n_chars}个。");
+            
             // 规则：若初始字 n - m <= 3，不出现花骨朵
-            if (n_chars - m_flower > 3 && m_flower > 0)
+            if (m_flower > 0)
             {
                 // 获取初始光标组
                 var cursorGroups = new HashSet<PhraseGroup>();
@@ -1403,7 +1421,7 @@ public class ChessStageInfo
                                     if (targetPiece != null) targetPiece.hasFlower = true;
                                 }
                             }
-                            // 🌟【核心修复】：同步更新主数据源 _chesspiece，确保能通过校验成功存入存档并渲染
+                            // 同步更新主数据源 _chesspiece，确保能通过校验成功存入存档并渲染
                             var hashPiece = _chesspiece.FirstOrDefault(cp => cp.row == p.row && cp.col == p.col);
                             if (hashPiece != null) hashPiece.hasFlower = true;
                    
@@ -1415,12 +1433,12 @@ public class ChessStageInfo
                 }
                 // 🌟 [加在花朵生成逻辑大括号结束前的最后一行]
                 string flowerPieces = string.Join(", ", _chesspiece.Where(p => p.hasFlower).Select(p => $"({p.row},{p.col})-{p.letter}"));
-                Debug.Log($"<color=#00FF00>[花朵生成-算法结束]</color> 关卡:{stageId} | 来源:<color=#FFA500>算法随机分配</color> | 难度:{flowerDegree} | 目标:{m_flower}个 | 实际激活: [{flowerPieces}] ");
+                Debug.Log($"<color=#00FF00>[花朵生成-算法结束]</color> 关卡:{stageId} | 来源:<color=#FFA500>算法随机分配</color> | 最终难度:{currentDegree} | 目标:{m_flower}个 | 实际激活: [{flowerPieces}] ");
             }
-            else if (m_flower > 0)
+            else 
             {
                 // 🌟 加上提示，让你在 Unity 控制台能直接看到原因！
-                Debug.LogWarning($"<color=#FF0000>[花朵未生成]</color> 关卡:{stageId} | 初始字数 {n_chars} - 需生成数 {m_flower} = {n_chars - m_flower} (<=3)。触发保护规则，不生成！");
+                Debug.LogWarning($"<color=#FF0000>[花朵未生成]</color> 关卡:{stageId} | 初始字数 {n_chars}，即使降至0级也无法满足 n_chars - m_flower > 3。触发绝对保护规则！");
             }
         }
         RemoveFlowerFromCursorGroup();

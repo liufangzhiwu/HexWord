@@ -377,7 +377,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         cloneRT.localScale = selfRT.localScale * 0.9f;
         clone.transform.position = selfRT.position;
     
-        AudioManager.Instance.PlaySoundEffect("GoldLeafFly",0,0.2f); // ⚠️ 请替换为金箔起飞真实音效名
+        AudioManager.Instance.PlaySoundEffect("GoldLeafFly",0,1); // ⚠️ 请替换为金箔起飞真实音效名
         
         Vector3 endWorld = TargetBtn.GetComponent<RectTransform>().position;
         Vector3 startPos = clone.transform.position;
@@ -453,7 +453,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (IsLocked || !PassDebounce()) return;   // 防抖
+        if (IsLocked || !PassDebounce() || ChessPlayArea.Instance.chessboardGrid.IsBlockInput) return;
         if (chesspiece.hasIce) return;
         ChessPlayArea.Instance?.NotifyPlayerInteraction();
         
@@ -663,5 +663,34 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             chesspiece.hasLeaf = false;
             _leafObj.SetActive(false);
         });
+    }
+    
+    /// <summary>
+    /// 触发单格子的持续扫光特效
+    /// </summary>
+    public void PlayHintShiny(float duration = 5f)
+    {
+        StartCoroutine(HandleShinyRoutine(duration));
+    }
+
+    private IEnumerator HandleShinyRoutine(float duration)
+    {
+        UIShiny shiny = GetComponentInChildren<UIShiny>(true);
+        if (shiny == null) yield break;
+
+        shiny.enabled = true;
+        shiny.Play(); 
+
+        // 核心防御：记录当前填入的字块数据，防止格子被对象池回收复用后依然在发光
+        var currentPiece = chesspiece;
+
+        yield return new WaitForSeconds(duration);
+
+        // 安全检查：确认格子没有被销毁且字块没有被替换
+        if (this != null && shiny != null && chesspiece != null && chesspiece.Equals(currentPiece))
+        {
+            shiny.enabled = false;
+            shiny.Stop(); 
+        }
     }
 }

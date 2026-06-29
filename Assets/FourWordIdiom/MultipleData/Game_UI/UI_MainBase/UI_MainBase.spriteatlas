@@ -129,6 +129,7 @@ SpriteAtlas:
     - 01415e3862d18e74389be35c42fbfffc: 21300000
     - 7f142c6849048424ab92ba65de748ffe: -8974891950757417909
     - ab153b784d36e2f49a9d7b0fc194ed14: 21300000
+    - 5d26bc8889cacb14eb6e850a91aa94e0: 21300000
     - eaac0398f2ddd8648a1a014c8a83446b: 21300000
     - 8ea8cfa8d33ab784695012c5bccc547e: 21300000
     - d544e5b8c6d5bde498ff9eb70b1f93f3: 21300000
@@ -243,6 +244,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 01415e3862d18e74389be35c42fbfffc, type: 3}
   - {fileID: -8974891950757417909, guid: 7f142c6849048424ab92ba65de748ffe, type: 3}
   - {fileID: 21300000, guid: ab153b784d36e2f49a9d7b0fc194ed14, type: 3}
+  - {fileID: 21300000, guid: 5d26bc8889cacb14eb6e850a91aa94e0, type: 3}
   - {fileID: 21300000, guid: eaac0398f2ddd8648a1a014c8a83446b, type: 3}
   - {fileID: 21300000, guid: 8ea8cfa8d33ab784695012c5bccc547e, type: 3}
   - {fileID: 21300000, guid: d544e5b8c6d5bde498ff9eb70b1f93f3, type: 3}
@@ -356,6 +358,7 @@ SpriteAtlas:
   - bing
   - countbg_0
   - time_icon
+  - UI_dieyuan
   - bowl_bg
   - UI_Icon_claim
   - UI_pause_di

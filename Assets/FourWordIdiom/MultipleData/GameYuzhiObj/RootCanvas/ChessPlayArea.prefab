@@ -5594,7 +5594,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &8177886334670234070
 RectTransform:
   m_ObjectHideFlags: 0
@@ -64424,7 +64424,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &4837258961459273062
 RectTransform:
   m_ObjectHideFlags: 0
@@ -84413,7 +84413,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2546386509361275938
 RectTransform:
   m_ObjectHideFlags: 0
@@ -114317,7 +114317,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5782513138999508954
 RectTransform:
   m_ObjectHideFlags: 0
@@ -114562,6 +114562,8 @@ MonoBehaviour:
     type: 3}
   selecteTile: {fileID: 0}
   pendingErrorTutorialTile: {fileID: 0}
+  hasPlayedComboSoundThisChain: 0
+  IsBlockInput: 0
 --- !u!225 &8134451096096346712
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -139440,7 +139442,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &8179698736791020141
 RectTransform:
   m_ObjectHideFlags: 0

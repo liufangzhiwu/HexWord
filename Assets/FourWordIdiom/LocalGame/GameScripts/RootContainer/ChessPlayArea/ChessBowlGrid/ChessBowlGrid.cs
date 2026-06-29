@@ -163,7 +163,7 @@ public class ChessBowlGrid : MonoBehaviour
     /// <param name="puzzle"></param>
     public void OnPuzzleSelected(BowlView puzzle)
     {
-        if (IsTutorialBlocking) return;
+        if (IsTutorialBlocking || GamePlayArea.chessboardGrid.IsBlockInput) return;
         StartCoroutine(GamePlayArea.chessboardGrid.HandleBlowViewState(puzzle));
     }
 
