@@ -42,7 +42,6 @@ namespace Middleware
             // StartCoroutine(ShowLoadingScreen());
             StartCoroutine(CheckNetworkConnection());
             
-            
             InitManagers();
         }
 
@@ -56,7 +55,7 @@ namespace Middleware
         {
             CreateAnalytic();
             yield return new WaitUntil(()=>Accounts.IsLogin);
-#if UNITY_EDITOR
+#if UNITY_EDITOR 
             CreateAd();
 #elif UNITY_OPENHARMONY||UNITY_huawei
             CreateAd();
@@ -65,11 +64,6 @@ namespace Middleware
 #endif
         }
 
-        // IEnumerator  ShowLoadingScreen()
-        // {
-        //     yield return new WaitForSeconds(2f);
-        //     LoadingScreen.gameObject.SetActive(true);
-        // }
 
         private void InitManagers()
         {

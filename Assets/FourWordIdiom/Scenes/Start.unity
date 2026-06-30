@@ -67382,6 +67382,7 @@ GameObject:
   - component: {fileID: 752339132}
   - component: {fileID: 752339133}
   - component: {fileID: 752339134}
+  - component: {fileID: 752339135}
   m_Layer: 0
   m_Name: Game
   m_TagString: Untagged
@@ -67470,7 +67471,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 570db12f7a7f582409c2d436ddc5b11d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  APIUrl: https://zen.test.mindwordplay.cn/api/
 --- !u!114 &752339131
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67541,6 +67541,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a600b6306aa25b44eb55bb3653a4d34e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &752339135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 752339123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64c9cb2637762294bbc7e60efc6a7d5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ButterfliesInfo: []
+  ButterfliesGrow: []
+  pupaConfig:
+    ZenBegin: 0
+    FirstPupa: 0
+    LaterPupa: 0
+    TimeLimit: 0
+  _processBar: {fileID: 0}
 --- !u!1 &754952642
 GameObject:
   m_ObjectHideFlags: 0

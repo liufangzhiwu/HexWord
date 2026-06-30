@@ -21,16 +21,17 @@ public class LightItem : MonoBehaviour
         lightImage.gameObject.SetActive(false);
         if(limitdata == null) return;
         
+        var rewards = LimitTimeManager.Instance.GetEffectiveRewards(Curlimitdata); // 获取有效奖励
+
         if (Curlimitdata.id <GameDataManager.Instance.UserData.timerePuzzleid)
         {
-            ShowComplete(limitdata.rewardContent.Count);
+            ShowComplete(rewards.Count);
         }
         else
         {
-            for (int i = 0; i < limitdata.rewardContent.Count; i++)
+            for (int i = 0; i < rewards.Count; i++)
             {
-                List<int> rlist = limitdata.rewardContent[i];
-                ShowLighItemUI(rlist, limitdata.id, i);
+                ShowLighItemUI(rewards[i], limitdata.id, i);
             }
         }
     }

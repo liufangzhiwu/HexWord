@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Middleware;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -10,9 +11,12 @@ public class LimitDataItem
     public int id;
     //奖励内容
     public List<List<int>> rewardContent;
+    // 蝶蛹收集完后的替换奖励内容（与 rewardContent 一一对应，可能为 null）
+    public List<List<int>> alternativeRewardContent;
     //需要的成语数
     public int num;
 }
+
 
 //对应限时奖励配置表中奖励配置批准中的奖励索引表示的类型
 public enum LimitRewordType
@@ -96,6 +100,61 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     }
  
     
+    /// <summary>
+    /// 领取当前阶段奖励，处理溢出词数结转到下一阶段
+    /// </summary>
+    public void ClaimCurrentReward()
+    {
+        if (CurlimitData == null) return;
+        var userData = GameDataManager.Instance.UserData;
+        int currentStage = userData.timerePuzzleid;
+        int totalBefore = 0;
+        // 计算之前所有阶段的总需求
+        for (int i = 0; i < currentStage; i++)
+        {
+            var item = GetLimitItem(i);
+            if (item != null) totalBefore += item.num;
+        }
+        // 当前阶段的需求
+        int currentNeed = CurlimitData.num;
+        // 当前已完成的词数（基于累计值）
+        int totalDone = userData.timePuzzlecount;
+        int completed = totalDone - totalBefore;
+        if (completed >= currentNeed)
+        {
+            int overflow = completed - currentNeed;
+            // 将完成数截断到本阶段满额
+            userData.timePuzzlecount = totalBefore + currentNeed;
+            // 保存溢出词数，在下一阶段生效
+            userData.timePuzzlecount += overflow;
+            // 递增阶段
+            userData.UpdateLImitid();
+            // 更新当前数据引用
+            CurlimitData = GetLimitItem(userData.timerePuzzleid);
+        }
+        // 刷新UI
+        UpdateLimitTimeBtnUI();
+    }
+    
+    // <summary>
+    /// 根据蝶蛹是否收集满，返回应使用的奖励列表
+    /// </summary>
+    public List<List<int>> GetEffectiveRewards(LimitDataItem item)
+    {
+        if (item == null) return null;
+        bool pupaFull = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining(); // 蛹足够时就替换
+        if (!pupaFull || item.alternativeRewardContent == null)
+            return item.rewardContent;
+
+        // 蝶蛹已满且有替代配置：逐项替换，没有替代的保留原奖励
+        var result = new List<List<int>>();
+        for (int i = 0; i < item.rewardContent.Count; i++)
+        {
+            result.Add(item.alternativeRewardContent[i] ?? item.rewardContent[i]);
+        }
+        return result;
+    }
+    
     private void CheckLimtEvent()
     {
         if (GameDataManager.Instance.UserData.isDayEnterLimint)
@@ -151,61 +210,63 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
         return 0;
     }
 
-    void ConvertCSVToJSON(string data)
+    private void ConvertCSVToJSON(string data)
     {
-        // 用于构建 JSON 字符串
         List<LimitDataItem> items = new List<LimitDataItem>();
-        string[] lines = data.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
+        string[] lines = data.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
-        for (int i = 2; i < lines.Length; i++) // 从第一行开始，跳过标题行
+        for (int i = 2; i < lines.Length; i++) // 跳过标题行
         {
             string[] fields = lines[i].Split(',');
-
-            if (fields.Length >= 3) // 确保有足够的字段
+            if (fields.Length >= 3)
             {
                 int id = int.Parse(fields[0].Trim());
-            
-                // 解析 productContent
-                List<List<int>> productContent = new List<List<int>>();
 
-                // 先用 # 分隔
+                List<List<int>> normalRewards = new List<List<int>>();
+                List<List<int>> alternativeRewards = new List<List<int>>();
+
                 string[] groups = fields[1].Split('#');
-
                 foreach (string group in groups)
                 {
-                    // 用 ; 分隔并转换为 List<int>
-                    List<int> numbers = new List<int>();
-                    string[] sinitems = group.Split(';');
+                    // 按 '_' 分割原始奖励和替换奖励
+                    string[] parts = group.Split('_');
+                    string normalPart = parts[0];
+                    string alternativePart = parts.Length > 1 ? parts[1] : null;
 
-                    foreach (string temp in sinitems)
-                    {
-                        if (int.TryParse(temp, out int number)) // 解析为整数
-                        {
-                            numbers.Add(number);
-                        }
-                    }
-
-                    productContent.Add(numbers); // 添加到主列表
+                    // 解析正常奖励
+                    normalRewards.Add(ParseNumbers(normalPart));
+                    // 解析替换奖励（如果有）
+                    alternativeRewards.Add(alternativePart != null ? ParseNumbers(alternativePart) : null);
                 }
-              
+
                 int count = int.Parse(fields[2].Trim());
 
                 LimitDataItem item = new LimitDataItem
                 {
                     id = id,
-                    rewardContent = productContent,
+                    rewardContent = normalRewards,
+                    alternativeRewardContent = alternativeRewards.Any(r => r != null) ? alternativeRewards : null, // 只有存在替换时才赋值
                     num = count
                 };
                 items.Add(item);
             }
-            else
-            {
-                Debug.LogWarning($"Skipping line {i + 1}: Not enough fields.");
-            }
         }
-      
         limitItems = items;
     }
+    
+    // 辅助方法：解析 "1;2;3" 为 List<int>
+    private List<int> ParseNumbers(string str)
+    {
+        List<int> numbers = new List<int>();
+        string[] parts = str.Split(';');
+        foreach (string part in parts)
+        {
+            if (int.TryParse(part, out int num))
+                numbers.Add(num);
+        }
+        return numbers;
+    }
+
 
     public List<LimitDataItem> GetLimitItems()
     {

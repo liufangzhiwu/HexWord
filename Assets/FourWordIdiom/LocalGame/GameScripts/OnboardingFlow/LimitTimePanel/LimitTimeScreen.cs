@@ -127,6 +127,7 @@ public class LimitTimeScreen : UIWindow
                     UpdateProgress(true);
                 });
                 GameDataManager.Instance.UserData.UpdateLImitid();
+                LimitTimeManager.Instance.ClaimCurrentReward();
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedLightLimit,1);
             }
           

@@ -85084,7 +85084,6 @@ GameObject:
   - component: {fileID: 963194229}
   - component: {fileID: 963194231}
   - component: {fileID: 963194230}
-  - component: {fileID: 963194232}
   - component: {fileID: 963194233}
   - component: {fileID: 963194234}
   m_Layer: 0
@@ -85207,26 +85206,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GoldObj: {fileID: 0}
   GoldPrefab: {fileID: 0}
---- !u!114 &963194232
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 963194225}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64c9cb2637762294bbc7e60efc6a7d5a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ButterfliesInfo: []
-  ButterfliesGrow: []
-  pupaConfig:
-    ZenBegin: 0
-    FirstPupa: 0
-    LaterPupa: 0
-    TimeLimit: 0
-  _processBar: {fileID: 0}
 --- !u!114 &963194233
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -128443,7 +128422,7 @@ RenderTexture:
   m_TextureSettings:
     serializedVersion: 2
     m_FilterMode: 1
-    m_Aniso: 1
+    m_Aniso: 0
     m_MipBias: 0
     m_WrapU: 1
     m_WrapV: 1
@@ -129625,7 +129604,7 @@ RenderTexture:
   m_TextureSettings:
     serializedVersion: 2
     m_FilterMode: 1
-    m_Aniso: 1
+    m_Aniso: 0
     m_MipBias: 0
     m_WrapU: 1
     m_WrapV: 1
