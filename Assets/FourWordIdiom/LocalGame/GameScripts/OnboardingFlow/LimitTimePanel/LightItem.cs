@@ -154,7 +154,9 @@ public class LightItem : MonoBehaviour
 
     public void ShowReward(bool isPlaySound=true, Action callback=null)
     {
-        for (int i = 0; i < rewardList.Count; i++)
+        var rewards = LimitTimeManager.Instance.GetEffectiveRewards(Curlimitdata);
+
+        for (int i = 0; i < rewards.Count; i++)
         {
             ShowRewardAnim(i, callback,isPlaySound);
         }
@@ -162,7 +164,9 @@ public class LightItem : MonoBehaviour
 
     private void ShowRewardAnim(int index,Action callback,bool isPlaySound=true)
     {
-        LimitRewordType type = (LimitRewordType)Curlimitdata.rewardContent[index][0];
+        var rewards = LimitTimeManager.Instance.GetEffectiveRewards(Curlimitdata);
+        
+        LimitRewordType type = (LimitRewordType)rewards[index][0];
         if (type == LimitRewordType.Coins)
         {
             UpdateRewardValue();
@@ -229,9 +233,12 @@ public class LightItem : MonoBehaviour
 
     public void UpdateRewardValue()
     {
-        for (int i = 0; i < Curlimitdata.rewardContent.Count; i++)
+        
+        var rewards = LimitTimeManager.Instance.GetEffectiveRewards(Curlimitdata);
+
+        for (int i = 0; i < rewards.Count; i++)
         {
-            List<int> rlist = Curlimitdata.rewardContent[i];
+            List<int> rlist = rewards[i];
             AddRewardValue(rlist,i);
         }
     }

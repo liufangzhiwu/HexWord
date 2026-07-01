@@ -177,10 +177,9 @@ namespace Middleware
 
                 if (!string.IsNullOrEmpty(data.referrerEx))
                     dict["referrer_ex"] = data.referrerEx;
-
-                // 以客户端事件 "$AppLaunch" 上报归因参数（客户端埋点）
-                string paramsJson = ConvertToJson(dict);
-                ReportConversion("$AppLaunch", paramsJson);
+               
+                //string paramsJson = ConvertToJson(dict);
+                //ReportConversion("$AppLaunch", paramsJson);
                 Debug.Log("[HuaweiAttr] Attribution reported via $AppLaunch (client).");
 
                 // ★ 如果 callBack 和 oaid 都已获取，且尚未上报激活，则自动上报激活（服务端）
@@ -198,53 +197,54 @@ namespace Middleware
 
         // ---------- 客户端事件上报（通过 Java 桥接） ----------
 
-        public void ReportConversion(string eventId, string eventParamsJson = null)
+        public void ReportConversion(string eventId)
         {
             if (!initFinished)
             {
                 Debug.LogWarning($"[HuaweiAttr] Not initialized, caching event: {eventId}");
                 lock (pendingActions)
                 {
-                    pendingActions.Add(() => ReportConversion(eventId, eventParamsJson));
+                    pendingActions.Add(() => ReportConversion(eventId));
                 }
                 return;
             }
-            ReportConversionInternal(eventId, eventParamsJson);
+            ReportConversionInternal(eventId);
         }
 
         public void ReportConversion(int eventCode)
         {
-            ReportConversion(eventCode.ToString(), null);
+            ReportConversion(eventCode.ToString());
         }
 
-        private void ReportConversionInternal(string eventId, string eventParamsJson)
+        private void ReportConversionInternal(string eventId)
         {
-            try
-            {
-                if (activity == null)
-                {
-                    Debug.LogError("[HuaweiAttr] Activity is null, cannot report event.");
-                    return;
-                }
-
-                using (AndroidJavaClass bridge = new AndroidJavaClass(
-                    "chengyu.idiom.hexa.zen.andriod.huawei.HuaweiAttributionBridge"))
-                {
-                    if (string.IsNullOrEmpty(eventParamsJson))
-                    {
-                        bridge.CallStatic("reportConversionEvent", activity, eventId);
-                    }
-                    else
-                    {
-                        bridge.CallStatic("reportConversionEvent", activity, eventId, eventParamsJson);
-                    }
-                }
-                Debug.Log($"[HuaweiAttr] Client event reported: {eventId}");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("[HuaweiAttr] Report client event failed: " + e.Message);
-            }
+            ReportCommon(eventId);
+            // try
+            // {
+            //     if (activity == null)
+            //     {
+            //         Debug.LogError("[HuaweiAttr] Activity is null, cannot report event.");
+            //         return;
+            //     }
+            //
+            //     using (AndroidJavaClass bridge = new AndroidJavaClass(
+            //         "chengyu.idiom.hexa.zen.andriod.huawei.HuaweiAttributionBridge"))
+            //     {
+            //         if (string.IsNullOrEmpty(eventParamsJson))
+            //         {
+            //             bridge.CallStatic("reportConversionEvent", activity, eventId);
+            //         }
+            //         else
+            //         {
+            //             bridge.CallStatic("reportConversionEvent", activity, eventId, eventParamsJson);
+            //         }
+            //     }
+            //     Debug.Log($"[HuaweiAttr] Client event reported: {eventId}");
+            // }
+            // catch (Exception e)
+            // {
+            //     Debug.LogError("[HuaweiAttr] Report client event failed: " + e.Message);
+            // }
         }
 
         // ---------- Access Token 获取（调用已有的 HuaweiTokenManager） ----------
@@ -301,6 +301,15 @@ namespace Middleware
             SendServerEvent("0", actionTime);
             SendServerEvent("1", actionTime);
             isActivationReported = true;
+        }
+        
+        /// <summary>
+        /// 上报通用事件（服务端）
+        /// </summary>
+        public void ReportCommon(string actionType)
+        {
+            long snow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            SendServerEvent(actionType, snow);
         }
         
         /// <summary>

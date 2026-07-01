@@ -26,7 +26,7 @@ namespace Middleware
 
         }
 
-        public void ReportConversion(int eventCode)
+        public void ReportConversion(string eventCode)
         {
 
             // if (attributionBridge != null)

@@ -1696,6 +1696,17 @@ public class ChessPlayArea : UIWindow
         chessboardGrid.IsBlockInput = true;
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用",GetCurrentSelectedPhrase());
         InitToolUI();
+
+        switch (toolInfo.reducecount)
+        {
+            case 1:
+                Game.self.Attributes.ReportConversion("507");
+                break;
+            case 2:
+                Game.self.Attributes.ReportConversion("508");
+                break;
+        }
+        
         
         // chessboardGrid.SetSelectTip();
         

@@ -333,6 +333,7 @@ public class UserData
             { 103, new ToolInfo { cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly", count = AppGameSettings.ShopItems.StartingButterflies } },
             { 104, new ToolInfo { cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete", count = AppGameSettings.ShopItems.WordHintCount } }
         };
+        
         // 签到数据
         signOpenTime = null;
         signid = 0;

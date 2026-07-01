@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -106,7 +107,33 @@ public class ChessFinishView : UIWindow
         nextBtn.gameObject.SetActive(false);
         
         StartCoroutine(CheckZenRankBtn());
-      
+        ReportLevelPass();
+    }
+
+
+    private void ReportLevelPass()
+    {
+        switch (GameDataManager.Instance.UserData.CurrentChessStage)
+        {
+            case 1:
+                Game.self.Attributes.ReportConversion("501");
+                break;
+            case 2:
+                Game.self.Attributes.ReportConversion("502");
+                break;
+            case 3:
+                Game.self.Attributes.ReportConversion("506");
+                break;
+            case 5:
+                Game.self.Attributes.ReportConversion("503");
+                break;
+            case 10:
+                Game.self.Attributes.ReportConversion("504");
+                break;
+            case 20:
+                Game.self.Attributes.ReportConversion("505");
+                break;
+        }
     }
 
     private IEnumerator CheckCompletedState()
@@ -120,6 +147,7 @@ public class ChessFinishView : UIWindow
         }
 #endif
     }
+    
     /// <summary>
     /// 动态刷新顶部过关文本（处理限时活动“还差一关”的精准预判）
     /// </summary>
@@ -322,6 +350,7 @@ public class ChessFinishView : UIWindow
         if (shouldActivate)
             _butterflyTimerDisplay.GetComponentInChildren<Text>().text = time;
     }
+    
     /// <summary>
     /// 🌟 新增：刷新结算界面的蝶蛹进度展示
     /// </summary>
@@ -371,6 +400,7 @@ public class ChessFinishView : UIWindow
             pupaText.text = $"{targetCount} / {butterflyGrow?.Count.ToString() ?? "&"}"; 
         }
     }
+    
     /// <summary>
     /// 带动画更新进度条
     /// </summary>
