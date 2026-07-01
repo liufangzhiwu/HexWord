@@ -1,4 +1,4 @@
-#if UNITY_OPENHARMON
+#if UNITY_OPENHARMONY
 using UnityEngine;
 
 namespace Middleware
@@ -20,6 +20,21 @@ namespace Middleware
                     Debug.LogError("Failed to create OpenHarmonyJSObject for AttributionBridge");
                 }
             });
+        }
+
+        public void ReportConversion(string eventCode)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ReportPurchase(long actionTime, decimal amount, string currency = "CNY")
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ReportRetention(long actionTime)
+        {
+            throw new System.NotImplementedException();
         }
 
         public void ReportConversion(int eventCode)
