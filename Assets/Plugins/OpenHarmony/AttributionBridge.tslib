@@ -1,27 +1,280 @@
-import { attributionManager } from '@kit.StoreKit';
-import { BusinessError } from '@kit.BasicServicesKit';
+// ====================================================================
+// 文件名: AttributionBridge.ts
+// 描述: 华为广告归因服务端回传桥接（鸿蒙版）
+// 适配：提供 RegisterAttributionBridge 供 Unity 注册
+// ====================================================================
 
-export class AttributionBridge {
-    // 方法名与C#调用的方法名一致
-    reportConversion(eventCode: number): void {
-        const triggerInfo: attributionManager.AdTriggerInfo = {
-            businessScene: 5,
-            triggerData: eventCode,
-            timestamp: Date.now(),
-        };
-        attributionManager.registerTrigger(triggerInfo)
-            .then(() => {
-                console.info(`Attribution event ${eventCode} reported successfully`);
-            })
-            .catch((err: BusinessError) => {
-                console.error(`Failed to report event ${eventCode}: ${err.message}`);
-            });
+import { http } from '@kit.NetworkKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { common } from '@kit.AbilityKit';
+import identifier from '@ohos.identifier.oaid';
+
+const TAG = '[AttributionBridge]';
+const DOMAIN = 0x0001;
+
+// ---------- 配置常量 ----------
+const APP_ID: string = '6917574075102471091';
+const CLIENT_ID: string = '1979065602840486336';
+const CLIENT_SECRET: string = '0F209BBC00F6599D5BED0CD78736F0E9124E8AAA46273EB0B4379D2B8A280197';
+
+const TOKEN_URL: string = 'https://oauth-login.cloud.huawei.com/oauth2/v3/token';
+const REPORT_URL: string = 'https://connect-api.cloud.huawei.com/api/datasource/v1/track/activate';
+const TOKEN_EXPIRE_BUFFER: number = 60;
+
+// ====================================================================
+// 归因桥接主类
+// ====================================================================
+class AttributionBridge {
+  private accessToken: string = '';
+  private tokenExpireTime: number = 0;
+  private oaid: string = '';
+  private callBack: string = '';
+  private appId: string = APP_ID;
+  private clientId: string = CLIENT_ID;
+  private context: common.UIAbilityContext | null = null;
+  private isInitialized: boolean = false;
+
+  /**
+   * 初始化（必须传入 UIAbilityContext）
+   */
+  init(context: common.UIAbilityContext): void {
+    try {
+      this.context = context;
+      hilog.info(DOMAIN, TAG, 'AttributionBridge init start');
+
+      this.fetchOAID();
+      this.fetchAccessToken();
+
+      this.isInitialized = true;
+      hilog.info(DOMAIN, TAG, 'AttributionBridge init done');
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `Init failed: ${JSON.stringify(error)}`);
     }
+  }
+
+  /**
+   * 设置归因回调参数（由服务端下发或从其他途径获取）
+   */
+  setCallBack(callback: string): void {
+    this.callBack = callback;
+    hilog.info(DOMAIN, TAG, `CallBack set: ${callback}`);
+  }
+
+  // ======== 获取 OAID ========
+  private async fetchOAID(): Promise<void> {
+    try {
+      this.oaid = await identifier.getOAID();
+      hilog.info(DOMAIN, TAG, `OAID fetched: ${this.oaid}`);
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `fetchOAID failed: ${JSON.stringify(error)}`);
+    }
+  }
+
+  // ======== 获取 Access Token ========
+  private async fetchAccessToken(): Promise<boolean> {
+    try {
+      if (this.accessToken && Date.now() < this.tokenExpireTime) {
+        hilog.info(DOMAIN, TAG, 'Token still valid, skip refresh');
+        return true;
+      }
+
+      const httpRequest = http.createHttp();
+      const response = await httpRequest.request(TOKEN_URL, {
+        method: http.RequestMethod.POST,
+        header: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        extraData: `grant_type=client_credentials&client_id=${this.clientId}&client_secret=${CLIENT_SECRET}`
+      });
+
+      if (response.responseCode === 200) {
+        const result = JSON.parse(response.result as string) as Record<string, Object>;
+        this.accessToken = result.access_token as string;
+        const expiresIn = (result.expires_in as number) || 3600;
+        this.tokenExpireTime = Date.now() + (expiresIn - TOKEN_EXPIRE_BUFFER) * 1000;
+        hilog.info(DOMAIN, TAG, `Token fetched, expires_in=${expiresIn}s`);
+        httpRequest.destroy();
+        return true;
+      } else {
+        hilog.error(DOMAIN, TAG, `Token fetch failed: ${response.responseCode}, body=${response.result}`);
+        httpRequest.destroy();
+        return false;
+      }
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `fetchAccessToken error: ${JSON.stringify(error)}`);
+      return false;
+    }
+  }
+
+  // ======== 服务端事件上报（核心） ========
+  private async sendServerEvent(
+    actionType: string,
+    actionTime: number,
+    amount?: number,
+    currency?: string,
+    actionParam?: string
+  ): Promise<void> {
+    if (!this.accessToken || Date.now() >= this.tokenExpireTime) {
+      hilog.warn(DOMAIN, TAG, 'Token missing or expired, refreshing...');
+      const tokenOk = await this.fetchAccessToken();
+      if (!tokenOk) {
+        hilog.error(DOMAIN, TAG, 'Token refresh failed, abort event');
+        return;
+      }
+    }
+
+    if (!this.callBack) {
+      hilog.warn(DOMAIN, TAG, 'Missing callBack, event will not be sent');
+      return;
+    }
+    if (!this.oaid) {
+      hilog.warn(DOMAIN, TAG, 'Missing OAID, event will not be sent');
+      return;
+    }
+
+    const body: Record<string, Object> = {
+      'actionType': actionType,
+      'actionTime': actionTime,
+      'deviceIdType': 'OAID',
+      'appId': this.appId,
+      'callBack': this.callBack,
+      'deviceId': this.oaid
+    };
+
+    if (actionParam) {
+      body['actionParam'] = actionParam;
+    } else if (amount !== undefined && amount > 0) {
+      body['amount'] = amount;
+      body['currency'] = currency || 'CNY';
+    }
+
+    const jsonBody = JSON.stringify(body);
+    hilog.info(DOMAIN, TAG, `Sending event: ${jsonBody}`);
+
+    try {
+      const httpRequest = http.createHttp();
+      const response = await httpRequest.request(REPORT_URL, {
+        method: http.RequestMethod.POST,
+        header: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.accessToken}`,
+          'client_id': this.clientId
+        },
+        extraData: jsonBody
+      });
+
+      if (response.responseCode === 200) {
+        hilog.info(DOMAIN, TAG, `Event reported successfully: actionType=${actionType}`);
+      } else if (response.responseCode === 401) {
+        hilog.warn(DOMAIN, TAG, '401 Unauthorized, refreshing token and retrying...');
+        const tokenOk = await this.fetchAccessToken();
+        if (tokenOk) {
+          await this.sendServerEventInner(actionType, actionTime, amount, currency, actionParam);
+        }
+      } else {
+        hilog.error(DOMAIN, TAG, `Event report failed: ${response.responseCode}, body=${response.result}`);
+      }
+      httpRequest.destroy();
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `sendServerEvent error: ${JSON.stringify(error)}`);
+    }
+  }
+
+  private async sendServerEventInner(
+    actionType: string,
+    actionTime: number,
+    amount?: number,
+    currency?: string,
+    actionParam?: string
+  ): Promise<void> {
+    const body: Record<string, Object> = {
+      'actionType': actionType,
+      'actionTime': actionTime,
+      'deviceIdType': 'OAID',
+      'appId': this.appId,
+      'callBack': this.callBack,
+      'deviceId': this.oaid
+    };
+
+    if (actionParam) {
+      body['actionParam'] = actionParam;
+    } else if (amount !== undefined && amount > 0) {
+      body['amount'] = amount;
+      body['currency'] = currency || 'CNY';
+    }
+
+    try {
+      const httpRequest = http.createHttp();
+      const response = await httpRequest.request(REPORT_URL, {
+        method: http.RequestMethod.POST,
+        header: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.accessToken}`,
+          'client_id': this.clientId
+        },
+        extraData: JSON.stringify(body)
+      });
+
+      if (response.responseCode === 200) {
+        hilog.info(DOMAIN, TAG, `Retry event reported: actionType=${actionType}`);
+      } else {
+        hilog.error(DOMAIN, TAG, `Retry failed: ${response.responseCode}, body=${response.result}`);
+      }
+      httpRequest.destroy();
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, `Retry error: ${JSON.stringify(error)}`);
+    }
+  }
+
+  // ======== 对外接口 ========
+  reportConversion(actionType: string,actionTime: number): void {
+    this.sendServerEvent(actionType, actionTime);
+  }
+
+  reportRetention(actionTime: number): void {
+    this.sendServerEvent('3', actionTime);
+  }
+
+  reportPurchase(actionTime: number, amountInYuan: number, currency: string): void {
+    const actionParam = JSON.stringify([
+      { name: '付费金额', value: amountInYuan }
+    ]);
+    this.sendServerEvent('4', actionTime, undefined, undefined, actionParam);
+  }
 }
 
-// 按照官方规范：注册函数名为 "Register" + 类名，返回一个对象，键为类名，值为实例
-export function RegisterAttributionBridge() {
-    let register = {}
-   register["AttributionBridge"] = new AttributionBridge();
-    return register;
+// ====================================================================
+// 导出单例与公开函数（独立导出供 Unity 直接调用）
+// ====================================================================
+const bridge = new AttributionBridge();
+
+export function init(context: common.UIAbilityContext): void {
+  bridge.init(context);
+}
+
+export function setCallBack(callback: string): void {
+  bridge.setCallBack(callback);
+}
+
+export function reportConversion(actionType: string,actionTime: number): void {
+  bridge.reportConversion(actionType,actionTime);
+}
+
+export function reportRetention(actionTime: number): void {
+  bridge.reportRetention(actionTime);
+}
+
+export function reportPurchase(actionTime: number, amountInYuan: number, currency: string): void {
+  bridge.reportPurchase(actionTime, amountInYuan, currency);
+}
+
+// ====================================================================
+// 新增：供 Unity 注册的入口函数（返回所有公开方法的对象）
+// ====================================================================
+export function RegisterAttributionBridge(): Record<string, Object> {
+  return {
+    init: init,
+    setCallBack: setCallBack,
+    reportConversion: reportConversion,
+    reportRetention: reportRetention,
+    reportPurchase: reportPurchase
+  };
 }

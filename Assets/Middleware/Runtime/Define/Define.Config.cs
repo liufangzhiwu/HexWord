@@ -2,7 +2,7 @@ namespace Middleware
 {
     public partial class Define 
     {
-#if UNITY_ANDROID 
+#if UNITY_ANDROID||UNITY_EDITOR
         public struct ConfigAndroid
         {
             public const string TestBannerAdId = "ca-app-pub-3940256099942544/6300978111";
