@@ -28,7 +28,7 @@ namespace Middleware
         private string clientId = "1979065602840486336"; // API客户端ID
         private string clientSecret = "0F209BBC00F6599D5BED0CD78736F0E9124E8AAA46273EB0B4379D2B8A280197"; // ★ 必须填写
         private string oaid;                             // 设备OAID
-        private string callbackUrl;                      // 归因系统返回的回调地址
+        private string callBack;                     // 归因系统返回的 callback
 
         // ---------- 激活上报状态 ----------
         private bool isActivationReported = false;
@@ -78,21 +78,42 @@ namespace Middleware
             return Game.self.GetOAID();
         }
 
-        // ---------- 获取归因信息（鸿蒙版） ----------
+        // 在 HuaweiHarAttribution 类中
         public string GetAttributionInfo()
         {
 #if UNITY_OPENHARMONY && !UNITY_EDITOR
-            if (string.IsNullOrEmpty(packageName))
+        try
+        {
+            // 鸿蒙侧写入的文件路径：Application.persistentDataPath/files/attribution.txt
+            string filePath = System.IO.Path.Combine(Application.persistentDataPath, "files", "attribution.txt");
+            if (System.IO.File.Exists(filePath))
             {
-                Debug.LogWarning("[HuaweiAttr] Package name not ready.");
-                return null;
+                string json = System.IO.File.ReadAllText(filePath);
+                Debug.Log("[HuaweiAttr] Read attribution from file: " + json);
+#if Unity_ShowLog
+                 json ="{\"enterAgTime\":\"2026-07-01 10:00:00\",\"installedFinishTime\":\"2026-07-01 10:00:05\",\"startDownloadTime\":\"2026-07-01 09:59:00\",\"referrerEx\":\"channel=huawei\"}";
+#endif
+                return json;
             }
-            // 调用鸿蒙Native插件获取归因信息
-            return HarmonyNative.GetAttributionInfo(packageName);
+            else
+            {
+                Debug.LogWarning("[HuaweiAttr] Attribution file not found: " + filePath);
+                string json=null;
+#if Unity_ShowLog
+                json ="{\"enterAgTime\":\"2026-07-01 10:00:00\",\"installedFinishTime\":\"2026-07-01 10:00:05\",\"startDownloadTime\":\"2026-07-01 09:59:00\",\"referrerEx\":\"channel=huawei\"}";
+#endif
+                return json;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("[HuaweiAttr] Failed to read attribution file: " + e.Message);
+            return null;
+        }
 #else
             Debug.Log("[HuaweiAttr] GetAttributionInfo (Editor mode)");
-            // 编辑器下返回测试数据
-            return "{\"enterAgTime\":\"2026-07-01 10:00:00\",\"installedFinishTime\":\"2026-07-01 10:00:05\",\"startDownloadTime\":\"2026-07-01 09:59:00\",\"trackId\":{\"channel\":\"huawei\",\"callback\":\"https://your-server.com/callback\",\"taskid\":\"123\",\"subTaskId\":\"456\",\"RTAID\":\"789\"},\"referrerEx\":\"test_referrer\"}";
+            // 编辑器下返回测试数据，方便调试
+            return "{\"enterAgTime\":\"2026-07-01 10:00:00\",\"installedFinishTime\":\"2026-07-01 10:00:05\",\"startDownloadTime\":\"2026-07-01 09:59:00\",\"referrerEx\":\"channel=huawei\"}";
 #endif
         }
 
@@ -121,7 +142,7 @@ namespace Middleware
                     if (!string.IsNullOrEmpty(data.trackId.taskid)) dict["taskid"] = data.trackId.taskid;
                     if (!string.IsNullOrEmpty(data.trackId.callback))
                     {
-                        callbackUrl = data.trackId.callback;   // ★ 存储callback地址
+                        callBack = data.trackId.callback;   // ★ 存储callback地址
                         dict["callback"] = data.trackId.callback;
                     }
                     if (!string.IsNullOrEmpty(data.trackId.subTaskId)) dict["sub_task_id"] = data.trackId.subTaskId;
@@ -134,7 +155,7 @@ namespace Middleware
                 Debug.Log("[HuaweiAttr] Attribution data parsed.");
 
                 // 如果callback和oaid都已获取，且尚未上报激活，则自动上报激活
-                if (!string.IsNullOrEmpty(callbackUrl) && !string.IsNullOrEmpty(oaid) && !isActivationReported)
+                if (!string.IsNullOrEmpty(callBack) && !string.IsNullOrEmpty(oaid) && !isActivationReported)
                 {
                     long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     ReportActivation(now);
@@ -166,59 +187,37 @@ namespace Middleware
         {
             if (isTokenFetching || !string.IsNullOrEmpty(accessToken)) return;
             isTokenFetching = true;
-            CoroutineRunner.StartCoroutine(FetchAccessTokenCoroutine());
-        }
 
-        private IEnumerator FetchAccessTokenCoroutine()
-        {
-            string tokenUrl = "https://connect-api.cloud.huawei.com/api/oauth2/v1/token";
-            
-            WWWForm form = new WWWForm();
-            form.AddField("grant_type", "client_credentials");
-            form.AddField("client_id", clientId);
-            form.AddField("client_secret", clientSecret);
-
-            using (UnityWebRequest request = UnityWebRequest.Post(tokenUrl, form))
-            {
-                yield return request.SendWebRequest();
-
-                if (request.result == UnityWebRequest.Result.Success)
+            // 假设 HuaweiTokenManager 是一个单例或静态类，提供了 GetAccessToken 方法
+            // 用户需要确保其存在并正确实现
+            HuaweiTokenManager.self.GetAccessToken(
+                (token) =>
                 {
-                    try
+                    accessToken = token;
+                    isTokenFetching = false;
+                    Debug.Log("[HuaweiAttr] Access Token obtained."+accessToken);
+                    
+                    // 6. 获取归因信息并上报（客户端事件 $AppLaunch）
+                    string json = GetAttributionInfo();
+                    if (!string.IsNullOrEmpty(json))
                     {
-                        var response = JsonUtility.FromJson<TokenResponse>(request.downloadHandler.text);
-                        accessToken = response.access_token;
-                        isTokenFetching = false;
-                        Debug.Log("[HuaweiAttr] Access Token obtained.");
-
-                        // Token获取成功后，获取归因信息并上报
-                        string json = GetAttributionInfo();
-                        if (!string.IsNullOrEmpty(json))
-                        {
-                            Debug.Log("[HuaweiAttr] Attribution data: " + json);
-                            ReportAttribution(json);
-                        }
-                        else
-                        {
-                            Debug.LogWarning("[HuaweiAttr] No attribution data received.");
-                        }
-
-                        // 上报启动事件（留存相关）
-                        long snow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                        ReportStart(snow);
+                        Debug.Log("[HuaweiAttr] Attribution data: " + json);
+                        ReportAttribution(json);   // 内部会解析 callBack 并自动上报激活（服务端）
                     }
-                    catch (Exception e)
+                    else
                     {
-                        isTokenFetching = false;
-                        Debug.LogError("[HuaweiAttr] Failed to parse token response: " + e.Message);
+                        Debug.LogWarning("[HuaweiAttr] No attribution data received.");
                     }
-                }
-                else
+                    
+                    long snow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    ReportStart(snow);
+                },
+                (error) =>
                 {
                     isTokenFetching = false;
-                    Debug.LogError($"[HuaweiAttr] Failed to get Access Token: {request.error}");
+                    Debug.LogError("[HuaweiAttr] Failed to get Access Token: " + error);
                 }
-            }
+            );
         }
 
         // ---------- 服务端事件上报 ----------
@@ -258,14 +257,23 @@ namespace Middleware
         // ---------- 服务端事件发送核心方法 ----------
         private void SendServerEvent(string actionType, long actionTime, decimal? amount = null, string currency = null)
         {
+            
+#if Unity_ShowLog //方便测试
+            if (string.IsNullOrEmpty(callBack))
+            {
+                callBack =
+                    "security:4053FFBAAE7109AE51C6DF9A:D0A9FB392680FE8F2BD82C1215873DF84A6C5F5EEE3CBCCA4D56F65F8A08E9DC481BC0BBBDAA0666FD30B8D07CD21A";
+            }
+#endif
+            
             if (string.IsNullOrEmpty(accessToken))
             {
                 Debug.LogWarning($"[HuaweiAttr] No access token, event will not be sent. actionType: {actionType}");
                 return;
             }
-            if (string.IsNullOrEmpty(callbackUrl) || string.IsNullOrEmpty(oaid))
+            if (string.IsNullOrEmpty(callBack) || string.IsNullOrEmpty(oaid))
             {
-                Debug.LogWarning($"[HuaweiAttr] Missing callbackUrl or OAID, cannot send server event. actionType: {actionType}");
+                Debug.LogWarning($"[HuaweiAttr] Missing callBack or OAID, cannot send server event. actionType: {actionType}");
                 return;
             }
 
@@ -275,7 +283,7 @@ namespace Middleware
             sb.Append($"\"actionTime\":{actionTime},");
             sb.Append($"\"deviceIdType\":\"OAID\",");
             sb.Append($"\"appId\":\"{appId}\",");
-            sb.Append($"\"callBack\":\"{callbackUrl}\",");
+            sb.Append($"\"callBack\":\"{callBack}\",");
             sb.Append($"\"deviceId\":\"{oaid}\"");
 
             if (actionType == "4" && amount.HasValue)

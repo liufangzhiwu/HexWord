@@ -60,13 +60,13 @@ public class HuaweiTokenManager : MonoBehaviour
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log("Token获取成功: " + request.downloadHandler.text);
+                Debug.Log("[HuaweiAttr] Token获取成功: " + request.downloadHandler.text);
                 TokenResponse response = JsonUtility.FromJson<TokenResponse>(request.downloadHandler.text);
                 onSuccess?.Invoke(response.access_token);
             }
             else
             {
-                Debug.LogError("Token获取失败: " + request.error);
+                Debug.Log("[HuaweiAttr] Token获取失败: " + request.error);
                 onError?.Invoke(request.error);
             }
         }

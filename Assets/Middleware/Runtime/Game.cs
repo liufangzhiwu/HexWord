@@ -55,9 +55,9 @@ namespace Middleware
         {
             CreateAnalytic();
             yield return new WaitUntil(()=>Accounts.IsLogin);
-#if UNITY_EDITOR 
-            CreateAd();
-#elif UNITY_OPENHARMONY||UNITY_huawei
+// #if UNITY_EDITOR 
+//             CreateAd();
+#if UNITY_OPENHARMONY||UNITY_huawei
             CreateAd();
             CreateShop();
             CreateAttribute();
@@ -114,7 +114,7 @@ namespace Middleware
 #elif UNITY_OPENHARMONY
             Attributes = new HuaweiHarAttribution();
 #endif
-            Attributes.Init(0.5f);
+            Attributes.Init(0.1f);
         }
         
         private void CreateAnalytic()
