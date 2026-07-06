@@ -232,6 +232,10 @@ public class Account_harmony : IAccounts
                 + "idToken : " + targetSignal.idToken + "\n"
                 + "teamPlayerId : " + targetSignal.localPlayer.teamPlayerId + "\n"
                 + "gamePlayerId : " + targetSignal.localPlayer.gamePlayerId + "\n");
+            
+            //设置登录用户ID（需要等待游戏数据获取后）
+            AnalyticMgr.SetLoginUser(null);
+            
             VerifyPlayer();
             
         }

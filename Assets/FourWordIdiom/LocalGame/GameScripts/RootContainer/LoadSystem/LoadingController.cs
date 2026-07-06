@@ -118,7 +118,7 @@ public class LoadingController : MonoBehaviour
             Game.self.ShowLoginErrorPanel(); //等错误处理
             yield break;
         }
-        
+      
         yield return APIGateway.Instance.LoginApi.Login((res)=> 
         {
             if (res != null)
