@@ -1191,6 +1191,7 @@ public class ChessPlayArea : UIWindow
         PuzzleBtn.interactable = true;
         ChessStageController.Instance.CompleteStage(CurrStageInfo.StageNumber, wordErrorCount, isJump);
     }
+    
      /// <summary>
     /// 动态加载并展示横幅，处理超过百分比文本
     /// </summary>

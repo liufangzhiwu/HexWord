@@ -278,7 +278,6 @@ public class ChessStageController
     /// <param name="StageIndex">关卡编号</param>
     public void SetStageData(int StageIndex)
     {
-        _limitPuzzleCount = 0;
         IsCurrentStageSkipped = false;
         // 初始化关卡配置
         IsFirstEnterStage = GameDataManager.Instance.IsNewLevelEntry(StageIndex, true);
@@ -328,6 +327,7 @@ public class ChessStageController
             CurrStageData.CurrentTotalScore = 0; // 🌟 同步进存档
             EarnedPupaThisLevel = 0;
             PuzzleComboCount = 0;
+            _limitPuzzleCount = 0;
             float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
             AnalyticMgr.LevelStart(energy);
             CurrStageData.IsFirstEnter = false;
@@ -771,6 +771,7 @@ public class ChessStageController
         OnUpdateRewardPuzzle(true,0, timeSpent);
         LastCorrectWordTimestamp = Time.time;
     }
+    
     /// <summary>
     /// 修改棋盘内的值
     /// </summary>
