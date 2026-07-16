@@ -58,6 +58,8 @@ public class GameDataManager : SingletonMono<GameDataManager>
         // needLogout = false;
         // 游戏启动时开始追踪
         StartTracking();
+        
+        LoadPlayerProfile();
     }
     
     

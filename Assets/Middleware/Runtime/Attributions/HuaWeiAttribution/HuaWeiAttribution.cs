@@ -40,6 +40,9 @@ namespace Middleware
         /// </summary>
         public void Init(float delay)
         {
+            
+            if(UIUtilities.isEditMode) return;
+            
             UnityTimer.Delay(delay, () =>
             {
                 // 1. 获取 Unity Activity

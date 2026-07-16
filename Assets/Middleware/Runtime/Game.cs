@@ -68,10 +68,12 @@ namespace Middleware
         private void InitManagers()
         {
 	        GameDataManager.Instance.Init();
+            LoadTextManager.Instance.Init();
 	        //AudioManager.Instance.Init();
             LimitTimeManager.Instance.Init();
+            StreakManager.Instance.Init();
             ThemeManager.Instance.Init();
-            LoadTextManager.Instance.Init();
+            
             #if UNITY_EDITOR
             CreateAnalytic();
             #endif
@@ -108,7 +110,9 @@ namespace Middleware
     
         private void CreateAttribute()
         {
-#if UNITY_ANDROID
+#if UNITY_ANDROID&&!UNITY_huawei
+            Attributes = new AndoridAttribution();
+#elif UNITY_huawei
             Attributes = new HuaWeiAttribution();
 #elif UNITY_IOS
             Attributes = new AndoridAttribution();

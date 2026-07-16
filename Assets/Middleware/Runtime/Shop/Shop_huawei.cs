@@ -16,6 +16,9 @@ namespace Middleware
         private Action<string> _failedAction;
         public void Init(float delay)
         {
+            
+            if(UIUtilities.isEditMode) return;
+            
             UnityTimer.Delay(delay, () =>
             {
                 var callback = new IapCallback();

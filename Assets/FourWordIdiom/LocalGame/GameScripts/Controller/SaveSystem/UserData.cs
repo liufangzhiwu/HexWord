@@ -28,6 +28,7 @@ public class UserData
     public int CurrentChessStage; // 当前拼字关卡进度
     public int levelMode; // 当前游戏模式 1:普通模式 2:拼字模式 3:六边形模式
     public int dayPassStageCount; // 每日通关数量
+    public int chessdayPassStageCount;                      // 拼字当日通关次数
     public int showRateusCount; // 好评界面显示次数
     public string showRateusTime; // 好评界面显示时间
     public bool isChangeUserName; // 是否更改过用户名称
@@ -288,6 +289,7 @@ public class UserData
         CurrentChessStage = AppGameSettings.FirstLevel;
         levelMode = 2;
         dayPassStageCount = 0;
+        chessdayPassStageCount = 0;
         LanguageCode = GetLanguage();
         IsMusicOn = true;
         IsSoundOn = true;
@@ -423,6 +425,10 @@ public class UserData
 
         HighestZenScore = 0;
         BestClearTimes = new Dictionary<int, float>();
+        
+        _signSaveData=new SignSaveData();
+        _loadTimeIndexData=new LoadTimeIndex();
+        _getAnimalsHeadIcons=new List<int>();
 
         #endregion
     }
@@ -450,6 +456,7 @@ public class UserData
         zenCount = user.zenCount;
         Zenlevel = user.Zenlevel ?? "ZenState01";
         dayPassStageCount = user.dayPassStageCount;
+        chessdayPassStageCount = user.chessdayPassStageCount;
         LanguageCode = GetLanguage();
         IsMusicOn = user.IsMusicOn;
         IsSoundOn = user.IsSoundOn;
@@ -475,20 +482,16 @@ public class UserData
         }
 
         hasUsedFreeRevive = user.hasUsedFreeRevive;
-
-        GoldLeaf = user.GoldLeaf;
-
-        ThemeSaveItems = user.ThemeSaveItems.Count <= 0
-            ? new List<ThemeSaveItem>
-            {
-                new() { id = 0, isGet = true },
-                new() { id = 1, isGet = true },
-            }
-            : user.ThemeSaveItems;
-        ThemeItemUses = user.ThemeItemUses ?? new Dictionary<int, int>() { { 0, 1 } };
+        GoldLeaf=user.GoldLeaf;
+        
+        ThemeSaveItems=user.ThemeSaveItems.Count<=0?new List<ThemeSaveItem>{
+            new() {id = 0,isGet = true},
+            new() {id = 1,isGet = true},
+        }:user.ThemeSaveItems;
+        ThemeItemUses=user.ThemeItemUses??new Dictionary<int,int>(){{0,1}};
         userthemeid = user.userthemeid;
-        ischangetheme = user.ischangetheme;
-
+        ischangetheme=user.ischangetheme;
+        isJoinedZenRank = user.isJoinedZenRank;
         isChangeUserName = user.isChangeUserName;
         // 评价界面显示次数
         showRateusCount = user.showRateusCount;
@@ -572,6 +575,10 @@ public class UserData
         HighestZenScore = user.HighestZenScore;
         BestClearTimes = user.BestClearTimes ?? new Dictionary<int, float>();
 
+        _signSaveData = user._signSaveData?.Clone() ?? new SignSaveData();
+        _loadTimeIndexData = user._loadTimeIndexData?.Clone() ?? new LoadTimeIndex();
+        _getAnimalsHeadIcons = user._getAnimalsHeadIcons;
+        
         // 检查并初始化缺失的生命周期事件
         InitializeLifecycleEvents();
 
@@ -663,6 +670,7 @@ public class UserData
         isDayEnterSign = true;
         //每日通过数据
         dayPassStageCount = 0;
+        chessdayPassStageCount = 0;
         // 可在此添加其他需要每日重置的数据
         // 👇 新增：每日重置首关插屏判定状态
         isDayFirstLevelAdChecked = false;

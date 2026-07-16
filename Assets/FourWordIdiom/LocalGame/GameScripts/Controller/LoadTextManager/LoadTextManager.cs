@@ -57,7 +57,7 @@ public class LoadTextManager : Singleton<LoadTextManager>
         if (loadTimeIndexData == null)
         {
             if (GameDataManager.Instance != null)
-                loadTimeIndexData = GameDataManager.Instance.UserData._loadTimeIndexData;
+                loadTimeIndexData = GameDataManager.Instance.UserData._loadTimeIndexData.Clone();
             else
                 Debug.LogError("LoadTextManager: 未找到 loadTimeIndexData 实例");
         }
