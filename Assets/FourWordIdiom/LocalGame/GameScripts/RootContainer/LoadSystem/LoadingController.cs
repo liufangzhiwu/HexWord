@@ -151,6 +151,7 @@ public class LoadingController : MonoBehaviour
         {
             Debug.Log("获取数据接口错误！，使用默认数据");
             StartCoroutine(LoadingSequence());
+            AnalyticMgr.Login();
             return;
         } 
         if (string.IsNullOrEmpty(response.UserData))
@@ -244,6 +245,7 @@ public class LoadingController : MonoBehaviour
     {
         ModifyUserWithABtest();
         StartCoroutine(LoadingSequence());
+        AnalyticMgr.Login();
     }
 
     private void UserServerData()
@@ -253,9 +255,11 @@ public class LoadingController : MonoBehaviour
             GameDataManager.Instance.FishUserSave.InitData(serverFishData);
         if (serverButterflyData != null)
             GameDataManager.Instance.ButterflyData.InitData(serverButterflyData);
+        
         GameDataManager.Instance.SetInitailized(true);
         ModifyUserWithABtest();
         StartCoroutine(LoadingSequence());
+        AnalyticMgr.Login();
     }
     
     
@@ -264,10 +268,9 @@ public class LoadingController : MonoBehaviour
     {
         UserData user = GameDataManager.Instance.UserData;
         user.PlayerId = loginResponse.uid;
-        user.ABName = (string)loginResponse.abtest.GetValueOrDefault("pack_name", null);
-        //user.ABName = "1";
         try
         {
+            user.ABName = (string)loginResponse.abtest.GetValueOrDefault("pack_name", "0");
             Dictionary<string, object> parameterValues = new Dictionary<string, object>();
             if (loginResponse.abtest.TryGetValue("parameter_value", out object value))
             {

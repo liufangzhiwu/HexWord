@@ -95,7 +95,7 @@ public partial class AnalyticMgr
             { "life_day", lifeDays},
         };
         Game.self?.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
-        
+        SetCommonProperties();
         Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
         
         //Game.self?.Attributes?.ReportConversion(2);
@@ -176,6 +176,7 @@ public partial class AnalyticMgr
             {"flyItem",GameDataManager.Instance.UserData.toolInfo[103].count},
             {"level_id",levelId},
             {"level_type",GameDataManager.Instance.UserData.GetLevelMode()},
+            { "game_package", userData.ABName ?? string.Empty },
             { "active_day_event", userData.activeDayCnt},
             { "life_day_event", lifeDays}
         };
@@ -194,9 +195,12 @@ public partial class AnalyticMgr
         
         SetCommonProperties();
         SetLoginProperties();
+    }
+    public static void Login()
+    {
+        SetCommonProperties();
         Game.self.Analytics.LogEvent("login", Define.DataTarget.Think);
     }
-    
     public static void SetLoginUser(string tuid)
     {
         var uid = tuid;
