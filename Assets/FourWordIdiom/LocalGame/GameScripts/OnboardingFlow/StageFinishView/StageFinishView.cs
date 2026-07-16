@@ -416,9 +416,6 @@ public class StageFinishView : UIWindow
     {
         UnlockButton(_tasktable.TaskBtn,AppGameSettings.UnlockRequirements.DailyMissions,PanelType.DailyTasksScreen,
             "");
-
-        UnlockButton(SignBtn, AppGameSettings.UnlockRequirements.SignInRewards, PanelType.SignWaterScreen,
-            GameDataManager.Instance.UserData.signOpenTime);
         
         UnlockButton(_limitBtnTable._limitTimeEventButton, AppGameSettings.UnlockRequirements.TimeLimitMode, PanelType.LimitTimeScreen,
             GameDataManager.Instance.UserData.limitOpenTime);
@@ -475,7 +472,7 @@ public class StageFinishView : UIWindow
     
     private void ShowSignInPanel()
     {
-        SystemManager.Instance.ShowPanel(PanelType.SignWaterScreen);    
+        SystemManager.Instance.ShowPanel(PanelType.SevenSignScreen);    
     }
 
     /// <summary>

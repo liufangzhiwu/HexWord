@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
@@ -15,6 +16,8 @@ public static class UIUtilities
     
     public static float REFERENCE_WIDTH = 1316;
     public static float REFERENCE_HEIGHT = 2832;
+    
+    private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0);
 
     public static void AddClickAction(this Button targetButton, UnityAction onClickAction, string soundName = "Button", bool includeAnimation = true)
     {
@@ -431,6 +434,51 @@ public static class UIUtilities
         }
 
         return sb.ToString();
+    }
+    
+    
+    public static long GetCurrentDayIndex()
+    {
+        return (long)(DateTime.Now - Epoch).TotalDays;
+    }
+    
+    public static long GetSomeDayIndex(DateTime date)
+    {
+        long dayIndex = (long)(date - Epoch).TotalDays;
+        return dayIndex;
+    }
+
+    public static DateTime DayIndexToDateTime(long dayIndex)
+    {
+        return Epoch.AddDays(dayIndex);
+    }
+
+    // 将年月转换为月份 Key（例如 2026年6月 → 202606）
+    public static long GetMonthKey(int year, int month)
+    {
+        return year * 100L + month;
+    }
+
+    public static (int year, int month) GetYearMonthFromKey(long key)
+    {
+        int year = (int)(key / 100);
+        int month = (int)(key % 100);
+        return (year, month);
+    }
+    
+    public static string ExtractNumber(string input)
+    {
+        // 1. 使用正则匹配出字符串中连续的数字部分 (如 "01", "10")
+        string numberStr = Regex.Match(input, @"\d+").Value;
+
+        // 2. 将提取出的字符串转为 int，自动消除前导 0
+        if (int.TryParse(numberStr, out int result))
+        {
+            // 3. 把干净的数字再转回字符串返回（如果你的业务需要 int，直接返回 result 即可）
+            return result.ToString(); 
+        }
+
+        return null;
     }
   
 }

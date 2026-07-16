@@ -17,7 +17,7 @@ public class ChessFinishView : UIWindow
 {
     [Header("活动按钮")] 
     // [SerializeField]
-    [SerializeField] private Button _signBtn;
+    //[SerializeField] private Button _signBtn;
     [SerializeField] private LimitBtnTable _limitBtnTable;
     [SerializeField] private Text reachLevelText;
     [SerializeField] private MatchFishTable _matchFishtable;
@@ -63,7 +63,7 @@ public class ChessFinishView : UIWindow
     {
         nextBtn.AddClickAction(OnNextButtonClick);
         _limitBtnTable._limitTimeEventButton.AddClickAction(OnLimitTimeEventButtonClicked);
-        _signBtn.AddClickAction(ShowSignInPanel);
+        
         Content.onClick.AddListener(() =>
         {
             SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
@@ -586,8 +586,6 @@ public class ChessFinishView : UIWindow
     {
         UnlockButton(_tasktable.TaskBtn,AppGameSettings.UnlockRequirements.DailyMissions, PanelType.DailyTasksScreen,
             GameDataManager.Instance.FishUserSave.opentime);
-        UnlockButton(_signBtn, AppGameSettings.UnlockRequirements.SignInRewards, PanelType.SignWaterScreen,
-            GameDataManager.Instance.UserData.signOpenTime);
         UnlockButton(_limitBtnTable._limitTimeEventButton, AppGameSettings.UnlockRequirements.TimeLimitMode, PanelType.LimitTimeScreen,
             GameDataManager.Instance.UserData.limitOpenTime);
     }
@@ -612,11 +610,6 @@ public class ChessFinishView : UIWindow
     private void OnLimitTimeEventButtonClicked()
     {
         SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
-    }
-
-    private void ShowSignInPanel()
-    {
-        SystemManager.Instance.ShowPanel(PanelType.SignWaterScreen);
     }
 
     /// <summary>

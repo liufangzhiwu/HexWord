@@ -316,9 +316,8 @@ public class LoadingController : MonoBehaviour
     /// </summary>
     private void SetupRandomLoadingHint()
     {
-        int id=Random.Range(1,12);
-        string sid = id < 10 ? "0" + id : id.ToString();
-        loadingHintText.text ="“"+ MultilingualManager.Instance.GetString("loadText"+ sid)+"”";    
+        string key = LoadTextManager.Instance.GetNextText();
+        loadingHintText.text =MultilingualManager.Instance.GetString(key);    
     }
 
     /// <summary>

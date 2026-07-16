@@ -14,102 +14,121 @@ using UnityEngine;
 public class UserData
 {
     #region 用户基础数据
-    public string PlayerId;              // 玩家ID
-    public string ABName;           // AB测试包名
+
+    public string PlayerId; // 玩家ID
+    public string ABName; // AB测试包名
     public string UserName;
     public int UserHeadId;
-    public string UserId;            // 用户唯一标识
-    public int Gold;                // 当前金币数量
-    public int TotalConsumedGold;   // 历史累计消耗金币
-    public int TotalEarnedGold;     // 历史累计获得金币
-    public int CurrentHexStage;        // 当前六边形关卡进度
-    
-    public int CurrentChessStage;        // 当前拼字关卡进度
-    public int levelMode;               // 当前游戏模式 1:普通模式 2:拼字模式 3:六边形模式
-    public int dayPassStageCount;        // 每日通关数量
-    public int showRateusCount;         // 好评界面显示次数
-    public string showRateusTime;       // 好评界面显示时间
-    public bool isChangeUserName;       // 是否更改过用户名称
-    public string Zenlevel;             // 禅修榜等级
-    
+    public string UserId; // 用户唯一标识
+    public int Gold; // 当前金币数量
+    public int TotalConsumedGold; // 历史累计消耗金币
+    public int TotalEarnedGold; // 历史累计获得金币
+    public int CurrentHexStage; // 当前六边形关卡进度
+
+    public int CurrentChessStage; // 当前拼字关卡进度
+    public int levelMode; // 当前游戏模式 1:普通模式 2:拼字模式 3:六边形模式
+    public int dayPassStageCount; // 每日通关数量
+    public int showRateusCount; // 好评界面显示次数
+    public string showRateusTime; // 好评界面显示时间
+    public bool isChangeUserName; // 是否更改过用户名称
+    public string Zenlevel; // 禅修榜等级
+
     // 👇 新增：体力系统基础字段
-    public int Energy;                       // 当前体力值
-    public string LastEnergyUpdateTime;      // 上次体力恢复的结算时间
+    public int Energy; // 当前体力值
+    public string LastEnergyUpdateTime; // 上次体力恢复的结算时间
     public bool hasUsedFreeRevive = false;
-    
-    public int GoldLeaf;            // 金箔数量
-    public List<ThemeSaveItem> ThemeSaveItems=new List<ThemeSaveItem>();
-    public Dictionary<int, int> ThemeItemUses;   // 单个主题累计使用次数
+    public int charInfoPopupCount; // 已弹出次数
+    public string charInfoPopupLastTime; // 上次弹出时间
+
+    public int GoldLeaf; // 金箔数量
+    public List<ThemeSaveItem> ThemeSaveItems = new List<ThemeSaveItem>();
+    public Dictionary<int, int> ThemeItemUses; // 单个主题累计使用次数
     public int userthemeid = 0;
     public bool ischangetheme = false;
-    
+
+    // 👇 新增：禅修榜是否主动加入标识（旧版本读取不到会默认为 false，但这没关系，旧版后端会放行）
+    public bool isJoinedZenRank = false;
+
     #endregion
 
     #region 系统设置数据
 
-    public bool IsMusicOn = true;       // 背景音乐开关
-    public bool IsSoundOn = true;        // 音效开关
+    public bool IsMusicOn = true; // 背景音乐开关
+
+    public bool IsSoundOn = true; // 音效开关
+
     //public bool IsVibrationOn ;    // 震动反馈开关
-    public string LanguageCode;          // 当前语言代码
-    public bool IsAgreePrivacy;    // 同意用户隐私协议
+    public string LanguageCode; // 当前语言代码
+    public bool IsAgreePrivacy; // 同意用户隐私协议
+
     #endregion
 
     #region 游戏进度数据
 
-    public int TutorialProgress;        // 新手引导进度
-    public Dictionary<int, bool> ChessTutorialProgress;   // 填字引导进度
-    public int GetTutorialProgress() { return TutorialProgress; }
-    public bool Rigister;   // 注册标志
-    public bool IsFirstLaunch = true;   // 首次启动标志
-    public bool isShowVocabulary;       // 是否显示词库标志
-    
+    public int TutorialProgress; // 新手引导进度
+    public Dictionary<int, bool> ChessTutorialProgress; // 填字引导进度
+
+    public int GetTutorialProgress()
+    {
+        return TutorialProgress;
+    }
+
+    public bool Rigister; // 注册标志
+    public bool IsFirstLaunch = true; // 首次启动标志
+    public bool isShowVocabulary; // 是否显示词库标志
+
     public int TotalPayTimes; //支付次数
     public float TotalRevenue; //累计付费金额
-    public int totallogin;       // 总登录次数
-    public int totalSeeAds;       // 总看广告次数
+    public int totallogin; // 总登录次数
+    public int totalSeeAds; // 总看广告次数
     public int activeDayCnt; //活跃天数
-    
+
     // 生命周期事件相关数据
-    public float TotalOnlineMinutes;    // 累计在线总时长（分钟）
+    public float TotalOnlineMinutes; // 累计在线总时长（分钟）
     public Dictionary<string, bool> ReportedLifecycleEvents; // 已上报的生命周期事件
-    
-  
+
+
     // --- 广告策略存档数据 ---
-    public int AdFatigueScore;            // 疲劳分数
-    public float TotalPlayTimeSeconds;   // 累计游戏时长 (G2)
-    public long LastPayTimeTicks;         // 上次付费时间 (Ticks) (G3)
-    public long LastRewardAdTimeTicks;    // 上次看激励视频的时间 (G1)
+    public int AdFatigueScore; // 疲劳分数
+    public float TotalPlayTimeSeconds; // 累计游戏时长 (G2)
+    public long LastPayTimeTicks; // 上次付费时间 (Ticks) (G3)
+    public long LastRewardAdTimeTicks; // 上次看激励视频的时间 (G1)
+
     public long LastInterstitialTimeTicks; // 上次看插屏的时间 (G5)
+
     // 👇 新增：D规则（每日首关插屏概率）状态记录
-    public bool isDayFirstLevelAdChecked;              // 今日首关是否已进行过插屏概率判定
-    public bool isDayFirstLevelAdAllowed;              // 今日首关插屏概率判定的结果
-    
+    public bool isDayFirstLevelAdChecked; // 今日首关是否已进行过插屏概率判定
+    public bool isDayFirstLevelAdAllowed; // 今日首关插屏概率判定的结果
+
     public int HighestZenScore = 0; // 历史最高禅意分
     public Dictionary<int, float> BestClearTimes = new Dictionary<int, float>(); // 极速通关记录字典
- 
+
     /// <summary>
     /// 词库数据
     /// </summary>   
     //public WordVocabulary<string> wordVocabularyJan  = new WordVocabulary<string>();  
     //public WordVocabulary<string> wordVocabularyChinTra  = new WordVocabulary<string>(); 
-    public WordVocabulary<string> wordVocabularyChinSim  = new WordVocabulary<string>();
+    public WordVocabulary<string> wordVocabularyChinSim = new WordVocabulary<string>();
 
     #endregion
 
     #region 时间相关数据
 
-    public string logoutTime;           // 退出时间
-    public string curStageStartTime;    // 当前关卡开始时间
-    public bool curIsEnter;    // 当前关卡是否已经进入
-    public int curStageOnlineTime;      // 当前关卡在线时长(秒)
+    public string logoutTime; // 退出时间
+    public string curStageStartTime; // 当前关卡开始时间
+    public bool curIsEnter; // 当前关卡是否已经进入
+
+    public int curStageOnlineTime; // 当前关卡在线时长(秒)
+
     // 关卡对应通关时长
-    public Dictionary<int, int> passLevelUseTime=new Dictionary<int, int>();
-    
-    public string firstPayTime;//首次充值时间
-    public string lastPayTime;//最后充值时间
-    public string firstLoginTime;//首次登录时间
-    public string lastLoginDay;//最后登录时间
-    public int zenCount;       // 禅意值数量
+    public Dictionary<int, int> passLevelUseTime = new Dictionary<int, int>();
+
+    public string firstPayTime; //首次充值时间
+    public string lastPayTime; //最后充值时间
+    public string firstLoginTime; //首次登录时间
+    public string lastLoginDay; //最后登录时间
+    public int zenCount; // 禅意值数量
+
     #endregion
 
     #region 道具数据
@@ -120,42 +139,50 @@ public class UserData
     /// Value: 道具信息
     /// </summary>
     public Dictionary<int, ToolInfo> toolInfo;
-    
+
     //签到数据
-    public int signid;         // 签到id
-    public bool isDayEnterSign;             // 签到活动重置后是否为首次进入
-    public string signOpenTime;          // 签到活动开启时间
-    
+    public int signid; // 签到id
+    public bool isDayEnterSign; // 签到活动重置后是否为首次进入
+    public string signOpenTime; // 签到活动开启时间
+
     //限时活动数据
-    public int timePuzzlecount;            // 限时活动中连出成语数量
-    public int timerePuzzleid;            // 限时活动中奖励领取id
-    public string limitOpenTime;        // 限时活动开启时间
-    public int limitMinPeriod;         // 限时翻倍周期（分钟）
-    public string limitEndTime;        // 限时翻倍结束时间
-    public bool isNeedShowHelp;      // 是否需要主动弹窗帮助界面
-    public bool isDayEnterLimint;      // 限时活动重置后是否为首次进入
-    
+    public int timePuzzlecount; // 限时活动中连出成语数量
+    public int timerePuzzleid; // 限时活动中奖励领取id
+    public string limitOpenTime; // 限时活动开启时间
+    public int limitMinPeriod; // 限时翻倍周期（分钟）
+    public string limitEndTime; // 限时翻倍结束时间
+    public bool isNeedShowHelp; // 是否需要主动弹窗帮助界面
+    public bool isDayEnterLimint; // 限时活动重置后是否为首次进入
+
     /// <summary>
     /// 每日任务数据
     /// </summary>
     /// 
     /// 完成任务id
-    public List<CompleteTaskData> completeTaskList=new List<CompleteTaskData>();
-    public bool butterflyTaskIsOpen;        // 每日任务无限蝴蝶任务是否开启
-    public string butterflyTaskOpenTime;                            // 每日任务无限蝴蝶任务开启时间
-    public int taskButterflyUseMinutes;             // 每日任务无限蝴蝶任务使用分钟
-    public bool isAllCompleteTask;      // 每日任务活动是否全部完成
+    public List<CompleteTaskData> completeTaskList = new List<CompleteTaskData>();
+
+    public bool butterflyTaskIsOpen; // 每日任务无限蝴蝶任务是否开启
+    public string butterflyTaskOpenTime; // 每日任务无限蝴蝶任务开启时间
+    public int taskButterflyUseMinutes; // 每日任务无限蝴蝶任务使用分钟
+    public bool isAllCompleteTask; // 每日任务活动是否全部完成
+
     /// 任务数据
-    public List<TaskSaveData> taskSaveDatas=new List<TaskSaveData>();
-   
+    public List<TaskSaveData> taskSaveDatas = new List<TaskSaveData>();
+
     /// <summary>
     /// 商店限时商品数据
     /// </summary>
-    public List<ShopLimitData> limitShopItems=new List<ShopLimitData>();
-    public bool isHideShopRedPoint;      // 商店每日免费商品是否获得
-    public bool isDayFreeGet;      // 商店每日免费商品是否获得
-    public bool isDayGoldBuy;      // 商店每日金币购买商品是否买过
-    public bool isDayMoneyBuy;      // 商店每日现金购买商品是否买过
+    public List<ShopLimitData> limitShopItems = new List<ShopLimitData>();
+
+    public bool isHideShopRedPoint; // 商店每日免费商品是否获得
+    public bool isDayFreeGet; // 商店每日免费商品是否获得
+    public bool isDayGoldBuy; // 商店每日金币购买商品是否买过
+    public bool isDayMoneyBuy; // 商店每日现金购买商品是否买过
+
+
+    public SignSaveData _signSaveData = new SignSaveData();
+    public LoadTimeIndex _loadTimeIndexData = new LoadTimeIndex();
+    public List<int> _getAnimalsHeadIcons = new List<int>();
 
     #endregion
 
@@ -170,22 +197,22 @@ public class UserData
     }
 
     #endregion
-    
-    
+
+
     // 生命周期事件配置
     private readonly int[] LIFE_CYCLE_MINUTES = { 1, 5, 10, 15, 20, 30, 40, 60, 120, 300, 600 };
     private readonly string LIFE_CYCLE_EVENT_PREFIX = "time_level_";
-    
-   
+
+
 
     #region 数据初始化方法
-    
+
     public bool LocalDataIsNull()
     {
         bool IsNull = false;
         string filePath = Getfilepath;
 
-       
+
         if (File.Exists(filePath))
         {
             IsNull = false;
@@ -193,19 +220,19 @@ public class UserData
         else
         {
             IsNull = true;
-        } 
-        
+        }
+
         return IsNull;
-       
+
     }
-    
+
     /// <summary>
     /// 加载用户数据
     /// </summary>
     public void LoadData()
     {
         string filePath = Getfilepath;
-        
+
         if (!File.Exists(filePath))
         {
             Debug.LogWarning("未找到用户数据文件，使用默认数据初始化");
@@ -218,15 +245,15 @@ public class UserData
             string encryptedJson = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
             //解密
             string json = SecurityProvider.RestoreData(encryptedJson);
-            
+
             Debug.Log($"加载用户数据: {json}");
             UserData loadedData = JsonConvert.DeserializeObject<UserData>(json);
-                
-            if (loadedData.CurrentHexStage <=0)
+
+            if (loadedData.CurrentHexStage <= 0)
             {
                 Debug.LogError($"关卡数据异常: {json}");
                 InitData();
-                AnalyticMgr.BugRecord("关卡存档异常",json);
+                AnalyticMgr.BugRecord("关卡存档异常", json);
                 return;
             }
 
@@ -238,7 +265,7 @@ public class UserData
             InitData();
         }
     }
-    
+
 
     /// <summary>
     /// 加载用户数据
@@ -246,13 +273,13 @@ public class UserData
     public void InitData()
     {
         # region 初始数据
-        
+
         // 基础数据
         // 用户基础数据
         PlayerId = null;
         ABName = "0";
         UserHeadId = 0;
-        UserName=null;
+        UserName = null;
         UserId = null;
         Gold = AppGameSettings.StartingGold;
         TotalConsumedGold = 0;
@@ -276,7 +303,8 @@ public class UserData
         isChangeUserName = false;
         // 游戏进度
         TutorialProgress = 0;
-        ChessTutorialProgress = new Dictionary<int,bool> {{1,false},{2,false},{3,false},{4,false},{5,false}};
+        ChessTutorialProgress = new Dictionary<int, bool>
+            { { 1, false }, { 2, false }, { 3, false }, { 4, false }, { 5, false } };
         IsFirstLaunch = true;
         isShowVocabulary = false;
         //支付次数
@@ -301,21 +329,22 @@ public class UserData
         zenCount = 0;
         passLevelUseTime = new Dictionary<int, int>();
         //限时商店数据
-        limitShopItems =new List<ShopLimitData>();
-        isDayFreeGet=false;
+        limitShopItems = new List<ShopLimitData>();
+        isDayFreeGet = false;
         isDayGoldBuy = false;
         isDayMoneyBuy = false;
-        isHideShopRedPoint=false;
-        
-        ThemeSaveItems=new List<ThemeSaveItem>{
-            new(){id = 0,isGet = true},
-            new(){id = 1,isGet = true},
+        isHideShopRedPoint = false;
+
+        ThemeSaveItems = new List<ThemeSaveItem>
+        {
+            new() { id = 0, isGet = true },
+            new() { id = 1, isGet = true },
         };
-        ThemeItemUses=new Dictionary<int,int>(){{0,1}};
+        ThemeItemUses = new Dictionary<int, int>() { { 0, 1 } };
         GoldLeaf = 0;
         userthemeid = 0;
         ischangetheme = false;
-        
+
         // 生命周期事件相关数据初始化
         TotalOnlineMinutes = 0f;
         ReportedLifecycleEvents = new Dictionary<string, bool>();
@@ -324,16 +353,44 @@ public class UserData
             string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{minutes}";
             ReportedLifecycleEvents[eventKey] = false;
         }
-        
+
         // 初始化道具数据
         toolInfo = new Dictionary<int, ToolInfo>
         {
-            { 101, new ToolInfo { cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint", count = AppGameSettings.ShopItems.SingleHintCount } },
-            { 102, new ToolInfo { cost = AppGameSettings.ShopItems.WordHintCost, type = "WordHint", count = AppGameSettings.ShopItems.WordHintCount } },
-            { 103, new ToolInfo { cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly", count = AppGameSettings.ShopItems.StartingButterflies } },
-            { 104, new ToolInfo { cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete", count = AppGameSettings.ShopItems.WordHintCount } }
+            {
+                101,
+                new ToolInfo
+                {
+                    cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint",
+                    count = AppGameSettings.ShopItems.SingleHintCount
+                }
+            },
+            {
+                102,
+                new ToolInfo
+                {
+                    cost = AppGameSettings.ShopItems.WordHintCost, type = "WordHint",
+                    count = AppGameSettings.ShopItems.WordHintCount
+                }
+            },
+            {
+                103,
+                new ToolInfo
+                {
+                    cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly",
+                    count = AppGameSettings.ShopItems.StartingButterflies
+                }
+            },
+            {
+                104,
+                new ToolInfo
+                {
+                    cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete",
+                    count = AppGameSettings.ShopItems.WordHintCount
+                }
+            }
         };
-        
+
         // 签到数据
         signOpenTime = null;
         signid = 0;
@@ -341,7 +398,7 @@ public class UserData
         butterflyTaskIsOpen = false;
         taskButterflyUseMinutes = 0;
         butterflyTaskOpenTime = null;
-        
+
         //显示奖励数据
         timerePuzzleid = 0;
         limitOpenTime = null;
@@ -355,7 +412,7 @@ public class UserData
         taskSaveDatas = new List<TaskSaveData>();
         isAllCompleteTask = false;
         wordVocabularyChinSim = new WordVocabulary<string>();
-        
+
         AdFatigueScore = 0;
         TotalPlayTimeSeconds = 0f;
         LastPayTimeTicks = 0;
@@ -363,13 +420,13 @@ public class UserData
         LastInterstitialTimeTicks = 0;
         isDayFirstLevelAdChecked = false;
         isDayFirstLevelAdAllowed = false;
-        
+
         HighestZenScore = 0;
         BestClearTimes = new Dictionary<int, float>();
-        
+
         #endregion
     }
-    
+
     /// <summary>
     /// 从现有用户数据初始化
     /// </summary>
@@ -377,7 +434,7 @@ public class UserData
     public void InitData(UserData user)
     {
         if (user == null) return;
-      
+
         // 基础数据
         PlayerId = user.PlayerId;
         ABName = user.ABName;
@@ -402,12 +459,12 @@ public class UserData
         lastLoginDay = user.lastLoginDay;
         firstPayTime = user.firstPayTime;
         lastPayTime = user.lastPayTime;
-        
+
         // 👇 🌟 核心修复：通过时间戳是否存在，来精准判断是不是老玩家首次更新
         if (string.IsNullOrEmpty(user.LastEnergyUpdateTime))
         {
             // 老玩家首次更新到新版本，作为福利直接送满体力，并初始化时间！
-            Energy = 5; 
+            Energy = 5;
             LastEnergyUpdateTime = DateTime.Now.ToString();
         }
         else
@@ -416,29 +473,33 @@ public class UserData
             Energy = user.Energy;
             LastEnergyUpdateTime = user.LastEnergyUpdateTime;
         }
+
         hasUsedFreeRevive = user.hasUsedFreeRevive;
-        
-        GoldLeaf=user.GoldLeaf;
-        
-        ThemeSaveItems=user.ThemeSaveItems.Count<=0?new List<ThemeSaveItem>{
-            new() {id = 0,isGet = true},
-            new() {id = 1,isGet = true},
-        }:user.ThemeSaveItems;
-        ThemeItemUses=user.ThemeItemUses??new Dictionary<int,int>(){{0,1}};
+
+        GoldLeaf = user.GoldLeaf;
+
+        ThemeSaveItems = user.ThemeSaveItems.Count <= 0
+            ? new List<ThemeSaveItem>
+            {
+                new() { id = 0, isGet = true },
+                new() { id = 1, isGet = true },
+            }
+            : user.ThemeSaveItems;
+        ThemeItemUses = user.ThemeItemUses ?? new Dictionary<int, int>() { { 0, 1 } };
         userthemeid = user.userthemeid;
-        ischangetheme=user.ischangetheme;
-        
+        ischangetheme = user.ischangetheme;
+
         isChangeUserName = user.isChangeUserName;
         // 评价界面显示次数
         showRateusCount = user.showRateusCount;
         // 评价界面显示时间
         showRateusTime = user.showRateusTime;
         //限时商店数据
-        limitShopItems =user.limitShopItems??new List<ShopLimitData>();
-        isDayFreeGet=user.isDayFreeGet;
+        limitShopItems = user.limitShopItems ?? new List<ShopLimitData>();
+        isDayFreeGet = user.isDayFreeGet;
         isDayGoldBuy = user.isDayGoldBuy;
         isDayMoneyBuy = user.isDayMoneyBuy;
-        isHideShopRedPoint=user.isHideShopRedPoint;
+        isHideShopRedPoint = user.isHideShopRedPoint;
         //支付次数
         TotalPayTimes = user.TotalPayTimes;
         //累计付费金额
@@ -455,18 +516,22 @@ public class UserData
         taskButterflyUseMinutes = user.taskButterflyUseMinutes;
         butterflyTaskOpenTime = user.butterflyTaskOpenTime;
         passLevelUseTime = user.passLevelUseTime;
-        ChessTutorialProgress = user.ChessTutorialProgress ?? new Dictionary<int,bool> {{1,false},{2,false},{3,false},{4,false},{5,false}};
+        ChessTutorialProgress = user.ChessTutorialProgress ?? new Dictionary<int, bool>
+            { { 1, false }, { 2, false }, { 3, false }, { 4, false }, { 5, false } };
         IsFirstLaunch = user.IsFirstLaunch;
         isShowVocabulary = user.isShowVocabulary;
-        
-        ThemeSaveItems=user.ThemeSaveItems.Count<=0?new List<ThemeSaveItem>{
-            new() {id = 0,isGet = true},
-            new() {id = 1,isGet = true},
-        }:user.ThemeSaveItems;
-        ThemeItemUses=user.ThemeItemUses??new Dictionary<int,int>(){{0,1}};
+
+        ThemeSaveItems = user.ThemeSaveItems.Count <= 0
+            ? new List<ThemeSaveItem>
+            {
+                new() { id = 0, isGet = true },
+                new() { id = 1, isGet = true },
+            }
+            : user.ThemeSaveItems;
+        ThemeItemUses = user.ThemeItemUses ?? new Dictionary<int, int>() { { 0, 1 } };
         userthemeid = user.userthemeid;
-        ischangetheme=user.ischangetheme;
-        
+        ischangetheme = user.ischangetheme;
+
         // 时间数据
         logoutTime = user.logoutTime;
         curIsEnter = user.curIsEnter;
@@ -476,7 +541,7 @@ public class UserData
         signOpenTime = user.signOpenTime;
         signid = user.signid;
         isDayEnterSign = user.isDayEnterSign;
-        curStageStartTime= user.curStageStartTime;
+        curStageStartTime = user.curStageStartTime;
         curStageOnlineTime = user.curStageOnlineTime;
         //显示奖励数据
         timerePuzzleid = user.timerePuzzleid;
@@ -491,11 +556,11 @@ public class UserData
         taskSaveDatas = user.taskSaveDatas;
         isAllCompleteTask = user.isAllCompleteTask;
         wordVocabularyChinSim = user.wordVocabularyChinSim;
-        
+
         // 生命周期事件相关数据
         TotalOnlineMinutes = user.TotalOnlineMinutes;
         ReportedLifecycleEvents = user.ReportedLifecycleEvents ?? new Dictionary<string, bool>();
-        
+
         AdFatigueScore = user.AdFatigueScore;
         TotalPlayTimeSeconds = user.TotalPlayTimeSeconds;
         LastPayTimeTicks = user.LastPayTimeTicks;
@@ -506,23 +571,23 @@ public class UserData
 
         HighestZenScore = user.HighestZenScore;
         BestClearTimes = user.BestClearTimes ?? new Dictionary<int, float>();
-        
+
         // 检查并初始化缺失的生命周期事件
         InitializeLifecycleEvents();
-        
+
         // 检查是否需要重置每日数据
         CheckResetDailyTime();
-        
+
         // 检查是否需要上报生命周期事件
         CheckLifecycleEvents();
-        
+
         CheckShopBuyData();
     }
 
     #endregion
 
     #region 数据维护方法
- 
+
     /// <summary>
     /// 获得关卡模式中文描述
     /// </summary>
@@ -538,9 +603,10 @@ public class UserData
             case 3:
                 return "六边形";
         }
+
         return "六边形";
     }
-    
+
     /// <summary>
     /// 检查并重置每日限时数据
     /// </summary>
@@ -551,14 +617,14 @@ public class UserData
         DateTime desTime = DateTime.Parse(logoutTime);
         DateTime offTime = new DateTime(desTime.Year, desTime.Month, desTime.Day, 0, 0, 0);
         DateTime nowTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
-        
+
         if ((nowTime - offTime).TotalDays >= 1)
         {
             // 超过一天的逻辑
             ResetDailyData();
-            
+
             ResetDailyTaskDate();
-            
+
             UpdatePanelUI();
             isDayFreeGet = false;
             isDayGoldBuy = false;
@@ -566,22 +632,22 @@ public class UserData
             isHideShopRedPoint = false;
         }
     }
-    
+
     private async Task ResetDailyTaskDate()
     {
         await Task.Delay(10); // 等待2秒
-        
-        butterflyTaskIsOpen=false;
+
+        butterflyTaskIsOpen = false;
         completeTaskList = new List<CompleteTaskData>();
         taskButterflyUseMinutes = 0;
         butterflyTaskOpenTime = null;
-        taskSaveDatas=new List<TaskSaveData>();
+        taskSaveDatas = new List<TaskSaveData>();
         isAllCompleteTask = false;
         //每日任务重置
         DailyTaskManager.Instance.GetTaskSaveData();
         DailyTaskManager.Instance.isResetDailyTask = true;
     }
-    
+
     /// 重置每日数据
     /// </summary>
     private void ResetDailyData()
@@ -602,32 +668,26 @@ public class UserData
         isDayFirstLevelAdChecked = false;
         isDayFirstLevelAdAllowed = false;
     }
-    
+
     private void UpdatePanelUI()
     {
         if (SystemManager.Instance != null)
         {
-            if(SystemManager.Instance.PanelIsShowing(PanelType.LimitTimeScreen))
+            if (SystemManager.Instance.PanelIsShowing(PanelType.LimitTimeScreen))
                 SystemManager.Instance.HidePanel(PanelType.LimitTimeScreen);
-            
-            if (SystemManager.Instance.PanelIsShowing(PanelType.SignWaterScreen))
+
+            if (SystemManager.Instance.PanelIsShowing(PanelType.SevenSignScreen))
             {
-                SystemManager.Instance.HidePanel(PanelType.SignWaterScreen);
+                SystemManager.Instance.HidePanel(PanelType.SevenSignScreen);
             }
-            
-            if(SystemManager.Instance.PanelIsShowing(PanelType.DailyTasksScreen))
+
+            if (SystemManager.Instance.PanelIsShowing(PanelType.DailyTasksScreen))
                 SystemManager.Instance.HidePanel(PanelType.DailyTasksScreen);
-           
-        }
-        
-        if (WaterManager.instance != null)
-        {
-            WaterManager.instance.WaterShow(false);
-            WaterManager.instance.ClearWater();
+
         }
     }
-    
-    
+
+
     public void CheckShopBuyData()
     {
         foreach (ShopLimitData shopdata in limitShopItems)
@@ -636,20 +696,20 @@ public class UserData
             {
                 DateTime getendtime = DateTime.Parse(shopdata.endtime);
                 TimeSpan timeSpan = getendtime.Subtract(DateTime.Now);
-      
+
                 if (timeSpan.TotalMinutes <= 0)
                 {
-                    shopdata.isopen=false;
-                    shopdata.endtime=null;
+                    shopdata.isopen = false;
+                    shopdata.endtime = null;
                 }
             }
-            
-            if (shopdata.isget&&shopdata.adstype==(int)LimitRewordType.Remove7DayAds)
+
+            if (shopdata.isget && shopdata.adstype == (int)LimitRewordType.Remove7DayAds)
             {
-                int hour = 24*7;
+                int hour = 24 * 7;
                 DateTime buyendTime = DateTime.Parse(shopdata.gettime).AddHours(hour);
                 TimeSpan timeSpan = buyendTime.Subtract(DateTime.Now);
-      
+
                 if (timeSpan.TotalMinutes <= 0)
                 {
                     shopdata.isoverdate = true;
@@ -657,7 +717,7 @@ public class UserData
             }
         }
     }
-    
+
     public float GetBestClearTime(int wordCount)
     {
         if (BestClearTimes != null && BestClearTimes.TryGetValue(wordCount, out float time))
@@ -675,7 +735,7 @@ public class UserData
 
     #region 数据持久化方法
 
-    
+
     /// <summary>
     /// 保存用户数据
     /// </summary>
@@ -683,27 +743,27 @@ public class UserData
     {
         try
         {
-            if(CurrentHexStage<=0) return;
-            
+            if (CurrentHexStage <= 0) return;
+
             // 更新登出时间
             if (!string.IsNullOrEmpty(logoutTime) && DateTime.Now > DateTime.Parse(logoutTime))
             {
                 logoutTime = DateTime.Now.ToString();
             }
-            
+
             // 更新在线时长
             UpdateOnlineStageTime();
             GameDataManager.Instance.CommitPushServerData();
-            
+
             // 序列化并加密数据
             string json = JsonConvert.SerializeObject(this, Formatting.Indented);
             string encryptedJson = SecurityProvider.ProtectData(json);
-            
+
             // 写入文件
             File.WriteAllText(Getfilepath, encryptedJson);
             Debug.Log("用户数据保存成功");
 
-           
+
         }
         catch (Exception ex)
         {
@@ -714,8 +774,8 @@ public class UserData
     #endregion
 
     #region 游戏数据操作方法
-    
-    
+
+
     /// <summary>
     /// 更新指定主题使用次数
     /// </summary>
@@ -731,8 +791,8 @@ public class UserData
             ThemeItemUses.Add(themeid, 1);
         }
     }
-    
-     
+
+
     /// <summary>
     /// 更新金箔数量
     /// </summary>
@@ -753,11 +813,11 @@ public class UserData
         }
 
         Debug.Log($"金箔{(value > 0 ? "增加" : "减少")}: {Math.Abs(value)}, 当前金箔: {GoldLeaf}");
-        
+
         // 金箔数量变化后，重新检查皮肤入口红点状态
         ThemeManager.Instance.CheckAndUpdateSkinRedPoint();
     }
-    
+
     /// <summary>
     /// 获得道具消耗总数
     /// </summary>
@@ -765,11 +825,11 @@ public class UserData
     public int GetTotalToolCost()
     {
         int totalToolCost = 0;
-        totalToolCost += toolInfo[101].reducecount+toolInfo[102].reducecount
-                                                  +toolInfo[103].reducecount;
+        totalToolCost += toolInfo[101].reducecount + toolInfo[102].reducecount
+                                                   + toolInfo[103].reducecount;
         return totalToolCost;
     }
-    
+
     /// <summary>
     /// 更新当前关卡在线时长
     /// </summary>
@@ -779,7 +839,7 @@ public class UserData
         {
             DateTime startTime = DateTime.Parse(curStageStartTime);
             TimeSpan duration = DateTime.Now - startTime;
-            
+
             if (duration.TotalSeconds >= 0)
             {
                 curStageOnlineTime += (int)duration.TotalSeconds;
@@ -789,26 +849,26 @@ public class UserData
             curStageStartTime = null;
         }
     }
-    
+
     /// <summary>
     /// 更新关卡用时
     /// </summary>
-    public void UpdateLevelUseTimes(int level,int secondtimes)
+    public void UpdateLevelUseTimes(int level, int secondtimes)
     {
         if (!passLevelUseTime.ContainsKey(level))
         {
-            passLevelUseTime.Add(level,secondtimes);
+            passLevelUseTime.Add(level, secondtimes);
         }
-        
+
         if (passLevelUseTime.Count > 9)
         {
             // 假设字典的键或值中包含时间信息，我们可以根据时间排序后保留最近的9个
             // 例如，如果键是时间戳或包含时间信息：
             var recentEntries = passLevelUseTime.OrderByDescending(x => x.Key).Take(9).ToList();
-    
+
             // 清空原字典
             passLevelUseTime.Clear();
-    
+
             // 将最近的9个条目添加回字典
             foreach (var entry in recentEntries)
             {
@@ -816,7 +876,7 @@ public class UserData
             }
         }
     }
-    
+
 
     /// <summary>
     /// 更新关卡进度
@@ -828,11 +888,12 @@ public class UserData
         CurrentChessStage = isSet ? value : CurrentChessStage + value;
         Debug.Log($"关卡更新: {(isSet ? "设置为" : "增加")}{value}, 当前关卡: {CurrentChessStage}");
     }
-   
+
     public void UdpateTimePuzzleCount(int value)
     {
-        timePuzzlecount+=value;
+        timePuzzlecount += value;
     }
+
     /// <summary>
     /// 新增任务数据
     /// </summary>
@@ -857,7 +918,7 @@ public class UserData
 
     public void UpdateTutorialProgress()
     {
-        TutorialProgress +=1;
+        TutorialProgress += 1;
     }
 
     /// <summary>
@@ -867,27 +928,27 @@ public class UserData
     {
         //int oldGold = Gold;
         Gold += value;
-        
+
         if (updateui)
         {
             EventDispatcher.instance.TriggerChangeGoldUI(value, isanim);
         }
-        
-        
+
+
         if (value <= 0)
         {
             TotalConsumedGold += Math.Abs(value);
-            SendCurrencyEvent(value, "金币",message); // 消耗金币事件
+            SendCurrencyEvent(value, "金币", message); // 消耗金币事件
         }
         else
         {
             TotalEarnedGold += value;
-            SendCurrencyEvent(value, "金币",message); // 获得金币事件
+            SendCurrencyEvent(value, "金币", message); // 获得金币事件
         }
-        
+
         GameDataManager.Instance.CommitGameData();
     }
-    
+
     /// <summary>
     /// 每日首次开启签到活动
     /// </summary>
@@ -896,7 +957,7 @@ public class UserData
         signOpenTime = DateTime.Now.ToString();
         isDayEnterSign = false;
     }
-    
+
     /// <summary>
     /// 更新限时活动进度id
     /// </summary>
@@ -905,13 +966,13 @@ public class UserData
         signid++;
         if (string.IsNullOrEmpty(signOpenTime)) signOpenTime = DateTime.Now.ToString();
         TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(signOpenTime));
-        AnalyticMgr.ActivityProgress("签到活动",signid,(int)ts.TotalSeconds);
+        AnalyticMgr.ActivityProgress("签到活动", signid, (int)ts.TotalSeconds);
         if (signid > 3)
         {
-            AnalyticMgr.ActivityComplete("签到活动",(int)ts.TotalSeconds);
+            AnalyticMgr.ActivityComplete("签到活动", (int)ts.TotalSeconds);
         }
     }
-    
+
     /// <summary>
     /// 发送货币事件（用于统计）
     /// </summary>
@@ -920,14 +981,14 @@ public class UserData
         AnalyticMgr.SetCommonProperties();
         if (value <= 0)
         {
-            AnalyticMgr.ResourceReduce(currencyName, Mathf.Abs(value), message,word);
+            AnalyticMgr.ResourceReduce(currencyName, Mathf.Abs(value), message, word);
         }
         else
         {
-            AnalyticMgr.ResourceGet(currencyName, value, message,word);
+            AnalyticMgr.ResourceGet(currencyName, value, message, word);
         }
     }
-    
+
     /// <summary>
     /// 更新完成任务列表
     /// </summary>
@@ -939,7 +1000,7 @@ public class UserData
             typeid = typeid
         });
     }
-    
+
     /// <summary>
     /// 更新所有任务完成数据
     /// </summary>
@@ -947,7 +1008,7 @@ public class UserData
     {
         isAllCompleteTask = true;
     }
-    
+
     /// <summary>
     /// 更新限时活动进度id
     /// </summary>
@@ -957,13 +1018,13 @@ public class UserData
         LimitTimeManager.Instance.GetCurWordCount();
         if (string.IsNullOrEmpty(limitOpenTime)) limitOpenTime = DateTime.Now.ToString();
         TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(limitOpenTime));
-        AnalyticMgr.ActivityProgress("限时活动",timerePuzzleid,(int)ts.TotalSeconds);
+        AnalyticMgr.ActivityProgress("限时活动", timerePuzzleid, (int)ts.TotalSeconds);
         if (timerePuzzleid > 10)
         {
-            AnalyticMgr.ActivityComplete("限时活动",(int)ts.TotalSeconds);
+            AnalyticMgr.ActivityComplete("限时活动", (int)ts.TotalSeconds);
         }
     }
-    
+
     /// <summary>
     /// 每日首次开启限时活动
     /// </summary>
@@ -972,7 +1033,7 @@ public class UserData
         limitOpenTime = DateTime.Now.ToString();
         isDayEnterLimint = false;
     }
-    
+
     /// <summary>
     /// 更新限时翻译结束时间
     /// </summary>
@@ -981,7 +1042,7 @@ public class UserData
         limitEndTime = DateTime.Now.AddMinutes(minutes).ToString();
         UpdatelimitMinPeriod(minutes);
     }
-    
+
     /// <summary>
     /// 更新限时翻倍周期
     /// </summary>
@@ -1039,14 +1100,14 @@ public class UserData
     //         GameDataManager.Instance.CommitGameData();
     //     }
     // }
-    
-    
+
+
     /// <summary>
     /// 更新道具数量
     /// </summary>
     /// <param name="type">道具类型</param>
     /// <param name="value">变化值</param>
-    public void UpdateTool(LimitRewordType type, int value, string message = "", string word= "")
+    public void UpdateTool(LimitRewordType type, int value, string message = "", string word = "")
     {
         int toolId = GetToolIdByType(type);
 
@@ -1103,8 +1164,8 @@ public class UserData
     }
 
     #endregion
-    
-     #region 生命周期事件管理
+
+    #region 生命周期事件管理
 
     /// <summary>
     /// 初始化生命周期事件数据结构
@@ -1115,7 +1176,7 @@ public class UserData
         {
             ReportedLifecycleEvents = new Dictionary<string, bool>();
         }
-        
+
         // 确保所有生命周期事件都在字典中
         foreach (var minutes in LIFE_CYCLE_MINUTES)
         {
@@ -1126,7 +1187,7 @@ public class UserData
             }
         }
     }
-    
+
     /// <summary>
     /// 增加在线时长并检查生命周期事件
     /// </summary>
@@ -1135,10 +1196,10 @@ public class UserData
     {
         TotalOnlineMinutes += minutes;
         CheckLifecycleEvents();
-        
+
         Debug.Log($"累计在线时长增加: {minutes}分钟, 总时长: {TotalOnlineMinutes:F1}分钟");
     }
-    
+
     /// <summary>
     /// 检查并上报生命周期事件
     /// </summary>
@@ -1148,9 +1209,9 @@ public class UserData
         {
             int targetMinutes = LIFE_CYCLE_MINUTES[i];
             string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{targetMinutes}";
-            
+
             // 如果达到目标时长且未上报过
-            if (TotalOnlineMinutes >= targetMinutes && 
+            if (TotalOnlineMinutes >= targetMinutes &&
                 (!ReportedLifecycleEvents.ContainsKey(eventKey) || !ReportedLifecycleEvents[eventKey]))
             {
                 AnalyticMgr.ReportLifecycleEvent(i + 1, targetMinutes);
@@ -1158,7 +1219,7 @@ public class UserData
             }
         }
     }
-    
+
     /// <summary>
     /// 获取下一个生命周期事件信息
     /// </summary>
@@ -1173,11 +1234,11 @@ public class UserData
                 return (minutes, $"{LIFE_CYCLE_EVENT_PREFIX}{index}");
             }
         }
-        
+
         // 所有事件都已完成
         return (0, "已完成所有生命周期事件");
     }
-    
+
     /// <summary>
     /// 获取已完成的生命周期事件数量
     /// </summary>
@@ -1191,9 +1252,10 @@ public class UserData
                 count++;
             }
         }
+
         return count;
     }
-    
+
     /// <summary>
     /// 获取生命周期事件完成进度
     /// </summary>
@@ -1202,7 +1264,7 @@ public class UserData
         int completed = GetCompletedLifecycleEventCount();
         return (float)completed / LIFE_CYCLE_MINUTES.Length;
     }
-    
+
     /// <summary>
     /// 重置所有生命周期事件（用于测试或账号重置）
     /// </summary>
@@ -1213,10 +1275,10 @@ public class UserData
             string eventKey = $"{LIFE_CYCLE_EVENT_PREFIX}{minutes}";
             ReportedLifecycleEvents[eventKey] = false;
         }
-        
+
         TotalOnlineMinutes = 0f;
         SaveData();
-        
+
         Debug.Log("已重置所有生命周期事件");
     }
 
@@ -1246,7 +1308,7 @@ public class UserData
         if (!vocabulary.UserNotes.Contains(Puzzle))
         {
             vocabulary.UserNotes.Insert(0, Puzzle);
-            
+
             if (!isShowVocabulary)
             {
                 isShowVocabulary = true;
@@ -1265,7 +1327,7 @@ public class UserData
             vocabulary.UserNotes.Remove(Puzzle);
         }
     }
-    
+
     public WordVocabulary<string> GetWordVocabulary()
     {
         // WordVocabulary<string> wordVocabulary = wordVocabularyJan;
@@ -1283,7 +1345,7 @@ public class UserData
         // }
         return wordVocabularyChinSim;
     }
-    
+
     /// <summary>
     /// 获取词库存储键
     /// </summary>
@@ -1298,7 +1360,7 @@ public class UserData
         };
     }
 
-    
+
     public void ClearPuzzleVocabulary()
     {
         WordVocabulary<string> vocabulary = GetWordVocabulary();
@@ -1307,9 +1369,9 @@ public class UserData
 
     #endregion
     
-        #region 体力系统核心逻辑
-    [JsonIgnore] public const int MAX_NATURAL_ENERGY = 5;       // 自然恢复上限
-    [JsonIgnore] public const int ENERGY_REGEN_MINUTES = 30;    // 恢复1点所需分钟数
+
+    [JsonIgnore] public const int MAX_NATURAL_ENERGY = 5; // 自然恢复上限
+    [JsonIgnore] public const int ENERGY_REGEN_MINUTES = 30; // 恢复1点所需分钟数
 
     /// <summary>
     /// 计算并执行体力自然恢复 (支持离线、切后台)
@@ -1322,21 +1384,22 @@ public class UserData
             LastEnergyUpdateTime = DateTime.Now.ToString();
             return;
         }
+
         if (string.IsNullOrEmpty(LastEnergyUpdateTime))
         {
             LastEnergyUpdateTime = DateTime.Now.ToString();
             return;
         }
-        
+
         DateTime lastTime = DateTime.Parse(LastEnergyUpdateTime);
         TimeSpan passedTime = DateTime.Now - lastTime;
-        
+
         // 计算过去的时间里，够恢复几个30分钟？
         int recoveredPoints = (int)(passedTime.TotalMinutes / ENERGY_REGEN_MINUTES);
         if (recoveredPoints > 0)
         {
             Energy += recoveredPoints;
-            
+
             if (Energy >= MAX_NATURAL_ENERGY)
             {
                 Energy = MAX_NATURAL_ENERGY;
@@ -1347,11 +1410,13 @@ public class UserData
                 // 没满，把用掉的时间加到上次计算时间上，保留剩余的零头（例如过去35分钟，加回30分钟，剩余5分钟进度保留）
                 LastEnergyUpdateTime = lastTime.AddMinutes(recoveredPoints * ENERGY_REGEN_MINUTES).ToString();
             }
+
             SendCurrencyEvent(recoveredPoints, "体力", "时间自然恢复");
             // 通知UI刷新 (需要在EventDispatcher里加上这行，如果你有的话)
             // EventDispatcher.instance?.TriggerEnergyUIChange(); 
         }
     }
+
     /// <summary>
     /// 消耗体力
     /// </summary>
@@ -1367,17 +1432,20 @@ public class UserData
         {
             bool wasFull = Energy >= MAX_NATURAL_ENERGY;
             Energy -= amount;
-            
+
             // 如果原本是满的(>=5)，现在扣到5以下了，马上启动自然恢复计时器！
             if (wasFull && Energy < MAX_NATURAL_ENERGY)
             {
                 LastEnergyUpdateTime = DateTime.Now.ToString();
             }
+
             SendCurrencyEvent(-amount, "体力", message);
             return true;
         }
+
         return false; // 体力不足
     }
+
     /// <summary>
     /// 活动奖励增加体力 (无上限叠加)
     /// </summary>
@@ -1387,6 +1455,7 @@ public class UserData
         SendCurrencyEvent(amount, "体力", message);
         // EventDispatcher.instance?.TriggerEnergyUIChange();
     }
+
     /// <summary>
     /// UI显示辅助：获取体力展示文本
     /// </summary>
@@ -1395,17 +1464,59 @@ public class UserData
         if (CurrentChessStage == 1) return "充足"; // 第一关特权
         return Energy.ToString();
     }
+
     /// <summary>
     /// UI显示辅助：获取距离恢复下1点体力还剩多少秒 (用于UI倒计时)
     /// </summary>
     public int GetNextEnergyRegenSeconds()
     {
         if (Energy >= MAX_NATURAL_ENERGY) return 0;
-        
+
         DateTime lastTime = DateTime.Parse(LastEnergyUpdateTime);
         DateTime nextRegenTime = lastTime.AddMinutes(ENERGY_REGEN_MINUTES);
         return Mathf.Max(0, (int)(nextRegenTime - DateTime.Now).TotalSeconds);
     }
+
+    #region 修改名称
+
+    /// <summary>
+    /// 检查是否可以弹出角色信息窗口
+    /// </summary>
+    public bool CanShowCharInfoPopup()
+    {
+        // 已经起名则不再弹出
+        if (!string.IsNullOrEmpty(UserName))
+            return false;
+
+        // 超过3次
+        if (charInfoPopupCount >= 3)
+            return false;
+
+        // 第一次弹出
+        if (string.IsNullOrEmpty(charInfoPopupLastTime))
+            return true;
+
+        // 检查间隔
+        if (DateTime.TryParse(charInfoPopupLastTime, out var lastTime))
+        {
+            return (DateTime.Now - lastTime).TotalHours >= 72;
+        }
+
+        return true; // 解析失败当作可以弹出
+    }
+
+
+    /// <summary>
+    /// 记录一次弹出
+    /// </summary>
+    public void MarkCharInfoPopupShown()
+    {
+        charInfoPopupCount++;
+        charInfoPopupLastTime = DateTime.Now.ToString("o"); // ISO 8601 格式，避免区域问题
+        SaveData(); // 立即保存
+    }
+
+
     #endregion
 
     #region 辅助方法
@@ -1419,7 +1530,7 @@ public class UserData
         Debug.Log($"当前语言设置: {defaultLanguage}");
         return defaultLanguage;
     }
-    
+
     /// <summary>
     /// 清空所有用户数据
     /// </summary>

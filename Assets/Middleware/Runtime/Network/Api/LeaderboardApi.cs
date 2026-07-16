@@ -38,4 +38,23 @@ public class LeaderboardApi
                 onError?.Invoke(error);
             });
     }
+    
+    /// <summary>
+    /// 👇=== 确认领奖接口 ===👇
+    /// 发送领奖确认请求，通知服务端结束玩家的上个赛季状态并更新真实段位
+    /// </summary>
+    public IEnumerator ClaimZenReward(System.Action<ClaimZenRewardResponse> action)
+    {
+        var url = "leaderboards/zen/claim";
+        
+        // 发送 POST 请求。因为服务端通过 auth token 识别用户，不需要额外 body 参数，传 null 即可
+        yield return httpClient.Post<ClaimZenRewardResponse>(url, null,
+            response => {
+                action?.Invoke(response);
+            },
+            error => {
+                Debug.LogError($"[LeaderboardApi] 领奖确认请求失败: {error}");
+                action?.Invoke(null);
+            });
+    }
 }

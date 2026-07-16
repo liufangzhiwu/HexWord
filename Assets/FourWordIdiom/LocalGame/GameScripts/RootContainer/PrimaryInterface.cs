@@ -28,7 +28,7 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private Animator ModeIndicator;
     [SerializeField] private Button ZenRankBtn;         // 禅意排名按钮
     //[SerializeField] private Button HexaBtn;         // 层层消按钮
-    [SerializeField] private Button ScoreboardBtn;        // 积分排行按钮
+    //[SerializeField] private Button ScoreboardBtn;        // 积分排行按钮
     [Header("UI LimitTime")]
     [SerializeField] private Button LimitTimeBtn;
     [SerializeField] private GameObject LimitTimeObj;
@@ -42,7 +42,9 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private Text tasktimetxt;
     [SerializeField] private Image taskOver;
     [Header("UI Sign")]
-    [SerializeField] private Button SignInBtn;
+    [SerializeField] private Button SevenSignBtn;
+    [SerializeField] private Image notSign;
+    [SerializeField] private Image fillSign;
     [Header("UI Fish")]
     [SerializeField] private Button FishBtn;
     [SerializeField] private GameObject FishClaim;
@@ -57,14 +59,14 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private GameObject ButterflyTime;
     [SerializeField] private Button myThemeBtn; // 服务协议按钮
     public GameObject GoldLeafredpoint;
+    [SerializeField] private GameObject ButterflyRedpoint;
     
     [Header("配置参数")]
     [SerializeField] private float topPanelDelay = 0.01f; // 顶部面板显示延迟时间
     
-    
     private void Start()
     {
-        //logo.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_logo");
+        logo.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_logo");
         if (!GameDataManager.Instance.UserData.IsFirstLaunch)
         {
             ModeIndicator.speed = 0.5f;
@@ -79,13 +81,13 @@ public class PrimaryInterface : UIWindow
     {      
         GameStageBtn.AddClickAction(OnPlayClick);
         ModeBtn.AddClickAction(OnModeClick);
-        SignInBtn.AddClickAction(ShowSignInPanel);
+        SevenSignBtn.AddClickAction(ShowSevenSignScreen);
         LimitTimeBtn.AddClickAction(ClickLimintTime);
         TasksBtn.AddClickAction(OnTaskClick);
         HeadBtn.AddClickAction(OnHeadClick);
         FishBtn.AddClickAction(OnFishClick);
 
-        ScoreboardBtn.AddClickAction(OnScoreboardClick);
+        //ScoreboardBtn.AddClickAction(OnScoreboardClick);
         ButterflyBtn.AddClickAction(OnButterflyClick);
         //HexaBtn.AddClickAction(ClickHexaBtnClick);
         
@@ -105,13 +107,14 @@ public class PrimaryInterface : UIWindow
         DailyTaskManager.Instance.OnDailyButterflyTaskUI += UpdateButterflyTime;
         EventDispatcher.instance.OnChangeHeadIconUpdateUI += UpdateHeadBtnUI;
         FishInfoController.Instance.OnFishTimeUpdated += UpdateFishTime;
-        //EventManager.OnChangeLanguageUpdateUI += InitUI;
+        EventDispatcher.instance.OnChangeGoldUI += InitUI;
+        
         CheckButtonsIsOpen();
         StartCoroutine(ShowTopPanel());
         UpdateTaskBtnUI();
         UpdateHeadBtnUI();
         StartCoroutine(UpdateFishRankUI());
-        
+        StartCoroutine(CheckZenRankBtn());
         Game.self.Ads?.HideBanner();
         
         StartCoroutine(CheckLobbyPopupsRoutine());
@@ -122,6 +125,8 @@ public class PrimaryInterface : UIWindow
         ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
         
         GameCoreManager.Instance.SetBackgroundImage(new Color(1,1,1,.8f));
+        
+        SevenSignBtn.gameObject.SetActive(StreakManager.Instance.UnlockStreak());
     }
     
     private void OnRedPointChanged(bool show)
@@ -142,7 +147,7 @@ public class PrimaryInterface : UIWindow
         {
             SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
         }
-
+        
         SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
         {
             SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
@@ -161,11 +166,39 @@ public class PrimaryInterface : UIWindow
         
         //更改为15关之后出现（16开始出现）
         // HexaBtn.gameObject.SetActive(ChessStageController.Instance.CurrentStage>15||StageController.Instance.CurrentStage>15 );
+      
+        // ==========================================
+        // 1. 禅意榜：赛季结算检查
+        // ==========================================
         
-        // 1. 优先检查并弹出“排行榜赛季结算”
-        // 这里会阻塞：如果有结算，它会等玩家领完奖励、关掉弹窗后，才往下走
-        yield return StartCoroutine(ZenRankManager.Instance.CheckAndShowSettlementRoutine());
-
+        // 🌟 核心拦截：只有加入了榜单，并且本地倒计时<=0（赛季结束），才去查结算！
+        bool isJoined = GameDataManager.Instance.UserData.isJoinedZenRank;
+        if (isJoined && ZenRankManager.Instance.RemainingSeconds <= 0)
+        {
+            bool hasTriggeredSettlement = false;
+            yield return StartCoroutine(ZenRankManager.Instance.CheckAndShowSettlementRoutine(
+                (res) => { hasTriggeredSettlement = res; }));
+            
+            // 如果触发了结算，死等玩家关掉匹配雷达页
+            if (hasTriggeredSettlement)
+            {
+                yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ZenRankStartScreen));
+            }
+        }
+        // ==========================================
+        // 2. 禅意榜：主动拉取最新排名并赋值给按钮UI
+        // ==========================================
+        // 走到这里说明结算弹窗已处理完（或者根本没结算），通知按钮拉取最新的排名数据
+        if (ZenRankBtn != null)
+        {
+            ZenRankButton rankBtn = ZenRankBtn.GetComponent<ZenRankButton>();
+            if (rankBtn != null)
+            {
+                rankBtn.CheckRankProgress();
+                rankBtn.FetchMyCurrentRank(); // 主动请求真实排名数据
+            }
+        }
+        
         // ==========================================
         // 💡 架构扩展示例：
         // 以后你所有的自动弹窗都可以按顺序写在这里，绝对不会打架！
@@ -181,11 +214,16 @@ public class PrimaryInterface : UIWindow
         // 3. 比如检查离线挂机收益
         // yield return StartCoroutine(OfflineRewardManager.CheckRoutine());
     }
+    
+    
+    
+    
+    
     private IEnumerator UpdateFishRankUI()
     {
         CheckFishBtn();
         FishClaim.gameObject.SetActive(false);
-        StartCoroutine(CheckZenRankBtn());
+     
         // 提取重复使用的SaveData引用
         //var fishSave = GameDataManager.MainInstance.FishUserSave;
         FishInfoController.Instance.RoundResultFishRank();
@@ -397,10 +435,7 @@ public class PrimaryInterface : UIWindow
         LimitTimeBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
                                           ||GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
         ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime));
-        SignInBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.SignInRewards
-                                    || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.SignInRewards
-        ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.signOpenTime));
-        
+  
         ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
         // 🌟 核心修改：全收集满后，隐藏按钮上的进度条和文字
         bool isAllCollected = ButterfliesManager.Instance.IsAllButterfliesCollected();
@@ -420,16 +455,18 @@ public class PrimaryInterface : UIWindow
             ButterflyGrow butterflyGrow = ButterfliesManager.Instance.GetCurrentGrow();
             if (pupaText != null) 
             {
-                pupaText.text =  $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow?.Count.ToString() ?? "10"}"; 
+                pupaText.text =  $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow?.Count.ToString() ?? "&"}"; 
             }
+            
             float progressValue = 0f;
             if (butterflyGrow != null && butterflyGrow.Count > 0)
-            {
+            { 
                 progressValue = Mathf.Clamp01((float)GameDataManager.Instance.ButterflyData.currPupa / butterflyGrow.Count);
             }
             if (pupaSlider != null) pupaSlider.value = progressValue;
+            
+            ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
         }
-        
        
     }
     
@@ -521,9 +558,9 @@ public class PrimaryInterface : UIWindow
         SystemManager.Instance.ShowPanel(PanelType.DailyTasksScreen);
     }
 
-    private void ShowSignInPanel()
+    private void ShowSevenSignScreen()
     {
-        SystemManager.Instance.ShowPanel(PanelType.SignWaterScreen);    
+        SystemManager.Instance.ShowPanel(PanelType.SevenSignScreen);    
     }
     private void UpdateButterflyTime(string time="")
     {
@@ -538,8 +575,8 @@ public class PrimaryInterface : UIWindow
     }
     private void ClickHexaBtnClick()
     {
-        // AnalyticMgr.PopShow("成语消：禅意之境引流");
-        // Application.OpenURL("https://appgallery.huawei.com/app/detail?id=chengyu.idiom.hexa.zen.huawei");
+        AnalyticMgr.PopShow("成语消：禅意之境引流");
+        Application.OpenURL("https://appgallery.huawei.com/app/detail?id=chengyu.idiom.hexa.zen.huawei");
     }
     
     private void OnButterflyClick()
@@ -569,6 +606,7 @@ public class PrimaryInterface : UIWindow
     {
         base.OnDisable();
         //EventManager.OnChangeLanguageUpdateUI -= InitUI;
+        EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         
         LimitTimeManager.Instance.OnLimitTimeBtnUI -= InitLimtBtnUI;
         DailyTaskManager.Instance.OnDailyTaskBtnUI -= UpdateDailyTaskBtnUI;
@@ -594,7 +632,7 @@ public class PrimaryInterface : UIWindow
     /// <summary>
     /// 初始化UI
     /// </summary>
-    public void InitUI()
+    public void InitUI(int index=0,bool active=false)
     {
         // 设置关卡文本
         // 设置关卡文本
@@ -604,10 +642,10 @@ public class PrimaryInterface : UIWindow
         Sprite sprite = null;
         switch (GameDataManager.Instance.UserData.levelMode)
         {
-            case 3:
+            case 1:
                 Stage = GameDataManager.Instance.UserData.CurrentHexStage != 0 ? 
                     GameDataManager.Instance.UserData.CurrentHexStage : 1;
-                sprite = LoadheadIcon("icon_layer");
+                sprite = LoadheadIcon("icon_xiao");
                 StageHexController.Instance.CurLevelMode = GetLevelDifficulty(Stage);
                 levelmode = StageHexController.Instance.CurLevelMode;
                 break;
@@ -641,6 +679,31 @@ public class PrimaryInterface : UIWindow
         Stagetxt.text = MultilingualManager.Instance.GetString("Level")+" " + Stage;
         if(sprite != null)
             ModeBtn.GetComponent<Image>().sprite = sprite;
+
+        UpdateWinTimes();
+    }
+    
+    private void UpdateWinTimes()
+    {
+        Text winTimes = SevenSignBtn.GetComponentInChildren<Text>();
+        
+        int curStreak = StreakManager.Instance.GetCurrentStreak();
+      
+        notSign.gameObject.SetActive(curStreak <= 0);
+        fillSign.gameObject.SetActive(curStreak > 0);
+       
+        if (curStreak <= 0)
+        {
+            winTimes.text = "0";
+            // winTimes.color = new Color(0.509804f, 0.509804f, 0.509804f,1f);
+            // winTimes.GetComponent<Outline>().effectColor = new Color(0.509804f, 0.509804f, 0.509804f,1f);
+        }
+        else
+        {
+            winTimes.text = curStreak.ToString();
+            // winTimes.color = new Color(0.9960785f, 1f, 0.7686275f,1f);
+            // winTimes.GetComponent<Outline>().effectColor = new Color(0.9960785f, 1f, 0.7686275f,1f);
+        }
     }
     
     /// <summary>
@@ -676,54 +739,76 @@ public class PrimaryInterface : UIWindow
     /// </summary>
     public void OnPlayClick()
     {
+      
         // 1. 获取当前准备进入的关卡ID (用于判断第一关是否免体力)
-        int currentStage = (GameDataManager.Instance.UserData.levelMode == 3) ? 
+        int currentStage = (GameDataManager.Instance.UserData.levelMode == 1) ? 
             StageHexController.Instance.CurrentStage : 
             ChessStageController.Instance.CurrentStage;
-
-        if (GameDataManager.Instance.UserData.levelMode == 2)
+        
+        bool hasUnfinishedSave = (GameDataManager.Instance.UserData.levelMode == 2 && ChessStageController.Instance.HasUnfinishedSave());
+        if (!hasUnfinishedSave)
         {
-            bool hasUnfinishedSave = (GameDataManager.Instance.UserData.levelMode == 2 && ChessStageController.Instance.HasUnfinishedSave());
-            if (!hasUnfinishedSave)
+            // 🌟 核心拦截：检查并扣除体力！
+            // ConsumeEnergy 会自动处理：如果是第一关返回 true 不扣体力，如果体力>=1返回 true 并扣除。
+            if (currentStage != 1 && GameDataManager.Instance.UserData.Energy <= 0)
             {
-                // 🌟 核心拦截：检查并扣除体力！
-                // ConsumeEnergy 会自动处理：如果是第一关返回 true 不扣体力，如果体力>=1返回 true 并扣除。
-                if (currentStage != 1 && GameDataManager.Instance.UserData.Energy <= 0)
-                {
-                    // 体力不足，拦截并提示玩家
-                    // MessageSystem.Instance.ShowTip("体力不足，休息一下吧！");
-            
-                    // TODO: 如果你有买体力或看广告回体力的弹窗，可以在这里自动弹出来引导玩家
-                    SystemManager.Instance.ShowPanel(PanelType.EnergyScreen); 
-                    return; // 终止进入关卡
-                }
-
-                // 顺手保存一下扣完体力后的最新数据
-                GameDataManager.Instance.CommitGameData();
+                // 体力不足，拦截并提示玩家
+                // MessageSystem.Instance.ShowTip("体力不足，休息一下吧！");
+                
+                // TODO: 如果你有买体力或看广告回体力的弹窗，可以在这里自动弹出来引导玩家
+                SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface); 
+                SystemManager.Instance.ShowPanel(PanelType.EnergyScreen);
+                // StartCoroutine(ShowHandleEnergyScreen());
+                return; // 终止进入关卡
             }
+
+            // 顺手保存一下扣完体力后的最新数据
+            GameDataManager.Instance.CommitGameData();
         }
         
-        // try
-        // {
+        try
+        {
             switch (GameDataManager.Instance.UserData.levelMode)
             {
-                case 3:
+                case 1:
                     StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
                     break;
                 case 2:
                     ChessStageController.Instance.SetStageData(ChessStageController.Instance.CurrentStage);
                     break;
             }
-        //    
-        // }catch (System.Exception e)
-        // {
-        //     Debug.LogError("设置关卡数据失败: " + e);
-        // }
+           
+        }catch (System.Exception e)
+        {
+            Debug.LogError("设置关卡数据失败: " + e);
+        }
+
         
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection,true, OnEnterStageClick);
-        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        if (SystemManager.Instance.PanelIsShowing(PanelType.HeaderSection))
+        {
+            SystemManager.Instance.HidePanel(PanelType.HeaderSection,true, OnEnterStageClick);
+            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+        }
+        else
+        {
+            if (SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface))
+            {
+                SystemManager.Instance.HidePanel(PanelType.PrimaryInterface, true, OnEnterStageClick);
+            }
+            else
+            {
+                OnEnterStageClick();
+            }
+        }
+       
+       
     }
 
+    private IEnumerator ShowHandleEnergyScreen()
+    {
+        yield return new WaitForSeconds(0.5f);
+        SystemManager.Instance.ShowPanel(PanelType.EnergyScreen);
+    }
     private Sprite LoadheadIcon(string showIcon)
     {
         return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
@@ -736,7 +821,7 @@ public class PrimaryInterface : UIWindow
     {
         switch (GameDataManager.Instance.UserData.levelMode)
         {
-            case 3:
+            case 1:
                 SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
                 break;
             case 2:

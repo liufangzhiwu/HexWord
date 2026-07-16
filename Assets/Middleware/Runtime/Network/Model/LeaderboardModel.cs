@@ -27,3 +27,12 @@ public class LeaderboardResponse
     public List<LeaderboardEntry> middle;
     public List<LeaderboardEntry> bottom;
 }
+
+// 👇=== 领奖接口的返回数据结构 ===👇
+public class ClaimZenRewardResponse
+{
+    public string status;           // 状态: "success" 或 "error"
+    public string message;          // 错误信息 (如果有)
+    public string new_level;        // 结算后的新段位 (如 "ZenState02")
+    public string settlement_type;  // 结算类型 ("up", "down", "keep")
+}

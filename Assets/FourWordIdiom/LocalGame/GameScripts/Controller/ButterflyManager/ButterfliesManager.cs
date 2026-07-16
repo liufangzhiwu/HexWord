@@ -50,6 +50,8 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     [Tooltip("获取条件配置")] public GetPupaConfig pupaConfig = new GetPupaConfig();
 
     [SerializeField] private GameObject _processBar;
+    public bool showButterflyRedPoint = false;
+    
     // 2. 供其他代码调用的属性
     public GameObject processBar
     {

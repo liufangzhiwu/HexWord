@@ -108,6 +108,7 @@ SpriteAtlas:
     - 1735cd74da7f00548882698267bbc5ff: 21300000
     - 09e58494e41045b40a27c3bba7f4e40c: 21300000
     - b7c2d0a45abcf024b85c0e9a253acfbf: 21300000
+    - 160f80150170d5943ada26a87a0a0533: 21300000
     - f98cb01544bf7a141aed9a82b3b94819: 21300000
     - 4f43f32565a75d546bbcaa2f848243b7: 21300000
     - 09a0a5357878d314faf472b74df7de43: 21300000
@@ -235,7 +236,6 @@ SpriteAtlas:
     - efb7c44efc0f86541969ed32507658c7: 21300000
     - f3c8817e7e2b62544a1a7d6e5d0d692c: 21300000
     - 1ab1db9e4b3bad749a8f93b4f7e148e4: 21300000
-    - 32ed64ce087176d4e89ff824e8feedc6: 21300000
     - a9b41beea8876694fb87fd1cf4edadbe: 21300000
     - 7d0ad2fe70c58454585231f5efdfe001: 21300000
     - 3856d6fe0fe7618469fb7049018548fc: 21300000
@@ -295,6 +295,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 1735cd74da7f00548882698267bbc5ff, type: 3}
   - {fileID: 21300000, guid: 09e58494e41045b40a27c3bba7f4e40c, type: 3}
   - {fileID: 21300000, guid: b7c2d0a45abcf024b85c0e9a253acfbf, type: 3}
+  - {fileID: 21300000, guid: 160f80150170d5943ada26a87a0a0533, type: 3}
   - {fileID: 21300000, guid: f98cb01544bf7a141aed9a82b3b94819, type: 3}
   - {fileID: 21300000, guid: 4f43f32565a75d546bbcaa2f848243b7, type: 3}
   - {fileID: 21300000, guid: 09a0a5357878d314faf472b74df7de43, type: 3}
@@ -422,7 +423,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: efb7c44efc0f86541969ed32507658c7, type: 3}
   - {fileID: 21300000, guid: f3c8817e7e2b62544a1a7d6e5d0d692c, type: 3}
   - {fileID: 21300000, guid: 1ab1db9e4b3bad749a8f93b4f7e148e4, type: 3}
-  - {fileID: 21300000, guid: 32ed64ce087176d4e89ff824e8feedc6, type: 3}
   - {fileID: 21300000, guid: a9b41beea8876694fb87fd1cf4edadbe, type: 3}
   - {fileID: 21300000, guid: 7d0ad2fe70c58454585231f5efdfe001, type: 3}
   - {fileID: 21300000, guid: 3856d6fe0fe7618469fb7049018548fc, type: 3}
@@ -481,6 +481,7 @@ SpriteAtlas:
   - Rankdi3
   - Logo
   - RankBox1
+  - fishicon
   - Tips
   - riMatchFail
   - hehua_10
@@ -608,7 +609,6 @@ SpriteAtlas:
   - zenicon_11
   - RankBox2
   - btnAds
-  - fishicon
   - giftdi9
   - item_bg
   - gold0

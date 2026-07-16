@@ -215,7 +215,7 @@ public class DebugMenu : UIWindow
         StageHexController.Instance.LimitPuzzlecount = 0;
         LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
         //AdsManager.Instance.HideBannerAd();
-        WaterManager.instance.ClearWater();
+        //WaterManager.instance.ClearWater();
         DailyTaskManager.Instance.GetTaskSaveData();
         DailyTaskManager.Instance.isResetDailyTask = true;
 

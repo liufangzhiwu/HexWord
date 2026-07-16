@@ -335,7 +335,7 @@ public class HeaderSection : UIWindow
         }
 
         bool isActivityOpen = SystemManager.Instance.PanelIsShowing(PanelType.LimitTimeScreen) ||
-                              SystemManager.Instance.PanelIsShowing(PanelType.SignWaterScreen) ||
+                              SystemManager.Instance.PanelIsShowing(PanelType.SevenSignScreen) ||
                               SystemManager.Instance.PanelIsShowing(PanelType.DailyTasksScreen) ||
                               SystemManager.Instance.PanelIsShowing(PanelType.ButterflyHome) ||
                               SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen) ||

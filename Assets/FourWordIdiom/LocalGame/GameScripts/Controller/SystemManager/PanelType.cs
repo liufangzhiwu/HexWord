@@ -20,10 +20,11 @@ public class PanelType  // Renamed class
     public const string OptionsView = "OptionsView";  
     public const string StageFinishView = "StageFinishView"; 
     public const string LimitTimeScreen = "LimitTimeScreen";
-    public const string SignWaterScreen = "SignWaterScreen";
+    public const string SevenSignScreen = "SevenSignScreen";
     public const string LimitHelpScreen= "LimitHelpScreen";
     public const string DashCompetition="DashCompetition";
     public const string HeadScreen="HeadScreen";
+    public const string RewardNamePanel = "RewardNamePanel";
     public const string MatchSuccess="MatchSuccess";
     public const string CompetitionFail="CompetitionFail";
     public const string CompetitionHelp="CompetitionHelp";
@@ -37,6 +38,8 @@ public class PanelType  // Renamed class
     public const string ZenRankScreen= "ZenRankScreen";
     public const string ZenRankHelpScreen= "ZenRankHelpScreen";
     public const string ZenSettlementScreen= "ZenSettlementScreen";
+    public const string ZenRankStartScreen = "ZenRankStartScreen";
+    public const string ZenRankChangePanel = "ZenRankChangePanel";
     
     // 已注释的旧界面常量 (Legacy commented constants)
     public const string GetItemScreen = "GetItemScreen"; 
@@ -59,6 +62,9 @@ public class PanelType  // Renamed class
      public const string FailGameScreen = "FailGameScreen";
      public const string ThemeHelpScreen = "ThemeHelpScreen";
      public const string NewThemeScreen = "NewThemeScreen";
+     public const string SignWinScreen = "SignWinScreen";  
+     public const string SignAwardScreen = "SignAwardScreen";  
+     public const string ReturnFirstWinScreen = "ReturnFirstWinScreen";  
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

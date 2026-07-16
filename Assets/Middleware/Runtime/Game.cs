@@ -71,6 +71,7 @@ namespace Middleware
 	        //AudioManager.Instance.Init();
             LimitTimeManager.Instance.Init();
             ThemeManager.Instance.Init();
+            LoadTextManager.Instance.Init();
             #if UNITY_EDITOR
             CreateAnalytic();
             #endif

@@ -1,0 +1,293 @@
+using System.Collections;
+using System.Collections.Generic;
+using DG.Tweening;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class ZenRankStartScreen : UIWindow
+{
+    [Header("UI 面板 (阶段1)")]
+    [SerializeField] private GameObject stage1Panel;
+    [SerializeField] private Button startGameButton;
+    [SerializeField] private Text stage1TitleText;
+    [SerializeField] private Text stage1TimeText;
+    [SerializeField] private Text stage1DescText;
+    [SerializeField] private Button closeButton;
+    
+    [Header("UI 面板 (阶段2 - 雷达匹配)")]
+    [SerializeField] private GameObject stage2Panel;
+    [SerializeField] private Image stage2MyAvatar;
+    [SerializeField] private Text stage2TipText;
+    [SerializeField] private Text stage2ProgressText;
+    [SerializeField] private Slider progressBar;          // 进度条
+    
+    [Header("匹配规则设置")]
+    [SerializeField] private int targetPlayerCount = 30;     // 逻辑上需要匹配的总人数
+    [SerializeField] private int maxVisualAvatars = 6;       // 视觉上雷达图最多同时显示的头像数量 (防止拥挤)
+    
+    [Header("雷达图设置")]
+    [SerializeField] private RectTransform radarCenter;   // 雷达中心容器（挂载头像的父节点）
+    [SerializeField] private float maxRadarRadius = 420f; // 头像出现的最大半径
+    [SerializeField] private float minRadarRadius = 160f;  // 头像出现的最小半径（避免挡住中间的“你”）
+    [SerializeField] private RectTransform radarLine; // 🌟 把你截图里的 "line" 拖到这里
+    [SerializeField] private float radarRotateDuration = 2.5f; // 🌟 转一圈需要几秒（越小转得越快）
+    [SerializeField] private float avatarMinDistance = 120f; // 🌟 新增：头像之间的最小安全距离（请根据实际头像 UI 的宽高/直径在 Inspector 中调整）
+    
+    private GameObject avatarPrefab;     // 其他玩家的头像预制体
+    private ObjectPool avatarPool;
+    // 用于管理已生成的视觉头像列表
+    private List<GameObject> activeAvatars = new List<GameObject>();
+    private Coroutine matchCoroutine;
+    
+    // 变量类型改为 string
+    private string _returnTargetPanel = PanelType.PrimaryInterface;
+    protected override void InitializeUIComponents()
+    {
+        // 绑定按钮点击事件
+        startGameButton.AddClickAction(OnStartGameClicked);
+        closeButton.AddClickAction(OnCloseClicked);
+        avatarPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","UserAvatar");
+        avatarPool = new ObjectPool(avatarPrefab, transform, 5);
+    }
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        
+        // 初始状态：显示阶段1，隐藏阶段2
+        stage1Panel.SetActive(true);
+        stage2Panel.SetActive(false);
+        InitLanguageAndData();
+        if (ZenRankManager.Instance != null)
+        {
+            ZenRankManager.Instance.OnRankTimerTick += UpdateTimerUI;
+            string boardId = GameDataManager.Instance.UserData.Zenlevel;
+            if (!string.IsNullOrEmpty(boardId))
+            {
+                StartCoroutine(ZenRankManager.Instance.FetchLeaderboardDataRoutine(boardId));
+            }
+        }
+    }
+    
+    // 【生命周期安全清理
+    protected override void OnDisable()
+    {
+        // 界面关闭时，必须停止匹配协程，防止后台乱跑
+        if (matchCoroutine != null)
+        {
+            StopCoroutine(matchCoroutine);
+            matchCoroutine = null;
+        }
+        if (ZenRankManager.Instance != null)
+        {
+            ZenRankManager.Instance.OnRankTimerTick -= UpdateTimerUI;
+        }
+        radarLine?.DOKill();
+        // 清理所有动态生成的头像，停止它们身上的 DOTween
+        ClearAllAvatars();
+        base.OnDisable();
+    }
+    private void InitLanguageAndData()
+    {
+        stage2MyAvatar.sprite = LoadheadIcon("head" + GameDataManager.Instance.UserData.UserHeadId);
+        
+        if (stage1TitleText != null) stage1TitleText.text = MultilingualManager.Instance.GetString("MeditationList");
+        if (stage1DescText != null) stage1DescText.text = MultilingualManager.Instance.GetString("ZenMatchRule");
+        if (startGameButton != null) startGameButton.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("StartGame");
+        if (stage2TipText != null) stage2TipText.text = MultilingualManager.Instance.GetString("Matching");
+        if (stage1TimeText != null) stage1TimeText.text = "..."; 
+        
+    }
+    
+    /// <summary>
+    /// 外部调用：设置关闭此界面时需要返回的面板
+    /// </summary>
+    public void SetSourcePanel(string sourcePanel)
+    {
+        _returnTargetPanel = sourcePanel;
+    }
+    
+    // 🌟 接收全局计时器推送的文本并刷新 UI
+    private void UpdateTimerUI(int seconds, string timeStr)
+    {
+        if (stage1TimeText != null)
+        {
+            // 如果你需要拼接前缀（比如"剩余时间:"），可以在这里拼接
+            stage1TimeText.text = timeStr; 
+        }
+    }
+    // 点击开始游戏按钮
+    private void OnStartGameClicked()
+    {
+        stage1Panel.SetActive(false);
+        stage2Panel.SetActive(true);
+        
+        if (matchCoroutine != null)
+        {
+            StopCoroutine(matchCoroutine);
+        }
+        // 开始模拟匹配协程
+        matchCoroutine = StartCoroutine(SimulateMatchmaking());
+        // 先杀掉可能残留的动画
+        radarLine?.DOKill();
+        // 设置 Z 轴旋转，无限循环，线性匀速
+        radarLine?.DORotate(new Vector3(0, 0, -360), radarRotateDuration, RotateMode.FastBeyond360)
+            .SetLoops(-1, LoopType.Restart)
+            .SetEase(Ease.Linear);
+    }
+    private void OnCloseClicked()
+    {
+        // 关闭当前窗口并返回大厅
+        SystemManager.Instance.HidePanel(PanelType.ZenRankStartScreen, true, () =>
+        {
+            SystemManager.Instance.ShowPanel(_returnTargetPanel);
+            SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        });
+    }
+    // 模拟匹配过程
+    private IEnumerator SimulateMatchmaking()
+    {
+        int currentPlayerCount = 1; // 初始只有玩家自己
+        UpdateProgressUI(currentPlayerCount);
+        ClearAllAvatars(); // 清理旧头像
+        yield return new WaitForSeconds(0.5f);
+        WaitForSeconds wait =  new WaitForSeconds(0.15f);
+        while (currentPlayerCount < targetPlayerCount)
+        {
+            // 随机等待 0.2 到 0.8 秒模拟寻找玩家的过程
+            // yield return new WaitForSeconds(Random.Range(0.2f, 0.8f));
+            yield return wait;
+            currentPlayerCount++;
+            UpdateProgressUI(currentPlayerCount);
+            
+            // 生成一个新头像
+            SpawnRandomAvatar();
+        }
+        // 匹配完成！
+        Debug.Log("匹配完成，进入游戏！");
+        GameDataManager.Instance.UserData.isJoinedZenRank = true;
+        GameDataManager.Instance.CommitGameData();
+        // 可选：匹配完成后稍微停顿 0.5 秒让玩家看清进度条满了再跳转
+        yield return new WaitForSeconds(0.5f);
+        
+        // 触发进入战斗场景逻辑
+        SystemManager.Instance.HidePanel(PanelType.ZenRankStartScreen, true, () =>
+        {
+           UIWindow uiWindow = SystemManager.Instance.GetPanel(PanelType.PrimaryInterface);
+           uiWindow?.GetComponent<PrimaryInterface>().OnPlayClick();
+        });
+    }
+
+    // 更新进度条和文字
+    private void UpdateProgressUI(int count)
+    {
+        if (progressBar != null)
+        {
+            progressBar.value = (float)count / targetPlayerCount;
+        }
+        if (stage2ProgressText != null)
+        {
+            stage2ProgressText.text = $"<color=#FFDC74>{count}</color>/{targetPlayerCount}";
+        }
+    }
+
+    // 在雷达图上随机位置生成头像
+    private void SpawnRandomAvatar()
+    {
+        if (avatarPrefab == null || radarCenter == null) return;
+
+        // 【防拥挤逻辑】：如果当前显示的头像数量已经达到上限，则移除最旧的一个
+        if (activeAvatars.Count >= maxVisualAvatars)
+        {
+            GameObject oldestAvatar = activeAvatars[0];
+            activeAvatars.RemoveAt(0);
+            
+            // 安全销毁：先杀死它身上可能正在运行的 DOTween 动画
+            oldestAvatar.transform.DOKill();
+            avatarPool.ReturnObjectToPool(oldestAvatar.GetComponent<PoolObject>());
+        }
+        Vector2 targetPos = Vector2.zero;
+        float randomRadius = 0f;
+        bool foundValidPos = false;
+        for (int i = 0; i < 30; i++)
+        {
+            // 1. 随机生成角度和半径
+            float randomAngle = Random.Range(0f, 360f) * Mathf.Deg2Rad; // 转换为弧度
+            randomRadius = Random.Range(minRadarRadius, maxRadarRadius);
+            
+            // 2. 利用三角函数计算出 X 和 Y 的坐标
+            float x = Mathf.Cos(randomAngle) * randomRadius;
+            float y = Mathf.Sin(randomAngle) * randomRadius;
+            targetPos = new Vector2(x, y);
+            
+            // 检查与场上现有头像的距离
+            bool isOverlapping = false;
+            foreach (var activeAvatar in activeAvatars)
+            {
+                if (activeAvatar == null) continue;
+                Vector2 existingPos = activeAvatar.GetComponent<RectTransform>().anchoredPosition;
+                
+                // 如果两点之间的距离小于下限值（头像直径），说明重叠了
+                if (Vector2.Distance(targetPos, existingPos) < avatarMinDistance)
+                {
+                    isOverlapping = true;
+                    break;
+                }
+            }
+            
+            // 如果不重叠，跳出循环，使用这个坐标
+            if (!isOverlapping)
+            {
+                foundValidPos = true;
+                break;
+            }
+        }
+        if (!foundValidPos)
+        {
+            Debug.LogWarning("屏幕太挤了，这次找不到合适的位置，放弃生成！");
+            return; 
+        }
+        // 3. 实例化头像并设置位置
+        GameObject newAvatar = avatarPool.GetObject(radarCenter);
+        RectTransform rectTransform = newAvatar.GetComponent<RectTransform>();
+        rectTransform.anchoredPosition = targetPos;
+            
+        Image avatarImage = newAvatar.transform.GetChild(0).GetComponent<Image>();
+        if (avatarImage != null)
+        {
+            // 随机抽取一个 1 到 maxHeadIconId 之间的头像
+            int randomHeadId = Random.Range(0, 24);
+            avatarImage.sprite = LoadheadIcon("head" + randomHeadId);
+        }
+            
+        float t = (randomRadius - minRadarRadius) / (maxRadarRadius - minRadarRadius); // 0~1，0=最内，1=最外
+        float baseScale = 0.75f;     // 最内圈的基础缩放
+        float minScale = 0.35f;      // 最外圈的最小缩放
+        float targetScale = Mathf.Lerp(baseScale, minScale, t);
+            
+        // 4. (可选) 添加一个弹出的动画效果
+        // 如果你使用了 DOTween 插件，可以这样做：
+        newAvatar.transform.localScale = Vector3.zero;
+        newAvatar.transform.DOScale(Vector3.one * targetScale, 0.3f).SetEase(Ease.OutBack);
+        
+        activeAvatars.Add(newAvatar);
+    }
+    
+    // 清理所有已生成的头像
+    private void ClearAllAvatars()
+    {
+        foreach (var avatar in activeAvatars)
+        {
+            if (avatar != null)
+            {
+                avatar.transform.DOKill(); // 必须 Kill，否则直接 Destroy 会导致 DOTween 报错
+                Destroy(avatar);
+            }
+        }
+        activeAvatars.Clear();
+    }
+    
+    private Sprite LoadheadIcon(string showIcon)
+    {
+        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+    }
+}
