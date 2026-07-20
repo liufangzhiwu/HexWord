@@ -13,14 +13,17 @@ public class PauseGameScreen : UIWindow
     [Header("声音控制")]
     [SerializeField] private Toggle musicToggle; // 音乐开关
     [SerializeField] private Toggle soundsToggle; // 音效开关
+    [SerializeField] private Toggle vibrateToggle; // 震动开关
+    
     [SerializeField] private GameObject muHandle; // 音乐开关的视觉手柄
     [SerializeField] private GameObject soHandle; // 音效开关的视觉手柄
+    [SerializeField] private GameObject viHandle; // 震动开关的视觉手柄
     [SerializeField] private Text musicText; // 音乐文本显示
     [SerializeField] private Text soundText; // 音效文本显示
+    [SerializeField] private Text vibrateText; // 震动文本显示
     
     [Header("主暂停界面按钮")]
     [SerializeField] private Text titleText;
-    [SerializeField] private Button closeBtn;
     [SerializeField] private Button jumpBtn;
     [SerializeField] private Button continueBtn;
     [SerializeField] private Button exitBtn;
@@ -46,7 +49,7 @@ public class PauseGameScreen : UIWindow
     // Start is called before the first frame update
     void Start()
     {
-        closeBtn.AddClickAction(OnCloseClicked);
+        //closeBtn.AddClickAction(OnCloseClicked);
         continueBtn.AddClickAction(OnCloseClicked);
         returnGame.AddClickAction(OnCloseClicked);
         jumpBtn.AddClickAction(OnJumpClicked);
@@ -57,6 +60,7 @@ public class PauseGameScreen : UIWindow
         soundText.text = MultilingualManager.Instance.GetString("Sounds").ToUpper(); // 音效文本
         musicToggle.onValueChanged.AddListener(ToggleMusic); // 绑定音乐开关变更事件
         soundsToggle.onValueChanged.AddListener(ToggleSounds); // 绑定音效开关变更事件
+        vibrateToggle.onValueChanged.AddListener(ToggleVibrate); // 绑定音效开关变更事件
 
         titleText.text = MultilingualManager.Instance.GetString("Pause");
         jumpBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("SkipLevel");
@@ -86,9 +90,11 @@ public class PauseGameScreen : UIWindow
         
         musicToggle.isOn = GameDataManager.Instance.UserData.IsMusicOn; // 更新音乐开关状态
         soundsToggle.isOn = GameDataManager.Instance.UserData.IsSoundOn; // 更新音效开关状态
+        vibrateToggle.isOn = GameDataManager.Instance.UserData.IsVibrationOn; // 更新音效开关状态
         
         SetToggleVisuals(muHandle, musicToggle.isOn);
         SetToggleVisuals(soHandle, soundsToggle.isOn);
+        SetToggleVisuals(viHandle, vibrateToggle.isOn);
         
         // 🌟 玩家点开了暂停，视为进入“嫌疑状态”，立即存入硬盘！
         ChessStageController.Instance.CurrStageData.IsPausedOrFailed = true;
@@ -105,18 +111,25 @@ public class PauseGameScreen : UIWindow
         GameDataManager.Instance.UserData.IsSoundOn = isOn; // 保存音效开关状态
         UpdateToggleVisuals(soHandle, isOn); // 更新音效手柄视觉
     }
+    
+    private void ToggleVibrate(bool isOn)
+    {
+        GameDataManager.Instance.UserData.IsVibrationOn = isOn; // 保存音效开关状态
+        UpdateToggleVisuals(viHandle, isOn); // 更新音效手柄视觉
+    }
+    
     private void UpdateToggleVisuals(GameObject handle, bool isOn, float time = 0.2f)
     {
         handle.GetComponent<Image>().sprite = isOn ? Opensprite : Closesprite;
         // 带动画更新位置
-        float targetPosition = isOn ? 55 : -55;
+        float targetPosition = isOn ? 64 : -64;
         handle.transform.DOLocalMoveX(targetPosition, time);
     }
     private void SetToggleVisuals(GameObject handle, bool isOn)
     {
         handle.GetComponent<Image>().sprite = isOn ? Opensprite : Closesprite;
         // 直接设置位置，不带动画
-        handle.transform.localPosition = new Vector3(isOn ? 52 : -52, handle.transform.localPosition.y, handle.transform.localPosition.z);
+        handle.transform.localPosition = new Vector3(isOn ? 64 : -64, handle.transform.localPosition.y, handle.transform.localPosition.z);
     }
     private void OnCloseClicked()
     {
@@ -147,8 +160,8 @@ public class PauseGameScreen : UIWindow
         
             ChessPlayArea.Instance.ResumeGame();
             ChessPlayArea.Instance.GamePlayOver(isJump: true);
-            AnalyticMgr.VideoAdSuccess("跳关广告");
             GameDataManager.Instance.UserData.totalSeeAds++;
+            AnalyticMgr.VideoAdSuccess("跳关广告");
         }
         else
         {
