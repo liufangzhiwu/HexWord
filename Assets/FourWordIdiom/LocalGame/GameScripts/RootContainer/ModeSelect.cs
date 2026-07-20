@@ -142,12 +142,12 @@ public class ModeSelect : UIWindow
                 dmg.gameObject.SetActive(false);
                 break;
             case LevelModes.Hard:
-                dmg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Difficulty1","UI_MainBase");
+                dmg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Difficulty1","UI_MainBase");
                 diffText.text = "潜心破局";
                 dmg.gameObject.SetActive(true);
                 break;
             case LevelModes.ExtraHard:
-                dmg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Difficulty2","UI_MainBase");
+                dmg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Difficulty2","UI_MainBase");
                 diffText.text = "极限巅峰";
                 dmg.gameObject.SetActive(true);
                 break;

@@ -21,7 +21,8 @@ public class LimitDataItem
 //对应限时奖励配置表中奖励配置批准中的奖励索引表示的类型
 public enum LimitRewordType
 {
-    Coins,Butterfly,SingleWordTipsttool,Tipstool,Min5Double,Min15Double,RemoveAds,Remove7DayAds,AutoComplete,Pupas=11
+    Coins,Butterfly,AutoComplete,Tipstool,Min5Double,Min15Double,RemoveAds,Remove7DayAds,Resettool,Pupas=11,
+    ZenScore=12,GoldLeaf,Energy,HeadIcon
 }
 
 public class LimitTimeManager : Singleton<LimitTimeManager>
@@ -35,7 +36,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
 
     public override void Init()
     {
-        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "limittime");
+        TextAsset data = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "limittime");
         if (data != null)
         {
             ParseLimitItems(data.text);

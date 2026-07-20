@@ -68,16 +68,16 @@ public class TileView : MonoBehaviour
         switch((HexType)StageHexController.Instance.CurStageInfo.HexType)
         {
             case HexType.PingHexagon:
-                tipPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingTipWord");
-                starttile.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingWord");
-                showTipObj.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingTipWord");
-                selectionPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingSeleWord");
+                tipPuzzle.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingTipWord");
+                starttile.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingWord");
+                showTipObj.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingTipWord");
+                selectionPuzzle.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_PingSeleWord");
                 break;
             case HexType.JianHexagon:
-                tipPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianTipWord");
-                starttile.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianWord");
-                showTipObj.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianTipWord");
-                selectionPuzzle.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianSeleWord");
+                tipPuzzle.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianTipWord");
+                starttile.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianWord");
+                showTipObj.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianTipWord");
+                selectionPuzzle.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_JianSeleWord");
                 break;
         }
         

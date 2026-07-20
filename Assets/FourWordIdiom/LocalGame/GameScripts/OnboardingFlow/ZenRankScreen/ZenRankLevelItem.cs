@@ -135,7 +135,7 @@ public class ZenRankLevelItem : MonoBehaviour
                     int leafIndex = (tierIndex % 4) + 1;
 
                     Sprite newFlowerSprite =
-                        AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("hehua_" + flowerIndex);
+                        AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("hehua_" + flowerIndex);
                     Image flowerImg = FindImageInChildren(currentHehua.transform, "hehua01");
                     flowerImg.sprite = newFlowerSprite;
                     // ==========================================

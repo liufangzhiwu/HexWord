@@ -515,10 +515,10 @@ public class ChessLearningGuide : UIWindow
         }
     }
 
-    public override void Close(CloseMethod method = CloseMethod.Default)
+    public override void Close()
     {
         OnCloseBtn();
-        base.Close(method);
+        base.Close();
     }
 
     protected override void OnDisable()

@@ -29,6 +29,7 @@ public class Chesspiece: IEquatable<Chesspiece> //Chess piece
     public int direction; // 格子方向
     public string letter; // 格子的词
     public TileState state;  // 格子当前的状态
+    public bool isInitialFixed; // 死死记住它是不是初始字，不受后续 state 变化的任何影响
     public bool tip = false; // 格子是否提示词
     public Bowl bowl; // 填入字
     public bool isUsed;
@@ -773,7 +774,11 @@ public class ChessStageInfo
     {
         // 1. 同步全盘 HashSet 数据源
         var hashPiece = _chesspiece.FirstOrDefault(p => p.row == row && p.col == col);
-        if (hashPiece != null) hashPiece.state = newState;
+        if (hashPiece != null)
+        {
+            hashPiece.state = newState;
+            hashPiece.isInitialFixed = (newState == TileState.Default); // 👇 同步
+        }
 
         // 2. 同步所有包含该坐标的词组中的实例 (重要：修复交叉字两端状态不一致的核心)
         if (_chessGroup.TryGetValue((row, col), out var groups))
@@ -781,7 +786,11 @@ public class ChessStageInfo
             foreach (var g in groups)
             {
                 var piece = g.chesspieces.FirstOrDefault(p => p.row == row && p.col == col);
-                if (piece != null) piece.state = newState;
+                if (piece != null)
+                {
+                    piece.state = newState;
+                    piece.isInitialFixed = (newState == TileState.Default); // 👇 同步
+                }
             }
         }
     }
@@ -1093,6 +1102,7 @@ public class ChessStageInfo
                     direction = direction,
                     letter = word,
                     state = show == 1 ? TileState.Default : TileState.None,
+                    isInitialFixed = (show == 1)
                 };
                 boardGame.chesspieces.Add(puzzle);
             }

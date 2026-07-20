@@ -66,7 +66,7 @@ public class PrimaryInterface : UIWindow
     
     private void Start()
     {
-        logo.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_logo");
+        logo.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_logo");
         if (!GameDataManager.Instance.UserData.IsFirstLaunch)
         {
             ModeIndicator.speed = 0.5f;
@@ -124,7 +124,7 @@ public class PrimaryInterface : UIWindow
         GoldLeafredpoint?.SetActive(ThemeManager.Instance.IsSkinRedPointActive);
         ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
         
-        GameCoreManager.Instance.SetBackgroundImage(new Color(1,1,1,.8f));
+        GameCoreManager.Instance.SetBackgroundImage(new Color(1,1,1,1));
         
         SevenSignBtn.gameObject.SetActive(StreakManager.Instance.UnlockStreak());
     }
@@ -170,20 +170,19 @@ public class PrimaryInterface : UIWindow
         // ==========================================
         // 1. 禅意榜：赛季结算检查
         // ==========================================
-        
-        // 🌟 核心拦截：只有加入了榜单，并且本地倒计时<=0（赛季结束），才去查结算！
         bool isJoined = GameDataManager.Instance.UserData.isJoinedZenRank;
-        if (isJoined && ZenRankManager.Instance.RemainingSeconds <= 0)
+        // 先向服务器请求排行榜数据，拿到【真实的】 RemainingSeconds！
+        if (isJoined)
         {
             bool hasTriggeredSettlement = false;
             yield return StartCoroutine(ZenRankManager.Instance.CheckAndShowSettlementRoutine(
-                (res) => { hasTriggeredSettlement = res; }));
-            
-            // 如果触发了结算，死等玩家关掉匹配雷达页
+                PanelType.PrimaryInterface,(res) => { hasTriggeredSettlement = res; }));
             if (hasTriggeredSettlement)
             {
                 yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ZenRankStartScreen));
             }
+            
+            yield return StartCoroutine(ZenRankManager.Instance.FetchLeaderboardDataRoutine(GameDataManager.Instance.UserData.Zenlevel));
         }
         // ==========================================
         // 2. 禅意榜：主动拉取最新排名并赋值给按钮UI
@@ -214,11 +213,6 @@ public class PrimaryInterface : UIWindow
         // 3. 比如检查离线挂机收益
         // yield return StartCoroutine(OfflineRewardManager.CheckRoutine());
     }
-    
-    
-    
-    
-    
     private IEnumerator UpdateFishRankUI()
     {
         CheckFishBtn();
@@ -741,7 +735,7 @@ public class PrimaryInterface : UIWindow
     {
       
         // 1. 获取当前准备进入的关卡ID (用于判断第一关是否免体力)
-        int currentStage = (GameDataManager.Instance.UserData.levelMode == 1) ? 
+        int currentStage = (GameDataManager.Instance.UserData.levelMode == 3) ? 
             StageHexController.Instance.CurrentStage : 
             ChessStageController.Instance.CurrentStage;
         
@@ -771,6 +765,7 @@ public class PrimaryInterface : UIWindow
             switch (GameDataManager.Instance.UserData.levelMode)
             {
                 case 1:
+                case 3:
                     StageHexController.Instance.SetStageData(StageHexController.Instance.CurrentStage);
                     break;
                 case 2:
@@ -811,7 +806,7 @@ public class PrimaryInterface : UIWindow
     }
     private Sprite LoadheadIcon(string showIcon)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
 
     /// <summary>
@@ -822,6 +817,7 @@ public class PrimaryInterface : UIWindow
         switch (GameDataManager.Instance.UserData.levelMode)
         {
             case 1:
+            case 3:
                 SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
                 break;
             case 2:

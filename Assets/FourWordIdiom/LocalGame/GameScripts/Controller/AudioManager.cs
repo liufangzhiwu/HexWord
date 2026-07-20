@@ -38,7 +38,7 @@ public class AudioManager : MonoBehaviour
         {
             if (!soundClipCache.ContainsKey(name))
             {
-                AudioClip clip = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", name);
+                AudioClip clip = AdvancedBundleLoader.SharedInstance.LoadAudioClip("musics", name);
                 if (clip != null)
                 {
                     soundClipCache[name] = clip;
@@ -55,7 +55,7 @@ public class AudioManager : MonoBehaviour
         if (!soundClipCache.TryGetValue(clipName, out AudioClip clip))
         {
             //Debug.LogWarning($"音效未预加载: {soundName}");
-            clip = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", clipName);
+            clip = AdvancedBundleLoader.SharedInstance.LoadAudioClip("musics", clipName);
             soundClipCache.Add(clipName, clip);
             //return;
         }
@@ -279,7 +279,7 @@ public class AudioManager : MonoBehaviour
         }
         
         // 加载新音乐
-        AudioClip newMusic = AssetBundleLoader.SharedInstance.LoadAudioClip("musics", musicName);
+        AudioClip newMusic = AdvancedBundleLoader.SharedInstance.LoadAudioClip("musics", musicName);
         if (newMusic != null)
         {
             musicSource.clip = newMusic;

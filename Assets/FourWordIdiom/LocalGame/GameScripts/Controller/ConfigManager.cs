@@ -50,7 +50,7 @@ public class ConfigManager : MonoBehaviour
     private void LoadAdjustTable()
     {
         // 从AssetBundle中加载CSV文件
-        TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "GameConfig");
+        TextAsset csvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "GameConfig");
         if (csvFile == null)
         {
             Debug.LogError("加载多语言文件 Failed to load CSV file from AssetBundle.");

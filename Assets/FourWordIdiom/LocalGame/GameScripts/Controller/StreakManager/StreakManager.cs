@@ -55,7 +55,7 @@ public class StreakManager : Singleton<StreakManager>
                 Debug.LogError("StreakManager: 未找到 UserData 实例，请手动赋值");
         }
         
-        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "DailyVictory");
+        TextAsset data = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "DailyVictory");
         if (data != null)
         {
             ParseRewardConfig(data.text);

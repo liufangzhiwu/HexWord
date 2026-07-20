@@ -75,8 +75,8 @@ public class ThemeManager : Singleton<ThemeManager>
 
     public override void Init()
     {
-        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "themes");
-        TextAsset setdata = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "themeSetConfig");
+        TextAsset data = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "themes");
+        TextAsset setdata = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "themeSetConfig");
         if (data != null)
         {
             ParseLimitItems(data.text);

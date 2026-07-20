@@ -33,7 +33,7 @@ public class AdsDiscountScreen : UIWindow
         
         if (giftItempPefab == null)
         {
-            giftItempPefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "DiscountItem").GetComponent<GiftItem>();
+            giftItempPefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "DiscountItem").GetComponent<GiftItem>();
         }
         objectPool = new ObjectPool(giftItempPefab.gameObject, ObjectPool.CreatePoolContainer(transform, "GiftItemPool"));
         
@@ -255,8 +255,8 @@ public class AdsDiscountScreen : UIWindow
                     case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,"限时宝箱商店购买"+item.ItemName);
                         break;
-                    case (int)LimitRewordType.SingleWordTipsttool://提示灯道具，单个字符提示
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool,count,"限时宝箱商店购买"+item.ItemName);
+                    case (int)LimitRewordType.AutoComplete://提示灯道具，单个字符提示
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,count,"限时宝箱商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:

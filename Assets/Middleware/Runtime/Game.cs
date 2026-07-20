@@ -39,9 +39,9 @@ namespace Middleware
 #if UNITY_huawei&&!UNITY_EDITOR
             HuaweiGameService.AppInit();
 #endif
-            // StartCoroutine(ShowLoadingScreen());
             StartCoroutine(CheckNetworkConnection());
             
+            CreateAnalytic();
             InitManagers();
         }
 
@@ -53,7 +53,6 @@ namespace Middleware
         
         private IEnumerator WaitLoginedCreateShop()
         {
-            CreateAnalytic();
             yield return new WaitUntil(()=>Accounts.IsLogin);
 // #if UNITY_EDITOR 
 //             CreateAd();

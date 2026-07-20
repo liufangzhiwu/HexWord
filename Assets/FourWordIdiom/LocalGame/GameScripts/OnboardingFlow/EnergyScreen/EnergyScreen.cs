@@ -93,6 +93,7 @@ public class EnergyScreen : UIWindow
                 GameDataManager.Instance.UserData.AddBonusEnergy(1, "看广告获取");
                 AnalyticMgr.VideoAdSuccess("体力广告");
                 MessageSystem.Instance.ShowTip("体力恢复成功！");
+                GameDataManager.Instance.UserData.totalSeeAds++;
             }
             else
             {

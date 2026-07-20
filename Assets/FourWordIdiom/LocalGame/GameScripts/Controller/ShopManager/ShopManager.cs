@@ -72,7 +72,7 @@ public class ShopManager : MonoBehaviour
 
     void Start()
     {
-        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "shop");
+        TextAsset data = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "shop");
         if (data != null)
         {
             ParseShopItems(data.text);
@@ -83,7 +83,6 @@ public class ShopManager : MonoBehaviour
         }
 
         paysuccess = false;
-
         Initialize();
     }
 
@@ -94,7 +93,6 @@ public class ShopManager : MonoBehaviour
         // 初始化查找结构
         _limitAdsGifts = GetLimitAdsGifts();
     }
-    
     
     // 在 Inspector 中将按钮的点击事件绑定到此方法
     //public void OnBuyGoldTestButtonClicked(string _productId, Action<Product> _successedCallback, Action<string> _failedCallback)
@@ -447,8 +445,8 @@ public class ShopManager : MonoBehaviour
                     case (int)LimitRewordType.Tipstool:
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count);
                         break;
-                    case (int)LimitRewordType.SingleWordTipsttool:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool,count);
+                    case (int)LimitRewordType.AutoComplete:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,count);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:

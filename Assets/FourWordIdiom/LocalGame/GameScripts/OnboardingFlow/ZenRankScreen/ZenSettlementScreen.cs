@@ -122,7 +122,7 @@ public class ZenSettlementScreen : UIWindow
         
         step1LevelTagText.text = newLevelName;
         string zenLevel = UIUtilities.ExtractNumber(GameDataManager.Instance.UserData.Zenlevel);
-        step1LotusImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("lotus_p"+zenLevel);
+        step1LotusImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("lotus_p"+zenLevel);
         
         // 初始状态：升段提示 和 实际段位 都隐藏
         // 开始编排步骤2动画
@@ -177,7 +177,7 @@ public class ZenSettlementScreen : UIWindow
                 GameObject itemObj = Instantiate(rewardTemplate, rewardsContainer);
                 itemObj.SetActive(true);
                 Image icon = itemObj.transform.GetChild(0).GetComponent<Image>();
-                icon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("give_"+kvp.Key);
+                icon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_"+kvp.Key);
                 icon.SetNativeSize();
                 itemObj.GetComponentInChildren<Text>().text = "× " + kvp.Value;
             }
@@ -286,10 +286,10 @@ public class ZenSettlementScreen : UIWindow
     {
         switch (rank)
         {
-            case 1: rewardChestIcon.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("give_coin_1"); break;
-            case 2: rewardChestIcon.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("give_coin_2"); break;
-            case 3: rewardChestIcon.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("give_coin_3"); break;
-            default: rewardChestIcon.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("give_coin_0"); break;
+            case 1: rewardChestIcon.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_coin_1"); break;
+            case 2: rewardChestIcon.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_coin_2"); break;
+            case 3: rewardChestIcon.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_coin_3"); break;
+            default: rewardChestIcon.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_coin_0"); break;
         }
         rewardChestIcon.GetComponent<Image>().SetNativeSize();
     }
@@ -301,10 +301,10 @@ public class ZenSettlementScreen : UIWindow
     {
         return id switch
         {
-            3 => LimitRewordType.SingleWordTipsttool,     // 重置
+            3 => LimitRewordType.AutoComplete,     // 重置
             2 => LimitRewordType.Tipstool,      // 提示
             1 => LimitRewordType.Butterfly,     // 蝴蝶
-            4 => LimitRewordType.AutoComplete,  // 自动拼字
+            //4 => LimitRewordType.AutoComplete,  // 自动拼字
             _ => default
         };
     }
@@ -314,13 +314,13 @@ public class ZenSettlementScreen : UIWindow
         switch (itemId)
         {
             case 0:
-                sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("gold");
+                sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("gold");
                 break;
             case 1:
-                sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
+                sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
                 break;
             case 2:
-                sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
+                sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
                 break;
         }
 

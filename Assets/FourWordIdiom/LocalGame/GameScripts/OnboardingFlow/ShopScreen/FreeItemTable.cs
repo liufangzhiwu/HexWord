@@ -59,7 +59,7 @@ public class FreeItemTable : MonoBehaviour
             case (int)LimitRewordType.Tipstool:
                 spritename = "tipicon";
                 break;
-            case (int)LimitRewordType.SingleWordTipsttool:
+            case (int)LimitRewordType.AutoComplete:
                 spritename = "shop_reset";
                 break;
             case (int)LimitRewordType.RemoveAds:
@@ -122,7 +122,7 @@ public class FreeItemTable : MonoBehaviour
 
     private Sprite LoadShopIcon(string showIcon)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
 
     private void ClicktipBtn()

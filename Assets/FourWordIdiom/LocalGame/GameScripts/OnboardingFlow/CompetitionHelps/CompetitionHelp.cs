@@ -20,7 +20,7 @@ public class CompetitionHelp : UIWindow
         switch (GameDataManager.Instance.UserData.LanguageCode)
         {
             case "JS":
-                titleImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("dashJantitle");
+                titleImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("dashJantitle");
                 break;  
             // case "CT":
             //     titleImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fanDashTitle");

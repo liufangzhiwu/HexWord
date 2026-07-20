@@ -92,8 +92,8 @@ public class FishInfoController : MonoBehaviour
     private void InitializeData()
     {
         // 从资源管理器获取数据（需替换实际数据源）
-        TextAsset csvData = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo","MatchRobatTable");
-        TextAsset awardcsvData = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo","MatchConfig");
+        TextAsset csvData = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo","MatchRobatTable");
+        TextAsset awardcsvData = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo","MatchConfig");
        
         if (csvData != null)
         {

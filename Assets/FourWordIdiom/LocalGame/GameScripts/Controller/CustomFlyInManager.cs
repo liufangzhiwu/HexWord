@@ -12,6 +12,7 @@ public class CustomFlyInManager : MonoBehaviour
     public static CustomFlyInManager  Instance;
     [HideInInspector] public GameObject GoldObj;
     [HideInInspector] public GameObject GoldPrefab;
+    [HideInInspector] public GameObject finishlevelBtnObj;
     private float BizerValue = 3.0f;
     
     private void Awake()
@@ -29,7 +30,7 @@ public class CustomFlyInManager : MonoBehaviour
 
     private void Start()
     {
-        GoldPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "GameGole");
+        GoldPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "GameGole");
     }
     
     /// <summary>
@@ -101,9 +102,78 @@ public class CustomFlyInManager : MonoBehaviour
         StartCoroutine(FlyInCoroutine(start,target,effect,call,duration));
     }
     
-    public void FlyIn(Vector3 start,Vector3 target,GameObject effect,Action call)
+    public void FlyAwardInRight(Vector3 start,GameObject effect,Action call)
     {
-        StartCoroutine(FlyVectorToEnd(start,target,effect,true,call));
+        GameObject effecttemp=Instantiate(effect,start,Quaternion.identity,SystemManager.Instance._uiRoot);
+        effecttemp.GetComponentInChildren<Text>().transform.gameObject.SetActive(false);
+        effecttemp.transform.localScale = new Vector3(0.6f,0.6f,0.6f);
+        Vector3 endPos = new Vector3(finishlevelBtnObj.transform.position.x+1,finishlevelBtnObj.transform.position.y,finishlevelBtnObj.transform.position.z);
+        StartCoroutine(FlyAwardVectorToEnd(start, endPos, effecttemp, Vector3.right, () =>
+        {
+            Destroy(effecttemp.gameObject);
+            call?.Invoke();
+        }));
+    }
+    
+    public void FlyAwardInLeft(Vector3 start,GameObject effect,Action call)
+    {
+        GameObject effecttemp=Instantiate(effect,start,Quaternion.identity,SystemManager.Instance._uiRoot);
+        effecttemp.GetComponentInChildren<Text>().transform.gameObject.SetActive(false);
+        effecttemp.transform.localScale = new Vector3(0.6f,0.6f,0.6f);
+        Vector3 endPos = new Vector3(finishlevelBtnObj.transform.position.x-1,finishlevelBtnObj.transform.position.y,finishlevelBtnObj.transform.position.z);
+        StartCoroutine(FlyAwardVectorToEnd(start, endPos, effecttemp, Vector3.left, () =>
+        {
+            Destroy(effecttemp.gameObject);
+            call?.Invoke();
+        }));
+    }
+    
+    
+    private IEnumerator FlyAwardVectorToEnd(Vector3 start, Vector3 target, GameObject gold, Vector3 left, Action call, float duration = 0.8f)
+    {
+        Vector3 endPos = target;
+        Vector3 starttemp = new Vector3(start.x,start.y+0.5f,endPos.z);
+
+        // ---- 1. 准备透明度控制组件（适用于 UI） ----
+        CanvasGroup cg = gold.GetComponent<CanvasGroup>();
+        if (cg == null) cg = gold.AddComponent<CanvasGroup>();
+        cg.alpha = 0f; // 初始透明
+
+        // ---- 2. 构建主序列 ----
+        Sequence flySeq = DOTween.Sequence();
+
+        // 2.1 淡入（0.2s）
+        flySeq.Join(cg.DOFade(1f, 0.2f).SetEase(Ease.OutQuad));
+        
+        // 2.2 悬浮效果（前 0.5 秒）：上下脉冲，自动回到原位
+        flySeq.Append(gold.transform.DOMove(starttemp, 0.2f).OnComplete(() =>
+            {
+                flySeq.Append(gold.transform.DOMove(start, 0.2f));
+            })
+            .SetEase(Ease.OutQuad));
+
+        // 2.3 曲线飞入（使用 CatmullRom）
+       
+        Vector3 mid = (start + endPos) / 2 + left * 1.5f;
+        Vector3[] path = new Vector3[] { start, mid, endPos };
+        flySeq.Append(gold.transform.DOPath(path, duration, PathType.CatmullRom)
+            .SetEase(Ease.InOutSine));
+
+        // 2.4 淡出（0.2s）— 飞入完成后逐渐消失
+        flySeq.Append(cg.DOFade(0f, 0.2f).SetEase(Ease.InQuad));
+
+        // ---- 3. 等待整个序列完成 ----
+        //yield return flySeq.WaitForCompletion();
+
+        // ---- 4. 飞入完成后，按钮缩放反馈 + 回调 ----
+        flySeq.Join(finishlevelBtnObj.transform.DOScale(new Vector3(1.1f, 1.1f, 1.1f), 0.1f)
+            .SetEase(Ease.OutBack)
+            .OnComplete(() => finishlevelBtnObj.transform.DOScale(Vector3.one, 0.1f)));
+        
+        yield return flySeq.WaitForCompletion();
+        
+        // 执行回调（此处会销毁 gold 等）
+        call?.Invoke();
     }
     
     private IEnumerator FlyVectorToEnd(Vector3 start,Vector3 target,GameObject gold,bool isCurve,Action call,float duration=0.35f)
@@ -186,7 +256,7 @@ public class CustomFlyInManager : MonoBehaviour
         
         Gold.transform.DOScale(new Vector3(0.78f,0.78f,1f), duration);
         yield return new WaitForSeconds(0.2f);
-        AudioManager.Instance.TriggerVibration();
+        //AudioManager.Instance.TriggerVibration();
         AudioManager.Instance.PlaySoundEffect("filyGold");
         yield return new WaitForSeconds(duration);
         Gold.GetComponent<Image>().DOFade(0, 0.1f).OnComplete(() =>

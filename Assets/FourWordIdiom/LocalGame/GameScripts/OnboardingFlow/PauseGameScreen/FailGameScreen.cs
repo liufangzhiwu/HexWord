@@ -120,6 +120,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
                     // 广告播放成功
                     AnalyticMgr.VideoAdSuccess("复活广告"); 
                     ExecuteRevive();
+                    GameDataManager.Instance.UserData.totalSeeAds++;
                 }
                 else
                 {

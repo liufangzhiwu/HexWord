@@ -35,12 +35,12 @@ public class ShopScreen : UIWindow
     {
         if (ShopItemPrefab == null)
         {
-            ShopItemPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "ShopItem").GetComponent<ShopItem>();
+            ShopItemPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ShopItem").GetComponent<ShopItem>();
         }
         
         if (ShopGiftItemPrefab == null)
         {
-            ShopGiftItemPrefab= AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "ShopGiftItem").GetComponent<ShopItem>();
+            ShopGiftItemPrefab= AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ShopGiftItem").GetComponent<ShopItem>();
         }
         // 初始化对象池
         objectPool = new ObjectPool(ShopItemPrefab.gameObject, ObjectPool.CreatePoolContainer(transform, "ShopItemPool"));

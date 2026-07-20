@@ -104,24 +104,24 @@ public class ZenRankScreen : UIWindow
     private IEnumerator Start()
     {
         //title.text = MultilingualManager.Instance.GetString("MeditationList");
-        ZenTitle.text = MultilingualManager.Instance.GetString("ZenValue");
+        //ZenTitle.text = MultilingualManager.Instance.GetString("ZenValue");
         MyGoPlay.AddClickAction(OnGoPlayClicked);
         
         if (RanklvProfab == null)
         {
-            RanklvProfab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenRankLvItem").GetComponent<ZenRankLevelItem>();
+            RanklvProfab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenRankLvItem").GetComponent<ZenRankLevelItem>();
         }
         LevelObjectPool = new ObjectPool(RanklvProfab.gameObject, ObjectPool.CreatePoolContainer(transform, "ZenRankLvPool"));
 
         if (RankProfab == null)
         {
-            RankProfab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenRankItem").GetComponent<ZenRankItem>();
+            RankProfab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenRankItem").GetComponent<ZenRankItem>();
         }
         RankObjectPool = new ObjectPool(RankProfab.gameObject, ObjectPool.CreatePoolContainer(transform, "ZenRankItemPool"));
         
         if (hehuaPrefab == null)
         {
-            hehuaPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("ZenHehua", "UI_hehua");
+            hehuaPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("ZenHehua", "UI_hehua");
         }
         hehuaObjectPool = new ObjectPool(hehuaPrefab, ObjectPool.CreatePoolContainer(transform, "ZenHehuaPool"));
         yield return StartCoroutine(UpdateAllLevelItems());
@@ -445,7 +445,7 @@ public class ZenRankScreen : UIWindow
         {
             isMeUnranked = true; // 🌟 我未上榜
             MyRank.text = "-";
-            MyAvatar.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + GameDataManager.Instance.UserData.UserHeadId); // 给个默认头像
+            MyAvatar.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + GameDataManager.Instance.UserData.UserHeadId); // 给个默认头像
             MyName.text =  "未上榜";
             MyScore.text = "0";
             MyRankIcon.gameObject.SetActive(false);
@@ -459,15 +459,15 @@ public class ZenRankScreen : UIWindow
             case 1:
                
                 MyRankIcon.gameObject.SetActive(true);
-                MyRankIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Rankicon1");
+                MyRankIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Rankicon1");
                 break;
             case 2:
                 MyRankIcon.gameObject.SetActive(true);
-                MyRankIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Rankicon2");
+                MyRankIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Rankicon2");
                 break;
             case 3:
                 MyRankIcon.gameObject.SetActive(true);
-                MyRankIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Rankicon3");
+                MyRankIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Rankicon3");
                 break;
             default:
                 MyRank.gameObject.SetActive(true);
@@ -475,7 +475,7 @@ public class ZenRankScreen : UIWindow
                 break;
         }
         
-        MyAvatar.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + GameDataManager.Instance.UserData.UserHeadId);
+        MyAvatar.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + GameDataManager.Instance.UserData.UserHeadId);
         MyName.text = GameDataManager.Instance.UserData.UserName;
         MyScore.text = entry.score.ToString();
     }

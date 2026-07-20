@@ -59,7 +59,7 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         this._bowlGrid = bowlGrid;
         _textDisplay.text = bowl.letter.ToString();
         _mesk.SetActive(locked);
-        _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
+        _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
         if(bowl.status == 2 )
         {
             gameObject.SetActive(false);
@@ -86,7 +86,7 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
             {
                 if (bowl.count > 1)
                 {
-                    _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
+                    _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
                     _badgeText.color = new Color32(168, 122, 81, 255);
                     _badgeGroup.SetActive(true);
                     _badgeText.text = bowl.count.ToString();
@@ -95,7 +95,7 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                 }
                 else
                 {
-                    _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
+                    _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
                     _badgeGroup.SetActive(false);
                     _isGoldLeaf = true;
                 }
@@ -105,13 +105,13 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                 _badgeGroup.SetActive(true);
                 _badgeText.text = bowl.count.ToString();
                 _badgeText.color = new Color32(168, 122, 81, 255);
-                _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
+                _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
             }
             else
             {
                 // 只有 1 个的时候隐藏角标
                 _badgeGroup.SetActive(false);
-                _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
+                _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
             }
             float scale = UIUtilities.GetScreenRatio();
             if (UIUtilities.IsiPad())
@@ -171,7 +171,10 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         cloneRT.localScale = selfRT.localScale * 1.1f;
         clone.transform.position = selfRT.position;
         Vector3 endWorld = tile.TileTransform.TransformPoint(tile.TileTransform.rect.center);
-        float   duration = 0.33f;
+        float distance = Vector3.Distance(clone.transform.position, endWorld);
+        float duration1 = Mathf.Sqrt(distance) * 0.08f;
+        float duration = Mathf.Clamp(duration1, 0.15f, 0.45f);
+        Debug.Log($"飞行距离: {distance}, 预计时间: {duration1}, 最终限制时间: {duration}");
         float   switchDist = cloneRT.TransformVector(new Vector3(cloneRT.sizeDelta.x * 0.5f, 0, 0)).magnitude;    // 剩余 半格宽度 时换图
         bool    hasSwitched = false;                // 只换一次
         clone.transform.DOMove(endWorld, duration).SetEase(Ease.Linear)
@@ -189,17 +192,17 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                             if (bowl.count >= 1)
                             {
                                 tile._isGoldLeaf = false;
-                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
+                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
                             }
                             else
                             {
-                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
+                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
                                 tile._isGoldLeaf = _isGoldLeaf;
                             }
                         }
                         else
                         {
-                            clone.transform.GetChild(0).GetComponent<Image>().sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
+                            clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
                             tile._isGoldLeaf = _isGoldLeaf;
                         }
                        
@@ -209,17 +212,17 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                         {
                             if (bowl.count >= 1)
                             {
-                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
                             }
                             else
                             {
-                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
+                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
                                
                             }
                         }
                         else
                         {
-                            clone.transform.GetChild(0).GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+                            clone.transform.GetChild(0).GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
                         }
                         tile._isGoldLeaf = _isGoldLeaf;
                     }
@@ -235,7 +238,6 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                     {
                         if(clone && clone.activeInHierarchy) 
                         {
-                            // 🌟 飞行结束！安全还给对象池
                             _bowlGrid.PhantomPool.ReturnObjectToPool(clone.GetComponent<PoolObject>());
                         }
                         onComplete?.Invoke();
@@ -263,6 +265,7 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         //_bowlHanding = true;
         transform.DOScale(1.05f, 0.01f);
         AudioManager.Instance.PlaySoundEffect("WordClick");
+        
         //if (ChessBowlGrid._isProcessing) return;
         //if(_clickRoutine != null) StopCoroutine(_clickRoutine);
         //_clickRoutine = StartCoroutine(ClickSequence());
@@ -273,6 +276,7 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         //if (!_bowlHanding && !PassDebounce()) return;
         transform.DOScale(1f, 0.01f);
         OnClickHandler?.Invoke(this);                    // 业务回调
+        AudioManager.Instance.TriggerVibration(40,40);
         
         //_bowlHanding = false;
         //if(_currentState != ClickState.Ready) return;

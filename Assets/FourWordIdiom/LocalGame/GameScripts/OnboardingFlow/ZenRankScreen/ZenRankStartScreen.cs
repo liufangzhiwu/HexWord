@@ -29,16 +29,20 @@ public class ZenRankStartScreen : UIWindow
     [SerializeField] private RectTransform radarCenter;   // 雷达中心容器（挂载头像的父节点）
     [SerializeField] private float maxRadarRadius = 420f; // 头像出现的最大半径
     [SerializeField] private float minRadarRadius = 160f;  // 头像出现的最小半径（避免挡住中间的“你”）
-    [SerializeField] private RectTransform radarLine; // 🌟 把你截图里的 "line" 拖到这里
-    [SerializeField] private float radarRotateDuration = 2.5f; // 🌟 转一圈需要几秒（越小转得越快）
-    [SerializeField] private float avatarMinDistance = 120f; // 🌟 新增：头像之间的最小安全距离（请根据实际头像 UI 的宽高/直径在 Inspector 中调整）
+    [SerializeField] private RectTransform radarCircle;    // 雷达中心的园从小变大到420
+    [SerializeField] private RectTransform radarLine; // 雷达扫描的线
+    [SerializeField] private float radarRotateDuration = 2.5f; //  转一圈需要几秒（越小转得越快）
+    [SerializeField] private float avatarMinDistance = 120f; // 头像之间的最小安全距离（请根据实际头像 UI 的宽高/直径在 Inspector 中调整）
+    
+    private Vector2 _originalCircleSize; //用于缓存雷达圆的初始大小
     
     private GameObject avatarPrefab;     // 其他玩家的头像预制体
     private ObjectPool avatarPool;
     // 用于管理已生成的视觉头像列表
     private List<GameObject> activeAvatars = new List<GameObject>();
     private Coroutine matchCoroutine;
-    
+    // 一个强制模式的标记
+    private bool _isForcedMode = false;
     // 变量类型改为 string
     private string _returnTargetPanel = PanelType.PrimaryInterface;
     protected override void InitializeUIComponents()
@@ -46,17 +50,22 @@ public class ZenRankStartScreen : UIWindow
         // 绑定按钮点击事件
         startGameButton.AddClickAction(OnStartGameClicked);
         closeButton.AddClickAction(OnCloseClicked);
-        avatarPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","UserAvatar");
+        avatarPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem","UserAvatar");
         avatarPool = new ObjectPool(avatarPrefab, transform, 5);
+        
+        _originalCircleSize = radarCircle.sizeDelta;
     }
     protected override void OnEnable()
     {
         base.OnEnable();
-        
+        _isForcedMode = false;
+        _returnTargetPanel = PanelType.PrimaryInterface;
+        closeButton.gameObject.SetActive(true);
         // 初始状态：显示阶段1，隐藏阶段2
         stage1Panel.SetActive(true);
         stage2Panel.SetActive(false);
         InitLanguageAndData();
+        ResetRadarUI();
         if (ZenRankManager.Instance != null)
         {
             ZenRankManager.Instance.OnRankTimerTick += UpdateTimerUI;
@@ -82,6 +91,7 @@ public class ZenRankStartScreen : UIWindow
             ZenRankManager.Instance.OnRankTimerTick -= UpdateTimerUI;
         }
         radarLine?.DOKill();
+        radarCircle?.DOKill();
         // 清理所有动态生成的头像，停止它们身上的 DOTween
         ClearAllAvatars();
         base.OnDisable();
@@ -97,7 +107,21 @@ public class ZenRankStartScreen : UIWindow
         if (stage1TimeText != null) stage1TimeText.text = "..."; 
         
     }
-    
+    // 专门的重置雷达状态方法
+    private void ResetRadarUI()
+    {
+        if (radarLine != null)
+        {
+            radarLine.DOKill();
+            radarLine.localEulerAngles = Vector3.zero; // 重置旋转角度
+        }
+
+        if (radarCircle != null)
+        {
+            radarCircle.DOKill();
+            radarCircle.sizeDelta = _originalCircleSize; // 恢复到原始大小
+        }
+    }
     /// <summary>
     /// 外部调用：设置关闭此界面时需要返回的面板
     /// </summary>
@@ -106,13 +130,30 @@ public class ZenRankStartScreen : UIWindow
         _returnTargetPanel = sourcePanel;
     }
     
+    //  暴露给外部调用的强制模式开关
+    public void SetForcedMode(bool isForced)
+    {
+        _isForcedMode = isForced;
+        if (closeButton != null)
+        {
+            closeButton.gameObject.SetActive(!isForced); // 强制模式下隐藏关闭按钮
+        }
+    }
+    
     // 🌟 接收全局计时器推送的文本并刷新 UI
     private void UpdateTimerUI(int seconds, string timeStr)
     {
         if (stage1TimeText != null)
         {
             // 如果你需要拼接前缀（比如"剩余时间:"），可以在这里拼接
-            stage1TimeText.text = timeStr; 
+            if (seconds > 0)
+            {
+                stage1TimeText.text = timeStr; 
+            }
+            else
+            {
+                stage1TimeText.text = ZenRankManager.Instance?.GetNextRemainingTimeFormatted();
+            }
         }
     }
     // 点击开始游戏按钮
@@ -127,12 +168,29 @@ public class ZenRankStartScreen : UIWindow
         }
         // 开始模拟匹配协程
         matchCoroutine = StartCoroutine(SimulateMatchmaking());
-        // 先杀掉可能残留的动画
+        StartRadarAnimations();
+    }
+    // [新增] 启动雷达动画逻辑
+    private void StartRadarAnimations()
+    {
+        // 1. 雷达线逻辑：无限匀速旋转
         radarLine?.DOKill();
-        // 设置 Z 轴旋转，无限循环，线性匀速
         radarLine?.DORotate(new Vector3(0, 0, -360), radarRotateDuration, RotateMode.FastBeyond360)
             .SetLoops(-1, LoopType.Restart)
             .SetEase(Ease.Linear);
+
+        // 2. 雷达圆逻辑：等待 -> 变大 -> 停止变大
+        if (radarCircle != null)
+        {
+            radarCircle.DOKill();
+            radarCircle.sizeDelta = _originalCircleSize; // 确保开始时是原始尺寸
+            
+            // 使用 DOTween 的 Sequence 实现“等待然后变大”的过程
+            Sequence circleSeq = DOTween.Sequence();
+            circleSeq.AppendInterval(0.4f); // 等待配置的时间
+            circleSeq.Append(radarCircle.DOSizeDelta(new Vector2(616,616), radarRotateDuration*2).SetEase(Ease.OutQuad)); // 慢慢变大
+            // Sequence 执行完毕后自动停止，圆不再继续变大，而雷达线还在继续转
+        }
     }
     private void OnCloseClicked()
     {
@@ -172,8 +230,16 @@ public class ZenRankStartScreen : UIWindow
         // 触发进入战斗场景逻辑
         SystemManager.Instance.HidePanel(PanelType.ZenRankStartScreen, true, () =>
         {
-           UIWindow uiWindow = SystemManager.Instance.GetPanel(PanelType.PrimaryInterface);
-           uiWindow?.GetComponent<PrimaryInterface>().OnPlayClick();
+            SystemManager.Instance.HidePanel(PanelType.ZenRankScreen);
+            
+            if (_isForcedMode)
+            {
+                SystemManager.Instance.HidePanel(PanelType.ChessFinishView);
+                SystemManager.Instance.HidePanel(PanelType.StageFinishView);
+            }
+            
+            UIWindow uiWindow = SystemManager.Instance.GetPanel(PanelType.PrimaryInterface);
+            uiWindow?.GetComponent<PrimaryInterface>().OnPlayClick();
         });
     }
 
@@ -288,6 +354,6 @@ public class ZenRankStartScreen : UIWindow
     
     private Sprite LoadheadIcon(string showIcon)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
 }

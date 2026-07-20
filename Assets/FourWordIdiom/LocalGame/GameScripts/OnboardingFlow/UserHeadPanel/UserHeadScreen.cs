@@ -153,7 +153,7 @@ public class UserHeadScreen : UIWindow
     
     private Sprite LoadheadIcon(string showIcon)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
     
     public override void OnHideAnimationEnd()

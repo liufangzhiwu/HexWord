@@ -18,24 +18,7 @@ public class LeaderboardApi
                 action?.Invoke(entries);
             },
             error => {
-                Debug.LogError($"GetLeaderboard failed: {error}");
                 action?.Invoke(null);
-            });
-    }
-    public IEnumerator SubmitScore(string boardId, int score, System.Action onSuccess, System.Action<string> onError)
-    {
-        var data = new Dictionary<string, string>
-        {
-            { "score", score.ToString() }
-        };
-        var url = $"leaderboards/{boardId}/submit";
-        yield return httpClient.Post<object>(url,
-            data,
-            response => {
-                onSuccess?.Invoke();
-            },
-            error => {
-                onError?.Invoke(error);
             });
     }
     
@@ -54,6 +37,22 @@ public class LeaderboardApi
             },
             error => {
                 Debug.LogError($"[LeaderboardApi] 领奖确认请求失败: {error}");
+                action?.Invoke(null);
+            });
+    }
+    
+    /// <summary>
+    /// 检查是否有段位榜(禅修榜)的结算奖励
+    /// </summary>
+    public IEnumerator CheckZenSettlement(System.Action<ZenSettlementResponse> action)
+    {
+        var url = "leaderboards/zen/check-settlement";
+        yield return httpClient.Get<ZenSettlementResponse>(url,
+            response => {
+                action?.Invoke(response);
+            },
+            error => {
+                Debug.LogError($"[LeaderboardApi] 检查结算失败: {error}");
                 action?.Invoke(null);
             });
     }

@@ -65,7 +65,7 @@ public class NewThemeScreen : UIWindow
     
     private Sprite GetSprite(string spriteName)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(spriteName,"UI_Theme");
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(spriteName,"UI_Theme");
     }
 
 

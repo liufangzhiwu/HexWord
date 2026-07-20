@@ -145,7 +145,7 @@ private void ResetUIForReplay()
         // oneSecondWait = new WaitForSeconds(1f);
         if (cachedUpTag == null)
         {
-            GameObject upTag = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenUptag");
+            GameObject upTag = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenUptag");
             if (upTag != null)
             {
                 cachedUpTag = Instantiate(upTag, listContainer);
@@ -156,7 +156,7 @@ private void ResetUIForReplay()
         }
         if (cachedDownTag == null)
         {
-            GameObject downTag = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenDowntag");
+            GameObject downTag = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenDowntag");
             if (downTag != null)
             {
                 cachedDownTag = Instantiate(downTag, listContainer);
@@ -166,7 +166,7 @@ private void ResetUIForReplay()
         }
         if (rankItemPrefab == null)
         {
-            rankItemPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenRankItem");
+            rankItemPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ZenRankItem");
         }
          
         rankItemPool = new ObjectPool(rankItemPrefab, listContainer, 5, PoolBehaviour.GameObject);
@@ -270,7 +270,7 @@ private void ResetUIForReplay()
         {
             string zenLevelNum = UIUtilities.ExtractNumber(levelCode);
             // 先尝试 lotus_p 系列命名，如果没有再尝试 zenicon_ 系列 (根据你之前的代码习惯兼容)
-            Sprite icon = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("zenlevel_icon" + zenLevelNum);
+            Sprite icon = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("zenlevel_icon" + zenLevelNum);
             if (icon != null) 
             {
                 zenImage.sprite = icon;

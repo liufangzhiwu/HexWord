@@ -64,12 +64,12 @@ public class PuzzleTileBoard : UIWindow
     {
         if (puzzleTilePrefab == null)
         {
-            puzzleTilePrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "PuzzleTileItem");
+            puzzleTilePrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "PuzzleTileItem");
         }
 
         if (tileHorizontalPrefab == null)
         {
-            tileHorizontalPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "TileHorizontal");
+            tileHorizontalPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "TileHorizontal");
         }
 
         puzzlePool = new ObjectPool(puzzleTilePrefab, ObjectPool.CreatePoolContainer(transform, "puzzleTilePool"));

@@ -35,7 +35,7 @@ public class DashCompetition : UIWindow
         
         if (_fishItemPrefab == null)
         {
-            _fishItemPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "FishItem").GetComponent<FishItem>();
+            _fishItemPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "FishItem").GetComponent<FishItem>();
         }
     
         // 初始化对象池
@@ -271,7 +271,7 @@ public class DashCompetition : UIWindow
         RectTransform rectTransform =FishLists.GetComponent<RectTransform>();
         if (UIUtilities.IsiPad())
         {
-            Background.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbigbg");
+            Background.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbigbg");
             FishLists.GetComponent<VerticalLayoutGroup>().spacing = -40;
             BoxsParent.transform.localScale = new Vector3(1.071f, 1.071f, 1f);
             BoxsParent.GetComponent<HorizontalLayoutGroup>().spacing =15f;
@@ -284,7 +284,7 @@ public class DashCompetition : UIWindow
         }
         else
         {
-            Background.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbg");
+            Background.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbg");
             float scale=UIUtilities.GetScreenRatio();
             FishLists.GetComponent<VerticalLayoutGroup>().spacing =Math.Clamp(-40 * scale, -40,100);
             BoxsParent.transform.localScale = Vector3.one*scale;

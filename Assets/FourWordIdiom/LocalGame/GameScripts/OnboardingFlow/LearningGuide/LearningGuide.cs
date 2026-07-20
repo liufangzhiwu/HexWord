@@ -167,9 +167,9 @@ public class LearningGuide : UIWindow
         OnHideAnimationEnd();
     }
 
-    public override void Close(CloseMethod method = CloseMethod.Default)
+    public override void Close()
     {
-        base.Close(method);
+        base.Close();
         OnCloseBtn();
     }
     

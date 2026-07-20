@@ -166,12 +166,12 @@ public class ChessDynamicHardManager : MonoBehaviour
         // ==========================================
         if (string.IsNullOrEmpty(dynamicCsvData))
         {
-            TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_dynamicConfig");
+            TextAsset csvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_dynamicConfig");
             dynamicCsvData = csvFile?.text;
         }
         if (string.IsNullOrEmpty(levelCsvData))
         {
-            TextAsset levelCsvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_levelDifficultyChange");
+            TextAsset levelCsvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_levelDifficultyChange");
             levelCsvData = levelCsvFile?.text;
         }
         

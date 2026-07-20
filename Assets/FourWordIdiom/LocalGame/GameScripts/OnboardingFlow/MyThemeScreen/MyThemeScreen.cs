@@ -36,7 +36,7 @@ public class MyThemeScreen : UIWindow
     {
         if (_themeItemPrefab == null)
         {
-            _themeItemPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "ThemeItem").GetComponent<ThemeItem>();
+            _themeItemPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ThemeItem").GetComponent<ThemeItem>();
         }
     
         // 初始化对象池
@@ -258,7 +258,7 @@ public class MyThemeScreen : UIWindow
     }
 
 
-    public override void Close(CloseMethod method = CloseMethod.Default)
+    public override void Close()
     {
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
         {
@@ -279,7 +279,7 @@ public class MyThemeScreen : UIWindow
             SystemManager.Instance.HidePanel(PanelType.ZenRankScreen);
         }
         
-        base.Close(method); // 隐藏面板
+        base.Close(); // 隐藏面板
     }
 
 

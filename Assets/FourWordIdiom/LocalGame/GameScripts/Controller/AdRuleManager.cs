@@ -70,7 +70,7 @@ public class AdRuleManager : MonoBehaviour
 
         if (string.IsNullOrEmpty(csvData))
         {
-            TextAsset textAsset = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "adv_general_config");
+            TextAsset textAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "adv_general_config");
             csvData = textAsset?.text;
         }
         if (!string.IsNullOrEmpty(csvData))

@@ -123,8 +123,8 @@ public class MatchSuccess : UIWindow
                 case LimitRewordType.Tipstool:
                     GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, award[1],message);
                     break;
-                case LimitRewordType.SingleWordTipsttool:
-                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, award[1],message);
+                case LimitRewordType.AutoComplete:
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, award[1],message);
                     break;
             }
         }
@@ -152,16 +152,16 @@ public class MatchSuccess : UIWindow
             switch (type)
             {
                 case LimitRewordType.Coins:
-                    awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
+                    awardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
                     break;
                 case LimitRewordType.Butterfly:
-                    awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Butterfly");
+                    awardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Butterfly");
                     break;
                 case LimitRewordType.Tipstool:
-                    awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
+                    awardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
                     break;
-                case LimitRewordType.SingleWordTipsttool:
-                    awardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
+                case LimitRewordType.AutoComplete:
+                    awardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
                     break;
             }                
             

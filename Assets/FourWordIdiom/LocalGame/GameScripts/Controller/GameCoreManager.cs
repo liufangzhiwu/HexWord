@@ -89,7 +89,7 @@ public sealed class GameCoreManager: MonoBehaviour
     
     private Sprite GetSprite(string spriteName)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(spriteName,"UI_Theme");
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(spriteName,"UI_Theme");
     }
 
     public void SetAutoLevelTalbe(bool isShow)

@@ -133,7 +133,7 @@ public class StageHexController
     /// </summary>
     private PackInfo LoadPackInfoAsset(string assetName)
     {
-        return AssetBundleLoader.SharedInstance.LoadScriptableObject(
+        return AdvancedBundleLoader.SharedInstance.LoadScriptableObject(
             "objects", 
             assetName
         ) as PackInfo;
@@ -297,7 +297,7 @@ public class StageHexController
                 if (issuccess)
                 {
                     AnalyticMgr.InsetAdSuccess("关卡插屏");
-                    GameDataManager.Instance.UserData.totalSeeAds++;
+                    GameDataManager.Instance.UserData.totalInsetSeeAds++;
                 }
                 else
                 {

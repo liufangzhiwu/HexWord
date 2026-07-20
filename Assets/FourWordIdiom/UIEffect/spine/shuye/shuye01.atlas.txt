@@ -1,0 +1,11 @@
+shuye01.png
+size:512,512
+filter:Linear,Linear
+pma:true
+shuye01
+bounds:1,34,274,456
+shuye02
+bounds:276,327,163,163
+offsets:1,1,165,165
+shuye03
+bounds:1,1,32,32

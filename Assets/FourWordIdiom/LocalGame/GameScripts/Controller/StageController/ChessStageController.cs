@@ -3,82 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using JetBrains.Annotations;
 using Middleware;
 using Newtonsoft.Json;
 using UnityEngine;
 
-public enum LevelModes
-{
-    Normal,
-    Hard,
-    ExtraHard,
-}
-/// <summary>
-/// 连击配置数据结构
-/// </summary>
-public class ComboConfig
-{
-    public string State;      // 加减分状态 (add)
-    public int Combo;         // 连击状态
-    public int Num;           // 加减分数值
-    public int TimeLag;       // 时间窗口（秒）
-}
-
-public class Interval
-{
-    public int Mode;    // 关卡模式: 1=困难,2=极难
-    public int Degree;  // 难度: 0=轻度,1=中度,2=重度
-    public int Start;   // 开始关卡
-    public int End;     // 结束关卡, 叹号表示后续所有关卡
-}
-
-/// <summary>
-/// 冰块玩法配置
-/// </summary>
-public class IceConfig
-{
-    public bool IsOpen;     // 是否开启
-    public int FirstLevel;   // 首次出现的关卡是
-    public int FirstDegree;  // 首次的难度
-    public Dictionary<int, int> Degree; // 难度配置 {难度级别:数量}
-    public Dictionary<int, int> Fixed;  // 固定关卡配置  {关卡id,级别degree}
-    public List<Interval> CycleLevels;   // 循环关卡配置
-}
-
-/// <summary>
-/// 根据叶子的收集数量发放奖励
-/// </summary>
-public class LeafReward
-{
-    public int Number;   // 叶子数量
-    public int Type;    // 奖励类型
-    public int Value;   // 数量
-}
-/// <summary>
-/// 叶子玩法配置
-/// </summary>
-public class LeafConfig
-{
-    public bool IsOpen;
-    public int FirstLevel;   // 首次出现的
-    public List<int> CycleLevels; // 循环关卡, 每个位数匹配出现
-    public List<LeafReward> Rewards; // 奖励列表
-}
-/// <summary>
-/// 花朵玩法配置
-/// </summary>
-public class FlowerConfig
-{
-    public bool IsOpen;
-    public int FirstLevel;
-    public int FirstDegree;
-    public int InitNumber;      // 初始消除最近花朵数量
-    public int MinNumber;       // 最小消除最近花朵数量
-    public Dictionary<int, int> Degree; // 难度配置 {难度级别:数量}
-    public Dictionary<int, int> Fixed;  // 固定关卡配置  {关卡id,级别degree}
-    public List<Interval> CycleLevels;  // 循环关卡配置
-}
 /// <summary>
 /// 关卡管理系统（非MonoBehaviour单例）
 /// 功能：
@@ -86,7 +14,7 @@ public class FlowerConfig
 /// 2. 处理关卡进度保存
 /// 3. 协调关卡完成流程
 /// </summary>
-public class ChessStageController
+public partial class ChessStageController
 {
     #region 单例实现
     private static readonly ChessStageController _instance = new ChessStageController();
@@ -97,19 +25,9 @@ public class ChessStageController
     
     private ChessStageController() { }
     #endregion
-
-    #region 数据配置
-    private readonly Dictionary<int, ComboConfig> _comboConfigDict = new Dictionary<int, ComboConfig>();
-    private readonly Dictionary<int, ComboConfig> _reduceConfigDict = new Dictionary<int, ComboConfig>();
-    public IceConfig IceConfig { get; private set; }          // 冰块
-    public LeafConfig LeafConfig { get; private set; }        // 叶子
-    public FlowerConfig FlowerConfig { get; private set; }    // 花朵
-    public readonly List<StimulateRuleConfig> StimulateRules = new List<StimulateRuleConfig>();   // 关卡鼓励词规则配置
-    private ChessPackInfo StagePackInfo;           // 关卡配置
-    public float ActiveTileSize { get; set; }      // 字块显示尺寸
     
-    public List<ChessView> GoldLeafChessViews = new List<ChessView>();
-    #endregion
+    public bool IsJump { get; set; }
+
 
     #region 运行时数据
     public ChessStageInfo CurrStageInfo { get; private set; }           // 当前关卡配置数据
@@ -127,154 +45,32 @@ public class ChessStageController
     public int UseTipToolCount { get;  set; } = 0;   // 使用提示工具次数
     public int UseCompleteCount { get; set; } = 0;  // 使用完成工具的字数
     
-    // public Chesspiece pupaLetter;     // 蝶蛹字
+    public float ActiveTileSize { get; set; }      // 字块显示尺寸
+    /// <summary> 皮肤金箔字 </summary>
+    public readonly List<ChessView> GoldLeafChessViews = new List<ChessView>();
     
     public int CurrentTotalScore { get; set; }       // 当前获得的总分数
     public int OptimalTotalScore { get; private set; } // 当前关卡的理论最高总分
     public int EarnedPupaThisLevel { get; private set; } = 0; // 👇 🌟 专门记录这“这一关”到底获取了几个蝶蛹
-    // 🌟 新增：记录树叶玩法在“这一局”内有没有因为答错被永久隐藏
-    public bool IsLeafDeadThisLevel { get; set; } = false;
-    // 🌟 新增：记录本关卡总共生成过几片叶子（用于皮肤循环切换）
-    public int LeafGenCounter
-    {
-        get
-        {
-            // 防御性编程：若底层数据尚未完成初始化，自动返回0安全兜底
-            if (GameDataManager.Instance == null || GameDataManager.Instance.ButterflyData == null) 
-                return 0;
-                
-            return GameDataManager.Instance.ButterflyData.leafSkinCounter;
-        }
-        set
-        {
-            if (GameDataManager.Instance != null && GameDataManager.Instance.ButterflyData != null)
-            {
-                GameDataManager.Instance.ButterflyData.leafSkinCounter = value;
-                
-                // 每次发生数据变动（如通关时累加），立刻批准调用物理SaveData落盘，打扫干净战场！
-                GameDataManager.Instance.ButterflyData.SaveData();
-            }
-        }
-    } 
     public StimulateRuleConfig CurrentMatchedRule { get; private set; }
-    public int CurrentBannerStyle { get; private set; }
-    public float LinearZenPercent { get; private set; }
+    public int CurrentBannerStyle { get; private set; }    // 过关横幅选取
+    public float LinearZenPercent { get; private set; }    // 计算连击百分比
     public float DisplayZenPercent { get; private set; }  // 展示用超越百分比（0~99.98）
 
+    /// <summary>
+    /// 记录每个 FeedbackID 上次触发的真实游戏时间 (Time.time)
+    /// </summary>
+    private Dictionary<int, float> _lastPraiseTriggerTimes = new Dictionary<int, float>();
+    // 👇 记录全局最后一次触发任何鼓励动效的时间
+    private float _lastGlobalPraiseTime = -999f; 
+    // 👇 设定横幅在屏幕上停留的霸体时间 (与 UI 层的 2.0f 保持一致)
+    private const float GLOBAL_PRAISE_COOLDOWN = 2.0f;
+    private List<PraiseContext> _praiseQueue = new List<PraiseContext>();
     // 🌟 新增：标记当前关卡是否是被跳过的
     public bool IsCurrentStageSkipped { get; set; } = false;
     #endregion
 
-    #region 属性封装
-    public ChessPackInfo PackInfos => StagePackInfo;
-    public int CurrentStage
-    {
-        get => GameDataManager.Instance.UserData.CurrentChessStage;
-        set => GameDataManager.Instance.UserData.CurrentChessStage = value;
-    }
-    #endregion
-    
-    #region 初始化方法
-
-    public void Initialized()
-    {
-        CoroutineRunner.StartCoroutine(LoadDynamicConfig());
-    }
-    /// <summary>
-    /// 加载当前语言的关卡配置
-    /// </summary>
-    private IEnumerator LoadDynamicConfig()
-    {
-        string levelConfigName = GameDataManager.Instance.UserData.ABName == "1" ? "ChessPackInfo_B" : "ChessPackInfo_A";   
-        // string levelConfigName = "ChessPackInfo_A";   
-        
-        StagePackInfo = AssetBundleLoader.SharedInstance.LoadScriptableObject(ToolUtil.GetLanguageBundle(), levelConfigName) as ChessPackInfo;
-        if (StagePackInfo == null)
-        {
-            StagePackInfo = AssetBundleLoader.SharedInstance.LoadScriptableObject("chinesesimplified", levelConfigName) as ChessPackInfo;
-        }
-        Debug.LogWarning("当前初始化的关卡包是 " +levelConfigName);
-        
-        // 🌟 1. 各个在线配置的异步状态与账本数据准备
-        bool isComboDone = false;
-        bool isMechanicsDone = false;
-        bool isStimulateDone = false;
-
-        string comboCsvData = null;
-        string mechanicsCsvData = null;
-        string stimulateCsvData = null;
-        // 🌟 2. 并发拉取机制：每个配置独立分配 Key，同时向服务器发出请求，不互相阻塞
-        // A. 拉取连击配置
-        CoroutineRunner.StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("ComboConfig",
-            onSuccess: (response) => { comboCsvData = response.CsvString; isComboDone = true; },
-            onError: (error) => { isComboDone = true; Debug.Log("⚠️ 服务器拉取 ComboConfig 失败，准备使用本地资源兜底: " + error); }
-        ));
-        // B. 拉取核心机制配置 (冰块、花朵、树叶)
-        CoroutineRunner.StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("Mechanics",
-            onSuccess: (response) => { mechanicsCsvData = response.CsvString; isMechanicsDone = true; },
-            onError: (error) => { isMechanicsDone = true; Debug.Log("⚠️ 服务器拉取 Mechanics 失败，准备使用本地资源兜底: " + error); }
-        ));
-        // C. 拉取关卡完结横幅与鼓励词配置
-        CoroutineRunner.StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("Stimulate",
-            onSuccess: (response) => { stimulateCsvData = response.CsvString; isStimulateDone = true; },
-            onError: (error) => { isStimulateDone = true; Debug.Log("⚠️ 服务器拉取 Stimulate 失败，准备使用本地资源兜底: " + error); }
-        ));
-        
-        // 🌟 3. 统一收网守候：用最大时间窗口安全等待所有线上的数据结账
-        float timeout = 5f;
-        while ((!isComboDone || !isMechanicsDone || !isStimulateDone) && timeout > 0)
-        {
-            timeout -= Time.deltaTime;
-            yield return null;
-        }
-        // 🌟 4. 数据落地清算与安全退路（Fallbacks）
-        // ======= A. 结算连击配置 =======
-        if (string.IsNullOrEmpty(comboCsvData))
-        {
-            TextAsset comboCsvObj = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_ComboConfig");
-            comboCsvData = comboCsvObj?.text;
-        }
-        if (!string.IsNullOrEmpty(comboCsvData))
-        {
-            LoadComboConfig(comboCsvData);
-        }
-        else
-        {
-            Debug.LogError("严重错误：连击配置表（在线/本地）全部加载失败，请核对资源名！");
-        }
-        // ======= B. 结算核心游戏机制（冰/花/叶） =======
-        if (string.IsNullOrEmpty(mechanicsCsvData))
-        {
-            TextAsset mechainCsvObj = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_Mechanics");
-            mechanicsCsvData = mechainCsvObj?.text;
-        }
-        if (!string.IsNullOrEmpty(mechanicsCsvData))
-        {
-            LoadMechainConfig(mechanicsCsvData);
-        }
-        else
-        {
-            Debug.LogError("严重错误：游戏机制配置（冰/花/叶）（在线/本地）全部加载失败！");
-        }
-        // ======= C. 结算结算横幅与鼓励词 =======
-        if (string.IsNullOrEmpty(stimulateCsvData))
-        {
-            TextAsset stimulateCsvObj = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_Stimulate");
-            stimulateCsvData = stimulateCsvObj?.text;
-        }
-        if (!string.IsNullOrEmpty(stimulateCsvData))
-        {
-            LoadStimulateRuleConfig(stimulateCsvData);
-        }
-        else
-        {
-            Debug.LogError("严重错误：关卡完成鼓励词配置（在线/本地）全部加载失败！");
-        }
-        yield return null;
-        // 5. 组装完毕，拉起当前进度的关卡沙盒数据
-        SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
-    }
-    #endregion
+ 
 
     #region 关卡管理
     /// <summary>
@@ -283,7 +79,6 @@ public class ChessStageController
     /// <param name="StageIndex">关卡编号</param>
     public void SetStageData(int StageIndex)
     {
-        _limitPuzzleCount = 0;
         IsCurrentStageSkipped = false;
         // 初始化关卡配置
         IsFirstEnterStage = GameDataManager.Instance.IsNewLevelEntry(StageIndex, true);
@@ -324,18 +119,9 @@ public class ChessStageController
         {
             GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Clear();
             GameDataManager.Instance.UserData.curStageOnlineTime = 0;
-            // IsLeafDeadThisLevel = false;
-            MaxComboCount = 0; // 🌟 首次进入关卡，最高连击清零
-            ComboErrorCount = 0;
-            UseCompleteCount = 0;
-            UseTipToolCount = 0;
-            CurrentTotalScore = 0; // 🌟 首次进入，总分清零
-            CurrStageData.CurrentTotalScore = 0; // 🌟 同步进存档
-            EarnedPupaThisLevel = 0;
-            PuzzleComboCount = 0;
+            ResetStageState(StageIndex);
             float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
             AnalyticMgr.LevelStart(energy);
-            CurrStageData.IsFirstEnter = false;
             GameDataManager.Instance.UserData.curIsEnter = true;
             GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
         }
@@ -347,11 +133,6 @@ public class ChessStageController
             EarnedPupaThisLevel = CurrStageData.EarnedPupaCount;
         }
 
-        // if (CurrStageData.PupaDatas != null)
-        // {
-        //     pupaLetter = CurrStageData.PupaDatas;
-        // }
-
         GameDataManager.Instance.UpdateLevelProgress(CurrStageData);
         CheckRateUsConditions(StageIndex);
         
@@ -360,7 +141,6 @@ public class ChessStageController
             GameDataManager.Instance.UserData.AddStagePuzzle(puzzle);
         }
         CurrStageData.SaveToFile();
-        // Debug.Log("添加完成后: "+ JsonConvert.SerializeObject(GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords));
     }
 
     /// <summary>
@@ -403,6 +183,14 @@ public class ChessStageController
     {
         _limitPuzzleCount = 0;
         PuzzleComboCount = 0;
+        MaxComboCount = 0; // 🌟 首次进入关卡，最高连击清零
+        ComboErrorCount = 0;
+        UseCompleteCount = 0;
+        UseTipToolCount = 0;
+        CurrentTotalScore = 0; // 🌟 首次进入，总分清零
+        CurrStageData.CurrentTotalScore = 0; // 🌟 同步进存档
+        EarnedPupaThisLevel = 0;
+        CurrStageData.IsFirstEnter = false;
     }
 
     /// <summary>
@@ -495,7 +283,7 @@ public class ChessStageController
     /// 获取当前连击剩余时间的百分比 (0.0f ~ 1.0f)
     /// 供 ChessPlayArea 在 Update 中刷新连击进度条
     /// </summary>
-    public float GetComboTimeProgress()
+    private float GetComboTimeProgress()
     {
         if (PuzzleComboCount <= 0) return 0f;
 
@@ -543,7 +331,6 @@ public class ChessStageController
     #endregion
 
     #region 关卡流程控制
-    
     /// <summary>
     /// 【阶段一：结账期】在游戏刚结束、任何动画都没播之前，瞬间结算所有分数并决定横幅样式
     /// </summary>
@@ -569,6 +356,8 @@ public class ChessStageController
             return;
         }
 
+        IsJump=isJump;
+        
         // 1. 计算树叶附带的【禅意分】奖励
         int collectedLeaves = CurrStageData.CollectedLeaves;
         int leafZenReward = 0;
@@ -620,7 +409,7 @@ public class ChessStageController
 
         if (!isJump)
         {
-            bool isButterflyFinished = ButterfliesManager.Instance.IsAllButterfliesCollected();
+            bool isButterflyFinished = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining();
             // 1. 【优先计算树叶奖励】
             int collectedLeaves = CurrStageData.CollectedLeaves;
             int leafGoldReward = 0;
@@ -657,10 +446,16 @@ public class ChessStageController
                 LeafGenCounter++;
                 Debug.Log($"[树叶轮询] 成功通关一个树叶关卡！当前树叶轮询总进度为: {LeafGenCounter}");
             }
+            
+            GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+            GameDataManager.Instance.UserData.dayPassStageCount++;
+            GameDataManager.Instance.UserData.chessdayPassStageCount++;
+            // 👉 禅意分，在这里真正加进内存！
+            GameDataManager.Instance.UserData.zenCount += CurrentTotalScore;
         }
-        yield return PlayCompletionEffects(stageNumber, isJump);
         GameDataManager.Instance.CommitGameData();
         ClearCurrentLevelSave();
+        yield return PlayCompletionEffects(stageNumber, isJump);
     }
 
     /// <summary>
@@ -670,26 +465,21 @@ public class ChessStageController
     {
         if (!isJump) AudioManager.Instance.PlaySoundEffect("success");
 
-        yield return new WaitForSeconds(0.4f);
-        
-        // ---- 修复：统一封存最后一段在线时长 ----
-        GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+        yield return new WaitForSeconds(0.2f);
         float duration = GameDataManager.Instance.UserData.curStageOnlineTime;
         float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
         if (!isJump)
         {
-            AnalyticMgr.LevelCompleted(duration,energy,CurrentTotalScore,MaxComboCount);
-            GameDataManager.Instance.UserData.dayPassStageCount++;
-            GameDataManager.Instance.UserData.zenCount += CurrentTotalScore;
+            AnalyticMgr.LevelCompleted(duration, energy, CurrentTotalScore, MaxComboCount);
             if(ChessDynamicHardManager.Instance.IsOpenDynamicHard())
-                CheckDynamicDifficultyIntervention(stageNumber,ComboErrorCount, duration);
+                CheckDynamicDifficultyIntervention(stageNumber, ComboErrorCount, duration);
         }
         AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
         {
             if (issuccess)
             {
                 AnalyticMgr.InsetAdSuccess("关卡插屏");
-                GameDataManager.Instance.UserData.totalSeeAds++;
+                GameDataManager.Instance.UserData.totalInsetSeeAds++;
             }
             else
             {
@@ -697,7 +487,6 @@ public class ChessStageController
             }
         });
         yield return new WaitForSeconds(0.4f);
-        
         // UI切换
         SystemManager.Instance.HidePanel(PanelType.HeaderSection);
         SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
@@ -706,6 +495,10 @@ public class ChessStageController
 
         SystemManager.Instance.ShowPanel(PanelType.ChessFinishView);
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        
+        
+        // ---- 修复：统一封存最后一段在线时长 ----
+        GameDataManager.Instance.UserData.UpdateOnlineStageTime();
     }
   
     /// <summary>
@@ -744,12 +537,6 @@ public class ChessStageController
     #endregion
 
     #region 游戏逻辑
-    
-    public void UpdateGoldLeafCount(int value)
-    {
-        //CurrStageData.UpdateGoldLeafCount(value);
-    }
-
     public int LimitPuzzleCount
     {
         get => _limitPuzzleCount;
@@ -812,52 +599,46 @@ public class ChessStageController
         CurrStageData.Puzzles.RemoveWhere(b => b.id == bowl.id);
         CurrStageData.Puzzles.Add(bowl);
     }
+    
+    /// <summary>
+    /// 彻底清理当前关卡的游戏状态 (包括内存数据和本地物理存档)
+    /// 供玩家中途强行退出、或失败放弃时调用
+    /// </summary>
+    public void ClearCurrentLevelSave()
+    {
+        //  获取当前关卡对应的存档文件名并物理删除
+        int currentStage = CurrentStage;
+        string saveFileName = ChessStageProgressData.CreateLevelIdentifier(currentStage);
+        string filePath = Path.Combine(Application.persistentDataPath, saveFileName);
+        
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+            Debug.Log($"[Controller] 已彻底物理清理关卡 {currentStage} 的游戏状态存档！");
+        }
+        GameDataManager.Instance.ClearChessLevelCache(currentStage);
+        // 3. 同步重置内存中的存档对象标志位
+        if (CurrStageData != null)
+        {
+            CurrStageData.IsFirstEnter = true;
+            // CurrStageData.CurrentTotalScore = 0;
+            CurrStageData.RemainingTime = 300f;
+        }
+    }
+    /// <summary>
+    /// 检查当前关卡是否有未完成的残余存档 (用于判断异常退出)
+    /// </summary>
+    public bool HasUnfinishedSave()
+    {
+        int currentStage = CurrentStage;
+        string saveFileName = ChessStageProgressData.CreateLevelIdentifier(currentStage);
+        string filePath = Path.Combine(Application.persistentDataPath, saveFileName);
+        
+        // 如果文件存在，说明玩家上次没打完就强退了
+        return File.Exists(filePath); 
+    }
     #endregion
     #region 连击与计分系统
-    /// <summary>
-    /// 加载并解析连击配置表 CSV (需要在游戏初始化时调用)
-    /// </summary>
-    /// <param name="csvText">CSV 文件的纯文本内容</param>
-    public void LoadComboConfig(string csvText)
-    {
-        _comboConfigDict.Clear();
-        _reduceConfigDict.Clear(); // 记得清空旧的扣分字典
-        
-        // 按行分割，支持不同操作系统的换行符
-        string[] lines = csvText.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        
-        // 从索引 2 开始遍历 (跳过第0行中文表头 和 第1行英文表头)
-        for (int i = 2; i < lines.Length; i++)
-        {
-            string[] cols = lines[i].Split(',');
-            if (cols.Length >= 3) // 至少要有状态、连击数、数值
-            {
-                string state = cols[0].Trim().ToLower();
-                int combo = int.Parse(cols[1]);
-                int num = int.Parse(cols[2]);
-                
-                // 解析时间窗口 (如果为空或0，默认给个极大值代表无限制)
-                int timeLag = 999999;
-                if (cols.Length >= 4 && !string.IsNullOrEmpty(cols[3]))
-                {
-                    int.TryParse(cols[3], out timeLag);
-                }
-
-                ComboConfig config = new ComboConfig
-                {
-                    State = state,
-                    Combo = combo,
-                    Num = num,
-                    TimeLag = timeLag
-                };
-                // 👇 分门别类存入不同的字典
-                if (state == "add") _comboConfigDict[combo] = config;
-                else if (state is "reduce" or "sub") _reduceConfigDict[combo] = config;
-            }
-        }
-        Debug.Log($"连击配置解析完成后: {JsonConvert.SerializeObject(_comboConfigDict)}");
-    }
-    
     /// <summary>
     /// 获取当前连击数对应的【额外连击加分】 (绝对不包含基础分)
     /// </summary>
@@ -931,226 +712,9 @@ public class ChessStageController
     }
     #endregion
     
-    /// <summary>
-    /// 彻底清理当前关卡的游戏状态 (包括内存数据和本地物理存档)
-    /// 供玩家中途强行退出、或失败放弃时调用
-    /// </summary>
-    public void ClearCurrentLevelSave()
-    {
-        //  获取当前关卡对应的存档文件名并物理删除
-        int currentStage = CurrentStage;
-        string saveFileName = ChessStageProgressData.CreateLevelIdentifier(currentStage);
-        string filePath = Path.Combine(Application.persistentDataPath, saveFileName);
-        
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-            Debug.Log($"[Controller] 已彻底物理清理关卡 {currentStage} 的游戏状态存档！");
-        }
-        GameDataManager.Instance.ClearChessLevelCache(currentStage);
-        // 3. 同步重置内存中的存档对象标志位
-        if (CurrStageData != null)
-        {
-            CurrStageData.IsFirstEnter = true;
-            // CurrStageData.CurrentTotalScore = 0;
-            CurrStageData.RemainingTime = 300f;
-        }
-    }
-    /// <summary>
-    /// 检查当前关卡是否有未完成的残余存档 (用于判断异常退出)
-    /// </summary>
-    public bool HasUnfinishedSave()
-    {
-        int currentStage = CurrentStage;
-        string saveFileName = ChessStageProgressData.CreateLevelIdentifier(currentStage);
-        string filePath = Path.Combine(Application.persistentDataPath, saveFileName);
-        
-        // 如果文件存在，说明玩家上次没打完就强退了
-        return File.Exists(filePath); 
-    }
-    
     #region 新玩法配置获取 (冰块、花朵、树叶)
 
-    private void LoadMechainConfig(string text)
-    {
-        string[] lines = text.Split(new[] { '\n', '\r'}, StringSplitOptions.RemoveEmptyEntries)
-            .Select(line => line.Trim())
-            .Where(line => !string.IsNullOrEmpty(line))
-            .ToArray();
-    
-        string[] cols = lines.Last().Split(',',StringSplitOptions.RemoveEmptyEntries);
-        // 定义一个安全的布尔值解析局部方法 (C# 7.0+)
-        bool TryParseBool(string[] arr, int index, bool defaultValue = false)
-        {
-            if (arr == null || index < 0 || index >= arr.Length) 
-                return defaultValue; // 防止 IndexOutOfRangeException
-            
-            string val = arr[index].Trim().ToLower();
-        
-            // 兼容配置表常见的 1/0 写法
-            if (val == "1" || val == "true") return true;
-            if (val == "0" || val == "false") return false;
-        
-            // 标准 TryParse 后备
-            if (bool.TryParse(val, out bool result)) return result;
-        
-            return defaultValue; // 无法解析时返回默认值，防止崩溃
-        }
-        string[] opens = cols[0].Split("_");
-        if (cols.Length > 3)
-        {
-            IceConfig = new IceConfig
-            {
-                IsOpen = TryParseBool(opens,0),
-                Fixed = new Dictionary<int, int>(),
-                CycleLevels = new List<Interval>(),
-                Degree = new Dictionary<int, int>()
-            };
-            string[] degree = cols[1].Split('_');
-            for (int i = 0; i < degree.Length; i++)
-            {
-                IceConfig.Degree.Add(i, int.Parse(degree[i]));
-            }
-            string[] levels = cols[2].Split(';');
-            string[] first = levels[0].Split('_');  
-            IceConfig.FirstLevel = int.Parse(first[0]);
-            IceConfig.FirstDegree = int.Parse(first[1]);
-            for (int i = 1; i < levels.Length; i++)
-            { 
-                degree = levels[i].Split('_');
-                IceConfig.Fixed.Add(int.Parse(degree[0]), int.Parse(degree[1]));
-            }
-            string[] cycles = cols[3].Split(';');
-            for (int i = 0; i < cycles.Length; i++)
-            {
-                string[] mode = cycles[i].Split('#');
-                degree = mode[1].Split("*");
-                string[] steps = degree[0].Split('_');
-                Interval interval = new Interval
-                {
-                    Mode = int.Parse(mode[0]),
-                    Degree = int.Parse(degree[1]),
-                    Start = int.Parse(steps[0])
-                };
-                if (steps.Length >= 2 && int.TryParse(steps[1], out int end)) 
-                    interval.End = end;
-                else interval.End = int.MaxValue;
-                IceConfig.CycleLevels.Add(interval);
-            }
-            
-            Debug.Log("解析完成后的冰块配置: "+ JsonConvert.SerializeObject(IceConfig));
-        }
-
-        if (cols.Length >= 5)
-        {
-            LeafConfig = new LeafConfig
-            {
-                IsOpen = TryParseBool(opens,1),
-                FirstLevel = int.Parse(cols[4]),
-                CycleLevels = new List<int>(),
-                Rewards = new List<LeafReward>()
-            };
-            string[] cycles = cols[5].Split('_');
-            for (int i = 0; i < cycles.Length; i++)
-            {
-                LeafConfig.CycleLevels.Add(int.Parse(cycles[i]));
-            }
-            string[] rewardGroups = cols[6].Split('_');
-            HashSet<(string NumberRaw, int Type)> seen = new HashSet<(string, int)>();
-            foreach (string groupStr in rewardGroups)
-            {
-                if (string.IsNullOrWhiteSpace(groupStr)) continue;
-                string[] rewards = groupStr.Split(';');
-
-                foreach (string r in rewards)
-                {
-                    string[] parts = r.Split('#');
-                    if (parts.Length < 2) continue;
-
-                    string[] rewardValue = parts[1].Split('*');
-                    if (rewardValue.Length < 2) continue;
-
-                    int type = int.Parse(rewardValue[1]);
-                    LeafReward leafReward = new LeafReward
-                    {
-                        Type = type,
-                        Value = int.Parse(rewardValue[0])
-                    };
-
-                    // 解析 Number 字段（支持 n、n-1 等）
-                    string numStr = parts[0];
-                    if (int.TryParse(numStr, out int num))
-                    {
-                        leafReward.Number = num;
-                    }
-                    else if (numStr == "n")
-                    {
-                        leafReward.Number = -1;
-                    }
-                    else if (numStr.StartsWith("n-") && int.TryParse(numStr.Substring(2), out int delta))
-                    {
-                        leafReward.Number = -delta;
-                    }
-                    else
-                    {
-                        throw new FormatException($"无法解析的数量: {numStr}");
-                    }
-                    var key = (numStr, type);
-                    if (seen.Contains(key)) continue;
-                    seen.Add(key);
-                    LeafConfig.Rewards.Add(leafReward);
-                }
-            }
-            Debug.Log("解析完成后的树叶配置: "+ JsonConvert.SerializeObject(LeafConfig));
-        }
-
-        if (cols.Length >= 9)
-        {
-            string[] levels = cols[9].Split(';');
-            string[] first = levels[0].Split('_');
-            string[] removes = cols[8].Split("_");
-            FlowerConfig = new FlowerConfig
-            {
-                IsOpen = TryParseBool(opens,2),
-                FirstLevel = int.Parse(first[0]),
-                FirstDegree = int.Parse(first[1]),
-                InitNumber = int.Parse(removes[0]),
-                MinNumber = int.Parse(removes[1]),
-                Degree = new Dictionary<int, int>(),
-                Fixed = new Dictionary<int, int>(),
-                CycleLevels = new List<Interval>(),
-            };
-            for (int i = 1; i < levels.Length; i++)
-            {
-                string[] next = levels[i].Split('_');    
-                FlowerConfig.Fixed.Add(int.Parse(next[0]), int.Parse(next[1]));
-            }
-            string[] degrees = cols[7].Split("_");
-            for (int i = 0; i < degrees.Length; i++)
-            {
-                FlowerConfig.Degree.Add(i,int.Parse(degrees[i]));
-            }
-            string[] cycles = cols[10].Split(';');
-            for (int i = 0; i < cycles.Length; i++)
-            {
-                string[] mode = cycles[i].Split('#');
-                string[] degree = mode[1].Split("*");
-                string[] steps = degree[0].Split('_');
-                Interval interval = new Interval
-                {
-                    Mode = int.Parse(mode[0]),
-                    Degree = int.Parse(degree[1]),
-                    Start = int.Parse(steps[0]),
-                };
-                if (steps.Length >= 2 && int.TryParse(steps[1], out int end))
-                    interval.End = end;
-                else interval.End = int.MaxValue;
-                
-                FlowerConfig.CycleLevels.Add(interval);
-            }
-            Debug.Log("解析完成后的花朵配置: "+ JsonConvert.SerializeObject(FlowerConfig));
-        }
-    }
+   
     /// <summary>
     /// 辅助方法：获取关卡难度枚举 (从 UI 抽离到底层计算)
     /// </summary>
@@ -1322,13 +886,13 @@ public class ChessStageController
     }
     
     /// <summary>
-    /// 🌟 修复：获取玩家当前收集数量下，所有已解锁的树叶奖励（累加机制）
+    /// 🌟 获取玩家当前收集数量下，所有已解锁的树叶奖励（累加机制）
     /// </summary>
     public List<LeafReward> GetAllLeafRewards(int collectedCount)
     {
         if (LeafConfig == null || LeafConfig.Rewards == null || LeafConfig.Rewards.Count == 0) 
             return new List<LeafReward>();
-        bool isButterflyFinished = ButterfliesManager.Instance.IsAllButterfliesCollected();
+        bool isButterflyFinished = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining();
         int maxLeavesInStage = CurrStageInfo.PhraseGroups.Count; 
         Debug.Log($"[树叶奖励] 当前收集叶子数: {collectedCount}，本关成语总数 n = {maxLeavesInStage}");
 
@@ -1346,107 +910,7 @@ public class ChessStageController
     }
     #endregion
 
-    #region StimulateRule 激励词规则
-
-    private void LoadStimulateRuleConfig(string assetText)
-    {
-        StimulateRules.Clear();
-        List<string> lines  = ToolUtil.SplitCsvLines(assetText);
-        for (int i = 2; i < lines.Count; i++)
-        {
-            string[] fields = ParseCsvLineAndCleanQuotes(lines[i]);
-            // 健壮性防御：如果当前行是彻底的空行，直接跳过
-            if (fields == null || fields.Length == 0 || string.IsNullOrEmpty(fields[0])) continue;
-            try
-            {
-                string[] banners = fields[0].Split(';', StringSplitOptions.RemoveEmptyEntries);
-                StimulateRuleConfig stimulateRule = new StimulateRuleConfig
-                {
-                    BannerTypes = new BannerType[banners.Length], TitleRate = 0, StimulateRate = 0,
-                };
-                for (int j = 0; j < banners.Length; j++)
-                {
-                    string[] bType = banners[j].Split('_');
-                    stimulateRule.BannerTypes[j] = new BannerType
-                    {
-                        Number = int.Parse(bType[0]),
-                        Rate =  int.Parse(bType[1])
-                    };
-                }
-
-                string[] tRates = fields[1].Split(';', StringSplitOptions.RemoveEmptyEntries);
-                if (tRates.Length >= 2)
-                {
-                    // 🌟 修复 2：优雅地切出 _ 后面的数字，替代危险的 Substring(-1)
-                    stimulateRule.TitleRate = int.Parse(tRates[0].Split('_')[1]);
-                    stimulateRule.StimulateRate = int.Parse(tRates[1].Split('_')[1]);
-                }
-
-                stimulateRule.ScatterFlowers = (fields[2] == "1"); // 如果填1表示开启撒花
-                stimulateRule.Priority = string.IsNullOrEmpty(fields[3]) ? 0 : int.Parse(fields[3]);
-                stimulateRule.Type = string.IsNullOrEmpty(fields[4]) ? 0 : int.Parse(fields[4]);
-                if (!string.IsNullOrEmpty(fields[5]))
-                {
-                    string[] percents = fields[5].Split('_');
-                    if (percents.Length >= 2)
-                    {
-                        stimulateRule.ZenPercent = new[] { int.Parse(percents[0]), int.Parse(percents[1]) };
-                    }
-                }
-
-                stimulateRule.TitleKey = fields[6];
-                stimulateRule.PhraseKey = fields[7];
-                stimulateRule.EmojiKey = fields[8];
-                stimulateRule.LongTextKey = fields[9];
-                StimulateRules.Add(stimulateRule);
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"解析第 {i} 行数据时崩溃! 内容: {lines[i]} | 错误: {ex.Message}\n{ex.StackTrace}");
-            }
-        }
-
-        Debug.Log("鼓励词配置解析完成! " + JsonConvert.SerializeObject(StimulateRules));
-    }
-    /// <summary>
-    /// 辅助方法：完美切分 CSV 列，并剥离外围双引号，同时保留单元格内容中的换行与逗号
-    /// </summary>
-    private string[] ParseCsvLineAndCleanQuotes(string line)
-    {
-        var list = new List<string>();
-        var cur = new System.Text.StringBuilder();
-        bool inQuote = false;
-
-        for (int i = 0; i < line.Length; i++)
-        {
-            char c = line[i];
-
-            if (c == '"')
-            {
-                if (i + 1 < line.Length && line[i + 1] == '"')
-                {
-                    cur.Append('"'); // 转义双引号
-                    i++;
-                }
-                else
-                {
-                    inQuote = !inQuote; // 只切换状态，外层包裹的引号不录入内容
-                }
-            }
-            else if (c == ',' && !inQuote)
-            {
-                list.Add(cur.ToString().Trim());
-                cur.Clear();
-            }
-            else
-            {
-                cur.Append(c);
-            }
-        }
-        list.Add(cur.ToString().Trim());
-        return list.ToArray();
-    }
-    
+    #region StimulateRule 过关横幅激励词规则
     /// <summary>
     /// 根据概率配置，权重随机抽取横幅样式编号
     /// </summary>
@@ -1508,7 +972,6 @@ public class ChessStageController
         {
             sMax += GetComboScoreReward(i);
         }
-        
         LinearZenPercent = (sMax > sMin) ? Mathf.Max(0, (float)(pureGameScore - sMin) / (sMax - sMin) * 100f) : 100f;
         if (sMax > 0)
         {
@@ -1522,7 +985,7 @@ public class ChessStageController
         {
             DisplayZenPercent = 99.98f;
         }
-        
+
         float zenPercent = LinearZenPercent;   // 用于激励匹配
         // 2. 本地记录判定：破纪录与极速通关
         bool isNewRecord = pureGameScore > userData.HighestZenScore;
@@ -1650,6 +1113,290 @@ public class ChessStageController
         
         Debug.Log(log.ToString());
     }
+    
+    #endregion
+
+    #region  填词鼓励系统
+    private bool _isProcessingQueue = false;
+    public void EnqueuePraiseCheck(PraiseContext context)
+    {
+        // 将这次触发加入队列
+        _praiseQueue.Add(context);
+        // 如果当前没有正在运行的仲裁逻辑，开启处理
+        if (!_isProcessingQueue)
+        {
+            CoroutineRunner.StartCoroutine(ProcessPraiseQueue());
+        }
+    }
+
+    private IEnumerator ProcessPraiseQueue()
+    {
+        _isProcessingQueue = true;
+    
+        // 等待 0.2 秒，让交叉字产生的多次 AddFoundPuzzle 调用全部落入队列
+        yield return new WaitForSeconds(0.2f);
+        List<PraiseConfig> praiseConfigs = new List<PraiseConfig>();
+        foreach (var queue in _praiseQueue)
+        {
+            var winner = EvaluatePraiseFeedback(queue);
+            if(winner != null) praiseConfigs.Add(winner);
+        }
+        
+        if (praiseConfigs.Count > 0)
+        {
+            // 从队列中选出一个优先级最高的进行仲裁
+            // 这里你可以根据 context 里的信息，或者直接取优先级最高的
+            var bestWinner = praiseConfigs.OrderByDescending(w=>w.Priority).First();
+            // 触发 UI 播放
+            ChessPlayArea.Instance.ShowPraiseUI(bestWinner);
+        }
+        praiseConfigs.Clear();
+        _praiseQueue.Clear();
+        _isProcessingQueue = false;
+    }
+    /// <summary>
+    /// 核心方法：评估并获取当前最合适的正反馈配置
+    /// </summary>
+    public PraiseConfig EvaluatePraiseFeedback(PraiseContext context)
+    {
+        if (PraiseConfigDict == null || PraiseConfigDict.Count == 0) return null;
+        if (CurrentStage == 1) return null;
+        System.Text.StringBuilder logSb = new System.Text.StringBuilder();
+        logSb.AppendLine($"<color=#00FFFF>【填词鼓励系统 (Praise) 仲裁报告】</color>");
+        // ==========================================
+        // 🌟 核心修复：全局表现层锁 (防止同帧叠加或快速连击重叠)
+        // ==========================================
+        // if (Time.time - _lastGlobalPraiseTime < GLOBAL_PRAISE_COOLDOWN)
+        // {
+        //     logSb.AppendLine($"<color=#FFA500>[表现层拦截] 屏幕上已有横幅正在展示中，直接丢弃本次请求！</color>");
+        //     Debug.Log(logSb.ToString());
+        //     return null; // 强行中断，不再占用 CPU 去做后面的规则计算
+        // }
+        
+        logSb.AppendLine($"[输入上下文] 首词:{context.IsFirstWord} | 初始字:{context.InitialLettersCount} | 单词试错:{context.ErrorsOnThisWord} | 剩余词:{context.WordsRemaining} | 当前连击:{context.CurrentCombo} | 总试错数:{context.TotalErrorsInLevel}");
+        
+        List<PraiseConfig> validCandidates = new List<PraiseConfig>();
+        
+        logSb.AppendLine("[阶段一：基础条件匹配]");
+        // 1. 遍历所有规则，匹配触发条件
+        foreach (var kvp in PraiseConfigDict)
+        {
+            PraiseConfig config = kvp.Value;
+            bool isMet = IsConditionMet(config.FeedbackID, context, out string reason);
+            
+            if (isMet)
+            {
+                validCandidates.Add(config);
+                logSb.AppendLine($"  <color=#00FF00>✔ ID {config.FeedbackID}: 匹配成功 ({reason})</color>");
+            }
+            else
+            {
+                logSb.AppendLine($"  <color=#808080>✖ ID {config.FeedbackID}: 匹配失败 -> {reason}</color>");
+            }
+        }
+
+        // 如果没有匹配到任何规则，直接返回
+        if (validCandidates.Count == 0)
+        {
+            logSb.AppendLine("<color=#FF0000>[仲裁中断] 没有任何规则满足基础触发条件。</color>");
+            Debug.Log(logSb.ToString());
+            return null;
+        }
+        
+        logSb.AppendLine("[阶段二：冷却(CD)过滤]");
+        // 2. 过滤冷却时间 (TimeWindow)
+        float currentTime = Time.time;
+        var afterCdCandidates = new List<PraiseConfig>();
+        foreach (var config in validCandidates)
+        {
+            if (config.TimeWindow <= 0)
+            {
+                afterCdCandidates.Add(config);
+                logSb.AppendLine($"  <color=#00FF00>✔ ID {config.FeedbackID}: 无冷却要求</color>");
+            }
+            else if (_lastPraiseTriggerTimes.TryGetValue(config.FeedbackID, out float lastTime))
+            {
+                float passedTime = currentTime - lastTime;
+                if (passedTime >= config.TimeWindow)
+                {
+                    afterCdCandidates.Add(config);
+                    logSb.AppendLine($"  <color=#00FF00>✔ ID {config.FeedbackID}: 冷却完毕 (已过 {passedTime:F1}s / 需要 {config.TimeWindow}s)</color>");
+                }
+                else
+                {
+                    logSb.AppendLine($"  <color=#FFA500>✖ ID {config.FeedbackID}: 冷却中 (剩余 {config.TimeWindow - passedTime:F1}s)</color>");
+                }
+            }
+            else
+            {
+                afterCdCandidates.Add(config);
+                logSb.AppendLine($"  <color=#00FF00>✔ ID {config.FeedbackID}: 首次触发，无CD阻碍</color>");
+            }
+        }
+
+        if (afterCdCandidates.Count == 0)
+        {
+            logSb.AppendLine("<color=#FF0000>[仲裁中断] 命中的规则全部处于冷却中。</color>");
+            Debug.Log(logSb.ToString());
+            return null;
+        }
+        
+        logSb.AppendLine("[阶段三：概率(Probability)过滤]");
+        // 3. 概率掷骰过滤 (Probability)
+        // 注意：配置表里的 Probability 是 0.5、1.0 这种浮点数
+        var afterProbCandidates = new List<PraiseConfig>();
+        foreach (var config in afterCdCandidates)
+        {
+            if (config.Probability >= 1.0f)
+            {
+                afterProbCandidates.Add(config);
+                logSb.AppendLine($"  <color=#00FF00>✔ ID {config.FeedbackID}: 必触发 (概率 1.0)</color>");
+            }
+            else
+            {
+                float roll = UnityEngine.Random.value;
+                if (roll <= config.Probability)
+                {
+                    afterProbCandidates.Add(config);
+                    logSb.AppendLine($"  <color=#00FF00>✔ ID {config.FeedbackID}: 概率命中 (Roll={roll:F2} <= 目标={config.Probability})</color>");
+                }
+                else
+                {
+                    logSb.AppendLine($"  <color=#FFA500>✖ ID {config.FeedbackID}: 概率未命中 (Roll={roll:F2} > 目标={config.Probability})</color>");
+                }
+            }
+        }
+
+        if (afterProbCandidates.Count == 0)
+        {
+            logSb.AppendLine("<color=#FF0000>[仲裁中断] 存活的规则全部因脸黑被概率过滤。</color>");
+            Debug.Log(logSb.ToString());
+            return null;
+        }
+
+        logSb.AppendLine("[阶段四：优先级(Priority)仲裁]");
+        // 4. 优先级仲裁 (Priority)
+        // 假设 Priority 数字越小优先级越高 (1最高)
+        PraiseConfig winner = afterProbCandidates.OrderBy(config => config.Priority).First();
+
+        string finalIds = string.Join(", ", afterProbCandidates.Select(c => $"ID:{c.FeedbackID}(优先:{c.Priority})"));
+        logSb.AppendLine($"  进入最终仲裁池: [{finalIds}]");
+        logSb.AppendLine($"  <color=#FFFF00>👑 胜出者: ID {winner.FeedbackID} (将播放样式: {winner.BannerStyle})</color>");
+
+        Debug.Log(logSb.ToString()); // 统一打印出这篇长长的报告
+        // 5. 记录触发时间，并返回赢家
+        _lastPraiseTriggerTimes[winner.FeedbackID] = currentTime;
+        // 👇 更新全局表现层锁的时间
+        // _lastGlobalPraiseTime = currentTime;
+        return winner;
+    }
+    
+    /// <summary>
+    /// 根据配置表硬编码判断条件。
+    /// 规则表说明 (拼字玩法配置表 - Praise)：
+    /// ID 1 (样式一/大拇指) - 第一次艰难答对：关卡内解开第一个词，同时满足：1.该词的初始字=2；2.答对之前，判断次数>=2次；（不论判断哪个词）
+    /// ID 2 (样式一/大拇指) - 第一次轻松答对：关卡内解开第一个词，同时满足：1.该词的初始字=2；2.答对之前，判断次数<=1；（不论判断哪个词）
+    /// ID 3 (样式一/大拇指) - 第一次答对难的词：关卡内解开第一个词，且该词的初始字<=1；
+    /// ID 4 (样式二/两个大拇指) - 盲答对：存在某个词，这个词不是关卡内解开的第一个词，且无初始字，并且一次性填对（这个词没有判定过错误）；
+    /// ID 5 (样式三/鼓掌) - 反复试错答对：存在某个词，这个词不是关卡内解开的第一个词，连续答错次数>=X(X=3)，且之后答对的也是这个词；
+    /// ID 6 (样式四/金色光效) - 临界过关：玩家答对一个词之后，只剩下最后一个词；
+    /// ID 7 (长横幅颜色一) - 2连击：连击达2次；
+    /// ID 8 (长横幅颜色二) - 5连击：连击达5次；
+    /// ID 9 (长横幅颜色三) - 8连击：连击达8次；
+    /// ID 10 (长横幅颜色四) - >=11连击：连击达11次及以上。
+    /// </summary>
+    private bool IsConditionMet(int feedbackID, PraiseContext context, out string reason)
+    {
+        reason = "";
+        switch (feedbackID)
+        {
+            case 1: // 第一次艰难答对
+                if (!context.IsFirstWord) { reason = "必须是本关解开的首个词"; return false; }
+                if (context.InitialLettersCount != 2) { reason = $"要求初始字=2 (当前:{context.InitialLettersCount})"; return false; }
+                // if (context.ErrorsOnThisWord < 2)
+                if (context.TotalErrorsInLevel < 2) { reason = $"要求全局累计错误>=2 (当前:{context.TotalErrorsInLevel})"; return false; }
+                reason = "满足: 首词 且 初始字=2 且 错误>=2";
+                return true;
+            
+            case 2: // 第一次轻松答对
+                if (!context.IsFirstWord) { reason = "必须是本关解开的首个词"; return false; }
+                if (context.InitialLettersCount != 2) { reason = $"要求初始字=2 (当前:{context.InitialLettersCount})"; return false; }
+                if (context.TotalErrorsInLevel > 1) { reason = $"要求全局累计错误<=1 (当前:{context.TotalErrorsInLevel})"; return false; }
+                reason = "满足: 首词 且 初始字=2 且 几乎没错";
+                return true;
+            
+            case 3: // 第一次答对难的词
+                if (!context.IsFirstWord) { reason = "必须是本关解开的首个词"; return false; }
+                if (context.InitialLettersCount > 1) { reason = $"要求初始字<=1 (当前:{context.InitialLettersCount})"; return false; }
+                reason = "满足: 首词 且 初始字<=1 的难词";
+                return true;
+            
+            case 4: // 盲答对
+                if (context.IsFirstWord) { reason = "不能是本关首个词"; return false; }
+                if (context.InitialLettersCount != 0) { reason = $"要求无初始字 (当前:{context.InitialLettersCount})"; return false; }
+                if (context.ErrorsOnThisWord != 0) { reason = $"要求一次答对零失误 (当前错误:{context.ErrorsOnThisWord})"; return false; }
+                reason = "满足: 非首词 且 全空盲答对 且 零失误";
+                return true;
+            
+            case 5: // 反复试错答对 (X=3)
+                if (context.IsFirstWord) { reason = "不能是本关首个词"; return false; }
+                if (context.ErrorsOnThisWord < 3) { reason = $"要求死磕连续试错>=3次 (当前:{context.ErrorsOnThisWord})"; return false; }
+                reason = "满足: 非首词 且 反复试错后答对";
+                return true;
+            
+            case 6: // 临界过关
+                if (context.WordsRemaining != 1) { reason = $"要求只剩最后1个词 (当前剩余:{context.WordsRemaining})"; return false; }
+                reason = "满足: 临界过关 (仅剩最后1词)";
+                return true;
+            
+            // 连击类判定
+            case 7: 
+                if (context.CurrentCombo != 2) { reason = $"要求恰好2连击 (当前:{context.CurrentCombo})"; return false; }
+                reason = "满足: 2连击";
+                return true;
+            case 8: 
+                if (context.CurrentCombo != 5) { reason = $"要求恰好5连击 (当前:{context.CurrentCombo})"; return false; }
+                reason = "满足: 5连击";
+                return true;
+            case 9: 
+                if (context.CurrentCombo != 8) { reason = $"要求恰好8连击 (当前:{context.CurrentCombo})"; return false; }
+                reason = "满足: 8连击";
+                return true;
+            case 10: 
+                if (context.CurrentCombo < 11) { reason = $"要求>=11连击 (当前:{context.CurrentCombo})"; return false; }
+                reason = "满足: >=11连击";
+                return true;
+
+            default:
+                reason = "未知的反馈ID";
+                return false;
+        }
+    }
+    
+    /// <summary>
+    /// 供鼓励系统使用：根据刚刚完成的成语字符串，反查它在关卡初始状态下有几个固定字
+    /// </summary>
+    public int GetPhraseInitialCountByWord(string phrase)
+    {
+        if (CurrStageInfo == null || CurrStageInfo.PhraseGroups == null) 
+            return 0;
+
+        foreach (var group in CurrStageInfo.PhraseGroups)
+        {
+            // 将组内字块的 letter 拼接成完整词组
+            string groupPhrase = string.Join("", group.chesspieces.Select(p => p.letter));
+            
+            // 如果匹配到了玩家刚刚填对的词
+            if (groupPhrase == phrase)
+            {
+                // 统计该组在初始配置中，状态为 Default (初始固定显示) 的字数
+                return group.chesspieces.Count(p => p.isInitialFixed);
+            }
+        }
+        
+        return 0; // 兜底
+    }
+    
     
     #endregion
 }

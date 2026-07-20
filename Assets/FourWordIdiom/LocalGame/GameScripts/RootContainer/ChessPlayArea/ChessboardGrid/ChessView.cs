@@ -39,6 +39,9 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     
     [SerializeField] private Text _score; // 提示分数
     [SerializeField] ParticleSystem _successParticle;
+    
+    [SerializeField] private GameObject _focusHaloObj; // 🌟 新增：聚焦光圈节点
+    
     // 错误动画配置
     private float shakeRadius   = 10f;      // 最大晃动半径（像素）
     private int   shakeSlices   = 16;      // 采样次数（越高越细腻）
@@ -90,7 +93,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         }
         iceLogicBroken = false;
         flowerLogicBroken = false; // 🌟 每次初始化格子时重置
-        _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
+        _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
         //Debug.Log($"当前词： {Answer} {CurrState}");
         // 设置选择框尺寸
         int row = ChessStageController.Instance.CurrStageData.MaxRow;
@@ -98,16 +101,17 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         int maxRC = Mathf.Max(row + 1, col);   // 7 7 →7   8 8 →8   8 9 →9
         _choose.GetComponent<Image>().sprite = maxRC switch
         {
-            7 => AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_162"),
-            8 => AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_142"),
-            9 => AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_126"),
-            _ => AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_162")   // 更大也按最小格
+            7 => AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_162"),
+            8 => AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_142"),
+            9 => AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_126"),
+            _ => AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_162")   // 更大也按最小格
         };
         //_choose.GetComponent<Image>().SetNativeSize();
      
         SetScore(0);
         IsOK = false;
         UpdateTile();
+        StopFocusAnim();
     }
 
     /// <summary>
@@ -203,21 +207,21 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                 {
                     if (chesspiece.bowl.totalcount > 1)
                     {
-                        _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
+                        _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
                         _bg.GetComponent<UIShiny>().enabled = false;
                         chesspiece.isGoldLeaf=false;
                         _isGoldLeaf = false;
                     }
                     else
                     {
-                        _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
+                        _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
                         _bg.GetComponent<UIShiny>().enabled = true;
                     }
                    
                 }
                 else
                 {
-                    _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
+                    _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
                     _bg.GetComponent<UIShiny>().enabled = false;
                 }
                 _bg.gameObject.SetActive(true);
@@ -232,14 +236,14 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                 {
                     if (chesspiece.bowl.count >= 1)
                     {
-                        _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+                        _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
                         _bg.GetComponent<UIShiny>().enabled = false;
                         _isGoldLeaf=false;
                         //chesspiece.isGoldLeaf = false;
                     }
                     else
                     {
-                        _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
+                        _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
                         _bg.GetComponent<UIShiny>().enabled = true;
                         chesspiece.isGoldLeaf=true;
                         ChessView tileView = ChessStageController.Instance.GoldLeafChessViews.Find(x=>x.Answer==chesspiece.bowl.letter);
@@ -252,7 +256,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                 }
                 else
                 {
-                    _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+                    _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
                     _bg.GetComponent<UIShiny>().enabled = false;
                 }
                 _bg.gameObject.SetActive(true);
@@ -261,7 +265,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                 //Debug.LogWarning($"更新词: {Answer} " + JsonUtility.ToJson(chesspiece));
                  _textDisplay.text = chesspiece.bowl.letter;
                  _textDisplay.color = Color.red;
-                _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+                _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
                 _bg.gameObject.SetActive(true);
                 break;
             case TileState.Success:
@@ -272,14 +276,14 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                     {
                         if (chesspiece.bowl.totalcount > 1)
                         {
-                            _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
+                            _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
                             _textDisplay.color = Color.white;
                             _bg.GetComponent<UIShiny>().enabled = false;
                             //chesspiece.bowl.isGoldLeaf = false;
                         }
                         else
                         {
-                            _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
+                            _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
                             _textDisplay.color = new Color32(100,80,66,255);
 
                             _bg.GetComponent<UIShiny>().enabled = true;
@@ -295,14 +299,14 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                     }
                     else
                     {
-                        _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
+                        _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
                         _textDisplay.color = Color.white;
                     }
                     
                 }
                 else
                 {
-                    _bg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
+                    _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
                     _textDisplay.color = Color.white;
                 }
                 _bg.gameObject.SetActive(true);
@@ -341,7 +345,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         {
             _leafObj.SetActive(false); // 🌟 核心防残留：不长叶子了就彻底关掉GameObject！
         }
-        
+        if (CurrState == TileState.Success) StopFocusAnim();
     }
     
     /// <summary>
@@ -377,7 +381,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         cloneRT.localScale = selfRT.localScale * 0.9f;
         clone.transform.position = selfRT.position;
     
-        AudioManager.Instance.PlaySoundEffect("GoldLeafFly",0,0.15f); // ⚠️ 请替换为金箔起飞真实音效名
+        AudioManager.Instance.PlaySoundEffect("GoldLeafFly",0,1); // ⚠️ 请替换为金箔起飞真实音效名
         
         Vector3 endWorld = TargetBtn.GetComponent<RectTransform>().position;
         Vector3 startPos = clone.transform.position;
@@ -460,6 +464,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         _isProcessingInteraction = true;
         TileTransform.DOScale(1.15f, 0.1f).SetEase(Ease.OutQuad);
         AudioManager.Instance.PlaySoundEffect("WordClick");
+        AudioManager.Instance.TriggerVibration(40,40);
     }
     private float lastClickTime = -1f;
     private const float DEBOUNCE_INTERVAL = 0.35f;   // 可调
@@ -510,15 +515,15 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         });
         
         // 1. 同步放大到 1.15倍 (耗时 0.15秒)
-        seq.Append(TileTransform.DOScale(1.15f, 0.15f).SetEase(Ease.OutQuad));
+        // seq.Append(TileTransform.DOScale(1.15f, 0.15f).SetEase(Ease.OutQuad));
         
         // 2. 悬停在这个大小，等待粒子和发光框播完 (耗时 = 总时长 - 放大和缩回的 0.3 秒)
-        float holdTime = Mathf.Max(0f, duration - 0.3f);
+        // float holdTime = Mathf.Max(0f, duration - 0.3f);
         // Debug.Log("发光框播完时间是 " + holdTime);
-        seq.AppendInterval(holdTime);
+        // seq.AppendInterval(holdTime);
         
         // 3. 完美缩回原状 (耗时 0.15秒)
-        seq.Append(TileTransform.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
+        // seq.Append(TileTransform.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
     }
 
     public void PlayRevealAnimation1(Transform index)
@@ -527,15 +532,8 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     }
     public IEnumerator PlayRevealAnimation(Transform index)
     {
-        // 1. 使用差异化特效资源名称
-        const string effectBundle = "useritems";
-        const string effectAsset = "ToolTipsEffect"; // 修改资源名称
-
-        // 2. 异步加载优化
-        var loadOperation = AssetBundleLoader.SharedInstance.LoadGameObject(effectBundle, effectAsset);      
-
         // 3. 特效实例化与定位
-        var effectInstance = Instantiate(loadOperation, transform.parent);
+        var effectInstance = ChessPlayArea.Instance.chessboardGrid.TipsEffectPool.GetObject(transform.parent);
         effectInstance.transform.position = index.position;
 
         // 4. 添加随机旋转增加差异化
@@ -559,13 +557,13 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
 
         // 7. 特效自动销毁计时器
         sequence.AppendInterval(3.5f); // 比原版更早销毁特效
-        // sequence.AppendCallback(() => {
-        //     if (effectInstance != null)
-        //     {
-        //         effectInstance.transform.DOScale(Vector3.zero, 0.2f)
-        //             .OnComplete(() => Destroy(effectInstance));
-        //     }
-        // });
+        sequence.AppendCallback(() => {
+            if (effectInstance != null)
+            {
+                effectInstance.transform.DOScale(Vector3.zero, 0.2f)
+                    .OnComplete(() =>   ChessPlayArea.Instance.chessboardGrid.TipsEffectPool.ReturnObjectToPool(effectInstance.GetComponent<PoolObject>()));
+            }
+        });
         if (effectInstance != null)
         {
             sequence.Append(effectInstance.transform.DOScale(Vector3.zero, 0.2f));
@@ -576,7 +574,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         // 8. 确保特效被清理
         if (effectInstance != null && effectInstance.activeInHierarchy)
         {
-            Destroy(effectInstance);
+            ChessPlayArea.Instance.chessboardGrid.TipsEffectPool.ReturnObjectToPool(effectInstance.GetComponent<PoolObject>());
         }
     }
     
@@ -632,8 +630,8 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             if (leafImg != null)
             {
                 int skinIndex = (ChessStageController.Instance.LeafGenCounter % 4) + 1; // 1, 2, 3 循环
-                // 从你的图集Atlas或AssetBundleLoader中加载对应的叶子切图
-                leafImg.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas($"leaf_skin_0{skinIndex}");
+                // 从你的图集Atlas或AdvancedBundleLoader中加载对应的叶子切图
+                leafImg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas($"leaf_skin_0{skinIndex}");
             }
             
             // 保持原有的呼吸动效，但不改动 Alpha 轴
@@ -691,6 +689,53 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         {
             shiny.enabled = false;
             shiny.Stop(); 
+        }
+    }
+    
+    // <summary>
+    /// 🌟 播放最后词组的波浪聚焦动画
+    /// </summary>
+    /// <param name="delay">延迟时间（用于制造波浪差）</param>
+    public void PlayFocusWaveAnim(float delay)
+    {
+        if (_focusHaloObj == null) return;
+        
+        _focusHaloObj.SetActive(true);
+        _focusHaloObj.transform.DOKill(); // 清理旧动画
+        
+        CanvasGroup cg = _focusHaloObj.GetComponent<CanvasGroup>();
+        if (cg == null) cg = _focusHaloObj.AddComponent<CanvasGroup>();
+
+        // 初始状态：缩小到0，完全透明
+        _focusHaloObj.transform.localScale = Vector3.zero;
+        cg.alpha = 0f;
+
+        Sequence seq = DOTween.Sequence();
+        seq.SetLink(gameObject); // 防报错护盾
+        seq.SetDelay(delay);     // 🌟 核心：波浪延迟
+
+        // 1. 由小到大，同时淡入 (带点 Q 弹效果)
+        seq.Append(_focusHaloObj.transform.DOScale(1.1f, 0.4f).SetEase(Ease.OutBack));
+        seq.Join(cg.DOFade(1f, 0.4f));
+
+        // 2. 出现后，保持轻微的呼吸律动，持续吸引注意力
+        seq.Append(_focusHaloObj.transform.DOScale(0.99f, 0.8f).SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo));
+        seq.Join(cg.DOFade(0.6f, 0.8f).SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo));
+    }
+
+    /// <summary>
+    /// 关闭聚焦动画 (填入字时调用)
+    /// </summary>
+    public void StopFocusAnim()
+    {
+        if (_focusHaloObj != null && _focusHaloObj.activeSelf)
+        {
+            _focusHaloObj.transform.DOKill();
+            CanvasGroup cg = _focusHaloObj.GetComponent<CanvasGroup>();
+            
+            // 快速淡出后隐藏
+            if (cg != null) cg.DOFade(0f, 0.2f).OnComplete(() => _focusHaloObj.SetActive(false));
+            else _focusHaloObj.SetActive(false);
         }
     }
 }

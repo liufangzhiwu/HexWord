@@ -63,7 +63,7 @@ public class LoadTextManager : Singleton<LoadTextManager>
         }
 
         // 加载并解析 CSV
-        TextAsset data = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "WisdomRules");
+        TextAsset data = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "WisdomRules");
         if (data != null)
         {
             ParseRewardConfig(data.text);

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
+using Random = System.Random;
 
 /// <summary>
 /// 用户游戏数据管理类
@@ -75,13 +76,15 @@ public class UserData
     }
 
     public bool Rigister; // 注册标志
+    public string first_version; // 注册标志
     public bool IsFirstLaunch = true; // 首次启动标志
     public bool isShowVocabulary; // 是否显示词库标志
 
     public int TotalPayTimes; //支付次数
     public float TotalRevenue; //累计付费金额
     public int totallogin; // 总登录次数
-    public int totalSeeAds; // 总看广告次数
+    public int totalSeeAds; // 总视频广告观看次数
+    public int totalInsetSeeAds; // 总插屏广告观看次数
     public int activeDayCnt; //活跃天数
 
     // 生命周期事件相关数据
@@ -184,6 +187,8 @@ public class UserData
     public SignSaveData _signSaveData = new SignSaveData();
     public LoadTimeIndex _loadTimeIndexData = new LoadTimeIndex();
     public List<int> _getAnimalsHeadIcons = new List<int>();
+    
+    private static readonly Random _random = new Random();
 
     #endregion
 
@@ -295,6 +300,7 @@ public class UserData
         IsSoundOn = true;
         IsAgreePrivacy = false;
         Zenlevel = "ZenState01";
+        first_version = "";
         Energy = 5;
         LastEnergyUpdateTime = DateTime.Now.ToString();
         hasUsedFreeRevive = false;
@@ -317,6 +323,7 @@ public class UserData
         totallogin = 0;
         //总看广告次数
         totalSeeAds = 0;
+        totalInsetSeeAds = 0;
         //活跃天数
         activeDayCnt = 0;
         // 时间数据
@@ -359,14 +366,14 @@ public class UserData
         // 初始化道具数据
         toolInfo = new Dictionary<int, ToolInfo>
         {
-            {
-                101,
-                new ToolInfo
-                {
-                    cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint",
-                    count = AppGameSettings.ShopItems.SingleHintCount
-                }
-            },
+            // {
+            //     101,
+            //     new ToolInfo
+            //     {
+            //         cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint",
+            //         count = AppGameSettings.ShopItems.SingleHintCount
+            //     }
+            // },
             {
                 102,
                 new ToolInfo
@@ -458,6 +465,7 @@ public class UserData
         dayPassStageCount = user.dayPassStageCount;
         chessdayPassStageCount = user.chessdayPassStageCount;
         LanguageCode = GetLanguage();
+        first_version=user.first_version;
         IsMusicOn = user.IsMusicOn;
         IsSoundOn = user.IsSoundOn;
         IsAgreePrivacy = user.IsAgreePrivacy;
@@ -511,6 +519,7 @@ public class UserData
         totallogin = user.totallogin;
         //总看广告次数
         totalSeeAds = user.totalSeeAds;
+        totalInsetSeeAds = user.totalInsetSeeAds;
         //活跃天数
         activeDayCnt = user.activeDayCnt;
         // 游戏进度
@@ -540,6 +549,27 @@ public class UserData
         curIsEnter = user.curIsEnter;
         // 初始化道具数据
         toolInfo = user.toolInfo;
+
+        if (toolInfo.TryGetValue(101, out var tool101))
+        {
+            // 确保目标道具 104 存在，若不存在则创建
+            if (!toolInfo.TryGetValue(104, out var tool104))
+            {
+                tool104 = new ToolInfo
+                {
+                    cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete",
+                    count = AppGameSettings.ShopItems.WordHintCount
+                }; // 根据实际 Tool 类的构造函数调整
+                toolInfo[104] = tool104;
+            }
+
+            // 合并数量
+            tool104.count += tool101.count;
+
+            // 移除源道具
+            toolInfo.Remove(101);
+        }
+       
         // 签到数据
         signOpenTime = user.signOpenTime;
         signid = user.signid;
@@ -782,6 +812,52 @@ public class UserData
     #endregion
 
     #region 游戏数据操作方法
+    
+    
+    /// <summary>
+    /// 直接新增指定的头像ID（带有效性校验）
+    /// </summary>
+    /// <param name="animalId">要新增的头像ID</param>
+    /// <returns>true表示添加成功，false表示ID无效或已拥有</returns>
+    public bool AddHeadIcon(int animalId)
+    {
+        // 校验1：ID必须在 25~39 范围内
+        if (animalId < 25 || animalId > 39)
+        {
+            Debug.Log($"错误：头像ID {animalId} 超出有效范围(25~{39})");
+            return false;
+        }
+
+        // 校验2：不能重复拥有（避免列表出现重复数据）
+        if (_getAnimalsHeadIcons.Contains(animalId))
+        {
+            Debug.Log($"提示：头像ID {animalId} 已经拥有，无需重复添加");
+            return false;
+        }
+
+        // 执行添加
+        _getAnimalsHeadIcons.Add(animalId);
+        return true;
+    }
+    
+
+    public bool TryGetRandomUnlockedAnimal(out int animalId)
+    {
+        //25表示起始id，15表示数量
+        var allIds = Enumerable.Range(25, 15);
+        var ownedSet = new HashSet<int>(_getAnimalsHeadIcons);
+        var available = allIds.Where(id => !ownedSet.Contains(id)).ToList();
+
+        if (available.Count == 0)
+        {
+            animalId = 0;   // 无效ID
+            return false;
+        }
+
+        int index = _random.Next(available.Count);
+        animalId = available[index];
+        return true;
+    }
 
 
     /// <summary>
@@ -833,7 +909,7 @@ public class UserData
     public int GetTotalToolCost()
     {
         int totalToolCost = 0;
-        totalToolCost += toolInfo[101].reducecount + toolInfo[102].reducecount
+        totalToolCost += toolInfo[102].reducecount + toolInfo[104].reducecount
                                                    + toolInfo[103].reducecount;
         return totalToolCost;
     }
@@ -1136,9 +1212,9 @@ public class UserData
 
             switch (type)
             {
-                case LimitRewordType.SingleWordTipsttool:
-                    toolName = "单字词语提示道具";
-                    break;
+                // case LimitRewordType.SingleWordTipsttool:
+                //     toolName = "单字词语提示道具";
+                //     break;
                 case LimitRewordType.Tipstool:
                     toolName = "提示道具";
                     break;
@@ -1163,8 +1239,8 @@ public class UserData
     {
         return type switch
         {
-            LimitRewordType.SingleWordTipsttool => 101,
-            LimitRewordType.Tipstool => 102,
+            LimitRewordType.Tipstool => 101,
+            //LimitRewordType.Tipstool => 102,
             LimitRewordType.Butterfly => 103,
             LimitRewordType.AutoComplete => 104,
             _ => 0

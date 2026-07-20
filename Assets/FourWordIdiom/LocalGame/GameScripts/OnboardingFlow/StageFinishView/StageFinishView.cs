@@ -360,7 +360,7 @@ public class StageFinishView : UIWindow
         if (addZenCount > 0 && _zenRankBtn != null && _zenRankBtn.gameObject.activeSelf)
         {
             // 初始化莲花状态（放在屏幕中央或者特定初始位置）
-            GameObject prefab = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "lotus_icon");
+            GameObject prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "lotus_icon");
             GameObject lotusInstance = Instantiate(prefab, transform,false);
             
             Canvas canvas = lotusInstance.GetComponent<Canvas>();
@@ -494,7 +494,7 @@ public class StageFinishView : UIWindow
     
     private Sprite LoadheadIcon(string showIcon)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
 
     protected override void OnDisable()

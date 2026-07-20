@@ -111,7 +111,7 @@ public partial class AnalyticMgr
             //资源类
             { "current_coin", GameDataManager.Instance.UserData.Gold },
             { "current_tipItem", GameDataManager.Instance.UserData.toolInfo[102].count },
-            { "current_resetItem", GameDataManager.Instance.UserData.toolInfo[101].count },
+            { "current_resetItem", GameDataManager.Instance.UserData.toolInfo[104].count },
             { "current_flyItem", GameDataManager.Instance.UserData.toolInfo[103].count },
             { "current_level", GameDataManager.Instance.UserData.CurrentHexStage },
         };
@@ -134,9 +134,7 @@ public partial class AnalyticMgr
     /// </summary>
     public static void SetCommonProperties()
     {
-        
         var userData = GameDataManager.Instance.UserData;
-        if(userData==null)  return;
         
         int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
         
@@ -172,7 +170,7 @@ public partial class AnalyticMgr
         {
             {"gold", GameDataManager.Instance.UserData.Gold },
             {"tipItem",GameDataManager.Instance.UserData.toolInfo[102].count},
-            {"resetItem",GameDataManager.Instance.UserData.toolInfo[101].count},
+            {"resetItem",GameDataManager.Instance.UserData.toolInfo[104].count},
             {"flyItem",GameDataManager.Instance.UserData.toolInfo[103].count},
             {"level_id",levelId},
             {"level_type",GameDataManager.Instance.UserData.GetLevelMode()},
@@ -183,24 +181,34 @@ public partial class AnalyticMgr
             Game.self.Analytics.SetCommonProperties(properties);
     }
 
-    public static void OnAnalyticsStart()
+    
+    public static void OnAnalyticsSdkInit(object sender, EventArgs e)
     {
+        var uid = Game.self.GetUniqueId();
+        SetCommonProperties();
+        var cacheUid = GameDataManager.Instance.UserData.UserId;
+        if (string.IsNullOrEmpty(cacheUid) || cacheUid != uid)
+        {
+            GameDataManager.Instance.UserData.UserId = uid;
+            Game.self.Analytics.Login(GameDataManager.Instance.UserData.UserId);
+        }
+
         if (!GameDataManager.Instance.UserData.Rigister)
-        {      
-            Game.self.Analytics.LogEvent("ta_app_install", Define.DataTarget.Think);
+        {
             Game.self.Analytics.LogEvent("ta_app_startFirst", Define.DataTarget.Think);
             Game.self.Analytics.LogEvent("register", Define.DataTarget.Think);
             GameDataManager.Instance.UserData.Rigister = true;
+            GameDataManager.Instance.UserData.first_version = Application.version;
         }
-        
-        SetCommonProperties();
-        SetLoginProperties();
+        GameStart();
     }
+
     public static void Login()
     {
         SetCommonProperties();
         Game.self.Analytics.LogEvent("login", Define.DataTarget.Think);
     }
+    
     public static void SetLoginUser(string tuid)
     {
         var uid = tuid;
@@ -215,6 +223,8 @@ public partial class AnalyticMgr
         }
         
         var cacheUid = GameDataManager.Instance.UserData.UserId;
+
+        SetCommonProperties();
         
         Debug.Log("用户唯一id为："+uid+"当前用户id"+cacheUid);
         if (string.IsNullOrEmpty(cacheUid) || cacheUid != uid)
@@ -225,7 +235,6 @@ public partial class AnalyticMgr
         }
         
         Debug.Log("赋值后用户唯一id为："+ GameDataManager.Instance.UserData.UserId);
-        OnAnalyticsStart();
     }
     
     public static void GuideBegin()

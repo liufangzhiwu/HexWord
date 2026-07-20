@@ -90,7 +90,7 @@ public class ZenRankItem : MonoBehaviour
         if (isMe)
         {
             GetComponent<Image>().sprite =
-                AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("mide", "OnboardingFlow");
+                AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("mide", "OnboardingFlow");
             if (ColorUtility.TryParseHtmlString("#823F15", out Color newColor))
             {
                 Name.color = newColor;
@@ -148,11 +148,11 @@ public class ZenRankItem : MonoBehaviour
 
     private Sprite LoadheadIcon(int idx)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + idx);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + idx);
     }
     private Sprite LoadRankIcon(int idx, string iconName = "RankBox")
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(iconName + idx);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(iconName + idx);
     }
     
     private void OnBoxClicked()

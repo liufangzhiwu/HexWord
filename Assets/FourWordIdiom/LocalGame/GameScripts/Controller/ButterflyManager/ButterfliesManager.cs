@@ -78,7 +78,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     private void Start()
     {
         StartCoroutine(LoadConfigTables());
-        AssetBundleLoader.SharedInstance.LoadMaterialResource("zenhehua","lizi02");
+        AdvancedBundleLoader.SharedInstance.LoadMaterialResource("zenhehua","lizi02");
     }
 
     #region 配置文件解析
@@ -87,14 +87,14 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     {
         if (processBar == null)
         {
-            AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterfly_icon");
-            GameObject go =  AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyProcessBar");
+            AdvancedBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterfly_icon");
+            GameObject go =  AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyProcessBar");
             processBar = Instantiate(go, this.transform);
             processBar.SetActive(false);
         }
         yield return new WaitForSeconds(0.5f);
         TextAsset butterfliesTable =
-            AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflyCollectionTable");
+            AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflyCollectionTable");
         if (butterfliesTable != null)
         {
             ParseButterflies(butterfliesTable.text);
@@ -105,7 +105,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         }
 
         TextAsset probabilityTable =                                                         
-            AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflySceneTable");
+            AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflySceneTable");
         if (probabilityTable != null)
         {
             ParseProbabilityTable(probabilityTable.text);
@@ -129,7 +129,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
 
         if (string.IsNullOrEmpty(csvData))
         {
-            TextAsset textAsset = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "Butterfly_zen_config");
+            TextAsset textAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "Butterfly_zen_config");
             csvData = textAsset?.text;
         }
         if (!string.IsNullOrEmpty(csvData))
@@ -141,7 +141,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
             Debug.LogError("Failed to load Butterfly_zen_config csv data.");
         }
         
-        AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflyparts");
+        AdvancedBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflyparts");
     }
 
     /// <summary>
@@ -292,7 +292,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// </summary>
     public IEnumerator FlyPupaCoroutine(Transform start, Transform target, Action call, float duration=0f)
     {
-           GameObject go = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "Pupa");
+           GameObject go = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "Pupa");
            GameObject effect = Instantiate(go, start.position, Quaternion.identity, target);
            effect.gameObject.SetActive(true);
            Vector3 endPosition = target.position;

@@ -73,7 +73,7 @@ public class DailyTaskManager : MonoBehaviour
         
         if (string.IsNullOrEmpty(csvData))
         {     
-            TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "dailytask");
+            TextAsset csvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "dailytask");
             csvData = csvFile?.text;
         }
         if (!string.IsNullOrEmpty(csvData))

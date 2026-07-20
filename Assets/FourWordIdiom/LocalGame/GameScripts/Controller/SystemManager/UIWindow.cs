@@ -129,29 +129,29 @@ public abstract class UIWindow : MonoBehaviour, IPointerDownHandler
     /// 关闭界面
     /// Close window
     /// </summary>
-    public virtual void Close(CloseMethod method = CloseMethod.Default)
+    public virtual void Close()
     {
         //if (CurrentState != WindowState.Opened) return;
 
         UpdateWindowState(WindowState.Closing);
 
-        switch (method)
-        {
-            case CloseMethod.Immediate:
-                CloseImmediately();
-                break;
-
-            case CloseMethod.Animated:
-                PlayCloseAnimation();
-                break;
-
-            default:
+        // switch (method)
+        // {
+        //     case CloseMethod.Immediate:
+        //         CloseImmediately();
+        //         break;
+        //
+        //     case CloseMethod.Animated:
+        //         PlayCloseAnimation();
+        //         break;
+        //
+        //     default:
                 if (_windowAnimator != null)
                     PlayCloseAnimation();
                 else
                     CloseImmediately();
-                break;
-        }
+        //         break;
+        // }
     }
 
     /// <summary>

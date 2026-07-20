@@ -73,7 +73,7 @@ public class LoadingController : MonoBehaviour
     {
         IsLocalDataNull = GameDataManager.Instance.UserData.LocalDataIsNull();
         this.transform.GetComponent<Image>().color = Color.black;
-        yield return AssetBundleLoader.SharedInstance.LoadAtlas(
+        yield return AdvancedBundleLoader.SharedInstance.LoadAtlas(
             "ui_theme",
             "UI_Theme");
         yield return null;
@@ -317,7 +317,12 @@ public class LoadingController : MonoBehaviour
     private void SetupRandomLoadingHint()
     {
         string key = LoadTextManager.Instance.GetNextText();
-        loadingHintText.text =MultilingualManager.Instance.GetString(key);    
+        string des = MultilingualManager.Instance.GetString(key);
+        if (des.Contains(" "))
+        {
+            des = des.Replace(" ", "\u00A0");
+        }
+        loadingHintText.text =des;    
     }
 
     /// <summary>
@@ -383,27 +388,27 @@ public class LoadingController : MonoBehaviour
     {
         Debug.Log("开始预加载游戏资源");
 
-        yield return AssetBundleLoader.SharedInstance.LoadAtlas(
+        yield return AdvancedBundleLoader.SharedInstance.LoadAtlas(
            "ui_universal",
            "UI_Universal");
 
         //LoadFont();
         // 加载字体资源
-        Font mainFont = AssetBundleLoader.SharedInstance.LoadFont(
+        Font mainFont = AdvancedBundleLoader.SharedInstance.LoadFont(
              "stagefonts",
              "FZKTK");
         //loadingHintText.font = mainFont;
 
         // 并行加载其他关键资源
-        yield return AssetBundleLoader.SharedInstance.LoadAtlas(
+        yield return AdvancedBundleLoader.SharedInstance.LoadAtlas(
             "effect_sprite",
             "trailAltas");
 
-        yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
+        yield return AdvancedBundleLoader.SharedInstance.LoadMaterialResource(
             "effectsitemmats",
             "Circle");       
         
-        yield return AssetBundleLoader.SharedInstance.LoadMaterialResource(
+        yield return AdvancedBundleLoader.SharedInstance.LoadMaterialResource(
             "materials",
             "lizi01"); 
         
@@ -415,7 +420,7 @@ public class LoadingController : MonoBehaviour
     
     private Sprite GetSprite(string spriteName)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(spriteName,"UI_Theme");
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(spriteName,"UI_Theme");
     }
 
     /// <summary>

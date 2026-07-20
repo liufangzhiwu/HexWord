@@ -57,7 +57,7 @@ public class WordVocabularyManager
     public async Task LoadEntriesAsync()
     {
         // 加载 TextAsset
-        TextAsset textAsset = AssetBundleLoader.SharedInstance.LoadTextFile(ToolUtil.GetLanguageBundle(),"config_wordBan");
+        TextAsset textAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile(ToolUtil.GetLanguageBundle(),"config_wordBan");
         if (textAsset == null)
         {
             Debug.LogError("Could not load the dictionary file.");

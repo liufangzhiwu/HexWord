@@ -39,8 +39,8 @@ public class PauseGameScreen : UIWindow
     protected override void Awake()
     {
         base.Awake();
-        Opensprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_OpenToggle");
-        Closesprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
+        Opensprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_OpenToggle");
+        Closesprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
     }
 
     // Start is called before the first frame update
@@ -148,6 +148,7 @@ public class PauseGameScreen : UIWindow
             ChessPlayArea.Instance.ResumeGame();
             ChessPlayArea.Instance.GamePlayOver(isJump: true);
             AnalyticMgr.VideoAdSuccess("跳关广告");
+            GameDataManager.Instance.UserData.totalSeeAds++;
         }
         else
         {

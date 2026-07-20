@@ -4964,7 +4964,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 10.3627, y: 1.884}
-  m_SizeDelta: {x: 743.7112, y: 197.9751}
+  m_SizeDelta: {x: 780, y: 197.9751}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!95 &4552589920783110388
 Animator:
@@ -5028,7 +5028,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u4F60\u53EF\u4EE5\u9762\u5BF9\u4EFB\u4F55\u56F0\u96BE\uFF01"
+  m_Text: "\u4F60\u7684\u6BCF\u4E00\u6B65\u90FD\u662F\u6B63\u786E\u7684\uFF01"
 --- !u!114 &2000310314691404344
 MonoBehaviour:
   m_ObjectHideFlags: 0

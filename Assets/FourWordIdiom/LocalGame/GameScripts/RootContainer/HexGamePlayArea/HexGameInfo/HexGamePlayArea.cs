@@ -105,19 +105,19 @@ public class HexGamePlayArea : UIWindow
 
     private void InitToolUI(int value=0,bool isfirst=false)
     {
-        if (GameDataManager.Instance.UserData.toolInfo[101].count > 0) 
+        if (GameDataManager.Instance.UserData.toolInfo[104].count > 0) 
         {
-            ResetCounttxt.GetComponentInChildren<Text>().text =GameDataManager.Instance.UserData.toolInfo[101].count.ToString();
+            ResetCounttxt.GetComponentInChildren<Text>().text =GameDataManager.Instance.UserData.toolInfo[104].count.ToString();
             //ResetCostObj.gameObject.SetActive(false);
             ResetCounttxt.gameObject.SetActive(true);
             ResetAdsObj.gameObject.SetActive(false);
         }
         else
         {
-            ResetCostObj.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
+            ResetCostObj.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
             ResetCounttxt.gameObject.SetActive(false);
             
-            ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
+            ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[104];
             if (!CanUseTool(toolInfo))
             {
                 //ResetAdsObj.gameObject.SetActive(true);
@@ -334,7 +334,7 @@ public class HexGamePlayArea : UIWindow
     {
         IsShowTipLight=true;
         
-        ToolInfo SingletoolInfo = GameDataManager.Instance.UserData.toolInfo[101];
+        ToolInfo SingletoolInfo = GameDataManager.Instance.UserData.toolInfo[104];
         ToolInfo WordtoolInfo = GameDataManager.Instance.UserData.toolInfo[102];
 
         if (CurStageInfo.StageNumber >= 10)
@@ -725,7 +725,7 @@ public class HexGamePlayArea : UIWindow
     /// </summary>
     public void ToolItemFirstLetter()
     {
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[101];
+        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[104];
         
         if (toolInfo == null)
         {
@@ -745,7 +745,7 @@ public class HexGamePlayArea : UIWindow
             // }
             // else
             // {
-            GetItemScreen.limitRewordType = LimitRewordType.SingleWordTipsttool;
+            GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
                 
 // #if UNITY_OPENHARMONY&&!UNITY_EDITOR
@@ -767,12 +767,12 @@ public class HexGamePlayArea : UIWindow
             if (useCoins) 
             {
                 GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1,"关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1,"购买道具");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1,"关卡内使用");
             }
             else
             {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用");
                 InitToolUI();
             }
             
@@ -800,12 +800,12 @@ public class HexGamePlayArea : UIWindow
         if (isShow)
         {
             usetoolCount++;
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, 1,"看广告获取提示灯道具");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1,"看广告获取提示灯道具");
             
             string Str = GetRandomTipsPuzzle();
             if (!string.IsNullOrEmpty(Str))
             {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, -1, "关卡内使用");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用");
                 InitToolUI();
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipAllWordTool,1);
                 AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
@@ -843,7 +843,7 @@ public class HexGamePlayArea : UIWindow
         if (start != null)
         {
             Transform startTransform = puzzleTile.TileView.gameObject.transform;
-            GameObject effect = AssetBundleLoader.SharedInstance.LoadGameObject("useritems", "ShowTipTuowei");
+            GameObject effect = AdvancedBundleLoader.SharedInstance.LoadGameObject("useritems", "ShowTipTuowei");
             CustomFlyInManager.Instance.FlyIn(start, startTransform, effect, () =>
             {
                 puzzleTile.TileView.ShowTipPuzzle();       
@@ -1037,9 +1037,9 @@ public class HexGamePlayArea : UIWindow
         }
     }
 
-    public override void Close(CloseMethod method = CloseMethod.Default)
+    public override void Close()
     {
-        base.Close(method);
+        base.Close();
         if (crossPuzzleGrid.PupatileView != null)
         {
             crossPuzzleGrid.PupatileView.TileTransform.GetComponent<CanvasGroup>().DOFade(0, 0.3f);

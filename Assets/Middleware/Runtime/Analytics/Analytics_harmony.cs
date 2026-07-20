@@ -81,7 +81,8 @@ namespace Middleware
             TDAnalytics.EnableLog(false);
 #endif
             TDAnalytics.Init(config);
-            //TDAnalytics.EnableAutoTrack( TDAutoTrackEventType.AppInstall | TDAutoTrackEventType.AppEnd);
+            OnSdkInit?.Invoke(this,null);
+            TDAnalytics.EnableAutoTrack( TDAutoTrackEventType.AppInstall);
             //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppInstall| TDAutoTrackEventType.AppEnd);
             
             

@@ -20,8 +20,9 @@ public class ZenRankButton : MonoBehaviour
     // public GameObject effect;
     
     // Start is called before the first frame update
-    private bool isUnranked = false; // 记录是否“未上榜”
-
+    private bool isUnranked = true; // 记录是否“未上榜”
+    private bool isHandlingClick = false;
+    
     private void Awake()
     {
         if (rankBtn == null)
@@ -37,9 +38,10 @@ public class ZenRankButton : MonoBehaviour
 
     private void OnEnable()
     {
+        isHandlingClick = false;
         // if (rankText != null) rankText.text = "...";
-        CheckRankProgress();
         SyncTextFromCache();
+        CheckRankProgress();
         // FetchMyCurrentRank();
         // 🌟 修复：注册倒计时监听
         if (ZenRankManager.Instance != null)
@@ -91,6 +93,8 @@ public class ZenRankButton : MonoBehaviour
             }
             return; // 未起名时不再继续后面的排行榜跳转
         }
+        if (isHandlingClick) return;
+        
         // 1. 记录来源页面 (捕获你要返回的 PanelType)
         string sourcePanel = PanelType.PrimaryInterface; // 默认大厅
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
@@ -104,26 +108,46 @@ public class ZenRankButton : MonoBehaviour
         else if (GameCoreManager.Instance.PanelState == PanelState.GamePingPanel)
             sourcePanel = PanelType.ChessPlayArea;
         
-        SystemManager.Instance.HidePanel(sourcePanel);
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+        StartCoroutine(HandleRankButtonClick(sourcePanel));
+    }
+    private IEnumerator HandleRankButtonClick(string sourcePanel)
+    {
+        isHandlingClick = true;
         
-        // ==========================================
-        // 🌟 剥离与优化：按时间决定是否要查结算
-        // ==========================================
-        if (ZenRankManager.Instance.RemainingSeconds <= 0 && GameDataManager.Instance.UserData.isJoinedZenRank)
+        bool hasTriggeredSettlement = false;
+        
+        // 🌟 核心修复1：无条件先去服务器查是否有结算！不要依赖本地的剩余时间！
+        yield return ZenRankManager.Instance.CheckAndShowSettlementRoutine(sourcePanel,(res) =>
         {
-            // 倒计时已结束，且已加入榜单，必须核实服务端是否结算
-            ZenRankManager.Instance.StartCoroutine(ZenRankManager.Instance.CheckAndShowSettlementRoutine((hasTriggeredSettlement) =>
+            hasTriggeredSettlement = res;
+        });
+        if (hasTriggeredSettlement)
+        {
+            SystemManager.Instance.HidePanel(sourcePanel);
+            SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+
+            // 如果触发了结算，Manager内部已自动打开了雷达页，只需把来源页传给它
+            var radarWindow = SystemManager.Instance.GetPanel(PanelType.ZenRankStartScreen);
+            if (radarWindow != null)
             {
-                if (hasTriggeredSettlement) return; // 如果真结算了，内部已打开雷达页，直接跳出
-                OpenRankUI(sourcePanel); // 没结算（可能接口异常或没轮到他），兜底打开正常界面
-            }));
+                radarWindow.GetComponent<ZenRankStartScreen>().SetSourcePanel(sourcePanel);
+            }
         }
         else
         {
-            // 倒计时还在，赛季进行中，直接打开界面！（省去了查结算的网络请求）
+            // 如果确实没结算，再拉取当前榜单数据并打开榜单
+            if (GameDataManager.Instance.UserData.isJoinedZenRank)
+            {
+                yield return ZenRankManager.Instance.FetchLeaderboardDataRoutine(GameDataManager.Instance.UserData.Zenlevel);
+            }
+            
+            SystemManager.Instance.HidePanel(sourcePanel);
+            SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+            
             OpenRankUI(sourcePanel);
         }
+        
+        isHandlingClick = false;
     }
     // 提炼出打开界面的逻辑
     private void OpenRankUI(string sourcePanel)
@@ -157,7 +181,7 @@ public class ZenRankButton : MonoBehaviour
         zenLevelText.text = zenName;
 
         string zenLevel = UIUtilities.ExtractNumber(GameDataManager.Instance.UserData.Zenlevel);
-        Sprite zenIcon = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("zenicon_"+zenLevel);
+        Sprite zenIcon = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("zenicon_"+zenLevel);
         if(zenIcon != null)
             rankImage.sprite = zenIcon;
         
@@ -184,7 +208,7 @@ public class ZenRankButton : MonoBehaviour
         }
     }
     // 🌟 新增：从 Manager 缓存直接恢复文字，避免显示 "..."
-    private void SyncTextFromCache()
+    public void SyncTextFromCache()
     {
         if (!Game.IsNetworkActive) return;
 
@@ -200,10 +224,14 @@ public class ZenRankButton : MonoBehaviour
         if (ZenRankManager.Instance != null)
         {
             // 状态 2：结算中
-            if (ZenRankManager.Instance.RemainingSeconds <= 0 && GameDataManager.Instance.UserData.isJoinedZenRank)
+            if (ZenRankManager.Instance.RemainingSeconds == 0 && GameDataManager.Instance.UserData.isJoinedZenRank)
             {
                 isUnranked = false;
-                if (rank != null) rank.SetActive(true);
+                if (rank != null)
+                {
+                    rank.SetActive(true);
+                    wifi.SetActive(false);
+                }
                 if (rankText != null) rankText.text = MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中";
                 return;
             }
@@ -213,7 +241,11 @@ public class ZenRankButton : MonoBehaviour
             if (myData != null && myData.rank > 0)
             {
                 isUnranked = false;
-                if (rank != null) rank.SetActive(true);
+                if (rank != null)
+                {
+                    rank.SetActive(true);
+                    wifi.SetActive(false);
+                }
                 if (rankText != null) rankText.text = "#" + myData.rank;
             }
             else if (myData != null && myData.rank <= 0) // 未上榜（如名次超过 1000）
@@ -223,8 +255,9 @@ public class ZenRankButton : MonoBehaviour
             }
             else
             {
-                // 只有游戏刚启动，本地彻底没有任何缓存数据时，才显示 ...
-                if (rankText != null) rankText.text = "...";
+                isUnranked = true;
+                if (rank != null) rank.SetActive(false);
+                if (rankText != null) rankText.text = "";
             }
         }
     }
@@ -233,7 +266,7 @@ public class ZenRankButton : MonoBehaviour
     /// </summary>
     public void FetchMyCurrentRank()
     {
-        if (!Game.IsNetworkActive) return;
+        // if (!GameCoreManager.Instance.IsNetworkActive) return;
         // 状态 1：如果没加入，直接显示“未加入”
         if (!GameDataManager.Instance.UserData.isJoinedZenRank)
         {
@@ -248,11 +281,9 @@ public class ZenRankButton : MonoBehaviour
         string boardId = GameDataManager.Instance.UserData.Zenlevel;
         if (string.IsNullOrEmpty(boardId)) return;
         
-        isUnranked = false;
-        if (rankText != null) rankText.text = "...";
-        rank.SetActive(true);
         StartCoroutine(APIGateway.Instance.LeaderboardApi.GetLeaderboard(boardId, (response) =>
         {
+            Debug.Log("来自按钮的获取榜单 " + boardId);
             if (response != null)
             {
                 ZenRankManager.Instance.StartGlobalTimer(response.remaining_seconds);
@@ -261,12 +292,14 @@ public class ZenRankButton : MonoBehaviour
                 {
                     isUnranked = false;
                     rank.SetActive(true);
+                    wifi.SetActive(false);
                     rankText.text = MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中";
                 }
                 else if (response.my != null && response.my.rank > 0)
                 {
                     isUnranked = false;
                     rank.SetActive(true);
+                    wifi.SetActive(false);
                     rankText.text = "#" + response.my.rank;
                 }
                 else
@@ -277,6 +310,7 @@ public class ZenRankButton : MonoBehaviour
             }
             else
             {
+                isUnranked = true;
                 if (rankText != null) rankText.text = "";
                 rank.SetActive(false);
             }

@@ -37,7 +37,7 @@ public class GiftItem : MonoBehaviour
                 spritename = "tipicon";
                 countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
                 break;
-            case (int)LimitRewordType.SingleWordTipsttool:
+            case (int)LimitRewordType.AutoComplete:
                 spritename = "shop_reset";
                 countText.text ="\u00d7 "+data[1]; // 假设 productContent 是数量
                 break;
@@ -73,7 +73,7 @@ public class GiftItem : MonoBehaviour
         if(string.IsNullOrEmpty(tips)) return;
         countText.fontSize = 45;
         if(tipBtnPrefab==null)
-            tipBtnPrefab=AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "Shop_tipbtn").GetComponent<Button>();
+            tipBtnPrefab=AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "Shop_tipbtn").GetComponent<Button>();
         // 从对象池获取 ShopItem 对象
         tipbtn = Instantiate(tipBtnPrefab, countText.transform).GetComponent<Button>();
         GameObject tippanel = tipbtn.transform.GetChild(0).gameObject;
@@ -84,7 +84,7 @@ public class GiftItem : MonoBehaviour
 
     private Sprite LoadShopIcon(string showIcon)
     {
-        return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
     }
 
     private void ClickShopItemtipBtn(GameObject tippanel)

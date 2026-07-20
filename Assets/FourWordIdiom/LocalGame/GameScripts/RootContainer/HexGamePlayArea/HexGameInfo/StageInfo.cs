@@ -180,7 +180,7 @@ public class StageInfo
         if (_StageFile == null)
         {
             string fileName = GetStageFileNameByLanguage();
-            _StageFile = AssetBundleLoader.SharedInstance.LoadTextFile(fileName, "hexlevel_"+_StageInfoId);
+            _StageFile = AdvancedBundleLoader.SharedInstance.LoadTextFile(fileName, "hexlevel_"+_StageInfoId);
         }    
 
         string jsonContent = _StageFile.text;

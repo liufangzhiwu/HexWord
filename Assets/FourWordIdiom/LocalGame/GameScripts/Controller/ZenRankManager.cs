@@ -22,12 +22,12 @@ public class ZenRankManager : MonoBehaviour
     public List<ZenRankState> MiddleRanks { get; private set; } = new List<ZenRankState>();
     public List<ZenRankState> BottomRanks { get; private set; } = new List<ZenRankState>();
     public LeaderboardEntry MyCurrentRankData { get; private set; } // 玩家自己的真实排名数据
-    public int RemainingSeconds { get; private set; } // 当前赛季剩余时间
-
+    public int RemainingSeconds { get; private set; } = -1; // 当前赛季剩余时间
+    public int NextRemainingSeconds { get; private set; } = -1;    // 下一期的时间next_remaining_seconds
     // 缓存上一次的排名和分数（用于结算动画比对）
-    public int CachedOldRank { get; private set; }
-    public int CachedOldScore { get; private set; }
-    public bool IsFetching { get; private set; } // 数据请求状态锁
+    public int CachedOldRank { get;  set; }
+    public int CachedOldScore { get;  set; }
+    public bool IsFetching { get;  set; } // 数据请求状态锁
     
     private void Awake()
     {
@@ -48,13 +48,13 @@ public class ZenRankManager : MonoBehaviour
         // 🌟 将原 ZenRankScreen 里的 ConvertCSVToJSON 和 ParseZenLevelItems 逻辑移到这里
         // 确保游戏一启动，段位表和奖励表就已经加载在内存里了
         
-        TextAsset csvData = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ZenStateTable");
+        TextAsset csvData = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ZenStateTable");
         if (csvData != null)
         {
             ParseZenLevelItems(csvData.text);
         }
         // 加载奖励列表
-        TextAsset textAsset = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo","ZenRankingRewardTable");
+        TextAsset textAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo","ZenRankingRewardTable");
         if (textAsset != null)
             ConvertRewardCSVToJSON(textAsset.text);
         
@@ -125,7 +125,15 @@ public class ZenRankManager : MonoBehaviour
             }
         }
     }
-    
+    public void ClearRankCache()
+    {
+        TopRanks.Clear();
+        MiddleRanks.Clear();
+        BottomRanks.Clear();
+        MyCurrentRankData = null; // 必须设为 null
+        CachedOldRank = 0;
+        CachedOldScore = 0;
+    }
     // ==========================================
     // 🌟 全局统一的排行榜数据请求接口
     // ==========================================
@@ -152,18 +160,17 @@ public class ZenRankManager : MonoBehaviour
                 foreach (var entry in res.bottom) BottomRanks.Add(ConvertEntryToState(entry));
                 
                 RemainingSeconds = res.remaining_seconds;
+                NextRemainingSeconds = res.next_remaining_seconds;
                 StartGlobalTimer(RemainingSeconds);
+                Debug.Log("拉取榜单完成, 通知所有时间订阅" + RemainingSeconds);
                 // 🌟 单独处理玩家自己的数据和缓存
                 if (res.my != null)
                 {
                     MyCurrentRankData = res.my;
                     
                     // 如果是本局第一次拿到有效数据，同步缓存，防播动画
-                    if (CachedOldRank == 0)
-                    {
-                        CachedOldRank = MyCurrentRankData.rank;
-                        CachedOldScore = MyCurrentRankData.score;
-                    }
+                    CachedOldRank = MyCurrentRankData.rank;
+                    CachedOldScore = MyCurrentRankData.score;
                 }
                 else
                 {
@@ -199,7 +206,7 @@ public class ZenRankManager : MonoBehaviour
         string hour = MultilingualManager.Instance.GetString("TimeH") ?? "h ";
         string minute = MultilingualManager.Instance.GetString("TimeM") ?? "m";
         string second = MultilingualManager.Instance.GetString("TimeS") ?? "s";
-        string settleStr = MultilingualManager.Instance.GetString("Settling") ?? "结算中...";
+        string settleStr = MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中...";
 
         while (RemainingSeconds > 0)
         {
@@ -210,9 +217,9 @@ public class ZenRankManager : MonoBehaviour
             yield return wait;
             RemainingSeconds--; // 全局统一递减
         }
-
         // 倒计时结束，广播结算状态
-        OnRankTimerTick?.Invoke(0, settleStr);
+        if(RemainingSeconds == 0)
+            OnRankTimerTick?.Invoke(0, settleStr);
     }
     // 统一的时间格式化方法
     private string FormatTime(int seconds, string d, string h, string m, string s)
@@ -221,6 +228,22 @@ public class ZenRankManager : MonoBehaviour
         if (ts.TotalDays >= 1) return $"{ts.Days}{d}{ts.Hours:D2}{h}";
         if (ts.TotalHours >= 1) return $"{(int)ts.TotalHours}{h}{ts.Minutes:D2}{m}";
         return $"{ts.Minutes:D2}{m}{ts.Seconds:D2}{s}";
+    }
+    /// <summary>
+    /// 返回 NextRemainingSeconds 格式化后的时间字符串（如 "1d 02h" "15m 30s"）
+    /// </summary>
+    public string GetNextRemainingTimeFormatted()
+    {
+        // 无效值或负数则返回结算中文本
+        if (NextRemainingSeconds <= 0)
+        {
+            return MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中...";
+        }
+        string day = MultilingualManager.Instance.GetString("TimeD") ?? "d ";
+        string hour = MultilingualManager.Instance.GetString("TimeH") ?? "h ";
+        string minute = MultilingualManager.Instance.GetString("TimeM") ?? "m";
+        string second = MultilingualManager.Instance.GetString("TimeS") ?? "s";
+        return FormatTime(NextRemainingSeconds, day, hour, minute, second);
     }
     // ==========================================
     // 🌟 核心修复：获取排行榜上下文玩家 (Vita式真实感)
@@ -257,52 +280,15 @@ public class ZenRankManager : MonoBehaviour
                 contextPlayers.Add(p);
             }
         }
-        
-        // if (contextPlayers.Count < 4)
-        // {
-        //     int botsNeeded = 4 - contextPlayers.Count;
-        //     
-        //     // 1. 寻找当前环境里的【最大名次】和【最低分数】
-        //     int maxExistingRank = newRank > 0 ? newRank : 1;
-        //     int minExistingScore =  MyCurrentRankData?.score ?? 100;
-        //
-        //     foreach (var p in contextPlayers)
-        //     {
-        //         if (p.Rank > maxExistingRank) maxExistingRank = p.Rank;
-        //         if (p.Score < minExistingScore) minExistingScore = p.Score;
-        //     }
-        //     
-        //     // 2. 假人的名次严格从已有最大名次往后顺延
-        //     int startBotRank = maxExistingRank + 1; 
-        //     
-        //     for (int i = 0; i < botsNeeded; i++)
-        //     {
-        //         contextPlayers.Add(new ZenRankState
-        //         {
-        //             Rank = startBotRank + i, // 保证绝不出现并列名次
-        //             Score = Mathf.Max(10, minExistingScore - ((i + 1) * 35) + UnityEngine.Random.Range(-5, 5)), // 分数严格低于已有最低分
-        //             Name = "神秘修士_" + UnityEngine.Random.Range(1000, 9999),
-        //             Avatar = UnityEngine.Random.Range(0, 15) 
-        //         });
-        //     }
-        // }
 
         // 4. 再次确保按名次排好序，交给 UI 层
         return contextPlayers.OrderBy(p => p.Rank).ToList();
     }
-    // 动画播完后调用，对齐数据
-    public void SyncCachedRank()
-    {
-        if (MyCurrentRankData != null)
-        {
-            CachedOldRank = MyCurrentRankData.rank;
-            CachedOldScore = MyCurrentRankData.score;
-        }
-    }
+    
     /// <summary>
     /// 全局通用：检查是否需要结算并弹出界面
     /// </summary>
-    public IEnumerator CheckAndShowSettlementRoutine(System.Action<bool> onComplete = null)
+    public IEnumerator CheckAndShowSettlementRoutine(string sourcePanel = null,System.Action<bool> onComplete = null)
     {
         bool isFetchFinished = false;
         bool hasSettlement = false;
@@ -312,16 +298,13 @@ public class ZenRankManager : MonoBehaviour
         int oldRank = 0;
 
         // 1. 请求后端获取玩家最新状态和结算信息
-        yield return APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
+        yield return APIGateway.Instance.LeaderboardApi.CheckZenSettlement((res) =>
         {
             if (res != null)
             {
-                GameDataManager.Instance.UserData.Zenlevel = res.zen_level;
-                GameDataManager.Instance.UserData.zenCount = res.zen_count;
-                
                 hasSettlement = res.has_settlement;
-                oldLevelCode = res.old_zen_level;
-                newLevelCode = res.zen_level;
+                oldLevelCode = res.old_level;
+                newLevelCode = res.current_level;
                 settlementType = res.settlement_type;
                 oldRank = res.old_rank;
             }
@@ -358,7 +341,7 @@ public class ZenRankManager : MonoBehaviour
             yield return APIGateway.Instance.LeaderboardApi.ClaimZenReward((res) =>
             {
                 // 收到服务端确认后，本地应用新段位
-                GameDataManager.Instance.UserData.Zenlevel = newLevelCode;
+                GameDataManager.Instance.UserData.Zenlevel = res.new_level;
                 
                 // 🌟 核心状态切换：强行把玩家踢出榜单，要求他等会儿必须点雷达匹配重新加入！
                 GameDataManager.Instance.UserData.isJoinedZenRank = false; 
@@ -369,13 +352,52 @@ public class ZenRankManager : MonoBehaviour
                 isClaimCompleted = true;
             });
             yield return new WaitUntil(() => isClaimCompleted);
-            SystemManager.Instance.ShowPanel(PanelType.ZenRankStartScreen);
+            Debug.Log("在打开加入面板前，已经完成领奖了");
+            UIWindow window = SystemManager.Instance.ShowPanel(PanelType.ZenRankStartScreen);
+            if (!string.IsNullOrEmpty(sourcePanel) && window != null)
+                window.GetComponent<ZenRankStartScreen>().SetSourcePanel(sourcePanel);
+            
             onComplete?.Invoke(true);
             Debug.Log("结算界面关闭，服务器已确认领奖，流程继续");
+            ClearRankCache();
         }
         else
         {
             onComplete?.Invoke(false);
         }
+    }
+    
+    /// <summary>
+    /// 遍历服务器下发的所有玩家数据，根据我最新打出的绝对分数，预测我的真实名次
+    /// </summary>
+    public int PredictMyRealRank(int realOldRank, int expectedNewScore)
+    {
+        // 默认名次：如果没上榜，先给个极大的数
+        int predictedRank = realOldRank > 0 ? realOldRank : 9999;
+    
+        var allRanks = new List<ZenRankState>();
+        allRanks.AddRange(TopRanks);
+        allRanks.AddRange(MiddleRanks);
+        allRanks.AddRange(BottomRanks);
+
+        // 剔除玩家自己
+        string myName = GameDataManager.Instance.UserData.UserName;
+        var otherPlayers = allRanks.Where(p => p.Name != myName && p.Rank > 0).ToList();
+
+        // 拿着我的新分数，去跟所有人硬碰硬对比
+        foreach (var p in otherPlayers)
+        {
+            // 只要我的分数大于等于他，并且他的名次比我现在的预测名次高，我就能顶替他！
+            if (expectedNewScore >= p.Score && p.Rank < predictedRank)
+            {
+                predictedRank = p.Rank; 
+            }
+        }
+        if (predictedRank == 9999) 
+        {
+            return otherPlayers.Count + 1;
+        }
+        // 兜底防御：最高是第 1 名
+        return Mathf.Max(1, predictedRank);
     }
 }

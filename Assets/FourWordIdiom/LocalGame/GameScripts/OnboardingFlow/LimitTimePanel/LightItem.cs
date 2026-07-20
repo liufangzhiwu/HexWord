@@ -47,7 +47,7 @@ public class LightItem : MonoBehaviour
         gouImage.transform.localScale=Vector3.zero;
         if (Curlimitdata.id >= 1)
         {
-            jianImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("jian");
+            jianImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("jian");
             jianImage.SetNativeSize();
         }
         
@@ -99,20 +99,20 @@ public class LightItem : MonoBehaviour
         {
             case LimitRewordType.Coins:
                 if(max)
-                    return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
-                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin1");
+                    return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin1");
             case LimitRewordType.Butterfly:
-                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
             case LimitRewordType.Tipstool:
-                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
-            case LimitRewordType.SingleWordTipsttool:
-                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
+            case LimitRewordType.AutoComplete:
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
             case LimitRewordType.Min5Double:
-                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
             case LimitRewordType.Min15Double:
-                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
             case LimitRewordType.Pupas:
-                return AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("limit_pupas");
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("limit_pupas");
                
         }
 
@@ -143,7 +143,7 @@ public class LightItem : MonoBehaviour
                     gouImage.transform.DOScale(Vector3.one, 0.4f);
                     if (Curlimitdata.id >= 1)
                     {
-                        jianImage.sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("anjian");
+                        jianImage.sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("anjian");
                         jianImage.SetNativeSize();
                     }
                 }
@@ -216,7 +216,7 @@ public class LightItem : MonoBehaviour
                     UpdateRewardValue();
                     if (Curlimitdata.id >= 1)
                     {
-                        jianImage.sprite =  AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("anjian");
+                        jianImage.sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("anjian");
                         jianImage.SetNativeSize();
                     }
                 }
@@ -272,9 +272,9 @@ public class LightItem : MonoBehaviour
                 //GameDataManager.instance.UserData.toolInfo[102].count+=rlist[1];
                 GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist[1],message);
                 break;
-            case LimitRewordType.SingleWordTipsttool:
+            case LimitRewordType.AutoComplete:
                 //GameDataManager.instance.UserData.toolInfo[101].count+=rlist[1];
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleWordTipsttool, rlist[1],message);
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, rlist[1],message);
                 break;
             case LimitRewordType.Min5Double:
                 GameDataManager.Instance.UserData.UpdateLimitEndTime(5);

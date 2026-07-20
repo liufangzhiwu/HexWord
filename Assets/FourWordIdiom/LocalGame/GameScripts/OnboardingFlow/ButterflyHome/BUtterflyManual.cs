@@ -33,7 +33,7 @@ public class BUtterflyManual : UIWindow
         base.OnEnable();
         if (manualAtlas == null)
         {
-            manualAtlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflymaunal");
+            manualAtlas = AdvancedBundleLoader.SharedInstance.LoadAtlas("butterfly_ui", "UI_Butterflymaunal");
         }
 
         StartCoroutine(UpdateUI());
@@ -73,7 +73,7 @@ public class BUtterflyManual : UIWindow
             if (isOwn)
             {
                 starParent.GetComponent<Image>().sprite =
-                    AssetBundleLoader.SharedInstance.GetSpriteFromAtlas($"star_show_"+ butterflyInfo.Rarity, "Butterfly_UI");
+                    AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas($"star_show_"+ butterflyInfo.Rarity, "Butterfly_UI");
                 butterfly.GetComponent<Image>().sprite = manualAtlas.GetSprite(butterflyInfo.ButterflyIcon);
            
                 nameParent.GetChild(0).gameObject.SetActive(true);
@@ -83,8 +83,8 @@ public class BUtterflyManual : UIWindow
             else
             {
                 starParent.GetComponent<Image>().sprite =
-                    AssetBundleLoader.SharedInstance.GetSpriteFromAtlas($"star_hide_"+ butterflyInfo.Rarity, "Butterfly_UI");
-                butterfly.GetComponent<Image>().sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("butterfly_ghost", "Butterfly_UI");
+                    AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas($"star_hide_"+ butterflyInfo.Rarity, "Butterfly_UI");
+                butterfly.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("butterfly_ghost", "Butterfly_UI");
                 nameParent.GetChild(0).gameObject.SetActive(false);
                 nameParent.GetChild(1).gameObject.SetActive(true);
             }

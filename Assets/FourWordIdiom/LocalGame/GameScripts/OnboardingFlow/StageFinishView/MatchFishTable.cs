@@ -112,17 +112,17 @@ public class MatchFishTable : MonoBehaviour
                  switch (rank)
                  {
                      case 1:
-                         rankimage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtnred");
+                         rankimage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtnred");
                          break;
                      case 2:
-                         rankimage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtnblue");
+                         rankimage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtnblue");
                          break;
                      case 3:
-                         rankimage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtngreen");
+                         rankimage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtngreen");
                          break;
                      case 4:
                      case 5:
-                         rankimage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtngrey");
+                         rankimage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fishbtngrey");
                          break;
         
                  }

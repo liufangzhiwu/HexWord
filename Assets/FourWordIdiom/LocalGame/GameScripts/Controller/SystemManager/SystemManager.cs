@@ -185,7 +185,7 @@ public class SystemManager : MonoBehaviour
     {
         if (_panelConfig == null)
         {
-            _panelConfig = AssetBundleLoader.SharedInstance
+            _panelConfig = AdvancedBundleLoader.SharedInstance
                 .LoadScriptableObject("objects", "InterfaceConfigs") as Configuration;
         }
     }
@@ -232,11 +232,11 @@ public class SystemManager : MonoBehaviour
         var panelData = _panelConfig.GetViewsData(panelName);
         if (panelData.prefab == null)
         {
-            AssetBundleLoader.SharedInstance.LoadAtlas(
+            AdvancedBundleLoader.SharedInstance.LoadAtlas(
                 panelData.spriteAtlasName.ToLower(), 
                 panelName);
                 
-            panelData.prefab = AssetBundleLoader.SharedInstance.LoadGameObject(
+            panelData.prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject(
                 panelData.bundleName.ToLower(), 
                 panelName);
         }

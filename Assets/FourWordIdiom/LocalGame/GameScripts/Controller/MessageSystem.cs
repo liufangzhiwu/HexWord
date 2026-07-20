@@ -81,14 +81,14 @@ public class MessageSystem : MonoBehaviour
     /// </summary>
     private IEnumerator LoadTipPrefab()
     {
-        var loadRequest = AssetBundleLoader.SharedInstance.LoadGameObject(
+        var loadRequest = AdvancedBundleLoader.SharedInstance.LoadGameObject(
             bundleName,
             prefabName
         );
       
         if (loadingPanel == null)
         {
-            GameObject prefab = AssetBundleLoader.SharedInstance.LoadGameObject(bundleName, "LoadingScreen");
+            GameObject prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject(bundleName, "LoadingScreen");
             loadingPanel = Instantiate(prefab,transform); // 实例化加载面板
             loadingPanel.gameObject.SetActive(false);
         }

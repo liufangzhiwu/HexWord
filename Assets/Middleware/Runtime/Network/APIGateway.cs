@@ -35,7 +35,7 @@ public class APIGateway: MonoBehaviour
     {
         
 #if Unity_ShowLog
-            APIUrl = "https://hex.prod.mindwordplay.cn/api/";
+            APIUrl = "https://hex.test.mindwordplay.cn/api/";
 #else
             APIUrl = "https://hex.prod.mindwordplay.cn/api/";
 #endif

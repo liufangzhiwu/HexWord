@@ -73,7 +73,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
 		CreatePuzzleParent();
         if (PuzzleItemObj == null)
         {
-            PuzzleItemObj = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem", "TileView");
+            PuzzleItemObj = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "TileView");
         }
 		//创建对象池用于管理字块
 		letterTilePool = new ObjectPool(PuzzleItemObj.gameObject, PuzzleParent,3, PoolBehaviour.CanvasGroup);        

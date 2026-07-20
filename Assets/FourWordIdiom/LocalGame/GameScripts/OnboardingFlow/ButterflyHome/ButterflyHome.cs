@@ -54,7 +54,7 @@ public class ButterflyHome : UIWindow
                 
         if (butterflyPrefab is null)
         {
-            butterflyPrefab = AssetBundleLoader.SharedInstance.LoadGameObject("scenehudie","Scenes_hudie03");
+            butterflyPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("scenehudie","Scenes_hudie03");
         }
         butterflyPool = new ObjectPool(butterflyPrefab.gameObject,ObjectPool.CreatePoolContainer(transform, "hudie_pool"), 3, PoolBehaviour.GameObject);
 
@@ -129,7 +129,7 @@ public class ButterflyHome : UIWindow
     {
         // 背景先删除再创建
         Destroy(transform.GetChild(0).gameObject);
-        GameObject go = AssetBundleLoader.SharedInstance.LoadGameObject("butterflybg", "ButterflyBg"+ GameDataManager.Instance.ButterflyData.currGarden);
+        GameObject go = AdvancedBundleLoader.SharedInstance.LoadGameObject("butterflybg", "ButterflyBg"+ GameDataManager.Instance.ButterflyData.currGarden);
         if(go == null)
             yield break;
         GameObject bg = Instantiate(go, transform);
@@ -207,7 +207,7 @@ public class ButterflyHome : UIWindow
 
     private void OnSceneClick()
     {
-        GameObject GO = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyGarden");
+        GameObject GO = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyGarden");
         GameObject scene =  Instantiate(GO, transform.parent);
     }
 
@@ -285,7 +285,7 @@ public class ButterflyHome : UIWindow
             if (nextGardenId is not -1)
             {
                 // MessageSystem.Instance.ShowTip("当前蝶园已收集完, 即将解锁下一个场景!");
-                GameObject GO = AssetBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyGarden");
+                GameObject GO = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem","ButterflyGarden");
                 yield return new WaitForSeconds(0.5f);
                 GameObject scene = Instantiate(GO, transform.parent);
                 ButterflyGarden garden = scene.GetComponent<ButterflyGarden>();
@@ -348,7 +348,7 @@ public class ButterflyHome : UIWindow
     private IEnumerator PlayUnlockEffect(ButterflyInfo butterflyInfo)
     {
         // 1. 加载并实例化
-        GameObject gradePab = AssetBundleLoader.SharedInstance.LoadGameObject("scenehudie","UI_hudie0" + butterflyInfo.Rarity);
+        GameObject gradePab = AdvancedBundleLoader.SharedInstance.LoadGameObject("scenehudie","UI_hudie0" + butterflyInfo.Rarity);
         GameObject gradeGo = Instantiate(gradePab, transform.parent);
         CanvasGroup nameCG = gradeGo.GetComponentInChildren<CanvasGroup>(true);
         nameCG.alpha = 0;
@@ -356,7 +356,7 @@ public class ButterflyHome : UIWindow
         //Canvas cvs = gradeGo.GetComponentInChildren<Canvas>(true);
         //if(cvs != null) cvs.sortingLayerName = "BaseEffect";
         nameCG.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString(butterflyInfo.Name,"hudie");
-        SpriteAtlas atlas = AssetBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflymaunal");
+        SpriteAtlas atlas = AdvancedBundleLoader.SharedInstance.LoadAtlas("butterfly_ui","UI_Butterflymaunal");
         gradeGo.GetComponentInChildren<Image>(true).sprite = atlas.GetSprite(butterflyInfo.ButterflyIcon);
         
         yield return new WaitForSeconds(0.8f);
@@ -802,8 +802,8 @@ public class ButterflyHome : UIWindow
         butterfly.SetActive(false);
         
         SpineSpriteReplacer replacer = butterfly.GetComponent<SpineSpriteReplacer>();
-        Sprite body = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts", $"{butterflyInfo.ButterflyIcon}-body");
-        Sprite wing = AssetBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts", $"{butterflyInfo.ButterflyIcon}-wing");
+        Sprite body = AdvancedBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts", $"{butterflyInfo.ButterflyIcon}-body");
+        Sprite wing = AdvancedBundleLoader.SharedInstance.GetSpriteFromBundle("butterfly_parts", $"{butterflyInfo.ButterflyIcon}-wing");
         
         yield return null;
         

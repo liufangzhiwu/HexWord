@@ -23,6 +23,7 @@ public class LeaderboardResponse
     public LeaderboardEntry my;
     public string updated_at;
     public int remaining_seconds; // 🌟 接收后端传来的秒数
+    public int next_remaining_seconds; // 下一期的时间
     public List<LeaderboardEntry> top;
     public List<LeaderboardEntry> middle;
     public List<LeaderboardEntry> bottom;
@@ -35,4 +36,14 @@ public class ClaimZenRewardResponse
     public string message;          // 错误信息 (如果有)
     public string new_level;        // 结算后的新段位 (如 "ZenState02")
     public string settlement_type;  // 结算类型 ("up", "down", "keep")
+}
+
+// 对应的响应数据结构
+public class ZenSettlementResponse
+{
+    public bool has_settlement;
+    public string current_level;
+    public string old_level;
+    public string settlement_type; // up, down, keep
+    public int old_rank;
 }

@@ -84,12 +84,6 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 2508230401924753788, guid: 0c91000c32552554e950874e209f4d91,
       type: 3}
-  - panelName: SignWaterScreen
-    panelLayer: UpPopPanel
-    bundleName: OnboardingFlow
-    spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 2508230401924753788, guid: 7a5e878dacc175840bb62c0c9b435402,
-      type: 3}
   - panelName: LimitHelpScreen
     panelLayer: UpPopPanel
     bundleName: OnboardingFlow
@@ -274,4 +268,40 @@ MonoBehaviour:
     bundleName: OnboardingFlow
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 2508230401924753788, guid: 97d2b4821d222894ca3787aec41c4a87,
+      type: 3}
+  - panelName: SignWinScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 31da2eabbc72955499d6e7a31aebef6b,
+      type: 3}
+  - panelName: SignAwardScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 6527089118256139734, guid: e62f131b033e1b5468635891d6414afe,
+      type: 3}
+  - panelName: ReturnFirstWinScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 95b2b19775b302b4faf5ee4d40402f8f,
+      type: 3}
+  - panelName: SevenSignScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: b30555fef0f782e4a9d88c3c5740ab08,
+      type: 3}
+  - panelName: ZenRankStartScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 6527089118256139734, guid: 91689ff30ec8e8d4a8bb73cc1e024f0a,
+      type: 3}
+  - panelName: ZenRankChangePanel
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 4670618091855325503, guid: 318e2f75a52e21c4da227211cf2661c3,
       type: 3}
