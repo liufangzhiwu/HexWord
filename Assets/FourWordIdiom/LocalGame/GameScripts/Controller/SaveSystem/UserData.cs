@@ -56,10 +56,8 @@ public class UserData
     #region 系统设置数据
 
     public bool IsMusicOn = true; // 背景音乐开关
-
     public bool IsSoundOn = true; // 音效开关
-
-    //public bool IsVibrationOn ;    // 震动反馈开关
+    public bool IsVibrationOn =true;    // 震动反馈开关
     public string LanguageCode; // 当前语言代码
     public bool IsAgreePrivacy; // 同意用户隐私协议
 
@@ -298,6 +296,7 @@ public class UserData
         LanguageCode = GetLanguage();
         IsMusicOn = true;
         IsSoundOn = true;
+        IsVibrationOn = true;
         IsAgreePrivacy = false;
         Zenlevel = "ZenState01";
         first_version = "";
@@ -468,6 +467,7 @@ public class UserData
         first_version=user.first_version;
         IsMusicOn = user.IsMusicOn;
         IsSoundOn = user.IsSoundOn;
+        IsVibrationOn= user.IsVibrationOn;
         IsAgreePrivacy = user.IsAgreePrivacy;
         Rigister = user.Rigister;
         firstLoginTime = user.firstLoginTime ?? DateTime.Now.ToString();
