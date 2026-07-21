@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Middleware;
 using UnityEngine;
 using UnityEngine.HuaweiAppGallery;
@@ -30,6 +31,7 @@ public sealed class GameCoreManager: MonoBehaviour
     #endregion
     
     [SerializeField] private Image backgroundImage;
+    [SerializeField] private GameObject changjing01_texiao;
     [Header("Blur Settings")]
     [SerializeField] private Material blurMaterial; // 挂载你第一版写的3x3模糊Shader的材质球
     [Range(1, 8)] 
@@ -45,6 +47,19 @@ public sealed class GameCoreManager: MonoBehaviour
     public bool IsTrueAuto;
     public GameObject AutoLevelTalbe;
     public PanelState PanelState=PanelState.Null;
+    
+    
+    // 原 ps 变量删除，换成以下：
+    private List<ParticleSystem> allPs = new List<ParticleSystem>();
+    private List<ParticleSystem.Particle[]> allParticleArrays = new List<ParticleSystem.Particle[]>();
+    private List<float> originalRates = new List<float>();
+
+    // 协程管理
+    private Coroutine fadeInCoroutine;
+    private Coroutine fadeOutCoroutine;
+
+    // 新增：淡入时是否已经完成（避免重复）
+    private bool isFadeInComplete = false;
 
     void Awake()
     {
@@ -80,10 +95,29 @@ public sealed class GameCoreManager: MonoBehaviour
 #endif
         
         LimitTimeManager.Instance.StartTickTimer();
+        StreakManager.Instance.UpdateWinStreak();
         
         ThemeDataItem curDataItem=ThemeManager.Instance.GetThemeDataItem(GameDataManager.Instance.UserData.userthemeid);
         Sprite sprite = GetSprite(curDataItem.iconName);
+        
         ChangeBackgroundImage(sprite);
+        
+        // ===== 替换原来获取 ps 的代码 =====
+        allPs.Clear();
+        allParticleArrays.Clear();
+        originalRates.Clear();
+
+        // 获取所有子物体上的粒子系统（包括自身若有）
+        allPs.AddRange(changjing01_texiao.GetComponentsInChildren<ParticleSystem>());
+
+        foreach (var ps in allPs)
+        {
+            // 预分配每个粒子系统的粒子数组
+            int maxParticles = ps.main.maxParticles;
+            allParticleArrays.Add(new ParticleSystem.Particle[maxParticles]);
+            // 保存原始发射率（用于淡入时恢复）
+            originalRates.Add(ps.emission.rateOverTime.constant);
+        }
     }
     
     
@@ -187,8 +221,175 @@ public sealed class GameCoreManager: MonoBehaviour
         }
     }
 
+       /// <summary>
+     /// 让所有子粒子系统从透明淡入到不透明（同时恢复发射）
+     /// </summary>
+     public void FadeIn(float duration = 0.5f)
+     {
+         // 如果已经处于淡入完成状态，跳过（可根据需要调整）
+         if (isFadeInComplete && changjing01_texiao.activeSelf) return;
+ 
+         // 停止正在进行的淡入淡出协程
+         if (fadeInCoroutine != null) StopCoroutine(fadeInCoroutine);
+         if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
+ 
+         // 确保物体激活
+         if (!changjing01_texiao.activeSelf)
+             changjing01_texiao.SetActive(true);
+ 
+         fadeInCoroutine = StartCoroutine(FadeInCoroutine(duration));
+     }
+ 
+     // 淡入协程
+     private IEnumerator FadeInCoroutine(float duration)
+     {
+         // 1. 恢复所有粒子系统的发射率（并确保发射开启）
+         for (int i = 0; i < allPs.Count; i++)
+         {
+             var emission = allPs[i].emission;
+             emission.rateOverTime = originalRates[i];
+             emission.rateOverDistance = 0; // 可根据需要恢复
+             // 如果之前被Stop了，重新Play
+             allPs[i].Play();
+         }
+ 
+         float elapsed = 0f;
+         // 先清除掉之前可能残留的粒子（透明度为0也可以，但最好清空重新产生）
+         // 这里选择不清除，而是将所有现存粒子alpha置0再淡入，更平滑
+         // 获取所有粒子，先设为0
+         foreach (var ps in allPs)
+         {
+             int count = ps.GetParticles(allParticleArrays[allPs.IndexOf(ps)]);
+             var particles = allParticleArrays[allPs.IndexOf(ps)];
+             for (int i = 0; i < count; i++)
+             {
+                 Color c = particles[i].startColor;
+                 c.a = 0f;
+                 particles[i].startColor = c;
+             }
+             ps.SetParticles(particles, count);
+         }
+ 
+         // 2. 逐渐增加透明度
+         while (elapsed < duration)
+         {
+             elapsed += Time.deltaTime;
+             float alpha = Mathf.Lerp(0f, 1f, elapsed / duration);
+ 
+             for (int i = 0; i < allPs.Count; i++)
+             {
+                 int count = allPs[i].GetParticles(allParticleArrays[i]);
+                 var particles = allParticleArrays[i];
+                 for (int j = 0; j < count; j++)
+                 {
+                     Color c = particles[j].startColor;
+                     c.a = alpha;
+                     particles[j].startColor = c;
+                 }
+                 allPs[i].SetParticles(particles, count);
+             }
+ 
+             yield return null;
+         }
+ 
+         // 3. 确保所有粒子alpha = 1（最后微调）
+         for (int i = 0; i < allPs.Count; i++)
+         {
+             int count = allPs[i].GetParticles(allParticleArrays[i]);
+             var particles = allParticleArrays[i];
+             for (int j = 0; j < count; j++)
+             {
+                 Color c = particles[j].startColor;
+                 c.a = 1f;
+                 particles[j].startColor = c;
+             }
+             allPs[i].SetParticles(particles, count);
+         }
+ 
+         isFadeInComplete = true;
+         fadeInCoroutine = null;
+     }
+
+
+    // 原 FadeOut 方法改为调用下面的协程
+     public void FadeOut(float duration = 0.5f)
+     {
+         FadeOut(duration, null);
+     }
+
+    // 新增重载：支持完成回调（比如隐藏物体）
+     public void FadeOut(float duration, Action onComplete)
+     {
+         if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
+         if (fadeInCoroutine != null) StopCoroutine(fadeInCoroutine);
+
+         fadeOutCoroutine = StartCoroutine(FadeOutCoroutine(duration, onComplete));
+     }
+
+     private IEnumerator FadeOutCoroutine(float duration, Action onComplete)
+     {
+         // 1. 停止发射新粒子
+         foreach (var ps in allPs)
+         {
+             var emission = ps.emission;
+             emission.rateOverTime = 0f;
+             emission.rateOverDistance = 0f;
+         }
+
+         float elapsed = 0f;
+
+         // 2. 将现有粒子透明度从1降到0
+         while (elapsed < duration)
+         {
+             elapsed += Time.deltaTime;
+             float alpha = Mathf.Lerp(1f, 0f, elapsed / duration);
+
+             for (int i = 0; i < allPs.Count; i++)
+             {
+                 int count = allPs[i].GetParticles(allParticleArrays[i]);
+                 var particles = allParticleArrays[i];
+                 for (int j = 0; j < count; j++)
+                 {
+                     Color c = particles[j].startColor;
+                     c.a = alpha;
+                     particles[j].startColor = c;
+                 }
+                 allPs[i].SetParticles(particles, count);
+             }
+
+             yield return null;
+         }
+
+         // 3. 彻底清除所有粒子
+         foreach (var ps in allPs)
+         {
+             ps.Clear();
+         }
+
+         isFadeInComplete = false;
+         fadeOutCoroutine = null;
+
+         // 4. 执行回调（例如隐藏物体）
+         onComplete?.Invoke();
+     }
+
     public void SetBackgroundImage(Color color)
     {
+        if (PanelState == PanelState.GamePingPanel || PanelState == PanelState.GameHexPanel)
+        {
+            //changjing01_texiao.gameObject.SetActive(false);
+            FadeOut(0.5f);
+
+        }else
+        {
+            if (GameDataManager.Instance.UserData.userthemeid == 0)
+            {
+                FadeIn(0.5f);
+            }
+            
+            changjing01_texiao.gameObject.SetActive(GameDataManager.Instance.UserData.userthemeid==0);
+        }
+        
         backgroundImage.color = Color.Lerp(backgroundImage.color, color, 2f);
     }
     
