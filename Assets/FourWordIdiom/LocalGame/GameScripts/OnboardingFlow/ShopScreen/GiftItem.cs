@@ -38,7 +38,7 @@ public class GiftItem : MonoBehaviour
                 countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.AutoComplete:
-                spritename = "shop_reset";
+                spritename = "rocket";
                 countText.text ="\u00d7 "+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.RemoveAds:

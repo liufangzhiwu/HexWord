@@ -81,7 +81,6 @@ SpriteAtlas:
     - c97a40b14dfa03f49af1a29b8510b556: 21300000
     - effa4eb1f6eb0b54ba79e4a1ba6c48a6: 21300000
     - e15761c18aafb2a458b24751798885d7: 21300000
-    - 5f0145c1f6cccdd42934c58fd1b9568c: 21300000
     - 4f8592f168bb91243988c48d8e195506: 21300000
     - ed3e91023b3196e438cdc489257dac82: 21300000
     - 5ef604029d7f60049814db9021c25173: 21300000
@@ -205,7 +204,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: c97a40b14dfa03f49af1a29b8510b556, type: 3}
   - {fileID: 21300000, guid: effa4eb1f6eb0b54ba79e4a1ba6c48a6, type: 3}
   - {fileID: 21300000, guid: e15761c18aafb2a458b24751798885d7, type: 3}
-  - {fileID: 21300000, guid: 5f0145c1f6cccdd42934c58fd1b9568c, type: 3}
   - {fileID: 21300000, guid: 4f8592f168bb91243988c48d8e195506, type: 3}
   - {fileID: 21300000, guid: ed3e91023b3196e438cdc489257dac82, type: 3}
   - {fileID: 21300000, guid: 5ef604029d7f60049814db9021c25173, type: 3}
@@ -328,7 +326,6 @@ SpriteAtlas:
   - maxbutterfly
   - name_pinzi
   - "\u8776\u86F92 (1)"
-  - UI_button_Bg
   - clock
   - btnicon
   - UI_Icon_lojd

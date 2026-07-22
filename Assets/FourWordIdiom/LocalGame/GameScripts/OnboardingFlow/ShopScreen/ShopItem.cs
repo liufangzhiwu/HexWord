@@ -689,13 +689,14 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     {
         //todo 关闭loading界面
         Debug.Log("购买成功: " + item.ProductId);
-        Game.self.Shop.CurrentShopDataItem=shopDataItem.DeepCopy();
-        
-        SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
         
         //var items = new List<AnalyticMgr.Item>();
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
+            Game.self.Shop.CurrentShopDataItem=shopDataItem.DeepCopy();
+            
+            SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
+            
             foreach (var dataitem in shopDataItem.productContent)
             {
                 int count = int.Parse(dataitem[1]);

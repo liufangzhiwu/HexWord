@@ -79,6 +79,7 @@ SpriteAtlas:
     - 33c4a581f20ab1042bb1bdb638f721ed: 21300000
     - 59ea3691fbe1c5e4fbad3b5aa8a3f6fc: 21300000
     - b81d6c91741f55f4ab90b72153d7b2ad: 21300000
+    - 5f0145c1f6cccdd42934c58fd1b9568c: 21300000
     - 1daf83d140a1f984d8bd9e971856c6cb: 21300000
     - db1978d1e957448a19675ec66420c620: 21300000
     - aa0080e1771994d41bdb5bfa77482126: 21300000
@@ -188,7 +189,6 @@ SpriteAtlas:
     - d07ef42a8ed7a7148a359b538fd79cd9: 21300000
     - 9d40e54a603f44e4b835c3574000932f: 21300000
     - 46d4645a16900a54fbc54b73bc747ff9: 21300000
-    - c90dc58a1eb0bdd409df3060f961f094: 21300000
     - 70a05a9ab6606954f90f4e6509cf8eb0: 21300000
     - bed72eaac5ea32347a345b23919b4747: 21300000
     - 756095ba4a22ed147aa0531769d962aa: 21300000
@@ -278,6 +278,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 33c4a581f20ab1042bb1bdb638f721ed, type: 3}
   - {fileID: 21300000, guid: 59ea3691fbe1c5e4fbad3b5aa8a3f6fc, type: 3}
   - {fileID: 21300000, guid: b81d6c91741f55f4ab90b72153d7b2ad, type: 3}
+  - {fileID: 21300000, guid: 5f0145c1f6cccdd42934c58fd1b9568c, type: 3}
   - {fileID: 21300000, guid: 1daf83d140a1f984d8bd9e971856c6cb, type: 3}
   - {fileID: 21300000, guid: db1978d1e957448a19675ec66420c620, type: 3}
   - {fileID: 21300000, guid: aa0080e1771994d41bdb5bfa77482126, type: 3}
@@ -387,7 +388,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: d07ef42a8ed7a7148a359b538fd79cd9, type: 3}
   - {fileID: 21300000, guid: 9d40e54a603f44e4b835c3574000932f, type: 3}
   - {fileID: 21300000, guid: 46d4645a16900a54fbc54b73bc747ff9, type: 3}
-  - {fileID: 21300000, guid: c90dc58a1eb0bdd409df3060f961f094, type: 3}
   - {fileID: 21300000, guid: 70a05a9ab6606954f90f4e6509cf8eb0, type: 3}
   - {fileID: 21300000, guid: bed72eaac5ea32347a345b23919b4747, type: 3}
   - {fileID: 21300000, guid: 756095ba4a22ed147aa0531769d962aa, type: 3}
@@ -476,6 +476,7 @@ SpriteAtlas:
   - head21
   - UI_Icon_PingTipWord
   - head13
+  - UI_button_Bg
   - Coin2
   - targetgrey
   - itemdi9
@@ -585,7 +586,6 @@ SpriteAtlas:
   - limit_pupas
   - rank2
   - leaf_skin_01
-  - UI_Icon_claim
   - Coin1
   - itemdi15
   - adsicon

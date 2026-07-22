@@ -81,6 +81,8 @@ public class ShopScreen : UIWindow
         
         GameDataManager.Instance.UserData.CheckShopBuyData();
         GameDataManager.Instance.UserData.isHideShopRedPoint=true;
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false);
     }
 
     private void InitUI(int value = 0, bool isanim = false)

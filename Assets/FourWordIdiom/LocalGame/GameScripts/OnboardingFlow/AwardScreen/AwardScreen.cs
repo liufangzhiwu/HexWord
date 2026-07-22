@@ -27,7 +27,7 @@ public class AwardScreen : UIWindow
     private void InitUI()
     {
         ClaimBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ADPopReceive");
-        title.text = MultilingualManager.Instance.GetString("FirstWin");
+        //title.text = MultilingualManager.Instance.GetString("FirstWin");
         //tips.text = MultilingualManager.Instance.GetString("FirstWinRewards");
 
 
@@ -37,15 +37,29 @@ public class AwardScreen : UIWindow
     
      private void InitAwardUI()
     {
-        VictoryRewardConfig rewardConfig= StreakManager.Instance.GetFirstWinSignRewards();
-        rewardItems = rewardConfig.normalRewards;
 
-        for (int i = 0; i < rewardItems.Count; i++)
+        foreach (GameObject rGameObject in rewardList)
         {
-            RewardItem rewardItem = rewardItems[i];
-            int rewardid = i;
-            ShowItemUI(rewardItem,rewardid);
+            rGameObject.gameObject.SetActive(false);
         }
+        
+        //var items = new List<AnalyticMgr.Item>();
+        if (Game.self.Shop.CurrentShopDataItem!=null)
+        {
+            for (int i = 0; i <  Game.self.Shop.CurrentShopDataItem.productContent.Count; i++)
+            {
+                var dataitem = Game.self.Shop.CurrentShopDataItem.productContent[i];
+
+                RewardItem rewardItem = new RewardItem()
+                {
+                    type = int.Parse(dataitem[0]),
+                    amount = int.Parse(dataitem[1])
+                };
+                int reward = i;
+                ShowItemUI(rewardItem,reward);
+            }
+        }
+       
     }
     
     
@@ -54,26 +68,32 @@ public class AwardScreen : UIWindow
         LimitRewordType type = (LimitRewordType)rlist.type;
         Image icon=rewardList[rewardid].GetComponentInChildren<Image>();
         Text count=rewardList[rewardid].GetComponentInChildren<Text>();
+        rewardList[rewardid].SetActive(true);
        
         icon.preserveAspect = true;
-        string message = "回归首胜奖励";
+        //string message = "回归首胜奖励";
        
         switch (type)
         {
             case LimitRewordType.Coins:
                 count.text="\u00d7"+rlist.amount;
                 icon.sprite = GetSprite(type);
-                GameDataManager.Instance.UserData.UpdateGold(rlist.amount,true,true,message);
+                //GameDataManager.Instance.UserData.UpdateGold(rlist.amount,true,true,message);
                 break;
             case LimitRewordType.Butterfly:
                count.text="\u00d7"+rlist.amount;
                icon.sprite = GetSprite(type);
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, rlist.amount,message);
+                //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, rlist.amount,message);
+                break;
+            case LimitRewordType.AutoComplete:
+                count.text="\u00d7"+rlist.amount;
+                icon.sprite = GetSprite(type);
+                //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist.amount,message);
                 break;
             case LimitRewordType.Tipstool:
                 count.text="\u00d7"+rlist.amount;
                 icon.sprite = GetSprite(type);
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist.amount,message);
+                //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist.amount,message);
                 break;
         }
     }
@@ -89,8 +109,8 @@ public class AwardScreen : UIWindow
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
             case LimitRewordType.Tipstool:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
-            case LimitRewordType.Resettool:
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
+            case LimitRewordType.AutoComplete:
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
             case LimitRewordType.Pupas:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Pupas");
         }
