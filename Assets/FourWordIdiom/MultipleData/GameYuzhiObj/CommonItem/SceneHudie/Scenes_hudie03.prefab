@@ -331,7 +331,7 @@ MonoBehaviour:
   initialFlipY: 0
   startingAnimation: run01
   startingLoop: 1
-  timeScale: 1
+  timeScale: 2
   freeze: 0
   layoutScaleMode: 0
   referenceSize: {x: 50, y: 50}

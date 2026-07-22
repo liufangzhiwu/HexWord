@@ -213,6 +213,7 @@ public class SignWinScreen : UIWindow
             {
                 DayCells[i].GetComponent<Animator>().enabled = true;
                 DayCells[i].signMark.gameObject.SetActive(GameDataManager.Instance.UserData._signSaveData.currentStreak%7!=0);
+                AudioManager.Instance.PlaySoundEffect("winday");
                 //DayCells[i].signMark.gameObject.SetActive(GameDataManager.Instance.UserData._signSaveData.currentStreak != 7);
             }
         }

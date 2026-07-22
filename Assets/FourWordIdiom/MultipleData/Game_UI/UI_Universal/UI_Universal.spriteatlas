@@ -96,7 +96,6 @@ SpriteAtlas:
     - b7462ef2e1fc76c42a67c4e1ce6ad44b: 21300000
     - bc423523e1087ad49b5a263d55d57a58: 21300000
     - f0a7df23624f84489991481722517908: 21300000
-    - 0526f3837c1ece949aee3e4a00dba353: 21300000
     - d70c34e3a648b0947aefe7c5856a2760: 21300000
     - 59bea7f3f30483e4a8b1a0c8365b2b9c: 21300000
     - 106cc9f390a01a043923d85d9a94b65e: 21300000
@@ -296,7 +295,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: b7462ef2e1fc76c42a67c4e1ce6ad44b, type: 3}
   - {fileID: 21300000, guid: bc423523e1087ad49b5a263d55d57a58, type: 3}
   - {fileID: 21300000, guid: f0a7df23624f84489991481722517908, type: 3}
-  - {fileID: 21300000, guid: 0526f3837c1ece949aee3e4a00dba353, type: 3}
   - {fileID: 21300000, guid: d70c34e3a648b0947aefe7c5856a2760, type: 3}
   - {fileID: 21300000, guid: 59bea7f3f30483e4a8b1a0c8365b2b9c, type: 3}
   - {fileID: 21300000, guid: 106cc9f390a01a043923d85d9a94b65e, type: 3}
@@ -495,7 +493,6 @@ SpriteAtlas:
   - head37
   - Reset
   - targetblue
-  - icon_xiao
   - Highlight_162
   - giftdi6
   - zenicon_7
@@ -567,7 +564,7 @@ SpriteAtlas:
   - fishline
   - gold2
   - success_bg
-  - icon_layer
+  - icon_xiao
   - shopads
   - UI_Icon_Butterfly
   - shopgift4

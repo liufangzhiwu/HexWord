@@ -637,6 +637,7 @@ public class PrimaryInterface : UIWindow
         switch (GameDataManager.Instance.UserData.levelMode)
         {
             case 1:
+            case 3:
                 Stage = GameDataManager.Instance.UserData.CurrentHexStage != 0 ? 
                     GameDataManager.Instance.UserData.CurrentHexStage : 1;
                 sprite = LoadheadIcon("icon_xiao");

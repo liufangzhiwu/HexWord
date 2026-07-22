@@ -38,6 +38,59 @@ public class ShopDataItem
         //     return produceNameId_tw;
         return produceNameId;
     }
+    
+    
+    /// <summary>
+    /// 深拷贝当前对象
+    /// </summary>
+    public ShopDataItem DeepCopy()
+    {
+        ShopDataItem copy = new ShopDataItem();
+
+        // 值类型直接复制
+        copy.id = this.id;
+        copy.purchaseType = this.purchaseType;
+        copy.type = this.type;
+        copy.price = this.price;
+        copy.sort = this.sort;
+        copy.isHomeDisplay = this.isHomeDisplay;
+
+        // 字符串（不可变，直接引用即可，也可显式复制）
+        copy.produceNameId = this.produceNameId;
+        copy.showIcon = this.showIcon;
+        copy.name = this.name;
+        copy.des = this.des;
+        copy.pointDes = this.pointDes;
+        copy.homeSort = this.homeSort;
+        copy.limitedTime = this.limitedTime;
+        copy.discount = this.discount;
+
+        // List<string> 深拷贝
+        if (this.unlocked != null)
+            copy.unlocked = new List<string>(this.unlocked);  // 字符串不可变，直接复制引用安全
+        else
+            copy.unlocked = null;
+
+        // List<List<string>> 深拷贝（嵌套列表必须逐层新建）
+        if (this.productContent != null)
+        {
+            copy.productContent = new List<List<string>>();
+            foreach (var innerList in this.productContent)
+            {
+                if (innerList != null)
+                    copy.productContent.Add(new List<string>(innerList));
+                else
+                    copy.productContent.Add(null);
+            }
+        }
+        else
+        {
+            copy.productContent = null;
+        }
+
+        return copy;
+    }
+    
 }
 
 

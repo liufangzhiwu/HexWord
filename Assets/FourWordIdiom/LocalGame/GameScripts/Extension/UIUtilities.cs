@@ -44,6 +44,36 @@ public static class UIUtilities
             {
                 onClickAction?.Invoke();
             }
+           
+            EventDispatcher.instance.TriggerChangeFreeTipsPanel();
+        });
+    }
+    
+    public static void AddVibraClickAction(this Button targetButton, UnityAction onClickAction, string soundName = "Button", bool includeAnimation = true)
+    {
+        targetButton.onClick.AddListener(() =>
+        {
+            if (!string.IsNullOrEmpty(soundName))
+            {
+                AudioManager.Instance.PlaySoundEffect(soundName);
+            }
+            else
+            {
+                AudioManager.Instance.PlaySoundEffect("Button");
+            }
+
+            if (includeAnimation)
+            {
+                targetButton.transform.DOScale(new Vector3(0.85f, 0.85f, 0.85f), 0.11f).OnComplete(() =>
+                {
+                    onClickAction?.Invoke();
+                    targetButton.transform.DOScale(Vector3.one, 0.11f);
+                });
+            }
+            else
+            {
+                onClickAction?.Invoke();
+            }
 
             AudioManager.Instance.TriggerVibration(10, 200);
             EventDispatcher.instance.TriggerChangeFreeTipsPanel();

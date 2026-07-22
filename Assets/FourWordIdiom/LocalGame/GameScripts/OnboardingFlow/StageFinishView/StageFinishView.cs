@@ -12,8 +12,8 @@ using UnityEngine.UI;
 public class StageFinishView : UIWindow
 {
     [Header("UI References")]
-    [SerializeField] private Button SignBtn;
-    [SerializeField] private Button butterflyBtn;
+    //[SerializeField] private Button SignBtn;
+    //[SerializeField] private Button butterflyBtn;
     [SerializeField] private LimitBtnTable _limitBtnTable;
     [SerializeField] private MatchFishTable _matchFishtable;
     [SerializeField] private TaskTable _tasktable;
@@ -42,13 +42,13 @@ public class StageFinishView : UIWindow
     {
         _nextStageButton.AddClickAction(OnNextStageButtonClicked);
         _limitBtnTable._limitTimeEventButton.AddClickAction(OnLimitTimeEventButtonClicked);
-        SignBtn.AddClickAction(ShowSignInPanel);
+        //SignBtn.AddClickAction(ShowSignInPanel);
         Content.onClick.AddListener(() =>
         {
             SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
             
         });
-        butterflyBtn.AddClickAction(OnButterflyClick);
+        //butterflyBtn.AddClickAction(OnButterflyClick);
     }
 
     protected override void OnEnable()

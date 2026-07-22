@@ -689,6 +689,10 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     {
         //todo 关闭loading界面
         Debug.Log("购买成功: " + item.ProductId);
+        Game.self.Shop.CurrentShopDataItem=shopDataItem.DeepCopy();
+        
+        SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
+        
         //var items = new List<AnalyticMgr.Item>();
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
@@ -700,7 +704,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count, true, true,"商店购买"+item.ItemName);
+                        GameDataManager.Instance.UserData.UpdateGold(count, false,false,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.Butterfly:
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count,"商店购买"+item.ItemName);
@@ -754,7 +758,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
         
         
-        MessageSystem.Instance.ShowTip("购买成功！");
+        //MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
     }
     

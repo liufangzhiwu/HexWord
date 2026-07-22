@@ -361,8 +361,17 @@ public class ButterflyHome : UIWindow
         
         yield return new WaitForSeconds(0.8f);
         nameCG.DOFade(1, 1.2f);
+        gradeGo.transform.DOScale(new Vector3(1.1f,1.1f,1.1f),0.2f).OnComplete(() =>
+        {
+            gradeGo.transform.DOScale(Vector3.one, 0.2f);
+        });
         
-        yield return new WaitForSeconds(2.8f);
+        AudioManager.Instance.PlaySoundEffect("hudieReward",1,0.4f);
+        
+        yield return new WaitForSeconds(2f);
+        nameCG.DOFade(0, 0.5f);
+        gradeGo.transform.DOScale(Vector3.zero, 1.8f);
+        yield return new WaitForSeconds(0.5f);
         Destroy(gradeGo);
     }
     #endregion
@@ -521,7 +530,7 @@ public class ButterflyHome : UIWindow
         yield return null;
     }
     
-    /// <summary>
+   /// <summary>
     /// 水平进入场景: 弧形飞到落点，落点调整为正45至负45之间随机
     /// </summary>
     private IEnumerator FlyEntry(Transform bf, Vector3 landPoint, Vector3 targetScale)
@@ -785,8 +794,8 @@ public class ButterflyHome : UIWindow
         // 如果找不到任何一个 !Occupied 的点，那就是满了
         return !list.Exists(p => !p.Occupied);
     }
-    private readonly Vector3 SCALE_TOP = Vector3.one * 0.75f;    // 远处/上方：小
-    private readonly Vector3 SCALE_BOTTOM = Vector3.one * 1.1f; // 近处/下方：大
+    private readonly Vector3 SCALE_TOP = Vector3.one * 0.5f;    // 远处/上方：小
+    private readonly Vector3 SCALE_BOTTOM = Vector3.one * 0.8f; // 近处/下方：大
     private Vector3 GetTargetScale(ButterflyLandPoint pt)
     {
         bool isFlatScene = (bottomPoints == null || bottomPoints.Count == 0);
