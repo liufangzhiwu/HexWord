@@ -8,6 +8,8 @@ namespace Middleware
         bool IsProductOk(string productId);
         void Purchase(string productId, Action<ProductItem> successAction, Action<string> failedAction);
         void Restore(Action<bool, ProductItem[]> restoreCallback);
+        
+        public ShopDataItem CurrentShopDataItem { get; set; }
     }
 
     /// <summary>

@@ -247,6 +247,7 @@ public partial class ChessPlayArea : UIWindow
         GameCoreManager.Instance.PanelState = PanelState.GamePingPanel;
         EventDispatcher.instance.OnCheckShowChessTutorial += CheckShowChessTutorialEvent;
         EventDispatcher.instance.OnAutoPassLevel += AutoPassLevel;
+        EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
         // 👇 新增：监听分数变化事件，并初始化当前分数
         EventDispatcher.instance.OnChessScoreChanged += OnChessScoreChanged;
         _lastZenScore = ChessStageController.Instance.CurrentTotalScore;
@@ -364,13 +365,10 @@ public partial class ChessPlayArea : UIWindow
         chessboardGrid.Clear();
         puzzleTileTable.Clear();
        
-        if(EventDispatcher.instance != null)
-        {
-            // EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
-            EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
-            EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
-            EventDispatcher.instance.OnChessScoreChanged -= OnChessScoreChanged;
-        }
+        EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
+        EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
+        EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
+        EventDispatcher.instance.OnChessScoreChanged -= OnChessScoreChanged;
 
         if (EffectButterFlays.Count > 0)
         {

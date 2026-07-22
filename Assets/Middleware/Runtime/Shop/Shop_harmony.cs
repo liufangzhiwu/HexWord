@@ -36,6 +36,7 @@ namespace Middleware
         ProductItem productItem = new ProductItem();
         
         bool InitSucceed = false;
+        public ShopDataItem CurrentShopDataItem { get; set; }
         
         public void Init(float delay)
         {

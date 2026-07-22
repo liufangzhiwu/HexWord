@@ -1244,8 +1244,8 @@ public class UserData
     {
         return type switch
         {
-            LimitRewordType.Tipstool => 101,
-            //LimitRewordType.Tipstool => 102,
+            //LimitRewordType.Tipstool => 101,
+            LimitRewordType.Tipstool => 102,
             LimitRewordType.Butterfly => 103,
             LimitRewordType.AutoComplete => 104,
             _ => 0

@@ -65,27 +65,21 @@ public class GetItemScreen : UIWindow
                 AwardIcon.sprite= AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
                 break;
             case LimitRewordType.Tipstool:
-                title.text = "放大镜";
-                tips.text = "提示一个成语中的所有字";
+                title.text = MultilingualManager.Instance.GetString("ItemName01","pingzi");
+                tips.text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
                 UpdateCliamBtn(false);
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
-                if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
-                {
-                    AwardIcon.sprite= AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_tip");
-                }
-                if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
-                {
-                    AwardIcon.sprite= AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_tip");
-                }
+                AwardIcon.sprite= AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
+             
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
                 eventDes=title.text+"弹窗广告";
                 break;
             case LimitRewordType.AutoComplete:
                 UpdateCliamBtn(true);
-                title.text = MultilingualManager.Instance.GetString("ItemName01","pingzi");
-                tips.text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
+                title.text = MultilingualManager.Instance.GetString("ItemName02","pingzi");
+                tips.text = MultilingualManager.Instance.GetString("ItemDes02","pingzi");
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
-                AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("shop_reset");
+                AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket1");
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
                 eventDes=title.text+"弹窗广告";
                 AnalyticMgr.VideoAdShow(eventDes);
@@ -168,22 +162,7 @@ public class GetItemScreen : UIWindow
         GameDataManager.Instance.UserData.UpdateTool(limitRewordType, 1,"金币购买道具");
         GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,true,true,"金币购买道具");
         
-        
-        // if (limitRewordType == LimitRewordType.SingleWordTipsttool)
-        // {
-        //     if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
-        //     {
-        //         SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
-        //             ?.ToolItemFirstLetter();
-        //     }
-        //     
-        //     if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
-        //     {
-        //         SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
-        //             ?.UseTips();
-        //     }
-        //   
-        // }else 
+       
         if (limitRewordType == LimitRewordType.Tipstool)
         {
             if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
@@ -191,6 +170,13 @@ public class GetItemScreen : UIWindow
                 SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
                     ?.UseTips();
             }
+            
+            if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+            {
+                SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
+                    ?.UseTips();
+            }
+            
             
         }else if (limitRewordType == LimitRewordType.AutoComplete)
         {
@@ -221,7 +207,7 @@ public class GetItemScreen : UIWindow
 
             if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
             {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1,"看广告获取"+title.text+"道具");
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1,"看广告获取"+title.text+"道具");
                 
                 SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
                     ?.UseTips();
@@ -261,6 +247,7 @@ public class GetItemScreen : UIWindow
         targetWord = ""; // 🌟 每次关闭弹窗清空目标词
         ClaimGoldBtn.interactable = true;
         closeBtn.interactable = true;
+        EventDispatcher.instance.TriggerChangeGoldUI(0, true);
         EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
     }
 }

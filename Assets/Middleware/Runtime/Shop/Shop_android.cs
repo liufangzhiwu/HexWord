@@ -12,6 +12,7 @@ namespace Middleware
     public class Shop_android : IShop
     {
         private List<ShopDataItem> shopItems;
+        public ShopDataItem CurrentShopDataItem { get; set; }
 
         public void Init(float delay)
         {

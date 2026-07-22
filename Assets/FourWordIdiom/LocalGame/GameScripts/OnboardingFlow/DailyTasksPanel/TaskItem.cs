@@ -34,6 +34,11 @@ public class TaskItem : MonoBehaviour
         taskIcon.sprite = LoadtaskIcon(taskDataItem.iconname);
         //taskIcon.SetNativeSize();
         string des = MultilingualManager.Instance.GetString(taskDataItem.des);
+
+        if (des.Contains("放大镜"))
+        {
+            des = des.Replace("放大镜","火箭");
+        }
         taskTitle.text = string.Format(des, maxvalue); // 假设 productContent 是数量
         if (taskSaveData.progressvalue > maxvalue)
         {
