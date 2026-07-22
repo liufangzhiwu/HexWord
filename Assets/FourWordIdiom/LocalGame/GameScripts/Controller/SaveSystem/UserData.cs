@@ -365,38 +365,22 @@ public class UserData
         // 初始化道具数据
         toolInfo = new Dictionary<int, ToolInfo>
         {
-            // {
-            //     101,
-            //     new ToolInfo
-            //     {
-            //         cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint",
-            //         count = AppGameSettings.ShopItems.SingleHintCount
-            //     }
-            // },
+            { 
+                101, new ToolInfo {
+                    cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint",
+                    count = 0 } },
             {
-                102,
-                new ToolInfo
-                {
+                102, new ToolInfo {
                     cost = AppGameSettings.ShopItems.WordHintCost, type = "WordHint",
-                    count = AppGameSettings.ShopItems.WordHintCount
-                }
-            },
-            {
-                103,
-                new ToolInfo
-                {
+                    count = AppGameSettings.ShopItems.WordHintCount } },
+            { 
+                103, new ToolInfo {
                     cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly",
-                    count = AppGameSettings.ShopItems.StartingButterflies
-                }
-            },
+                    count = AppGameSettings.ShopItems.StartingButterflies } },
             {
-                104,
-                new ToolInfo
-                {
-                    cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete",
-                    count = AppGameSettings.ShopItems.WordHintCount
-                }
-            }
+                104, new ToolInfo{
+                cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete",
+                count = AppGameSettings.ShopItems.WordHintCount } }
         };
 
         // 签到数据
@@ -548,26 +532,47 @@ public class UserData
         logoutTime = user.logoutTime;
         curIsEnter = user.curIsEnter;
         // 初始化道具数据
-        toolInfo = user.toolInfo;
-
+        toolInfo = user.toolInfo??new Dictionary<int, ToolInfo>
+        {
+            { 
+                101, new ToolInfo {
+                    cost = AppGameSettings.ShopItems.SingleHintCost, type = "SignleHint",
+                    count = 0 } },
+            {
+                102, new ToolInfo {
+                    cost = AppGameSettings.ShopItems.WordHintCost, type = "WordHint",
+                    count = AppGameSettings.ShopItems.WordHintCount } },
+            { 
+                103, new ToolInfo {
+                    cost = AppGameSettings.ShopItems.ButterflyCost, type = "Butterfly",
+                    count = AppGameSettings.ShopItems.StartingButterflies } },
+            {
+                104, new ToolInfo{
+                    cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete",
+                    count = AppGameSettings.ShopItems.WordHintCount } }
+        };
+        
         if (toolInfo.TryGetValue(101, out var tool101))
         {
-            // 确保目标道具 104 存在，若不存在则创建
-            if (!toolInfo.TryGetValue(104, out var tool104))
+            if (tool101.count>0)
             {
-                tool104 = new ToolInfo
+                // 确保目标道具 104 存在，若不存在则创建
+                if (!toolInfo.TryGetValue(104, out var tool104))
                 {
-                    cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete",
-                    count = AppGameSettings.ShopItems.WordHintCount
-                }; // 根据实际 Tool 类的构造函数调整
-                toolInfo[104] = tool104;
+                    tool104 = new ToolInfo
+                    {
+                        cost = AppGameSettings.ShopItems.AutoCompleteCost, type = "AutoComplete",
+                        count = AppGameSettings.ShopItems.WordHintCount
+                    }; // 根据实际 Tool 类的构造函数调整
+                    toolInfo[104] = tool104;
+                }
+
+                // 合并数量
+                toolInfo[104].count += toolInfo[101].count;
+
+                // 移除源道具
+                toolInfo[101].count = 0;
             }
-
-            // 合并数量
-            tool104.count += tool101.count;
-
-            // 移除源道具
-            toolInfo.Remove(101);
         }
        
         // 签到数据

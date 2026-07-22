@@ -14,6 +14,8 @@ public class ShopScreen : UIWindow
     [SerializeField] private Image CoinIcon;
     [SerializeField] private Text HeaderText;
     [SerializeField] private Text GoldText;
+    [SerializeField] private Text TipText;
+    [SerializeField] private Text AutoText;
     [SerializeField] private Text ButteryText;
     [SerializeField] private ShopItem ShopGiftItemPrefab;
     [SerializeField] private ShopItem ShopItemPrefab;
@@ -91,7 +93,9 @@ public class ShopScreen : UIWindow
         {
             GoldText.text = GameDataManager.Instance.UserData.Gold.ToString();
         }
+        AutoText.text = GameDataManager.Instance.UserData.toolInfo[104].count.ToString();
         ButteryText.text = GameDataManager.Instance.UserData.toolInfo[103].count.ToString();
+        TipText.text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
     }
 
     private IEnumerator AnimateCoinAddition(int amount)

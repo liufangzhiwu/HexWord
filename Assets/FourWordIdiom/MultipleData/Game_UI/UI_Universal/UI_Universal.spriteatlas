@@ -87,7 +87,6 @@ SpriteAtlas:
     - 47ab8d32ff46fd64980ade56ac8084f0: 21300000
     - 7456cf32bdda7f746b309449b871a26b: 21300000
     - 8aa6686212cc951439d58a06b44995ba: 21300000
-    - a3fd4c6204e8c814081f25545561216a: 21300000
     - c00238821540c42d8927f7dc27d80283: 21300000
     - 36742e92f3d1a2d43b597a88102d3be3: 21300000
     - 0f7e11a2ae2d91b43a5f192f94540752: 21300000
@@ -128,7 +127,6 @@ SpriteAtlas:
     - 391a99d59906d5d48b0ffdfc20377580: 21300000
     - 53c9c9d59227e8a4693359f1993fb1c1: 21300000
     - 5864a9064d99ea64bb620a77ef8df3ac: 21300000
-    - 6b61421603460774ba285289d2c66971: 21300000
     - 39280e36c4ee42d4dab2e2b51e9e9e3f: 21300000
     - 0b8e35468cb38b24a9429e3c768f9002: 21300000
     - 436a9f46ff4d3f34d936b35ca6230dbd: 21300000
@@ -289,7 +287,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 47ab8d32ff46fd64980ade56ac8084f0, type: 3}
   - {fileID: 21300000, guid: 7456cf32bdda7f746b309449b871a26b, type: 3}
   - {fileID: 21300000, guid: 8aa6686212cc951439d58a06b44995ba, type: 3}
-  - {fileID: 21300000, guid: a3fd4c6204e8c814081f25545561216a, type: 3}
   - {fileID: 21300000, guid: c00238821540c42d8927f7dc27d80283, type: 3}
   - {fileID: 21300000, guid: 36742e92f3d1a2d43b597a88102d3be3, type: 3}
   - {fileID: 21300000, guid: 0f7e11a2ae2d91b43a5f192f94540752, type: 3}
@@ -330,7 +327,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 391a99d59906d5d48b0ffdfc20377580, type: 3}
   - {fileID: 21300000, guid: 53c9c9d59227e8a4693359f1993fb1c1, type: 3}
   - {fileID: 21300000, guid: 5864a9064d99ea64bb620a77ef8df3ac, type: 3}
-  - {fileID: 21300000, guid: 6b61421603460774ba285289d2c66971, type: 3}
   - {fileID: 21300000, guid: 39280e36c4ee42d4dab2e2b51e9e9e3f, type: 3}
   - {fileID: 21300000, guid: 0b8e35468cb38b24a9429e3c768f9002, type: 3}
   - {fileID: 21300000, guid: 436a9f46ff4d3f34d936b35ca6230dbd, type: 3}
@@ -490,7 +486,6 @@ SpriteAtlas:
   - UI_Icon_CloseToggle
   - zenicon_9
   - head22
-  - anniubg
   - fishbtngreen
   - Butterfly
   - UI_pupa
@@ -531,7 +526,6 @@ SpriteAtlas:
   - head36
   - UI_Icon_PingWord
   - head0
-  - tipicon
   - goldLeaf
   - UI_Icon_gold
   - zenicon_10
@@ -542,7 +536,7 @@ SpriteAtlas:
   - head16
   - head8
   - giftdi14
-  - reseticon
+  - tipicon
   - UI_Icon_JianWord
   - head3
   - bigfishline
