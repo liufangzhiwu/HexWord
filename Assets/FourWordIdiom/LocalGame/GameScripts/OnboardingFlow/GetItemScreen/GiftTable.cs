@@ -47,7 +47,7 @@ public class GiftTable : MonoBehaviour
                 //AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
                 break;
             case LimitRewordType.AutoComplete:
-                giftNameText.text ="放大镜礼包";
+                giftNameText.text ="火箭礼包";
                 break;
             case LimitRewordType.Tipstool:
                 giftNameText.text ="提示灯礼包";

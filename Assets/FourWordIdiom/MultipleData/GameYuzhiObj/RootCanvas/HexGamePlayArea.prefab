@@ -88,7 +88,7 @@ GameObject:
   - component: {fileID: 4623200756043988430}
   - component: {fileID: 1083733305673742892}
   m_Layer: 5
-  m_Name: CostContainer
+  m_Name: TipsCostContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -165,7 +165,7 @@ GameObject:
   - component: {fileID: 505523865501653391}
   - component: {fileID: 8323085997438337580}
   m_Layer: 5
-  m_Name: CoutBg
+  m_Name: TipCoutBg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5226,7 +5226,7 @@ GameObject:
   - component: {fileID: 3943852763007819353}
   - component: {fileID: 5534236386273796168}
   m_Layer: 5
-  m_Name: CostContainer
+  m_Name: AutoCostContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5605,7 +5605,7 @@ GameObject:
   - component: {fileID: 7750746584088573653}
   - component: {fileID: 7656905341995475957}
   m_Layer: 5
-  m_Name: SingleBtn
+  m_Name: TipsBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -20807,16 +20807,15 @@ MonoBehaviour:
   ButterflyPrefab: {fileID: 2020902604337131835}
   ButterflyObj: {fileID: 7473778527758645432}
   StageOverObj: {fileID: 7001417694158584529}
-  ResetCostObj: {fileID: 349413078359399089}
-  SingleTipLight: {fileID: 5462970432868665205}
-  WordTipLight: {fileID: 4092125976405002821}
-  ResetAdsObj: {fileID: 4632755752994271043}
-  ResetCounttxt: {fileID: 373859013600202582}
+  TipCostObj: {fileID: 373859013600202582}
+  TipLight: {fileID: 5462970432868665205}
+  AutoTipLight: {fileID: 4092125976405002821}
+  TipsCounttxt: {fileID: 9029586038052432871}
   PupaProgress: {fileID: 6119819528704015739}
-  HintCostObj: {fileID: 928323175312339080}
-  HintCounttxt: {fileID: 5829072899453575262}
-  PuzzleTipsBtn: {fileID: 4409436973005003240}
-  SingleHingBtn: {fileID: 7750746584088573653}
+  AutoTipCostObj: {fileID: 5829072899453575262}
+  AutoTipCounttxt: {fileID: 8751204808092967853}
+  AutoTipsBtn: {fileID: 4409436973005003240}
+  TipsButton: {fileID: 7750746584088573653}
   ShopBtn: {fileID: 8212930510038863984}
   Stagetxt: {fileID: 6778961576738992116}
   redpoint: {fileID: 5371203548274585477}
@@ -21052,7 +21051,7 @@ GameObject:
   - component: {fileID: 3682975827778300623}
   - component: {fileID: 446011123153641706}
   m_Layer: 5
-  m_Name: WordtipLight
+  m_Name: AutotipLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -26575,7 +26574,7 @@ GameObject:
   - component: {fileID: 1077606842920164372}
   - component: {fileID: 379889843236466066}
   m_Layer: 5
-  m_Name: SingletipLight
+  m_Name: tipLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -26672,7 +26671,7 @@ GameObject:
   - component: {fileID: 371786286374945475}
   - component: {fileID: 1563669666772792047}
   m_Layer: 5
-  m_Name: CoutBg
+  m_Name: AutoCoutBg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

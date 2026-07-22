@@ -67,7 +67,7 @@ public class GetItemScreen : UIWindow
             case LimitRewordType.Tipstool:
                 title.text = MultilingualManager.Instance.GetString("ItemName01","pingzi");
                 tips.text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
-                UpdateCliamBtn(false);
+                UpdateCliamBtn(true);
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
                 AwardIcon.sprite= AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
              
@@ -75,11 +75,11 @@ public class GetItemScreen : UIWindow
                 eventDes=title.text+"弹窗广告";
                 break;
             case LimitRewordType.AutoComplete:
-                UpdateCliamBtn(true);
+                UpdateCliamBtn(false);
                 title.text = MultilingualManager.Instance.GetString("ItemName02","pingzi");
                 tips.text = MultilingualManager.Instance.GetString("ItemDes02","pingzi");
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
-                AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket1");
+                AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
                 eventDes=title.text+"弹窗广告";
                 AnalyticMgr.VideoAdShow(eventDes);
@@ -180,6 +180,13 @@ public class GetItemScreen : UIWindow
             
         }else if (limitRewordType == LimitRewordType.AutoComplete)
         {
+            
+            if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
+            {
+                SystemManager.Instance.GetPanel(PanelType.HexGamePlayArea)?.GetComponent<HexGamePlayArea>()
+                    ?.UseAutoTips();
+            }
+            
             if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
             {
                 SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()

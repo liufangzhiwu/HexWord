@@ -797,8 +797,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _openDuration: 0.3
   _closeDuration: 0.3
-  SignBtn: {fileID: 0}
-  butterflyBtn: {fileID: 0}
   _limitBtnTable: {fileID: 8165639119597720616}
   _matchFishtable: {fileID: 4355530601219577380}
   _tasktable: {fileID: 7769520485364782630}
@@ -809,7 +807,7 @@ MonoBehaviour:
   _nextStageButton: {fileID: 4630453639354141465}
   Showlimiticon: {fileID: 6461280486798262230}
   Enlimiticon: {fileID: 3748623892104787019}
-  _progressSlider: {fileID: 0}
+  _progressSlider: {fileID: 5581293936525870457}
   _StageNumberText: {fileID: 6948013906748632566}
   _puzzletoggle: {fileID: 0}
   _progressText: {fileID: 0}
