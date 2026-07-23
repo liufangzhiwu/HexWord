@@ -106,7 +106,7 @@ public class LightItem : MonoBehaviour
             case LimitRewordType.Tipstool:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Tips");
             case LimitRewordType.AutoComplete:
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
             case LimitRewordType.Min5Double:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Mintool");
             case LimitRewordType.Min15Double:

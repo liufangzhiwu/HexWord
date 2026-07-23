@@ -492,7 +492,7 @@ SpriteAtlas:
   - tag_up
   - zenicon_1
   - head37
-  - Reset
+  - Tips
   - targetblue
   - Highlight_162
   - giftdi6
@@ -509,7 +509,7 @@ SpriteAtlas:
   - Logo
   - RankBox1
   - fishicon
-  - Tips
+  - Reset1
   - riMatchFail
   - hehua_10
   - leaf_skin_03
