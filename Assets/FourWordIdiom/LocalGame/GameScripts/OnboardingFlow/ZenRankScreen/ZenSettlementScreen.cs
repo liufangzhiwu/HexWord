@@ -50,7 +50,7 @@ public class ZenSettlementScreen : UIWindow
     void Start()
     {
         nextBtn.AddClickAction(OnNextButtonClicked);
-        step1CanvasGroup.GetComponent<Button>().AddClickAction(OnNextButtonClicked);
+        step1CanvasGroup.GetComponent<Button>().onClick.AddListener(OnNextButtonClicked);
         // 初始隐藏模板
         if (rewardTemplate != null) rewardTemplate.SetActive(false);
         
@@ -112,8 +112,8 @@ public class ZenSettlementScreen : UIWindow
         {
             // 没有排名的缺席/降级情况 (请确保在多语言表中配置 "ZenUnranked" 字段)
             // 中文配表参考："您上期在【{0}】中未上榜，段位下降！"
-            string unrankedDesc = MultilingualManager.Instance.GetString("ZenUnranked");
-            if (unrankedDesc == "ZenUnranked")
+            string unrankedDesc = MultilingualManager.Instance.GetString("ZenDecline2");
+            if (unrankedDesc == "ZenDecline2")
             {
                 unrankedDesc = "您上期在【{0}】中未上榜，段位下降至【{1}】！";
             }
@@ -232,10 +232,44 @@ public class ZenSettlementScreen : UIWindow
     private IEnumerator GrantAndCloseRoutine()
     {
         isAnimating = true; // 锁定点击
-        yield return StartCoroutine(GrantLocalRewardsRoutine());
-        // var zenLevel = GameDataManager.Instance.UserData.Zenlevel;
-        // yield return ZenRankManager.Instance.FetchLeaderboardDataRoutine(zenLevel);
-        OnClose();
+        bool isRequestDone = false;
+        bool isSuccess = false;
+        yield return APIGateway.Instance.LeaderboardApi.ClaimZenReward((res) =>
+        {
+            if (res != null && res.status == "success")
+            {
+                // 服务器确认发放成功，拿到最新的真实段位
+                GameDataManager.Instance.UserData.Zenlevel = res.new_level;
+                
+                // 🌟 核心状态切换：踢出榜单，准备重新匹配
+                GameDataManager.Instance.UserData.isJoinedZenRank = false; 
+                ZenRankManager.Instance.ClearRankCache();
+                isSuccess = true;
+            }
+            else
+            {
+                Debug.LogError("服务器领奖确认失败！");
+            }
+            isRequestDone = true;
+        });
+        // 死等网络请求返回
+        yield return new WaitUntil(() => isRequestDone);
+
+        if (isSuccess)
+        {
+            // 2. 🌟 服务器点头了，本地才真正开始发资产、飞金币！
+            yield return StartCoroutine(GrantLocalRewardsRoutine());
+            
+            // 3. 关闭结算面板
+            OnClose();
+        }
+        else
+        {
+            // 如果请求失败（比如断网），解锁界面让玩家重试
+            isAnimating = false;
+            if (nextBtn != null) 
+                nextBtn.GetComponentInChildren<Text>().text = "网络异常，点击重试";
+        }
     }
     private IEnumerator ShowHeaderSection()
     {
@@ -301,10 +335,10 @@ public class ZenSettlementScreen : UIWindow
     {
         return id switch
         {
-            3 => LimitRewordType.AutoComplete,     // 重置
+            3 => LimitRewordType.Resettool,     // 重置
             2 => LimitRewordType.Tipstool,      // 提示
             1 => LimitRewordType.Butterfly,     // 蝴蝶
-            //4 => LimitRewordType.AutoComplete,  // 自动拼字
+            4 => LimitRewordType.AutoComplete,  // 自动拼字
             _ => default
         };
     }
