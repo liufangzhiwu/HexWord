@@ -2,14 +2,25 @@ package com.unity3d.player;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.view.WindowManager;
+import android.util.TypedValue;
+import android.widget.Button;
+import android.view.Gravity;
+import android.widget.LinearLayout;
+
+import java.io.InputStream;
+import java.io.IOException;
 
 public class PrivacyActivity extends Activity {
 
@@ -17,74 +28,111 @@ public class PrivacyActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 检查用户是否已经同意过隐私政策
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        getWindow().setBackgroundDrawableResource(android.R.color.black);
+
         SharedPreferences prefs = getSharedPreferences("PrivacyPrefs", MODE_PRIVATE);
         boolean isAgreed = prefs.getBoolean("isPrivacyAgreed", false);
 
         if (isAgreed) {
-            // 已经同意，直接启动游戏主Activity
             startUnityActivity();
         } else {
-            // 未同意，显示隐私政策弹窗
             showPrivacyDialog();
         }
     }
 
-    /**
-     * 显示支持超链接的隐私政策弹窗
-     */
     private void showPrivacyDialog() {
-        // 带 HTML 标签的隐私文本
-        String htmlMessage = "欢迎来到本游戏！<br/><br/>" +
-                "为了向您提供更优质的游戏体验与相关服务，我们需要收集和使用您的部分个人信息。<br/>" +
-                "在您开启这段禅意之旅前，请知悉：<br/>" +
-                "我们将严格遵守相关法律法规，保障您的个人信息安全。<br/>" +
-                "我们可能会收集设备信息（如设备型号、操作系统版本）、网络信息、游戏日志等，用于游戏功能实现、服务优化、安全保障、广告投放（如适用）及合规要求。<br/><br/>" +
-                "您可以查阅我们的<a href=\"https://mindwordplay.cn/ysxyb\">《隐私政策》</a>了解详细信息，" +
-                "包括我们如何收集、使用、存储和保护您的信息，以及您的相关权利。<br/><br/>" +
-                "您也需要同意我们的<a href=\"https://mindwordplay.cn/yhxyb\">《用户协议》</a>以使用本游戏。<br/><br/>" +
-                "请您仔细阅读并理解以上内容。您的同意对我们至关重要。";
+        // 1. 构建文本内容
+        String bodyMessage = "欢迎体验我们的游戏！点击可查看我们的 " +
+                "<a href=\"https://mindwordplay.cn/yhxyb\">服务条款</a> 和 " +
+                "<a href=\"https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008\">隐私政策</a> ，" +
+                "如您同意，可点击「继续」进入游戏。<br/><br/>希望您能愉快地体验我们的产品。感谢您的选择！";
 
-        // 创建 TextView 来显示 HTML 内容
-        TextView textView = new TextView(this);
-        textView.setPadding(48, 32, 48, 32);
-        textView.setTextSize(14);
-        textView.setLineSpacing(1.2f, 1.2f);
-        // 将 HTML 内容设置到 TextView 中
-        textView.setText(Html.fromHtml(htmlMessage, Html.FROM_HTML_MODE_LEGACY));
-        // 使链接可点击
-        textView.setMovementMethod(LinkMovementMethod.getInstance());
+        TextView welcomeView = new TextView(this);
+        welcomeView.setText("欢迎");
+        welcomeView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
+        welcomeView.setTextColor(0xFF3A516A);
+        welcomeView.setGravity(Gravity.CENTER);
+        welcomeView.setPadding(48, 50, 48, 0);
 
-        // 将 TextView 放入 ScrollView，支持滚动
+        TextView bodyView = new TextView(this);
+        bodyView.setPadding(30, 320, 30, 32);
+        bodyView.setTextSize(20);
+        bodyView.setLineSpacing(1f, 1f);
+        bodyView.setText(Html.fromHtml(bodyMessage, Html.FROM_HTML_MODE_LEGACY));
+        bodyView.setMovementMethod(LinkMovementMethod.getInstance());
+        bodyView.setTextColor(0xFF3A516A);
+        // ========== 新增：设置超链接颜色 ==========
+        bodyView.setLinkTextColor(0xFF3A516A);   // 链接颜色与正文保持一致
+        // ======================================
+
+        LinearLayout contentLayout = new LinearLayout(this);
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        contentLayout.addView(welcomeView);
+        contentLayout.addView(bodyView);
+
         ScrollView scrollView = new ScrollView(this);
-        scrollView.addView(textView);
+        scrollView.addView(contentLayout);
 
-        // 构建 AlertDialog
+        // 2. 创建“继续”按钮（使用自定义图片，固定尺寸 260×90 像素，您已修改）
+        Button continueButton = new Button(this);
+        continueButton.setText("继续");
+        continueButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 25);
+        continueButton.setGravity(Gravity.CENTER);
+        continueButton.setTextColor(0xFFFFFFFF);
+        try (InputStream is = getAssets().open("continue_button.png")) {
+            Drawable drawable = new BitmapDrawable(getResources(), BitmapFactory.decodeStream(is));
+            continueButton.setBackground(drawable);
+        } catch (IOException e) {
+            e.printStackTrace();
+            continueButton.setBackgroundColor(0xFF3A516A);
+        }
+        continueButton.setPadding(30, 20, 30, 20);
+
+        LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(260, 90);
+        btnLp.gravity = Gravity.CENTER_HORIZONTAL;
+        btnLp.topMargin = 20;
+        btnLp.bottomMargin = 50;
+        continueButton.setLayoutParams(btnLp);
+        continueButton.setElevation(100f);
+
+        // 3. 根布局
+        LinearLayout rootLayout = new LinearLayout(this);
+        rootLayout.setOrientation(LinearLayout.VERTICAL);
+        try (InputStream is = getAssets().open("background.png")) {
+            Drawable drawable = new BitmapDrawable(getResources(), BitmapFactory.decodeStream(is));
+            rootLayout.setBackground(drawable);
+        } catch (IOException e) {
+            e.printStackTrace();
+            rootLayout.setBackgroundColor(0x88000000);
+        }
+
+        rootLayout.addView(scrollView, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f));
+        rootLayout.addView(continueButton);
+
+        // 4. 创建 AlertDialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("隐私政策与用户协议");
-        builder.setView(scrollView);
-        builder.setPositiveButton("同意", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                SharedPreferences prefs = getSharedPreferences("PrivacyPrefs", MODE_PRIVATE);
-                prefs.edit().putBoolean("isPrivacyAgreed", true).apply();
-                startUnityActivity();
-            }
-        });
-        builder.setNegativeButton("拒绝", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-                System.exit(0);
-            }
-        });
+        builder.setView(rootLayout);
         builder.setCancelable(false);
-        builder.show();
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // 5. 按钮点击事件
+        continueButton.setOnClickListener(v -> {
+            getSharedPreferences("PrivacyPrefs", MODE_PRIVATE)
+                    .edit().putBoolean("isPrivacyAgreed", true).apply();
+            startUnityActivity();
+        });
+
+        // 6. 窗口尺寸
+        WindowManager.LayoutParams lpWindow = dialog.getWindow().getAttributes();
+        lpWindow.width = 550;
+        lpWindow.height = 900;
+        dialog.getWindow().setAttributes(lpWindow);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
     }
 
-    /**
-     * 启动 UnityPlayerActivity
-     */
     private void startUnityActivity() {
         Intent intent = new Intent(this, UnityPlayerActivity.class);
         startActivity(intent);
