@@ -775,7 +775,7 @@ public class HexGamePlayArea : UIWindow
                 InitToolUI();
             }
             
-            DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipsTool,1);
+            DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipWordTool,1);
             AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
             
             CurStageData.AddPuzzleHints(Str);
@@ -794,39 +794,39 @@ public class HexGamePlayArea : UIWindow
         AutoTipLight.gameObject.SetActive(false);
     }
     
-    private void UpdateAdsRewardUI(bool isShow)
-    {
-        if (isShow)
-        {
-            usetoolCount++;
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1,"看广告获取提示灯道具");
-            
-            string Str = GetRandomTipsPuzzle();
-            if (!string.IsNullOrEmpty(Str))
-            {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用");
-                InitToolUI();
-                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipsTool,1);
-                AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
-            
-                CurStageData.AddPuzzleHints(Str);
-                CurStageData.AddCharacterHints(Str);
-                List<PuzzleTile> puzzleDatas = crossPuzzleGrid.GetPuzzleTileRowCol(Str);
-                ShowLetterTips(puzzleDatas[0],TipsButton.transform);
-            }  
-            else
-            {
-                MessageSystem.Instance.ShowTip("TipAllWordPrompted");
-            }   
-            
-            AnalyticMgr.VideoAdSuccess("提示灯广告");
-        }
-        else
-        {
-            MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
-            AnalyticMgr.VideoAdFail("提示灯广告");
-        }
-    }
+    // private void UpdateAdsRewardUI(bool isShow)
+    // {
+    //     if (isShow)
+    //     {
+    //         usetoolCount++;
+    //         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1,"看广告获取提示灯道具");
+    //         
+    //         string Str = GetRandomTipsPuzzle();
+    //         if (!string.IsNullOrEmpty(Str))
+    //         {
+    //             GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用");
+    //             InitToolUI();
+    //             DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipWordTool,1);
+    //             AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
+    //         
+    //             CurStageData.AddPuzzleHints(Str);
+    //             CurStageData.AddCharacterHints(Str);
+    //             List<PuzzleTile> puzzleDatas = crossPuzzleGrid.GetPuzzleTileRowCol(Str);
+    //             ShowLetterTips(puzzleDatas[0],TipsButton.transform);
+    //         }  
+    //         else
+    //         {
+    //             MessageSystem.Instance.ShowTip("TipAllWordPrompted");
+    //         }   
+    //         
+    //         AnalyticMgr.VideoAdSuccess("提示灯广告");
+    //     }
+    //     else
+    //     {
+    //         MessageSystem.Instance.ShowTip("广告加载失败，请稍后重试。");
+    //         AnalyticMgr.VideoAdFail("提示灯广告");
+    //     }
+    // }
     
     /// <summary>
     /// 显示字母作为提示
@@ -915,14 +915,14 @@ public class HexGamePlayArea : UIWindow
                 GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1,"道具购买");
                 GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1,"关卡内使用");
                 AudioManager.Instance.PlaySoundEffect("tishidaoju");
-                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipAllWordTool,1);
+                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
             }
             else
             {
                 GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,-1,"关卡内使用");
                 InitToolUI();
                 AudioManager.Instance.PlaySoundEffect("tishidaoju");
-                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipAllWordTool,1);
+                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
             }
         }
         else

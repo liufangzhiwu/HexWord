@@ -71,7 +71,7 @@ public class GetItemScreen : UIWindow
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
                 AwardIcon.sprite= AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
              
-                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
+                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
                 eventDes=title.text+"弹窗广告";
                 break;
             case LimitRewordType.AutoComplete:
@@ -80,7 +80,7 @@ public class GetItemScreen : UIWindow
                 tips.text = MultilingualManager.Instance.GetString("ItemDes02","pingzi");
                 ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
                 AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
-                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox01");
+                shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
                 eventDes=title.text+"弹窗广告";
                 AnalyticMgr.VideoAdShow(eventDes);
                 break;

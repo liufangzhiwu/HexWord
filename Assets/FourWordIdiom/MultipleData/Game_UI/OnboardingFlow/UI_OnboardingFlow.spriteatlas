@@ -163,7 +163,6 @@ SpriteAtlas:
     - adc7c6e6fbe1d484e9d4a2b9bc1bbd5d: 21300000
     - bacf16f60517b0c48a35fa934a061ced: 21300000
     - 4e420ef640621c2429079e83828a7df9: 21300000
-    - 84b74507fea2a694393afefb9189fefd: 21300000
     - c0fe7507584632947b6f1b11c3c94091: 21300000
     - fb20d8079e357c14daf1159ea0953b31: 21300000
     - 2f90571785b2c234ba02d441737037eb: 21300000
@@ -391,7 +390,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: adc7c6e6fbe1d484e9d4a2b9bc1bbd5d, type: 3}
   - {fileID: 21300000, guid: bacf16f60517b0c48a35fa934a061ced, type: 3}
   - {fileID: 21300000, guid: 4e420ef640621c2429079e83828a7df9, type: 3}
-  - {fileID: 21300000, guid: 84b74507fea2a694393afefb9189fefd, type: 3}
   - {fileID: 21300000, guid: c0fe7507584632947b6f1b11c3c94091, type: 3}
   - {fileID: 21300000, guid: fb20d8079e357c14daf1159ea0953b31, type: 3}
   - {fileID: 21300000, guid: 2f90571785b2c234ba02d441737037eb, type: 3}
@@ -618,7 +616,6 @@ SpriteAtlas:
   - discount
   - left
   - bg_midground_3
-  - "\u5B8C\u6574\u5546\u5E971 (1)"
   - Lotus_Dark
   - wordbg
   - target

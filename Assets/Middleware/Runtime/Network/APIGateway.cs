@@ -9,7 +9,7 @@ public class APIGateway: MonoBehaviour
     private static APIGateway _instance;
     public static APIGateway Instance => _instance;
 
-    private string APIUrl = "https://zen.test.mindwordplay.cn/api/";
+    private string APIUrl = "https://zen.prod.mindwordplay.cn/api/";
     //测试服："https://zen.test.mindwordplay.cn/api/";
     //正式服："https://hex.prod.mindwordplay.cn/api/";
 
@@ -35,7 +35,7 @@ public class APIGateway: MonoBehaviour
     {
         
 #if Unity_ShowLog
-            APIUrl = "https://hex.test.mindwordplay.cn/api/";
+            APIUrl = "https://zen.test.mindwordplay.cn/api/";
 #else
             APIUrl = "https://hex.prod.mindwordplay.cn/api/";
 #endif
