@@ -141,6 +141,12 @@ public class GiftTable : MonoBehaviour
         //var items = new List<AnalyticMgr.Item>();
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
+            SystemManager.Instance.HidePanel(PanelType.GetItemScreen);
+            
+            Game.self.Shop.CurrentShopDataItem=shopDataItem.DeepCopy();
+            
+            SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
+            
             foreach (var dataitem in shopDataItem.productContent)
             {
                 int count = int.Parse(dataitem[1]);
@@ -186,10 +192,10 @@ public class GiftTable : MonoBehaviour
 #endif
         }
         
-        MessageSystem.Instance.ShowTip("购买成功！");
+        //MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
         
-        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+        //EventDispatcher.instance.TriggerChangeGoldUI(0, false);
     }
     
     private void OnPurchaseFailed(string error)

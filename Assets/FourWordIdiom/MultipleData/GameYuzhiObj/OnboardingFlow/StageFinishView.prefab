@@ -184,7 +184,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5398282511758168731
 RectTransform:
   m_ObjectHideFlags: 0
@@ -307,7 +307,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4dae3f033d3adb14c963d0a6d524cd74, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5ef604029d7f60049814db9021c25173, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -413,7 +413,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &6296146345511924070
 RectTransform:
   m_ObjectHideFlags: 0
@@ -461,7 +461,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: fa765ce8ed9069341b1157e2bdac1017, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 496eedcf64b82454c8886a9924d72bc4, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -797,6 +797,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _openDuration: 0.3
   _closeDuration: 0.3
+  SignBtn: {fileID: 0}
   _limitBtnTable: {fileID: 8165639119597720616}
   _matchFishtable: {fileID: 4355530601219577380}
   _tasktable: {fileID: 7769520485364782630}
@@ -804,14 +805,14 @@ MonoBehaviour:
   extrahardStageTable: {fileID: 2156306258288649632}
   _zenRankBtn: {fileID: 3343070287583876234}
   Content: {fileID: 2428106905910553521}
-  _nextStageButton: {fileID: 4630453639354141465}
   Showlimiticon: {fileID: 6461280486798262230}
   Enlimiticon: {fileID: 3748623892104787019}
-  _progressSlider: {fileID: 5581293936525870457}
+  _nextStageButton: {fileID: 4630453639354141465}
+  progressSlider: {fileID: 5581293936525870457}
   _StageNumberText: {fileID: 6948013906748632566}
-  _puzzletoggle: {fileID: 0}
-  _progressText: {fileID: 0}
+  progressText: {fileID: 4523987149974054297}
   _butterflyTimerDisplay: {fileID: 1990585718486792753}
+  logo: {fileID: 5234401576335942864}
 --- !u!223 &6114793278562374718
 Canvas:
   m_ObjectHideFlags: 0
@@ -1404,7 +1405,7 @@ GameObject:
   - component: {fileID: 3721928589328650162}
   - component: {fileID: 2715022915255680834}
   - component: {fileID: 6948013906748632566}
-  - component: {fileID: 5677849285860316515}
+  - component: {fileID: 6543896413830958456}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -1460,12 +1461,12 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
-    m_FontSize: 78
-    m_FontStyle: 1
+    m_Font: {fileID: 12800000, guid: 1d3f78d5ad31d8c47aae1da420b6cf6d, type: 3}
+    m_FontSize: 86
+    m_FontStyle: 0
     m_BestFit: 1
     m_MinSize: 5
-    m_MaxSize: 85
+    m_MaxSize: 86
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -1473,20 +1474,20 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: "\u30EC\u30D9\u30EB 2"
---- !u!114 &5677849285860316515
+--- !u!114 &6543896413830958456
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7794586778626554282}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
-  m_EffectDistance: {x: 3, y: -3}
+  m_EffectColor: {r: 1, g: 1, b: 1, a: 1}
+  m_EffectDistance: {x: 0.5, y: -0.5}
   m_UseGraphicAlpha: 1
 --- !u!1 &8123503800006404197
 GameObject:
@@ -1608,7 +1609,7 @@ PrefabInstance:
     - target: {fileID: 970101722539827014, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2436343889873542076, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
@@ -2128,7 +2129,7 @@ PrefabInstance:
     - target: {fileID: 481668440151770717, guid: 2bef36291172ffa43b438f9f776fdaf8,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 593434311797310177, guid: 2bef36291172ffa43b438f9f776fdaf8,
         type: 3}
