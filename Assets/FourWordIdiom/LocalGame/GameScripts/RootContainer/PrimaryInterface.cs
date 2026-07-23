@@ -734,18 +734,12 @@ public class PrimaryInterface : UIWindow
     /// </summary>
     public void OnPlayClick()
     {
-      
-        // 1. 获取当前准备进入的关卡ID (用于判断第一关是否免体力)
-        int currentStage = (GameDataManager.Instance.UserData.levelMode == 3) ? 
-            StageHexController.Instance.CurrentStage : 
-            ChessStageController.Instance.CurrentStage;
-        
         bool hasUnfinishedSave = (GameDataManager.Instance.UserData.levelMode == 2 && ChessStageController.Instance.HasUnfinishedSave());
         if (!hasUnfinishedSave)
         {
             // 🌟 核心拦截：检查并扣除体力！
             // ConsumeEnergy 会自动处理：如果是第一关返回 true 不扣体力，如果体力>=1返回 true 并扣除。
-            if (currentStage != 1 && GameDataManager.Instance.UserData.Energy <= 0)
+            if (ChessStageController.Instance.CurrentStage != 1 && GameDataManager.Instance.UserData.Energy <= 0)
             {
                 // 体力不足，拦截并提示玩家
                 // MessageSystem.Instance.ShowTip("体力不足，休息一下吧！");
@@ -805,6 +799,7 @@ public class PrimaryInterface : UIWindow
         yield return new WaitForSeconds(0.5f);
         SystemManager.Instance.ShowPanel(PanelType.EnergyScreen);
     }
+    
     private Sprite LoadheadIcon(string showIcon)
     {
         return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
