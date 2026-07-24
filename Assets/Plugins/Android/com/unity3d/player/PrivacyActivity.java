@@ -100,10 +100,10 @@ public class PrivacyActivity extends Activity {
                 "如您同意，可点击「继续」进入游戏。<br/><br/>希望您能愉快地体验我们的产品。感谢您的选择！";
 
         TextView bodyView = new TextView(this);
-        int bodyPadding = (int) (dialogWidth * 0.075f);
-        int bodyTop = (int) (dialogHeight * 0.25f);
+        int bodyPadding = (int) (dialogWidth * 0.05f);
+        int bodyTop = (int) (dialogHeight * 0.27f);
         bodyView.setPadding(bodyPadding, bodyTop, bodyPadding, 0);
-        bodyView.setTextSize(TypedValue.COMPLEX_UNIT_PX, screenWidth * 0.045f);
+        bodyView.setTextSize(TypedValue.COMPLEX_UNIT_PX, screenWidth * 0.048f);
         bodyView.setLineSpacing(1f, 1f);
         bodyView.setText(Html.fromHtml(bodyMessage, Html.FROM_HTML_MODE_LEGACY));
         bodyView.setMovementMethod(LinkMovementMethod.getInstance());
@@ -131,7 +131,7 @@ public class PrivacyActivity extends Activity {
         continueButton.setGravity(Gravity.CENTER);
         continueButton.setTextColor(0xFFFFFFFF);
 
-        int btnWidth = (int) (dialogWidth * 0.4f);
+        int btnWidth = (int) (dialogWidth * 0.5f);
         int btnHeight = (int) (btnWidth * 0.35f);
 
         // 尝试加载按钮背景图
