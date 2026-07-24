@@ -119,42 +119,70 @@ public class AwardScreen : UIWindow
 
     protected override void InitializeUIComponents()
     {
-        closeBtn.AddClickAction(Close); // 绑定关闭按钮事件
-        ClaimBtn.AddClickAction(ClickClaimBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(ClickClaimBtn); // 绑定关闭按钮事件
+        ClaimBtn.AddVibraClickAction(ClickClaimBtn); // 绑定关闭按钮事件
     }
 
     private void ClickClaimBtn()
+    {
+
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen))
+        {
+            StartCoroutine(ShowRewardAnim());
+        }
+        else
+        {
+            EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+            Close();
+        }
+    }
+
+    IEnumerator ShowRewardAnim()
     {
         
         //var items = new List<AnalyticMgr.Item>();
         if (Game.self.Shop.CurrentShopDataItem!=null)
         {
+            int rewardid = 0;
             foreach (var dataitem in Game.self.Shop.CurrentShopDataItem.productContent)
             {
+                Image icon=rewardList[rewardid].GetComponentInChildren<Image>();
+                GameObject endposObj=CustomFlyInManager.Instance.ShopGoldObj;
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
                 //items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        //GameDataManager.Instance.UserData.UpdateGold(count, true, true,"商店购买"+item.ItemName);
+                        endposObj=CustomFlyInManager.Instance.ShopGoldObj;
                         break;
                     case (int)LimitRewordType.Butterfly:
-                        //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count,"商店购买"+item.ItemName);
+                        endposObj=CustomFlyInManager.Instance.ShopButterflyObj;
                         break;
                     case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
-                        //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,"商店购买"+item.ItemName);
+                        endposObj=CustomFlyInManager.Instance.ShopTipObj;
                         break;
                     case (int)LimitRewordType.AutoComplete://提示灯道具，单个字符提示
-                        //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,count,"商店购买"+item.ItemName);
+                        endposObj=CustomFlyInManager.Instance.ShopAutoObj;
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:
                         //BuyRemoveAdsEvent(type);
                         break;
                 }
+
+               
+                CustomFlyInManager.Instance.FlyAwardIn(icon.gameObject.transform.position,endposObj,icon.gameObject,
+                    () =>
+                    {
+                        AudioManager.Instance.PlaySoundEffect("BtnUnlock");
+                        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+                    });
+                
+                rewardid++;
+                
+                yield return new WaitForSeconds(0.1f);
             }
-           
         }
         
         Close();
@@ -164,7 +192,6 @@ public class AwardScreen : UIWindow
     
     private void Close()
     {
-        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
         base.Close(); // 隐藏面板
     }
     

@@ -29,7 +29,7 @@ public class NewThemeScreen : UIWindow
 
     protected override void OnEnable()
     {
-        AudioManager.Instance.PlaySoundEffect("ShowUI");
+        AudioManager.Instance.PlaySoundEffect("hudieReward");
       
         InitUI();
     }

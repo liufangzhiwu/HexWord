@@ -12,6 +12,9 @@ public class ShopScreen : UIWindow
     [SerializeField] private Button pageBtn; // 关闭按钮
     [SerializeField] private Button adsbtn; // 关闭按钮
     [SerializeField] private Image CoinIcon;
+    [SerializeField] private Image TipIcon;
+    [SerializeField] private Image AutoIcon;
+    [SerializeField] private Image ButteryIcon;
     [SerializeField] private Text HeaderText;
     [SerializeField] private Text GoldText;
     [SerializeField] private Text TipText;
@@ -51,6 +54,11 @@ public class ShopScreen : UIWindow
         shopallDataItems  =  ShopManager.shopManager.GetShopItems();
         shopDataItems =  ShopManager.shopManager.GetShopHomeItems();
         CrateShopItem(shopDataItems,true);
+
+        CustomFlyInManager.Instance.ShopAutoObj = AutoIcon.gameObject;
+        CustomFlyInManager.Instance.ShopGoldObj = CoinIcon.gameObject;
+        CustomFlyInManager.Instance.ShopTipObj = TipIcon.gameObject;
+        CustomFlyInManager.Instance.ShopButterflyObj = ButteryIcon.gameObject;
     }
 
     protected override void OnEnable()

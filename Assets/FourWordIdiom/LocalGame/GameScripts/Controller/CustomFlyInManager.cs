@@ -10,7 +10,12 @@ using Random = UnityEngine.Random;
 public class CustomFlyInManager : MonoBehaviour
 {
     public static CustomFlyInManager  Instance;
+    public Transform AwardRoot;
     [HideInInspector] public GameObject GoldObj;
+    [HideInInspector] public GameObject ShopGoldObj;
+    [HideInInspector] public GameObject ShopTipObj;
+    [HideInInspector] public GameObject ShopAutoObj;
+    [HideInInspector] public GameObject ShopButterflyObj;
     [HideInInspector] public GameObject GoldPrefab;
     [HideInInspector] public GameObject finishlevelBtnObj;
     private float BizerValue = 3.0f;
@@ -107,8 +112,8 @@ public class CustomFlyInManager : MonoBehaviour
         GameObject effecttemp=Instantiate(effect,start,Quaternion.identity,SystemManager.Instance._uiRoot);
         effecttemp.GetComponentInChildren<Text>().transform.gameObject.SetActive(false);
         effecttemp.transform.localScale = new Vector3(0.6f,0.6f,0.6f);
-        Vector3 endPos = new Vector3(finishlevelBtnObj.transform.position.x+1,finishlevelBtnObj.transform.position.y,finishlevelBtnObj.transform.position.z);
-        StartCoroutine(FlyAwardVectorToEnd(start, endPos, effecttemp, Vector3.right, () =>
+        //Vector3 endPos = new Vector3(finishlevelBtnObj.transform.position.x+1,finishlevelBtnObj.transform.position.y,finishlevelBtnObj.transform.position.z);
+        StartCoroutine(FlyAwardVectorToEndLevelBtn(start, finishlevelBtnObj, effecttemp, Vector3.right, () =>
         {
             Destroy(effecttemp.gameObject);
             call?.Invoke();
@@ -120,18 +125,96 @@ public class CustomFlyInManager : MonoBehaviour
         GameObject effecttemp=Instantiate(effect,start,Quaternion.identity,SystemManager.Instance._uiRoot);
         effecttemp.GetComponentInChildren<Text>().transform.gameObject.SetActive(false);
         effecttemp.transform.localScale = new Vector3(0.6f,0.6f,0.6f);
-        Vector3 endPos = new Vector3(finishlevelBtnObj.transform.position.x-1,finishlevelBtnObj.transform.position.y,finishlevelBtnObj.transform.position.z);
-        StartCoroutine(FlyAwardVectorToEnd(start, endPos, effecttemp, Vector3.left, () =>
+        //Vector3 endPos = new Vector3(finishlevelBtnObj.transform.position.x-1,finishlevelBtnObj.transform.position.y,finishlevelBtnObj.transform.position.z);
+        StartCoroutine(FlyAwardVectorToEndLevelBtn(start, finishlevelBtnObj, effecttemp, Vector3.left, () =>
         {
             Destroy(effecttemp.gameObject);
             call?.Invoke();
         }));
     }
     
-    
-    private IEnumerator FlyAwardVectorToEnd(Vector3 start, Vector3 target, GameObject gold, Vector3 left, Action call, float duration = 0.8f)
+    public void FlyAwardIn(Vector3 start,GameObject endGameObject,GameObject effect,Action call)
     {
-        Vector3 endPos = target;
+        GameObject effecttemp = Instantiate(effect, AwardRoot);
+
+        RectTransform rect = effecttemp.GetComponent<RectTransform>();
+
+        // 1. 固定锚点和轴心，让 anchoredPosition = (0,0) 表示居中
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+
+        // 2. 坐标转换：将世界坐标 start 转为相对于 parent 的 UI 坐标
+        Vector2 screenPoint = Camera.main.WorldToScreenPoint(start);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            SystemManager.Instance._uiRoot as RectTransform, 
+            screenPoint, 
+            Camera.main, 
+            out Vector2 localPos
+        );
+
+        // 3. ✅ 用 anchoredPosition 设置正确位置（不再使用 transform.position）
+        rect.anchoredPosition = localPos;
+
+        // 4. 缩放
+        effecttemp.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
+       
+        StartCoroutine(FlyAwardVectorToEnd(start, endGameObject, effecttemp, Vector3.left, () =>
+        {
+             Destroy(effecttemp.gameObject);
+             call?.Invoke();
+        },1.1f));
+    }
+    
+    private IEnumerator FlyAwardVectorToEnd(Vector3 start, GameObject endGameObject, GameObject gold, Vector3 left, Action call, float duration = 0.8f)
+    {
+        Vector3 endPos = endGameObject.transform.position;
+        Vector3 starttemp = new Vector3(start.x,start.y+0.1f,endPos.z);
+
+        // ---- 1. 准备透明度控制组件（适用于 UI） ----
+        CanvasGroup cg = gold.GetComponent<CanvasGroup>();
+        if (cg == null) cg = gold.AddComponent<CanvasGroup>();
+        cg.alpha = 0f; // 初始透明
+
+        // ---- 2. 构建主序列 ----
+        Sequence flySeq = DOTween.Sequence();
+
+        // 2.1 淡入（0.2s）
+        flySeq.Join(cg.DOFade(1f, 0.2f).SetEase(Ease.OutQuad));
+        
+        // 2.2 悬浮效果（前 0.5 秒）：上下脉冲，自动回到原位
+        flySeq.Append(gold.transform.DOMove(starttemp, 0.2f).OnComplete(() =>
+            {
+                flySeq.Append(gold.transform.DOMove(start, 0.2f));
+            })
+            .SetEase(Ease.OutQuad));
+
+        // 2.3 曲线飞入（使用 CatmullRom）
+       
+        Vector3 mid = (start + endPos) / 2 + left * 0.2f;
+        Vector3[] path = new Vector3[] { start, mid, endPos };
+        flySeq.Append(gold.transform.DOPath(path, duration, PathType.CatmullRom)
+            .SetEase(Ease.InOutSine));
+        flySeq.Join(gold.transform.DOScale(new Vector3(0.4f, 0.4f, 0.4f), duration));
+
+        // 2.4 淡出（0.2s）— 飞入完成后逐渐消失
+        flySeq.Append(cg.DOFade(0f, 0.2f).SetEase(Ease.InQuad));
+
+        // ---- 4. 飞入完成后，按钮缩放反馈 + 回调 ----
+        flySeq.Join(endGameObject.transform.DOScale(new Vector3(1.1f, 1.1f, 1.1f), 0.1f)
+            .SetEase(Ease.OutBack)
+            .OnComplete(() => endGameObject.transform.DOScale(Vector3.one, 0.1f)));
+        
+        yield return flySeq.WaitForCompletion();
+        
+        // 执行回调（此处会销毁 gold 等）
+        call?.Invoke();
+    }
+    
+    
+    private IEnumerator FlyAwardVectorToEndLevelBtn(Vector3 start, GameObject endGameObject, GameObject gold, Vector3 left, Action call, float duration = 0.8f)
+    {
+        Vector3 endPos = new Vector3(endGameObject.transform.position.x-1,endGameObject.transform.position.y,endGameObject.transform.position.z);
         Vector3 starttemp = new Vector3(start.x,start.y+0.5f,endPos.z);
 
         // ---- 1. 准备透明度控制组件（适用于 UI） ----
@@ -160,57 +243,20 @@ public class CustomFlyInManager : MonoBehaviour
             .SetEase(Ease.InOutSine));
 
         // 2.4 淡出（0.2s）— 飞入完成后逐渐消失
-        flySeq.Append(cg.DOFade(0f, 0.2f).SetEase(Ease.InQuad));
+        flySeq.Append(cg.DOFade(1f, 0.2f).SetEase(Ease.InQuad));
 
         // ---- 3. 等待整个序列完成 ----
         //yield return flySeq.WaitForCompletion();
 
         // ---- 4. 飞入完成后，按钮缩放反馈 + 回调 ----
-        flySeq.Join(finishlevelBtnObj.transform.DOScale(new Vector3(1.1f, 1.1f, 1.1f), 0.1f)
+        flySeq.Join(endGameObject.transform.DOScale(new Vector3(1.1f, 1.1f, 1.1f), 0.1f)
             .SetEase(Ease.OutBack)
-            .OnComplete(() => finishlevelBtnObj.transform.DOScale(Vector3.one, 0.1f)));
+            .OnComplete(() => endGameObject.transform.DOScale(Vector3.one, 0.1f)));
         
         yield return flySeq.WaitForCompletion();
         
         // 执行回调（此处会销毁 gold 等）
         call?.Invoke();
-    }
-    
-    private IEnumerator FlyVectorToEnd(Vector3 start,Vector3 target,GameObject gold,bool isCurve,Action call,float duration=0.35f)
-    {
-        Vector3 endPosition = target; // 设置起始位置
-        
-        if (isCurve)
-        {
-            var midPos = (endPosition + start) / 2;
-            var BezierMidPos = (midPos + start) / 2 + Vector3.left * 50;
-            //var MidEndPos = (midPos + endPosition) / 2 + Vector3.right *0.78f;
-            Vector3[] MovePoints = CreatTwoBezierCurve(start,endPosition,BezierMidPos).ToArray();
-            
-            // 计算目标旋转（例如，设置一个随机旋转或特定旋转）
-            // 计算目标旋转（仅 Z 轴旋转）
-            Vector3 targetRotation = new Vector3(0, 0, Random.Range(60,240)); // 沿 Z 轴旋转 360 度
-
-            // 移动和旋转
-            Sequence sequence = DOTween.Sequence();
-    
-            sequence.Append(gold.transform.DOLocalPath(MovePoints, duration).SetEase(Ease.InCubic));
-            sequence.Join(gold.transform.DORotate(targetRotation, duration).SetEase(Ease.Linear));
-    
-            sequence.OnComplete(() =>
-            {
-                call?.Invoke();
-            });
-        }
-        else
-        {
-            gold.transform.DOMove(endPosition,duration).SetEase(Ease.InCubic).OnComplete(() =>
-            {
-                call?.Invoke();
-                // 确保元素最终位置在目标位置
-            });
-        }
-        yield return new WaitForSeconds(5.0f);
     }
     
     private IEnumerator FlyInGoldCoroutine(Transform start,Transform target,GameObject gold,bool isCurve,Action call,Vector3 scale,float duration=0.45f)

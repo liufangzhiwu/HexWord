@@ -366,7 +366,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -96.55, y: 0}
-  m_SizeDelta: {x: 83.6, y: 96.46}
+  m_SizeDelta: {x: 71.2, y: 73.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2461689562211637476
 CanvasRenderer:
@@ -766,6 +766,9 @@ MonoBehaviour:
   pageBtn: {fileID: 3499323222490211023}
   adsbtn: {fileID: 5756653600335707048}
   CoinIcon: {fileID: 5781746681512304130}
+  TipIcon: {fileID: 2420552419347200200}
+  AutoIcon: {fileID: 2756711795986835237}
+  ButteryIcon: {fileID: 1979422040224459551}
   HeaderText: {fileID: 3234202365150166848}
   GoldText: {fileID: 8889914445957218557}
   TipText: {fileID: 8717977933990516273}
