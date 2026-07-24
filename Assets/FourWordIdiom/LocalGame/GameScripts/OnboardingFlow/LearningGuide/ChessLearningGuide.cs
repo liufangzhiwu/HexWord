@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,15 +19,32 @@ public class ChessLearningGuide : UIWindow
     [SerializeField] private List<ChessView> chessViews = new List<ChessView>();
     [SerializeField] private List<BowlView> bowlViews = new List<BowlView>();
     private GameObject highlightedCollectionPoint; // 缓存第一步中被赋予高亮 Canvas 的树叶进度条对象
-   
-    // ✨ 新增：用于缓存 TipText 父节点的初始本地坐标
-    private Vector3 _originalTipTextParentLocalPos;
+    private GameObject highlightedToolObject;
+    
+    // 用于缓存 TipText 父节点的初始本地坐标
+    private Vector3 _originalTipTextParentAnchoredPos;
     private bool _hasSavedTipTextParentPos = false;
     
     protected override void InitializeUIComponents()
     {
         base.InitializeUIComponents();
         _specialTipBtn.AddClickAction(()=>this.Close());
+        
+        // 为遮罩添加随意点击事件以完成道具引导
+        Button bgBtn = Background.GetComponent<Button>();
+        if (bgBtn == null)
+        {
+            bgBtn = Background.AddComponent<Button>();
+        }
+        bgBtn.transition = Selectable.Transition.None; // 确保点击不会产生颜色变化
+        bgBtn.onClick.AddListener(() =>
+        {
+            string source = ChessGuideSystem.Instance.toolSourceName;
+            if (source == "UseTips" || source == "UseComplete")
+            {
+                this.Close(); // 随意点击遮罩即可关闭（完成引导）
+            }
+        });
     }
     
     protected override void OnEnable()
@@ -55,22 +73,48 @@ public class ChessLearningGuide : UIWindow
         ShowUIStyle();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
     }
+    
+    /// <summary>
+    /// 显示特殊面板并播放弹出动画，解决 Animator 动画丢失问题
+    /// </summary>
+    private void ShowSpecialTipPanel(string content, bool forceDOTween = false)
+    {
+        _specialTipPanel.SetActive(true);
+        _specialTipPanel.GetComponentInChildren<Text>().text = content;
+        if (forceDOTween)
+        {
+            //如果是中途弹出的界面，暂时关掉组件自带的 Animator，防止它在后台锁死界面的大小！
+            Animator anim = GetComponent<Animator>();
+            if (anim != null) anim.enabled = false;
 
+            // 动态代码动画：缩放到0，再弹簧式放大到1
+            _specialTipPanel.transform.DOKill();
+            _specialTipPanel.transform.localScale = Vector3.zero;
+            _specialTipPanel.transform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack).SetUpdate(true);
+        }
+    }
     private void ShowUIStyle()
     {
-        // ✨ 1. 记录初始位置，并在每次刷新UI时先将其归位，防止污染其他教程的排版
+        // 记录初始位置，并在每次刷新UI时先将其归位，防止污染其他教程的排版
+        RectTransform tipRect = null;
         if (TipText != null && TipText.transform.parent != null)
         {
+            tipRect = TipText.transform.parent.GetComponent<RectTransform>();
             if (!_hasSavedTipTextParentPos)
             {
-                _originalTipTextParentLocalPos = TipText.transform.parent.localPosition;
+                _originalTipTextParentAnchoredPos = tipRect.anchoredPosition;
                 _hasSavedTipTextParentPos = true;
             }
-            TipText.transform.parent.localPosition = _originalTipTextParentLocalPos;
+            TipText.transform.parent.localPosition = _originalTipTextParentAnchoredPos;
         }
         
         if (_specialTipPanel != null) _specialTipPanel.SetActive(false);
-        
+        string source = ChessGuideSystem.Instance.toolSourceName;
+        Button bgBtn = Background.GetComponent<Button>();
+        if (bgBtn != null)
+        {
+            bgBtn.interactable = (source == "UseTips" || source == "UseComplete");
+        }
         switch(ChessGuideSystem.Instance.toolSourceName)
         {
             case "FirstStage":
@@ -93,21 +137,25 @@ public class ChessLearningGuide : UIWindow
                 PropText.SetActive(false);
                 break;
             case "SetChess":
-                TipText.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString($"GuidingTips0" + 2 , "pingzi");
+                ShowSpecialTipPanel(MultilingualManager.Instance.GetString($"GuidingTips0" + 2 , "pingzi"));
+                Background.SetActive(true);
+                TipText.SetActive(false);
+                DianShouTable.SetActive(false);
+                // TipText.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString($"GuidingTips0" + 2 , "pingzi");
                 Background.SetActive(false);
                 break;
             case "UseTips":
                 PropText.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString($"GuidingTips0" + 3, "pingzi");
                 PropText.SetActive(true);
                 DianShouTable.SetActive(false);
-                Background.SetActive(false);
+                Background.SetActive(true);
                 TipText.SetActive(false);
                 break;
             case "UseComplete":
                 PropText.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString($"GuidingTips0" + 5,"pingzi");
                 PropText.SetActive(true);
                 DianShouTable.SetActive(false);
-                Background.SetActive(false);
+                Background.SetActive(true);
                 TipText.SetActive(false);
                 break;
             case "ChessError":
@@ -116,8 +164,12 @@ public class ChessLearningGuide : UIWindow
                 Background.SetActive(true);
                 DianShouTable.SetActive(true);
                 PropText.SetActive(false);
+                if (tipRect != null)
+                {
+                    tipRect.anchoredPosition = new Vector2(_originalTipTextParentAnchoredPos.x, -200f);
+                }
                 break;
-            // 🌟 👇 新增：冰块玩法引导样式
+            // 冰块玩法引导样式
             case "IceTutorial":
                 _specialTipPanel.SetActive(true); // 亮起内嵌的小面板
                 _specialTipPanel.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ClearIceRule", "pingzi");
@@ -127,7 +179,7 @@ public class ChessLearningGuide : UIWindow
                 PropText.SetActive(false);
                 break;
 
-            // 🌟 👇 新增：花朵玩法引导样式
+            // 花朵玩法引导样式
             case "FlowerTutorial":
                 _specialTipPanel.SetActive(true);
                 _specialTipPanel.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ClearFlowerRule", "pingzi");
@@ -137,7 +189,7 @@ public class ChessLearningGuide : UIWindow
                 PropText.SetActive(false);
                 break;
 
-            // 🌟 新增：树叶引导第一步样式（无确认按钮，显现文字与手指，强制填字）
+            // 树叶引导第一步样式（无确认按钮，显现文字与手指，强制填字）
             case "LeafTutorialStep1":
                 _specialTipPanel.SetActive(false); // 彻底隐藏带有关闭/我知道了按钮的面板
                 Background.SetActive(true);
@@ -146,14 +198,13 @@ public class ChessLearningGuide : UIWindow
                 TipText.GetComponentInChildren<Text>().text = string.Format(baseStr, ChessGuideSystem.Instance.targetPhrase);
                 DianShouTable.SetActive(false);    // 唤醒指引小手
                 PropText.SetActive(false);
-                TipText.transform.localPosition = new Vector3(
-                        _originalTipTextParentLocalPos.x, 
-                        _originalTipTextParentLocalPos.y + 100f, 
-                        _originalTipTextParentLocalPos.z);
-                
+                if (tipRect != null)
+                {
+                    tipRect.anchoredPosition = new Vector2(_originalTipTextParentAnchoredPos.x, _originalTipTextParentAnchoredPos.y + 100f);
+                }
                 break;
 
-            // 🌟 新增：树叶引导第二步样式（隐藏手指，显现带有确认按钮的内嵌面板提示去收集更多）
+            // 树叶引导第二步样式（隐藏手指，显现带有确认按钮的内嵌面板提示去收集更多）
             case "LeafTutorialStep2":
                 _specialTipPanel.SetActive(true);  // 亮起内嵌的小面板，展现确认关闭按钮
                 _specialTipPanel.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ButterflyPraise","pingzi");
@@ -184,7 +235,7 @@ public class ChessLearningGuide : UIWindow
         {
             foreach (ChessView chessView in ChessGuideSystem.Instance.ChesspieceList)
             {
-                // 🌟 1. 先让内部方法去设置它自己的状态，防止它覆盖我们后续的强制层级
+                // 1. 先让内部方法去设置它自己的状态，防止它覆盖我们后续的强制层级
                 if (chessView.CurrState == TileState.Check || chessView.CurrState == TileState.Error)
                 {
                     chessView.SetChoose(true, UIPanelLayer.TipsPanel);
@@ -260,8 +311,26 @@ public class ChessLearningGuide : UIWindow
             cpCanvas.sortingOrder = 1;
             cpRaycaster.enabled = false; // 运行第一步时锁定进度条自身点击，仅用于视觉高亮
         }
-        // 🌟 如果属于特殊玩法，不需要小手指路，手势节点直接隐藏
+        // 如果属于特殊玩法，不需要小手指路，手势节点直接隐藏
         string src = ChessGuideSystem.Instance.toolSourceName;
+        if (src == "UseTips" || src == "UseComplete")
+        {
+            if (ChessGuideSystem.Instance.activeToolObject != null)
+            {
+                highlightedToolObject = ChessGuideSystem.Instance.activeToolObject;
+                
+                Canvas btnCanvas = highlightedToolObject.GetComponent<Canvas>();
+                if (btnCanvas == null) btnCanvas = highlightedToolObject.AddComponent<Canvas>();
+                
+                GraphicRaycaster btnGr = highlightedToolObject.GetComponent<GraphicRaycaster>();
+                if (btnGr == null) btnGr = highlightedToolObject.AddComponent<GraphicRaycaster>();
+                
+                btnCanvas.overrideSorting = true;
+                btnCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
+                btnCanvas.sortingOrder = 1;
+                btnGr.enabled = true;
+            }
+        }
         bool isSpecial = (src == "IceTutorial" || src == "FlowerTutorial" || src == "LeafTutorial");
 
         if (!isSpecial && ChessGuideSystem.Instance.activeToolObject != null)
@@ -272,7 +341,7 @@ public class ChessLearningGuide : UIWindow
 
     public void SetClickCallback()
     {
-        // 🌟 终极修复：拦截底层广播的 "SetChess" (填字) 事件，处理树叶引导进度
+        // 拦截底层广播的 "SetChess" (填字) 事件，处理树叶引导进度
         if (ChessGuideSystem.Instance.toolSourceName == "SetChess" && ChessGuideSystem.Instance.currentTutorial == 8)
         {
             // 1. 获取刚刚被玩家点击并飞入棋盘的字块
@@ -281,7 +350,7 @@ public class ChessLearningGuide : UIWindow
                 BowlView clickedBowl = ChessGuideSystem.Instance.activeToolObject.GetComponent<BowlView>();
                 if (clickedBowl != null)
                 {
-                    // 👇 🌟 核心修复：玩家点击后，立刻销毁该字块身上的提层组件，让它瞬间失去高亮！
+                    // ：玩家点击后，立刻销毁该字块身上的提层组件，让它瞬间失去高亮！
                     if (clickedBowl.GetComponent<GraphicRaycaster>() != null)
                         Destroy(clickedBowl.GetComponent<GraphicRaycaster>());
 
@@ -324,8 +393,12 @@ public class ChessLearningGuide : UIWindow
                 AnalyticMgr.GuideComplete();
                 ChessGuideSystem.Instance.currentTutorial = 2;
                 AnalyticMgr.GuideBegin();
-                Background.SetActive(false);
-                TipText.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString($"GuidingTips0" + 2,"pingzi");
+                ShowSpecialTipPanel(MultilingualManager.Instance.GetString($"GuidingTips0" + 2, "pingzi"),true);
+                Background.SetActive(true);
+                TipText.gameObject.SetActive(false);
+                PropText.gameObject.SetActive(false);
+                DianShouTable.SetActive(false);
+                
                 if (ChessGuideSystem.Instance.activeToolObject != null)
                 {
                     BowlView clickedBowl = ChessGuideSystem.Instance.activeToolObject.GetComponent<BowlView>();
@@ -337,6 +410,8 @@ public class ChessLearningGuide : UIWindow
                     MoveHandToTile(bowlViews[0].transform);
                 }
                 DianShouTable.SetActive(false);
+                //TipText.gameObject.SetActive(false);
+                //this.Close();
             }
             else
             {
@@ -361,13 +436,19 @@ public class ChessLearningGuide : UIWindow
             // 是错误的开始
             ChessGuideSystem.Instance.currentTutorial = 3;
             AnalyticMgr.GuideBegin(); 
+            Button bgBtn = Background.GetComponent<Button>();
+            if (bgBtn != null) bgBtn.interactable = false;
             DianShouTable.SetActive(true);
             Background.SetActive(true);
             TipText.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString($"GuidingTips0" + 4,"pingzi");
            
             if (_hasSavedTipTextParentPos && TipText != null && TipText.transform.parent != null)
             {
-                TipText.transform.parent.localPosition = _originalTipTextParentLocalPos;
+                RectTransform tipRect = TipText.transform.parent.GetComponent<RectTransform>();
+                if (tipRect != null)
+                {
+                    tipRect.anchoredPosition = new Vector2(_originalTipTextParentAnchoredPos.x, -200f);
+                }
             }
             ChessView chessView = ChessGuideSystem.Instance.ChesspieceList[0];
             int index = chessViews.IndexOf(chessView);
@@ -412,8 +493,9 @@ public class ChessLearningGuide : UIWindow
             this.Close();
         }else if (ChessGuideSystem.Instance.toolSourceName == "UseTips")
         {
-            //DianShouTable.SetActive(true);
-            //MoveHandToTile(ChessGuideSystem.Instance.activeToolObject.transform);
+            this.Close();
+            // DianShouTable.SetActive(true);
+            // MoveHandToTile(ChessGuideSystem.Instance.activeToolObject.transform);
         }
     }
 
@@ -483,20 +565,32 @@ public class ChessLearningGuide : UIWindow
         
             highlightedCollectionPoint = null;
         }
+        
+        if (highlightedToolObject != null)
+        {
+            if (highlightedToolObject.GetComponent<GraphicRaycaster>() != null)
+                Destroy(highlightedToolObject.GetComponent<GraphicRaycaster>());
+
+            if (highlightedToolObject.GetComponent<Canvas>() != null)
+                Destroy(highlightedToolObject.GetComponent<Canvas>());
+            
+            highlightedToolObject = null;
+        }
     }
     
     private void OnCloseBtn()
     {
-        if (_hasSavedTipTextParentPos)
+        if (_hasSavedTipTextParentPos && TipText != null && TipText.transform.parent != null)
         {
-            TipText.transform.localPosition = _originalTipTextParentLocalPos;
+            RectTransform tipRect = TipText.transform.parent.GetComponent<RectTransform>();
+            if (tipRect != null) tipRect.anchoredPosition = _originalTipTextParentAnchoredPos;
         }
         
         if (string.IsNullOrEmpty(ChessGuideSystem.Instance.toolSourceName)) 
             return;
         if (ChessGuideSystem.Instance.toolSourceName == "WaitLeafAnimation") 
             return;
-        // 🌟 核心防错修复：根据当前的模式名，精准把对应玩法的引导进度设为 true
+        // 根据当前的模式名，精准把对应玩法的引导进度设为 true
         int currentGuideId = ChessGuideSystem.Instance.currentTutorial;
         string source = ChessGuideSystem.Instance.toolSourceName;
         if (source == "IceTutorial") currentGuideId = 6;
@@ -517,6 +611,9 @@ public class ChessLearningGuide : UIWindow
 
     public override void Close()
     {
+        Animator anim = GetComponent<Animator>();
+        if (anim != null) anim.enabled = true;
+        
         OnCloseBtn();
         base.Close();
     }
@@ -525,5 +622,10 @@ public class ChessLearningGuide : UIWindow
     {
         OnCloseBtn();
         base.OnDisable();
+    }
+    
+    public override void OnHideAnimationEnd()
+    {
+        base.OnHideAnimationEnd();
     }
 }
