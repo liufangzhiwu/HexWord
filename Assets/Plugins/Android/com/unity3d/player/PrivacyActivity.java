@@ -55,32 +55,54 @@ public class PrivacyActivity extends Activity {
         int screenWidth = dm.widthPixels;
         int screenHeight = dm.heightPixels;
 
-        // ----- 弹窗目标尺寸 -----
-        int dialogWidth = (int)(screenWidth * 0.85);
-        int dialogHeight = (int)(screenHeight * 0.80);
+        // 弹窗目标尺寸（基于屏幕比例）
+        int targetWidth = (int) (screenWidth * 0.85);
+        int targetHeight = (int) (screenHeight * 0.80);
 
-        // ---------- 文本内容 ----------
-        String bodyMessage = "欢迎体验我们的游戏！点击可查看我们的 " +
-                "<a href=\"https://mindwordplay.cn/yhxyb\">服务条款</a> 和 " +
-                "<a href=\"https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008\">隐私政策</a> ，" +
-                "如您同意，可点击「继续」进入游戏。<br/><br/>希望您能愉快地体验我们的产品。感谢您的选择！";
+        // ---------- 加载背景图 ----------
+        Bitmap bgBitmap = null;
+        try (InputStream is = getAssets().open("background.png")) {
+            bgBitmap = BitmapFactory.decodeStream(is);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e("PrivacyActivity", "Failed to load background.png, using fallback.");
+        }
 
-        // ---------- 欢迎标题 ----------
+        // 计算实际弹窗尺寸（保持图片比例，适应目标区域）
+        float scale;
+        int dialogWidth, dialogHeight;
+        if (bgBitmap != null) {
+            int bw = bgBitmap.getWidth();
+            int bh = bgBitmap.getHeight();
+            scale = Math.min((float) targetWidth / bw, (float) targetHeight / bh);
+            dialogWidth = Math.round(bw * scale);
+            dialogHeight = Math.round(bh * scale);
+        } else {
+            // 无背景图时使用目标尺寸
+            dialogWidth = targetWidth;
+            dialogHeight = targetHeight;
+        }
+
+        // ---------- 构造UI元素 ----------
+        // 欢迎标题
         TextView welcomeView = new TextView(this);
         welcomeView.setText("欢迎");
         welcomeView.setTextSize(TypedValue.COMPLEX_UNIT_PX, screenWidth * 0.06f);
         welcomeView.setTextColor(0xFF3A516A);
         welcomeView.setGravity(Gravity.CENTER);
-        // 左右内边距，顶部极小
-        int paddingH = (int)(dialogWidth * 0.04f);
-        int paddingTop = (int)(dialogHeight * 0.01f);   // 仅留极小顶部
-        welcomeView.setPadding(paddingH, paddingTop, paddingH, 0);
+        int paddingH = (int) (dialogWidth * 0.04f);
+        welcomeView.setPadding(paddingH, 0, paddingH, 0);
 
-        // ---------- 正文 ----------
+        // 正文
+        String bodyMessage = "欢迎体验我们的游戏！点击可查看我们的 " +
+                "<a href=\"https://mindwordplay.cn/yhxyb\">服务条款</a> 和 " +
+                "<a href=\"https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008\">隐私政策</a> ，" +
+                "如您同意，可点击「继续」进入游戏。<br/><br/>希望您能愉快地体验我们的产品。感谢您的选择！";
+
         TextView bodyView = new TextView(this);
-        int bodyPadding = (int)(dialogWidth * 0.075f);
-        int bodyTop = (int)(dialogHeight * 0.25f);
-        bodyView.setPadding(bodyPadding, bodyTop, bodyPadding, 0);  // 无顶部边距
+        int bodyPadding = (int) (dialogWidth * 0.075f);
+        int bodyTop = (int) (dialogHeight * 0.25f);
+        bodyView.setPadding(bodyPadding, bodyTop, bodyPadding, 0);
         bodyView.setTextSize(TypedValue.COMPLEX_UNIT_PX, screenWidth * 0.045f);
         bodyView.setLineSpacing(1f, 1f);
         bodyView.setText(Html.fromHtml(bodyMessage, Html.FROM_HTML_MODE_LEGACY));
@@ -89,31 +111,30 @@ public class PrivacyActivity extends Activity {
         bodyView.setLinkTextColor(0xFF3A516A);
         bodyView.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
 
-        // ---------- 内容容器（垂直排列）----------
+        // 内容布局（标题 + 正文）
         LinearLayout contentLayout = new LinearLayout(this);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
-        contentLayout.setGravity(Gravity.CENTER);  // 整体居中
-        // 添加整体下移的顶部内边距（按需调整）
-        int contentPaddingTop = (int)(dialogHeight * 0.06f);  // 6% 弹窗高度
+        contentLayout.setGravity(Gravity.TOP);
+        int contentPaddingTop = (int) (dialogHeight * 0.05f);
         contentLayout.setPadding(0, contentPaddingTop, 0, 0);
         contentLayout.addView(welcomeView);
 
-        // 正文占剩余空间，并居中
         LinearLayout.LayoutParams bodyLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
         bodyView.setLayoutParams(bodyLp);
         contentLayout.addView(bodyView);
 
-        // ---------- 继续按钮 ----------
+        // 继续按钮
         Button continueButton = new Button(this);
         continueButton.setText("继续");
         continueButton.setTextSize(TypedValue.COMPLEX_UNIT_PX, screenWidth * 0.05f);
         continueButton.setGravity(Gravity.CENTER);
         continueButton.setTextColor(0xFFFFFFFF);
 
-        int btnWidth = (int)(dialogWidth * 0.4f);
-        int btnHeight = (int)(btnWidth * 0.35f);
+        int btnWidth = (int) (dialogWidth * 0.4f);
+        int btnHeight = (int) (btnWidth * 0.35f);
 
+        // 尝试加载按钮背景图
         try (InputStream is = getAssets().open("continue_button.png")) {
             Bitmap original = BitmapFactory.decodeStream(is);
             Bitmap scaled = Bitmap.createScaledBitmap(original, btnWidth, btnHeight, true);
@@ -124,34 +145,32 @@ public class PrivacyActivity extends Activity {
             continueButton.setBackgroundColor(0xFF3A516A);
         }
 
-        int btnPad = (int)(dialogWidth * 0.045f);
-        continueButton.setPadding(btnPad, btnPad/2, btnPad, btnPad/2);
+        int btnPad = (int) (dialogWidth * 0.045f);
+        continueButton.setPadding(btnPad, btnPad / 2, btnPad, btnPad / 2);
         continueButton.setElevation(100f);
 
         LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(btnWidth, btnHeight);
         btnLp.gravity = Gravity.CENTER_HORIZONTAL;
-        btnLp.topMargin = (int)(dialogHeight * 0.01f);
-        btnLp.bottomMargin = (int)(dialogHeight * 0.06f);
+        btnLp.topMargin = (int) (dialogHeight * 0.01f);
+        btnLp.bottomMargin = (int) (dialogHeight * 0.06f);
         continueButton.setLayoutParams(btnLp);
 
-        // ---------- 根布局（FrameLayout + 背景图）----------
+        // ---------- 根布局 ----------
         FrameLayout rootLayout = new FrameLayout(this);
         rootLayout.setBackgroundColor(Color.TRANSPARENT);
 
-        // 背景图：改为 FIT_XY 拉伸填满（取消等比显示）
+        // 背景图（若有）
         ImageView bgView = new ImageView(this);
-        bgView.setScaleType(ImageView.ScaleType.FIT_XY);
-        try (InputStream is = getAssets().open("background.png")) {
-            Bitmap bitmap = BitmapFactory.decodeStream(is);
-            bgView.setImageBitmap(bitmap);
-        } catch (IOException e) {
-            e.printStackTrace();
-            rootLayout.setBackgroundColor(0x88000000);
+        bgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        if (bgBitmap != null) {
+            bgView.setImageBitmap(bgBitmap);
+        } else {
+            // 无背景图时使用半透明灰色背景
+            bgView.setBackgroundColor(0x88000000);
         }
         FrameLayout.LayoutParams bgLp = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT);
-        // 不再设置 margin，让背景图完全填满弹窗
         rootLayout.addView(bgView, bgLp);
 
         // 内容容器（包含 contentLayout 和按钮）
@@ -178,6 +197,7 @@ public class PrivacyActivity extends Activity {
             startUnityActivity();
         });
 
+        // 调整窗口属性
         Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -195,7 +215,7 @@ public class PrivacyActivity extends Activity {
             window.setAttributes(lp);
         }
     }
-    
+
     private void startUnityActivity() {
         Intent intent = new Intent(this, UnityPlayerActivity.class);
         startActivity(intent);
