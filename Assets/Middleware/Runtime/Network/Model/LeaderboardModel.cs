@@ -5,13 +5,13 @@ using UnityEngine;
 public class LeaderboardEntry
 {
     public int user_id;
+    public bool is_joined;
     public int rank;
     public int avatar;
     public string nickname;
     public int score;
     public string leaderboard_name;
     public string grouping;
-    
 }
 public class LeaderboardRequest
 {
@@ -46,4 +46,12 @@ public class ZenSettlementResponse
     public string old_level;
     public string settlement_type; // up, down, keep
     public int old_rank;
+}
+// 加入响应
+public class JoinZenRankResponse
+{
+    public string status;           
+    public string level;            // 当前段位
+    public string grouping;         // 分组（我们修改后为空）
+    public int base_zen_count;      // 服务端锁定的底分
 }

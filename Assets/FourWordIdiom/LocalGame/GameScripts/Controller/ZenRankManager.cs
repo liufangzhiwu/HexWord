@@ -22,8 +22,8 @@ public class ZenRankManager : MonoBehaviour
     public List<ZenRankState> MiddleRanks { get; private set; } = new List<ZenRankState>();
     public List<ZenRankState> BottomRanks { get; private set; } = new List<ZenRankState>();
     public LeaderboardEntry MyCurrentRankData { get; private set; } // 玩家自己的真实排名数据
-    public int RemainingSeconds { get; private set; } = -1; // 当前赛季剩余时间
-    public int NextRemainingSeconds { get; private set; } = -1;    // 下一期的时间next_remaining_seconds
+    public int RemainingSeconds { get;  set; } = -1; // 当前赛季剩余时间
+    public int NextRemainingSeconds { get;  set; } = -1;    // 下一期的时间next_remaining_seconds
     // 缓存上一次的排名和分数（用于结算动画比对）
     public int CachedOldRank { get;  set; }
     public int CachedOldScore { get;  set; }
@@ -167,17 +167,29 @@ public class ZenRankManager : MonoBehaviour
                 if (res.my != null)
                 {
                     MyCurrentRankData = res.my;
+                    GameDataManager.Instance.UserData.isJoinedZenRank = res.my.is_joined;
+                    Debug.Log($"【Rank Debug - API】收到服务器排行榜数据 - 服务器分数: {res.my.score}, 服务器排名: {res.my.rank}");
+                    Debug.Log($"【Rank Debug - API】当前本地缓存 - 旧分数: {CachedOldScore}, 旧排名: {CachedOldRank}");
                     
-                    // 如果是本局第一次拿到有效数据，同步缓存，防播动画
-                    CachedOldRank = MyCurrentRankData.rank;
-                    CachedOldScore = MyCurrentRankData.score;
+                    // if (CachedOldScore == 0 && CachedOldRank == 0)
+                    // {
+                    //     CachedOldRank = MyCurrentRankData.rank;
+                    //     CachedOldScore = MyCurrentRankData.score;
+                    //     Debug.Log($"【Rank Debug - API】⚠️ 首次初始化缓存完成！将缓存设定为: 分数={CachedOldScore}, 排名={CachedOldRank}");
+                    // }
+                    // else
+                    // {
+                    //     Debug.Log($"【Rank Debug - API】✅ 已存在旧缓存，成功拦截无脑覆盖！维持缓存旧分数: {CachedOldScore}");
+                    // }
                 }
                 else
                 {
                     // 确保未上榜时数据为空，UI 层才能正确显示“未上榜”状态
                     MyCurrentRankData = null; 
+                    Debug.Log("【Rank Debug - API】未上榜，MyCurrentRankData 设为空。");
                 }
             }
+            
             isCompleted = true;
         });
 
@@ -316,11 +328,8 @@ public class ZenRankManager : MonoBehaviour
         // 2. 如果发生了结算，弹出结算 UI 
         if (hasSettlement)
         {
-            GameDataManager.Instance.UserData.Zenlevel = newLevelCode;
-            
             // 查找旧段位的 ID 以匹配奖励
             var oldState = ZenStates.FirstOrDefault(s => s.Code == oldLevelCode) ?? ZenStates[0];
-            
             // 查找该发的奖励
             Dictionary<int, int> myRewards = null;
             var rewardConfig = RewardDatas.FirstOrDefault(r => r.State == oldState.Id && r.Rank == oldRank);
@@ -337,21 +346,8 @@ public class ZenRankManager : MonoBehaviour
 
             // 🌟 死锁等待：无论是大厅还是排行榜调用此方法，都会一直等到玩家点击关闭结算界面！
             yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ZenSettlementScreen));
-            bool isClaimCompleted = false;
-            yield return APIGateway.Instance.LeaderboardApi.ClaimZenReward((res) =>
-            {
-                // 收到服务端确认后，本地应用新段位
-                GameDataManager.Instance.UserData.Zenlevel = res.new_level;
-                
-                // 🌟 核心状态切换：强行把玩家踢出榜单，要求他等会儿必须点雷达匹配重新加入！
-                GameDataManager.Instance.UserData.isJoinedZenRank = false; 
-                
-                // 保存本地，并把变更为 false 的状态立刻同步给服务端
-                GameDataManager.Instance.CommitGameData();
-                
-                isClaimCompleted = true;
-            });
-            yield return new WaitUntil(() => isClaimCompleted);
+            ClearRankCache();
+            
             Debug.Log("在打开加入面板前，已经完成领奖了");
             UIWindow window = SystemManager.Instance.ShowPanel(PanelType.ZenRankStartScreen);
             if (!string.IsNullOrEmpty(sourcePanel) && window != null)
@@ -359,7 +355,6 @@ public class ZenRankManager : MonoBehaviour
             
             onComplete?.Invoke(true);
             Debug.Log("结算界面关闭，服务器已确认领奖，流程继续");
-            ClearRankCache();
         }
         else
         {
@@ -382,15 +377,25 @@ public class ZenRankManager : MonoBehaviour
 
         // 剔除玩家自己
         string myName = GameDataManager.Instance.UserData.UserName;
-        var otherPlayers = allRanks.Where(p => p.Name != myName && p.Rank > 0).ToList();
-
+        var otherPlayers = allRanks.Where(p => p.Name != myName && p.Rank > 0)
+            .OrderBy(p => p.Rank) 
+            .ToList();
         // 拿着我的新分数，去跟所有人硬碰硬对比
         foreach (var p in otherPlayers)
         {
             // 只要我的分数大于等于他，并且他的名次比我现在的预测名次高，我就能顶替他！
-            if (expectedNewScore >= p.Score && p.Rank < predictedRank)
+            if (expectedNewScore >= p.Score)
             {
                 predictedRank = p.Rank; 
+            }
+            else
+            {
+                // 如果我的新分数依然比他低，且他占据了我的预测名次（或排在我原本后面）
+                // 说明我被他挤下去了，必须给他让位，我的名次往后退！
+                if (p.Rank >= predictedRank)
+                {
+                    predictedRank = p.Rank + 1;
+                }
             }
         }
         if (predictedRank == 9999) 
@@ -399,5 +404,42 @@ public class ZenRankManager : MonoBehaviour
         }
         // 兜底防御：最高是第 1 名
         return Mathf.Max(1, predictedRank);
+    }
+    
+    // ==========================================
+    // 玩家主动请求加入排行榜 (雷达匹配)
+    // ==========================================
+    public IEnumerator RequestJoinZenRankRoutine(System.Action<bool> onComplete = null)
+    {
+        bool isRequestFinished = false;
+        bool isSuccess = false;
+
+        IsFetching = true; // 复用网络锁，防狂点
+
+        yield return APIGateway.Instance.LeaderboardApi.JoinZenRank((res) =>
+        {
+            if (res != null && res.status == "success")
+            {
+                Debug.Log($"【Rank Debug - Join】成功加入段位榜！锁定底分: {res.base_zen_count}");
+                
+                // 1. 本地状态变更为已加入
+                GameDataManager.Instance.UserData.isJoinedZenRank = true;
+                
+                // 2. 立即持久化，告诉服务器我已经加入
+                GameDataManager.Instance.CommitGameData();
+                
+                isSuccess = true;
+            }
+            else
+            {
+                Debug.LogError("【Rank Debug - Join】加入排行榜失败！");
+            }
+            isRequestFinished = true;
+        });
+
+        yield return new WaitUntil(() => isRequestFinished);
+        IsFetching = false;
+        
+        onComplete?.Invoke(isSuccess);
     }
 }

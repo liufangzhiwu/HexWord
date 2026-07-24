@@ -78,7 +78,7 @@ public class GetItemScreen : UIWindow
                 UpdateCliamBtn(false);
                 title.text = MultilingualManager.Instance.GetString("ItemName02","pingzi");
                 tips.text = MultilingualManager.Instance.GetString("ItemDes02","pingzi");
-                ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[101].cost.ToString();
+                ClaimGoldBtn.GetComponentInChildren<Text>().text=GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
                 AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
                 eventDes=title.text+"弹窗广告";

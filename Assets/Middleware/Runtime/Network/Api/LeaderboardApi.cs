@@ -23,6 +23,25 @@ public class LeaderboardApi
     }
     
     /// <summary>
+    /// 👇=== 新增：主动加入禅修榜接口 ===👇
+    /// 玩家在雷达界面点击匹配时调用，通知服务端锁定新赛季底分
+    /// </summary>
+    public IEnumerator JoinZenRank(System.Action<JoinZenRankResponse> action)
+    {
+        var url = "leaderboards/zen/join";
+        
+        // POST 请求，无需传参，通过 Header 的 Token 识别玩家
+        yield return httpClient.Post<JoinZenRankResponse>(url, null,
+            response => {
+                action?.Invoke(response);
+            },
+            error => {
+                Debug.LogError($"[LeaderboardApi] 主动加入排行榜请求失败: {error}");
+                action?.Invoke(null);
+            });
+    }
+    
+    /// <summary>
     /// 👇=== 确认领奖接口 ===👇
     /// 发送领奖确认请求，通知服务端结束玩家的上个赛季状态并更新真实段位
     /// </summary>

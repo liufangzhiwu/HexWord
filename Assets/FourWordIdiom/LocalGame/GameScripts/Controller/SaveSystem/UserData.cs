@@ -371,7 +371,7 @@ public class UserData
                     count = 0 } },
             {
                 102, new ToolInfo {
-                    cost = AppGameSettings.ShopItems.WordHintCost, type = "WordHint",
+                    cost = AppGameSettings.ShopItems.SingleHintCost, type = "WordHint",
                     count = AppGameSettings.ShopItems.WordHintCount } },
             { 
                 103, new ToolInfo {
@@ -540,7 +540,7 @@ public class UserData
                     count = 0 } },
             {
                 102, new ToolInfo {
-                    cost = AppGameSettings.ShopItems.WordHintCost, type = "WordHint",
+                    cost = AppGameSettings.ShopItems.SingleHintCost, type = "WordHint",
                     count = AppGameSettings.ShopItems.WordHintCount } },
             { 
                 103, new ToolInfo {
@@ -572,6 +572,11 @@ public class UserData
 
                 // 移除源道具
                 toolInfo[101].count = 0;
+            }
+
+            if (toolInfo[102].cost > AppGameSettings.ShopItems.SingleHintCost)
+            {
+                toolInfo[102].cost = AppGameSettings.ShopItems.SingleHintCost;
             }
         }
        

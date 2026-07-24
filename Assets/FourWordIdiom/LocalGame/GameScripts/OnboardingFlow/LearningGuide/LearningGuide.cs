@@ -76,6 +76,10 @@ public class LearningGuide : UIWindow
                 ItemTable.gameObject.SetActive(true);
                 shushouTable.gameObject.SetActive(false);
                 hengshouTable.gameObject.SetActive(false);
+                if (tips.Contains("放大镜"))
+                {
+                    tips = tips.Replace("放大镜", "火箭");
+                }
                 tooltipsText.text = tips;
                 break;           
         }

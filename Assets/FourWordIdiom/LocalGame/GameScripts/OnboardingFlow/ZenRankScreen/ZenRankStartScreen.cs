@@ -23,7 +23,7 @@ public class ZenRankStartScreen : UIWindow
     
     [Header("匹配规则设置")]
     [SerializeField] private int targetPlayerCount = 30;     // 逻辑上需要匹配的总人数
-    [SerializeField] private int maxVisualAvatars = 6;       // 视觉上雷达图最多同时显示的头像数量 (防止拥挤)
+    [SerializeField] private int maxVisualAvatars = 4;       // 视觉上雷达图最多同时显示的头像数量 (防止拥挤)
     
     [Header("雷达图设置")]
     [SerializeField] private RectTransform radarCenter;   // 雷达中心容器（挂载头像的父节点）
@@ -208,7 +208,8 @@ public class ZenRankStartScreen : UIWindow
         UpdateProgressUI(currentPlayerCount);
         ClearAllAvatars(); // 清理旧头像
         yield return new WaitForSeconds(0.5f);
-        WaitForSeconds wait =  new WaitForSeconds(0.15f);
+        StartCoroutine(GenerateAvatars(12));
+        WaitForSeconds wait =  new WaitForSeconds(0.08f);
         while (currentPlayerCount < targetPlayerCount)
         {
             // 随机等待 0.2 到 0.8 秒模拟寻找玩家的过程
@@ -216,16 +217,23 @@ public class ZenRankStartScreen : UIWindow
             yield return wait;
             currentPlayerCount++;
             UpdateProgressUI(currentPlayerCount);
-            
-            // 生成一个新头像
-            SpawnRandomAvatar();
         }
-        // 匹配完成！
-        Debug.Log("匹配完成，进入游戏！");
-        GameDataManager.Instance.UserData.isJoinedZenRank = true;
-        GameDataManager.Instance.CommitGameData();
-        // 可选：匹配完成后稍微停顿 0.5 秒让玩家看清进度条满了再跳转
-        yield return new WaitForSeconds(0.5f);
+        
+        bool isSuccess = false;
+        yield return StartCoroutine(ZenRankManager.Instance.RequestJoinZenRankRoutine((res) =>
+        {
+            isSuccess = res;
+        }));
+        if (!isSuccess)
+        {
+            if (stage2TipText != null) 
+                stage2TipText.text = "<color=#FF5555>网络异常，匹配失败，请重试！</color>";
+            
+            // 重置按钮或让玩家手动关闭面板，这里可以根据你的 UI 需求调整
+            // 为了安全，不再往下执行强制进游戏的逻辑
+            yield break; 
+        }
+        Debug.Log("服务器确认加入成功，进入游戏！");
         
         // 触发进入战斗场景逻辑
         SystemManager.Instance.HidePanel(PanelType.ZenRankStartScreen, true, () =>
@@ -242,7 +250,19 @@ public class ZenRankStartScreen : UIWindow
             uiWindow?.GetComponent<PrimaryInterface>().OnPlayClick();
         });
     }
-
+    // 独立协程：慢慢生成指定数量的头像（同时最多显示4个）
+    private IEnumerator GenerateAvatars(int totalCount)
+    {
+        int generated = 0;
+        WaitForSeconds wait = new WaitForSeconds(Random.Range(0.4f, 0.6f));
+        while (generated < totalCount)
+        {
+            yield return wait;
+             // 控制生成节奏
+            SpawnRandomAvatar();
+            generated++;
+        }
+    }
     // 更新进度条和文字
     private void UpdateProgressUI(int count)
     {
@@ -272,6 +292,8 @@ public class ZenRankStartScreen : UIWindow
             avatarPool.ReturnObjectToPool(oldestAvatar.GetComponent<PoolObject>());
         }
         Vector2 targetPos = Vector2.zero;
+        Vector2 myAvatarPos = stage2MyAvatar.rectTransform.anchoredPosition;
+
         float randomRadius = 0f;
         bool foundValidPos = false;
         for (int i = 0; i < 30; i++)
@@ -285,7 +307,11 @@ public class ZenRankStartScreen : UIWindow
             float y = Mathf.Sin(randomAngle) * randomRadius;
             targetPos = new Vector2(x, y);
             
+            // 避免覆盖自己的头像
+            if (Vector2.Distance(targetPos, myAvatarPos) < avatarMinDistance)
+                continue;
             // 检查与场上现有头像的距离
+            
             bool isOverlapping = false;
             foreach (var activeAvatar in activeAvatars)
             {

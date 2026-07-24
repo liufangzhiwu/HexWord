@@ -233,8 +233,9 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 
                 if (!GameDataManager.Instance.UserData.isDayGoldBuy)
                 {
+                    int needgold = (int)shopDataItem.price;
                     
-                    if (GameDataManager.Instance.UserData.Gold < 400)
+                    if (GameDataManager.Instance.UserData.Gold < needgold)
                     {
                         MessageSystem.Instance.ShowTip("TipGoldInsufficient");
                         return;
@@ -244,7 +245,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                     int count = int.Parse(giftdata[1]);
                     int type = int.Parse(giftdata[0]);
                     
-                    GameDataManager.Instance.UserData.UpdateGold(-400, true,true,"看广告领取商店金币");
+                    GameDataManager.Instance.UserData.UpdateGold(-needgold, true,true,"看广告领取商店金币");
                     GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count,"看广告领取商店金币");
                     GameDataManager.Instance.UserData.isDayGoldBuy = true;
                     shopPriceText.text = "已购买";
@@ -548,7 +549,8 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             {
                 if (!GameDataManager.Instance.UserData.isDayGoldBuy)
                 {
-                    shopPriceText.text = "400";
+                    //shopPriceText.text = "400";
+                    shopPriceText.text = data.price.ToString();
                 }
                 else
                 {

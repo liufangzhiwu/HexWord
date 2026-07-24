@@ -224,7 +224,7 @@ public class ShopManager : MonoBehaviour
                     .Select(group => group.Split(';').ToList())
                     .ToList();
 
-                float price =purchaseType >= 0? float.Parse(fields[6].Trim().Trim('"')):0; // 去掉引号
+                int price =!string.IsNullOrEmpty(fields[6].Trim())? int.Parse(fields[6].Trim().Trim('"')):0; // 去掉引号
                 string showIcon = fields[7].Trim();
                 string name = fields[3].Trim();
                 string des = fields[9].Trim();

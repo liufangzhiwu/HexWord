@@ -104,7 +104,7 @@ public class ZenRankScreen : UIWindow
     private IEnumerator Start()
     {
         //title.text = MultilingualManager.Instance.GetString("MeditationList");
-        //ZenTitle.text = MultilingualManager.Instance.GetString("ZenValue");
+        // ZenTitle.text = MultilingualManager.Instance.GetString("ZenValue");
         MyGoPlay.AddClickAction(OnGoPlayClicked);
         
         if (RanklvProfab == null)
@@ -184,7 +184,7 @@ public class ZenRankScreen : UIWindow
     private IEnumerator CheckSettlementAndLoadRank()
     {
         // 🌟 1. 直接复用 Manager 里的统一步骤（万一玩家是一直挂机在游戏里跨周的，这里依然能触发弹窗）
-        yield return StartCoroutine(ZenRankManager.Instance.CheckAndShowSettlementRoutine());
+        yield return StartCoroutine(ZenRankManager.Instance.CheckAndShowSettlementRoutine(_returnTargetPanel));
         
         // 🌟 2. 此时肯定没有弹窗了，数据也肯定是最新的了。直接刷新 UI！
         string latestLevelCode = GameDataManager.Instance.UserData.Zenlevel;
@@ -287,7 +287,7 @@ public class ZenRankScreen : UIWindow
     protected override void InitializeUIComponents()
     {
         base.InitializeUIComponents();
-        BackBtn.AddClickAction(OnClickBack);
+        BackBtn.AddVibraClickAction(OnClickBack);
         HelpBtn.AddClickAction(()=> SystemManager.Instance.ShowPanel(PanelType.ZenRankHelpScreen));
         LeftArrowBtn.AddClickAction(OnClickLeftArrow);
         RightArrowBtn.AddClickAction(OnClickRightArrow);
@@ -515,12 +515,16 @@ public class ZenRankScreen : UIWindow
         {
             SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
         }
-        else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
+        else if (GameCoreManager.Instance.PanelState == PanelState.FinishXiaoPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPingPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.ChessFinishView);
+        }
+        else if (GameCoreManager.Instance.PanelState == PanelState.GameXiaoPanel)
+        {
+            SystemManager.Instance.HidePanel(PanelType.GamePlayArea);
         }
         else if (GameCoreManager.Instance.PanelState == PanelState.GameHexPanel)
         {

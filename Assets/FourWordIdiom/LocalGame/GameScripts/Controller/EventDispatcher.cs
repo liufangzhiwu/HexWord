@@ -227,8 +227,8 @@ public class EventDispatcher:MonoBehaviour
     public void TriggerUpdateRewardPuzzle(bool state)
         => _onUpdateRewardPuzzle?.Invoke(state);
 
-    public void TriggerUpdateLayerCoin(bool immediate, bool animate,bool isshowpupa=false)
-        => _onUpdateLayerCoin?.Invoke(immediate, animate,isshowpupa);
+    public void TriggerUpdateLayerCoin(bool istop, bool btnshow,bool isshowpupa=false)
+        => _onUpdateLayerCoin?.Invoke(istop, btnshow,isshowpupa);
 
     public void TriggerChoicePuzzleSetStatus(bool visible)
         => _onChoicePuzzleSetStatus?.Invoke(visible);
