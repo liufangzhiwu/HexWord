@@ -24,6 +24,11 @@ public class ZenRankItem : MonoBehaviour
     [SerializeField] private Button BoxReward;
     [SerializeField] private GameObject GoldReward;
     
+    [Header("我的分数背景")]
+    [SerializeField] private Image zenscoreBg;
+    [SerializeField] private Sprite normalSprite;
+    [SerializeField] private Sprite selectedSprite;
+    
     // 🌟 暴露出分数和排名的 Text 组件，供外部控制动画
     public Text ScoreText => Score;
     public Text RankText { get; private set; }
@@ -89,20 +94,33 @@ public class ZenRankItem : MonoBehaviour
 
         if (isMe)
         {
-            GetComponent<Image>().sprite =
-                AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("mide", "OnboardingFlow");
+            if (isDisplayOnly)
+            {
+                GetComponent<Image>().sprite =
+                    AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("change_rank_me", "OnboardingFlow");
+            }
+            else
+            {
+                GetComponent<Image>().sprite =
+                    AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("mide", "OnboardingFlow");
+            }
+           
             if (ColorUtility.TryParseHtmlString("#823F15", out Color newColor))
             {
                 Name.color = newColor;
                 Score.color = newColor;
+                RankText.color = newColor;
             }
-                
+
+            zenscoreBg.sprite = selectedSprite;
         }
         else
         {
             GetComponent<Image>().sprite = _sprite;
             Name.color = Color.white;
             Score.color = Color.white;
+            RankText.color = Color.white;
+            zenscoreBg.sprite = normalSprite;
         }
             
     }

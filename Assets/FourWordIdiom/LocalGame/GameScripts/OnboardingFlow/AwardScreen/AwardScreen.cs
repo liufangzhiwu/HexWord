@@ -21,7 +21,7 @@ public class AwardScreen : UIWindow
     {
         base.OnEnable();
         InitUI();
-        AudioManager.Instance.PlaySoundEffect("ShowUI");
+        AudioManager.Instance.PlaySoundEffect("hudieReward");
     }
 
     private void InitUI()

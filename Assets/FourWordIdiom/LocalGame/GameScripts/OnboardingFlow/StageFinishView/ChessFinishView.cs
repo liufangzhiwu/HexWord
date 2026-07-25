@@ -56,6 +56,8 @@ public class ChessFinishView : UIWindow
     
     private GameObject _treasureBoxEffect;
     private GameObject lotusInstance;
+    private GameObject _pupaPrefab;
+    private ObjectPool _pupaPool;
     private int _currentProgressSegment = 0;
 
     private float sliderProgress;
@@ -69,7 +71,7 @@ public class ChessFinishView : UIWindow
     
     protected override void InitializeUIComponents()
     {
-        nextBtn.AddClickAction(OnNextButtonClick);
+        nextBtn.AddVibraClickAction(OnNextButtonClick);
         _limitBtnTable._limitTimeEventButton.AddClickAction(OnLimitTimeEventButtonClicked);
        
         Content.onClick.AddListener(() => { SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen); });
@@ -78,7 +80,8 @@ public class ChessFinishView : UIWindow
         // 初始化莲花状态（放在屏幕中央或者特定初始位置）
         GameObject prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "lotus_icon");
         lotusInstance = Instantiate(prefab, _centerLotusImage.transform, false);
-        
+        _pupaPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "Pupa");
+        _pupaPool = new ObjectPool(_pupaPrefab, transform, 2,PoolBehaviour.GameObject);
         CustomFlyInManager.Instance.finishlevelBtnObj=nextBtn.gameObject;
     }
 
@@ -141,6 +144,21 @@ public class ChessFinishView : UIWindow
 
         // nextBtn.gameObject.SetActive(false);
         StartCoroutine(CheckZenRankBtn());
+        
+        isShowWinSign = StreakManager.Instance.IsCanShowWinSign();
+        // bool isJump = ChessStageController.Instance.IsJump;
+
+        //if (isShowWinSign&&!isJump)
+        // if (isShowWinSign)
+        // {
+        //     SystemManager.Instance.ShowPanel(PanelType.SignWinScreen);
+        // }
+        // else
+        // {
+        //     CheckReturnFirstWinScreen();
+        // }
+        
+        // StartCoroutine(PlayRewardSequence(isShowWinSign));
     }
     
     private void CheckReturnFirstWinScreen()
@@ -158,15 +176,15 @@ public class ChessFinishView : UIWindow
         
         Debug.Log("是否触发回归奖励: "+isTriggerFirstWin+"离线时间(秒数): "+offlineSeconds+"今日拼字玩法通关次数: "+todaywinTime+"金币数量: "+goldcount+"道具数量: "+toolcount+"连胜天数: "+curStreak);
         
-        switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
-        {
-            case LevelType.ChessWord:
-                if (isTriggerFirstWin)
-                {
-                    SystemManager.Instance.ShowPanel(PanelType.ReturnFirstWinScreen);
-                }
-                break;
-        }
+        // switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
+        // {
+        //     case LevelType.ChessWord:
+        //         if (isTriggerFirstWin)
+        //         {
+        //             SystemManager.Instance.ShowPanel(PanelType.ReturnFirstWinScreen);
+        //         }
+        //         break;
+        // }
 
     }
 
@@ -538,7 +556,18 @@ public class ChessFinishView : UIWindow
                                              &&!SystemManager.Instance.PanelIsShowing(PanelType.SevenSignScreen)
                                              &&!SystemManager.Instance.PanelIsShowing(PanelType.ReturnFirstWinScreen));
         }
-        
+        AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
+        {
+            if (issuccess)
+            {
+                AnalyticMgr.InsetAdSuccess("关卡插屏");
+                GameDataManager.Instance.UserData.totalInsetSeeAds++;
+            }
+            else
+            {
+                AnalyticMgr.InsetAdFail("关卡插屏");
+            }
+        });
         int cachedLimitCount = ChessStageController.Instance.LimitPuzzleCount;
         int leafCollected = ChessStageController.Instance.CurrStageData.CollectedLeaves;
         if (leafCollected > 0)
@@ -822,66 +851,63 @@ public class ChessFinishView : UIWindow
         // 如果本局获得了蝶蛹，才播放动画
         if (earnedPupa > 0 && butterflyBtn != null)
         {
-            // 加载蝶蛹预制体 (和你在 ButterfliesManager 里用的是同一个)
-            GameObject prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "Pupa");
-            if (prefab == null) yield break;
-
+            int initialPupa = GameDataManager.Instance.ButterflyData.currPupa - earnedPupa;
+            int completedCount = 0;
+            bool allDone = false;
             // 循环生成蝶蛹 (获得几个就飞几次)
             for (int i = 0; i < earnedPupa; i++)
             {
-            GameObject pupaInstance = Instantiate(prefab, transform, false);
+                GameObject pupaInstance = _pupaPool.GetObject();
 
-            Canvas canvas = pupaInstance.GetComponent<Canvas>();
-            // 2. 只有真没找到，才去添加
-            if (canvas == null)
-            {
-                canvas = pupaInstance.AddComponent<Canvas>();
+                Canvas canvas = pupaInstance.GetComponent<Canvas>();
+                // 2. 只有真没找到，才去添加
+                if (canvas == null)
+                {
+                    canvas = pupaInstance.AddComponent<Canvas>();
+                }
+
+                canvas.overrideSorting = true;
+                canvas.sortingLayerName = "PopPanel";
+                canvas.sortingOrder = 10;
+
+                pupaInstance.SetActive(true);
+                pupaInstance.transform.localPosition = Vector3.zero; // 从屏幕中间开始
+                pupaInstance.transform.localScale = Vector3.one;
+
+                Sequence seq = DOTween.Sequence();
+                seq.SetLink(pupaInstance);
+
+                // 动作1：向上弹起
+                seq.Append(pupaInstance.transform.DOLocalMoveY(150f, 0.4f).SetRelative(true).SetEase(Ease.OutQuad));
+
+                // 动作2：飞向蝴蝶按钮，同时缩小
+                seq.Append(pupaInstance.transform.DOMove(butterflyBtn.transform.position, 0.6f).SetEase(Ease.InBack));
+                seq.Join(pupaInstance.transform.DOScale(0.5f, 0.6f));
+                
+                // 动作3：飞到了！
+                seq.OnComplete(() =>
+                {
+                    AudioManager.Instance.PlaySoundEffect("getPupa"); // 播放获得音效
+                    completedCount++;
+                    int currentVisualPupa = initialPupa + completedCount;
+                    // 🌟 核心：飞到一个，进度条就涨一点！
+                    // int oldPupaCount = GameDataManager.Instance.ButterflyData.currPupa - earnedPupa;
+                    // int currentVisualPupa = oldPupaCount + (i + 1); 
+                    UpdateButterflyProgressUI(GameDataManager.Instance.ButterflyData.currPupa); // 触发 UI 更新动画
+
+                    // 可选：让按钮有个被击中的弹跳反馈
+                    butterflyBtn.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 10, 1);
+                    if (completedCount >= earnedPupa)
+                        allDone = true;
+
+                    _pupaPool.ReturnObjectToPool(pupaInstance.GetComponent<PoolObject>());
+                });
+                // 每个蝶蛹启动后，间隔 0.2 秒再启动下一个（最后一个不用等）
+                if (i < earnedPupa - 1)
+                    yield return new WaitForSeconds(0.2f);
             }
-
-            canvas.overrideSorting = true;
-            canvas.sortingLayerName = "PopPanel";
-            canvas.sortingOrder = 10;
-
-            pupaInstance.SetActive(true);
-            pupaInstance.transform.localPosition = Vector3.zero; // 从屏幕中间开始
-            pupaInstance.transform.localScale = Vector3.one;
-
-            Sequence seq = DOTween.Sequence();
-            seq.SetLink(pupaInstance);
-
-            // 动作1：向上弹起
-            seq.Append(pupaInstance.transform.DOLocalMoveY(150f, 0.4f).SetRelative(true).SetEase(Ease.OutQuad));
-
-            // 动作2：飞向蝴蝶按钮，同时缩小
-            seq.Append(pupaInstance.transform.DOMove(butterflyBtn.transform.position, 0.6f).SetEase(Ease.InBack));
-            seq.Join(pupaInstance.transform.DOScale(0.5f, 0.6f));
-
-            bool isAnimFinished = false;
-
-            // 动作3：飞到了！
-            seq.OnComplete(() =>
-            {
-                AudioManager.Instance.PlaySoundEffect("getPupa"); // 播放获得音效
-
-                // 🌟 核心：飞到一个，进度条就涨一点！
-                // int oldPupaCount = GameDataManager.Instance.ButterflyData.currPupa - earnedPupa;
-                // int currentVisualPupa = oldPupaCount + (i + 1); 
-                UpdateButterflyProgressUI(GameDataManager.Instance.ButterflyData.currPupa); // 触发 UI 更新动画
-
-                // 可选：让按钮有个被击中的弹跳反馈
-                butterflyBtn.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 10, 1);
-
-                isAnimFinished = true;
-                Destroy(pupaInstance);
-            });
-
-            // 等这只蝶蛹飞完
-            yield return new WaitUntil(() => isAnimFinished);
-
-            // 稍微等 0.2 秒再飞下一只
-            yield return new WaitForSeconds(0.2f);
-            }
-
+            // 等待所有蝶蛹动画彻底结束
+            yield return new WaitUntil(() => allDone);
             // 所有蝶蛹都飞完了，稍微停顿一下再继续后面的流程
             // yield return new WaitForSeconds(0.8f);
         }
@@ -893,7 +919,7 @@ public class ChessFinishView : UIWindow
         {
             SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
         }
-        else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
+        else if (GameCoreManager.Instance.PanelState == PanelState.FinishXiaoPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }
@@ -916,6 +942,7 @@ public class ChessFinishView : UIWindow
         if (!isZenUnlocked) yield break;
   
         var userData = GameDataManager.Instance.UserData;
+           
         bool isFirstUnlockZen = !userData.isJoinedZenRank &&
                                 userData.CurrentChessStage == AppGameSettings.UnlockRequirements.ZenOpenLevel;
         if (isFirstUnlockZen)
@@ -943,16 +970,33 @@ public class ChessFinishView : UIWindow
             // 既然强制弹出了匹配页，玩家必须点击匹配，匹配完会自动触发进下一关
             // 此时结算页会被强行关闭。所以在这里使用死循环挂起，不让后续代码继续执行！
             yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ZenRankStartScreen));
-            GameDataManager.Instance.UserData.isJoinedZenRank = true; 
-            GameDataManager.Instance.CommitGameData();
             yield break; // 匹配结束界面关闭后，直接退出协程
         }
-        
+        // ==========================================
+        // 🌟【关键修复】：静默检查赛季状态 (绝对不在这里弹窗)
+        // ==========================================
+        bool hasSettlement = false;
+        bool isCheckFinished = false;
+        // 直接调用底层 API 请求，不走带 UI 的 Routine
+        yield return APIGateway.Instance.LeaderboardApi.CheckZenSettlement((res) =>
+        {
+            if (res != null)
+            {
+                hasSettlement = res.has_settlement;
+            }
+            isCheckFinished = true;
+        });
+
+        yield return new WaitUntil(() => isCheckFinished);
+        // 如果服务器标记已有结算，或者本地倒计时已经归零，说明处于“赛季交替期”
+        if (hasSettlement || ZenRankManager.Instance.RemainingSeconds <= 0)
+        {
+            Debug.Log("[ZenFlow] 检测到赛季已结束或有待领取的奖励。静默拦截：胜利页不弹结算，跳过排名变化动画。");
+            // 直接退出流程！玩家点继续后会回到大厅，由大厅统一管理赛季结算弹窗的弹出。
+            yield break; 
+        }
+        // ==========================================
         int addZenCount = ChessStageController.Instance.CurrentTotalScore;
-        Debug.Log($"[ZenFlow] isJoinedZenRank: {userData.isJoinedZenRank}, " +
-                  $"RemainingSeconds: {ZenRankManager.Instance.RemainingSeconds}, " +
-                  $"addZenCount: {addZenCount}, " +
-                  $"MyCurrentRankData: {(ZenRankManager.Instance.MyCurrentRankData != null ? ZenRankManager.Instance.MyCurrentRankData.rank : -1)}");
         // 纯净判断：加入了、赛季没结束、得分>0 -> 弹名次变化面板！
         if (userData.isJoinedZenRank && ZenRankManager.Instance.RemainingSeconds > 0 && addZenCount > 0)
         {
@@ -973,28 +1017,56 @@ public class ChessFinishView : UIWindow
             yield return null;
         }
         var myData = ZenRankManager.Instance.MyCurrentRankData;
-        Debug.Log("是否进入排名变化加载之前 " + myData);
+        Debug.Log($"【Rank Debug - Flow】是否进入排名变化加载之前 myData: {(myData != null ? "非空" : "空")}");
+        
         if (myData != null)
         {
             // 1. 严格使用缓存中的旧数据，如果没缓存(首次)，说明旧分数就是现在分数减去新增
             // int realOldScore = Mathf.Max(0, myData.score - addZenCount);
             int realOldScore = ZenRankManager.Instance.CachedOldScore;
             int realOldRank = ZenRankManager.Instance.CachedOldRank;
-            if (myData.score == addZenCount || (realOldScore == addZenCount && myData.score > 0))
+            Debug.Log($"【Rank Debug - Flow】[计算前] 从缓存读取到的真实旧分数: {realOldScore}, 旧排名: {realOldRank}, 准备加上的本局得分: {addZenCount}");
+            if (realOldScore == 0 && realOldRank == 0 && myData != null)
+            {
+                // 真实旧分数 = 服务器最新分数 - 本局加分 (最低不小于0，保护雷达入榜底分)
+                realOldScore = Mathf.Max(0, myData.score - addZenCount);
+    
+                // 如果倒推出来的旧分数是0，说明之前完全没分，名次强制给0以触发飞升动画。
+                // 如果有底分，暂时借用最新名次进行兜底。
+                realOldRank = (realOldScore == 0) ? 0 : Mathf.Max(1, myData.rank);
+    
+                Debug.Log($"【Rank Debug - Fix】缓存为空，倒推出真实旧数据 -> 旧分数: {realOldScore}, 旧排名: {realOldRank}");
+            }else 
+            if (realOldRank <= 0)
             {
                 realOldScore = 0; // 旧分数强制修正为0
                 realOldRank = 0;  // 之前没上榜，旧名次强制修正为0（让UI显示 "-" 并播放飞升动画）
+                Debug.Log("【Rank Debug - Flow】检测到之前未上榜(realOldRank <= 0)，将旧分数和排名强行重置为 0。");
             }
             
-            Debug.LogWarning($"当前旧分数是： {ZenRankManager.Instance.CachedOldScore} , 添加分数{addZenCount} ,我的分数:{myData.score}, 计算分数:{realOldScore}");
             // ==========================================
             // 前端“乐观预测” (解决 Laravel 队列未处理完的问题)
             // ==========================================
             // 不管服务器有没有加分，我们自己先把本局得分加上去！
             int expectedNewScore = realOldScore + addZenCount;
-            int optimisticNewRank = ZenRankManager.Instance.PredictMyRealRank(realOldRank, expectedNewScore);
+            int optimisticNewRank;
+            // 如果服务器下发的分数已经 >= 我们预期的分数，
+            // 说明后端队列瞬间处理完了！此时直接使用服务器的真实排名，跳过预测！
+            if (myData.score >= expectedNewScore)
+            {
+                optimisticNewRank = myData.rank;
+                expectedNewScore = myData.score;
+                Debug.Log($"【Rank Debug - Flow】[命中真实数据] 服务器队列已处理完毕，跳过预测，直接使用最新真实排名:{optimisticNewRank}");
+            }
+            else
+            {
+                optimisticNewRank = ZenRankManager.Instance.PredictMyRealRank(realOldRank, expectedNewScore);
+                Debug.Log($"【Rank Debug - Flow】[预测结果] 服务器数据未同步，执行预测新排名:{optimisticNewRank}");
+            }
+            Debug.Log($"【Rank Debug - Flow】传入面板的值 -> 旧分数:{realOldScore}, 新分数:{expectedNewScore}, 新增差值:{expectedNewScore - realOldScore}, 最终应用排名:{optimisticNewRank}");
             // 传入智能抓取的“环境玩家”数据，UI 会自动计算谁在上谁在下！
-            List<ZenRankState> contextPlayers = ZenRankManager.Instance.GetContextPlayersForAnimation(realOldRank, myData.rank);
+            // List<ZenRankState> contextPlayers = ZenRankManager.Instance.GetContextPlayersForAnimation(realOldRank, myData.rank);
+            List<ZenRankState> contextPlayers = ZenRankManager.Instance.GetContextPlayersForAnimation(realOldRank, optimisticNewRank);
             // ⚠️ 删除了强行把 newRank 置为 1 的假逻辑，没上榜就是 <=0，UI层会显示为 "-"
             UIWindow window = SystemManager.Instance.ShowPanel(PanelType.ZenRankChangePanel);
             if (window != null)
@@ -1018,6 +1090,7 @@ public class ChessFinishView : UIWindow
             ZenRankManager.Instance.CachedOldScore = expectedNewScore;
             ZenRankManager.Instance.CachedOldRank = optimisticNewRank;
             // ZenRankManager.Instance.SyncCachedRank();
+            Debug.Log($"【Rank Debug - Cache】动画播放完毕，已将最新预测值存入缓存。当前 Cache 旧分数变更为: {ZenRankManager.Instance.CachedOldScore}");
         }
     }
 

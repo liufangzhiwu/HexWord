@@ -66,7 +66,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 45
     m_FontStyle: 0
     m_BestFit: 0
@@ -170,11 +170,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 581390054226720779}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a6973f05b90272419a2d7f904999739, type: 3}
+  m_Script: {fileID: 11500000, guid: 5064b5e099f26724d905ac169e717d0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Rank: {fileID: 7255268152852516226}
-  Avatar: {fileID: 8846108210975995274}
+  Avatar: {fileID: 3833231646868274887}
   Name: {fileID: 8657118591457752985}
   Score: {fileID: 3710275423083268964}
   BoxReward: {fileID: 4980092583017690447}
@@ -616,7 +616,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 70
     m_FontStyle: 0
     m_BestFit: 0
@@ -5547,7 +5547,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 60
     m_FontStyle: 0
     m_BestFit: 1
@@ -10716,7 +10716,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: d2830ca8f89dcb74ca68c596cb29a203, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 08f24f3723bce694ba165e89d00922b2, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

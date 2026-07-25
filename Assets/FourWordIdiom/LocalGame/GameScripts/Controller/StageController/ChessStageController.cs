@@ -336,6 +336,7 @@ public partial class ChessStageController
     /// </summary>
     public void FinalizeStageData(bool isJump)
     {
+        IsJump=isJump;
         // 🚨 如果是跳过关卡，不加分，不计算超越百分比，不抽横幅
         if (isJump)
         {
@@ -355,8 +356,6 @@ public partial class ChessStageController
 
             return;
         }
-
-        IsJump=isJump;
         
         // 1. 计算树叶附带的【禅意分】奖励
         int collectedLeaves = CurrStageData.CollectedLeaves;
@@ -474,19 +473,7 @@ public partial class ChessStageController
             if(ChessDynamicHardManager.Instance.IsOpenDynamicHard())
                 CheckDynamicDifficultyIntervention(stageNumber, ComboErrorCount, duration);
         }
-        AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
-        {
-            if (issuccess)
-            {
-                AnalyticMgr.InsetAdSuccess("关卡插屏");
-                GameDataManager.Instance.UserData.totalInsetSeeAds++;
-            }
-            else
-            {
-                AnalyticMgr.InsetAdFail("关卡插屏");
-            }
-        });
-        yield return new WaitForSeconds(0.4f);
+        yield return new WaitForSeconds(0.1f);
         // UI切换
         SystemManager.Instance.HidePanel(PanelType.HeaderSection);
         SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
