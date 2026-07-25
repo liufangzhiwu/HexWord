@@ -17,7 +17,7 @@ public class ZenRankHelpScreen : UIWindow
     protected override void InitializeUIComponents()
     {
         base.InitializeUIComponents();
-        closeBtn.onClick.AddListener(()=>base.Close());
+        closeBtn.AddVibraClickAction(()=>base.Close());
        
     }
     // Start is called before the first frame update

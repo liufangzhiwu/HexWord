@@ -55,7 +55,7 @@ public class ThemeHelpScreen : UIWindow
    
     protected override void InitializeUIComponents()
     {
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
     }
 
     private void OnCloseBtn()

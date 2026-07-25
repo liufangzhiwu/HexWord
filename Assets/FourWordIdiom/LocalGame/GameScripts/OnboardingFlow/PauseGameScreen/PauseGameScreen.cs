@@ -50,11 +50,11 @@ public class PauseGameScreen : UIWindow
     void Start()
     {
         //closeBtn.AddClickAction(OnCloseClicked);
-        continueBtn.AddClickAction(OnCloseClicked);
-        returnGame.AddClickAction(OnCloseClicked);
-        jumpBtn.AddClickAction(OnJumpClicked);
-        exitBtn.AddClickAction(OnExitClicked);
-        realExitBtn.AddClickAction(OnRealExitClicked);
+        continueBtn.AddVibraClickAction(OnCloseClicked);
+        returnGame.AddVibraClickAction(OnCloseClicked);
+        jumpBtn.AddVibraClickAction(OnJumpClicked);
+        exitBtn.AddVibraClickAction(OnExitClicked);
+        realExitBtn.AddVibraClickAction(OnRealExitClicked);
         
         musicText.text = MultilingualManager.Instance.GetString("Music").ToUpper(); // 音乐文本
         soundText.text = MultilingualManager.Instance.GetString("Sounds").ToUpper(); // 音效文本

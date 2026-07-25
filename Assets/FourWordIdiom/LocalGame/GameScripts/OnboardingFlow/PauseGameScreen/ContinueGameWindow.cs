@@ -74,7 +74,7 @@ public class ContinueGameWindow : UIWindow, IPointerDownHandler, IPointerUpHandl
         });
 
         // 二次确认：取消退出，退回主面板
-        cancelQuitBtn.AddClickAction(() => 
+        cancelQuitBtn.AddVibraClickAction(() => 
         {
             mainPanel.SetActive(true);
             confirmPanel.SetActive(false);

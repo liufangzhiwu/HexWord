@@ -238,7 +238,7 @@ public class ShopScreen : UIWindow
 
     protected override void InitializeUIComponents()
     {
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
         pageBtn.AddClickAction(ClickOnPageBtn);
         //adsbtn.AddClick(OnAdsBtn);
     }

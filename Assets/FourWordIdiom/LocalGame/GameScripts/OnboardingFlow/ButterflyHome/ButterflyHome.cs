@@ -45,11 +45,11 @@ public class ButterflyHome : UIWindow
     #region  生命周期 及初始化方法
     protected override void InitializeUIComponents()
     {
-        backhome.AddClickAction(OnBackHomeClick);
+        backhome.AddVibraClickAction(OnBackHomeClick);
         helpBtn.AddClickAction(OnHelpClick);
         sceneBtn.AddClickAction(OnSceneClick);
         manualBtn.AddClickAction(OnManualClick);
-        collectBtn.AddClickAction(OnCollectClick);
+        collectBtn.AddVibraClickAction(OnCollectClick);
         
                 
         if (butterflyPrefab is null)

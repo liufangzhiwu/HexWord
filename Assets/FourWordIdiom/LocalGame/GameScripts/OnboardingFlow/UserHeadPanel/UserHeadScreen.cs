@@ -78,8 +78,8 @@ public class UserHeadScreen : UIWindow
 
     protected override void InitializeUIComponents()
     {
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
-        comfirmBtn.AddClickAction(OnClickComfirmBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        comfirmBtn.AddVibraClickAction(OnClickComfirmBtn); // 绑定关闭按钮事件
     }
 
     private void ClickHeadItemBtn(int index)

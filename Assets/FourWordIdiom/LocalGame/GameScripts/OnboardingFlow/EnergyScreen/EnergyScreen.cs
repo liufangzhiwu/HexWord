@@ -19,7 +19,7 @@ public class EnergyScreen : UIWindow
     void Start()
     {
         backButton.AddClickAction(OnCloseClicked);
-        closeButton.AddClickAction(OnCloseClicked);
+        closeButton.AddVibraClickAction(OnCloseClicked);
         adsButton.AddClickAction(OnAdsClicked);
         buyButton.AddClickAction(OnGoldBuyClicked);
 

@@ -100,8 +100,8 @@ public class ReturnFirstWinScreen : UIWindow
 
     protected override void InitializeUIComponents()
     {
-        closeBtn.AddClickAction(Close); // 绑定关闭按钮事件
-        ClaimBtn.AddClickAction(ClickClaimBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(Close); // 绑定关闭按钮事件
+        ClaimBtn.AddVibraClickAction(ClickClaimBtn); // 绑定关闭按钮事件
     }
 
     private void ClickClaimBtn()

@@ -89,8 +89,8 @@ public class DailyTasksScreen : UIWindow
 
     protected void InitButton()
     {
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
-        HideBtn.AddClickAction(OnCloseBtn);
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        HideBtn.AddVibraClickAction(OnCloseBtn);
     }
 
     private void InitUI()

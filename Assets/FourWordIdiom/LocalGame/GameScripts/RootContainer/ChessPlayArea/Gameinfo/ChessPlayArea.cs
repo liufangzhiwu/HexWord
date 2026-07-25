@@ -137,8 +137,8 @@ public partial class ChessPlayArea : UIWindow
 
     protected override void InitializeUIComponents()
     {
-        HitsBtn.AddClickAction(UseTips, "");
-        CompleteBtn.AddClickAction(() => UseComplete(), "");
+        HitsBtn.AddVibraClickAction(UseTips, "");
+        CompleteBtn.AddVibraClickAction(() => UseComplete(), "");
         PuzzleBtn.AddClickAction(ClickLevelPuzzle);
         BoardInitialize();
     }
@@ -247,9 +247,9 @@ public partial class ChessPlayArea : UIWindow
         GameCoreManager.Instance.PanelState = PanelState.GamePingPanel;
         EventDispatcher.instance.OnCheckShowChessTutorial += CheckShowChessTutorialEvent;
         EventDispatcher.instance.OnAutoPassLevel += AutoPassLevel;
-        EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
         // 👇 新增：监听分数变化事件，并初始化当前分数
         EventDispatcher.instance.OnChessScoreChanged += OnChessScoreChanged;
+        EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
         _lastZenScore = ChessStageController.Instance.CurrentTotalScore;
         _zenScoreText.text = _lastZenScore.ToString();
         
@@ -364,7 +364,7 @@ public partial class ChessPlayArea : UIWindow
     {
         chessboardGrid.Clear();
         puzzleTileTable.Clear();
-       
+        
         EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
         EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
         EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;

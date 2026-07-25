@@ -89,10 +89,10 @@ public class SevenSignScreen : UIWindow
 
     protected override void InitializeUIComponents()
     {
-        oktBtn.AddClickAction(Close);
+        oktBtn.AddVibraClickAction(Close);
         prevMonthBtn.AddClickAction(OnPrevMonth);
         nextMonthBtn.AddClickAction(OnNextMonth);
-        closeBtn.AddClickAction(Close);
+        closeBtn.AddVibraClickAction(Close);
     }
 
     // ==================== UI 更新 ====================

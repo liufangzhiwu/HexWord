@@ -33,8 +33,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     {
         addTimeBtn.AddClickAction(OnReviveClicked);
         exitBtn.AddClickAction(() => SwitchPanel(false));
-        returnGame.AddClickAction(() => SwitchPanel(true));
-        realExitBtn.AddClickAction(OnRealExitClicked);
+        returnGame.AddVibraClickAction(() => SwitchPanel(true));
+        realExitBtn.AddVibraClickAction(OnRealExitClicked);
         
         conTitleText.text = MultilingualManager.Instance.GetString("AreYouSure");
         conTipText.text = MultilingualManager.Instance.GetString("YouWillLose");

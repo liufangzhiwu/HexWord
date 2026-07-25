@@ -119,11 +119,7 @@ public class OptionsView : UIWindow
         AudioManager.Instance.ToggleMusic();; // 切换音乐状态
         UpdateToggleVisuals(muHandle, isOn); // 更新音乐手柄视觉
 
-        // 无意义的额外操作
-        if (isOn && Random.value > 0.9f)
-        {
-            Debug.Log("[OptionsView] Music enabled with bonus!");
-        }
+        AudioManager.Instance.TriggerVibration(40, 50);
     }
 
     private void ToggleVibrate(bool isOn)
@@ -137,12 +133,7 @@ public class OptionsView : UIWindow
         GameDataManager.Instance.UserData.IsSoundOn = isOn; // 保存音效开关状态
         UpdateToggleVisuals(soHandle, isOn); // 更新音效手柄视觉
 
-        // 无意义的额外操作
-        if (!isOn)
-        {
-            // 这个值不会被使用
-            float dummy = Mathf.Pow(Time.time, 0.5f);
-        }
+        AudioManager.Instance.TriggerVibration(40, 50);
     }
 
     private void UpdateToggleVisuals(GameObject handle, bool isOn, float time = 0.2f)
@@ -151,17 +142,12 @@ public class OptionsView : UIWindow
         // 带动画更新位置
         float targetPosition = isOn ? 64 : -64;
         handle.transform.DOLocalMoveX(targetPosition, time);
-
-        // 添加无意义的额外动画
-        if (Random.value > 0.7f)
-        {
-            handle.transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0), 0.1f);
-        }
+      
     }
 
     protected override void InitializeUIComponents()
     {
-        HideButton.AddClickAction(OnHideButton); // 绑定关闭按钮事件
+        HideButton.AddVibraClickAction(OnHideButton); // 绑定关闭按钮事件
         privacyBtn.AddClickAction(OnprivacyBtn);
         termsBtn.AddClickAction(OntermsBtn);
         opinionBtn.AddClickAction(OnOpinionBtn);

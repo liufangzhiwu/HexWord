@@ -99,12 +99,12 @@ public class ZenRankButton : MonoBehaviour
         string sourcePanel = PanelType.PrimaryInterface; // 默认大厅
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
             sourcePanel = PanelType.PrimaryInterface;
-        else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
+        else if (GameCoreManager.Instance.PanelState == PanelState.FinishXiaoPanel)
             sourcePanel = PanelType.StageFinishView;
         else if (GameCoreManager.Instance.PanelState == PanelState.FinishPingPanel)
             sourcePanel = PanelType.ChessFinishView;
-        else if (GameCoreManager.Instance.PanelState == PanelState.GameHexPanel)
-            sourcePanel = PanelType.HexGamePlayArea;
+        else if (GameCoreManager.Instance.PanelState == PanelState.GameXiaoPanel)
+            sourcePanel = PanelType.GamePlayArea;
         else if (GameCoreManager.Instance.PanelState == PanelState.GamePingPanel)
             sourcePanel = PanelType.ChessPlayArea;
         

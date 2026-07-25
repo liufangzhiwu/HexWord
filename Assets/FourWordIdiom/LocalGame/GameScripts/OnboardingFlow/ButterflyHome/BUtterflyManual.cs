@@ -16,7 +16,7 @@ public class BUtterflyManual : UIWindow
     private void Start()
     {
         title.text = MultilingualManager.Instance.GetString("ButterflyUI04", "hudie");
-        backhome.AddClickAction(() =>
+        backhome.AddVibraClickAction(() =>
         {
             SystemManager.Instance.HidePanel(PanelType.ButterflyManual);
             SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);

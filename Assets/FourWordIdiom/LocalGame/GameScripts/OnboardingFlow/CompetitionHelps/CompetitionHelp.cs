@@ -47,7 +47,7 @@ public class CompetitionHelp : UIWindow
    
     protected void InitButton()
     {
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
     }
 
     private void OnCloseBtn()

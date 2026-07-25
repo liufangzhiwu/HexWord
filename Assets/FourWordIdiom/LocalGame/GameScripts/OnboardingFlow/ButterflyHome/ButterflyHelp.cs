@@ -17,7 +17,7 @@ public class ButterflyHelp : UIWindow
     void Start()
     {
         // titleImage.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_garden_title");
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
     
     }
     protected override void OnEnable()

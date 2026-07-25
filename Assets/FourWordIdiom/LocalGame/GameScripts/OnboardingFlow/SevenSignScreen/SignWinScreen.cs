@@ -230,7 +230,7 @@ public class SignWinScreen : UIWindow
    
     protected override void InitializeUIComponents()
     {
-        okBtn.AddClickAction(ClickOKBtn); // 绑定关闭按钮事件
+        okBtn.AddVibraClickAction(ClickOKBtn); // 绑定关闭按钮事件
     }
 
     private void ClickOKBtn()

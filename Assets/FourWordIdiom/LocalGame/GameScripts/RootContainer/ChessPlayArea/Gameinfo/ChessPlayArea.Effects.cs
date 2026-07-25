@@ -1264,8 +1264,8 @@ public partial class ChessPlayArea
             }
             // 2. 赋值当前文本
             string key = config.TextLoop[currentIndex];
-            textComp.text = MultilingualManager.Instance.GetString(key, "pingzi");
-            
+            string text = MultilingualManager.Instance.GetString(key, "pingzi");
+            textComp.text = text;
             // 3. 索引 +1，如果超过数组长度则回到 0，实现完美的循环播放
             _praiseTextIndexMap[config.FeedbackID] = (currentIndex + 1) % config.TextLoop.Length;
         }

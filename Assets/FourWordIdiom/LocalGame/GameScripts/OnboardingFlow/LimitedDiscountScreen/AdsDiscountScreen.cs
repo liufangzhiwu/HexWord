@@ -41,7 +41,7 @@ public class AdsDiscountScreen : UIWindow
     
     protected override void InitializeUIComponents()
     {
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
         ClaimBtn.AddClickAction(OnBuyButtonClicked);
     }
 
@@ -239,6 +239,10 @@ public class AdsDiscountScreen : UIWindow
         //var items = new List<AnalyticMgr.Item>();
         if (currentShopItem.GetProduceName() == item.ProductId)
         {
+            Game.self.Shop.CurrentShopDataItem=currentShopItem.DeepCopy();
+            
+            SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
+            
             foreach (var dataitem in currentShopItem.productContent)
             {
                 int count = int.Parse(dataitem[1]);
@@ -247,7 +251,7 @@ public class AdsDiscountScreen : UIWindow
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count, true, true,"限时宝箱商店购买"+item.ItemName);
+                        GameDataManager.Instance.UserData.UpdateGold(count, false, false,"限时宝箱商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.Butterfly:
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count,"限时宝箱商店购买"+item.ItemName);
@@ -284,7 +288,7 @@ public class AdsDiscountScreen : UIWindow
 #endif
         }
         
-        MessageSystem.Instance.ShowTip("购买成功！");
+        //MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
         
         ShopLimitData limitData =

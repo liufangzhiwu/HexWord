@@ -85,9 +85,9 @@ public class RateUsScreen : UIWindow
 
     protected override void InitializeUIComponents()
     {      
-        nextBtn.AddClickAction(OnNextBtn); // 绑定关闭按钮事件
+        nextBtn.AddVibraClickAction(OnNextBtn); // 绑定关闭按钮事件
         opinionBtn.AddClickAction(OnOpinionBtn); // 绑定关闭按钮事件
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
     }
     
     private void OnOpinionBtn()

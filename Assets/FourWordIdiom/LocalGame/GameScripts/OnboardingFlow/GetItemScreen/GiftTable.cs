@@ -155,7 +155,7 @@ public class GiftTable : MonoBehaviour
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count, true, true,giftNameText+"购买金币");
+                        GameDataManager.Instance.UserData.UpdateGold(count, false, false,giftNameText+"购买金币");
                         break;
                     case (int)LimitRewordType.Butterfly:
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count,giftNameText+"商店购买蝴蝶");

@@ -172,7 +172,7 @@ public class MyThemeScreen : UIWindow
     
     protected override void InitializeUIComponents()
     {
-        HideButton.AddClickAction(()=>Close()); 
+        HideButton.AddVibraClickAction(()=>Close()); 
         drawButton.AddClickAction(OnClickDrawButton);
         helpButton.AddClickAction(OnClickHelpButton);
     }

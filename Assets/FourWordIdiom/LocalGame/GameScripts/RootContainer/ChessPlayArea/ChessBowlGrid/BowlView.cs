@@ -157,8 +157,8 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         
         RectTransform cloneRT = clone.GetComponent<RectTransform>();
         Canvas canvas = clone.GetComponent<Canvas>();
-        if(canvas == null ) 
-            canvas = clone.AddComponent<Canvas>();
+        // if(canvas == null ) 
+        //     canvas = clone.AddComponent<Canvas>();
         canvas.overrideSorting = true;
         canvas.sortingLayerName = UIPanelLayer.TipsPanel;
         canvas.sortingOrder = 10;
@@ -170,78 +170,100 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         cloneRT.pivot = selfRT.pivot;
         cloneRT.localScale = selfRT.localScale * 1.1f;
         clone.transform.position = selfRT.position;
-        Vector3 endWorld = tile.TileTransform.TransformPoint(tile.TileTransform.rect.center);
-        float distance = Vector3.Distance(clone.transform.position, endWorld);
-        float duration1 = Mathf.Sqrt(distance) * 0.08f;
+        
+        // ======================= 核心修改：计算到达边缘的位置 =======================
+        Vector3 startWorld = clone.transform.position;
+        // 目标格子的中心点
+        Vector3 centerWorld = tile.TileTransform.TransformPoint(tile.TileTransform.rect.center);
+        // 计算目标格子在世界空间下的一半宽度（即边缘半径）
+        float tileEdgeRadius = tile.TileTransform.TransformVector(new Vector3(tile.TileTransform.rect.width * 0.5f, 0, 0)).magnitude;
+        Vector3 dir = (centerWorld - startWorld).normalized;
+        // 新的飞行终点设为：目标格子的边缘
+        Vector3 endWorld = centerWorld - dir * tileEdgeRadius;
+        float fullDistance = Vector3.Distance(startWorld, centerWorld);
+        float flyDistance = Vector3.Distance(startWorld, endWorld);
+        if (fullDistance <= tileEdgeRadius)
+        {
+            endWorld = centerWorld;
+            flyDistance = fullDistance;
+        }
+        // Vector3 endWorld = tile.TileTransform.TransformPoint(tile.TileTransform.rect.center);
+        // float distance = Vector3.Distance(clone.transform.position, endWorld);
+        float duration1 = Mathf.Sqrt(flyDistance) * 0.08f;
         float duration = Mathf.Clamp(duration1, 0.15f, 0.45f);
-        Debug.Log($"飞行距离: {distance}, 预计时间: {duration1}, 最终限制时间: {duration}");
+        // Debug.Log($"飞行距离: {flyDistance}, 预计时间: {duration1}, 最终限制时间: {duration}");
         float   switchDist = cloneRT.TransformVector(new Vector3(cloneRT.sizeDelta.x * 0.5f, 0, 0)).magnitude;    // 剩余 半格宽度 时换图
-        bool    hasSwitched = false;                // 只换一次
-        clone.transform.DOMove(endWorld, duration).SetEase(Ease.Linear)
-            .OnUpdate(() =>
-            {
-                if (hasSwitched || !clone) return;
-                float remain = Vector3.Distance(clone.transform.position, endWorld);
-                // Debug.Log($"当前距离 {remain} 检查距离 {switchDist} 当前位置{clone.transform.position} 目标位置{endWorld} ");
-                if (remain <= switchDist) 
-                {
-                    if (tile.CurrState == TileState.Success)
-                    {
-                        if (_isGoldLeaf)
-                        {
-                            if (bowl.count >= 1)
-                            {
-                                tile._isGoldLeaf = false;
-                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
-                            }
-                            else
-                            {
-                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
-                                tile._isGoldLeaf = _isGoldLeaf;
-                            }
-                        }
-                        else
-                        {
-                            clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
-                            tile._isGoldLeaf = _isGoldLeaf;
-                        }
-                       
-                    }else if (tile.CurrState is TileState.Error or TileState.Fill)
-                    {
-                        if (_isGoldLeaf)
-                        {
-                            if (bowl.count >= 1)
-                            {
-                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
-                            }
-                            else
-                            {
-                                clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
-                               
-                            }
-                        }
-                        else
-                        {
-                            clone.transform.GetChild(0).GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
-                        }
-                        tile._isGoldLeaf = _isGoldLeaf;
-                    }
-                    hasSwitched = true;
-                }
-            });
+        // bool    hasSwitched = false;                // 只换一次
+        clone.transform.DOMove(endWorld, duration).SetEase(Ease.Linear);
+            // .OnUpdate(() =>
+            // {
+            //     if (hasSwitched || !clone) return;
+            //     float remain = Vector3.Distance(clone.transform.position, endWorld);
+            //     // Debug.Log($"当前距离 {remain} 检查距离 {switchDist} 当前位置{clone.transform.position} 目标位置{endWorld} ");
+            //     if (remain <= switchDist) 
+            //     {
+            //         if (tile.CurrState == TileState.Success)
+            //         {
+            //             if (_isGoldLeaf)
+            //             {
+            //                 if (bowl.count >= 1)
+            //                 {
+            //                     tile._isGoldLeaf = false;
+            //                     clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
+            //                 }
+            //                 else
+            //                 {
+            //                     clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
+            //                     tile._isGoldLeaf = _isGoldLeaf;
+            //                 }
+            //             }
+            //             else
+            //             {
+            //                 clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
+            //                 tile._isGoldLeaf = _isGoldLeaf;
+            //             }
+            //            
+            //         }else if (tile.CurrState is TileState.Error or TileState.Fill)
+            //         {
+            //             if (_isGoldLeaf)
+            //             {
+            //                 if (bowl.count >= 1)
+            //                 {
+            //                     clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+            //                 }
+            //                 else
+            //                 {
+            //                     clone.transform.GetChild(0).GetComponent<Image>().sprite =  AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
+            //                    
+            //                 }
+            //             }
+            //             else
+            //             {
+            //                 clone.transform.GetChild(0).GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
+            //             }
+            //             tile._isGoldLeaf = _isGoldLeaf;
+            //         }
+            //         hasSwitched = true;
+            //     }
+            // });
         clone.transform.DOScale(tile.TileTransform.localScale * 0.5f, duration).SetEase(Ease.Linear)
             .OnComplete(() =>
             {
-                Vector3 targetWorldScale = tile.TileTransform.lossyScale;
-                clone.transform.DOScale(targetWorldScale, 0.01f).SetEase(Ease.Linear)
-                    .OnComplete(() =>
-                    {
-                        if(clone && clone.activeInHierarchy) 
-                        {
-                            _bowlGrid.PhantomPool.ReturnObjectToPool(clone.GetComponent<PoolObject>());
-                        }
-                        onComplete?.Invoke();
-                    });
+                // Vector3 targetWorldScale = tile.TileTransform.lossyScale;
+                // clone.transform.DOScale(targetWorldScale, 0.01f).SetEase(Ease.Linear)
+                //     .OnComplete(() =>
+                //     {
+                //         if(clone && clone.activeInHierarchy) 
+                //         {
+                //             _bowlGrid.PhantomPool.ReturnObjectToPool(clone.GetComponent<PoolObject>());
+                //         }
+                //         onComplete?.Invoke();
+                //     });
+                if(clone && clone.activeInHierarchy) 
+                {
+                    _bowlGrid.PhantomPool.ReturnObjectToPool(clone.GetComponent<PoolObject>());
+                }
+                onComplete?.Invoke();
             });
     }
     #region 点击事件

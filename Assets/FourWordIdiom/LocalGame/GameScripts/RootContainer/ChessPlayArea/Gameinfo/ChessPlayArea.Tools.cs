@@ -61,7 +61,34 @@ public partial class ChessPlayArea
             // hintAdd.gameObject.SetActive(true);
         }
     }
-    
+    public void SetToolButtonsEnabled(bool enabled)
+    {
+        // 按钮可交互
+        if (CompleteBtn != null) CompleteBtn.interactable = enabled;
+        if (HitsBtn != null) HitsBtn.interactable = enabled;
+
+        // 禁用时的背景色：#C8C8C8 透明度 128
+        Color disabledColor = new Color(200f / 255f, 200f / 255f, 200f / 255f, 128f / 255f);
+        Color enabledColor = Color.white;
+
+        // 像 InitToolUI 一样动态获取 CompCount 和 HintCount
+        Transform compCount = CompleteBtn != null ? CompleteBtn.transform.GetChild(1) : null;
+        Transform hintCount = HitsBtn != null ? HitsBtn.transform.GetChild(1) : null;
+
+        // 设置自动完成数量背景
+        if (compCount != null)
+        {
+            Image compImg = compCount.GetComponent<Image>();
+            if (compImg != null) compImg.color = enabled ? enabledColor : disabledColor;
+        }
+
+        // 设置提示数量背景
+        if (hintCount != null)
+        {
+            Image hintImg = hintCount.GetComponent<Image>();
+            if (hintImg != null) hintImg.color = enabled ? enabledColor : disabledColor;
+        }
+    }
     public void UseComplete(bool isReset = false)
     {
         NotifyPlayerInteraction(); // 🌟 触发唤醒计时
@@ -98,7 +125,6 @@ public partial class ChessPlayArea
         chessboardGrid.IsBlockInput = true;
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用", GetCurrentSelectedPhrase());
-        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
         InitToolUI();
 
         AudioManager.Instance.PlaySoundEffect("ItemUSe02");

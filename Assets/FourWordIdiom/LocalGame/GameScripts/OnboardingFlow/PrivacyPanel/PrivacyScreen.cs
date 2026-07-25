@@ -35,7 +35,7 @@ public class PrivacyScreen : UIWindow
 
     protected override void InitializeUIComponents()
     {
-        nextBtn.AddClickAction(OnClosePanel); // 绑定关闭按钮事件
+        nextBtn.AddVibraClickAction(OnClosePanel); // 绑定关闭按钮事件
     }
 
     IEnumerator AddVisibleBound()

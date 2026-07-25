@@ -239,6 +239,7 @@ public class GetItemScreen : UIWindow
     
     public void Close()
     {
+        AudioManager.Instance.TriggerVibration(10, 200);
         base.Close(); // 隐藏面板
     }
 

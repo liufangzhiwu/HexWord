@@ -255,7 +255,7 @@ public partial class ChessPlayArea
             wordErrorCount = 0;
             usetoolCount = 0;
         }
-
+        SetToolButtonsEnabled(true);
         // _isTimerRunning = true;
         // yield return new WaitUntil(()=>_isTimerRunning);
         EventDispatcher.instance.TriggerChangeTopRaycast(true);
@@ -641,8 +641,7 @@ public partial class ChessPlayArea
         }
 
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
-        if (HitsBtn != null) HitsBtn.interactable = false;
-        if (CompleteBtn != null) CompleteBtn.interactable = false;
+        SetToolButtonsEnabled(false);
         HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
         if (header != null)
         {
@@ -693,9 +692,7 @@ public partial class ChessPlayArea
             // 🌟【时序安全修复】：如果确认为跳关，无缝闪过横幅展示期，不进行任何动态预制体实例化
             yield return null;
         }
-
-        HitsBtn.interactable = true;
-        CompleteBtn.interactable = true;
+        
         ChessStageController.Instance.CompleteStage(CurrStageInfo.StageNumber, wordErrorCount, isJump);
     }
 

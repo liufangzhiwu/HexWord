@@ -314,7 +314,7 @@ public class DashCompetition : UIWindow
 
     protected void InitButton()
     {
-        CloseBtn.AddClickAction(OnClosePanel); // 绑定关闭按钮事件
+        CloseBtn.AddVibraClickAction(OnClosePanel); // 绑定关闭按钮事件
         HelpBtn.AddClickAction(OnHelpPanel);
     }
  

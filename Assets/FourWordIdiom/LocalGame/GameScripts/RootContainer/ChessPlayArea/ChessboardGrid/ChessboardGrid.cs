@@ -371,12 +371,12 @@ public class ChessboardGrid : MonoBehaviour
                     }
                     // 3. 设为成功并处理树叶
                     targetTile.SetTileState(TileState.Success, false);
-                    if (targetTile.chesspiece != null && targetTile.chesspiece.hasLeaf)
-                    {
-                        targetTile.isPendingLeafFlight = true;
-                        targetTile.chesspiece.hasLeaf = false;
-                        ChessStageController.Instance.CurrStageData.CollectedLeaves++;
-                    }
+                    // if (targetTile.chesspiece != null && targetTile.chesspiece.hasLeaf)
+                    // {
+                    //     targetTile.isPendingLeafFlight = true;
+                    //     targetTile.chesspiece.hasLeaf = false;
+                    //     ChessStageController.Instance.CurrStageData.CollectedLeaves++;
+                    // }
 
                     // 4. 触发弹跳变绿和 5 秒扫光特效！
                     targetTile.PlaySuccessAnimation(0.5f, () => {
@@ -1689,8 +1689,26 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
                 GridList.TryGetValue((p.row, p.col), out var v) && 
                 v.chesspiece.hasIce && !v.iceLogicBroken
             );
-            
-            if (hasUnbrokenIceInGroup)
+            if (activeGroups.Contains(evalGroup)) 
+            {
+                // [微观寻路]：当前成语未圆满时的组内流向（完美继承防拐弯逻辑）
+                // 🌟 核心修改：赋予当前解答组“冰块豁免权”！
+                // 只要光标已经在该词组内（玩家手动选中），就允许在露出的空格之间正常顺延。
+                bool isCurrentLine = evalGroup.direction == _lastActiveDirection;
+                int currentIndexInActive = sortedPieces.FindIndex(p => p.Equals(selecteTile.chesspiece));
+                
+                if (candidateIndex > currentIndexInActive)
+                {
+                    tier = isCurrentLine ? 1 : 3; 
+                    reason = isCurrentLine ? "T1: 主行组内顺延" : "T3: 交叉行组内顺延";
+                }
+                else
+                {
+                    tier = isCurrentLine ? 2 : 4; 
+                    reason = isCurrentLine ? "T2: 主行回头补空" : "T4: 交叉行回头补空"; 
+                }
+            }
+            else if (hasUnbrokenIceInGroup)
             {
                 tier = 99; 
                 reason = "过滤：包含未破冰格子，死路拦截";
@@ -2222,13 +2240,7 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
             .Where(v => v != null)
             .ToList();
     }
-
-    /// <summary>
-    /// 在 GridList 中随机返回一个满足：
-    /// 1. 当前状态为 None
-    /// 2. ChessPiece.Tip == false
-    /// 的字块；若无满足条件的字块则返回 null。
-    /// </summary>
+    
     /// <summary>
     /// 在 GridList 中随机返回一个满足：
     /// 1. 当前状态为 None
@@ -2753,39 +2765,6 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
     }
     
     #endregion
-    
-    /// <summary>
-    /// 计算当前词组自带的“初始字”数量
-    /// </summary>
-    public int GetCurrentPhraseInitialCount()
-    {
-        // 获取当前正在解答的词组格子列表 (你在代码里原本叫 GetCurrentSelectGroup2)
-        List<ChessView> activeGroup = GetCurrentSelectGroup2();
-        if (activeGroup == null || activeGroup.Count == 0) return 0;
-
-        int initialCount = 0;
-
-        foreach (var tile in activeGroup)
-        {
-            // 条件 1：如果是策划固定给的字（假设你的底层数据结构有 isFixed 类似字段）
-            bool isFixedHint = tile.chesspiece.state == TileState.Default; // 请替换为你真实的固定提示字段
-        
-            // 条件 2：或者是被其他交叉词组填好，早就处于 Success/Check 状态的字
-            // 注意：这里要排除玩家“刚刚”填进去的那个字
-            bool isAlreadySolved = tile.CurrState == TileState.Success || tile.IsOK;
-
-            if (isFixedHint || isAlreadySolved)
-            {
-                initialCount++;
-            }
-        }
-
-        // 关键修正：玩家最后填入的那一两个字，导致了整个词组变绿过关。
-        // 这几个“触发过关的字”不能算作初始字，我们需要在统计时减去玩家本轮刚刚放进去的字数。
-        // （如果你的判定时机是在填字瞬间，这里可以灵活调整）
-    
-        return initialCount;
-    }
     
     /// <summary>
     /// 🌟 检测并触发最后一词的波浪聚焦特效

@@ -49,8 +49,8 @@ public class ZenSettlementScreen : UIWindow
     // Start is called before the first frame update
     void Start()
     {
-        nextBtn.AddClickAction(OnNextButtonClicked);
-        step1CanvasGroup.GetComponent<Button>().onClick.AddListener(OnNextButtonClicked);
+        nextBtn.AddVibraClickAction(OnNextButtonClicked);
+        step1CanvasGroup.GetComponent<Button>().AddVibraClickAction(OnNextButtonClicked);
         // 初始隐藏模板
         if (rewardTemplate != null) rewardTemplate.SetActive(false);
         

@@ -49,7 +49,7 @@ public class WordDetailScreen : UIWindow
     
     protected override void InitializeUIComponents()
     {
-        closeBtn.onClick.AddListener(OnCloseBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
         leftBtn.AddClickAction(()=>MovePage(true)); // 左
         rightBtn.AddClickAction(()=>MovePage(false)); // 右
     }

@@ -48,7 +48,7 @@ public class NewThemeScreen : UIWindow
     
     protected override void InitializeUIComponents()
     {
-        HideButton.AddClickAction(OnHideButton); 
+        HideButton.AddVibraClickAction(OnHideButton); 
         useButton.AddClickAction(OnClickUseButton);
     }
 

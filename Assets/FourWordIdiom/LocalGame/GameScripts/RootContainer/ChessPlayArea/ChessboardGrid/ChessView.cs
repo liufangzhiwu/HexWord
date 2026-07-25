@@ -216,6 +216,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                     {
                         _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
                         _bg.GetComponent<UIShiny>().enabled = true;
+                        _bg.GetComponent<UIShiny>().Play();
                     }
                    
                 }
@@ -245,6 +246,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                     {
                         _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
                         _bg.GetComponent<UIShiny>().enabled = true;
+                        _bg.GetComponent<UIShiny>().Play();
                         chesspiece.isGoldLeaf=true;
                         ChessView tileView = ChessStageController.Instance.GoldLeafChessViews.Find(x=>x.Answer==chesspiece.bowl.letter);
                         if (tileView == null)
@@ -287,6 +289,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                             _textDisplay.color = new Color32(100,80,66,255);
 
                             _bg.GetComponent<UIShiny>().enabled = true;
+                            _bg.GetComponent<UIShiny>().Play();
                             chesspiece.bowl.isGoldLeaf = true;
                             chesspiece.isGoldLeaf=true;
                             ChessView tileView = ChessStageController.Instance.GoldLeafChessViews.Find(x=>x.Answer==chesspiece.bowl.letter);
@@ -324,7 +327,10 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         if (chesspiece.hasFlower)
         {
             _flowerObj.GetComponent<Image>().enabled = true;
-            _textDisplay.text = "";
+            _textDisplay.text = Answer.ToString();
+            Color c = _textDisplay.color;
+            c.a = 0f;
+            _textDisplay.color = c;
             _flowerObj.transform.localScale = Vector3.one;
             _flowerObj.SetActive(true);
         }else
@@ -489,6 +495,12 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         _successParticle.gameObject.SetActive(false);
         if (_iceObj != null) _iceObj.transform.DOKill();
         if (_flowerObj != null) _flowerObj.transform.DOKill();
+        UIShiny shiny = GetComponentInChildren<UIShiny>(true);
+        if (shiny != null)
+        {
+            shiny.Stop();
+            shiny.enabled = false;
+        }
     }
     
     /// <summary>
@@ -603,9 +615,22 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         // 播放花朵绽放、消失的动画
         // _flowerObj.transform.DOScale(1.2f, 0.3f).SetEase(Ease.OutBack);
         _flowerObj.GetComponentInChildren<ParticleSystem>(true).Play();
-        yield return new WaitForSeconds(1.2f);
-        UpdateTile(true); 
-        _flowerObj.SetActive(false);
+        yield return new WaitForSeconds(0.8f);
+        if (_textDisplay != null)
+        {
+            // 确保文字此时是激活状态且颜色 alpha 为 0
+            Color textCol = new Color32(100, 80, 66, 0); 
+            _textDisplay.color = textCol;
+            
+            // 使用 DOTween 让文字平滑淡入（耗时 0.4 秒，可自行调整）
+            _textDisplay.DOFade(1f, 1.2f).SetEase(Ease.OutQuad)
+                .OnComplete(() =>
+                {
+                    UpdateTile(true); 
+                    _flowerObj.SetActive(false);
+                });
+        }
+        yield return new WaitForSeconds(0.4f);
         flowerLogicBroken = false;   // 🌟 动画结束，清除逻辑标记
     }
     
@@ -687,8 +712,11 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         // 安全检查：确认格子没有被销毁且字块没有被替换
         if (this != null && shiny != null && chesspiece != null && chesspiece.Equals(currentPiece))
         {
-            shiny.enabled = false;
-            shiny.Stop(); 
+            if (!_isGoldLeaf) 
+            {
+                shiny.enabled = false;
+                shiny.Stop(); 
+            }
         }
     }
     

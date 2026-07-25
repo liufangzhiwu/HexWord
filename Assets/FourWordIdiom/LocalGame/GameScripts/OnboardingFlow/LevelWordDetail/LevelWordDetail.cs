@@ -58,7 +58,7 @@ public class LevelWordDetail : UIWindow
     
     protected override void InitializeUIComponents()
     {
-        closeBtn.AddClickAction(OnCloseBtn); // 绑定关闭按钮事件
+        closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
         leftBtn.AddClickAction(()=>MovePage(true)); // 左
         rightBtn.AddClickAction(()=>MovePage(false)); // 右
         wordBookBtn.AddClickAction(ShowWordVocabulary); // 绑定关闭按钮事件
