@@ -388,11 +388,19 @@ public class ShopManager : MonoBehaviour
     {
         // 检查限购状态
         ShopLimitData buyshopDta = GameDataManager.Instance.UserData.limitShopItems.Find(itemdata => itemdata.isget && !itemdata.isoverdate);
+        int levelid = ChessStageController.Instance.CurrentStage;
+        int waittime =800;
+
+        if (GameDataManager.Instance.UserData.levelMode == 3)
+        {
+            levelid = StageHexController.Instance.CurrentStage;
+            waittime = 1500;
+        }
 
          foreach (var item in _limitAdsGifts)
          {
              // 判断是否到达解锁关卡
-             if (!item.unlocked.Contains(StageHexController.Instance.CurStageInfo.StageNumber.ToString()))
+             if (!item.unlocked.Contains(levelid.ToString()))
                  continue;
         
         
@@ -448,7 +456,7 @@ public class ShopManager : MonoBehaviour
              }
         
             // 等待1秒后显示面板
-            await Task.Delay(1500); // 1000毫秒 = 1秒
+            await Task.Delay(waittime); // 1000毫秒 = 1秒
             SystemManager.Instance.ShowPanel(PanelType.AdsDiscountScreen);
             return;
         }

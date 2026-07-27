@@ -16,15 +16,19 @@ public class FreeItemTable : MonoBehaviour
     [SerializeField] private Button tipBtn;
     [SerializeField] private GameObject tipPanel;
 
+    private ShopDataItem freeDataItem;
+    private ShopDataItem goldDataItem;
+    private ShopDataItem toolDataItem;
+
     private void Start()
     {
-        tipBtn.AddClickAction(ClicktipBtn);
+        tipBtn.AddClickAction(()=>ClicktipBtn(),"Button",false);
         
         UnityTimer.Loop(3f, TickTime);
         
-        ShopDataItem freeDataItem=  ShopManager.shopManager.FormAllItemsGetProduct("FreeGoods");
-        ShopDataItem goldDataItem=  ShopManager.shopManager.FormAllItemsGetProduct("GoldGoods");
-        ShopDataItem toolDataItem=  ShopManager.shopManager.GetProduct("SingleGoods");
+       freeDataItem =  ShopManager.shopManager.FormAllItemsGetProduct("FreeGoods");
+       goldDataItem =  ShopManager.shopManager.FormAllItemsGetProduct("GoldGoods");
+       toolDataItem =  ShopManager.shopManager.GetProduct("SingleGoods");
 
         SetShowIcon(freeDataItem);
         SetShowIcon(goldDataItem);
@@ -40,6 +44,10 @@ public class FreeItemTable : MonoBehaviour
         InitUI();
 
         EventDispatcher.instance.OnChangeFreeTipsPanel += ChangeTipsPanelState;
+        
+        freeitem.SetShopData(freeDataItem);
+        golditem.SetShopData(goldDataItem);
+        toolitem.SetShopData(toolDataItem);
     }
 
     private void SetShowIcon(ShopDataItem shopDataItem)
@@ -127,7 +135,8 @@ public class FreeItemTable : MonoBehaviour
 
     private void ClicktipBtn()
     {
-        tipPanel.SetActive(!tipPanel.activeSelf);
+        bool isshow=!tipPanel.activeSelf;
+        tipPanel.SetActive(isshow);
     }
     
     private void ChangeTipsPanelState()

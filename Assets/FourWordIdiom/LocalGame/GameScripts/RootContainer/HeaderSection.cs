@@ -127,7 +127,7 @@ public class HeaderSection : UIWindow
     protected void InitializeButtons()
     {       
         SetBtn.AddClickAction(OnSetClick);
-        BackBtn.AddClickAction(OnBackClick);
+        BackBtn.AddVibraClickAction(OnBackClick);
         ShopBtn.AddClickAction(OnShopClick);
 #if Unity_ShowLog || UNITY_EDITOR
         GmBtn.AddClickAction(OnGmClick, "", false);

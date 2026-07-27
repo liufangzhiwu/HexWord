@@ -121,6 +121,7 @@ public class AdsDiscountScreen : UIWindow
             {
                 if (float.TryParse(currentShopItem.discount.TrimEnd('%'), out float discountPercent))
                 {
+                    discountPercent=Mathf.Abs(discountPercent);
                     decimal discountRate = (decimal)(discountPercent / 100f);
                     decimal originalPrice = (decimal) price / discountRate;
                     discountText.text = UIUtilities.FormatCurrency(originalPrice, culture);

@@ -2731,6 +2731,16 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5529639816739866999, guid: f3c136c5c5f8f504b9c532f202af6a09,
+        type: 3}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    - target: {fileID: 5529639816739866999, guid: f3c136c5c5f8f504b9c532f202af6a09,
+        type: 3}
+      propertyPath: m_FontData.m_FontStyle
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5830644404675120390, guid: f3c136c5c5f8f504b9c532f202af6a09,
         type: 3}
       propertyPath: m_AnchorMax.x
@@ -2900,6 +2910,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: FreeItemTable
+      objectReference: {fileID: 0}
+    - target: {fileID: 6985905959697203525, guid: f3c136c5c5f8f504b9c532f202af6a09,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7134778685395263612, guid: f3c136c5c5f8f504b9c532f202af6a09,
         type: 3}

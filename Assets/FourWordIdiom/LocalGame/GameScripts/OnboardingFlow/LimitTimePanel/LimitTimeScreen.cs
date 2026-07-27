@@ -204,7 +204,7 @@ public class LimitTimeScreen : UIWindow
 
     private void OnCloseBtn()
     {
-        AudioManager.Instance.TriggerVibration(10, 200);
+        AudioManager.Instance.TriggerVibration(40, 50);
         QuickComplete();
         base.Close(); // 隐藏面板
         firstenter=false;

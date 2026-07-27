@@ -1,7 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class APIGateway: MonoBehaviour
@@ -30,12 +28,11 @@ public class APIGateway: MonoBehaviour
             DontDestroyOnLoad(gameObject);
         }
     }
-    
     private void Start()
     {
         
 #if Unity_ShowLog
-            APIUrl = "https://zen.test.mindwordplay.cn/api/";
+        APIUrl = "https://zen.test.mindwordplay.cn/api/";
 #else
             APIUrl = "https://hex.prod.mindwordplay.cn/api/";
 #endif

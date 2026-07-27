@@ -221,7 +221,7 @@ public class TileView : MonoBehaviour
     /// </summary>
     private void TriggerVibration()
     {
-        AudioManager.Instance.TriggerVibration(1, 10);
+        AudioManager.Instance.TriggerVibration(30, 40);
     }
 
     /// <summary>
@@ -358,7 +358,7 @@ public class TileView : MonoBehaviour
         });
         
         TileTransform.anchoredPosition = _startPosition;
-        AudioManager.Instance.TriggerVibration();
+        //AudioManager.Instance.TriggerVibration();
     }
 
     /// <summary>

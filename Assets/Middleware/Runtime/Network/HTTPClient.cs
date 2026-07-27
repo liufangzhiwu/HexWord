@@ -14,7 +14,7 @@ public class HTTPClient
     public static HTTPClient Instance => _instance.Value;
 
     private string _baseUrl = "http://127.0.0.1:8000/api/";
-    private string authToken = "";
+    public string authToken = "";
     private Dictionary<string, string> defaultHeaders = new Dictionary<string, string>();
 
     private HTTPClient() { }
@@ -42,11 +42,12 @@ public class HTTPClient
         return this;
     }
 
-    public void SetAuthToken(string token)
+    public void SetAuthToken(string token,int offlineSeconds)
     {
         authToken = token;
 
         PlayerPrefs.SetString("auth_token", token);
+        PlayerPrefs.SetInt("offline_Seconds", offlineSeconds);
         PlayerPrefs.Save();
         UpdateAuthHeader();
     }
@@ -82,14 +83,10 @@ public class HTTPClient
     public IEnumerator Get<T>(string endpoint, Action<T> onSuccess, Action<string> onError, Dictionary<string, string> customHeaders = null)
     {
         yield return SendRequest<T>(HTTPMethods.Get, endpoint, null, onSuccess, onError, customHeaders);
-        //onError?.Invoke("HTTP Client 处于禁用状态");
-        yield return null;
     }
     public IEnumerator Post<T>(string endpoint, object body, Action<T> onSuccess, Action<string> onError, Dictionary<string, string> customHeaders = null)
     {
         yield return SendRequest<T>(HTTPMethods.Post, endpoint, body, onSuccess, onError, customHeaders);
-        //onError?.Invoke("HTTP Client 处于禁用状态");
-        yield return null;
     }
     private IEnumerator SendRequest<T>(HTTPMethods method, string endpoint, object body, Action<T> onSuccess, Action<string> onError, Dictionary<string, string> customHeaders)
     {

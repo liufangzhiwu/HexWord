@@ -1,101 +1,161 @@
+using System;
 using UnityEngine;
+using System.Runtime.InteropServices; // 必须引用
 
 public class AndroidVibration : MonoBehaviour
 {
+    // ---------- 可调参数 ----------
+    private const long MIN_VIBRATION_MS = 10;
+    private const long MAX_VIBRATION_MS = 50;
+    private const int DEFAULT_AMPLITUDE = 128;
+
+    // ---------- 缓存 Android 对象（全局静态） ----------
+    private static AndroidJavaClass _unityPlayer;
+    private static AndroidJavaObject _currentActivity;
+    private static AndroidJavaObject _vibrator;
+
+    // ---------- 鸿蒙原生插件导入 ----------
+    #if UNITY_OPENHARMONY&& !UNITY_EDITOR
+    [DllImport("entry")] // 插件名称，与编译生成的 .so 文件名对应
+    private static extern void vibrate(long milliseconds, int intensity);
+    #endif
+
+    // ---------- 初始化（懒加载） ----------
+    private static void Initialize()
+    {
+        #if UNITY_ANDROID && !UNITY_EDITOR && !UNITY_OPENHARMONY
+        // 注意：如果 UNITY_OPENHARMONY 定义了，则不会进入此分支，因为鸿蒙平台不会使用 AndroidJava
+        if (_vibrator != null) return;
+
+        try
+        {
+            if (_unityPlayer == null)
+                _unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+
+            if (_currentActivity == null)
+                _currentActivity = _unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+
+            if (_currentActivity != null && _vibrator == null)
+                _vibrator = _currentActivity.Call<AndroidJavaObject>("getSystemService", "vibrator");
+
+            if (_vibrator == null)
+                Debug.LogWarning("[AndroidVibration] Vibrator service not available.");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AndroidVibration] Initialization failed: {e.Message}");
+        }
+        #endif
+    }
+
     /// <summary>
-    /// 
+    /// 触发震动（兼容 Android 和 HarmonyOS）
     /// </summary>
-    /// <param name="milliseconds"> 震动时长</param>
-    /// <param name="intensity">震动强度</param>
-    // Android 震动功能封装
     public static void Vibrate(long milliseconds, int intensity)
     {
+        // 限制时长与强度
+        milliseconds = Math.Clamp(milliseconds, MIN_VIBRATION_MS, MAX_VIBRATION_MS);
+        int clampedIntensity = Math.Clamp(intensity, 1, 255);
 
-#if UNITY_ANDROID && !UNITY_EDITOR    
+        #if UNITY_OPENHARMONY && !UNITY_EDITOR
+        // ---------- 鸿蒙平台：直接调用原生插件 ----------
+        Debug.Log($"[AndroidVibration] HarmonyOS vibrate: {milliseconds}ms, intensity={clampedIntensity}");
+        vibrate(milliseconds, clampedIntensity);
+        return;
+        #endif
 
-        //获取系统服务
-        using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-        using (var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
-        using (var vibrator = currentActivity.Call<AndroidJavaObject>("getSystemService", "vibrator"))
+        #if UNITY_ANDROID && !UNITY_EDITOR
+        // ---------- Android 平台（非鸿蒙） ----------
+        Initialize();
+
+        if (_vibrator == null)
         {
-            if (vibrator == null)
-            {
-                Debug.LogWarning("Vibrator service not available.");
-                return;
-            }
+            Debug.LogWarning("[AndroidVibration] Vibrator not available, fallback to Handheld.Vibrate()");
+            Handheld.Vibrate();
+            return;
+        }
 
-            //检查API版本
-            int apiStage = new AndroidJavaClass("android.os.Build$VERSION").GetStatic<int>("SDK_INT");
+        try
+        {
+            try { _vibrator.Call("cancel"); } catch (Exception ex) { Debug.LogWarning($"[AndroidVibration] Cancel failed: {ex.Message}"); }
 
-            //处理强度参数范围(1 - 255)
-            int clampedIntensity = Mathf.Clamp(intensity, 1, 255);
+            int apiLevel = new AndroidJavaClass("android.os.Build$VERSION").GetStatic<int>("SDK_INT");
 
-            if (apiStage >= 26)
-            {
-                //修复后的VibrationEffect调用
-                using (var vibrationEffect = new AndroidJavaClass("android.os.VibrationEffect"))
-                {
-                   //检查设备是否支持振幅控制
-                    bool hasAmplitudeControl = false;
-                    try
-                    {
-                        hasAmplitudeControl = vibrator.Call<bool>("hasAmplitudeControl");
-                    }
-                    catch (System.Exception e)
-                    {
-                        Debug.LogWarning($"hasAmplitudeControl check failed: {e.Message}");
-                    }
-
-                    AndroidJavaObject effect;
-
-                    if (hasAmplitudeControl)
-                    {
-                        //支持振幅控制的设备
-                       effect = vibrationEffect.CallStatic<AndroidJavaObject>(
-                           "createOneShot",
-                           milliseconds,
-                           clampedIntensity
-                       );
-                    }
-                    else
-                    {
-                        //不支持振幅控制的设备使用默认强度
-                       effect = vibrationEffect.CallStatic<AndroidJavaObject>(
-                           "createOneShot",
-                           milliseconds,
-                           -1  // 使用默认振幅
-                       );
-                    }
-                    
-                    //添加额外的震动参数检查
-                    if (effect != null)
-                    {
-                        //确保震动时长有效
-                        if (milliseconds <= 0)
-                        {
-                            Debug.LogWarning("Invalid vibration duration: " + milliseconds);
-                            return;
-                        }
-
-                        //Handheld.Vibrate();
-                        vibrator.Call("vibrate", effect);                       
-                        Debug.Log($"Vibration triggered: {milliseconds}ms, intensity: {clampedIntensity}");
-                    }
-                    else
-                    {
-                        Debug.LogError("Failed to create VibrationEffect");
-
-                        //回退到旧API
-                        vibrator.Call("vibrate", milliseconds);
-                    }
-                }
-            }
+            if (apiLevel >= 26)
+                TriggerVibrationEffect(milliseconds, clampedIntensity);
             else
             {
-                //旧版本忽略强度参数
-                vibrator.Call("vibrate", milliseconds);
+                _vibrator.Call("vibrate", milliseconds);
+                Debug.Log($"[AndroidVibration] Legacy vibrate: {milliseconds}ms");
             }
         }
-#endif
+        catch (Exception e)
+        {
+            Debug.LogError($"[AndroidVibration] Vibrate error: {e.Message}");
+            Handheld.Vibrate();
+        }
+        #endif
+    }
+
+    #if UNITY_ANDROID && !UNITY_EDITOR && !UNITY_OPENHARMONY
+    private static void TriggerVibrationEffect(long milliseconds, int intensity)
+    {
+        try
+        {
+            using (var effectClass = new AndroidJavaClass("android.os.VibrationEffect"))
+            {
+                bool hasAmplitudeControl = false;
+                try
+                {
+                    hasAmplitudeControl = _vibrator.Call<bool>("hasAmplitudeControl");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[AndroidVibration] hasAmplitudeControl failed: {ex.Message}");
+                }
+
+                AndroidJavaObject effect;
+
+                if (hasAmplitudeControl)
+                {
+                    effect = effectClass.CallStatic<AndroidJavaObject>("createOneShot", milliseconds, intensity);
+                    Debug.Log($"[AndroidVibration] VibrationEffect (amplitude): {milliseconds}ms, intensity={intensity}");
+                }
+                else
+                {
+                    effect = effectClass.CallStatic<AndroidJavaObject>("createOneShot", milliseconds, DEFAULT_AMPLITUDE);
+                    Debug.Log($"[AndroidVibration] VibrationEffect (default amplitude): {milliseconds}ms");
+                }
+
+                if (effect != null)
+                {
+                    _vibrator.Call("vibrate", effect);
+                }
+                else
+                {
+                    Debug.LogWarning("[AndroidVibration] Effect creation failed, fallback to legacy vibrate.");
+                    _vibrator.Call("vibrate", milliseconds);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AndroidVibration] VibrationEffect error: {ex.Message}, fallback to legacy.");
+            _vibrator.Call("vibrate", milliseconds);
+        }
+    }
+    #endif
+
+    // ---------- 释放资源 ----------
+    private void OnApplicationQuit()
+    {
+        #if UNITY_ANDROID && !UNITY_EDITOR && !UNITY_OPENHARMONY
+        _vibrator?.Dispose();
+        _currentActivity?.Dispose();
+        _unityPlayer?.Dispose();
+        _vibrator = null;
+        _currentActivity = null;
+        _unityPlayer = null;
+        #endif
     }
 }

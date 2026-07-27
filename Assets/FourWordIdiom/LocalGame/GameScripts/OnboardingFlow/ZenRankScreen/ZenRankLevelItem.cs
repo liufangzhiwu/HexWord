@@ -138,6 +138,7 @@ public class ZenRankLevelItem : MonoBehaviour
                         AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("hehua_" + flowerIndex);
                     Image flowerImg = FindImageInChildren(currentHehua.transform, "hehua01");
                     flowerImg.sprite = newFlowerSprite;
+                    flowerImg.gameObject.SetActive(true);
                     // ==========================================
                     // 3. 动态替换 Spine 图片
                     // ==========================================

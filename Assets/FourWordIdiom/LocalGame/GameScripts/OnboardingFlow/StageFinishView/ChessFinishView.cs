@@ -528,16 +528,10 @@ public class ChessFinishView : UIWindow
         _tasktable.taskEffect.gameObject.SetActive(false);
         _matchFishtable.matchEffect.gameObject.SetActive(false);
         
-        // ==========================================
-        // 🌟 队列首位：全权交由专属协程处理禅修榜的三种状态
-        // ==========================================
-        yield return StartCoroutine(HandleZenRankFlowRoutine());
-        
-        
         isShowWinSign = StreakManager.Instance.IsCanShowWinSign();
-        bool isJump = ChessStageController.Instance.IsJump;
+        //bool isJump = ChessStageController.Instance.IsJump;
 
-        if (isShowWinSign&&!isJump)
+        if (isShowWinSign)
         {
             SystemManager.Instance.ShowPanel(PanelType.SignWinScreen);
         }
@@ -556,6 +550,13 @@ public class ChessFinishView : UIWindow
                                              &&!SystemManager.Instance.PanelIsShowing(PanelType.SevenSignScreen)
                                              &&!SystemManager.Instance.PanelIsShowing(PanelType.ReturnFirstWinScreen));
         }
+        
+           
+        // ==========================================
+        // 🌟 队列首位：全权交由专属协程处理禅修榜的三种状态
+        // ==========================================
+        yield return StartCoroutine(HandleZenRankFlowRoutine());
+        
         AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
         {
             if (issuccess)

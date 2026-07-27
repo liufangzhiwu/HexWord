@@ -50,11 +50,11 @@ public class PauseGameScreen : UIWindow
     void Start()
     {
         //closeBtn.AddClickAction(OnCloseClicked);
-        continueBtn.AddVibraClickAction(OnCloseClicked);
-        returnGame.AddVibraClickAction(OnCloseClicked);
-        jumpBtn.AddVibraClickAction(OnJumpClicked);
-        exitBtn.AddVibraClickAction(OnExitClicked);
-        realExitBtn.AddVibraClickAction(OnRealExitClicked);
+        continueBtn.AddClickAction(OnCloseClicked);
+        returnGame.AddClickAction(OnCloseClicked);
+        jumpBtn.AddClickAction(OnJumpClicked);
+        exitBtn.AddClickAction(OnExitClicked);
+        realExitBtn.AddClickAction(OnRealExitClicked);
         
         musicText.text = MultilingualManager.Instance.GetString("Music").ToUpper(); // 音乐文本
         soundText.text = MultilingualManager.Instance.GetString("Sounds").ToUpper(); // 音效文本
@@ -105,11 +105,13 @@ public class PauseGameScreen : UIWindow
         GameDataManager.Instance.UserData.IsMusicOn = isOn; // 保存音乐开关状态
         AudioManager.Instance.ToggleMusic();; // 切换音乐状态
         UpdateToggleVisuals(muHandle, isOn); // 更新音乐手柄视觉
+        AudioManager.Instance.TriggerVibration(40, 50);
     }
     private void ToggleSounds(bool isOn)
     {
         GameDataManager.Instance.UserData.IsSoundOn = isOn; // 保存音效开关状态
         UpdateToggleVisuals(soHandle, isOn); // 更新音效手柄视觉
+        AudioManager.Instance.TriggerVibration(40, 50);
     }
     
     private void ToggleVibrate(bool isOn)

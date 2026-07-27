@@ -375,13 +375,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 4576454824034092214}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 60397d49eed59bd4287a2f1dd863344b, type: 3}
+  m_Script: {fileID: 11500000, guid: c4f464ff767cd924dab5640e995e561a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   LevelText: {fileID: 693659220157192151}
   ScoreText: {fileID: 6768328747571301750}
   nameBoardBg: {fileID: 9168175581457899082}
-  unlockedBoardSprite: {fileID: 21300000, guid: febc312cee8110e4684e3e8c0ede57fa, type: 3}
+  unlockedBoardSprite: {fileID: 21300000, guid: febc312cee8110e4684e3e8c0ede57fa,
+    type: 3}
   lockedBoardSprite: {fileID: 21300000, guid: 43a0a44f9f56ef648a412e45e7966099, type: 3}
   hehuaTransform: {fileID: 611865974389671498}
   lockedLeafShadow: {fileID: 89405008765109228}

@@ -173,6 +173,7 @@ SpriteAtlas:
     - 9513e54ed1e37fa4880e17a6a7dc7321: 21300000
     - cb41084e67c8a4471833e3ac9fd6d585: 21300000
     - 6e7b1e5ee7760f842a53b245800b11bd: 21300000
+    - aa2cb17eca47ea248ba926891a161e5d: 21300000
     - f6dee7aea5e140345aa47c6e3d97b7b3: 21300000
     - 400471be92fa74449aa9a5af9c4c7dd6: 21300000
     - e83362deb10dabb46941b5c615970277: 21300000
@@ -296,6 +297,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 9513e54ed1e37fa4880e17a6a7dc7321, type: 3}
   - {fileID: 21300000, guid: cb41084e67c8a4471833e3ac9fd6d585, type: 3}
   - {fileID: 21300000, guid: 6e7b1e5ee7760f842a53b245800b11bd, type: 3}
+  - {fileID: 21300000, guid: aa2cb17eca47ea248ba926891a161e5d, type: 3}
   - {fileID: 21300000, guid: f6dee7aea5e140345aa47c6e3d97b7b3, type: 3}
   - {fileID: 21300000, guid: 400471be92fa74449aa9a5af9c4c7dd6, type: 3}
   - {fileID: 21300000, guid: e83362deb10dabb46941b5c615970277, type: 3}
@@ -418,6 +420,7 @@ SpriteAtlas:
   - time_bg
   - headicon
   - UI_btn_pupa
+  - focusHalo
   - timer_red
   - deng
   - dengbg

@@ -10,10 +10,9 @@ public class LoginRequest
 {
     public string factory;
     public string openId;
-    public string platform;
     public string deviceId;
-    public string authToken;
-    public string authCode;
+    public string platform;
+    public string idfa;
     public string version;
     public string language;
 }
@@ -22,6 +21,7 @@ public class LoginRequest
 public class LoginResponse
 {
     public string token;
+    public int offline_Seconds;
     public int expiresIn; // 过期时间，单位秒
     public string uid;
     public Dictionary<string, Object> abtest; // A/B测试参数
@@ -32,6 +32,7 @@ public class LogoutRequest
 {
     public string gameData;
 }
+
 
 [Serializable]
 public class GameDataDto
@@ -67,14 +68,6 @@ public class ExtraDataDto
     // 对应你的 dynamicHard 对象
     [JsonProperty("butterfly")]
     public string Butterfly { get; set; }
-}
-
-[Serializable]
-public class GetGameDataResponse
-{
-    public string gameData;
-    public int createdTime;
-    public int updatedTime;
 }
 
 [Serializable]

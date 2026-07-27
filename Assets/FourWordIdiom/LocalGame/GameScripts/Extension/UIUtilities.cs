@@ -38,14 +38,13 @@ public static class UIUtilities
                 {
                     onClickAction?.Invoke();
                     targetButton.transform.DOScale(Vector3.one, 0.11f);
+                    EventDispatcher.instance.TriggerChangeFreeTipsPanel();
                 });
             }
             else
             {
                 onClickAction?.Invoke();
             }
-           
-            EventDispatcher.instance.TriggerChangeFreeTipsPanel();
         });
     }
     
@@ -75,8 +74,7 @@ public static class UIUtilities
                 onClickAction?.Invoke();
             }
 
-            AudioManager.Instance.TriggerVibration(10, 200);
-            EventDispatcher.instance.TriggerChangeFreeTipsPanel();
+            AudioManager.Instance.TriggerVibration(40, 50);
         });
     }
 

@@ -159,6 +159,13 @@ public partial class ChessPlayArea
         _remainingTime = CurrStageData.RemainingTime;
         _isTimerRunning = false;
         UpdateTimerUI();
+        
+          
+        if (ChessStageController.Instance.IsFirstEnterStage)
+        {
+            ShopManager.shopManager.ShowLimitAdsPanel();
+        }
+        
         // bool gotoNext = false;
         // if (!ChessStageController.Instance.IsFirstEnterStage)
         // {

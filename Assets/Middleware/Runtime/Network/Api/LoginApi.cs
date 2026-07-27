@@ -1,7 +1,6 @@
 ﻿using Middleware;
 using System;
 using System.Collections;
-using Newtonsoft.Json;
 using UnityEngine;
 
 /**
@@ -18,7 +17,7 @@ public class LoginApi
     private string GetCurrentFactory()
     {
         // 如果是华为渠道包
-#if UNITY_huawei || UNITY_OPENHARMONY
+#if UNITY_HUAWEI || UNITY_OPENHARMONY
     return "huawei";
 #elif UNITY_hornor
     return "hornor";
@@ -37,40 +36,26 @@ public class LoginApi
      */
     public IEnumerator Login(Action<object> action)
     {
-        // string deviceId = Game.GetUniqueId();
-        // if(string.IsNullOrEmpty(deviceId))
-        // {
-        //     deviceId = SystemInfo.deviceUniqueIdentifier;
-        // }
-        
-        string openId = GameDataManager.Instance.UserData.UserId;
+       
+        string openId = Game.self.GetUniqueId();
         string factory = GetCurrentFactory();
-        
-#if UNITY_EDITOR
-        if (string.IsNullOrEmpty(openId))
-        {
-            openId = SystemInfo.deviceUniqueIdentifier;
-        }
-#endif
-        
         var data = new LoginRequest
         {
             factory = factory,
+            // openId = "66bcdef7477127aec526a7c489d2ed06",
             openId = openId,
-            deviceId =  SystemInfo.deviceUniqueIdentifier,
+            deviceId = openId,
             platform = Application.platform.ToString(),
             version = Application.version ?? "1.0.0",
             language = Application.systemLanguage.ToString(),
         };
-
-        Debug.LogFormat("登录用户时的数据: {0}", JsonConvert.SerializeObject(data));
        
         yield return httpClient.Post<LoginResponse>("auth/device-login",
             data,
             response =>
             {
                 // 保存Token
-                HTTPClient.Instance.SetAuthToken(response.token);
+                HTTPClient.Instance.SetAuthToken(response.token,response.offline_Seconds);
                 Debug.Log("Login success!" + response.token);
                 action?.Invoke(response);
             },
@@ -147,6 +132,24 @@ public class LoginApi
             error =>
             {
                 // Debug.LogError($"Fetch profile failed: {error}");
+                action?.Invoke(null);
+            });
+    }
+    
+    // 登录后获取用户信息
+    public IEnumerator ClearUserProfile(Action<bool> action)
+    {
+        yield return httpClient.Post<bool>("auth/debug/clear-data",
+            null,
+            response =>
+            {
+                action?.Invoke(response);
+                Debug.Log("清理服务端数据成功！");
+            },
+            error =>
+            {
+                // Debug.LogError($"Fetch profile failed: {error}");
+                action?.Invoke(false);
             });
     }
 }

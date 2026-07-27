@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: hehua_amin_SkeletonData
   m_EditorClassIdentifier: 
   atlasAssets:
-  - {fileID: 11400000, guid: fcabe8f1a101a344aa5cb279d2f9b563, type: 2}
+  - {fileID: 11400000, guid: 87a49ab1e922b4e4ab41b822c33e5079, type: 2}
   scale: 0.01
-  skeletonJSON: {fileID: 4900000, guid: 123e2220ee91a444faaa4efb910f52cc, type: 3}
+  skeletonJSON: {fileID: 4900000, guid: 76b98dae552d5694c9334c9666b8fce7, type: 3}
   isUpgradingBlendModeMaterials: 0
   blendModeMaterials:
     requiresBlendModeMaterials: 0

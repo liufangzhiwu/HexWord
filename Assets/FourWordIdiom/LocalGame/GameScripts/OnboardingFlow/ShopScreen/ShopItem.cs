@@ -247,6 +247,8 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                     
                     GameDataManager.Instance.UserData.UpdateGold(-needgold, true,true,"看广告领取商店金币");
                     GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count,"看广告领取商店金币");
+                    
+                    EventDispatcher.instance.TriggerChangeGoldUI(0, true);
                     GameDataManager.Instance.UserData.isDayGoldBuy = true;
                     shopPriceText.text = "已购买";
                     btntagicon.gameObject.SetActive(false);
@@ -415,25 +417,25 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             shopCountText.text = MultilingualManager.Instance?.GetString(data.name) ?? data.name;
             dibg.sprite =LoadShopIcon("giftdi"+data.id);
             
-            Color color = new Color(40.0f/255,144.0f/255,1);
-
-            switch (data.id)
-            {
-                case 6:
-                    color = new Color(25.0f/255f,193.0f/255,134.0f/255);
-                    break;
-                case 7:
-                    color =new Color(251.0f/255,91.0f/255,168.0f/255);
-                    break;
-                case 8:
-                    color = new Color(254.0f/255,141.0f/255,50.0f/255);
-                    break;
-                case 9:
-                    color =new Color(140.0f/255,89.0f/255,246.0f/255);
-                    break;
-            }
-            
-            shopCountText.color = color;
+            // Color color = new Color(40.0f/255,144.0f/255,1);
+            //
+            // switch (data.id)
+            // {
+            //     case 6:
+            //         color = new Color(25.0f/255f,193.0f/255,134.0f/255);
+            //         break;
+            //     case 7:
+            //         color =new Color(251.0f/255,91.0f/255,168.0f/255);
+            //         break;
+            //     case 8:
+            //         color = new Color(254.0f/255,141.0f/255,50.0f/255);
+            //         break;
+            //     case 9:
+            //         color =new Color(140.0f/255,89.0f/255,246.0f/255);
+            //         break;
+            // }
+            //
+            // shopCountText.color = color;
         }
     }
 

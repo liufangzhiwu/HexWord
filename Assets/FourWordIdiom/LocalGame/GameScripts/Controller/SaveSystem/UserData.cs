@@ -308,6 +308,7 @@ public class UserData
         // 评价界面显示时间
         showRateusTime = null;
         isChangeUserName = false;
+        isJoinedZenRank = false;
         // 游戏进度
         TutorialProgress = 0;
         ChessTutorialProgress = new Dictionary<int, bool>

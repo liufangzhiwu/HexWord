@@ -314,18 +314,18 @@ public class AudioManager : MonoBehaviour
         source.volume = targetVolume;
     }
     
-    public void TriggerVibration(long milliseconds = 5,int intensity=50,int iointensity=1)
+    public void TriggerVibration(long milliseconds = 50,int intensity=50,int iointensity=1)
     {
-        //if (!GameDataManager.instance.UserData.IsVibrationOn) return;
-// #if UNITY_EDITOR
-//         // 编辑器模式下的模拟逻辑
-//         Debug.Log($"模拟震动：强度 {intensity}，持续时间 {milliseconds}ms");
-// #elif UNITY_IOS
-//      // iOS 震动逻辑
-//         TriggerVibrationWithStyle(1);
-// #elif UNITY_ANDROID
-//     // Android 平台的震动逻辑
-//       AndroidVibration.Vibrate(milliseconds,intensity);
-// #endif
+        if (!GameDataManager.Instance.UserData.IsVibrationOn) return;
+#if UNITY_EDITOR
+        // 编辑器模式下的模拟逻辑
+        Debug.Log($"模拟震动：强度 {intensity}，持续时间 {milliseconds}ms");
+#elif UNITY_IOS
+             // iOS 震动逻辑
+                TriggerVibrationWithStyle(1);
+#elif UNITY_ANDROID||UNITY_OPENHARMONY
+            // Android 平台的震动逻辑
+              AndroidVibration.Vibrate(milliseconds,intensity);
+#endif
     }
 }

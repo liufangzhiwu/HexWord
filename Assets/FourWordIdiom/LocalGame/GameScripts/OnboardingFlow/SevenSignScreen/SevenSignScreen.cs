@@ -64,7 +64,7 @@ public class SevenSignScreen : UIWindow
         StartCoroutine(ShowReward());
         oktBtn.gameObject.SetActive(false);
         
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
     }
 
     private void InitUI()

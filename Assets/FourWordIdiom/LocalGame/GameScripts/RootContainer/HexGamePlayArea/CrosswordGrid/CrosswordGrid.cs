@@ -987,7 +987,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         if (newSelectedPuzzleGrids.Count < selectedPuzzleGrids.Count)
         {
-            AudioManager.Instance.TriggerVibration(1, 10);
+            //AudioManager.Instance.TriggerVibration(30, 40);
             AudioManager.Instance.PlaySoundEffect("Puzzle" + newSelectedPuzzleGrids.Count);
         }
 
@@ -1129,7 +1129,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
         
         if (newSelectedPuzzleGrids.Count < selectedPuzzleGrids.Count)
         {
-            AudioManager.Instance.TriggerVibration(1, 10);
+            //AudioManager.Instance.TriggerVibration(30, 40);
             AudioManager.Instance.PlaySoundEffect("Puzzle" + newSelectedPuzzleGrids.Count);
         }
 
@@ -1341,7 +1341,7 @@ public class CrossPuzzleGrid : UIWindow,IPointerDownHandler, IPointerUpHandler, 
             Puzzle.TileView.TriggerErrorState(isx);
         }
         AudioManager.Instance.PlaySoundEffect("xuanzhecuowu");
-        AudioManager.Instance.TriggerVibration(1, 10);
+        //AudioManager.Instance.TriggerVibration(30, 40);
     }
 
 

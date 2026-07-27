@@ -30,6 +30,8 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button ShopBuyBtn;
     [SerializeField] private Button AddPupaBtn;
     [SerializeField] private Button AddGoldLeafBtn;
+    [SerializeField] private Button AddStreakWinDays;
+    [SerializeField] private Button GetAllHeadIcons;
     [SerializeField] private Toggle AutoToggle;
 
     public InputField EmailText; 
@@ -81,6 +83,8 @@ public class DebugMenu : UIWindow
         ChessEBtn.AddClickAction(OnChessEnergyClick);
         setAbBtButton.AddClickAction(OnSetABBtnClick);
         AddGoldLeafBtn.AddClickAction(OnAddGoldLeafClick);
+        AddStreakWinDays.AddClickAction(OnAddStreakWinDays);
+        GetAllHeadIcons.AddClickAction(OnGetAllHeadIcons);
     }
 
     private void InitUIData()
@@ -98,6 +102,7 @@ public class DebugMenu : UIWindow
         InitBtnData(ShopBuyBtn, "10");
         InitBtnData(AddPupaBtn, "10");
         InitBtnData(AddGoldLeafBtn, "10");
+        InitBtnData(AddStreakWinDays, "10");
         ChessEBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue.ToString("0.00");
         ChessStageBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.UserData.CurrentChessStage.ToString();
         
@@ -123,6 +128,30 @@ public class DebugMenu : UIWindow
         ChessStageController.Instance.Initialized();
         ABName = GameDataManager.Instance.UserData.ABName;
         logText.text = "拼字玩法当前为"+bagName+"\n 其中0为A包 1为B包"; // 清空 UI 文本
+    }
+    
+    private void OnGetAllHeadIcons()
+    { 
+        for (int i = 25; i < 40; i++)
+        {
+            GameDataManager.Instance.UserData.AddHeadIcon(i);
+        }
+    }
+    
+    private void OnAddStreakWinDays()
+    { 
+        InputField Stagenumtxt = AddStreakWinDays.GetComponentInChildren<InputField>();
+        int value = int.Parse(Stagenumtxt.text);
+        
+        GameDataManager.Instance.UserData._signSaveData.AddDodaySigneDays(value);
+
+        StreakManager.Instance.UpdateWinStreak();
+        
+        if (value > 30&&GameDataManager.Instance.UserData._signSaveData.winAwardClaims.Count>=3)
+            GameDataManager.Instance.UserData._signSaveData.winAwardClaims.Clear();
+       
+        
+        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
     }
     
     private void OnAddGoldLeafClick()

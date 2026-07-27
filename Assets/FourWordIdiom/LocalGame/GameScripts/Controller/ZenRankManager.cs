@@ -270,31 +270,50 @@ public class ZenRankManager : MonoBehaviour
 
         // 1. 剔除玩家自己，避免在列表中看到两个自己
         string myName = GameDataManager.Instance.UserData.UserName;
-        var otherPlayers = allRanks.Where(p => p.Name != myName && p.Rank > 0).ToList();
-
-        // 2. 按名次从高到低 (1, 2, 3...) 排序
-        var sortedOthers = otherPlayers.OrderBy(p => p.Rank).ToList();
-
-        // 3. 智能抓取策略：我们最多在界面上展示 4 个其他玩家
-        // 优先抓取名次介于 oldRank 和 newRank 之间的人 (你确确实实超越/被超越的人)
-        // 如果不够，就抓紧挨着你 newRank 的人 (让你知道周围都是谁)
-        foreach (var p in sortedOthers)
+        var sortedOthers = allRanks.Where(p => p.Name != myName && p.Rank > 0)
+            .OrderBy(p => p.Rank)
+            .ToList();
+        
+        if (sortedOthers.Count <= 4) return sortedOthers;
+     
+        // 2. 找到我的新名次 (newRank) 在剔除我之后的列表中的“理论插入点”
+        int insertIndex = 0;
+        while (insertIndex < sortedOthers.Count && sortedOthers[insertIndex].Rank < newRank)
         {
-            if (contextPlayers.Count >= 4) break; // 界面最多塞4个垫背/仰望的
+            insertIndex++;
+        }
+        
+        // 3. 确定滑动窗口的起始和结束索引 (理想情况：前2名，后2名)
+        int startIndex = insertIndex - 2;
+        int endIndex = insertIndex + 1;
+        
+        // 4. 处理边界情况：如果我在非常靠前的位置（比如第 1、2 名），上面不够 2 个人
+        if (startIndex < 0)
+        {
+            int offset = -startIndex; // 算出现在缺了几个位置
+            startIndex = 0;           // 强制从第 0 个索引开始
+            endIndex += offset;       // 把缺的名额补给后面（向后多取几个）
+        }
 
-            // 无论升降，只要他的名次离你新名次足够近 (比如正负5名以内)
-            // 或者他刚好卡在你新旧名次之间，就把他抓进 UI 里展示
-            bool isBetweenRanks = (oldRank > 0 && p.Rank >= Mathf.Min(oldRank, newRank) && p.Rank <= Mathf.Max(oldRank, newRank));
-            bool isCloseToNewRank = Mathf.Abs(p.Rank - newRank) <= 5;
+        // 5. 处理边界情况：如果我在非常靠后的位置，下面不够 2 个人
+        if (endIndex >= sortedOthers.Count)
+        {
+            int offset = endIndex - sortedOthers.Count + 1; // 算出后面缺了几个位置
+            endIndex = sortedOthers.Count - 1;              // 强制到最后一个索引结束
+            startIndex -= offset;                           // 把缺的名额补给前面（向前多取几个）
+        
+            // 极度安全的防御性处理（防止列表本身特别小导致越界）
+            if (startIndex < 0) startIndex = 0; 
+        }
 
-            if (isBetweenRanks || isCloseToNewRank)
-            {
-                contextPlayers.Add(p);
-            }
+        // 6. 根据计算好的安全窗口，提取环境玩家
+        for (int i = startIndex; i <= endIndex && i < sortedOthers.Count; i++)
+        {
+            contextPlayers.Add(sortedOthers[i]);
         }
 
         // 4. 再次确保按名次排好序，交给 UI 层
-        return contextPlayers.OrderBy(p => p.Rank).ToList();
+        return contextPlayers;
     }
     
     /// <summary>
@@ -386,7 +405,13 @@ public class ZenRankManager : MonoBehaviour
             // 只要我的分数大于等于他，并且他的名次比我现在的预测名次高，我就能顶替他！
             if (expectedNewScore >= p.Score)
             {
-                predictedRank = p.Rank; 
+                // 只有当顶替的名次比我当前的预测名次更好(数值更小)时，才顶替
+                if (p.Rank < predictedRank)
+                {
+                    predictedRank = p.Rank; 
+                }
+                // 因为数组是从第1名往下排的，碰到第一个被我超越的人，就是我能拿到的最高名次，直接中断！
+                break;
             }
             else
             {

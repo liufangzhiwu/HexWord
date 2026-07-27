@@ -142,7 +142,9 @@ public class SignWinScreen : UIWindow
 
     IEnumerator ShowReward()
     {
-        yield return new WaitForSeconds(4.8f);
+        yield return new WaitForSeconds(0.3f);
+        AudioManager.Instance.PlaySoundEffect("signwinLeaf");
+        yield return new WaitForSeconds(4.5f);
         
         int currentStreak = StreakManager.Instance.GetCurrentStreak();
         

@@ -484,7 +484,7 @@ public class HexGamePlayArea : UIWindow
     {
         // 基础音效
         AudioManager.Instance.PlaySoundEffect("ciright");
-        AudioManager.Instance.TriggerVibration(1, 10);
+        //AudioManager.Instance.TriggerVibration(30, 40);
     }
 
 

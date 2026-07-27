@@ -59,6 +59,8 @@ public class ZenSettlementScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+        
+        AudioManager.Instance.PlaySoundEffect("ShowUI");
     
         step1CanvasGroup.gameObject.SetActive(false);
         step2CanvasGroup.gameObject.SetActive(false);

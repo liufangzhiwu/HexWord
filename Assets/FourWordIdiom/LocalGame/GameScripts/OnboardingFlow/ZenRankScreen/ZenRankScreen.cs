@@ -62,7 +62,7 @@ public class ZenRankScreen : UIWindow
     // Start is called before the first frame update
     
     private ObjectPool hehuaObjectPool;
-    private GameObject hehuaPrefab;
+    public GameObject hehuaPrefab;
     
     // 顶部的滑动组件
     private ScrollRect topScrollRect;

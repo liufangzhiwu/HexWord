@@ -58,6 +58,7 @@ public class ZenRankStartScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+        AudioManager.Instance.PlaySoundEffect("ShowUI");
         _isForcedMode = false;
         _returnTargetPanel = PanelType.PrimaryInterface;
         closeButton.gameObject.SetActive(true);

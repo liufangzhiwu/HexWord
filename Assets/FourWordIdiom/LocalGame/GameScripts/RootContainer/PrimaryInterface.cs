@@ -66,7 +66,7 @@ public class PrimaryInterface : UIWindow
     
     private void Start()
     {
-        logo.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_logo");
+        //logo.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_logo");
         if (!GameDataManager.Instance.UserData.IsFirstLaunch)
         {
             ModeIndicator.speed = 0.5f;
@@ -79,7 +79,7 @@ public class PrimaryInterface : UIWindow
     /// </summary>
     protected override void InitializeUIComponents()
     {      
-        GameStageBtn.AddClickAction(OnPlayClick);
+        GameStageBtn.AddVibraClickAction(OnPlayClick);
         ModeBtn.AddClickAction(OnModeClick);
         SevenSignBtn.AddClickAction(ShowSevenSignScreen);
         LimitTimeBtn.AddClickAction(ClickLimintTime);

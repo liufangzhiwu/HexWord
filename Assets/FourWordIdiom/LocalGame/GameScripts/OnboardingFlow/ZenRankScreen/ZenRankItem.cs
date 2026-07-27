@@ -97,12 +97,12 @@ public class ZenRankItem : MonoBehaviour
             if (isDisplayOnly)
             {
                 GetComponent<Image>().sprite =
-                    AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("change_rank_me", "OnboardingFlow");
+                    AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("change_rank_me");
             }
             else
             {
                 GetComponent<Image>().sprite =
-                    AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("mide", "OnboardingFlow");
+                    AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("mide");
             }
            
             if (ColorUtility.TryParseHtmlString("#823F15", out Color newColor))
