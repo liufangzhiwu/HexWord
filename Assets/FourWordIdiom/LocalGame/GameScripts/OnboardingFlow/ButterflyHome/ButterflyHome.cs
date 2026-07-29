@@ -80,6 +80,8 @@ public class ButterflyHome : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+        backhome.enabled = true;
+        AudioManager.Instance.PlaySoundEffect("ShowUI");
 
         EventDispatcher.instance.OnButterflyGardenChange += ChangeGardenNotify;
         // 先展示ui
@@ -87,10 +89,8 @@ public class ButterflyHome : UIWindow
         StopAllCoroutines();
         StartCoroutine(BackgroundInit());
         SetButtonsState();
-        if (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankScreen))
-        {
-            SystemManager.Instance.HidePanel(PanelType.ZenRankScreen);
-        }
+
+        ButterfliesManager.Instance.showButterflyRedPoint = false;
     }
 
     private void ChangeGardenNotify()
@@ -171,11 +171,8 @@ public class ButterflyHome : UIWindow
     #region 按钮事件
     private void OnBackHomeClick()
     {
-        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
-        {
-            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
-        }
-        else if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
+        backhome.enabled = false;
+        if (GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }else if (GameCoreManager.Instance.PanelState == PanelState.FinishPingPanel)

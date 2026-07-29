@@ -82,7 +82,6 @@ public class GetItemScreen : UIWindow
                 AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
                 shopDataItem = ShopManager.shopManager.GetProduct("ItemBox02");
                 eventDes=title.text+"弹窗广告";
-                AnalyticMgr.VideoAdShow(eventDes);
                 break;
             // case LimitRewordType.AutoComplete:
             //     UpdateCliamBtn(false);

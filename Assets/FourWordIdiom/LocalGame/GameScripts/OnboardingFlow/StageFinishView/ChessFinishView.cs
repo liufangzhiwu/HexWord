@@ -120,7 +120,6 @@ public class ChessFinishView : UIWindow
         LimitTimeManager.Instance.OnLimitTimeBtnUI += UpdateSliderProgress;
         DailyTaskManager.Instance.OnDailyButterflyTaskUI += UpdateButterflyTime;
         FishInfoController.Instance.OnFishTimeUpdated += _matchFishtable.UpdateFishTime;
-        _matchFishtable.CheckFishBtn();
         AudioManager.Instance.PlaySoundEffect("StageFinish");   
         
         StartCoroutine(CheckCompletedState());
@@ -159,6 +158,18 @@ public class ChessFinishView : UIWindow
         // }
         
         // StartCoroutine(PlayRewardSequence(isShowWinSign));
+        CheckFishiTable();
+    }
+
+    public void CheckFishiTable()
+    {
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
+            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
+        {
+            _matchFishtable.FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
+            _matchFishtable.CheckFishBtn();
+        }
+        _matchFishtable.FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
     }
     
     private void CheckReturnFirstWinScreen()

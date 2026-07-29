@@ -32,7 +32,8 @@ public class ButterflyHelp : UIWindow
         slidertips.text = MultilingualManager.Instance.GetString("ButterflyUI06", "hudie");
         rewardtips.text = MultilingualManager.Instance.GetString("ButterflyUI07", "hudie");
         // //mintips.text = MultilingualManager.Instance.GetString("limitedRewardsDes04");
-        closetips.text = MultilingualManager.Instance.GetString("ButterflyUI05", "hudie");
+        //closetips.text = MultilingualManager.Instance.GetString("ButterflyUI05", "hudie");
+        closetips.text = "点击关闭";
     }
     
     private void OnCloseBtn()

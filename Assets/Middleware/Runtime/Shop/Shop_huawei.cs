@@ -169,6 +169,8 @@ namespace Middleware
                             
                             ProductItem productItem = new ProductItem
                             {
+                                order_id =  inAppPurchaseDataBean.getOrderID(),
+                                ItemName =  inAppPurchaseDataBean.getProductId(),
                                 IsoCurrencyCode = inAppPurchaseDataBean.getCurrency(),
                                 ProductId = inAppPurchaseDataBean.getProductId(),
                                 LocalizedPrice = inAppPurchaseDataBean.getPrice(),

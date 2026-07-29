@@ -122,6 +122,20 @@ public class ButterflyData
     {
         this.pupa += num;
         this.currPupa += num;
+        
+        if (this.currPupa >= 10)
+        {
+            bool isAllCollected = ButterfliesManager.Instance.IsAllButterfliesCollected();
+
+            if (!isAllCollected)
+            {
+                ButterflyGrow butterflyGrow = ButterfliesManager.Instance.GetCurrentGrow();
+                if (this.currPupa >= butterflyGrow?.Count)
+                {
+                    ButterfliesManager.Instance.showButterflyRedPoint = true;
+                }
+            }
+        }
         SaveData();
     }
 

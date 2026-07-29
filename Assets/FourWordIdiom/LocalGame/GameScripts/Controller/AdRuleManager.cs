@@ -152,6 +152,8 @@ public class AdRuleManager : MonoBehaviour
             onComplete?.Invoke(false); // 拦截掉了，直接执行回调，让游戏继续
             return;
         }
+        
+        AnalyticMgr.InsetAdStart("关卡插屏");
 
         // 2. 大脑放行了，调底层 SDK (不管是鸿蒙、安卓还是 iOS)
         Game.self.Ads.ShowInterstitial((success) => 

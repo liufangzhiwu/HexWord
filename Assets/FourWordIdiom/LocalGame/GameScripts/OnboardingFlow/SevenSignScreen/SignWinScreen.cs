@@ -245,7 +245,7 @@ public class SignWinScreen : UIWindow
         int toolcount = GameDataManager.Instance.UserData.toolInfo[102].count +
                         GameDataManager.Instance.UserData.toolInfo[104].count;
 
-        bool isTriggerFirstWin = offlineSeconds >= 80 && todaywinTime <= 1 &&goldcount<= 300
+        bool isTriggerFirstWin = offlineSeconds >= 1296000 && todaywinTime <= 1 &&goldcount<= 300
                                  && toolcount <= 3 && curStreak == 1;
         
         Debug.Log("是否触发回归奖励: "+isTriggerFirstWin+"离线时间(秒数): "+offlineSeconds+"今日拼字玩法通关次数: "+todaywinTime+"金币数量: "+goldcount+"道具数量: "+toolcount+"连胜天数: "+curStreak);

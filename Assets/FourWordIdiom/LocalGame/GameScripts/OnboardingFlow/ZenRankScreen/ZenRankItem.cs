@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 public class ZenRankState
 {
+    public int PlayerId;
     public int Rank;
     public int Avatar;
     public string Name;
@@ -57,7 +58,8 @@ public class ZenRankItem : MonoBehaviour
     {
         currentRank = state.Rank;
         // GoPlay.gameObject.SetActive(false);
-        isMe = state.Name == GameDataManager.Instance.UserData.UserName;
+        //isMe = state.Name == GameDataManager.Instance.UserData.UserName;
+        isMe = state.PlayerId == int.Parse(GameDataManager.Instance.UserData.PlayerId);
         if (isDisplayOnly)
         {
             BoxReward.interactable = false; // 禁用宝箱点击

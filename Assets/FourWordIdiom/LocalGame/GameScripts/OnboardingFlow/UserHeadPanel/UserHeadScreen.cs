@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,23 +19,35 @@ public class UserHeadScreen : UIWindow
     [SerializeField] private Transform HeadItemParent;         
     
     private Dictionary<int ,GameObject> Headitems = new Dictionary<int ,GameObject>();
+    private int newHeadIonIndex = 0;
    
     protected void Start()
     {
-       InitHeadIconList();
+       //InitHeadIconList();
     }
 
     protected override void OnEnable()
     {
         base.OnEnable();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
-        UpdateHeadIcon();
-        UpdateHeadName();
 
-        UpdateHeadIconList(0,true);
+       
         HeaderText.text = MultilingualManager.Instance.GetString("CharacterInfoTitle");
         litterTitleText.text= MultilingualManager.Instance.GetString("CharacterInfoAvatar");
         EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
+        newHeadIonIndex=GameDataManager.Instance.UserData.UserHeadId;
+        UpdateHeadIconList(true);
+        UpdateHeadIcon();
+        UpdateHeadName();
+     
+        int gethead= GameDataManager.Instance.UserData._getAnimalsHeadIcons.Count;
+        int totalheads=25+gethead;
+
+        if (totalheads > Headitems.Count)
+        {
+            InitHeadIconList();
+        }
+        
     }
     
     private void UpdateHeadName()
@@ -47,7 +61,7 @@ public class UserHeadScreen : UIWindow
 
     private void UpdateHeadIcon()
     {
-        headIcon.sprite = LoadheadIcon("head"+GameDataManager.Instance.UserData.UserHeadId);
+        headIcon.sprite = LoadheadIcon("head"+newHeadIonIndex);
     }
 
     private void InitHeadIconList()
@@ -59,21 +73,18 @@ public class UserHeadScreen : UIWindow
         {
             int index = i;
             int iconindex = i;
+            if (Headitems.ContainsKey(iconindex))
+            {
+                // GameObject item = Headitems[iconindex];
+                // item.GetComponent<Button>().onClick.AddListener(()=>ClickHeadItemBtn(index,iconindex));
+                continue;
+            }
+          
             GameObject HeadItemObj = Instantiate(HeadItemBtn.gameObject, HeadItemParent);
             
             HeadItemObj.gameObject.SetActive(true);
-            if (headid == i)
-            {
-                HeadItemObj.transform.GetChild(0).gameObject.SetActive(true);
-                if (headid >= 1)
-                {
-                    HeadItemObj.transform.SetSiblingIndex(2);
-                }
-            }
-            else
-            {
-                HeadItemObj.transform.GetChild(0).gameObject.SetActive(false);
-            }
+              
+            int spriteindex =i;
 
             if (i >= 25)
             {
@@ -81,6 +92,7 @@ public class UserHeadScreen : UIWindow
                 int index2 = totalheads - i-1;
                 int getid= GameDataManager.Instance.UserData._getAnimalsHeadIcons[index2];
                 iconindex=getid;
+                spriteindex = getid;
                 HeadItemObj.GetComponent<Image>().sprite = LoadheadIcon("head"+getid);
             }
             else
@@ -88,8 +100,17 @@ public class UserHeadScreen : UIWindow
                 HeadItemObj.GetComponent<Image>().sprite = LoadheadIcon("head"+i);
             }
             
+            if (headid == spriteindex)
+            {
+                HeadItemObj.transform.GetChild(0).gameObject.SetActive(true);
+            } else
+            {
+                HeadItemObj.transform.GetChild(0).gameObject.SetActive(false);
+            }
+            
             HeadItemObj.GetComponent<Button>().onClick.AddListener(()=>ClickHeadItemBtn(index,iconindex));
-            Headitems.Add(index, HeadItemObj);
+
+            Headitems.Add(spriteindex,HeadItemObj);
         }
     }
 
@@ -101,26 +122,27 @@ public class UserHeadScreen : UIWindow
 
     private void ClickHeadItemBtn(int index,int iconindex)
     {
-        GameDataManager.Instance.UserData.UserHeadId = iconindex;
+        newHeadIonIndex = iconindex;
         UpdateHeadIcon();
-        UpdateHeadIconList(index);
+        UpdateHeadIconList();
 
         AnalyticMgr.HeadChange();
     }
     
-    private void UpdateHeadIconList(int headid=0, bool show = false)
+    private void UpdateHeadIconList(bool show = false)
     {
-        for (int i = 0; i < Headitems.Count; i++)
+        List<GameObject> array = Headitems.Values.ToList();
+        
+        for (int i = 0; i < Headitems.Values.Count; i++)
         {
-            int index = i;
-            GameObject HeadItemObj = Headitems[index];
-            if (headid == i)
+            GameObject HeadItemObj = array[i];
+            string spritename=HeadItemObj.GetComponent<Image>().sprite.name.Replace("head","");
+            spritename=spritename.Replace("(Clone)","");
+            int iconindex =int.Parse(spritename);
+            
+            if (newHeadIonIndex == iconindex)
             {
                 HeadItemObj.transform.GetChild(0).gameObject.SetActive(true);
-                if (headid >= 1&&show)
-                {
-                    HeadItemObj.transform.SetSiblingIndex(2);
-                }
             }
             else
             {
@@ -132,6 +154,8 @@ public class UserHeadScreen : UIWindow
     private void OnClickComfirmBtn()
     {
         string name = NameText.text;
+        
+        GameDataManager.Instance.UserData.UserHeadId = newHeadIonIndex;
 
         if (!string.IsNullOrEmpty(name))
         {

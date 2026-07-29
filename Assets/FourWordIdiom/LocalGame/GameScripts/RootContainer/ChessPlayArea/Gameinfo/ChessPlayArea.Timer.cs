@@ -29,7 +29,7 @@ public partial class ChessPlayArea
             return; // 结束执行，倒计时绝对不走！
         }
         // 2. 常规的开关检查 只有在计时器运行，且时间大于0时才倒计时
-        if (!_isTimerRunning || _remainingTime <= 0) return;
+        if (!_isTimerRunning || _remainingTime <= 0||ChessStageController.Instance.CurrentStage<=1) return;
         
         // ==========================================
         // 🌟 3. 真实活跃时间累加

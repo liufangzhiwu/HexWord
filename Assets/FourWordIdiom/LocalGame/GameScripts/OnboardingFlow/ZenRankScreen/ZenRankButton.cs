@@ -174,7 +174,7 @@ public class ZenRankButton : MonoBehaviour
             GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.ZenOpenLevel ||
             GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ZenOpenLevel;
         
-        rankBtn.transform.parent.gameObject.SetActive(isShow);
+        //rankBtn.transform.parent.gameObject.SetActive(isShow);
         rankBtn.gameObject.SetActive(isShow);
 
         string zenName = MultilingualManager.Instance.GetString(GameDataManager.Instance.UserData.Zenlevel);

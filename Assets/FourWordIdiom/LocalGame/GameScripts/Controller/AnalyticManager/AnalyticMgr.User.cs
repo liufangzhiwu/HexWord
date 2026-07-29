@@ -4,6 +4,13 @@ using System.Globalization;
 using Middleware;
 using UnityEngine;
 
+public static class ItemConstants
+{
+    public const int Audo = 104;   // 重置道具
+    public const int Tip = 102;     // 提示道具
+    public const int Fly = 103;     // 飞行道具
+}
+
 public partial class AnalyticMgr
 {
     #region 进度相关
@@ -61,6 +68,8 @@ public partial class AnalyticMgr
                 // 解析失败，保守增加
                 userData.activeDayCnt++;
             }
+            
+            if(userData.activeDayCnt<=0) userData.activeDayCnt = 1;
 
             userData.totallogin++;
             userData.lastLoginDay = today.ToString("yyyy-MM-dd");
@@ -91,7 +100,7 @@ public partial class AnalyticMgr
             { "total_pay_times", GameDataManager.Instance.UserData.TotalPayTimes },
             { "total_ad_times", GameDataManager.Instance.UserData.totalSeeAds},
             { "total_item_cost", GameDataManager.Instance.UserData.GetTotalToolCost()},
-            { "active_day", GameDataManager.Instance.UserData.activeDayCnt},
+            { "active_day", userData.activeDayCnt},
             { "life_day", lifeDays},
         };
         Game.self?.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
@@ -106,15 +115,39 @@ public partial class AnalyticMgr
     /// </summary>
     private static void SetLogoutProperties()
     {
+        var userData = GameDataManager.Instance.UserData;
+        if (userData == null) return;
+        int levelId = GameDataManager.Instance.UserData.CurrentChessStage;
+        
+        switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
+        {
+            case LevelType.BlockWord:
+                levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+                break;
+            case LevelType.ChessWord:
+                levelId = GameDataManager.Instance.UserData.CurrentChessStage;
+                break;
+            case LevelType.HexWord:
+                levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+                break;
+        }
+        
+        int tipCount = userData.toolInfo.TryGetValue(ItemConstants.Tip, out var tip) ? tip.count : 0;
+        int resetCount = userData.toolInfo.TryGetValue(ItemConstants.Audo, out var reset) ? reset.count : 0;
+        int flyCount = userData.toolInfo.TryGetValue(ItemConstants.Fly, out var fly) ? fly.count : 0;
+
         var properties = new Dictionary<string, object>
         {
-            //资源类
-            { "current_coin", GameDataManager.Instance.UserData.Gold },
-            { "current_tipItem", GameDataManager.Instance.UserData.toolInfo[102].count },
-            { "current_resetItem", GameDataManager.Instance.UserData.toolInfo[104].count },
-            { "current_flyItem", GameDataManager.Instance.UserData.toolInfo[103].count },
-            { "current_level", GameDataManager.Instance.UserData.CurrentHexStage },
+            { "current_coin", userData.Gold },
+            { "current_tipItem", tipCount },
+            { "current_resetItem", resetCount },
+            { "current_flyItem", flyCount },
+            { "current_level", levelId },
+            { "first_version", userData.first_version ?? string.Empty },
+            { "current_pupa", GameDataManager.Instance.ButterflyData.pupa},
+            { "current_goldFoil", userData.GoldLeaf},
         };
+       
         Game.self.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
         
         //处理异常，确保_startTime有值
@@ -129,14 +162,13 @@ public partial class AnalyticMgr
         Game.self.Analytics?.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
     }
     
-    /// <summary>
-    /// 公共事件属性
-    /// </summary>
-    public static void SetCommonProperties()
+     public static void SetCommonProperties()
     {
         var userData = GameDataManager.Instance.UserData;
-        
-        int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+        var now = DateTime.Now;
+        var today = now.Date;
+
+        int levelId = GameDataManager.Instance.UserData.CurrentChessStage;
         
         switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
         {
@@ -151,36 +183,72 @@ public partial class AnalyticMgr
                 break;
         }
 
-        // 计算生命周期天数（基于首次登录时间）
-        int lifeDays = 0;
+        int tipCount = userData.toolInfo.TryGetValue(ItemConstants.Tip, out var tip) ? tip.count : 0;
+        int resetCount = userData.toolInfo.TryGetValue(ItemConstants.Audo, out var reset) ? reset.count : 0;
+        int flyCount = userData.toolInfo.TryGetValue(ItemConstants.Fly, out var fly) ? fly.count : 0;
         
+        
+        // 处理首次登录
+        if (string.IsNullOrEmpty(userData.firstLoginTime))
+        {
+            userData.firstLoginTime = now.ToString("yyyy-MM-dd HH:mm:ss");
+            userData.activeDayCnt = 1;
+            userData.lastLoginDay = today.ToString("yyyy-MM-dd");
+            userData.totallogin = 1;
+        }
+        else
+        {
+            // 更新活跃天数
+            if (DateTime.TryParse(userData.lastLoginDay, out var lastLoginDate))
+            {
+                if (lastLoginDate.Date != today)
+                {
+                    userData.activeDayCnt++;
+                }
+            }
+            else
+            {
+                // 解析失败时保守增加
+                userData.activeDayCnt++;
+            }
+            
+            if(userData.activeDayCnt<=0) userData.activeDayCnt = 1;
+            
+            userData.totallogin++;
+            userData.lastLoginDay = today.ToString("yyyy-MM-dd");
+        }
+        
+
+        int lifeDays = 0;
         if (!string.IsNullOrEmpty(userData.firstLoginTime) &&
             DateTime.TryParse(userData.firstLoginTime, out var firstLoginDate))
         {
-            lifeDays = (DateTime.Now.Date - firstLoginDate.Date).Days+ 1; // +1 表示第1天
+            lifeDays = (DateTime.Now.Date - firstLoginDate.Date).Days + 1;
         }
         
         if (lifeDays == 2)
         {
-            long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            Game.self.Attributes?.ReportRetention(now);
+#if UNITY_HUAWEI
+            long nowTimeMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            Game.self.Attributes?.ReportRetention(nowTimeMilliseconds);
+#endif
         }
-     
+
         var properties = new Dictionary<string, object>
         {
-            {"gold", GameDataManager.Instance.UserData.Gold },
-            {"tipItem",GameDataManager.Instance.UserData.toolInfo[102].count},
-            {"resetItem",GameDataManager.Instance.UserData.toolInfo[104].count},
-            {"flyItem",GameDataManager.Instance.UserData.toolInfo[103].count},
-            {"level_id",levelId},
-            {"level_type",GameDataManager.Instance.UserData.GetLevelMode()},
+            { "gold", userData.Gold },
+            { "tipItem", tipCount },
+            { "resetItem", resetCount },
+            { "flyItem", flyCount },
+            { "level_id", levelId },
+            { "level_type", userData.GetLevelMode() },
             { "game_package", userData.ABName ?? string.Empty },
-            { "active_day_event", userData.activeDayCnt},
-            { "life_day_event", lifeDays}
+            { "active_day_event", userData.activeDayCnt },
+            { "life_day_event", lifeDays },
         };
-            Game.self.Analytics.SetCommonProperties(properties);
-    }
 
+        Game.self.Analytics.SetCommonProperties(properties);
+    }
     
     public static void OnAnalyticsSdkInit(object sender, EventArgs e)
     {

@@ -312,7 +312,7 @@ private void ResetUIForReplay()
         // 2. 准备 UI 节点
         PrepareRankItems(surpassedPlayers.Count);
         
-        ZenRankState myState = new ZenRankState { Rank = newRank, Score = oldScore, Name = GameDataManager.Instance.UserData.UserName, Avatar = GameDataManager.Instance.UserData.UserHeadId };
+        ZenRankState myState = new ZenRankState { PlayerId = int.Parse(GameDataManager.Instance.UserData.PlayerId),Rank = newRank, Score = oldScore, Name = GameDataManager.Instance.UserData.UserName, Avatar = GameDataManager.Instance.UserData.UserHeadId };
         myRankItem.SetRankInfo(myState, true);
         RectTransform myRect = myRankItem.GetComponent<RectTransform>();
 

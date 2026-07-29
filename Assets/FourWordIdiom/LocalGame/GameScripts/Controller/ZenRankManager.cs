@@ -198,7 +198,7 @@ public class ZenRankManager : MonoBehaviour
     }
     private ZenRankState ConvertEntryToState(LeaderboardEntry entry)
     {
-        return new ZenRankState { Rank = entry.rank, Avatar = entry.avatar, Name = entry.nickname, Level = entry.leaderboard_name, Score = entry.score };
+        return new ZenRankState { PlayerId=entry.user_id, Rank = entry.rank, Avatar = entry.avatar, Name = entry.nickname, Level = entry.leaderboard_name, Score = entry.score };
     }
     public void StartGlobalTimer(int seconds)
     {

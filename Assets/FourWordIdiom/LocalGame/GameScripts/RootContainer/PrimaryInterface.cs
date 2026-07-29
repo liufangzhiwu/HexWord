@@ -170,20 +170,22 @@ public class PrimaryInterface : UIWindow
         // ==========================================
         // 1. 禅意榜：赛季结算检查
         // ==========================================
-        bool isJoined = GameDataManager.Instance.UserData.isJoinedZenRank;
-        // 先向服务器请求排行榜数据，拿到【真实的】 RemainingSeconds！
-        if (isJoined)
+        bool hasTriggeredSettlement = false;
+        yield return StartCoroutine(ZenRankManager.Instance.CheckAndShowSettlementRoutine(
+            PanelType.PrimaryInterface, (res) => { hasTriggeredSettlement = res; }));
+
+        if (hasTriggeredSettlement)
         {
-            bool hasTriggeredSettlement = false;
-            yield return StartCoroutine(ZenRankManager.Instance.CheckAndShowSettlementRoutine(
-                PanelType.PrimaryInterface,(res) => { hasTriggeredSettlement = res; }));
-            if (hasTriggeredSettlement)
-            {
-                yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ZenRankStartScreen));
-            }
-            
+            yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ZenRankStartScreen));
+        }
+        // ==========================================
+        // 2. 如果已加入新赛季，再拉取当前榜单数据
+        // ==========================================
+        if (GameDataManager.Instance.UserData.isJoinedZenRank)
+        {
             yield return StartCoroutine(ZenRankManager.Instance.FetchLeaderboardDataRoutine(GameDataManager.Instance.UserData.Zenlevel));
         }
+        
         // ==========================================
         // 2. 禅意榜：主动拉取最新排名并赋值给按钮UI
         // ==========================================
@@ -222,7 +224,7 @@ public class PrimaryInterface : UIWindow
         //var fishSave = GameDataManager.MainInstance.FishUserSave;
         FishInfoController.Instance.RoundResultFishRank();
         UpdateFishRank();
-        while (FishBtn.gameObject.activeSelf)
+        while (FishBtn.gameObject.transform.parent.gameObject.activeSelf)
         {
             yield return new WaitForSeconds(0.5f);
             FishInfoController.Instance.RoundResultFishRank();
@@ -247,11 +249,11 @@ public class PrimaryInterface : UIWindow
             ||GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             || !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
         {
-            FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
+            FishBtn.gameObject.transform.parent.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
         }
         else
         {
-            FishBtn.gameObject.SetActive(false);
+            FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
         }
     }
 

@@ -213,7 +213,10 @@ public class HeaderSection : UIWindow
             BackBtn.gameObject.SetActive(false);
             ShopBtn.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(false);
-            pauseBtn.gameObject.SetActive(true);
+            pauseBtn.gameObject.SetActive(false);
+            
+            if(ChessStageController.Instance.CurrentStage>1)
+                pauseBtn.gameObject.SetActive(true);
             if (ChessStageController.Instance.CurrStageData.PupaDatas != null&&!GameDataManager.Instance.ButterflyData.IsOpenButterfly)
             {
                 GameDataManager.Instance.ButterflyData.IsOpenButterfly = true;
@@ -290,7 +293,8 @@ public class HeaderSection : UIWindow
     private IEnumerator CheckLevelPuzzleVisibility()
     {
         yield return new WaitForSeconds(0.5f);  
-        bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) ||
+        bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea) ||
+                          SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) ||
                           SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView);
         
         LevelPuzzleBtn.GetComponent<CanvasGroup>().alpha = 0f;
@@ -301,7 +305,7 @@ public class HeaderSection : UIWindow
             yield return new WaitForSeconds(0.8f);  
             if (isgameshow)
             {
-                if(GameDataManager.Instance.UserData.levelMode == 1)
+                if(GameDataManager.Instance.UserData.levelMode == 1||GameDataManager.Instance.UserData.levelMode == 3)
                     hasLevelWords = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count > 0 ;
                 else if (GameDataManager.Instance.UserData.levelMode == 2&&ChessStageController.Instance.CurrStageData!=null)
                     hasLevelWords = ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0;
@@ -763,7 +767,7 @@ public class HeaderSection : UIWindow
     }
     private void OnClickPuzzleVocabulary()
     {
-        if (GameDataManager.Instance.UserData.levelMode == 1)
+        if(GameDataManager.Instance.UserData.levelMode == 1||GameDataManager.Instance.UserData.levelMode == 3)
             StageHexController.Instance.IsEnterVocabulary = false;
         else if (GameDataManager.Instance.UserData.levelMode == 2)
             ChessStageController.Instance.IsEnterVocabulary = false;
@@ -774,7 +778,7 @@ public class HeaderSection : UIWindow
     
     private void OnClickStagePuzzleScreen()
     {
-        if(GameDataManager.Instance.UserData.levelMode == 1)
+        if(GameDataManager.Instance.UserData.levelMode == 1||GameDataManager.Instance.UserData.levelMode == 3)
             StageHexController.Instance.IsEnterVocabulary = true;
         else if (GameDataManager.Instance.UserData.levelMode == 2)
             ChessStageController.Instance.IsEnterVocabulary = true;

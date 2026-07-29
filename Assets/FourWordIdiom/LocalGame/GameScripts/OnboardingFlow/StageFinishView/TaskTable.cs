@@ -82,6 +82,7 @@ public class TaskTable : MonoBehaviour
                 AudioManager.Instance.PlaySoundEffect("levelOverLimitwordAward");
                 taskyezi.transform.DOScale(new Vector3(1.2f,1.15f,1.15f), 0.3f).OnComplete(() =>
                 {
+                    taskEffect.gameObject.SetActive(false);
                     taskyezi.transform.DOScale(Vector3.one, 0.2f);
                 });
             });

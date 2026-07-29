@@ -11,7 +11,7 @@ public class LimitBtnTable : MonoBehaviour
     public Button _limitTimeEventButton;
     [SerializeField] private Image limitOver;
     [SerializeField] private Image lantern;
-    [SerializeField] public Text txtwordprogress;
+    [SerializeField] private Text txtwordprogress;
     [SerializeField] private GameObject LimitClaim;
     [SerializeField] private GameObject Worddouble;
     [SerializeField] private GameObject TimeObj;
@@ -37,28 +37,37 @@ public class LimitBtnTable : MonoBehaviour
             // 限时活动逻辑
             LimitTimeManager.Instance.OnLimitTimeBtnUI += InitLimtBtnUI;                
             _limitTimeEventButton.gameObject.SetActive(true);
+            LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
+            
+            int wordcount = 0;
+            switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
+            {
+                case LevelType.BlockWord:
+                    wordcount=StageHexController.Instance.LimitPuzzlecount;
+                    StageHexController.Instance.LimitPuzzlecount = 0; // 提取后立刻清零！
+                    break;
+                case LevelType.ChessWord:
+                    wordcount=ChessStageController.Instance.GetDoubleRewardedPuzzleCount();
+                    ChessStageController.Instance.LimitPuzzleCount = 0; // 提取后立刻清零！
+                    break;
+                case LevelType.HexWord:
+                    wordcount=StageHexController.Instance.LimitPuzzlecount;//立刻清零
+                    StageHexController.Instance.LimitPuzzlecount = 0; // 提取后立刻清零！
+                    break;
+            }
+            
             if (!LimitTimeManager.Instance.IsComplete())
             {
-                int wordcount = 0;
                 //txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
-                switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
+                if (wordcount > 0)
                 {
-                    case LevelType.BlockWord:
-                        wordcount=StageHexController.Instance.LimitPuzzlecount;
-                        break;
-                    case LevelType.ChessWord:
-                        wordcount=ChessStageController.Instance.LimitPuzzleCount;
-                        break;
-                    case LevelType.HexWord:
-                        wordcount=StageHexController.Instance.LimitPuzzlecount;
-                        break;
+                    LimitTimeManager.Instance.UpdateLimitProgress(wordcount);
+                    Effect.gameObject.SetActive(false);
+                    AddCount.gameObject.SetActive(false);
+                    AddCount.text = "+" + wordcount;
+                    StartCoroutine(ShowLimitWordAnim(parent));
                 }
-                LimitTimeManager.Instance.UpdateLimitProgress(wordcount);
-                Effect.gameObject.SetActive(false);
-                AddCount.gameObject.SetActive(false);
-                AddCount.text = "+" + wordcount;
-                
-                StartCoroutine(ShowLimitWordAnim(parent));
+                LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
             }
             
             if(GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.TimeLimitMode
@@ -128,7 +137,7 @@ public class LimitBtnTable : MonoBehaviour
         
         dengObj.transform.localScale=new Vector3(1.2f,1.2f,1.2f);
         dengObj.transform.SetAsLastSibling();
-        dengObj.transform.localPosition=new Vector3(-165f,165f,0f);
+        dengObj.transform.localPosition=new Vector3(165f,165f,0f);
         CanvasGroup canvas = dengObj.GetComponent<CanvasGroup>();
         if (canvas == null)
         {
@@ -155,8 +164,9 @@ public class LimitBtnTable : MonoBehaviour
                 AudioManager.Instance.PlaySoundEffect("levelOverLimitwordAward");
                 lantern.transform.DOScale(new Vector3(1.2f,1.15f,1.15f), 0.3f).OnComplete(() =>
                 {
+                    Effect.gameObject.SetActive(false);
                     AddCount.DOColor(Color.white,0.2f);
-                    AddCount.transform.DOLocalMoveY(130, 0.3f).OnComplete(() =>
+                    AddCount.transform.DOLocalMoveY(130, 1.3f).OnComplete(() =>
                     {
                         AddCount.DOColor(Color.white, 0.5f).OnComplete(() =>
                         {

@@ -289,9 +289,7 @@ public class StageHexController
         {
 
 #if UNITY_OPENHARMONY || UNITY_HUAWEI
-
-            AnalyticMgr.InsetAdStart("关卡插屏");
-            
+          
             AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
             {
                 if (issuccess)
