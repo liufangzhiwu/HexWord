@@ -69,14 +69,7 @@ SignPourTea02,续沏顺心
 SignPourTea03,三沏福至
 SignPourTea04,终沏圆满
 SignPourTeaFinish,今日茶满·明日可期
-PrivacyAgreement01,"欢迎来到「成语消：禅意之境」！
-为了向您提供更优质的产品体验与相关服务，我们需要收集和使用您的部分个人信息。
-在您开启这段禅意之旅前，请知悉：
-我们将严格遵守相关法律法规，保障您的个人信息安全。
-我们可能会收集设备信息（如设备型号、操作系统版本）、网络信息、应用日志、等，用于应用功能实现、服务优化、安全保障、广告投放（如适用）及合规要求。
-您可以查阅我们的<href=https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008>《隐私政策》</href>了解详细信息，包括我们如何收集、使用、存储和保护您的信息，以及您的相关权利。
-您也需要同意我们的<href=https://mindwordplay.cn/yhxyb>《用户协议》</href>以使用本应用。
-请您仔细阅读并理解以上内容。您的同意对我们至关重要。"
+PrivacyAgreement01,欢迎体验我们的游戏！点击可查看我们的 <href=https://mindwordplay.cn/yhxy>服务条款</href> 和 <href=https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1750050033266373376>隐私政策</href> ，如您同意，可点击「继续」进入游戏。
 PrivacyAgreement01_General,"欢迎来到「成语消：禅意之境」！
 为了向您提供更优质的游戏体验与相关服务，我们需要收集和使用您的部分个人信息。
 在您开启这段禅意之旅前，请知悉：
@@ -85,7 +78,7 @@ PrivacyAgreement01_General,"欢迎来到「成语消：禅意之境」！
 您可以查阅我们的<href=https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008>《隐私政策》</href>了解详细信息，包括我们如何收集、使用、存储和保护您的信息，以及您的相关权利。
 您也需要同意我们的<href=https://mindwordplay.cn/yhxyb>《用户协议》</href>以使用本产品。
 请您仔细阅读并理解以上内容。您的同意对我们至关重要。"
-PrivacyAgreement02,如果您选择开始使用我们的应用，请点击「同意」
+PrivacyAgreement02,希望您能愉快地体验我们的产品。感谢您的选择！
 PrivacyAgreement03,同意
 PrivacyAgreement04,不同意
 PrivacyAgreement05,再想想

@@ -69,6 +69,8 @@ namespace Middleware
             TDAnalytics.Login(uid);
         }
 
+        public event EventHandler OnSdkInit;
+
         private void InitThink()
         {
             var config = new TDConfig(Define.Config.ThinkAppId, Define.Config.ThinkServerUrl);

@@ -145,8 +145,7 @@ public sealed class GameCoreManager: MonoBehaviour
         
         EventDispatcher.instance.TriggerAutoPassLevel();
     }
-
-    #region 私有方法
+  
     /// <summary>
     /// 初始化多语言字符串
     /// </summary>
@@ -167,7 +166,15 @@ public sealed class GameCoreManager: MonoBehaviour
         {
             ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
             yield return new WaitForSeconds(0.2f);
+#if UNITY_HUAWEI
             SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
+            //ShowPrivacyScreen();
+#elif UNITY_OPENHARMONY
+            ShowPrivacyScreen();
+#endif
+            
+          
+            
             // 标记非首次进入
             GameDataManager.Instance.UserData.IsFirstLaunch = false;
             
@@ -199,7 +206,6 @@ public sealed class GameCoreManager: MonoBehaviour
             }
         });
     }
-    #endregion
     
     public void ChangeBackgroundImage(Sprite image)
     {
@@ -502,4 +508,5 @@ public sealed class GameCoreManager: MonoBehaviour
         HuaweiGameService.HideFloatWindow();
         #endif
     }
+
 }

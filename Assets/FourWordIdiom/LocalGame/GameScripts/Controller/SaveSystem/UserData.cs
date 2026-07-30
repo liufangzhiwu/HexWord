@@ -576,13 +576,14 @@ public class UserData
 
                 // 合并数量
                 toolInfo[104].count += toolInfo[102].count;
+                // 移除源道具
+                toolInfo[102].count = toolInfo[101].count;
+                toolInfo[101].count = 0;
             }
 
             if (toolInfo[102].cost > AppGameSettings.ShopItems.SingleHintCost)
             {
                 toolInfo[102].cost = AppGameSettings.ShopItems.SingleHintCost;
-                // 移除源道具
-                toolInfo[102].count = toolInfo[101].count;
             }
         }
        

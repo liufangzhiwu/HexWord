@@ -347,7 +347,7 @@ public class StageHexController
         var userData = GameDataManager.Instance.UserData;
 
         // 第5关首次触发
-        if (StageIndex == 6 && userData.showRateusCount <= 0)
+        if (StageIndex == 8 && userData.showRateusCount <= 0)
         {
             SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
             return;

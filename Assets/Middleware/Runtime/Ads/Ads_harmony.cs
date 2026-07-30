@@ -35,7 +35,7 @@ namespace Middleware
                 SignalHandler.Instance.RegisterSignalDelegate<AdsLoadSignal>(OnLoadAdsTrigger);
                 SignalHandler.Instance.RegisterSignalDelegate<AdsShowSignal>(OnShowAdsTrigger);
                 SignalHandler.Instance.RegisterSignalDelegate<AdsStatusSignal>(OnAdsStatusTrigger);
-                _uniqueId = Game.GetUniqueId();
+                _uniqueId = Game.self.GetUniqueId();
                 
                 // 初始化后立即预加载广告
                 //PreloadAds();
@@ -448,7 +448,7 @@ namespace Middleware
                 Debug.Log($"[OnShowAdsTrigger] type:{(AdType)targetSignal.adType},uniqueId：{targetSignal.uniqueId}");
             }
             
-            Game.PauseGame();
+            Game.self.PauseGame();
            
             // 🔥 别在这里立刻发奖了，等玩家关闭插屏时再发，统一生命周期！
             // if (_adType == AdType.Interstitial)
@@ -472,7 +472,7 @@ namespace Middleware
                     // 1. 无条件解除锁定和UI，不管是什么广告
                     if (statusLower.Contains("close") || statusLower.Contains("fail"))
                     {
-                        Game.ResumeGame(); 
+                        Game.self.ResumeGame(); 
                         IsPlaying = false;
                         if (MessageSystem.Instance != null) MessageSystem.Instance.HideLoadingAnimation();
                     }
@@ -512,7 +512,7 @@ namespace Middleware
                 {
                     // Error 分支，必须释放锁定状态！
                     Debug.LogError("[AD] 鸿蒙发送信号附带 Error！");
-                    Game.ResumeGame();
+                    Game.self.ResumeGame();
                     IsPlaying = false;
                     if (MessageSystem.Instance != null) MessageSystem.Instance.HideLoadingAnimation();
                     if (_adType != AdType.Banner)
@@ -528,7 +528,7 @@ namespace Middleware
             {
                 // 保命大绝招，万一解析崩了，也要让游戏跑下去
                 Debug.LogError($"[AD] OnAdsStatusTrigger 崩溃啦: {ex.Message}");
-                Game.ResumeGame();
+                Game.self.ResumeGame();
                 IsPlaying = false;
                 if (MessageSystem.Instance != null) MessageSystem.Instance.HideLoadingAnimation();
             }

@@ -1,50 +1,51 @@
 using System.Collections;
-
+using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 
 
 public class PrivacyScreen : UIWindow
 {               
-    [SerializeField] private Button nextBtn; // 关闭按钮    
-    [SerializeField] private HyperlinkText linkText;
-    [SerializeField] private Text tip_Text;        
+    [AutoAssign] private Button btn_next; // 关闭按钮    
+    [AutoAssign] private HyperlinkText txt_link;
+    [AutoAssign] private Text txt_tip;
+    [AutoAssign] private Text txt_next;
+
+    protected override void InitializeUIComponents()
+    {
+        AutoAssign.AutoInject(this);
+        btn_next.AddClickAction(OnClosePanel); // 绑定关闭按钮事件
+    }
 
     protected void Start()
     {       
         //设置点击回调
-        linkText.onHyperlinkClick = OnClickText;
-        //StartCoroutine(AddVisibleBound());
-        //InitLanguage();
+        txt_link.onHyperlinkClick = OnClickText;
+        InitLanguage();
     }
 
     protected override void OnEnable()
     {
         base.OnEnable();
-        AudioManager.Instance.PlaySoundEffect("ShowUI");
+        AudioManager.Instance.PlaySoundEffect("Entergame",1,0.1f);
     }
-
-    //private void InitLanguage()
-    //{
-    //    tip_Text.text = LanguageManager.Instance.GetString("PrivacyAgreement02");
-    //    linkText.text = LanguageManager.Instance.GetString("PrivacyAgreement01");
-    //    nextBtn.GetComponentInChildren<Text>().text = LanguageManager.Instance.GetString("PrivacyAgreement03");
-    //}
-
-   
-
-    protected override void InitializeUIComponents()
+    
+    private void InitLanguage()
     {
-        nextBtn.AddVibraClickAction(OnClosePanel); // 绑定关闭按钮事件
+        txt_tip.text = MultilingualManager.Instance.GetString("PrivacyAgreement02");
+        //txt_tip.text ="Hello \u00A0 World";
+      
+        string tiplink= MultilingualManager.Instance.GetString("PrivacyAgreement01");
+        if (tiplink.Contains(" "))
+        {
+            tiplink = tiplink.Replace(" ", "\u00A0");
+        }
+        txt_link.text = tiplink;
+        txt_next.text = MultilingualManager.Instance.GetString("PrivacyAgreement03");
     }
 
-    IEnumerator AddVisibleBound()
-    {
-        yield return null;
-        //linkText.AddVisibleBound();
-    }
-
-    void OnClickText(string url)
+    
+    private void OnClickText(string url)
     {
         Debug.Log("点击"+url);
         Application.OpenURL(url);
@@ -54,23 +55,31 @@ public class PrivacyScreen : UIWindow
     {
         //GameCoreManager.Instance.ShowGamePanel();
         ShowGamePanel();
+        // 标记非首次进入
+        GameDataManager.Instance.UserData.IsFirstLaunch = false;
         base.Close(); // 隐藏面板
     }
     
-    public void ShowGamePanel()
+    private void ShowGamePanel()
     {
-        StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
-        SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
-    }
-
-    public override void OnHideAnimationEnd()
-    {
-        base.OnHideAnimationEnd();      
-        //AdjustManager.Instance.InitAdjust();
-    }
-
-    protected override void OnDisable()
-    {
-        base.OnDisable();
+        
+        if (GameDataManager.Instance.UserData.levelMode == (int)LevelType.BlockWord)
+        {
+            StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
+            SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
+        }
+        
+        if (GameDataManager.Instance.UserData.levelMode == (int)LevelType.HexWord)
+        {
+            StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
+            SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
+        }
+        
+        if (GameDataManager.Instance.UserData.levelMode == (int)LevelType.ChessWord)
+        {
+            ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
+            SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
+        }
+    
     }
 }

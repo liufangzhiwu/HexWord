@@ -30,21 +30,32 @@ public class TaskTable : MonoBehaviour
     
     public void CheckTasksScreen()
     {
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions)
+        
+        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions
+            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.DailyMissions
+            ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
         {
             DailyTaskManager.Instance.OnDailyTaskBtnUI += InitTaskBtnUI;                
             TaskBtn.gameObject.SetActive(true);
-            if(GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.DailyMissions)
+            
+            if (GameDataManager.Instance.UserData.levelMode == 1)
             {
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedFindWord,StageHexController.Instance.LimitPuzzlecount);
-                
-                if(DailyTaskManager.Instance.UpdatetaskItem.Count > 0)
-                    StartCoroutine(ShowTaskWordAnim());
-            }
-            else
+
+            }else if (GameDataManager.Instance.UserData.levelMode == 2)
             {
-                DailyTaskManager.Instance.GetTaskSaveData();
+                int puzzlecount = ChessStageController.Instance.LimitPuzzleCount;
+                Debug.Log("找出的词语数量: "+puzzlecount );
+                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedFindWord,puzzlecount);
             }
+            if (GameDataManager.Instance.UserData.levelMode == 3)
+            {
+                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedFindWord,StageHexController.Instance.LimitPuzzlecount);
+            }
+            
+            if(DailyTaskManager.Instance.UpdatetaskItem.Count > 0)
+                StartCoroutine(ShowTaskWordAnim());
+          
         }
     }
     

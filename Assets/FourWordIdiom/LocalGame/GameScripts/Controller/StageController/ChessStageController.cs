@@ -200,15 +200,15 @@ public partial class ChessStageController
     {
         var userData = GameDataManager.Instance.UserData;
 
-        // 第9关首次触发
-        if (stageIndex == 6 && userData.showRateusCount <= 0)
+        // 第8关首次触发
+        if (stageIndex == 8 && userData.showRateusCount <= 0)
         {
             SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
             return;
         }
 
         // 每日通关条件
-        if (userData.dayPassStageCount == 6 && 
+        if (userData.dayPassStageCount == 5 && 
             userData.showRateusCount < 3 &&
             !string.IsNullOrEmpty(userData.showRateusTime))
         {
