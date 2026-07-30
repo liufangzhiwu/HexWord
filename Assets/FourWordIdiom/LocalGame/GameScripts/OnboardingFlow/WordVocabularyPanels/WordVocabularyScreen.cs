@@ -91,7 +91,7 @@ public class WordVocabularyScreen : UIWindow
             GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel||
             GameCoreManager.Instance.PanelState == PanelState.FinishPingPanel)
         {
-            EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
+            EventDispatcher.instance.TriggerUpdateLayerCoin(true,true);
         }
        
         if (NoteBooks.Count > 0)
