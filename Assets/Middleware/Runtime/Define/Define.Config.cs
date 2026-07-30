@@ -14,7 +14,7 @@ namespace Middleware
         }
 #endif
 
-#if UNITY_huawei
+#if UNITY_HUAWEI
         public struct ConfigHuaweiAndroid
         {
             public const string TestBannerAdId = "ca-app-pub-3940256099942544/6300978111";

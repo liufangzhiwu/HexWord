@@ -76,7 +76,7 @@ public sealed class GameCoreManager: MonoBehaviour
         ChessDynamicHardManager.Instance.Initialized();
         ChessStageController.Instance.Initialized();
         
-#if UNITY_huawei && !UNITY_EDITOR
+#if UNITY_HUAWEI && !UNITY_EDITOR
         HuaweiGameService.ShowFloatWindow();
         StartCoroutine(CheckOrderShipmentCompleted());
 #endif
@@ -498,7 +498,7 @@ public sealed class GameCoreManager: MonoBehaviour
 
     private void OnDisable()
     {
-        #if UNITY_huawei && !UNITY_EDITOR
+        #if UNITY_HUAWEI && !UNITY_EDITOR
         HuaweiGameService.HideFloatWindow();
         #endif
     }

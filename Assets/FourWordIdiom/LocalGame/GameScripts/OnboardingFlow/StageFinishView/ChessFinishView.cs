@@ -529,9 +529,9 @@ public class ChessFinishView : UIWindow
         _matchFishtable.matchEffect.gameObject.SetActive(false);
         
         isShowWinSign = StreakManager.Instance.IsCanShowWinSign();
-        //bool isJump = ChessStageController.Instance.IsJump;
+        bool isJump = ChessStageController.Instance.IsJump;
 
-        if (isShowWinSign)
+        if (isShowWinSign&&!isJump)
         {
             SystemManager.Instance.ShowPanel(PanelType.SignWinScreen);
         }

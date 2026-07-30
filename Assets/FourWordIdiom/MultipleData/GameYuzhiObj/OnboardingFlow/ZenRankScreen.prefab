@@ -797,7 +797,7 @@ MonoBehaviour:
   MyScore: {fileID: 1817060380120102310}
   ZenTitle: {fileID: 0}
   MyGoPlay: {fileID: 581798675658637106}
-  hehuaPrefab: {fileID: 7789647493305736829, guid: 19b55fcf0a5905844ab9f2c07f25b1c9,
+  hehuaPrefab: {fileID: 7789647493305736829, guid: c6140264f8affee42b55ffb5c7d935d2,
     type: 3}
 --- !u!222 &1037855296299943636
 CanvasRenderer:
@@ -3553,7 +3553,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &9191326967400836048
 RectTransform:
   m_ObjectHideFlags: 0

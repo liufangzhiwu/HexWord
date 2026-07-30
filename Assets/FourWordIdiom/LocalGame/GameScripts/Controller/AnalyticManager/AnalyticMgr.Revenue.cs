@@ -45,7 +45,7 @@ public partial class AnalyticMgr
         string paymethod = "";
 #if UNITY_OPENHARMONY
         paymethod = "huaweiOpenHarmony";
-#elif UNITY_huawei
+#elif UNITY_HUAWEI
         paymethod = "huaweiAndroid";
 #endif
         

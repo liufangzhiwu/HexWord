@@ -141,6 +141,7 @@ SpriteAtlas:
     - 391a99d59906d5d48b0ffdfc20377580: 21300000
     - 53c9c9d59227e8a4693359f1993fb1c1: 21300000
     - 5864a9064d99ea64bb620a77ef8df3ac: 21300000
+    - f9192926d4f76a54ba564372f7ff4106: 21300000
     - 39280e36c4ee42d4dab2e2b51e9e9e3f: 21300000
     - 0b8e35468cb38b24a9429e3c768f9002: 21300000
     - 436a9f46ff4d3f34d936b35ca6230dbd: 21300000
@@ -372,6 +373,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 391a99d59906d5d48b0ffdfc20377580, type: 3}
   - {fileID: 21300000, guid: 53c9c9d59227e8a4693359f1993fb1c1, type: 3}
   - {fileID: 21300000, guid: 5864a9064d99ea64bb620a77ef8df3ac, type: 3}
+  - {fileID: 21300000, guid: f9192926d4f76a54ba564372f7ff4106, type: 3}
   - {fileID: 21300000, guid: 39280e36c4ee42d4dab2e2b51e9e9e3f, type: 3}
   - {fileID: 21300000, guid: 0b8e35468cb38b24a9429e3c768f9002, type: 3}
   - {fileID: 21300000, guid: 436a9f46ff4d3f34d936b35ca6230dbd, type: 3}
@@ -602,6 +604,7 @@ SpriteAtlas:
   - head36
   - UI_Icon_PingWord
   - head0
+  - Pupas
   - goldLeaf
   - UI_Icon_gold
   - zenicon_10

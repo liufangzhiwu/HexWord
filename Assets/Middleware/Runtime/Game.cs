@@ -36,7 +36,7 @@ namespace Middleware
             gameObject.AddComponent<UnityTimer>();
          
             
-#if UNITY_huawei&&!UNITY_EDITOR
+#if UNITY_HUAWEI&&!UNITY_EDITOR
             HuaweiGameService.AppInit();
 #endif
             StartCoroutine(CheckNetworkConnection());
@@ -56,7 +56,7 @@ namespace Middleware
             yield return new WaitUntil(()=>Accounts.IsLogin);
 // #if UNITY_EDITOR 
 //             CreateAd();
-#if UNITY_OPENHARMONY||UNITY_huawei
+#if UNITY_OPENHARMONY||UNITY_HUAWEI
             CreateAd();
             CreateShop();
             CreateAttribute();
@@ -82,9 +82,9 @@ namespace Middleware
         {
 #if UNITY_EDITOR
             Accounts = new Account_android();
-#elif UNITY_ANDROID&&!UNITY_huawei
+#elif UNITY_ANDROID&&!UNITY_HUAWEI
             Accounts = new Account_android();
-#elif UNITY_huawei&&!UNITY_EDITOR
+#elif UNITY_HUAWEI&&!UNITY_EDITOR
             Accounts = new Account_huaweiandroid();
 #elif UNITY_OPENHARMONY
             Accounts = new Account_harmony();
@@ -97,7 +97,7 @@ namespace Middleware
         {
 #if UNITY_EDITOR
             Ads = new Ads_android();
-#elif UNITY_huawei
+#elif UNITY_HUAWEI
             Ads = new Ads_huawei();
 #elif UNITY_IOS
             Ads = new Ads_ios();
@@ -109,9 +109,9 @@ namespace Middleware
     
         private void CreateAttribute()
         {
-#if UNITY_ANDROID&&!UNITY_huawei
+#if UNITY_ANDROID&&!UNITY_HUAWEI
             Attributes = new AndoridAttribution();
-#elif UNITY_huawei
+#elif UNITY_HUAWEI
             Attributes = new HuaWeiAttribution();
 #elif UNITY_IOS
             Attributes = new AndoridAttribution();
@@ -135,7 +135,7 @@ namespace Middleware
         
         private void CreateShop()
         {
-#if UNITY_huawei
+#if UNITY_HUAWEI
             Shop = new Shop_huawei();
 #elif UNITY_IOS
             Shop = new Shop_ios();

@@ -125,6 +125,7 @@ public partial class ChessPlayArea
         chessboardGrid.IsBlockInput = true;
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用", GetCurrentSelectedPhrase());
+        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
         InitToolUI();
 
         AudioManager.Instance.PlaySoundEffect("ItemUSe02");

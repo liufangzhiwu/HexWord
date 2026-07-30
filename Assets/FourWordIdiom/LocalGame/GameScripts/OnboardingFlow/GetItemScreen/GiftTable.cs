@@ -186,7 +186,7 @@ public class GiftTable : MonoBehaviour
         {
             AnalyticMgr.PurchaseFinished(item, firstPay);
             
-#if UNITY_huawei
+#if UNITY_HUAWEI
          // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);
 #endif

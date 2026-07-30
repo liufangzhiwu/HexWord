@@ -337,7 +337,7 @@ public class ZenSettlementScreen : UIWindow
     {
         return id switch
         {
-            3 => LimitRewordType.Resettool,     // 重置
+            3 => LimitRewordType.Tipstool,     // 重置
             2 => LimitRewordType.Tipstool,      // 提示
             1 => LimitRewordType.Butterfly,     // 蝴蝶
             4 => LimitRewordType.AutoComplete,  // 自动拼字

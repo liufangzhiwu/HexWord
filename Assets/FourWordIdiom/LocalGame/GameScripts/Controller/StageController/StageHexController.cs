@@ -288,7 +288,7 @@ public class StageHexController
         if (StageNumber >= 1)
         {
 
-#if UNITY_OPENHARMONY || UNITY_huawei
+#if UNITY_OPENHARMONY || UNITY_HUAWEI
 
             AnalyticMgr.InsetAdStart("关卡插屏");
             

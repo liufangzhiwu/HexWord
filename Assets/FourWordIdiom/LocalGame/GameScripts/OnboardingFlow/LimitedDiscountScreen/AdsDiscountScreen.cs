@@ -5,6 +5,7 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Tls;
 using DG.Tweening;
 using Middleware;
 using UnityEngine;
@@ -58,6 +59,16 @@ public class AdsDiscountScreen : UIWindow
         
         StartCoroutine(UpdateTime());
         AudioManager.Instance.PlaySoundEffect("ShowUI");
+
+        
+        if (GameDataManager.Instance.UserData.levelMode == 3)
+        {
+            GameDataManager.Instance.UserData.isShowDiscountPanel = true;
+        }
+        else
+        {
+            GameDataManager.Instance.UserData.isShowChessDiscountPanel = true;
+        }
     }
 
     private void InitUI()
@@ -283,7 +294,7 @@ public class AdsDiscountScreen : UIWindow
         {
             AnalyticMgr.PurchaseFinished(item, firstPay);
             // 处理购买成功后的逻辑，例如增加游戏内货
-#if UNITY_huawei
+#if UNITY_HUAWEI
             // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);
 #endif

@@ -25,13 +25,30 @@ public class HTTPClient
         {
             _baseUrl = baseUrl;
         }
+
+        string platform = Application.platform.ToString();
+        
+#if UNITY_HUAWEI ||UNITY_hornor 
+        platform ="Android"; 
+#elif UNITY_OPENHARMONY
+    platform ="OpenHarmony"; 
+    // 如果是 Google Play 渠道包 (包括 PC 版)
+#elif UNITY_ANDROID || UNITY_STANDALONE_WIN
+        // 注意：Google Play Games PC 版也是 Google 厂商
+        platform ="Android"; 
+#elif UNITY_IOS
+     platform= "apple";
+#else
+     platform ="Android"; 
+#endif
+        
         string appVersion = Application.version ?? "1.0.0";
         SetDefaultHeaders("Content-Type", "application/json");
         SetDefaultHeaders("Accept", "application/json");
         // 添加标准版本头
         SetDefaultHeaders("X-Client-Version", appVersion);
         // 可选：添加平台标识
-        SetDefaultHeaders("X-Client-Platform",Application.platform.ToString());
+        SetDefaultHeaders("X-Client-Platform",platform);
         SetDefaultHeaders("X-Client-Env", "development");
 
         if (PlayerPrefs.HasKey("auth_token"))

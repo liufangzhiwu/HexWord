@@ -1,4 +1,4 @@
-#if UNITY_huawei
+#if UNITY_HUAWEI
 using UnityEngine;
 using UnityEngine.Networking;
 using System;

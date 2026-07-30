@@ -386,8 +386,6 @@ public class ShopManager : MonoBehaviour
     /// </summary>
     public async void ShowLimitAdsPanel()
     {
-        // 检查限购状态
-        ShopLimitData buyshopDta = GameDataManager.Instance.UserData.limitShopItems.Find(itemdata => itemdata.isget && !itemdata.isoverdate);
         int levelid = ChessStageController.Instance.CurrentStage;
         int waittime =800;
 
@@ -395,7 +393,19 @@ public class ShopManager : MonoBehaviour
         {
             levelid = StageHexController.Instance.CurrentStage;
             waittime = 1500;
+            //如果在六边形玩法中已经显示过了，那么就不显示
+            if (GameDataManager.Instance.UserData.isShowDiscountPanel) return;
         }
+        else
+        {
+            //暂时拼字玩法12关不弹
+            return;
+            //如果在拼字玩法中已经显示过了，那么就不显示
+            if (GameDataManager.Instance.UserData.isShowChessDiscountPanel) return;
+        }
+        
+        // 检查限购状态
+        ShopLimitData buyshopDta = GameDataManager.Instance.UserData.limitShopItems.Find(itemdata => itemdata.isget && !itemdata.isoverdate);
 
          foreach (var item in _limitAdsGifts)
          {
@@ -528,7 +538,7 @@ public class ShopManager : MonoBehaviour
         if (!UIUtilities.isEditMode)
         {
              AnalyticMgr.PurchaseFinished(item, firstPay);
-#if UNITY_huawei
+#if UNITY_HUAWEI
          // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);
 #endif

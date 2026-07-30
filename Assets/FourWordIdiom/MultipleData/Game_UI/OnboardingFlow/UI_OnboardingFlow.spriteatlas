@@ -247,6 +247,7 @@ SpriteAtlas:
     - 5bed353da9797ac409c3715d54a7ff43: 21300000
     - a892ca3d994aeb143912f3a9936ec677: 21300000
     - 1c9dbc3de669cfb4990bdd2c4f037228: 21300000
+    - 2ba8e45d209b707409a603388e7e8bec: 21300000
     - 3c666e6d87d845c4dbd46c176096b090: 21300000
     - e905d07d34533574b85f3fba2f3e8a44: 21300000
     - 8659277d313d1f6458aec0364abd9f8e: 21300000
@@ -474,6 +475,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 5bed353da9797ac409c3715d54a7ff43, type: 3}
   - {fileID: 21300000, guid: a892ca3d994aeb143912f3a9936ec677, type: 3}
   - {fileID: 21300000, guid: 1c9dbc3de669cfb4990bdd2c4f037228, type: 3}
+  - {fileID: 21300000, guid: 2ba8e45d209b707409a603388e7e8bec, type: 3}
   - {fileID: 21300000, guid: 3c666e6d87d845c4dbd46c176096b090, type: 3}
   - {fileID: 21300000, guid: e905d07d34533574b85f3fba2f3e8a44, type: 3}
   - {fileID: 21300000, guid: 8659277d313d1f6458aec0364abd9f8e, type: 3}
@@ -700,6 +702,7 @@ SpriteAtlas:
   - qian
   - bottom_line
   - UI_deng_fill
+  - help_1
   - time_icon
   - collect_bg
   - gifttablebg

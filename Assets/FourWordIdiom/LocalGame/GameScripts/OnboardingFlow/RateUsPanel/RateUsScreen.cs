@@ -101,7 +101,7 @@ public class RateUsScreen : UIWindow
         GameDataManager.Instance.UserData.showRateusCount = 3;
         
         string url = "";
-#if UNITY_ANDROID || UNITY_huawei
+#if UNITY_ANDROID || UNITY_HUAWEI
         url = $"https://appgallery.huawei.com/#/app/C116093983";
 #elif UNITY_IOS
         string appId = ConfigManager.Instance.GetString("Appid"); // 替换为你的App ID

@@ -1,7 +1,58 @@
 fileFormatVersion: 2
-guid: c8aaa95b660795a43a03c808caa1e4fd
+guid: 937b9eb8163b44c458120aae1805d9df
 TextureImporter:
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      213: 1090482633251471274
+    second: Effect_Butterfly01_0
+  - first:
+      213: -9096799103627467205
+    second: Effect_Butterfly01_1
+  - first:
+      213: -1279815574461297966
+    second: Effect_Butterfly01_2
+  - first:
+      213: 6749506360059794990
+    second: Effect_Butterfly01_3
+  - first:
+      213: 2241497611322321291
+    second: Effect_Butterfly01_4
+  - first:
+      213: 7473836549706634244
+    second: Effect_Butterfly01_5
+  - first:
+      213: -3798312064950904199
+    second: Effect_Butterfly01_6
+  - first:
+      213: -2701729456488666970
+    second: Effect_Butterfly01_7
+  - first:
+      213: 5997717896568607349
+    second: Effect_Butterfly01_8
+  - first:
+      213: -445631218132698764
+    second: Effect_Butterfly01_9
+  - first:
+      213: 4730424823525658972
+    second: Effect_Butterfly01_10
+  - first:
+      213: -1871618409084558701
+    second: Effect_Butterfly01_11
+  - first:
+      213: -363027519277950852
+    second: Effect_Butterfly01_12
+  - first:
+      213: -7578315396307330431
+    second: Effect_Butterfly01_13
+  - first:
+      213: -4964095998473036550
+    second: Effect_Butterfly01_14
+  - first:
+      213: -1886791866296862208
+    second: Effect_Butterfly01_15
+  - first:
+      213: 7605107694031886577
+    second: Effect_Butterfly01_16
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -43,7 +94,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -67,7 +118,7 @@ TextureImporter:
   swizzle: 50462976
   cookieLightType: 0
   platformSettings:
-  - serializedVersion: 3
+  - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -80,7 +131,7 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 3
+  - serializedVersion: 4
     buildTarget: Standalone
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -93,59 +144,440 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 3
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
     buildTarget: Android
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: -1
+    textureFormat: 65
     textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 3
-    buildTarget: iPhone
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 3
-    buildTarget: WebGL
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
+    overridden: 1
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Effect_Butterfly01_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 416
+        width: 122
+        height: 90
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aafbfa46d2c222f00800000000000000
+      internalID: 1090482633251471274
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_1
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 416
+        width: 122
+        height: 88
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b366133896da1c180800000000000000
+      internalID: -9096799103627467205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_2
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 288
+        width: 122
+        height: 90
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2dac83a048e2d3ee0800000000000000
+      internalID: -1279815574461297966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_3
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 288
+        width: 123
+        height: 96
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e269a9826401bad50800000000000000
+      internalID: 6749506360059794990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 160
+        width: 124
+        height: 89
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b89e0c793366b1f10800000000000000
+      internalID: 2241497611322321291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_5
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 160
+        width: 124
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 404589e6eb668b760800000000000000
+      internalID: 7473836549706634244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_6
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 73
+        width: 16
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97a558e1d4fa94bc0800000000000000
+      internalID: -3798312064950904199
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_7
+      rect:
+        serializedVersion: 2
+        x: 62
+        y: 71
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a8a8caaf57818ad0800000000000000
+      internalID: -2701729456488666970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_8
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 70
+        width: 22
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57299ff46ac2c3350800000000000000
+      internalID: 5997717896568607349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_9
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 15
+        width: 126
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4793066a4ccc0d9f0800000000000000
+      internalID: -445631218132698764
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_10
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 6
+        width: 128
+        height: 61
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c51dfea6058d5a140800000000000000
+      internalID: 4730424823525658972
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_11
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 52
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 392ee6329fca606e0800000000000000
+      internalID: -1871618409084558701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_12
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 15
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c781fb5056446faf0800000000000000
+      internalID: -363027519277950852
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_13
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 2
+        width: 17
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18a5a377c4a64d690800000000000000
+      internalID: -7578315396307330431
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_14
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 11
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: afc93148dfcfb1bb0800000000000000
+      internalID: -4964095998473036550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_15
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 0
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00a77445bc4c0d5e0800000000000000
+      internalID: -1886791866296862208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Effect_Butterfly01_16
+      rect:
+        serializedVersion: 2
+        x: 203
+        y: 8
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f85c557725ca8960800000000000000
+      internalID: 7605107694031886577
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
+    customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
-    nameFileIdTable: {}
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Effect_Butterfly01_0: 1090482633251471274
+      Effect_Butterfly01_1: -9096799103627467205
+      Effect_Butterfly01_10: 4730424823525658972
+      Effect_Butterfly01_11: -1871618409084558701
+      Effect_Butterfly01_12: -363027519277950852
+      Effect_Butterfly01_13: -7578315396307330431
+      Effect_Butterfly01_14: -4964095998473036550
+      Effect_Butterfly01_15: -1886791866296862208
+      Effect_Butterfly01_16: 7605107694031886577
+      Effect_Butterfly01_2: -1279815574461297966
+      Effect_Butterfly01_3: 6749506360059794990
+      Effect_Butterfly01_4: 2241497611322321291
+      Effect_Butterfly01_5: 7473836549706634244
+      Effect_Butterfly01_6: -3798312064950904199
+      Effect_Butterfly01_7: -2701729456488666970
+      Effect_Butterfly01_8: 5997717896568607349
+      Effect_Butterfly01_9: -445631218132698764
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

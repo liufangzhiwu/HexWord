@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using DG.Tweening;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,9 +30,10 @@ public class UserHeadScreen : UIWindow
         UpdateHeadIcon();
         UpdateHeadName();
 
-        UpdateHeadIconList(true);
+        UpdateHeadIconList(0,true);
         HeaderText.text = MultilingualManager.Instance.GetString("CharacterInfoTitle");
         litterTitleText.text= MultilingualManager.Instance.GetString("CharacterInfoAvatar");
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
     }
     
     private void UpdateHeadName()
@@ -53,11 +53,14 @@ public class UserHeadScreen : UIWindow
     private void InitHeadIconList()
     {
         int headid = GameDataManager.Instance.UserData.UserHeadId;
-        for (int i = 0; i < 25; i++)
+        int gethead= GameDataManager.Instance.UserData._getAnimalsHeadIcons.Count;
+        int totalheads=25+gethead;
+        for (int i = 0; i < totalheads; i++)
         {
             int index = i;
+            int iconindex = i;
             GameObject HeadItemObj = Instantiate(HeadItemBtn.gameObject, HeadItemParent);
-            HeadItemObj.GetComponent<Image>().sprite = LoadheadIcon("head"+i);
+            
             HeadItemObj.gameObject.SetActive(true);
             if (headid == i)
             {
@@ -71,7 +74,21 @@ public class UserHeadScreen : UIWindow
             {
                 HeadItemObj.transform.GetChild(0).gameObject.SetActive(false);
             }
-            HeadItemObj.GetComponent<Button>().onClick.AddListener(()=>ClickHeadItemBtn(index));
+
+            if (i >= 25)
+            {
+                HeadItemObj.transform.SetSiblingIndex(3);
+                int index2 = totalheads - i-1;
+                int getid= GameDataManager.Instance.UserData._getAnimalsHeadIcons[index2];
+                iconindex=getid;
+                HeadItemObj.GetComponent<Image>().sprite = LoadheadIcon("head"+getid);
+            }
+            else
+            {
+                HeadItemObj.GetComponent<Image>().sprite = LoadheadIcon("head"+i);
+            }
+            
+            HeadItemObj.GetComponent<Button>().onClick.AddListener(()=>ClickHeadItemBtn(index,iconindex));
             Headitems.Add(index, HeadItemObj);
         }
     }
@@ -79,21 +96,20 @@ public class UserHeadScreen : UIWindow
     protected override void InitializeUIComponents()
     {
         closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
-        comfirmBtn.AddVibraClickAction(OnClickComfirmBtn); // 绑定关闭按钮事件
+        comfirmBtn.AddClickAction(OnClickComfirmBtn); // 绑定关闭按钮事件
     }
 
-    private void ClickHeadItemBtn(int index)
+    private void ClickHeadItemBtn(int index,int iconindex)
     {
-        GameDataManager.Instance.UserData.UserHeadId = index;
+        GameDataManager.Instance.UserData.UserHeadId = iconindex;
         UpdateHeadIcon();
-        UpdateHeadIconList();
+        UpdateHeadIconList(index);
 
         AnalyticMgr.HeadChange();
     }
     
-    private void UpdateHeadIconList(bool show = false)
+    private void UpdateHeadIconList(int headid=0, bool show = false)
     {
-        int headid = GameDataManager.Instance.UserData.UserHeadId;
         for (int i = 0; i < Headitems.Count; i++)
         {
             int index = i;
@@ -147,7 +163,6 @@ public class UserHeadScreen : UIWindow
     {
         EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
         EventDispatcher.instance.TriggerChangeHeadIconUpdateEvent();
-        
         base.Close(); // 隐藏面板
     }
     

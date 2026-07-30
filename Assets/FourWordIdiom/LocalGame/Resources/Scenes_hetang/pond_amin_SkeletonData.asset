@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: pond_amin_SkeletonData
   m_EditorClassIdentifier: 
   atlasAssets:
-  - {fileID: 11400000, guid: 2fcfc617b2de4c240be19b9c87a8d4dc, type: 2}
+  - {fileID: 11400000, guid: 18c83039cf0206942ad1ea84f60367a9, type: 2}
   scale: 0.01
-  skeletonJSON: {fileID: 4900000, guid: 47e57d8182339174996fcdcaa83fd3b8, type: 3}
+  skeletonJSON: {fileID: 4900000, guid: a6864b4f6d2de394faef546e4f2362b3, type: 3}
   isUpgradingBlendModeMaterials: 0
   blendModeMaterials:
     requiresBlendModeMaterials: 0

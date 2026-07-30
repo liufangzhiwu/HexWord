@@ -39,13 +39,29 @@ public class LoginApi
        
         string openId = Game.self.GetUniqueId();
         string factory = GetCurrentFactory();
+        string platform = Application.platform.ToString();
+        
+#if UNITY_HUAWEI ||UNITY_hornor 
+     platform ="Android"; 
+#elif UNITY_OPENHARMONY
+    platform ="OpenHarmony"; 
+    // 如果是 Google Play 渠道包 (包括 PC 版)
+#elif UNITY_ANDROID || UNITY_STANDALONE_WIN
+        // 注意：Google Play Games PC 版也是 Google 厂商
+        platform ="Android"; 
+#elif UNITY_IOS
+     platform= "apple";
+#else
+     platform ="Android"; 
+#endif
+        
         var data = new LoginRequest
         {
             factory = factory,
             // openId = "66bcdef7477127aec526a7c489d2ed06",
             openId = openId,
             deviceId = openId,
-            platform = Application.platform.ToString(),
+            platform = platform,
             version = Application.version ?? "1.0.0",
             language = Application.systemLanguage.ToString(),
         };
