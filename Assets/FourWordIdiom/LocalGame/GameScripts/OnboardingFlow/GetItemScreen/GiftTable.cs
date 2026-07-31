@@ -72,28 +72,11 @@ public class GiftTable : MonoBehaviour
 
         Debug.Log($"获取商品内购名称: {shopDataItem.GetProduceName()}");
 
-        // Product product = ShopManager.shopManager?.GetProduct(data.GetProduceName());
-        // if (product == null || product.metadata == null)
-        // {
-        //     ShowPriceLoadingState(true);
-        //     return;
-        // }
-
         try
         {
-
-#if UNITY_IOS
-            decimal price = product.metadata.localizedPrice;
-            string currencyCode = product.metadata.isoCurrencyCode;
-
-            Debug.Log($"商品价格: {price} ({currencyCode})");
-
-            CultureInfo culture = UIExtension.GetCultureForCurrency(currencyCode);
-#else
             float price = shopDataItem.price;
             // 获取合适的文化信息
             CultureInfo culture = UIUtilities.GetCultureForCurrency("");
-#endif
            
             shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
         }

@@ -54,13 +54,11 @@ namespace Middleware
         private IEnumerator WaitLoginedCreateShop()
         {
             yield return new WaitUntil(()=>Accounts.IsLogin);
-// #if UNITY_EDITOR 
-//             CreateAd();
-#if UNITY_OPENHARMONY||UNITY_HUAWEI
+
             CreateAd();
             CreateShop();
             CreateAttribute();
-#endif
+
         }
 
 

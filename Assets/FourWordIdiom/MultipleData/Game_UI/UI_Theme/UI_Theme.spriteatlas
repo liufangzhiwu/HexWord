@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!687078895 &4343727234628468602
 SpriteAtlas:
   m_ObjectHideFlags: 0
@@ -7,11 +7,10 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: UI_Theme
-  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 3
+      serializedVersion: 2
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -20,13 +19,11 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
-      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: OpenHarmony
       m_MaxTextureSize: 2048
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 50
       m_TextureCompression: 1
@@ -40,9 +37,21 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 4096
-      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 49
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    - serializedVersion: 3
+      m_BuildTarget: iPhone
+      m_MaxTextureSize: 8192
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 50
       m_TextureCompression: 1
       m_CompressionQuality: 50
       m_CrunchedCompression: 0
@@ -68,111 +77,110 @@ SpriteAtlas:
     cachedData: {fileID: 0}
     packedSpriteRenderDataKeys:
     - fe8b1cc0753d8a7448d26a03f63d6693: 21300000
+    - 431b4e116f35b674e92f38e4ec1fdc0c: 21300000
     - 1b29ac31b5747c144a876e00ccdece34: 21300000
     - 3fcca4d14ce23324f8debc3682aa9cfc: 21300000
-    - 349bc0f1ec0a200408f50111856fb197: 21300000
-    - 55695e62e2ce658498a99e17c0c734b6: 21300000
-    - 6d856082f5f553e4ebb155a7a608187f: 21300000
+    - 2141f5627a14aa04488bd3ca0ac1cba3: 21300000
+    - 7028a1b2d46a4f542af943946f30112c: 21300000
     - cce75d033c7892e479143c3281996314: 21300000
-    - ec0dd863ad23c964296696154ba2713a: 21300000
     - 41eeb96355affe146994259b958b3cd1: 21300000
-    - 20698bb3b2b06b94f852bb5dbe72e95d: 21300000
     - cbf282542f431ec4aa137e7ec831771f: 21300000
     - 8b2e4d940b0939a4e901b30b0ae4a277: 21300000
     - 343e90b4db08ecd4eab4a5435ffff585: 21300000
     - 5731f625f9afe12408a4891d42b7c41f: 21300000
-    - 6eb626a5b77a26f4a9eb3cbdc194c865: 21300000
     - c8f716d5006724d4d92e7d8bc6682ebc: 21300000
-    - cf5997e5dad381348926b73d62e0a5ad: 21300000
+    - 351da7f5e06c2164a8509b7f10bce2de: 21300000
+    - 0d7aea76f4c42c14391e17b589ff2eb7: 21300000
+    - 19891dd6877468143844e6675f33d11e: 21300000
     - a38a1727dc7525c4bb41cd064c819036: 21300000
     - 0f59a7c773f459943a6c72a80edfd9b1: 21300000
+    - f7709fc79d7a66b419071d9f113a55c4: 21300000
     - 3556d8d7a69fba4408dc1ee434e21427: 21300000
+    - b6be50586f68c7241953ad404fa2d569: 21300000
+    - 22893298bad47fc4dbc51022b55dc273: 21300000
     - fc33deb8db416744c9c82045c7b7ce2a: 21300000
-    - 3e6a7049ff86b9649a4ee38c190d6bbe: 21300000
+    - bc973789fb989b9409387f3116b93d5c: 21300000
     - f4904bc9ebc496a40bc16a025063a239: 21300000
     - 7f58480ae60ede24e950943a27cc9210: 21300000
-    - be79119bacfa9ba4fac4ef674378a420: 21300000
-    - a1f0823c87e969947bb3d369bb67b0ee: 21300000
     - ea8e254c86c384440af0f54134718e8d: 21300000
-    - 5eecfaad464725c4c993681ea313f3ad: 21300000
-    - 47a96ced293b5b1409cced96246533de: 21300000
-    - b4de4dfd99367e64b9280aba8d6b0546: 21300000
+    - abf1879c5615a6849a0ec27cec4fd8f3: 21300000
+    - c284c1cc752394f44adac48704bff912: 21300000
+    - e1e7397d80a5afa42a01ea24e3809b55: 21300000
     - 020c4a4e76a497246a764f888e9892a1: 21300000
-    - b805709ee10c3474a9538d12aace4932: 21300000
+    - f590e25e63106364cb84e9f528268760: 21300000
     - d190b5eec6c9737478e9fdc3e759de8c: 21300000
-    - 47a55d5fcd80a8047a234e1c79704b99: 21300000
+    - 897ad47fe2407e44eb3328d53a2bb41e: 21300000
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
   - {fileID: 21300000, guid: fe8b1cc0753d8a7448d26a03f63d6693, type: 3}
+  - {fileID: 21300000, guid: 431b4e116f35b674e92f38e4ec1fdc0c, type: 3}
   - {fileID: 21300000, guid: 1b29ac31b5747c144a876e00ccdece34, type: 3}
   - {fileID: 21300000, guid: 3fcca4d14ce23324f8debc3682aa9cfc, type: 3}
-  - {fileID: 21300000, guid: 349bc0f1ec0a200408f50111856fb197, type: 3}
-  - {fileID: 21300000, guid: 55695e62e2ce658498a99e17c0c734b6, type: 3}
-  - {fileID: 21300000, guid: 6d856082f5f553e4ebb155a7a608187f, type: 3}
+  - {fileID: 21300000, guid: 2141f5627a14aa04488bd3ca0ac1cba3, type: 3}
+  - {fileID: 21300000, guid: 7028a1b2d46a4f542af943946f30112c, type: 3}
   - {fileID: 21300000, guid: cce75d033c7892e479143c3281996314, type: 3}
-  - {fileID: 21300000, guid: ec0dd863ad23c964296696154ba2713a, type: 3}
   - {fileID: 21300000, guid: 41eeb96355affe146994259b958b3cd1, type: 3}
-  - {fileID: 21300000, guid: 20698bb3b2b06b94f852bb5dbe72e95d, type: 3}
   - {fileID: 21300000, guid: cbf282542f431ec4aa137e7ec831771f, type: 3}
   - {fileID: 21300000, guid: 8b2e4d940b0939a4e901b30b0ae4a277, type: 3}
   - {fileID: 21300000, guid: 343e90b4db08ecd4eab4a5435ffff585, type: 3}
   - {fileID: 21300000, guid: 5731f625f9afe12408a4891d42b7c41f, type: 3}
-  - {fileID: 21300000, guid: 6eb626a5b77a26f4a9eb3cbdc194c865, type: 3}
   - {fileID: 21300000, guid: c8f716d5006724d4d92e7d8bc6682ebc, type: 3}
-  - {fileID: 21300000, guid: cf5997e5dad381348926b73d62e0a5ad, type: 3}
+  - {fileID: 21300000, guid: 351da7f5e06c2164a8509b7f10bce2de, type: 3}
+  - {fileID: 21300000, guid: 0d7aea76f4c42c14391e17b589ff2eb7, type: 3}
+  - {fileID: 21300000, guid: 19891dd6877468143844e6675f33d11e, type: 3}
   - {fileID: 21300000, guid: a38a1727dc7525c4bb41cd064c819036, type: 3}
   - {fileID: 21300000, guid: 0f59a7c773f459943a6c72a80edfd9b1, type: 3}
+  - {fileID: 21300000, guid: f7709fc79d7a66b419071d9f113a55c4, type: 3}
   - {fileID: 21300000, guid: 3556d8d7a69fba4408dc1ee434e21427, type: 3}
+  - {fileID: 21300000, guid: b6be50586f68c7241953ad404fa2d569, type: 3}
+  - {fileID: 21300000, guid: 22893298bad47fc4dbc51022b55dc273, type: 3}
   - {fileID: 21300000, guid: fc33deb8db416744c9c82045c7b7ce2a, type: 3}
-  - {fileID: 21300000, guid: 3e6a7049ff86b9649a4ee38c190d6bbe, type: 3}
+  - {fileID: 21300000, guid: bc973789fb989b9409387f3116b93d5c, type: 3}
   - {fileID: 21300000, guid: f4904bc9ebc496a40bc16a025063a239, type: 3}
   - {fileID: 21300000, guid: 7f58480ae60ede24e950943a27cc9210, type: 3}
-  - {fileID: 21300000, guid: be79119bacfa9ba4fac4ef674378a420, type: 3}
-  - {fileID: 21300000, guid: a1f0823c87e969947bb3d369bb67b0ee, type: 3}
   - {fileID: 21300000, guid: ea8e254c86c384440af0f54134718e8d, type: 3}
-  - {fileID: 21300000, guid: 5eecfaad464725c4c993681ea313f3ad, type: 3}
-  - {fileID: 21300000, guid: 47a96ced293b5b1409cced96246533de, type: 3}
-  - {fileID: 21300000, guid: b4de4dfd99367e64b9280aba8d6b0546, type: 3}
+  - {fileID: 21300000, guid: abf1879c5615a6849a0ec27cec4fd8f3, type: 3}
+  - {fileID: 21300000, guid: c284c1cc752394f44adac48704bff912, type: 3}
+  - {fileID: 21300000, guid: e1e7397d80a5afa42a01ea24e3809b55, type: 3}
   - {fileID: 21300000, guid: 020c4a4e76a497246a764f888e9892a1, type: 3}
-  - {fileID: 21300000, guid: b805709ee10c3474a9538d12aace4932, type: 3}
+  - {fileID: 21300000, guid: f590e25e63106364cb84e9f528268760, type: 3}
   - {fileID: 21300000, guid: d190b5eec6c9737478e9fdc3e759de8c, type: 3}
-  - {fileID: 21300000, guid: 47a55d5fcd80a8047a234e1c79704b99, type: 3}
+  - {fileID: 21300000, guid: 897ad47fe2407e44eb3328d53a2bb41e, type: 3}
   m_PackedSpriteNamesToIndex:
   - locktheme
+  - theme14
   - wordtip
   - newThemelight
-  - theme04
-  - theme08
-  - theme15
-  - decal_scorch
-  - theme10
-  - Leaflight
+  - theme03
   - theme05
+  - decal_scorch
+  - Leaflight
   - namebg
   - namebg2
   - newtittle
   - themeup
-  - theme02
   - point2
+  - theme13
+  - theme06
   - theme01
   - point1
   - light1
+  - theme08
   - goldLeafTip
+  - theme07
+  - theme11
   - choice
-  - theme14
+  - theme12
   - whiteTexture
   - point3
-  - theme03
-  - theme06
   - newthemetip
-  - theme11
-  - theme13
-  - theme09
+  - theme04
+  - theme15
+  - theme02
   - freebg
-  - theme12
+  - theme09
   - wordlight
-  - theme07
+  - theme10
   m_RenderDataMap: {}
   m_Tag: UI_Theme
   m_IsVariant: 0
-  m_IsPlaceholder: 0

@@ -9,6 +9,16 @@ namespace Middleware
 {
     public class Shop_ios : IShop,IDetailedStoreListener
     {
+        private IStoreController _storeController;
+        private IExtensionProvider _extensionProvider;
+        private IAppleExtensions _appleExtension;
+        private IGooglePlayStoreExtensions _googlePlayStoreExtensions;
+
+        private Action<string> _failedCallback;
+        private Action<ProductItem> _successCallback;
+        private bool _isInPurchaseProgress;
+        private const int RetryCount = 3; // 重试次数
+        
         public void Init(float delay)
         {
             UnityTimer.Delay(delay, () =>
@@ -99,7 +109,9 @@ namespace Middleware
                 }
             });
         }
-        
+
+        public ShopDataItem CurrentShopDataItem { get; set; }
+
         private List<ProductItem> GetRestoredProducts()
         {
             if (_storeController == null) return null;
@@ -120,18 +132,33 @@ namespace Middleware
             }
             return restoredProducts;
         }
+        
+        /// <summary>
+        /// 发起内购
+        /// </summary>
+        /// <param name="_productId">要购买的商品ID</param>
+        /// <param name="_successedCallback">购买成功回调</param>
+        /// <param name="_failedCallback">购买失败回调</param>
+        public Product GetProduct(string _productId)
+        {        
+
+            if (!IsInitialized())
+            {
+                _failedCallback("Not initialized.");
+                return null;
+            }
+
+            Product product = _storeController.products.WithID(_productId);
+            if (product == null || !product.availableToPurchase)
+            {
+                _failedCallback("Either is not found or is not available for purchase");
+                return null;
+            }
+            return product;
+        }
 
         
         #region 基础逻辑
-        private IStoreController _storeController;
-        private IExtensionProvider _extensionProvider;
-        private IAppleExtensions _appleExtension;
-        private IGooglePlayStoreExtensions _googlePlayStoreExtensions;
-
-        private Action<string> _failedCallback;
-        private Action<ProductItem> _successCallback;
-        private bool _isInPurchaseProgress;
-        private const int RetryCount = 3; // 重试次数
         
         private bool IsInitialized()
         {

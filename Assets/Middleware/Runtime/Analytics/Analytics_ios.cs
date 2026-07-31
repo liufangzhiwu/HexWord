@@ -1,8 +1,7 @@
 #if UNITY_IOS
 using System;
 using System.Collections.Generic;
-using Firebase;
-using Firebase.Analytics;
+using System.Threading;
 using ThinkingData.Analytics;
 using UnityEngine;
 
@@ -12,20 +11,13 @@ namespace Middleware
     {
         public void Init(float delay)
         {
-            UnityTimer.Delay(delay, () =>
-            {
-                InitThink();
-                InitFirebase();
-            });
+            UnityTimer.Delay(delay, InitThink);
         }
-        
+
         public void LogEvent(string key, Define.DataTarget targets)
         {
             if (targets.HasFlag(Define.DataTarget.Think))
                 TDAnalytics.Track(key);
-            
-            if (targets.HasFlag(Define.DataTarget.Firebase) && _isFirebaseInit)
-                FirebaseAnalytics.LogEvent(key);
         }
 
         public void LogEvent(string key, string parameterName, object parameterValue, Define.DataTarget targets)
@@ -38,23 +30,12 @@ namespace Middleware
                 };
                 TDAnalytics.Track(key,dic);
             }
-            
-            if (targets.HasFlag(Define.DataTarget.Firebase) && _isFirebaseInit)
-                FirebaseAnalytics.LogEvent(key, parameterName, parameterValue.ToString());
         }
 
         public void LogEvent(string key, Dictionary<string, object> properties, Define.DataTarget targets)
         {
             if (targets.HasFlag(Define.DataTarget.Think))
                 TDAnalytics.Track(key, properties);
-
-            if (targets.HasFlag(Define.DataTarget.Firebase) && _isFirebaseInit)
-            {
-                var list = new List<Parameter>();
-                foreach (var d in properties)
-                    list.Add(new Parameter(d.Key, d.Value.ToString()));
-                FirebaseAnalytics.LogEvent(key, list.ToArray());
-            }
         }
 
         public void SetUserProperty(string key, object property, Define.DataTarget targets)
@@ -67,21 +48,12 @@ namespace Middleware
                 };
                 TDAnalytics.UserSet(dic);
             }
-            
-            if (targets.HasFlag(Define.DataTarget.Firebase) && _isFirebaseInit)
-                FirebaseAnalytics.SetUserProperty(key,property.ToString());
         }
 
         public void SetUserProperty(Dictionary<string, object> properties, Define.DataTarget targets)
         {
-            if (targets.HasFlag(Define.DataTarget.Think))
+            if (targets.HasFlag(Define.DataTarget.Think)) 
                 TDAnalytics.UserSet(properties);
-
-            if (targets.HasFlag(Define.DataTarget.Firebase) && _isFirebaseInit)
-            {
-                foreach (var d in properties)
-                    FirebaseAnalytics.SetUserProperty(d.Key, d.Value.ToString());
-            }
         }
 
         /// <summary>
@@ -111,27 +83,12 @@ namespace Middleware
             TDAnalytics.EnableLog(false);
 #endif
             TDAnalytics.Init(config);
-            TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppInstall | TDAutoTrackEventType.AppEnd);
             OnSdkInit?.Invoke(this,null);
-        }
-
-        private bool _isFirebaseInit;
-        private void InitFirebase()
-        {
-            FirebaseApp.CheckDependenciesAsync().ContinueWith(task =>
-            {
-                var depStatus = task.Result;
-                if (depStatus == DependencyStatus.Available)
-                {
-                    Debug.Log("Firebase init Ok");
-                    _isFirebaseInit = true;
-                }
-                else
-                {
-                    Debug.LogError("Firebase init failed: " + depStatus);
-                    _isFirebaseInit = false;
-                }
-            });
+            TDAnalytics.EnableAutoTrack( TDAutoTrackEventType.AppInstall);
+            //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppInstall| TDAutoTrackEventType.AppEnd);
+            
+            
+            //Debug.Log($"线程ID: {Thread.CurrentThread.ManagedThreadId}");
         }
     }
 }

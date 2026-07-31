@@ -14,7 +14,7 @@ namespace Middleware
         private bool _isEnvReady;
         private Action<ProductItem> _successAction;
         private Action<string> _failedAction;
-        
+
         public ShopDataItem CurrentShopDataItem { get; set; }
         
         public void Init(float delay)

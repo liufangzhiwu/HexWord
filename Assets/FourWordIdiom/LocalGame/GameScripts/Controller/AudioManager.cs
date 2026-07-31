@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class AudioManager : MonoBehaviour
@@ -15,6 +16,18 @@ public class AudioManager : MonoBehaviour
     private ObjectPool audioSourcePool;
     
     float normalVolume = 0.25f; // 正常音量
+    
+    // 声明 iOS 原生方法
+#if UNITY_IOS
+    [DllImport("__Internal")]
+    private static extern void TriggerVibrationWithStyle(int style);
+    
+    [System.Runtime.InteropServices.DllImport("__Internal")]
+    private static extern void ConfigureAudioSession();
+
+    [System.Runtime.InteropServices.DllImport("__Internal")]
+    private static extern bool IsExternalAudioPlaying();
+#endif
     
     private void Awake()
     {

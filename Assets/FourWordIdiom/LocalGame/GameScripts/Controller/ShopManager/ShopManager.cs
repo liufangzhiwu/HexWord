@@ -5,6 +5,8 @@ using System.Net;
 using System.Threading.Tasks;
 using Middleware;
 using UnityEngine;
+using UnityEngine.Purchasing;
+
 //using UnityEngine.Purchasing;
 
 public class ShopDataItem
@@ -110,8 +112,7 @@ public class ShopManager : MonoBehaviour
     public Action<string,bool> UpdateAdsBtnUI;
 
     public Dictionary<int,GameObject> shopItemsTipsPanel=new Dictionary<int, GameObject>();
-
-    //public IAPManager iapManager; // 引用 IAPManager
+  
     [HideInInspector] public bool paysuccess; //支付成功
 
     private void Awake()
@@ -146,7 +147,7 @@ public class ShopManager : MonoBehaviour
         // 初始化查找结构
         _limitAdsGifts = GetLimitAdsGifts();
     }
-    
+
     // 在 Inspector 中将按钮的点击事件绑定到此方法
     //public void OnBuyGoldTestButtonClicked(string _productId, Action<Product> _successedCallback, Action<string> _failedCallback)
     //{

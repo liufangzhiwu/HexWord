@@ -110,19 +110,10 @@ public class AdsDiscountScreen : UIWindow
         try
         {
 
-#if UNITY_IOS
-            decimal price = product.metadata.localizedPrice;
-            string currencyCode = product.metadata.isoCurrencyCode;
-
-            Debug.Log($"商品价格: {price} ({currencyCode})");
-
-            // 获取合适的文化信息
-            CultureInfo culture = UIUtilities.GetCultureForCurrency(currencyCode);
-#else
             float price = currentShopItem.price;
             // 获取合适的文化信息
             CultureInfo culture = UIUtilities.GetCultureForCurrency("");
-#endif
+
             
             // 格式化价格
             priceText.text = UIUtilities.FormatCurrency(price,culture );
