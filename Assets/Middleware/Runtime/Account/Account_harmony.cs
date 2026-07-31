@@ -226,7 +226,6 @@ public class Account_harmony : IAccounts
             LoginSignal targetSignal = (LoginSignal)signal;
             teamPlayerId = targetSignal.localPlayer.teamPlayerId;
             UserId=targetSignal.localPlayer.gamePlayerId;
-            IsLogin = true;
             Debug.Log("Login Success" + "\n "
                 + "authorizationCode :" + targetSignal.authorizationCode + "\n "
                 + "idToken : " + targetSignal.idToken + "\n"
@@ -234,8 +233,8 @@ public class Account_harmony : IAccounts
                 + "gamePlayerId : " + targetSignal.localPlayer.gamePlayerId + "\n");
             
             //设置登录用户ID（需要等待游戏数据获取后）
-            AnalyticMgr.SetLoginUser(null);
-            
+            AnalyticMgr.SetLoginUser(UserId);
+            IsLogin = true;
             VerifyPlayer();
             
         }

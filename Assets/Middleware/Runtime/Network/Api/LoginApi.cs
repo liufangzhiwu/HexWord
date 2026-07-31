@@ -36,10 +36,18 @@ public class LoginApi
      */
     public IEnumerator Login(Action<object> action)
     {
-       
-        string openId = Game.self.GetUniqueId();
-        string factory = GetCurrentFactory();
+      
         string platform = Application.platform.ToString();
+        
+        string openId = GameDataManager.Instance.UserData.UserId;
+        string factory = GetCurrentFactory();
+        
+#if UNITY_EDITOR
+        if (string.IsNullOrEmpty(openId))
+        {
+            openId = SystemInfo.deviceUniqueIdentifier;
+        }
+#endif
         
 #if UNITY_HUAWEI ||UNITY_hornor 
      platform ="Android"; 
