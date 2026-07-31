@@ -42,12 +42,14 @@ public class LoginApi
         string openId = GameDataManager.Instance.UserData.UserId;
         string factory = GetCurrentFactory();
         
-#if UNITY_EDITOR
+
         if (string.IsNullOrEmpty(openId))
         {
             openId = SystemInfo.deviceUniqueIdentifier;
+            
+            Debug.LogError(string.Format("[{0}] - {1} OpenId为空！请检查登录逻辑。", factory, openId));
         }
-#endif
+
         
 #if UNITY_HUAWEI ||UNITY_hornor 
      platform ="Android"; 
@@ -66,7 +68,6 @@ public class LoginApi
         var data = new LoginRequest
         {
             factory = factory,
-            // openId = "66bcdef7477127aec526a7c489d2ed06",
             openId = openId,
             deviceId = openId,
             platform = platform,
