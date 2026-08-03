@@ -124,36 +124,43 @@ public class PrivacyActivity extends Activity {
         bodyView.setLayoutParams(bodyLp);
         contentLayout.addView(bodyView);
 
-        // 继续按钮
-        Button continueButton = new Button(this);
-        continueButton.setText("继续");
-        continueButton.setTextSize(TypedValue.COMPLEX_UNIT_PX, screenWidth * 0.05f);
-        continueButton.setGravity(Gravity.CENTER);
-        continueButton.setTextColor(0xFFFFFFFF);
-
-        int btnWidth = (int) (dialogWidth * 0.5f);
+        // ---------- 创建两个按钮（继续 & 关闭） ----------
+        // 按钮尺寸
+        int btnWidth = (int) (dialogWidth * 0.4f);      // 略小于原来的一半，便于并排
         int btnHeight = (int) (btnWidth * 0.35f);
 
-        // 尝试加载按钮背景图
-        try (InputStream is = getAssets().open("continue_button.png")) {
-            Bitmap original = BitmapFactory.decodeStream(is);
-            Bitmap scaled = Bitmap.createScaledBitmap(original, btnWidth, btnHeight, true);
-            Drawable drawable = new BitmapDrawable(getResources(), scaled);
-            continueButton.setBackground(drawable);
-        } catch (IOException e) {
-            e.printStackTrace();
-            continueButton.setBackgroundColor(0xFF3A516A);
-        }
+        // 同意按钮
+        Button continueButton = createStyledButton("同意", btnWidth, btnHeight, screenWidth);
+        continueButton.setOnClickListener(v -> {
+            getSharedPreferences("PrivacyPrefs", MODE_PRIVATE)
+                    .edit().putBoolean("isPrivacyAgreed", true).apply();
+            startUnityActivity();
+        });
 
-        int btnPad = (int) (dialogWidth * 0.045f);
-        continueButton.setPadding(btnPad, btnPad / 2, btnPad, btnPad / 2);
-        continueButton.setElevation(100f);
+        // 拒绝按钮（样式与同意完全相同，仅文字不同）
+        Button closeButton = createStyledButton("拒绝", btnWidth, btnHeight, screenWidth);
+        closeButton.setOnClickListener(v -> finish());   // 关闭Activity，退出应用
 
-        LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(btnWidth, btnHeight);
-        btnLp.gravity = Gravity.CENTER_HORIZONTAL;
-        btnLp.topMargin = (int) (dialogHeight * 0.01f);
-        btnLp.bottomMargin = (int) (dialogHeight * 0.06f);
-        continueButton.setLayoutParams(btnLp);
+        // 水平按钮容器
+        LinearLayout buttonLayout = new LinearLayout(this);
+        buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
+        buttonLayout.setGravity(Gravity.CENTER);
+        int btnMargin = (int) (dialogWidth * 0.05f);
+        buttonLayout.setPadding(btnMargin, 0, btnMargin, 0);
+
+        // 为两个按钮设置等宽权重，并添加间距
+        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(0, btnHeight, 1.0f);
+        int marginHalf = (int) (dialogWidth * 0.02f);
+        btnParams.setMargins(marginHalf, 0, marginHalf, 0);
+        buttonLayout.addView(continueButton, btnParams);
+        buttonLayout.addView(closeButton, btnParams);
+
+        // 按钮容器的外边距（与原来单个按钮的边距一致）
+        LinearLayout.LayoutParams btnContainerLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        btnContainerLp.topMargin = (int) (dialogHeight * 0.01f);
+        btnContainerLp.bottomMargin = (int) (dialogHeight * 0.06f);
+        buttonLayout.setLayoutParams(btnContainerLp);
 
         // ---------- 根布局 ----------
         FrameLayout rootLayout = new FrameLayout(this);
@@ -173,12 +180,12 @@ public class PrivacyActivity extends Activity {
                 FrameLayout.LayoutParams.MATCH_PARENT);
         rootLayout.addView(bgView, bgLp);
 
-        // 内容容器（包含 contentLayout 和按钮）
+        // 内容容器（包含 contentLayout 和按钮容器）
         LinearLayout contentContainer = new LinearLayout(this);
         contentContainer.setOrientation(LinearLayout.VERTICAL);
         contentContainer.addView(contentLayout, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f));
-        contentContainer.addView(continueButton);
+        contentContainer.addView(buttonLayout);   // 替换原来的单个按钮
 
         FrameLayout.LayoutParams contentLp = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -190,12 +197,6 @@ public class PrivacyActivity extends Activity {
         dialog.setContentView(rootLayout);
         dialog.setCancelable(false);
         dialog.show();
-
-        continueButton.setOnClickListener(v -> {
-            getSharedPreferences("PrivacyPrefs", MODE_PRIVATE)
-                    .edit().putBoolean("isPrivacyAgreed", true).apply();
-            startUnityActivity();
-        });
 
         // 调整窗口属性
         Window window = dialog.getWindow();
@@ -214,6 +215,34 @@ public class PrivacyActivity extends Activity {
             lp.height = dialogHeight;
             window.setAttributes(lp);
         }
+    }
+
+    /**
+     * 辅助方法：创建一个样式统一的按钮（背景图片、文字大小、颜色、内边距等）
+     */
+    private Button createStyledButton(String text, int width, int height, int screenWidth) {
+        Button button = new Button(this);
+        button.setText(text);
+        button.setTextSize(TypedValue.COMPLEX_UNIT_PX, screenWidth * 0.05f);
+        button.setGravity(Gravity.CENTER);
+        button.setTextColor(0xFFFFFFFF);
+
+        // 尝试加载按钮背景图
+        try (InputStream is = getAssets().open("continue_button.png")) {
+            Bitmap original = BitmapFactory.decodeStream(is);
+            Bitmap scaled = Bitmap.createScaledBitmap(original, width, height, true);
+            Drawable drawable = new BitmapDrawable(getResources(), scaled);
+            button.setBackground(drawable);
+        } catch (IOException e) {
+            e.printStackTrace();
+            // 加载失败使用纯色背景
+            button.setBackgroundColor(0xFF3A516A);
+        }
+
+        int btnPad = (int) (width * 0.09f);   // 根据按钮宽度调整内边距
+        button.setPadding(btnPad, btnPad / 2, btnPad, btnPad / 2);
+        button.setElevation(100f);
+        return button;
     }
 
     private void startUnityActivity() {

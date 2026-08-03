@@ -5,8 +5,9 @@ using System.Net;
 using System.Threading.Tasks;
 using Middleware;
 using UnityEngine;
+#if UNITY_IOS
 using UnityEngine.Purchasing;
-
+#endif
 //using UnityEngine.Purchasing;
 
 public class ShopDataItem
