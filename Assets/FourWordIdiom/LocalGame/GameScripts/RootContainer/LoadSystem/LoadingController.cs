@@ -317,7 +317,7 @@ public class LoadingController : MonoBehaviour
     private void SetupRandomLoadingHint()
     {
         string key = LoadTextManager.Instance.GetNextText();
-        string des = MultilingualManager.Instance.GetString(key);
+        string des = MultilingualManager.Instance.GetString(key,"hudie");
         if (des.Contains(" "))
         {
             des = des.Replace(" ", "\u00A0");

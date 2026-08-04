@@ -63,21 +63,21 @@ public class SevenSignScreen : UIWindow
 
         StartCoroutine(ShowReward());
         oktBtn.gameObject.SetActive(false);
-        
         EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
+        
     }
 
     private void InitUI()
     {
-        titleText.text = MultilingualManager.Instance.GetString("DailyVictory");
-        winTimesDexText.text = MultilingualManager.Instance.GetString("WinDays");
-        daytitleText[0].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Su");
-        daytitleText[1].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Mo");
-        daytitleText[2].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Tu");
-        daytitleText[3].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("We");
-        daytitleText[4].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Th");
-        daytitleText[5].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Fr");
-        daytitleText[6].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Sa");
+        titleText.text = MultilingualManager.Instance.GetString("DailyVictory","hudie");
+        winTimesDexText.text = MultilingualManager.Instance.GetString("WinDays","hudie");
+        daytitleText[0].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Su","hudie");
+        daytitleText[1].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Mo","hudie");
+        daytitleText[2].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Tu","hudie");
+        daytitleText[3].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("We","hudie");
+        daytitleText[4].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Th","hudie");
+        daytitleText[5].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Fr","hudie");
+        daytitleText[6].GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Sa","hudie");
     }
 
     protected override void OnDisable()

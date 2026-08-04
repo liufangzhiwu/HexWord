@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: CHodvXusAXkXYXtXGfh48EWhJOEjotSqXv/aECBHT2mXutqKTpioXDE=
+guid: 7028a1b2d46a4f542af943946f30112c
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -22,9 +22,6 @@ TextureImporter:
     normalMapFilter: 0
     flipGreenChannel: 0
   isReadable: 0
-  webStreaming: 0
-  priorityLevel: 0
-  uploadedMode: 2
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
@@ -73,7 +70,6 @@ TextureImporter:
   - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
-    maxPlaceholderSize: 32
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -87,7 +83,6 @@ TextureImporter:
   - serializedVersion: 3
     buildTarget: Standalone
     maxTextureSize: 2048
-    maxPlaceholderSize: 32
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -101,7 +96,6 @@ TextureImporter:
   - serializedVersion: 3
     buildTarget: Server
     maxTextureSize: 2048
-    maxPlaceholderSize: 32
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -115,7 +109,6 @@ TextureImporter:
   - serializedVersion: 3
     buildTarget: OpenHarmony
     maxTextureSize: 2048
-    maxPlaceholderSize: 32
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -128,8 +121,20 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
     buildTarget: Android
+    maxTextureSize: 1024
+    resizeAlgorithm: 0
+    textureFormat: 49
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: HMIAndroid
     maxTextureSize: 2048
-    maxPlaceholderSize: 32
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -141,9 +146,8 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
-    buildTarget: HMIAndroid
+    buildTarget: iPhone
     maxTextureSize: 2048
-    maxPlaceholderSize: 32
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1

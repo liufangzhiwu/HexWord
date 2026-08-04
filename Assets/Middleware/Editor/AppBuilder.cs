@@ -265,7 +265,7 @@ namespace Middleware
 			//账户设置
 			//SetDefaultIcon(1);
 			PlayerSettings.companyName = "HexaSpaceGames";
-			PlayerSettings.productName = "成语消:禅意之境";
+			PlayerSettings.productName = "成语消：禅意之境";
 			PlayerSettings.applicationIdentifier = "chengyu.idiom.hexa.zen.huawei";
 			PlayerSettings.OpenHarmony.useCustomKeystore = true;
 			PlayerSettings.OpenHarmony.keystoreName =

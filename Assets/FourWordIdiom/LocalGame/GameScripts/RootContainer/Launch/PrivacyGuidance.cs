@@ -13,7 +13,16 @@ public class PrivacyGuidance : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _descriptionText.text = MultilingualManager.Instance.GetString("PrivacyAgreement01_General");
+        //txt_tip.text = MultilingualManager.Instance.GetString("PrivacyAgreement02");
+        //txt_tip.text ="Hello \u00A0 World";
+      
+        string tiplink= MultilingualManager.Instance.GetString("PrivacyAgreement01");
+        if (tiplink.Contains(" "))
+        {
+            tiplink = tiplink.Replace(" ", "\u00A0");
+        }
+        //_descriptionText.text = tiplink;
+        //_descriptionText.text = MultilingualManager.Instance.GetString("PrivacyAgreement01_General");
         _descriptionText.onHyperlinkClick = OnClickText;
         _confirmButton.AddClickAction(OnConfirmClick);
         _rejectButton.AddClickAction(OnRejectClick);
@@ -22,9 +31,10 @@ public class PrivacyGuidance : MonoBehaviour
     private void OnRejectClick()
     {
         gameObject.SetActive(false);
-        GameObject go = Resources.Load<GameObject>("Privacy/PrivacyReject");
-        GameObject pr = Instantiate(go, transform.parent);
-        pr.SetActive(true);
+        Application.Quit();
+        // GameObject go = Resources.Load<GameObject>("Privacy/PrivacyReject");
+        // GameObject pr = Instantiate(go, transform.parent);
+        // pr.SetActive(true);
     }
 
     private void OnConfirmClick()

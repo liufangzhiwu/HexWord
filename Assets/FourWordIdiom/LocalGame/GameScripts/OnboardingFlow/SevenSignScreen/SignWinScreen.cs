@@ -35,20 +35,22 @@ public class SignWinScreen : UIWindow
         AudioManager.Instance.PlaySoundEffect("ShowUI");
         InitUI();
 
-        OnSignBtnClick();
+        ShowSignReward();
         
         spineitem.GetComponent<SkeletonAnimation>().AnimationState.SetAnimation(0, "idle01", false);
         
         HTTPManager.OnUpdate();
         
         okBtn.gameObject.SetActive(false);
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
     }
 
     private void InitUI()
     {
         int curStreak = StreakManager.Instance.GetCurrentStreak();
         
-        titleText.text = MultilingualManager.Instance.GetString("DailyVictory");
+        titleText.text = MultilingualManager.Instance.GetString("DailyVictory","hudie");
         int lastStreak = (curStreak - 1)<=0 ?0:(curStreak - 1);
         lastWinTimes.text = lastStreak.ToString();
         WinTimes.text = curStreak.ToString();
@@ -66,7 +68,7 @@ public class SignWinScreen : UIWindow
         }
         
         string daytipkey = "Day"+days+"Text";
-        string daytipvalue = MultilingualManager.Instance.GetString(daytipkey);
+        string daytipvalue = MultilingualManager.Instance.GetString(daytipkey,"hudie");
 
         if (daytipvalue.Length > 14)
         {
@@ -102,13 +104,13 @@ public class SignWinScreen : UIWindow
         // 3. 从多语言获取7个星期缩写（顺序：周日~周六）
         string[] weekNames = new string[]
         {
-            MultilingualManager.Instance.GetString("Su"),
-            MultilingualManager.Instance.GetString("Mo"),
-            MultilingualManager.Instance.GetString("Tu"),
-            MultilingualManager.Instance.GetString("We"),
-            MultilingualManager.Instance.GetString("Th"),
-            MultilingualManager.Instance.GetString("Fr"),
-            MultilingualManager.Instance.GetString("Sa")
+            MultilingualManager.Instance.GetString("Su","hudie"),
+            MultilingualManager.Instance.GetString("Mo","hudie"),
+            MultilingualManager.Instance.GetString("Tu","hudie"),
+            MultilingualManager.Instance.GetString("We","hudie"),
+            MultilingualManager.Instance.GetString("Th","hudie"),
+            MultilingualManager.Instance.GetString("Fr","hudie"),
+            MultilingualManager.Instance.GetString("Sa","hudie")
         };
 
         // 4. 按偏移赋值
@@ -120,7 +122,7 @@ public class SignWinScreen : UIWindow
         }
     }
 
-    private void OnSignBtnClick()
+    private void ShowSignReward()
     {
         bool success = StreakManager.Instance.ClaimDailyReward();
         if (success)
@@ -215,6 +217,7 @@ public class SignWinScreen : UIWindow
             {
                 DayCells[i].GetComponent<Animator>().enabled = true;
                 DayCells[i].signMark.gameObject.SetActive(GameDataManager.Instance.UserData._signSaveData.currentStreak%7!=0);
+                
                 AudioManager.Instance.PlaySoundEffect("winday");
                 //DayCells[i].signMark.gameObject.SetActive(GameDataManager.Instance.UserData._signSaveData.currentStreak != 7);
             }

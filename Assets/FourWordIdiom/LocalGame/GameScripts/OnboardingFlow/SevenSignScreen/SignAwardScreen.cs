@@ -20,7 +20,7 @@ public class SignAwardScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
-        AudioManager.Instance.PlaySoundEffect("ShowUI");
+        AudioManager.Instance.PlaySoundEffect("hudieReward");
         InitAwardUI();
     }
 

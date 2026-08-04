@@ -166,14 +166,7 @@ public sealed class GameCoreManager: MonoBehaviour
         {
             ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
             yield return new WaitForSeconds(0.2f);
-//#if UNITY_HUAWEI
             SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
-            //ShowPrivacyScreen();
-//#elif UNITY_OPENHARMONY
-            //ShowPrivacyScreen();
-//#endif
-            
-          
             
             // 标记非首次进入
             GameDataManager.Instance.UserData.IsFirstLaunch = false;

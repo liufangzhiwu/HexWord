@@ -143,8 +143,6 @@ public class ShopScreen : UIWindow
                     shopDataItems = ShopManager.shopManager.GetShopHomeItems();
                     CrateShopItem(shopDataItems, true);
                 }
-               
-               
             }
             else
             {

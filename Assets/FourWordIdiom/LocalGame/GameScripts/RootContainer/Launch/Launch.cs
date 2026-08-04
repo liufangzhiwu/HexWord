@@ -15,10 +15,12 @@ public class Launch : MonoBehaviour
     {
         MultilingualManager.Instance.LoadLocalization();
         GameDataManager.Instance.LoadPlayerProfile();
+
+        StartCoroutine(InitUI());
     }
 
     // Start is called before the first frame update
-    private IEnumerator Start()
+    private IEnumerator InitUI()
     {
         transform.parent.GetChild(transform.GetSiblingIndex() + 1).gameObject.SetActive(false);
         _ageTip.AddClickAction(OnAgeTipClick);
@@ -26,10 +28,11 @@ public class Launch : MonoBehaviour
 
         if (!GameDataManager.Instance.UserData.IsAgreePrivacy)
         {
-#if UNITY_OPENHARMONY||UNITY_HUAWEI
+#if UNITY_HUAWEI
              GameDataManager.Instance.UserData.IsAgreePrivacy = true;
              isTiming = true;
-#else
+#elif UNITY_OPENHARMONY||IOS
+            yield return new WaitForSeconds(2f);
             GameObject pg = Resources.Load<GameObject>("Privacy/PrivacyGuidance");
             GameObject ps = Instantiate(pg, transform);
             ps.SetActive(true);
