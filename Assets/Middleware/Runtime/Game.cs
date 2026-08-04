@@ -23,6 +23,7 @@ namespace Middleware
         public IAccounts Accounts { private set; get; }
         public IAnalytics Analytics { private set; get; }
         public IShop Shop { private set; get; }
+        public IPushs Pushs { private set; get; }
         
         public Transform _uiRoot;
         public CommonErrorType CurrentErrorType { private set; get; }
@@ -60,6 +61,7 @@ namespace Middleware
             CreateAd();
             CreateShop();
             CreateAttribute();
+            CreatePush();
 
         }
 
@@ -143,6 +145,18 @@ namespace Middleware
             Shop = new Shop_harmony();
 #endif
             Shop.Init(0.2f);
+        }
+        
+        private void CreatePush()
+        {
+#if UNITY_HUAWEI
+             Pushs = new Push_harmony();
+#elif UNITY_IOS
+              Pushs = new Push_harmony();
+#elif UNITY_OPENHARMONY
+            Pushs = new Push_harmony();
+#endif
+            Pushs.Init(2f);
         }
         
         public void PauseGame()
