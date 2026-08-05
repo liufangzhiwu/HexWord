@@ -1,3 +1,4 @@
+#if UNITY_OPENHARMONY
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -113,3 +114,4 @@ namespace Middleware
         }
     }
 }
+#endif

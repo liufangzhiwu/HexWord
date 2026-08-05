@@ -150,13 +150,14 @@ namespace Middleware
         private void CreatePush()
         {
 #if UNITY_HUAWEI
-             Pushs = new Push_harmony();
+             //Pushs = new Push_harmony();
 #elif UNITY_IOS
-              Pushs = new Push_harmony();
+            
 #elif UNITY_OPENHARMONY
             Pushs = new Push_harmony();
+             Pushs.Init(2f);
 #endif
-            Pushs.Init(2f);
+           
         }
         
         public void PauseGame()
