@@ -85,8 +85,8 @@ public class LoadingController : MonoBehaviour
     
     public void OnClick()
     {
-        VivoSDKManager.OnPrivacyAgreed();
-        VivoSDKManager.Login();
+        //VivoSDKManager.OnPrivacyAgreed();
+        //VivoSDKManager.Login();
     }
 
     /// <summary>
