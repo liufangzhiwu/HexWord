@@ -1,31 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          package="com.unity3d.player">
+    package="com.mi.unitydevlib"
+    android:versionCode="1"
+    android:versionName="1.0" >
 
-    <!-- vivo SDK 所需权限 -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <application
+        android:allowBackup="true"
+        android:supportsRtl="true"
+        android:label="@string/app_name">
 
-    <application>
         <activity android:name="com.unity3d.player.UnityPlayerActivity"
-                  android:theme="@style/UnityThemeSelector">
+            android:exported="true"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density"
+            android:hardwareAccelerated="false"
+            android:launchMode="singleTask"
+            android:screenOrientation="sensorLandscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
             <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
         </activity>
 
-        <!-- vivo SDK 配置（与 activity 平级） -->
-        <provider
-                android:name="com.vivo.unionsdk.VivoUnionProvider"
-                android:authorities="${applicationId}.VivoUnionProvider"
-                android:enabled="true"
-                android:exported="true" />
-
         <meta-data
-                android:name="vivoUnionAppId"
-                android:value="106007769" />
+            android:name="miGameAppId"
+            android:value="mi_2882303761520479149" />
+        <meta-data
+            android:name="miGameAppKey"
+            android:value="mi_5592047971149" />
+
+        <!--        ${applicationId}  替换为游戏包名        -->
+        <provider
+            android:name="com.xiaomi.gamecenter.sdk.MiOauthProvider"
+            android:authorities="chengyu.idiom.hexa.zen.mi.mi_provider"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
+
 </manifest>

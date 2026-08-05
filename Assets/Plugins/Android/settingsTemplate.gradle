@@ -1,23 +1,36 @@
 pluginManagement {
     repositories {
         **ARTIFACTORYREPOSITORY**
-        google()
         gradlePluginPortal()
+        google()
         mavenCentral()
     }
 }
 
 include ':launcher', ':unityLibrary'
+include ':Plugin',':SampleMiGameSdk'
+include ':jar-anti'
+include ':jar-base'
+include ':jar-client'
+include ':onetrack'
+include ':achievement'
+include ':milink'
 **INCLUDES**
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         **ARTIFACTORYREPOSITORY**
+        maven {
+               url 'https://pkgs.d.xiaomi.net:443/artifactory/public'
+        }
+        maven {
+            url "https://pkgs.d.xiaomi.net:443/artifactory/maven-snapshot-virtual/"
+        }
         google()
         mavenCentral()
         flatDir {
             dirs "${project(':unityLibrary').projectDir}/libs"
-        }
+        }       
     }
 }
