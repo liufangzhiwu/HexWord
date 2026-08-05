@@ -51,7 +51,7 @@ public static class AppGameSettings
         public static int FishOpenLevel { get; } = 21;
         //10关卡进入结算界面时开启（命名界面）
         public static int HeadOpenLevel { get; } = 11;
-        public static int ZenOpenLevel { get; } = 11; // 11关卡开启禅模式
+        public static int ZenOpenLevel { get; } = 999999; // 11关卡开启禅模式
     }
 
     // ===== 任务系统 =====

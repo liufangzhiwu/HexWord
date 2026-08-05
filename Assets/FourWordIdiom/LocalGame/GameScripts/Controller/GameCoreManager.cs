@@ -104,9 +104,9 @@ public sealed class GameCoreManager: MonoBehaviour
         
         if (GameDataManager.Instance.UserData.IsFirstLaunch)
         {
-            ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
+            StageHexController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentHexStage);
             yield return new WaitForSeconds(0.2f);
-            SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
+            SystemManager.Instance.ShowPanel(PanelType.HexGamePlayArea);
             // 标记非首次进入
             GameDataManager.Instance.UserData.IsFirstLaunch = false;
             

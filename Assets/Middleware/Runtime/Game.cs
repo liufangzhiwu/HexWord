@@ -27,6 +27,8 @@ namespace Middleware
 
         public static bool IsNetworkActive { private set; get; }
 
+        private GameObject ps;
+
         private void Awake()
         {
             self = this;
@@ -218,7 +220,10 @@ namespace Middleware
             
             CurrentErrorType = CommonErrorType.LoginFail;
             GameObject pg = Resources.Load<GameObject>("Privacy/NetErrorView");
-            GameObject ps = Instantiate(pg, _uiRoot.transform);
+            if (pg == null)
+            {
+                ps= Instantiate(pg, _uiRoot.transform);
+            }
             ps.SetActive(true);
         }
         

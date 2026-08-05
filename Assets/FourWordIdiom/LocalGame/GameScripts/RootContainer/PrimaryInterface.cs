@@ -70,6 +70,7 @@ public class PrimaryInterface : UIWindow
 
     private void Start()
     {
+        ModeBtn.gameObject.transform.parent.gameObject.SetActive(false);
         StartCoroutine(DelayLoadRoutine());
     }
 

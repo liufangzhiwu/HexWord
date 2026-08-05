@@ -82,11 +82,20 @@ public class LoadingController : MonoBehaviour
     {
         StartCoroutine(InitializeLoadingProcess());
     }
+
     
-    public void OnClick()
+    public void InitAgreed()
     {
         //VivoSDKManager.OnPrivacyAgreed();
         //VivoSDKManager.Login();
+        //用户同意隐私协议后，通知SDK用户已经同意隐私协议
+#if UNITY_ANDROID&&!UNITY_EDITOR
+        SDKAndroid.Instance.OnUserAgreed();
+         //调用登录接口
+        SDKAndroid.Instance.OnStartLogin(new MyLoginCallback());
+#endif
+    
+       
     }
 
     /// <summary>
@@ -99,7 +108,7 @@ public class LoadingController : MonoBehaviour
         // iOS 平台直接开始模拟加载进度
         StartCoroutine(SimulateLoadingProgress());
         
-        OnClick();
+        InitAgreed();
 
         // 等待启动流程完成
         yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.LoggingIn);

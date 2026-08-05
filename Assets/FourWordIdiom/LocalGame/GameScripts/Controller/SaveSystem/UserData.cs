@@ -213,7 +213,7 @@ public class UserData
         TotalEarnedGold = 0;
         CurrentHexStage = AppGameSettings.FirstLevel;
         CurrentChessStage = AppGameSettings.FirstLevel;
-        levelMode = 2;
+        levelMode = 3;
         dayPassStageCount = 0;
         LanguageCode = GetLanguage();
         IsMusicOn = true;
