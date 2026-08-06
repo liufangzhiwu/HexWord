@@ -16,11 +16,11 @@ public class PrivacyGuidance : MonoBehaviour
         //txt_tip.text = MultilingualManager.Instance.GetString("PrivacyAgreement02");
         //txt_tip.text ="Hello \u00A0 World";
       
-        string tiplink= MultilingualManager.Instance.GetString("PrivacyAgreement01");
-        if (tiplink.Contains(" "))
-        {
-            tiplink = tiplink.Replace(" ", "\u00A0");
-        }
+        // string tiplink= MultilingualManager.Instance.GetString("PrivacyAgreement01");
+        // if (tiplink.Contains(" "))
+        // {
+        //     tiplink = tiplink.Replace(" ", "\u00A0");
+        // }
         //_descriptionText.text = tiplink;
         //_descriptionText.text = MultilingualManager.Instance.GetString("PrivacyAgreement01_General");
         _descriptionText.onHyperlinkClick = OnClickText;
