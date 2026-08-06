@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 using UnityEditor;
 
@@ -32,7 +33,6 @@ namespace Middleware
             BuildHarmony(new BuildParam()
             {
                 BuildVersion = "1.5.0",
-                BuildType = BuildType.EditorBuild,
                 IsBuildRelease = false,
                 IsBuildShowLog = true,
                 Channel = Channel.None
@@ -45,7 +45,6 @@ namespace Middleware
             BuildHarmony(new BuildParam()
             {
                 BuildVersion = "1.5.0",
-                BuildType = BuildType.EditorBuild,
                 IsBuildRelease = true,
                 IsBuildShowLog = false,
                 Channel = Channel.None
@@ -53,7 +52,7 @@ namespace Middleware
         }
         #endif
 
- #if UNITY_OPENHARMONY
+#if UNITY_2022_3_55 || UNITY_2022_3_61
         private static void BuildHarmony(BuildParam buildParam)
         {
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.OpenHarmony)
@@ -100,7 +99,7 @@ namespace Middleware
         #endif
 
         // 实现 Harmony 特有设置（目前无额外设置，因为已在主方法中完成）
-        private void ApplyHarmonySettings()
+        private static void ApplyHarmonySettings()
         {
             // 如果有额外需要（如修改鸿蒙特定属性），可在此实现
             // 例如：PlayerSettings.OpenHarmony.xxx = ...;
