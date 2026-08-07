@@ -74,10 +74,6 @@ namespace Middleware
             LimitTimeManager.Instance.Init();
             StreakManager.Instance.Init();
             ThemeManager.Instance.Init();
-            
-            #if UNITY_EDITOR
-            CreateAnalytic();
-            #endif
         }
         
         private void CreateAccounts()
@@ -137,7 +133,9 @@ namespace Middleware
         
         private void CreateShop()
         {
-#if UNITY_HUAWEI
+#if UNITY_EDITOR
+            Shop = new Shop_android();
+#elif UNITY_HUAWEI
             Shop = new Shop_huawei();
 #elif UNITY_IOS
             Shop = new Shop_ios();

@@ -31,7 +31,7 @@ public class Launch : MonoBehaviour
 #if UNITY_HUAWEI
              GameDataManager.Instance.UserData.IsAgreePrivacy = true;
              isTiming = true;
-#elif UNITY_OPENHARMONY||IOS
+#elif UNITY_OPENHARMONY||UNITY_IOS
             yield return new WaitForSeconds(2f);
             GameObject pg = Resources.Load<GameObject>("Privacy/PrivacyGuidance");
             GameObject ps = Instantiate(pg, transform);

@@ -37,7 +37,7 @@ public class HTTPClient
         // 注意：Google Play Games PC 版也是 Google 厂商
         platform ="Android"; 
 #elif UNITY_IOS
-     platform= "apple";
+     platform= "IPhonePlayer";
 #else
      platform ="Android"; 
 #endif
