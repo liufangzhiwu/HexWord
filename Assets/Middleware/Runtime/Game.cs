@@ -94,7 +94,7 @@ namespace Middleware
         private void CreateAd()
         {
 #if UNITY_EDITOR
-            Ads = new Ads_android();
+            Ads = new Ads_ios();
 #elif UNITY_HUAWEI
             Ads = new Ads_huawei();
 #elif UNITY_IOS

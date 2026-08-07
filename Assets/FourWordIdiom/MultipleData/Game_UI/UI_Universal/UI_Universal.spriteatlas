@@ -108,6 +108,7 @@ SpriteAtlas:
     - bc423523e1087ad49b5a263d55d57a58: 21300000
     - f0a7df23624f84489991481722517908: 21300000
     - c1366843c9e144b4f96928ec3df377fd: 21300000
+    - 0526f3837c1ece949aee3e4a00dba353: 21300000
     - d70c34e3a648b0947aefe7c5856a2760: 21300000
     - 59bea7f3f30483e4a8b1a0c8365b2b9c: 21300000
     - 106cc9f390a01a043923d85d9a94b65e: 21300000
@@ -189,7 +190,6 @@ SpriteAtlas:
     - d2830ca8f89dcb74ca68c596cb29a203: 21300000
     - b17c8ea85ebcc034192922b881cb5a81: 21300000
     - 6e29fdb829a73f843893e7dbca52774c: 21300000
-    - 7a7a40c867e4d594ba4102bc7621cc42: 21300000
     - d7818bc85bcd070489f7ecd558529faa: 21300000
     - 18373ec83ff964343af0b4246ec17b17: 21300000
     - 3af559e897a66f14aadbce40c5f992f8: 21300000
@@ -341,6 +341,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: bc423523e1087ad49b5a263d55d57a58, type: 3}
   - {fileID: 21300000, guid: f0a7df23624f84489991481722517908, type: 3}
   - {fileID: 21300000, guid: c1366843c9e144b4f96928ec3df377fd, type: 3}
+  - {fileID: 21300000, guid: 0526f3837c1ece949aee3e4a00dba353, type: 3}
   - {fileID: 21300000, guid: d70c34e3a648b0947aefe7c5856a2760, type: 3}
   - {fileID: 21300000, guid: 59bea7f3f30483e4a8b1a0c8365b2b9c, type: 3}
   - {fileID: 21300000, guid: 106cc9f390a01a043923d85d9a94b65e, type: 3}
@@ -422,7 +423,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: d2830ca8f89dcb74ca68c596cb29a203, type: 3}
   - {fileID: 21300000, guid: b17c8ea85ebcc034192922b881cb5a81, type: 3}
   - {fileID: 21300000, guid: 6e29fdb829a73f843893e7dbca52774c, type: 3}
-  - {fileID: 21300000, guid: 7a7a40c867e4d594ba4102bc7621cc42, type: 3}
   - {fileID: 21300000, guid: d7818bc85bcd070489f7ecd558529faa, type: 3}
   - {fileID: 21300000, guid: 18373ec83ff964343af0b4246ec17b17, type: 3}
   - {fileID: 21300000, guid: 3af559e897a66f14aadbce40c5f992f8, type: 3}
@@ -573,6 +573,7 @@ SpriteAtlas:
   - Tips
   - targetblue
   - leaf_skin_02a
+  - icon_xiao
   - Highlight_162
   - giftdi6
   - zenicon_7
@@ -654,7 +655,6 @@ SpriteAtlas:
   - lotus
   - gold2
   - success_bg
-  - icon_xiao
   - shopads
   - UI_Icon_Butterfly
   - zenlevel_icon11

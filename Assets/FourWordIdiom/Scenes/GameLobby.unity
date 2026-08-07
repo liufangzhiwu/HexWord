@@ -4262,7 +4262,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: cf5997e5dad381348926b73d62e0a5ad, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6ac83fabcb7096f46b63c5f5d34622ef, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -31177,6 +31177,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: changjing01_texiao
       objectReference: {fileID: 0}
+    - target: {fileID: 1064777159963245594, guid: fb56f7e0cbea6674d9f34a4fc0bca04f,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 816c3f654cb95e1448652c5ee27418a3, type: 2}
     - target: {fileID: 2531230742422258644, guid: fb56f7e0cbea6674d9f34a4fc0bca04f,
         type: 3}
       propertyPath: m_Enabled
@@ -31237,6 +31242,11 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6946102452598181824, guid: fb56f7e0cbea6674d9f34a4fc0bca04f,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 00e68890eb2fbc64f8967945df288d76, type: 2}
     - target: {fileID: 7311491723064517049, guid: fb56f7e0cbea6674d9f34a4fc0bca04f,
         type: 3}
       propertyPath: m_Pivot.x
@@ -85781,7 +85791,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: a0eac19cc0e29de47a5bf67e0e362fab, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 78afd148a30dff24cab32d8cd0a514de, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -120635,7 +120645,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: bd3a5e7069495454c830db04f24b7ef7, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4b117f5528ad2bd46972d5673988f43c, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
