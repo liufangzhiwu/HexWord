@@ -2,8 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Net.Mime;
 using DG.Tweening;
+#if UNITY_HUAWEI
 using HuaweiService.CloudStorage;
+#endif
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;

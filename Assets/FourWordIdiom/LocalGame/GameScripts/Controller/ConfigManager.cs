@@ -30,7 +30,7 @@ public class ConfigManager : MonoBehaviour
     async void Start()
     {
         //等待100毫秒（保证数据初始化成功）
-        await Task.Delay(100);
+        await Task.Delay(1000);
         
         LoadAdjustTable();
         if (SpineObject == null)
@@ -44,7 +44,6 @@ public class ConfigManager : MonoBehaviour
         }
         
         //Debug.unityLogger.logEnabled = isLog;
-        Application.targetFrameRate = 60; // 平台设置为60帧
     }
     
     private void LoadAdjustTable()

@@ -6,9 +6,11 @@ using DG.Tweening;
 using Middleware;
 using Newtonsoft.Json;
 using UnityEngine;
+#if UNITY_HUAWEI
 using UnityEngine.HuaweiAppGallery;
 using UnityEngine.HuaweiAppGallery.Listener;
 using UnityEngine.HuaweiAppGallery.Model;
+#endif
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Game = Middleware.Game;

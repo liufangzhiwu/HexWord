@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using Middleware;
 using UnityEngine;
+#if UNITY_HUAWEI
 using UnityEngine.HuaweiAppGallery;
+#endif
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 #if UNITY_IOS
