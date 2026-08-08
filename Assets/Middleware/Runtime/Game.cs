@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
+#if UNITY_HUAWEI
 using UnityEngine.HuaweiAppGallery;
+#endif
 using UnityEngine.Networking;
 
 namespace Middleware
@@ -94,7 +96,7 @@ namespace Middleware
         private void CreateAd()
         {
 #if UNITY_EDITOR
-            Ads = new Ads_ios();
+            Ads = new Ads_android();
 #elif UNITY_HUAWEI
             Ads = new Ads_huawei();
 #elif UNITY_IOS
@@ -153,7 +155,7 @@ namespace Middleware
             
 #elif UNITY_OPENHARMONY
             Pushs = new Push_harmony();
-             Pushs.Init(2f);
+            Pushs.Init(0.5f);
 #endif
            
         }

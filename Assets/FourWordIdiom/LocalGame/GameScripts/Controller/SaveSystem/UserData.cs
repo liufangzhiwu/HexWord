@@ -18,6 +18,7 @@ public class UserData
 
     public string PlayerId; // 玩家ID
     public string ABName; // AB测试包名
+    public string PushToken; // 推送Token
     public string UserName;
     public int UserHeadId;
     public string UserId; // 用户唯一标识
@@ -284,6 +285,7 @@ public class UserData
         // 用户基础数据
         PlayerId = null;
         ABName = "0";
+        PushToken = "";
         UserHeadId = 0;
         UserName = null;
         UserId = null;
@@ -439,6 +441,7 @@ public class UserData
         // 基础数据
         PlayerId = user.PlayerId;
         ABName = user.ABName;
+        PushToken=user.PushToken;
         UserHeadId = user.UserHeadId;
         UserName = user.UserName;
         UserId = user.UserId;

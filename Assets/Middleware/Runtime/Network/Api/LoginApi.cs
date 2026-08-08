@@ -41,7 +41,7 @@ public class LoginApi
         
         string openId = GameDataManager.Instance.UserData.UserId;
         string factory = GetCurrentFactory();
-        
+        string push_token = GameDataManager.Instance.UserData.PushToken;
 
         if (string.IsNullOrEmpty(openId))
         {
@@ -73,6 +73,7 @@ public class LoginApi
             platform = platform,
             version = Application.version ?? "1.0.0",
             language = Application.systemLanguage.ToString(),
+            push_token = push_token,
         };
        
         yield return httpClient.Post<LoginResponse>("auth/device-login",

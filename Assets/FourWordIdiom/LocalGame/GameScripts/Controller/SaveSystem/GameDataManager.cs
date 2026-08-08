@@ -61,21 +61,8 @@ public class GameDataManager : SingletonMono<GameDataManager>
         StartTracking();
         
         LoadPlayerProfile();
-
-        StartCoroutine(SetTargetFrameRate());
-    }
-
-    IEnumerator SetTargetFrameRate()
-    {
-        yield return new WaitForSeconds(1.0f);
-        Application.targetFrameRate = 60; // 平台设置为60帧
     }
     
-    IEnumerator DelayedSetFrameRate()
-    {
-        yield return new WaitForSeconds(0.5f);
-        Application.targetFrameRate = 60; // 平台设置为60帧
-    }
     
     /// <summary>
     /// 开始追踪玩家在线时长
@@ -170,7 +157,6 @@ public class GameDataManager : SingletonMono<GameDataManager>
 
     private new void OnApplicationQuit()
     {
-        Application.targetFrameRate = -1;
         HandleQuitEvent();
     }
     #endregion
@@ -391,12 +377,8 @@ public class GameDataManager : SingletonMono<GameDataManager>
         if (isPaused && dataInitialized)
         {
             CommitGameData();
-            Application.targetFrameRate = -1;
             //StopTracking();
             Debug.Log("应用暂停，数据已保存");
-        }else if (!isPaused)
-        {
-            StartCoroutine(DelayedSetFrameRate());
         }
     }
 

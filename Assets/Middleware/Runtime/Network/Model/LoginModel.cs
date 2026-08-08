@@ -15,6 +15,7 @@ public class LoginRequest
     public string idfa;
     public string version;
     public string language;
+    public string push_token;
 }
 
 [Serializable]

@@ -9,7 +9,7 @@ namespace Middleware
         
 #if UNITY_2022_3_55 || UNITY_2022_3_61
         [MenuItem("Tools/切换平台/Harmony", false, 101)]
-        private void SwitchToHarmony()
+        private static void SwitchToHarmony()
         {
             SwitchPlatform(BuildTarget.OpenHarmony);
             if (AssetDatabase.IsValidFolder("Assets/GeneratedLocalRepo"))
@@ -17,18 +17,9 @@ namespace Middleware
         }
 #endif
         
-#if UNITY_OPENHARMONY
-        public void JenkinsBuildHarmony()
-        {
-            var buildParam = ParseJenkinsBuildSetting(Environment.GetCommandLineArgs());
-            buildParam.BuildType = BuildType.JenkinsBuild;
-            BuildHarmony(buildParam);
-        }
-#endif
-        
         #if UNITY_2022_3_55 || UNITY_2022_3_61
         [MenuItem("Tools/自动化打包/Harmony/Debug", false, 110)]
-        public void BuildHarmonyDebug()
+        private static void BuildHarmonyDebug()
         {
             BuildHarmony(new BuildParam()
             {
@@ -40,7 +31,7 @@ namespace Middleware
         }
 
         [MenuItem("Tools/自动化打包/Harmony/Release", false, 111)]
-        public void BuildHarmonyRelease()
+        private static void BuildHarmonyRelease()
         {
             BuildHarmony(new BuildParam()
             {
