@@ -18,6 +18,7 @@ namespace Middleware
         public enum Channel
         {
             None,           // 未指定（默认华为）
+            Android,
             HuaweiAndroid,
             Honor,
             Xiaomi,
@@ -77,11 +78,36 @@ namespace Middleware
         [MenuItem("Tools/切换平台/Android", false, 102)]
         private static void SwitchToAndroid()
         {
-            SwitchPlatform(BuildTarget.Android, false);
+            SwitchPlatform(BuildTarget.Android);
         }
 
-        private static void SwitchPlatform(BuildTarget targetPlatform, bool isMange = false)
+        private static void SwitchPlatform(BuildTarget targetPlatform, Channel channel = Channel.Android)
         {
+            switch (channel)
+            {
+                case Channel.Android:
+                    CleanXiaomiFolder();
+                    CopyHuaweiFolderIfEmpty();
+                    break;
+                case Channel.HuaweiAndroid:
+                    CleanXiaomiFolder();
+                    CopyHuaweiFolderIfEmpty();
+                    break;
+                case Channel.Honor:
+                    break;
+                case Channel.Xiaomi:
+                    CleanHuaweiFolder();
+                    CopyXiaomiFolderIfEmpty();
+                    break;
+                case Channel.OPPO:
+                    break;
+                case Channel.GOOGLE:
+                    break;
+                case Channel.IOS:
+                    break;
+            }
+            AssetDatabase.Refresh();
+            
             if (EditorUserBuildSettings.activeBuildTarget == targetPlatform)
                 return;
             
@@ -89,6 +115,29 @@ namespace Middleware
                 targetPlatform);
             Debug.Log("切换平台成功");
             AssetDatabase.Refresh();
+        }
+
+        /// <summary>
+        /// 递归复制目录
+        /// </summary>
+        private static void CopyDirectory(string sourceDir, string targetDir)
+        {
+            // 创建目标目录
+            Directory.CreateDirectory(targetDir);
+
+            // 复制所有文件
+            foreach (var file in Directory.GetFiles(sourceDir))
+            {
+                string destFile = Path.Combine(targetDir, Path.GetFileName(file));
+                File.Copy(file, destFile, true); // true 表示覆盖
+            }
+
+            // 递归复制子目录
+            foreach (var subDir in Directory.GetDirectories(sourceDir))
+            {
+                string destSubDir = Path.Combine(targetDir, Path.GetFileName(subDir));
+                CopyDirectory(subDir, destSubDir);
+            }
         }
 
         #endregion

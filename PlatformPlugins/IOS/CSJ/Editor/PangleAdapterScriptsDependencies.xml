@@ -1,0 +1,111 @@
+<dependencies>
+
+  <!-- Android dependencies are specified under the "androidPackages" element.
+       Each "androidPackage" element contains the attributes of an Android
+       dependency (e.g AAR, JAR reference). -->
+  <androidPackages>
+    <!-- Global set of repositories to search for packages.
+         These repos will be searched for all packages specified by
+         androidPackage. -->
+    <repositories>
+      <repository>https://artifact.bytedance.com/repository/pangle</repository>
+      <repository>https://maven.aliyun.com/repository/jcenter</repository>
+      <repository>https://maven.aliyun.com/repository/google</repository>
+    </repositories>
+    <!-- The "spec" attribute is *required* and provides the Maven package
+         specification.
+
+         Currently this only supports group:artifact:version_specification where
+         group:artifact:version_specification references a Maven package that
+         can be located in:
+         * Maven central.
+         * Google's Maven repo.
+         * Local Android SDK Maven repo.
+
+         Additional repositories can be added using the "repositories" element.
+    -->
+    <androidPackage spec="com.android.support:appcompat-v7:28.0.0"/>    
+    <androidPackage spec="com.android.support:support-v4:28.0.0"/>
+    <!--  聚合功能 adapter，注：穿山甲不需要adapter，其他adn需要  -->
+    <androidPackage spec="com.pangle.cn:mediation-gdt-adapter:4.680.1550.0"/>
+    <androidPackage spec="com.pangle.cn:mediation-ks-adapter:5.3.20.1.0"/>
+    <androidPackage spec="com.pangle.cn:mediation-baidu-adapter:9.4503.0"/>
+    <androidPackage spec="com.pangle.cn:mediation-sigmob-adapter:4.25.14.0"/>
+  </androidPackages>
+
+  <!-- iOS Cocoapod dependencies can be specified by each iosPod element. -->
+  <iosPods>
+    <!-- Global set of sources to search for Cocoapods.
+         These sources will be searched for all Cocoapods specified by
+         iosPod. -->
+<!--    <sources>-->
+<!--      <source>https://cocoapods.org/pods/Ads-Global</source>-->
+<!--    </sources>-->
+    <!-- iosPod supports the following attributes:
+         * "name" (required)
+           Name of the Cocoapod.
+         * "path" (optional)
+           Path to the local Cocoapod.
+           NOTE: This is expanded to a local path when the Podfile is generated.
+           For example, if a Unity project has the root path "/my/game" and the
+           pod the path is "foo/bar", this will be will be expanded to
+           "/my/game/foo/bar" when the Podfile is generated.
+         * "version" (optional)
+           Cocoapod version specification for the named pod.
+           If this is not specified the latest version is used.
+           NOTE: This can't be used when "path" is set.
+         * "bitcodeEnabled" (optional)
+           Whether this Cocoapod requires bitcode to be enabled in Unity's
+           generated Xcode project.  This is "true" by default.
+         * "minTargetSdk" (optional)
+           The minimum iOS SDK required by this Cocoapod.
+         * "addToAllTargets" (optional)
+           Whether to add this pod to all targets when multiple target is
+           supported. This is "false" by default.
+         * "configurations" (optional)
+           Podfile formatted list of configurations to include this pod in.
+         * "modular_headers" (optional)
+           Set to true to enable modular headers, false to disable.
+         * "source" (optional)
+           Source repo to fetch the pod from.
+         * "subspecs" (optional)    
+           Subspecs to include for the pod.
+     -->
+
+    <!--  穿山甲广告SDK 以及 聚合服务  -->
+    <!--  如需直播拉流功能，需手动本地引入进行添加 https://bytedance.larkoffice.com/docx/Fv5odfmxpoKu4CxxfIGcJKdznFh -->
+    <iosPod name="Ads-CN" version="7.6.0.4" bitcodeEnabled="true" minTargetSdk="10.0" addToAllTargets="false" subspecs="['CSJMediation-Only']">
+    </iosPod>
+     
+    <!--  聚合维度其他家adn adapter & adn SDK -->
+
+    <!--  SigmobAd  -->
+    <iosPod name="SigmobAd-iOS" version="&lt;=4.20.10">
+    </iosPod> 
+    <iosPod name="GMSigmobAdapter" version="4.20.10.0">
+    </iosPod>
+     
+    <!--  广点通/优量汇  （注销原因：通过该方式引入后会出现启动崩溃，如需引入“广点通广告SDK”可以 手动本地引入 或 导出iOS工程后 在podfile主target中进行添加  pod 'GDTMobSDK', '<=4.15.80'）  -->
+    <!--  <iosPod name="GDTMobSDK" version="&lt;=4.15.80">  -->
+    <!--  </iosPod>   -->
+    <iosPod name="GMGdtAdapter" version="4.15.80.0">
+    </iosPod>
+     
+    <!--  快手SDK  （注销原因：通过该方式引入后会出现启动崩溃，如需引入“快手广告SDK”可以 手动本地引入 或 导出iOS工程后 在podfile主target中进行添加  pod 'KSAdSDK', '<=5.3.20.1'）  -->            
+    <!--  <iosPod name="KSAdSDK" version="&lt;=5.3.20.1">  -->
+    <!--  </iosPod>  -->
+    <iosPod name="GMKsAdapter" version="5.3.20.1.0">
+    </iosPod>
+   
+    <!--  百度SDK  -->            
+    <iosPod name="BaiduMobAdSDK" version="&lt;=10.050">
+    </iosPod>
+    <iosPod name="GMBaiduAdapter" version="10.050.0">
+    </iosPod>
+     
+    <sources>
+      <source>https://github.com/CocoaPods/Specs</source>
+    </sources>
+    
+  </iosPods>
+</dependencies>

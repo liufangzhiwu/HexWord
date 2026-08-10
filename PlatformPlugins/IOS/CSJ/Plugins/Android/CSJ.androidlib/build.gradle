@@ -1,0 +1,50 @@
+apply plugin: 'com.android.library'
+
+repositories {
+    flatDir {
+        dirs '../libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'bin', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    compileOnly fileTree(dir: '../libs', include: ['*.aar'])
+}
+
+buildscript {
+    repositories {
+        jcenter() {
+            url 'https://maven.aliyun.com/repository/jcenter'
+        }
+        maven {
+            url 'https://maven.aliyun.com/repository/google'
+        }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.4'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+android {
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    compileSdkVersion 32
+    buildToolsVersion '32.0.0'
+
+    defaultConfig{
+        proguardFiles  'proguard-user.txt'
+        consumerProguardFiles 'proguard-user.txt'
+    }
+}
