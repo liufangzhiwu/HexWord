@@ -38,7 +38,7 @@ public static class AppGameSettings
     //每日任务中无限使用蝴蝶道具时长（分钟）
     public static int TaskButterflyUseTime { get; } = 60;     
     //竞速目标词语数量
-    public static int FishTargetWordCount { get; } = 100;   
+    public static int FishTargetWordCount { get; set; } = 100;   
 
     // ===== 关卡循环设置 =====
     public static int LoopLevelStart { get; } = 180;     

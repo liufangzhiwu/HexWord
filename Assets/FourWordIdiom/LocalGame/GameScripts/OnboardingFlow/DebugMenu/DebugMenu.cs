@@ -229,7 +229,7 @@ public class DebugMenu : UIWindow
         int value = int.Parse(Stagenumtxt.text);
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedFindWord,value);
         LimitTimeManager.Instance.UpdateLimitProgress(value);
-        //GameDataManager.instance.FishUserSave.UpdateFishProgress(value);
+        GameDataManager.Instance.FishUserSave.UpdateFishProgress(value);
     }
     private void OnChessEnergyClick()
     {

@@ -139,7 +139,8 @@ public class FishInfoController : MonoBehaviour
         int userUseTime = GameDataManager.Instance.FishUserSave.updatePuzzleusetime;
         int round= GameDataManager.Instance.FishUserSave.curround;
         FishaiInfoItem infoItem = GetCurrFishItem(round);
-        int fishTargetWordCount = infoItem?.wordCount ?? AppGameSettings.FishTargetWordCount;
+        AppGameSettings.FishTargetWordCount=infoItem.wordCount;
+        int fishTargetWordCount =  AppGameSettings.FishTargetWordCount;
         // 合并符合条件的AI和玩家数据，并包含usetime
         var query = GameDataManager.Instance.FishUserSave.aiSaveDatas
             .Where(ai => ai.Puzzleprogress >= fishTargetWordCount)
@@ -228,12 +229,12 @@ public class FishInfoController : MonoBehaviour
     /// <returns></returns>
     public bool IsShowFishProgressAnim()
     {
-        if (GameDataManager.Instance.FishUserSave.Puzzleprogress >= 100)
+        if (GameDataManager.Instance.FishUserSave.Puzzleprogress >= AppGameSettings.FishTargetWordCount)
         {
             return false;
         }
         
-        int targetOver=GameDataManager.Instance.FishUserSave.aiSaveDatas.FindAll((item)=>item.Puzzleprogress >= 100).Count;
+        int targetOver=GameDataManager.Instance.FishUserSave.aiSaveDatas.FindAll((item)=>item.Puzzleprogress >= AppGameSettings.FishTargetWordCount).Count;
         
         if(targetOver>=3)
             return false;
@@ -251,12 +252,12 @@ public class FishInfoController : MonoBehaviour
     /// <returns></returns>
     public bool RoundFishIsOver()
     {
-        if (GameDataManager.Instance.FishUserSave.Puzzleprogress >= 100)
+        if (GameDataManager.Instance.FishUserSave.Puzzleprogress >= AppGameSettings.FishTargetWordCount)
         {
             return true;
         }
         
-        int targetOver=GameDataManager.Instance.FishUserSave.aiSaveDatas.FindAll((item)=>item.Puzzleprogress >= 100).Count;
+        int targetOver=GameDataManager.Instance.FishUserSave.aiSaveDatas.FindAll((item)=>item.Puzzleprogress >= AppGameSettings.FishTargetWordCount).Count;
         
         if(targetOver>=3)
            return true;

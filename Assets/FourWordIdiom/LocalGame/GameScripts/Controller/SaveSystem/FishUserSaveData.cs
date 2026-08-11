@@ -31,8 +31,8 @@ public class FishAISaveData
     {
         Puzzleprogress += progress;
         ailevel++;
-        if(Puzzleprogress>=100)
-            Puzzleprogress = 100;
+        if(Puzzleprogress>=AppGameSettings.FishTargetWordCount)
+            Puzzleprogress = AppGameSettings.FishTargetWordCount;
     }
 
     public void UpdatePassLvTime(int second)
@@ -230,9 +230,9 @@ public class FishUserSaveData
         
         Puzzleprogress += progress;
         
-        if (Puzzleprogress >= 100)
+        if (Puzzleprogress >= AppGameSettings.FishTargetWordCount)
         {
-            Puzzleprogress = 100;
+            Puzzleprogress = AppGameSettings.FishTargetWordCount;
             updatePuzzleusetime = (int)DateTime.Now.Subtract(DateTime.Parse(roundstarttime)).TotalSeconds;
         }
 
