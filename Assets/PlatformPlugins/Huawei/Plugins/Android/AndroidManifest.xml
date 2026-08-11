@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        package="com.unity3d.player"
+        xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 粗略位置权限（基于基站/WiFi） -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- 精确位置权限（基于GPS） -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!-- 网络状态权限（用于检测网络连接） -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 互联网访问权限（必须） -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 前台服务权限（若需要在后台持续定位时显示通知） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="com.huawei.hms.permission.AD_ID" />
+
+    <application>
+
+        <!-- 隐私协议 Activity（启动入口） -->
+        <activity android:name="com.unity3d.player.PrivacyActivity"
+                  android:theme="@style/UnityThemeSelector"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Unity 主 Activity -->
+        <activity android:name="com.unity3d.player.UnityPlayerActivity"
+                  android:theme="@style/UnityThemeSelector">
+            <!-- <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+                 <category android:name="android.intent.category.LAUNCHER" />
+             </intent-filter> -->
+            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+        </activity>
+
+        <activity android:name="com.unity.hms.iap.HmsIapActivity"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                  android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
+                  android:exported="false">
+        </activity>      
+
+        <!-- 华为 HMS 应用 ID（用于定位等服务） -->
+        <meta-data android:name="com.huawei.hms.client.appid" android:value="116093983"/>
+        <!-- 禁用华为应用市场渠道检查 -->
+        <meta-data
+                android:name="com.huawei.hms.client.channel.androidMarket"
+                android:value="false" />
+    </application>
+</manifest>
