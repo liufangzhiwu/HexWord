@@ -59,6 +59,7 @@ public class UserData
     public bool IsMusicOn = true; // 背景音乐开关
     public bool IsSoundOn = true; // 音效开关
     public bool IsVibrationOn =true;    // 震动反馈开关
+    public bool HasUnclaimedUpdateJoin;       // 是否升级版本
     public string LanguageCode; // 当前语言代码
     public bool IsAgreePrivacy; // 同意用户隐私协议
 
@@ -304,6 +305,7 @@ public class UserData
         IsAgreePrivacy = false;
         Zenlevel = "ZenState01";
         first_version = "";
+        HasUnclaimedUpdateJoin = false;
         Energy = 5;
         LastEnergyUpdateTime = DateTime.Now.ToString();
         hasUsedFreeRevive = false;
@@ -460,6 +462,7 @@ public class UserData
         IsMusicOn = user.IsMusicOn;
         IsSoundOn = user.IsSoundOn;
         IsVibrationOn= user.IsVibrationOn;
+        HasUnclaimedUpdateJoin=user.HasUnclaimedUpdateJoin;
         IsAgreePrivacy = user.IsAgreePrivacy;
         Rigister = user.Rigister;
         firstLoginTime = user.firstLoginTime ?? DateTime.Now.ToString();

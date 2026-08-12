@@ -42,11 +42,18 @@ public class LoginApi
         string openId = GameDataManager.Instance.UserData.UserId;
         string factory = GetCurrentFactory();
         string push_token = GameDataManager.Instance.UserData.PushToken;
+        
+        //  获取稳定设备ID，优先使用你写的 GetUniqueId()
+        string stableDeviceId = Game.self.GetUniqueId();
+        if (string.IsNullOrEmpty(stableDeviceId))
+        {
+            // 如果读不到 OAID，再用原生 API 兜底
+            stableDeviceId = SystemInfo.deviceUniqueIdentifier;
+        }
 
         if (string.IsNullOrEmpty(openId))
         {
-            openId = SystemInfo.deviceUniqueIdentifier;
-            
+            openId = stableDeviceId;
             Debug.LogError(string.Format("[{0}] - {1} OpenId为空！请检查登录逻辑。", factory, openId));
         }
 
@@ -69,7 +76,7 @@ public class LoginApi
         {
             factory = factory,
             openId = openId,
-            deviceId = openId,
+            deviceId = stableDeviceId,
             platform = platform,
             version = Application.version ?? "1.0.0",
             language = Application.systemLanguage.ToString(),

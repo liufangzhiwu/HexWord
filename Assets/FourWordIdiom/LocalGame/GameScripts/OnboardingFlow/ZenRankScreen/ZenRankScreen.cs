@@ -40,7 +40,6 @@ public class ZenRankScreen : UIWindow
     [SerializeField] private Image MyAvatar;
     [SerializeField] private Text MyName;
     [SerializeField] private Text MyScore;
-    [SerializeField] private Text ZenTitle;
     [SerializeField] private Button MyGoPlay;
     
     // 🌟 缓存的升降级标签实例
@@ -62,7 +61,7 @@ public class ZenRankScreen : UIWindow
     // Start is called before the first frame update
     
     private ObjectPool hehuaObjectPool;
-    public GameObject hehuaPrefab;
+    private GameObject hehuaPrefab;
     
     // 顶部的滑动组件
     private ScrollRect topScrollRect;
@@ -476,7 +475,12 @@ public class ZenRankScreen : UIWindow
         }
         
         MyAvatar.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + GameDataManager.Instance.UserData.UserHeadId);
-        MyName.text = GameDataManager.Instance.UserData.UserName;
+        string displayName = GameDataManager.Instance.UserData.UserName;
+        if (!string.IsNullOrEmpty(displayName) && displayName.Length > 6)
+        {
+            displayName = displayName.Substring(0, 5) + "...";
+        }
+        MyName.text = displayName;
         MyScore.text = entry.score.ToString();
     }
    

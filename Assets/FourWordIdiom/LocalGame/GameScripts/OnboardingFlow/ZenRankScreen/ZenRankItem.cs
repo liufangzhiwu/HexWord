@@ -58,7 +58,7 @@ public class ZenRankItem : MonoBehaviour
     {
         currentRank = state.Rank;
         // GoPlay.gameObject.SetActive(false);
-        //isMe = state.Name == GameDataManager.Instance.UserData.UserName;
+        // isMe = state.Name == GameDataManager.Instance.UserData.UserName;
         isMe = state.PlayerId == int.Parse(GameDataManager.Instance.UserData.PlayerId);
         if (isDisplayOnly)
         {
@@ -91,7 +91,12 @@ public class ZenRankItem : MonoBehaviour
             }
         }
         Avatar.sprite = LoadheadIcon(state.Avatar);
-        Name.text = state.Name;
+        string displayName = state.Name;
+        if (!string.IsNullOrEmpty(displayName) && displayName.Length > 6)
+        {
+            displayName = displayName.Substring(0, 5) + "...";
+        }
+        Name.text = displayName;
         Score.text = state.Score.ToString();
 
         if (isMe)

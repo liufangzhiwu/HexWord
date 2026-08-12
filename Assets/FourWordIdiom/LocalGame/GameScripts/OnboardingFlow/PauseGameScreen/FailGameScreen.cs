@@ -33,8 +33,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     {
         addTimeBtn.AddClickAction(OnReviveClicked);
         exitBtn.AddClickAction(() => SwitchPanel(false));
-        returnGame.AddVibraClickAction(() => SwitchPanel(true));
-        realExitBtn.AddVibraClickAction(OnRealExitClicked);
+        returnGame.AddClickAction(() => SwitchPanel(true));
+        realExitBtn.AddClickAction(OnRealExitClicked);
         
         conTitleText.text = MultilingualManager.Instance.GetString("AreYouSure");
         conTipText.text = MultilingualManager.Instance.GetString("YouWillLose");
@@ -49,6 +49,9 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     protected override void OnEnable()
     {
         base.OnEnable();
+        
+        AudioManager.Instance.PlaySoundEffect("ShowUI");
+        
         SwitchPanel(true); // 每次打开弹窗，强制显示主失败页
         RefreshReviveUI(); // 刷新复活按钮的UI表现 (是否免费)
         RefreshPupaIconVisibility();
@@ -146,6 +149,15 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     /// </summary>
     private void OnRealExitClicked()
     {
+        if (ChessPlayArea.Instance != null)
+        {
+            if (ChessPlayArea.Instance.chessboardGrid != null)
+            {
+                ChessPlayArea.Instance.chessboardGrid.IsBlockInput = true;
+            }
+            // 锁死下方的待填字盘
+            ChessBowlGrid.IsTutorialBlocking = true; 
+        }
         SystemManager.Instance.HidePanel(PanelType.HeaderSection, true, () =>
         {
             ChessPlayArea.Instance.QuitGameAndDeductEnergy();

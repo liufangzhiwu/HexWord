@@ -35,8 +35,8 @@ public class MultilingualManager:MonoBehaviour
         localizedStrings = ToolUtil.ReadCvsLanguage(defCsvFile,"multilingual");
         TextAsset pinCsvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "conifg_pingzi_lang");
         pinziLocalized = ToolUtil.ReadCvsLanguage(pinCsvFile,"conifg_pingzi_lang");
-        TextAsset hudieCsvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "ButterflyLocales");
-        butterfliesLocalized = ToolUtil.ParseCvsLanguage(hudieCsvFile,"ButterflyLocales");
+        TextAsset hudieCsvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "GeneralLocales");
+        butterfliesLocalized = ToolUtil.ParseCvsLanguage(hudieCsvFile,"GeneralLocales");
 
         LoadLocalizationNameTable();
     }

@@ -18,6 +18,7 @@ public class RewardNamePanel : UIWindow
     {
         if (rewardButton != null) rewardButton.AddClickAction(OnClaimReward);
         if (closeButton != null) closeButton.AddVibraClickAction(OnClose);
+        titleText.text = MultilingualManager.Instance.GetString("nickname", "hudie");
     }
 
     protected override void OnEnable()

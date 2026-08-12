@@ -21,10 +21,11 @@ public class LoginRequest
 [Serializable]
 public class LoginResponse
 {
-    public string token;
-    public int offline_Seconds;
-    public int expiresIn; // 过期时间，单位秒
     public string uid;
+    public string token;
+    public int expiresIn; // 过期时间，单位秒
+    public int offline_Seconds;
+    public bool is_version_upgraded;
     public Dictionary<string, Object> abtest; // A/B测试参数
 }
 
@@ -33,7 +34,6 @@ public class LogoutRequest
 {
     public string gameData;
 }
-
 
 [Serializable]
 public class GameDataDto

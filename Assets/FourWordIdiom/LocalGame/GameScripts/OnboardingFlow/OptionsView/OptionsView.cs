@@ -15,6 +15,7 @@ public class OptionsView : UIWindow
     [SerializeField] private Button termsBtn; // 服务协议按钮
     [SerializeField] private Button opinionBtn; // 语言选择按钮
     [SerializeField] private Button restoreBuyBtn; // 服务协议按钮
+    [SerializeField] private Button copyButton;   // 复制id和包名
     
     [SerializeField] private GameObject muHandle; // 音乐开关的视觉手柄
     [SerializeField] private GameObject soHandle; // 音效开关的视觉手柄
@@ -152,7 +153,7 @@ public class OptionsView : UIWindow
         termsBtn.AddClickAction(OntermsBtn);
         opinionBtn.AddClickAction(OnOpinionBtn);
         restoreBuyBtn.AddClickAction(OnRestoreBuyBtn);
-        
+        copyButton.AddClickAction(OnCopyPackageAndOpenId);
         // 添加无用的点击监听器
         var buttons = new Button[] { HideButton, privacyBtn, termsBtn };
         foreach (var btn in buttons)
@@ -210,5 +211,41 @@ public class OptionsView : UIWindow
     {
         //todo 关闭loading界面
         //todo 处理items数据
+    }
+    /// <summary>
+    /// 复制包名和 OpenId 到系统剪贴板
+    /// </summary>
+    public void OnCopyPackageAndOpenId()
+    {
+        // 1. 获取包名 (Bundle Identifier)
+        string packageName = Application.identifier;
+
+        // 2. 获取 OpenId (结合你现有的 GameDataManager 数据结构)
+        string openId = "暂无数据";
+        
+        // 加入判空保护，防止游戏刚启动还没加载完数据时报错
+        if (GameDataManager.Instance != null && GameDataManager.Instance.UserData != null)
+        {
+            openId = GameDataManager.Instance.UserData.UserId;
+            
+            // 如果本地 UserId 为空，也可以顺便获取一下设备的标识
+            if (string.IsNullOrEmpty(openId))
+            {
+                openId = "本地为空，当前设备号: " + Game.self.GetUniqueId();
+            }
+        }
+
+        // 3. 拼接文本
+        string copyText = $"包名: {packageName}\n 用户ID: {openId}";
+
+        // 4. 写入剪贴板 (Unity 原生核心 API)
+        GUIUtility.systemCopyBuffer = copyText;
+
+        // 5. 日志输出 (在真机上你可以换成调用你游戏内的飘字/Toast 提示)
+        Debug.Log("复制成功：\n" + copyText);
+        
+        // 示例：如果你有飘字组件，可以加上
+        // ToastManager.Show("信息已复制");
+        MessageSystem.Instance.ShowTip("信息已复制");
     }
 }

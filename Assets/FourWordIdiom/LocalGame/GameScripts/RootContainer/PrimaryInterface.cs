@@ -291,7 +291,7 @@ public class PrimaryInterface : UIWindow
     
     private void OnHeadClick()
     {
-        SystemManager.Instance.ShowPanel(PanelType.HeadScreen);
+        SystemManager.Instance.ShowPanel(PanelType.RewardNamePanel);
     }
     
     private void UpdateFishTime(string time="")

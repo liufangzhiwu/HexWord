@@ -245,6 +245,7 @@ public partial class AnalyticMgr
             { "game_package", userData.ABName ?? string.Empty },
             { "active_day_event", userData.activeDayCnt },
             { "life_day_event", lifeDays },
+            { "current_weekly_rank", ZenRankManager.Instance?.CachedOldScore},
         };
 
         Game.self.Analytics.SetCommonProperties(properties);

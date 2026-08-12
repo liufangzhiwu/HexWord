@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: UI_ZenRanks
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: Android
+      m_MaxTextureSize: 1024
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 49
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 2
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 0
+      enableAlphaDilation: 1
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: c5429f2b6515d134ca9f351ff8530fa1, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - c98f5d00b327deb4d8677818f2a27610: 21300000
+    - c3c5053123e58384a9ea7ddc4c4631c9: 21300000
+    - 72c527410fa8d0c4e98e2f2e58d399a2: 21300000
+    - bd8432f2a6653b9499bde945bee8d230: 21300000
+    - 1b02bc73efaef5649b5e569021d14af4: 21300000
+    - beccacb3a9c90354ab9ba92a921148ee: 21300000
+    - 3b0282d3fc62f6542b94e5212ec60937: 21300000
+    - acbd9ec480497794abd2162c58dbf324: 21300000
+    - 5088dd19ad6611a4e81a8ec0c5ae3801: 21300000
+    - 58725b59426d902449d3561e123937b9: 21300000
+    - 21c1f2fdaeb0cce44b45ebedfe385239: 21300000
+    - 828c9e5e5595087429400aba8fefcaf7: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: c98f5d00b327deb4d8677818f2a27610, type: 3}
+  - {fileID: 21300000, guid: c3c5053123e58384a9ea7ddc4c4631c9, type: 3}
+  - {fileID: 21300000, guid: 72c527410fa8d0c4e98e2f2e58d399a2, type: 3}
+  - {fileID: 21300000, guid: bd8432f2a6653b9499bde945bee8d230, type: 3}
+  - {fileID: 21300000, guid: 1b02bc73efaef5649b5e569021d14af4, type: 3}
+  - {fileID: 21300000, guid: beccacb3a9c90354ab9ba92a921148ee, type: 3}
+  - {fileID: 21300000, guid: 3b0282d3fc62f6542b94e5212ec60937, type: 3}
+  - {fileID: 21300000, guid: acbd9ec480497794abd2162c58dbf324, type: 3}
+  - {fileID: 21300000, guid: 5088dd19ad6611a4e81a8ec0c5ae3801, type: 3}
+  - {fileID: 21300000, guid: 58725b59426d902449d3561e123937b9, type: 3}
+  - {fileID: 21300000, guid: 21c1f2fdaeb0cce44b45ebedfe385239, type: 3}
+  - {fileID: 21300000, guid: 828c9e5e5595087429400aba8fefcaf7, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - zen5
+  - zen1
+  - zen6
+  - zen12
+  - zen4
+  - zen10
+  - zen8
+  - zen7
+  - zen9
+  - zen2
+  - zen3
+  - zen11
+  m_RenderDataMap: {}
+  m_Tag: UI_ZenRanks
+  m_IsVariant: 0

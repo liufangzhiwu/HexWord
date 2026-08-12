@@ -23,7 +23,7 @@ SpriteAtlas:
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
-      m_MaxTextureSize: 4096
+      m_MaxTextureSize: 8192
       m_ResizeAlgorithm: 0
       m_TextureFormat: 49
       m_TextureCompression: 1
@@ -254,6 +254,7 @@ SpriteAtlas:
     - 180afc9cf92c3384a80037b887648185: 21300000
     - 82e0f6bcf7c27cd41ba1e74f49b41380: 21300000
     - 377a67bcb5b44534b8f77e959a6b536c: 21300000
+    - dd97dbfcea75ca847b7c8cb635269cda: 21300000
     - 64cdce0d8cfe60b44a9fad3c2b0f55e1: 21300000
     - f5e2b61d4140c444596a1c64c1c1d413: 21300000
     - 05a0352d076d2694a849941a8dcc5f1c: 21300000
@@ -482,6 +483,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 180afc9cf92c3384a80037b887648185, type: 3}
   - {fileID: 21300000, guid: 82e0f6bcf7c27cd41ba1e74f49b41380, type: 3}
   - {fileID: 21300000, guid: 377a67bcb5b44534b8f77e959a6b536c, type: 3}
+  - {fileID: 21300000, guid: dd97dbfcea75ca847b7c8cb635269cda, type: 3}
   - {fileID: 21300000, guid: 64cdce0d8cfe60b44a9fad3c2b0f55e1, type: 3}
   - {fileID: 21300000, guid: f5e2b61d4140c444596a1c64c1c1d413, type: 3}
   - {fileID: 21300000, guid: 05a0352d076d2694a849941a8dcc5f1c, type: 3}
@@ -709,6 +711,7 @@ SpriteAtlas:
   - dailytitle
   - rewardbg
   - dailytaskdi
+  - copy
   - signtitlebg
   - give_di
   - Min

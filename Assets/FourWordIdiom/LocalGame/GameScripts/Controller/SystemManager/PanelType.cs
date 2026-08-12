@@ -67,6 +67,7 @@ public class PanelType  // Renamed class
      public const string SignAwardScreen = "SignAwardScreen";  
      public const string ReturnFirstWinScreen = "ReturnFirstWinScreen";  
      public const string AwardScreen = "AwardScreen";  
+     public const string PersonInfoScreen="PersonInfoScreen";
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

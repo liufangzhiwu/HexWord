@@ -58,7 +58,6 @@ public class ZenRankStartScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
-        AudioManager.Instance.PlaySoundEffect("ShowUI");
         _isForcedMode = false;
         _returnTargetPanel = PanelType.PrimaryInterface;
         closeButton.gameObject.SetActive(true);
@@ -135,10 +134,10 @@ public class ZenRankStartScreen : UIWindow
     public void SetForcedMode(bool isForced)
     {
         _isForcedMode = isForced;
-        if (closeButton != null)
-        {
-            closeButton.gameObject.SetActive(!isForced); // 强制模式下隐藏关闭按钮
-        }
+        // if (closeButton != null)
+        // {
+        //     closeButton.gameObject.SetActive(!isForced); // 强制模式下隐藏关闭按钮
+        // }
     }
     
     // 🌟 接收全局计时器推送的文本并刷新 UI
@@ -229,27 +228,31 @@ public class ZenRankStartScreen : UIWindow
         {
             if (stage2TipText != null) 
                 stage2TipText.text = "<color=#FF5555>网络异常，匹配失败，请重试！</color>";
-            
             // 重置按钮或让玩家手动关闭面板，这里可以根据你的 UI 需求调整
             // 为了安全，不再往下执行强制进游戏的逻辑
-            yield break; 
-        }
-        Debug.Log("服务器确认加入成功，进入游戏！");
-        
-        // 触发进入战斗场景逻辑
-        SystemManager.Instance.HidePanel(PanelType.ZenRankStartScreen, true, () =>
-        {
+            yield return new WaitForSeconds(2.5f);
             SystemManager.Instance.HidePanel(PanelType.ZenRankScreen);
-            
-            if (_isForcedMode)
+            OnCloseClicked();
+        }
+        else
+        {
+            Debug.Log("服务器确认加入成功，进入游戏！");
+        
+            // 触发进入战斗场景逻辑
+            SystemManager.Instance.HidePanel(PanelType.ZenRankStartScreen, true, () =>
             {
-                SystemManager.Instance.HidePanel(PanelType.ChessFinishView);
-                SystemManager.Instance.HidePanel(PanelType.StageFinishView);
-            }
+                SystemManager.Instance.HidePanel(PanelType.ZenRankScreen);
             
-            UIWindow uiWindow = SystemManager.Instance.GetPanel(PanelType.PrimaryInterface);
-            uiWindow?.GetComponent<PrimaryInterface>().OnPlayClick();
-        });
+                if (_isForcedMode)
+                {
+                    SystemManager.Instance.HidePanel(PanelType.ChessFinishView);
+                    SystemManager.Instance.HidePanel(PanelType.StageFinishView);
+                }
+            
+                UIWindow uiWindow = SystemManager.Instance.GetPanel(PanelType.PrimaryInterface);
+                uiWindow?.GetComponent<PrimaryInterface>().OnPlayClick();
+            }); 
+        }
     }
     // 独立协程：慢慢生成指定数量的头像（同时最多显示4个）
     private IEnumerator GenerateAvatars(int totalCount)

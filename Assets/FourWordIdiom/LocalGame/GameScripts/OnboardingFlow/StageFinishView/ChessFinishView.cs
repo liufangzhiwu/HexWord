@@ -90,6 +90,7 @@ public class ChessFinishView : UIWindow
        yield return StartCoroutine(ZenRankManager.Instance.FetchLeaderboardDataRoutine(leaderboardName));
        _zenRankBtn.SyncTextFromCache();
     }
+    
     protected override void OnEnable()
     {
         base.OnEnable();
@@ -122,7 +123,7 @@ public class ChessFinishView : UIWindow
         FishInfoController.Instance.OnFishTimeUpdated += _matchFishtable.UpdateFishTime;
         AudioManager.Instance.PlaySoundEffect("StageFinish");   
         
-        StartCoroutine(CheckCompletedState());
+        StartCoroutine(UpdateFishRankUI());
         DailyTaskManager.Instance.UpateButterflyTaskUI();
         butterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
         int oldPupaCount = GameDataManager.Instance.ButterflyData.currPupa -
@@ -163,15 +164,13 @@ public class ChessFinishView : UIWindow
 
     public void CheckFishiTable()
     {
-        _matchFishtable.gameObject.SetActive(false);
-        
         if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
         {
-            _matchFishtable.gameObject.SetActive(true);
+            _matchFishtable.FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
             _matchFishtable.CheckFishBtn();
         }
-       
+        _matchFishtable.FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
     }
     
     private void CheckReturnFirstWinScreen()
@@ -199,18 +198,6 @@ public class ChessFinishView : UIWindow
         //         break;
         // }
 
-    }
-
-    private IEnumerator CheckCompletedState()
-    {
-        yield return UpdateFishRankUI();
-#if Unity_ShowLog || UNITY_EDITOR
-        if (GameCoreManager.Instance.IsTrueAuto)
-        {
-            yield return new WaitForSeconds(1.2f);
-            OnNextButtonClick();
-        }
-#endif
     }
 
     /// <summary>
@@ -363,10 +350,19 @@ public class ChessFinishView : UIWindow
             {
                 Showlimiticon.SetActive(true);
             }
+            
+            if (GameCoreManager.Instance.IsTrueAuto)
+            {
+                StartCoroutine(AutoClickNextDelay());
+            }
         }
         DailyTaskManager.Instance.UpdateMaxButterflyTime();
     }
-
+    private IEnumerator AutoClickNextDelay()
+    {
+        yield return new WaitForSeconds(1.5f);
+        OnNextButtonClick();
+    }
     /// <summary>
     /// 核心：从 Controller 提取配置，根据概率渲染文案
     /// </summary>
@@ -564,7 +560,6 @@ public class ChessFinishView : UIWindow
                                              &&!SystemManager.Instance.PanelIsShowing(PanelType.ReturnFirstWinScreen));
         }
         
-           
         // ==========================================
         // 🌟 队列首位：全权交由专属协程处理禅修榜的三种状态
         // ==========================================
@@ -667,6 +662,14 @@ public class ChessFinishView : UIWindow
 
         // 等待限时活动进度更新
         //yield return new WaitForSeconds(0.5f);
+        
+#if Unity_ShowLog || UNITY_EDITOR
+        if (GameCoreManager.Instance.IsTrueAuto)
+        {
+            yield return new WaitForSeconds(1.2f);
+            OnNextButtonClick();
+        }
+#endif
     }
     
     private IEnumerator UpdateFishRankUI()
@@ -674,9 +677,10 @@ public class ChessFinishView : UIWindow
         FishInfoController.Instance.RoundResultFishRank();
         _matchFishtable.UpdateFishRank();
 
+        WaitForSeconds wait = new WaitForSeconds(1f);
         while (_matchFishtable.FishBtn.gameObject.activeSelf)
         {
-            yield return new WaitForSeconds(1f);
+            yield return wait;
             FishInfoController.Instance.RoundResultFishRank();
             _matchFishtable.UpdateFishRank();
         }
@@ -956,10 +960,17 @@ public class ChessFinishView : UIWindow
         if (!isZenUnlocked) yield break;
   
         var userData = GameDataManager.Instance.UserData;
-           
+        if (userData.isJoinedZenRank && userData.HasUnclaimedUpdateJoin)
+        {
+            userData.HasUnclaimedUpdateJoin = false;
+        }
+        // 正常首次解锁的条件（已经包含 !isJoinedZenRank）
         bool isFirstUnlockZen = !userData.isJoinedZenRank &&
                                 userData.CurrentChessStage == AppGameSettings.UnlockRequirements.ZenOpenLevel;
-        if (isFirstUnlockZen)
+        // 升级更新触发的条件，必须要求玩家当前【不在榜单内】
+        bool isUpdateUnlockZen = !userData.isJoinedZenRank && userData.HasUnclaimedUpdateJoin;
+        
+        if (isFirstUnlockZen || isUpdateUnlockZen)
         {
             // ---------- 检查昵称（与 ZenRankButton 点击逻辑一致）----------
             // 判断是否允许弹出起名窗
@@ -980,7 +991,8 @@ public class ChessFinishView : UIWindow
                 startScreen.SetSourcePanel(PanelType.ChessFinishView);
                 startScreen.SetForcedMode(true); // 🌟 开启强制模式，隐藏关闭按钮！
             }
-            
+
+            GameDataManager.Instance.UserData.HasUnclaimedUpdateJoin = false;
             // 既然强制弹出了匹配页，玩家必须点击匹配，匹配完会自动触发进下一关
             // 此时结算页会被强行关闭。所以在这里使用死循环挂起，不让后续代码继续执行！
             yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ZenRankStartScreen));

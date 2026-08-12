@@ -52,7 +52,7 @@ public static class AppGameSettings
         //30关卡进入结算界面时开启(鲤鱼跃龙门活动)
         public static int FishOpenLevel { get; } = 21;
         //10关卡进入结算界面时开启（命名界面）
-        public static int HeadOpenLevel { get; } = 11;
+        public static int HeadOpenLevel { get; } = 1;
         public static int ZenOpenLevel { get; } = 11; // 11关卡开启禅模式
     }
 

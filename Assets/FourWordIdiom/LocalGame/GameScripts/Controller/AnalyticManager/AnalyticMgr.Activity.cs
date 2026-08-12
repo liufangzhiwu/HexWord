@@ -116,6 +116,7 @@ public partial class AnalyticMgr
             {"activity_id",activityId},
             {"progress_id",progressId},
             {"activity_duration",duration},
+            {"activity_count", progressId}
         }; 
         Game.self.Analytics.LogEvent("activity_progress", properties, Define.DataTarget.Think);
     }

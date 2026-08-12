@@ -302,6 +302,12 @@ public class LoadingController : MonoBehaviour
         {
             Debug.LogError("ABtest参数解析失败！"+ ex.Message);
         }
+        
+        if (loginResponse.is_version_upgraded)
+        {
+            GameDataManager.Instance.UserData.HasUnclaimedUpdateJoin = true;
+        }
+        
         GameDataManager.Instance.SetNewUser(user);
     }
 

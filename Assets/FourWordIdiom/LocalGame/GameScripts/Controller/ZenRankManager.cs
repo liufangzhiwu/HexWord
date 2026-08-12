@@ -28,7 +28,8 @@ public class ZenRankManager : MonoBehaviour
     public int CachedOldRank { get;  set; }
     public int CachedOldScore { get;  set; }
     public bool IsFetching { get;  set; } // 数据请求状态锁
-    
+    // 记录上一次分数更新的时间
+    public DateTime LastScoreUpdateTime = DateTime.MinValue;
     private void Awake()
     {
         if (Instance == null)
@@ -133,6 +134,7 @@ public class ZenRankManager : MonoBehaviour
         MyCurrentRankData = null; // 必须设为 null
         CachedOldRank = 0;
         CachedOldScore = 0;
+        LastScoreUpdateTime = DateTime.MinValue;
     }
     // ==========================================
     // 🌟 全局统一的排行榜数据请求接口
@@ -142,10 +144,12 @@ public class ZenRankManager : MonoBehaviour
         IsFetching = true;
 
         // 在拉取新数据前，如果有旧数据，先将其缓存下来用于对比
-        if (MyCurrentRankData != null && MyCurrentRankData.rank > 0)
+        bool hasLocalCache = (MyCurrentRankData != null && MyCurrentRankData.rank > 0);
+        if (hasLocalCache)
         {
             CachedOldRank = MyCurrentRankData.rank;
             CachedOldScore = MyCurrentRankData.score;
+            AnalyticMgr.SetCommonProperties();
         }
 
         bool isCompleted = false;
@@ -168,9 +172,8 @@ public class ZenRankManager : MonoBehaviour
                 {
                     MyCurrentRankData = res.my;
                     GameDataManager.Instance.UserData.isJoinedZenRank = res.my.is_joined;
-                    Debug.Log($"【Rank Debug - API】收到服务器排行榜数据 - 服务器分数: {res.my.score}, 服务器排名: {res.my.rank}");
+                    Debug.Log($"【Rank Debug - API】收到服务器排行榜数据 - 服务器分数: {res.my.score}, 服务器排名: {res.my.rank}  {hasLocalCache}");
                     Debug.Log($"【Rank Debug - API】当前本地缓存 - 旧分数: {CachedOldScore}, 旧排名: {CachedOldRank}");
-                    
                     // if (CachedOldScore == 0 && CachedOldRank == 0)
                     // {
                     //     CachedOldRank = MyCurrentRankData.rank;
@@ -198,7 +201,7 @@ public class ZenRankManager : MonoBehaviour
     }
     private ZenRankState ConvertEntryToState(LeaderboardEntry entry)
     {
-        return new ZenRankState { PlayerId=entry.user_id, Rank = entry.rank, Avatar = entry.avatar, Name = entry.nickname, Level = entry.leaderboard_name, Score = entry.score };
+        return new ZenRankState { PlayerId = entry.user_id, Rank = entry.rank, Avatar = entry.avatar, Name = entry.nickname, Level = entry.leaderboard_name, Score = entry.score };
     }
     public void StartGlobalTimer(int seconds)
     {
