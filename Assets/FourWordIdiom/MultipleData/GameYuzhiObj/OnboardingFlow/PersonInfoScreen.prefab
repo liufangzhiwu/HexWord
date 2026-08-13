@@ -181,7 +181,7 @@ GameObject:
   - component: {fileID: 3394930864572807452}
   - component: {fileID: 5425342311713135860}
   m_Layer: 5
-  m_Name: WinStreakTitle
+  m_Name: MulWinStreakTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -353,7 +353,7 @@ GameObject:
   - component: {fileID: 5447994004921446072}
   - component: {fileID: 2909982071664572945}
   m_Layer: 5
-  m_Name: ZenScoreTitle
+  m_Name: MulZenScoreTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1177,7 +1177,7 @@ Canvas:
   m_VertexColorAlwaysGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: -506211957
+  m_SortingLayerID: -1698276591
   m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!114 &5780311666598182103
@@ -1233,6 +1233,7 @@ MonoBehaviour:
   _openDuration: 0.3
   _closeDuration: 0.3
   closeBtn: {fileID: 6043342328112555402}
+  achieveBtn: {fileID: 6001028321985263442}
   HeaderText: {fileID: 899973376308756124}
 --- !u!1 &2595099068337386462
 GameObject:
@@ -1434,8 +1435,9 @@ GameObject:
   - component: {fileID: 208432383259266125}
   - component: {fileID: 5012570565021506470}
   - component: {fileID: 2696765976321216410}
+  - component: {fileID: 6478517275652391311}
   m_Layer: 5
-  m_Name: NameTable
+  m_Name: NameInfoTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1502,6 +1504,32 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &6478517275652391311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2689341655609051291}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bc49a939b2c45242aa61b609cc54f33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  changeHeadIconBtn: {fileID: 7129094050599559502}
+  CopyAccountIdBtn: {fileID: 1579514918051387038}
+  HeadIcon: {fileID: 1523174577263640729}
+  HeadBorder: {fileID: 6686882136258297036}
+  firstLoginTimeText: {fileID: 6326055718070619101}
+  NameText: {fileID: 5567002057162043312}
+  zanCountText: {fileID: 2435252089736717456}
+  MulCopyText: {fileID: 3403370944388332234}
+  MulZenLevelText: {fileID: 3084673749808095225}
+  MulZenScoreText: {fileID: 5447994004921446072}
+  MulWinStreakText: {fileID: 3394930864572807452}
+  ZenLevelText: {fileID: 1867989048590009526}
+  ZenScoreText: {fileID: 6590489829432458566}
+  WinStreakText: {fileID: 5402464065307157795}
 --- !u!1 &2775938962640833136
 GameObject:
   m_ObjectHideFlags: 0
@@ -1747,7 +1775,7 @@ GameObject:
   - component: {fileID: 7888024414294076923}
   - component: {fileID: 3403370944388332234}
   m_Layer: 5
-  m_Name: Text (Legacy)
+  m_Name: MulCopyText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1825,8 +1853,9 @@ GameObject:
   - component: {fileID: 7675201797529419733}
   - component: {fileID: 3659153446944235097}
   - component: {fileID: 3705394613922330091}
+  - component: {fileID: 6001028321985263442}
   m_Layer: 5
-  m_Name: titleimge
+  m_Name: achievebtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1889,6 +1918,50 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &6001028321985263442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3086434636814620650}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 3705394613922330091}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &3181888769966650559
 GameObject:
   m_ObjectHideFlags: 0
@@ -3063,7 +3136,7 @@ GameObject:
   - component: {fileID: 3084673749808095225}
   - component: {fileID: 8476026457316518831}
   m_Layer: 5
-  m_Name: ZenLevelTitle
+  m_Name: MulZenLevelTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

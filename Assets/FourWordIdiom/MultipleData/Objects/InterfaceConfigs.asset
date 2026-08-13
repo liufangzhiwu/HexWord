@@ -322,3 +322,9 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 2508230401924753788, guid: 20a1cdcc2af24544f8a324f0abb37b2c,
       type: 3}
+  - panelName: AchievementScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 4eff076de91516e4a89d5343e2c0e78d,
+      type: 3}

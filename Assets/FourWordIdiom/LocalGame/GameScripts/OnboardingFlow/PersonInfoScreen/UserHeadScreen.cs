@@ -34,7 +34,7 @@ public class UserHeadScreen : UIWindow
        
         HeaderText.text = MultilingualManager.Instance.GetString("CharacterInfoTitle");
         litterTitleText.text= MultilingualManager.Instance.GetString("CharacterInfoAvatar");
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
         newHeadIonIndex=GameDataManager.Instance.UserData.UserHeadId;
         UpdateHeadIconList(true);
         UpdateHeadIcon();
@@ -185,7 +185,6 @@ public class UserHeadScreen : UIWindow
  
     private void OnCloseBtn()
     {
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
         EventDispatcher.instance.TriggerChangeHeadIconUpdateEvent();
         base.Close(); // 隐藏面板
     }

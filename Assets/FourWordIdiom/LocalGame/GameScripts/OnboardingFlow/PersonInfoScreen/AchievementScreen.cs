@@ -21,7 +21,7 @@ public class AchievementScreen : UIWindow
         base.OnEnable();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
        
-        HeaderText.text = MultilingualManager.Instance.GetString("CharacterInfoTitle");
+        //HeaderText.text = MultilingualManager.Instance.GetString("CharacterInfoTitle");
         
         EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
     }
