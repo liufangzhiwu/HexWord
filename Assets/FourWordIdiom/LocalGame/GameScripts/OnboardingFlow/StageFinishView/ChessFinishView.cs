@@ -1127,7 +1127,7 @@ public class ChessFinishView : UIWindow
         LimitTimeManager.Instance.OnLimitTimeBtnUI -= UpdateSliderProgress;
         FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
 
-        GameDataManager.Instance?.UserData.ClearPuzzleVocabulary();
+        //GameDataManager.Instance?.UserData.ClearPuzzleVocabulary();
 
         // EventDispatcher.instance.TriggerUpdateLayerCoin(false,false,false);
         EventDispatcher.instance.TriggerChangeGoldUI(AppGameSettings.LevelCompleteBonus, false);
