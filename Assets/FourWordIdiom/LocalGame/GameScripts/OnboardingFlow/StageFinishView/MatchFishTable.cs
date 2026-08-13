@@ -68,10 +68,13 @@ public class MatchFishTable : MonoBehaviour
                 GameDataManager.Instance.FishUserSave.cloestime = closeTime.ToString();
                 FishInfoController.Instance.UpdateFishTime();
                 FishBtn.gameObject.SetActive(true);
+                FishBtn.gameObject.transform.parent.gameObject.SetActive(true);
             }
             else
             {
-                FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
+                bool fishOpen = FishInfoController.Instance.GetOpenFishFunction();
+                FishBtn.gameObject.SetActive(fishOpen);
+                FishBtn.gameObject.transform.parent.gameObject.SetActive(fishOpen);
                 
                 if (GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.FishOpenLevel
                     || GameDataManager.Instance.UserData.CurrentChessStage > AppGameSettings.UnlockRequirements.FishOpenLevel
