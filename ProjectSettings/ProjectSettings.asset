@@ -1039,7 +1039,7 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: Unity_ShowLog;UNITY_huawei
+    Android: Unity_ShowLog;UNITY_HUAWEI
     HMIAndroid: UNITY_UOS_SECURITY
     OpenHarmony: Unity_Release
     Server: 
