@@ -796,6 +796,8 @@ MonoBehaviour:
   MyName: {fileID: 2294794562439346799}
   MyScore: {fileID: 1817060380120102310}
   MyGoPlay: {fileID: 1603186664208732947}
+  hehuaPrefab: {fileID: 7789647493305736829, guid: c6140264f8affee42b55ffb5c7d935d2,
+    type: 3}
 --- !u!222 &1037855296299943636
 CanvasRenderer:
   m_ObjectHideFlags: 0
