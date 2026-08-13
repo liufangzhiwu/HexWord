@@ -164,13 +164,14 @@ public class ChessFinishView : UIWindow
 
     public void CheckFishiTable()
     {
+        _matchFishtable.FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
+        
         if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
         {
-            _matchFishtable.FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
             _matchFishtable.CheckFishBtn();
         }
-        _matchFishtable.FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
+        
     }
     
     private void CheckReturnFirstWinScreen()
