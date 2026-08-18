@@ -132,6 +132,7 @@ public class UserData
     public string firstLoginTime; //首次登录时间
     public string lastLoginDay; //最后登录时间
     public int zenCount; // 禅意值数量
+    public int likeCount; // 点赞数量
 
     #endregion
 
@@ -342,6 +343,7 @@ public class UserData
         curStageOnlineTime = 0;
         curIsEnter = false;
         zenCount = 0;
+        likeCount = 0;
         passLevelUseTime = new Dictionary<int, int>();
         //限时商店数据
         limitShopItems = new List<ShopLimitData>();
@@ -454,6 +456,7 @@ public class UserData
         CurrentChessStage = user.CurrentChessStage;
         levelMode = user.levelMode;
         zenCount = user.zenCount;
+        likeCount = user.likeCount;
         Zenlevel = user.Zenlevel ?? "ZenState01";
         dayPassStageCount = user.dayPassStageCount;
         chessdayPassStageCount = user.chessdayPassStageCount;
@@ -862,7 +865,6 @@ public class UserData
         _getAnimalsHeadIcons.Add(animalId);
         return true;
     }
-    
 
     public bool TryGetRandomUnlockedAnimal(out int animalId)
     {

@@ -32,9 +32,9 @@ public class NameInfoTable : MonoBehaviour
         CopyAccountIdBtn.AddClickAction(OnCopyPackageAndOpenId);
         
         //MulCopyText.text=MultilingualManager.Instance.GetString("MulZenLevelText");
-        MulZenLevelText.text=MultilingualManager.Instance.GetString("ZenLevel");
-        MulZenScoreText.text=MultilingualManager.Instance.GetString("ZenScore");
-        MulWinStreakText.text=MultilingualManager.Instance.GetString("LongestWinDay");
+        MulZenLevelText.text=MultilingualManager.Instance.GetString("ZenLevel","hudie");
+        MulZenScoreText.text=MultilingualManager.Instance.GetString("ZenScore","hudie");
+        MulWinStreakText.text=MultilingualManager.Instance.GetString("LongestWinDay","hudie");
         
       
     }
@@ -49,7 +49,7 @@ public class NameInfoTable : MonoBehaviour
         DateTime firstLoginDate= DateTime.Parse(GameDataManager.Instance.UserData.firstLoginTime);
         firstLoginTimeText.text=String.Format(MultilingualManager.Instance.GetString("StartDate"), firstLoginDate.Year, firstLoginDate.Month);
         NameText.text=GameDataManager.Instance.UserData.UserName;
-        zanCountText.text=GameDataManager.Instance.UserData.zenCount.ToString();
+        zanCountText.text=GameDataManager.Instance.UserData.likeCount.ToString();
         ZenLevelText.text=GameDataManager.Instance.UserData.Zenlevel;
         ZenScoreText.text=GameDataManager.Instance.UserData.zenCount.ToString();
         WinStreakText.text=GameDataManager.Instance.UserData._signSaveData.historyWinDayTimes.ToString();
