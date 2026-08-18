@@ -105,15 +105,13 @@ public class LoadingController : MonoBehaviour
         LoadWordVocabulary();
         Game.self.InitGame();
         yield return new WaitForSeconds(0.5f);
-        
         // 等待 Accounts 登录完成（无论成功或失败，可增加超时处理）
-        float loginTimeout = 10f;
-        float loginStart = Time.time;
         
-        while (!Game.self.Accounts.IsLogin && (Time.time - loginStart) < loginTimeout)
+        while (!Game.self.Accounts.IsLogin && (Time.time - Game.self.loginStart) < Game.self.loginTimeout)
         {
             yield return null;
         }
+        
         if (!Game.self.Accounts.IsLogin)
         {
             Debug.LogError("登录超时或失败");

@@ -391,6 +391,7 @@ namespace Middleware
                 // MessageSystem.Instance.ShowTip("AdListener Ad Opened");
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
+                    AnalyticMgr.InsetAdStart("关卡插屏");
                     MessageSystem.Instance.HideLoadingAnimation();
                     _callback?.Invoke(true);
                 });

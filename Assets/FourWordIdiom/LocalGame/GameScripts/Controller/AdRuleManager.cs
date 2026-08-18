@@ -153,7 +153,7 @@ public class AdRuleManager : MonoBehaviour
             return;
         }
         
-        AnalyticMgr.InsetAdStart("关卡插屏");
+        //AnalyticMgr.InsetAdStart("关卡插屏");
 
         // 2. 大脑放行了，调底层 SDK (不管是鸿蒙、安卓还是 iOS)
         Game.self.Ads.ShowInterstitial((success) => 

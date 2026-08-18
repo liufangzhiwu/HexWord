@@ -25,12 +25,12 @@ namespace Middleware
         {
             UnityTimer.Delay(delay, () =>
             {
-                RequestEnableNotification();
-
-                // 注册Token获取信号回调
-                SignalHandler.Instance.RegisterSignalDelegate<Push_GetTokenSignal>(OnGetTokenTrigger);
-
-                GetToken();
+                // RequestEnableNotification();
+                //
+                // // 注册Token获取信号回调
+                // SignalHandler.Instance.RegisterSignalDelegate<Push_GetTokenSignal>(OnGetTokenTrigger);
+                //
+                // GetToken();
             });
         }
 

@@ -141,7 +141,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 1.2.2
+  bundleVersion: 1.2.4
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -173,7 +173,7 @@ PlayerSettings:
     iPhone: 103
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
-  AndroidBundleVersionCode: 26062606
+  AndroidBundleVersionCode: 26081706
   AndroidMinSdkVersion: 24
   AndroidTargetSdkVersion: 35
   AndroidPreferredInstallLocation: 1
@@ -1039,14 +1039,14 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: Unity_ShowLog;UNITY_huawei
+    Android: Unity_Release;UNITY_HUAWEI
     HMIAndroid: UNITY_UOS_SECURITY
     OpenHarmony: Unity_Release
     Server: 
     Standalone: UNITY_UOS_SECURITY
     WebGL: UNITY_UOS_SECURITY
     WeixinMiniGame: UNITY_UOS_SECURITY
-    iPhone: LEVELPLAY_DEPENDENCIES_INSTALLED;UNITY_UOS_SECURITY
+    iPhone: 
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

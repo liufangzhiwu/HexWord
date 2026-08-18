@@ -30,6 +30,9 @@ namespace Middleware
         public Transform _uiRoot;
         public CommonErrorType CurrentErrorType { private set; get; }
 
+        public float loginStart = 0;
+        public float loginTimeout = 10f;
+
         public static bool IsNetworkActive { private set; get; }
 
         private GameObject NetErrorView;
@@ -48,10 +51,13 @@ namespace Middleware
             
             CreateAnalytic();
             InitManagers();
+            
+            loginStart = Time.time;
         }
 
         public void InitGame()
-        { 
+        {
+            loginStart = Time.time;
             CreateAccounts();
             StartCoroutine(WaitLoginedCreateShop());
         }
@@ -80,8 +86,8 @@ namespace Middleware
         
         private void CreateAccounts()
         {
-#if UNITY_EDITOR
-            Accounts = new Account_android();
+#if UNITY_HUAWEI
+            Accounts = new Account_huaweiandroid();
 #elif UNITY_ANDROID&&!UNITY_HUAWEI
             Accounts = new Account_android();
 #elif UNITY_HUAWEI&&!UNITY_EDITOR

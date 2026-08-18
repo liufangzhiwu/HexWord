@@ -313,4 +313,9 @@ QualitySettings:
     vgStreamingBufferSize: 512
     excludedTargetPlatforms: []
   m_TextureMipmapLimitGroupNames: []
-  m_PerPlatformDefaultQuality: {}
+  m_PerPlatformDefaultQuality:
+    Android: 0
+    OpenHarmony: 0
+    Server: 0
+    Standalone: 0
+    WeixinMiniGame: 0

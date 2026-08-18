@@ -56,6 +56,7 @@ public class GameDataDto
     [JsonProperty("created_at")]
     public string CreatedAt { get; set; }
 }
+
 /// <summary>
 /// 额外数据的内部结构
 /// </summary>

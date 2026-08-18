@@ -183,6 +183,8 @@ private void ResetUIForReplay()
         // 🌟 注册事件
         if (ZenRankManager.Instance != null)
             ZenRankManager.Instance.OnRankTimerTick += UpdateTimerUI;
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
     }
 
     private void Start()

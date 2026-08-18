@@ -150,13 +150,17 @@ namespace Middleware
         
         private IEnumerator LoadHuaweiGameLogin()
         {
+            Game.self.loginStart = Time.time;
+            
             Action<GameFlowStatus> statusSetter = (status) => { _flowStatus = status; };
         
             HuaweiGameService.SilentSignIn(new SilentLoginListener(statusSetter));
             if (_flowStatus == GameFlowStatus.SilentFailed)
             {
+                Game.self.loginTimeout = 30f;
                 HuaweiGameService.Login(new SilentLoginListener(statusSetter));
             }
+            Game.self.loginStart = Time.time;
             Debug.Log("[HuaweiAccount] 登录完成, 当前状态" + _flowStatus );
             yield return new WaitUntil(() => _flowStatus is GameFlowStatus.GetGamePlayer);
             Player _player = null;
@@ -390,9 +394,8 @@ namespace Middleware
             string msg = "account method failed, code:" + code + " message:" + message;
             UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
-                MessageSystem.Instance.ShowTip(msg);
                 _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
-                Game.self.ShowLoginErrorPanel(); //等错误处理
+                //Game.self.ShowLoginErrorPanel(); //等错误处理
             });
         }
     }
