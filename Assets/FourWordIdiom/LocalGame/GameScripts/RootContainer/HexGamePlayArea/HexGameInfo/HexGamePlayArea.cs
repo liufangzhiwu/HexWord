@@ -267,8 +267,8 @@ public class HexGamePlayArea : UIWindow
         {
             wordErrorCount = 0;
             usetoolCount = 0;
-            yield return new WaitForSeconds(1f);
-            ShopManager.shopManager.ShowLimitAdsPanel();
+            //yield return new WaitForSeconds(1f);
+            //ShopManager.shopManager.ShowLimitAdsPanel();
 
             StageHexController.Instance.IsFirstEnterStage = false;
             yield return new WaitForSeconds(0.5f);

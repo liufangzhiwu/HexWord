@@ -196,7 +196,7 @@ public class OptionsView : UIWindow
 
     private void OnprivacyBtn()
     {
-        Application.OpenURL("https://mindwordplay.cn/ysxyb");
+        Application.OpenURL("https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008");
     }
 
     private void OntermsBtn()
