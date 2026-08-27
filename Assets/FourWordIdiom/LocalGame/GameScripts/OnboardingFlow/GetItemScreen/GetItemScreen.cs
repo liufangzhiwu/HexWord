@@ -195,8 +195,7 @@ public class GetItemScreen : UIWindow
 
     private void UpdateCliamBtn(bool canClaimed)
     {
-        //ClaimAdsBtn.gameObject.SetActive(canClaimed);
-        ClaimAdsBtn.gameObject.SetActive(false);
+        ClaimAdsBtn.gameObject.SetActive(canClaimed);
         ClaimGoldBtn.gameObject.SetActive(true);
     }
     

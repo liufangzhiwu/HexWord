@@ -62,7 +62,7 @@ public class ShopScreen : UIWindow
         //AdsManager.Instance.HideBannerAd();
         ShopManager.shopManager.paysuccess = false;
         shopScrollView.enabled=false;
-        pageBtn.gameObject.SetActive(true);
+        pageBtn.gameObject.SetActive(false);
         adsbtn.gameObject.SetActive(false);
         
         if (shopDataItems.Count > 0)
