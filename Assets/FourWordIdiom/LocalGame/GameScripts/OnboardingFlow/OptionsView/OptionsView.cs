@@ -119,7 +119,8 @@ public class OptionsView : UIWindow
         GameDataManager.Instance.CommitGameData();
         yield return new WaitUntil(()=> GameDataManager.Instance.SaveNumber >= 3);
         Debug.Log("点击退出,保存数据成功！");
-        Application.Quit();
+        
+        SDKAndroid.Instance.OnAppExit(new MyExitCallback());
     }
 
     private void OnChangeLanguage()

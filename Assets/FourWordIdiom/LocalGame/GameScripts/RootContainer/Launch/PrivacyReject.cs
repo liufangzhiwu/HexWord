@@ -20,7 +20,6 @@ public class PrivacyReject : MonoBehaviour
     private void OnRejectClick()
     {
         SDKAndroid.Instance.OnAppExit(new MyExitCallback());
-        Application.Quit();
     }
 
     private void OnCallbackClick()
