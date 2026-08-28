@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using FourWordIdiom.LocalGame.GameScripts.Controller;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,10 +22,13 @@ public partial class ChessPlayArea
         puzzleTileTable.Clear();
         yield return new WaitForEndOfFrame();
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
-
+        SetToolButtonsEnabled(false); // 强制禁用所有道具按钮
+        chessboardGrid.IsBlockInput = true; // 强制锁死棋盘
+        ChessBowlGrid.IsTutorialBlocking = true;
+        
         IsClickAuto = false;
         // ==========================================
-        // 🌟 修复关键 1：先执行你原版的缩放和尺寸适配逻辑
+        // 先执行你原版的缩放和尺寸适配逻辑
         // ==========================================
         RectTransform chessRectTransform = chessboardGrid.GetComponent<RectTransform>();
         RectTransform btnParent = HitsBtn.transform.parent.GetComponentInParent<RectTransform>();
@@ -75,7 +79,7 @@ public partial class ChessPlayArea
         }
 
         // ==========================================
-        // 🌟 修复关键 2：强制刷新布局，确保下面拿到的是设置后的真实宽度
+        // 强制刷新布局，确保下面拿到的是设置后的真实宽度
         // ==========================================
         yield return new WaitForEndOfFrame();
         LayoutRebuilder.ForceRebuildLayoutImmediate(chessboardGrid.GetComponent<RectTransform>());
@@ -150,7 +154,6 @@ public partial class ChessPlayArea
         {
             isAnimFinished = true; // 动画播完，标记设为 true
         });
-        SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
         // 协程在这里暂停，直到 isAnimFinished 变成 true 才往下走
         yield return new WaitUntil(() => isAnimFinished);
         _currentWordActiveSeconds = 0f;
@@ -160,9 +163,9 @@ public partial class ChessPlayArea
         _isTimerRunning = false;
         UpdateTimerUI();
         
-          
         if (ChessStageController.Instance.IsFirstEnterStage)
         {
+            yield return new WaitForSeconds(1f);
             ShopManager.shopManager.ShowLimitAdsPanel();
         }
         
@@ -230,11 +233,13 @@ public partial class ChessPlayArea
         yield return null;
         // 检查一下是否存在错误的成功状态
         chessboardGrid.FixChessState();
-        yield return new WaitForSeconds(0.2f);
         // 触发新手引导检查
+        chessboardGrid.IsBlockInput = false;
+        ChessBowlGrid.IsTutorialBlocking = false;
         EventDispatcher.instance.TriggerCheckShowChessTutorial();
+        yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ChessLearningGuide));
         AdRuleManager.Instance.TryShowBanner();
-        yield return new WaitForSeconds(0.4f);
+        yield return new WaitForSeconds(0.1f);
         // 飞蝴蝶道具
         if (ChessStageController.Instance.IsFirstEnterStage && useButterflyCount <= 2)
         {
@@ -262,9 +267,8 @@ public partial class ChessPlayArea
             wordErrorCount = 0;
             usetoolCount = 0;
         }
+        
         SetToolButtonsEnabled(true);
-        // _isTimerRunning = true;
-        // yield return new WaitUntil(()=>_isTimerRunning);
         EventDispatcher.instance.TriggerChangeTopRaycast(true);
         AutoPassLevel();
     }
@@ -375,13 +379,11 @@ public partial class ChessPlayArea
 #if Unity_ShowLog || UNITY_EDITOR
         if (GameCoreManager.Instance.IsTrueAuto) return;
 #endif
-        StartCoroutine(CheckShowChessTutorial());
+        CheckShowChessTutorial();
     }
 
-    private IEnumerator CheckShowChessTutorial()
+    private void CheckShowChessTutorial()
     {
-        yield return new WaitForSeconds(0.1f);
-
         if (CurrStageData.StageId == 1 && !GameDataManager.Instance.UserData.ChessTutorialProgress[1])
         {
             ChessGuideSystem.Instance.ChesspieceList = chessboardGrid.GetCurrentSelectGroup();
@@ -423,13 +425,13 @@ public partial class ChessPlayArea
                 Debug.Log("🌟 [引导注入] 正式弹窗展示冰块新手引导");
                 // 寻找棋盘上第一个被冰块冻住的格子，作为小手指向的目标
                 var allIceTiles = chessboardGrid.GridList.Values.Where(v => v.chesspiece.hasIce).ToList();
-                if (allIceTiles.Count <= 0) yield break;
+                if (allIceTiles.Count <= 0) return;
                 ChessGuideSystem.Instance.ChesspieceList = allIceTiles;
                 ChessGuideSystem.Instance.activeToolObject = null;
                 ChessGuideSystem.Instance.currentTutorial = 6;
                 ChessGuideSystem.Instance.toolSourceName = "IceTutorial";
                 ChessGuideSystem.Instance.DisplayGuide();
-                yield break; // 强行拦截一维时间轴，一次只弹一个引导
+                return; // 强行拦截一维时间轴，一次只弹一个引导
             }
 
             // 花朵新手引导
@@ -440,13 +442,13 @@ public partial class ChessPlayArea
             {
                 Debug.Log("🌟 [引导注入] 正式弹窗展示花朵新手引导");
                 var allFlowerTiles = chessboardGrid.GridList.Values.Where(v => v.chesspiece.hasFlower).ToList();
-                if (allFlowerTiles.Count <= 0) yield break;
+                if (allFlowerTiles.Count <= 0) return;
                 ChessGuideSystem.Instance.ChesspieceList = allFlowerTiles;
                 ChessGuideSystem.Instance.activeToolObject = null;
                 ChessGuideSystem.Instance.currentTutorial = 7;
                 ChessGuideSystem.Instance.toolSourceName = "FlowerTutorial";
                 ChessGuideSystem.Instance.DisplayGuide();
-                yield break;
+                return;
             }
 
             // 树叶新手引导
@@ -492,7 +494,7 @@ public partial class ChessPlayArea
                 ChessGuideSystem.Instance.currentTutorial = 8;
                 ChessGuideSystem.Instance.toolSourceName = "LeafTutorialStep1";
                 ChessGuideSystem.Instance.DisplayGuide();
-                yield break;
+                return;
             }
         }
     }
@@ -649,13 +651,7 @@ public partial class ChessPlayArea
 
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
         SetToolButtonsEnabled(false);
-        HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
-        if (header != null)
-        {
-            if (header.pauseBtn != null) header.pauseBtn.interactable = false;
-            if (header.MyThemeBtn != null) header.MyThemeBtn.interactable = false;
-        }
-        PuzzleBtn.interactable = false;
+   
         StartCoroutine(HandleStageCompletion(isJump));
         if (!isJump) ShowGoldLeafAnim();
     }
@@ -665,7 +661,7 @@ public partial class ChessPlayArea
         foreach (var chessView in ChessStageController.Instance.GoldLeafChessViews)
         {
             chessView._bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
-            chessView.FlyToThemeBtn(ThemeManager.Instance.themeButton, this.transform, null);
+            chessView.FlyToThemeBtn(MyThemeBtn.gameObject, this.transform, null);
         }
 
         chessboardGrid.ClearAllGoldLeafOnBowls();

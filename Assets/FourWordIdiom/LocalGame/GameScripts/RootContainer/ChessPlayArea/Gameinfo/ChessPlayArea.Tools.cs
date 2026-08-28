@@ -61,7 +61,34 @@ public partial class ChessPlayArea
             // hintAdd.gameObject.SetActive(true);
         }
     }
-    public void SetToolButtonsEnabled(bool enabled)
+    
+    private void OnClickMyThemeBtn()
+    {
+        SystemManager.Instance.HidePanel(PanelType.ChessPlayArea,true, () =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
+        });
+    }
+    private void OnRedPointChanged(bool show)
+    {
+        if (MyThemeRedPoint != null)
+            MyThemeRedPoint.SetActive(show);
+    }
+    private void OnPauseClicked()
+    {
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        {
+            // 调用游戏内的暂停逻辑（里面包含了停住时间和弹出面板）
+            OnPauseClick(); 
+        }
+        else
+        {
+            // 兜底保护
+            SystemManager.Instance.ShowPanel(PanelType.PauseGameScreen);
+        }
+    }
+    
+    private void SetToolButtonsEnabled(bool enabled)
     {
         // 按钮可交互
         if (CompleteBtn != null) CompleteBtn.interactable = enabled;
@@ -88,6 +115,10 @@ public partial class ChessPlayArea
             Image hintImg = hintCount.GetComponent<Image>();
             if (hintImg != null) hintImg.color = enabled ? enabledColor : disabledColor;
         }
+        
+        pauseBtn.interactable = enabled;
+        MyThemeBtn.interactable = enabled;
+        PuzzleBtn.interactable = enabled;
     }
     public void UseComplete(bool isReset = false)
     {
@@ -125,7 +156,6 @@ public partial class ChessPlayArea
         chessboardGrid.IsBlockInput = true;
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用", GetCurrentSelectedPhrase());
-        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
         InitToolUI();
 
         AudioManager.Instance.PlaySoundEffect("ItemUSe02");

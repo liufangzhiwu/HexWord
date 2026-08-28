@@ -29,7 +29,7 @@ public partial class ChessPlayArea
             return; // 结束执行，倒计时绝对不走！
         }
         // 2. 常规的开关检查 只有在计时器运行，且时间大于0时才倒计时
-        if (!_isTimerRunning || _remainingTime <= 0||ChessStageController.Instance.CurrentStage<=1) return;
+        if (!_isTimerRunning || _remainingTime <= 0) return;
         
         // ==========================================
         // 🌟 3. 真实活跃时间累加
@@ -160,16 +160,24 @@ public partial class ChessPlayArea
             PuzzleBtn.gameObject.SetActive(false);
         }
     }
-
+    
+    /// <summary>
+    /// 触发时间警告表现（红色背景 + 单次呼吸放大）
+    /// </summary>
     private void TriggerTimeWarning()
     {
         _isWarningTriggered = true;
-        HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
-        if (header != null)
+        if (gameTimeBg != null)
         {
-            header.ShowTimeWarning();
+            gameTimeBg.gameObject.SetActive(true);
+            gameTimeBg.color = new Color(gameTimeBg.color.r, gameTimeBg.color.g, gameTimeBg.color.b, 1f);
+            // 2. 杀掉旧动画，执行一次呼吸效果 (变大再缩回)
+            gameTimeBg.transform.DOKill();
+            gameTimeBg.DOFade(.15f, 1.5f).SetEase(Ease.InOutSine).SetLoops(4, LoopType.Yoyo)
+                .OnComplete(()=>{ gameTimeBg.gameObject.SetActive(false); });
         }
     }
+    
     #endregion
     
     /// <summary>
@@ -201,10 +209,59 @@ public partial class ChessPlayArea
     private void ResetTimeWarning()
     {
         _isWarningTriggered = false;
-        HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
-        if (header != null)
+        if (gameTimeBg != null)
         {
-            header.ResetTimeWarning();
+            // 停止动画，恢复缩放
+            gameTimeBg.transform.DOKill();
+            gameTimeBg.transform.localScale = new Vector3(0.9f,0.9f,0.9f);
+            gameTimeBg.gameObject.SetActive(false);
         }
     }
+    
+    /// <summary>
+    /// 刷新蝶蛹圆环进度
+    /// </summary>
+    /// <param name="currentScore">当前获得的总分</param>
+    /// <param name="isInstant">是否瞬间刷满(不播动画，用于界面刚打开时)</param>
+    public void UpdatePupaProgress(int currentScore, bool isInstant)
+    {
+        if (pupaObj.activeSelf)
+        {
+            int threshold = ButterfliesManager.Instance.GetScoreThresholdForPupa();
+            
+            // 🌟 核心机制：如果总分超过了阈值(比如拿了150分，阈值60)，取余数得出30，让进度条循环显示！
+            // 防止除以0报错，且保留当 currentScore 正好等于 threshold 时，视觉上呈现满环
+            float targetFill = Mathf.Clamp01((float)currentScore / threshold);
+            
+            Text progressText = pupaObj.GetComponentInChildren<Text>(true);
+            bool isJustCompleted = (targetFill >= 1f && pupaProgressBar.fillAmount < 1f);
+            if (targetFill < 1f) progressText.text = "+1"; 
+            
+            pupaProgressBar.DOKill();
+            if (isInstant)
+            {
+                // 界面刚打开，瞬间设置，不播平滑动画
+                pupaProgressBar.fillAmount = targetFill;
+                progressText.gameObject.SetActive(targetFill >= 1f); // 满了才显示数字
+                if (targetFill >= 1f) progressText.text = "+1";
+            }
+            else
+            {
+                // 游戏进行中加分，花 0.3 秒平滑过渡过去
+                // 平滑动画赋值（游戏中途）
+                pupaProgressBar.DOFillAmount(targetFill, 0.3f).SetEase(Ease.OutQuad).OnComplete(() => 
+                {
+                    progressText.gameObject.SetActive(targetFill >= 1f); // 动画涨满了才显示数字
+                    
+                    // 如果是这次才刚刚达标满格，触发发光粒子特效！
+                    if (isJustCompleted)
+                    {
+                        progressText.text = "+1";
+                        PlayPupaCompleteEffect();
+                    }
+                });
+            }
+        }
+    }
+
 }

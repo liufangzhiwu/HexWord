@@ -115,7 +115,8 @@ public class StageProgressData
         }
     }
 
-    public void SaveToPlayerPrefs()
+    
+    public void SaveToFile()
     {
         SaveFileName = $"StageProgress_{StageId}.json";
         string filePath = Path.Combine(Application.persistentDataPath, SaveFileName);

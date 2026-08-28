@@ -10,54 +10,155 @@ public class NameInfoTable : MonoBehaviour
 {
     [SerializeField] private Button changeHeadIconBtn;
     [SerializeField] private Button CopyAccountIdBtn;
-    [SerializeField] private Image HeadIcon;
-    [SerializeField] private Image HeadBorder;
-    [SerializeField] private Text firstLoginTimeText;
-    [SerializeField] private Text NameText;
-    [SerializeField] private Text zanCountText;
-    [SerializeField] private Text MulCopyText;
-    [SerializeField] private Text MulZenLevelText;
-    [SerializeField] private Text MulZenScoreText;
-    [SerializeField] private Text MulWinStreakText;
+    [SerializeField] private Image headIcon;
+    [SerializeField] private Image headBorder;
+    [SerializeField] private Image headSpecialBorder;
+    [SerializeField] private Image redPoint;
     
-    [SerializeField] private Text ZenLevelText;
-    [SerializeField] private Text ZenScoreText;
-    [SerializeField] private Text WinStreakText;
+    [SerializeField] private Text firstLoginTimeText;
+    [SerializeField] private Text nameText;
+    [SerializeField] private Text zanCountText;
+    [SerializeField] private Text mulCopyText;
+    [SerializeField] private Text mulZenLevelText;
+    [SerializeField] private Text mulZenScoreText;
+    [SerializeField] private Text mulWinStreakText;
+    
+    [SerializeField] private Text zenLevelText;
+    [SerializeField] private Text zenScoreText;
+    [SerializeField] private Text winStreakText;
   
     
     // Start is called before the first frame update
     private void Start()
     {
         changeHeadIconBtn.AddClickAction(OnClickChangeHeadIconBtn);
-        CopyAccountIdBtn.AddClickAction(OnCopyPackageAndOpenId);
+        CopyAccountIdBtn?.AddClickAction(OnCopyPackageAndOpenId);
         
         //MulCopyText.text=MultilingualManager.Instance.GetString("MulZenLevelText");
-        MulZenLevelText.text=MultilingualManager.Instance.GetString("ZenLevel","hudie");
-        MulZenScoreText.text=MultilingualManager.Instance.GetString("ZenScore","hudie");
-        MulWinStreakText.text=MultilingualManager.Instance.GetString("LongestWinDay","hudie");
+        mulZenLevelText.text=MultilingualManager.Instance.GetString("ZenLevel","hudie");
+        mulZenScoreText.text=MultilingualManager.Instance.GetString("ZenScore","hudie");
+        mulWinStreakText.text=MultilingualManager.Instance.GetString("LongestWinDay","hudie");
         
       
     }
 
     private void OnEnable()
     {
-        InitUI();
+        
+        EventDispatcher.instance.OnChangeHeadIconUpdateUI += UpdateHeadIcon;
+      
     }
 
-    private void InitUI()
+    public void InitMyUI()
     {
+        changeHeadIconBtn.gameObject.SetActive(true);
         DateTime firstLoginDate= DateTime.Parse(GameDataManager.Instance.UserData.firstLoginTime);
+        
+        if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.UserName))
+        {
+            GameDataManager.Instance.UserData.UserName = FishInfoController.Instance.GeneratePlayerName();
+        }
+        
         firstLoginTimeText.text=String.Format(MultilingualManager.Instance.GetString("StartDate"), firstLoginDate.Year, firstLoginDate.Month);
-        NameText.text=GameDataManager.Instance.UserData.UserName;
-        zanCountText.text=GameDataManager.Instance.UserData.likeCount.ToString();
-        ZenLevelText.text=GameDataManager.Instance.UserData.Zenlevel;
-        ZenScoreText.text=GameDataManager.Instance.UserData.zenCount.ToString();
-        WinStreakText.text=GameDataManager.Instance.UserData._signSaveData.historyWinDayTimes.ToString();
+        zanCountText.text = GameCoreManager.Instance.userProfile.likes_count.ToString();
+        zenLevelText.text = OverallRankingManager.Instance.GetZenLevelByScore(GameDataManager.Instance.UserData.overallZenScore).ToString();
+        zenScoreText.text=GameDataManager.Instance.UserData.overallZenScore.ToString();
+        winStreakText.text=GameDataManager.Instance.UserData._signSaveData.historyWinDayTimes.ToString();
+        
+        if (GameDataManager.Instance.UserData.UserName.Length > 8)
+        {
+            nameText.text=GameDataManager.Instance.UserData.UserName.Substring(0,8)+"...";
+        }
+        else
+        {
+            nameText.text=GameDataManager.Instance.UserData.UserName;
+        }
+        redPoint.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon||GameDataManager.Instance.UserData.isGetNewHeadBorderIcon);
+        UpdateHeadIcon();
+    }
+
+    private void UpdateHeadIcon()
+    {
+        headIcon.sprite = LoadheadIcon("head"+GameDataManager.Instance.UserData.UserHeadId);
+
+        int userHeadBorderId = GameDataManager.Instance.UserData.UserHeadBorderId;
+        
+        headBorder.gameObject.SetActive(userHeadBorderId <= 3);
+        headSpecialBorder.gameObject.SetActive(userHeadBorderId > 3);
+
+        if (userHeadBorderId > 4)
+        {
+            headSpecialBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
+        }
+        else
+        {
+            headBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
+        }
+
+        if (GameDataManager.Instance.UserData.UserName.Length > 8)
+        {
+            nameText.text=GameDataManager.Instance.UserData.UserName.Substring(0,8)+"...";
+        }
+        else
+        {
+            nameText.text=GameDataManager.Instance.UserData.UserName;
+        }
+    }
+    
+    public void InitOtherUI(int likeCount)
+    {
+        changeHeadIconBtn.gameObject.SetActive(false);
+        //DateTime firstLoginDate= DateTime.Parse(GameCoreManager.Instance.otherPersonProfile.join_date_text);
+
+        firstLoginTimeText.text = GameCoreManager.Instance.otherPersonProfile.join_date_text;
+        zanCountText.text = likeCount.ToString();
+        zenLevelText.text = OverallRankingManager.Instance.GetZenLevelByScore(GameCoreManager.Instance.otherPersonProfile.overallZenScore).ToString();
+        zenScoreText.text=GameCoreManager.Instance.otherPersonProfile.overallZenScore.ToString();
+        winStreakText.text=GameCoreManager.Instance.otherPersonProfile.max_win_streak.ToString();
+        
+        if (GameCoreManager.Instance.otherPersonProfile.nickname.Length > 8)
+        {
+            nameText.text=GameCoreManager.Instance.otherPersonProfile.nickname.Substring(0,8)+"...";
+        }
+        else
+        {
+            nameText.text=GameCoreManager.Instance.otherPersonProfile.nickname;
+        }
+
+        UpdateOtherHeadIcon();
+    }
+    
+    private void UpdateOtherHeadIcon()
+    {
+        headIcon.sprite = LoadheadIcon("head"+GameCoreManager.Instance.otherPersonProfile.avatar);
+
+        int userHeadBorderId = int.Parse(GameCoreManager.Instance.otherPersonProfile.avatar_frame);
+        
+        headBorder.gameObject.SetActive(userHeadBorderId <= 3);
+        headSpecialBorder.gameObject.SetActive(userHeadBorderId > 3);
+
+        if (userHeadBorderId > 4)
+        {
+            headSpecialBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
+        }
+        else
+        {
+            headBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
+        }
     }
 
     private void OnClickChangeHeadIconBtn()
     {
         SystemManager.Instance.ShowPanel(PanelType.HeadScreen);
+        
+        GameDataManager.Instance.UserData.isGetNewHeadIcon = false;
+        
+        redPoint.gameObject.SetActive(false);
+    }
+    
+    private Sprite LoadheadIcon(string showIcon)
+    {
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon,"UserHeadIcons");
     }
     
     /// <summary>
@@ -95,6 +196,11 @@ public class NameInfoTable : MonoBehaviour
         // 示例：如果你有飘字组件，可以加上
         // ToastManager.Show("信息已复制");
         MessageSystem.Instance.ShowTip("信息已复制");
+    }
+
+    private void OnDisable()
+    {
+        EventDispatcher.instance.OnChangeHeadIconUpdateUI -= UpdateHeadIcon;
     }
     
 }

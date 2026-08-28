@@ -8,10 +8,11 @@ public class LeaderboardEntry
     public bool is_joined;
     public int rank;
     public int avatar;
+    public string avatar_frame;
     public string nickname;
     public int score;
     public string leaderboard_name;
-    public string grouping;
+    public string period_date;
 }
 public class LeaderboardRequest
 {
@@ -54,4 +55,36 @@ public class JoinZenRankResponse
     public string level;            // 当前段位
     public string grouping;         // 分组（我们修改后为空）
     public int base_zen_count;      // 服务端锁定的底分
+}
+
+// ==========================================
+// 🌟 总榜、月榜、名人堂 通用的响应数据结构
+// ==========================================
+public class OverallRankResponse
+{
+    public LeaderboardEntry my;            // 玩家自己的排名数据
+    public List<LeaderboardEntry> list;    // 榜单主体列表（前100名等）
+    public int remaining_seconds;
+}
+
+// ==========================================
+// 🌟 月榜领奖响应数据结构
+// ==========================================
+public class ClaimMonthlyRewardResponse
+{
+    public string status;           // 状态: "success" 或 "error"
+    public string message;          // 提示信息（例如：“奖励已发放”、“不在发奖期”等）
+    // 如果后端直接下发掉落物列表，可以在这里拓展一个 List<RewardItem> rewards
+}
+// 🌟 月榜结算响应（用于给玩家展示自己和前5名的数据）
+public class MonthlySettlementResponse
+{
+    public bool has_settlement;          // 是否弹结算（独立于有没有奖励）
+    public bool has_reward;              // 是否进前3有奖
+    public string period;        // 期数 (例如 "2026-07-30 14")
+    public int my_rank;                  // 0 = 未上榜
+    public int my_score;
+    public int my_avatar;                // 与 LeaderboardEntry.avatar 同为 int
+    public string my_nickname;
+    public List<LeaderboardEntry> list; // 前6名快照
 }

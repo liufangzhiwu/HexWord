@@ -3,29 +3,15 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-
 public class HeaderSection : UIWindow
 {
-    [Header("左侧按钮组")]
+    [Header("GM工具按钮")]
     public Button GmBtn;
-    public Button SetBtn;
-    public Button BackBtn;
-    [Header("动态布局控制")]
-    public HorizontalLayoutGroup centerLayoutGroup;
     
-    [Header("中间按钮组")]
-    public HorizontalLayoutGroup middleLayoutGroup;
-    public Button ShopBtn;
-    public GameObject GoldImage;
-    public Text Goldtxt;    
-    public Button PupaTable;
-
-    public GameObject addObj;
-    public GameObject redpoint;
-    public GameObject GoldLeafredpoint;
-    public GameObject sale;
-    public GameObject PupaImage;
-    public Text Pupatxt; 
+    [Header("显隐控制")] 
+    public Button BackBtn;
+    public Button LevelPuzzleBtn;
+    public GameObject Gap;
     
     [Header("体力系统")]
     public Button energyBtn;
@@ -33,27 +19,44 @@ public class HeaderSection : UIWindow
     public Text energyTimer;
     public GameObject energyAdd;
     
-    [Header("右侧按钮组 (词库)")]
-    public Button MyThemeBtn;
-    public Button PuzzlebookBtn;
-    public Button LevelPuzzleBtn;
+    [Header("蝶蛹进度")] 
+    public Button PupaTable;
+    public Text Pupatxt;
     
-    [Header("游戏内控制")]
-    public Button pauseBtn;
-    public Text gameTimeTxt;
-    public Image gameTimeBg;             // 时间的背景图组件
+    [Header("金币钮组")]
+    public Button ShopBtn;
+    public GameObject GoldImage;
+    public Text Goldtxt;    
+    public GameObject addObj;
+    public GameObject redpoint;
+    public GameObject sale;
+    [Header("未知的")]
+    public GameObject GoldLeafredpoint;
+    // [Header("右侧按钮组 (词库)")]
+    // public Button MyThemeBtn;
+    // public Button PuzzlebookBtn;
     
-    // 蝶蛹进度
-    [Header("游戏内专属：蝶蛹圆形进度条")]
-    public GameObject pupaObj;             // 进度条的总开关节点
-    public Image pupaProgressBar;          // 你的圆形 Fill 进度条 (Image Type = Filled)
-    public GameObject _pupaCompleteEffectNode;
     // Start is called before the first frame update
 
     private bool _isShowEnergyAdd = true;
     
     // 缓存金币文本的最原始缩放值
     private Vector3 _originalGoldTextScale = Vector3.zero;
+
+    protected override void InitializeUIComponents()
+    {
+        BackBtn.onClick.AddListener(OnBackClick);
+        ShopBtn.AddVibraClickAction(OnShopClick);
+#if Unity_ShowLog || UNITY_EDITOR
+        GmBtn.AddClickAction(OnGmClick, "", false);
+#endif
+        // PuzzlebookBtn.AddVibraClickAction(OnClickPuzzleVocabulary);
+        LevelPuzzleBtn.AddClickAction(OnClickStagePuzzleScreen);
+        PupaTable.AddClickAction(()=>SystemManager.Instance.ShowPanel(PanelType.ButterflyHome));
+        energyBtn.AddClickAction(()=> SystemManager.Instance.ShowPanel(PanelType.EnergyScreen));
+        // MyThemeBtn.AddVibraClickAction(OnClickMyThemeBtn);
+    }
+
     protected void Start()
     {
         if (Goldtxt != null)
@@ -62,9 +65,7 @@ public class HeaderSection : UIWindow
         }
         
         InitUI();
-        InitializeButtons();       
-        
-        ThemeManager.Instance.themeButton = MyThemeBtn.gameObject;
+        // ThemeManager.Instance.themeButton = MyThemeBtn.gameObject;
         ThemeManager.Instance.CheckAndUpdateSkinRedPoint();
     }
 
@@ -92,9 +93,7 @@ public class HeaderSection : UIWindow
         redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
         sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
         
-        MyThemeBtn.gameObject.SetActive(SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)&&ThemeManager.Instance.CanShowThemeBtn());
-
-        InitPupaUI();
+        // MyThemeBtn.gameObject.SetActive(SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)&&ThemeManager.Instance.CanShowThemeBtn());
     }
     
     private IEnumerator AnimateCoinAddition(int amount)
@@ -124,85 +123,51 @@ public class HeaderSection : UIWindow
         Goldtxt.transform.localScale = _originalGoldTextScale;
     }
 
-    protected void InitializeButtons()
-    {       
-        SetBtn.AddClickAction(OnSetClick);
-        BackBtn.AddVibraClickAction(OnBackClick);
-        ShopBtn.AddClickAction(OnShopClick);
-#if Unity_ShowLog || UNITY_EDITOR
-        GmBtn.AddClickAction(OnGmClick, "", false);
-#endif
-        PuzzlebookBtn.AddClickAction(OnClickPuzzleVocabulary);
-        LevelPuzzleBtn.AddClickAction(OnClickStagePuzzleScreen);
-        PupaTable.AddClickAction(()=>SystemManager.Instance.ShowPanel(PanelType.ButterflyHome));
-        energyBtn.AddClickAction(()=>
-        {
-            // var userData = GameDataManager.Instance.UserData;
-            // int stage = Mathf.Max(userData.CurrentStage, userData.CurrentChessStage);
-            // bool isAdequate = (userData.Energy >= UserData.MAX_NATURAL_ENERGY) || (stage == 1);
-            //
-            // // 如果体力是满的，或者是第一关，直接截断！
-            // if (isAdequate) 
-            // {
-            //     return;
-            // }
-            SystemManager.Instance.ShowPanel(PanelType.EnergyScreen);
-        });
-        pauseBtn.AddClickAction(OnPauseClicked);
-        MyThemeBtn.AddClickAction(OnClickMyThemeBtn);
-    }
-
     protected override void OnEnable()
     {
-        LayoutElement pupaElement = PupaTable.GetComponent<LayoutElement>();
-        if (pupaElement == null)
+        // if (MyThemeBtn != null) MyThemeBtn.interactable = true;
+        if (GoldLeafredpoint != null)
         {
-            pupaElement = PupaTable.gameObject.AddComponent<LayoutElement>();
+            GoldLeafredpoint.SetActive(ThemeManager.Instance.IsSkinRedPointActive);
         }
-        pupaElement.ignoreLayout = false;
-        if (pauseBtn != null) pauseBtn.interactable = true;
-        if (MyThemeBtn != null) MyThemeBtn.interactable = true;
-        
+        CustomFlyInManager.Instance.GoldObj= GoldImage.gameObject;
+        ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
         EventDispatcher.instance.OnUpdateLayerCoin += UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
         EventDispatcher.instance.OnChangeTopRaycast += ChangeTopRaycast;
         // EventDispatcher.instance.OnChessScoreChanged += UpdatePupaProgress; 
-        EventDispatcher.instance.OnHighlightHeaderUI += HighlightEnergyAndPupa;
+        EventDispatcher.instance.OnHighlightHeaderUI += HighlightEnergy;
         EventDispatcher.instance.OnHighlightGoldAndEnergy += HighlightGoldAndEnergy;
         
         bool ishomeshow = SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface);
-        PuzzlebookBtn.gameObject.SetActive(ishomeshow&& GameDataManager.Instance.UserData.isShowVocabulary);
+        // PuzzlebookBtn.gameObject.SetActive(ishomeshow&& GameDataManager.Instance.UserData.isShowVocabulary);
         GmBtn.gameObject.SetActive(ishomeshow);
         BackBtn.gameObject.SetActive(!ishomeshow);
-        SetBtn.gameObject.SetActive(ishomeshow);
         energyBtn.gameObject.SetActive(ishomeshow);
-        CustomFlyInManager.Instance.GoldObj=GoldImage.gameObject;
-
+        ShopBtn.gameObject.SetActive(ishomeshow);
+        PupaTable.gameObject.SetActive(false);
+        
         if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) || SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
         {
             BackBtn.GetComponent<Image>().sprite =AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Home");
         }
         else
         {
-            BackBtn.GetComponent<Image>().sprite =AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_back");
+            BackBtn.GetComponent<Image>().sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_back");
         }
         EventDispatcher.instance.TriggerChangeTopRaycast(true);
         EventDispatcher.instance.TriggerChangeGoldUI(0,false);       
-
-        //LevelPuzzleBtn.gameObject.SetActive(SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView));
         
-        if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
-        {
-            ShopBtn.gameObject.SetActive(false);
+        if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
+        { 
+            BackBtn.gameObject.SetActive(true);
+            LevelPuzzleBtn.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(StageHexController.Instance.CurStageData.PupaDatas!=null);
-            pupaElement.ignoreLayout = true;
-            RectTransform pupaRect = PupaTable.GetComponent<RectTransform>();
-            pupaRect.anchorMin = Vector2.one;
-            pupaRect.anchorMax = Vector2.one;
-            pupaRect.anchoredPosition = new Vector2(40, -65);
-            
-            pupaObj.SetActive(false);
-            pauseBtn.gameObject.SetActive(false);
+            // RectTransform pupaRect = PupaTable.GetComponent<RectTransform>();
+            // pupaRect.anchorMin = Vector2.one;
+            // pupaRect.anchorMax = Vector2.one;
+            // pupaRect.anchoredPosition = new Vector2(40, -65);
+            //
             if (StageHexController.Instance.CurStageData.PupaDatas != null&&!GameDataManager.Instance.ButterflyData.IsOpenButterfly)
             {
                 GameDataManager.Instance.ButterflyData.IsOpenButterfly = true;
@@ -210,46 +175,25 @@ public class HeaderSection : UIWindow
         }
         else if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
         {
-            BackBtn.gameObject.SetActive(false);
+            LevelPuzzleBtn.gameObject.SetActive(false);
             ShopBtn.gameObject.SetActive(false);
-            PupaTable.gameObject.SetActive(false);
-            pauseBtn.gameObject.SetActive(false);
-            
-            if(ChessStageController.Instance.CurrentStage>1)
-                pauseBtn.gameObject.SetActive(true);
+           
             if (ChessStageController.Instance.CurrStageData.PupaDatas != null&&!GameDataManager.Instance.ButterflyData.IsOpenButterfly)
             {
                 GameDataManager.Instance.ButterflyData.IsOpenButterfly = true;
             }
-            
-            bool showPupaProgress = ButterfliesManager.Instance.CanShowPupaProgressBarThisLevel(ChessStageController.Instance.OptimalTotalScore);
-            
-            pupaObj.SetActive(showPupaProgress);
-            ChangeLayoutAlignment(true);
-            ChessPlayArea.Instance._timerText = gameTimeTxt;
-            UpdatePupaProgress(ChessStageController.Instance.CurrentTotalScore, true);
         }
-        else if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) || 
-                 SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
+        else if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
         {
             BackBtn.gameObject.SetActive(true);
-            bool isChessFinish = SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView);
-            ShopBtn.gameObject.SetActive(isChessFinish);
-      
-            ShopBtn.gameObject.SetActive(false);
-            PupaTable.gameObject.SetActive(false);
-            pupaObj.SetActive(false);
-            pauseBtn.gameObject.SetActive(false);
-            ChangeLayoutAlignment(false);
-        }
-        else
-        {
-            addObj.gameObject.SetActive(true);
             ShopBtn.gameObject.SetActive(true);
-            PupaTable.gameObject.SetActive(false);
-            pupaObj.SetActive(false);
-            pauseBtn.gameObject.SetActive(false);
-            ChangeLayoutAlignment(false);
+            LevelPuzzleBtn.gameObject.SetActive(true);
+        }
+        else if(SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
+        {
+            BackBtn.gameObject.SetActive(true);
+            ShopBtn.gameObject.SetActive(true);
+            LevelPuzzleBtn.gameObject.SetActive(true);
         }
 
         InitPupaUI();
@@ -257,44 +201,13 @@ public class HeaderSection : UIWindow
         // 启用时开始重复调用 (1秒延迟，每秒1次)
         StartCoroutine(CheckLevelPuzzleVisibility());
         
-        GoldLeafredpoint?.SetActive(ThemeManager.Instance.IsSkinRedPointActive);
-        ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
+      
     }
-    /// <summary>
-    /// 动态改变顶部资产区域的对齐方式
-    /// </summary>
-    /// <param name="isRightAlign">true: 右对齐(关卡内) | false: 左对齐(大厅等其他情况)</param>
-    private void ChangeLayoutAlignment(bool isRightAlign)
-    {
-        if (centerLayoutGroup != null)
-        {
-            // 根据你截图里的设置，这里使用 UpperRight 和 UpperLeft。
-            // 如果你的 UI 需要垂直居中，可以换成 MiddleRight 和 MiddleLeft。
-            centerLayoutGroup.childAlignment = isRightAlign ? TextAnchor.UpperRight : TextAnchor.UpperLeft;
-            // 🌟 核心：强制刷新布局，防止切换时 UI 出现一帧的残影或位置不对
-            LayoutRebuilder.ForceRebuildLayoutImmediate(centerLayoutGroup.GetComponent<RectTransform>());
-        }
-    }
-    /// <summary>
-    /// 动态改变顶部资产区域的对齐方式
-    /// </summary>
-    /// <param name="isRightAlign">true: 右对齐(关卡内) | false: 左对齐(大厅等其他情况)</param>
-    private void MiddleLayoutAlignment(bool isRightAlign)
-    {
-        if (middleLayoutGroup != null)
-        {
-            // 根据你截图里的设置，这里使用 UpperRight 和 UpperLeft。
-            // 如果你的 UI 需要垂直居中，可以换成 MiddleRight 和 MiddleLeft。
-            middleLayoutGroup.childAlignment = isRightAlign ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft;
-            // 🌟 核心：强制刷新布局，防止切换时 UI 出现一帧的残影或位置不对
-            LayoutRebuilder.ForceRebuildLayoutImmediate(middleLayoutGroup.GetComponent<RectTransform>());
-        }
-    }
+
     private IEnumerator CheckLevelPuzzleVisibility()
     {
         yield return new WaitForSeconds(0.5f);  
-        bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea) ||
-                          SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) ||
+        bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) ||
                           SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView);
         
         LevelPuzzleBtn.GetComponent<CanvasGroup>().alpha = 0f;
@@ -305,7 +218,7 @@ public class HeaderSection : UIWindow
             yield return new WaitForSeconds(0.8f);  
             if (isgameshow)
             {
-                if(GameDataManager.Instance.UserData.levelMode == 1||GameDataManager.Instance.UserData.levelMode == 3)
+                if(GameDataManager.Instance.UserData.levelMode == 1)
                     hasLevelWords = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count > 0 ;
                 else if (GameDataManager.Instance.UserData.levelMode == 2&&ChessStageController.Instance.CurrStageData!=null)
                     hasLevelWords = ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0;
@@ -323,7 +236,7 @@ public class HeaderSection : UIWindow
     /// </summary>
     private void UpdateCoinLayer(bool istop, bool isshopbtnEnable = true, bool isshowPupa = false)
     {
-        // ShopBtn.gameObject.SetActive(istop);
+        
         GameObject coinObj = ShopBtn.gameObject;
         Canvas canvas = coinObj.GetComponent<Canvas>();
         if (canvas == null)
@@ -346,12 +259,12 @@ public class HeaderSection : UIWindow
                               SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen) ||
                               SystemManager.Instance.PanelIsShowing(PanelType.EnergyScreen) ||
                               SystemManager.Instance.PanelIsShowing(PanelType.GetItemScreen);
-        
+        Gap.gameObject.SetActive(!istop);
         bool isFinish = false;
         if (istop || isActivityOpen)
         {
             coinObj.gameObject.SetActive(true);
-            bool isOldGamePupa = SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea) && 
+            bool isOldGamePupa = SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea) && 
                                  StageHexController.Instance.CurStageData.PupaDatas != null;
                              
             bool shouldShowPupa = isshowPupa || SystemManager.Instance.PanelIsShowing(PanelType.ButterflyHome) || isOldGamePupa;
@@ -361,15 +274,15 @@ public class HeaderSection : UIWindow
         {
             coinObj.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(false);
+            BackBtn.gameObject.SetActive(true);
         }
-        else if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
+        else if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
         {
             coinObj.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(StageHexController.Instance.CurStageData.PupaDatas != null);
         }
         else if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
         {
-            // 🌟 核心防御：严格锁死，游戏局内绝不出现金币栏
             coinObj.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(false);
         }
@@ -377,6 +290,7 @@ public class HeaderSection : UIWindow
         {
             coinObj.gameObject.SetActive(true);
             PupaTable.gameObject.SetActive(false);
+            BackBtn.gameObject.SetActive(true);
             isFinish = true;
         }
         else
@@ -384,6 +298,7 @@ public class HeaderSection : UIWindow
             bool isLobby = SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface);
             coinObj.gameObject.SetActive(isLobby);
             PupaTable.gameObject.SetActive(isshowPupa);
+       
         }
        
         if (istop)
@@ -434,24 +349,19 @@ public class HeaderSection : UIWindow
             InitPupaUI();
         }
         PupaTable.interactable = !isshowPupa;
+        energyBtn.gameObject.SetActive(!PupaTable.gameObject.activeInHierarchy && 
+                                       !SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView));
     }
     /// <summary>
     /// 供退出/重连弹窗调用：将体力槽和蝶蛹进度条提到最顶层高亮显示，穿透黑色半透明蒙版
     /// </summary>
-    public void HighlightEnergyAndPupa(bool isHighlight)
+    public void HighlightEnergy(bool isHighlight)
     {
-        // energyBtn.transform.GetChild(1).gameObject.SetActive(!isHighlight);
         energyAdd.SetActive(!isHighlight);
         // 1. 给体力按钮挂载 Canvas 以便提层
         Canvas energyCanvas = energyBtn.GetComponent<Canvas>();
         if (energyCanvas == null) energyCanvas = energyBtn.gameObject.AddComponent<Canvas>();
         if (energyBtn.GetComponent<GraphicRaycaster>() == null) energyBtn.gameObject.AddComponent<GraphicRaycaster>();
-
-        // 2. 给蝶蛹进度组挂载 Canvas 以便提层
-        Canvas pupaCanvas = pupaObj.GetComponent<Canvas>();
-        if (pupaCanvas == null) pupaCanvas = pupaObj.AddComponent<Canvas>();
-        if (pupaObj.GetComponent<GraphicRaycaster>() == null) pupaObj.AddComponent<GraphicRaycaster>();
-        
         // 3. 开始控制层级
         if (isHighlight)
         {
@@ -461,10 +371,6 @@ public class HeaderSection : UIWindow
             energyCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
             energyCanvas.sortingOrder = 101; // 保证在弹窗蒙版之上
             energyBtn.interactable = false;
-            
-            pupaCanvas.overrideSorting = true;
-            pupaCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
-            pupaCanvas.sortingOrder = 101;
         }
         else
         {
@@ -475,16 +381,10 @@ public class HeaderSection : UIWindow
             int stage = Mathf.Max(userData.CurrentHexStage, userData.CurrentChessStage);
             bool isAdequate = (userData.Energy >= UserData.MAX_NATURAL_ENERGY) || (stage == 1);
             energyBtn.interactable = !isAdequate;
-
-            pupaCanvas.overrideSorting = false;
-            pupaCanvas.sortingOrder = 0;
             energyBtn.gameObject.SetActive(false);
         }
-        
-        // Debug.LogError($" {isHighlight} 最后关闭了吗" + energyCanvas.overrideSorting);
         _isShowEnergyAdd = !isHighlight;
         energyAdd.SetActive(!isHighlight);
-        MiddleLayoutAlignment(isHighlight);
     }
     /// <summary>
     /// 供体力购买界面调用：将金币槽和体力槽提到最顶层高亮显示
@@ -623,7 +523,7 @@ public class HeaderSection : UIWindow
         if(butterflyGrow == null)
             return;
 
-        StartCoroutine(ButterfliesManager.Instance.FlyPupaCoroutine(startPoint, PupaImage.transform, () =>
+        StartCoroutine(ButterfliesManager.Instance.FlyPupaCoroutine(startPoint, PupaTable.transform.GetChild(0), () =>
         {
             AudioManager.Instance.PlaySoundEffect("getPupa");
             GameDataManager.Instance.ButterflyData.AddPupa(pupa);
@@ -631,143 +531,10 @@ public class HeaderSection : UIWindow
             GameDataManager.Instance.UserData.SendCurrencyEvent(pupa,"蝶蛹","关卡内收集");
         }, 1.3f));
     }
-    
-    // 监听到事件后执行的方法
-    private void UpdatePupaProgress(int currentScore)
-    {
-        UpdatePupaProgress(currentScore, false); // 默认带动画
-    }
-    /// <summary>
-    /// 刷新蝶蛹圆环进度
-    /// </summary>
-    /// <param name="currentScore">当前获得的总分</param>
-    /// <param name="isInstant">是否瞬间刷满(不播动画，用于界面刚打开时)</param>
-    public void UpdatePupaProgress(int currentScore, bool isInstant)
-    {
-        if (pupaObj.activeSelf)
-        {
-            int threshold = ButterfliesManager.Instance.GetScoreThresholdForPupa();
-            
-            // 🌟 核心机制：如果总分超过了阈值(比如拿了150分，阈值60)，取余数得出30，让进度条循环显示！
-            // 防止除以0报错，且保留当 currentScore 正好等于 threshold 时，视觉上呈现满环
-            float targetFill = Mathf.Clamp01((float)currentScore / threshold);
-            
-            Text progressText = pupaObj.GetComponentInChildren<Text>(true);
-            bool isJustCompleted = (targetFill >= 1f && pupaProgressBar.fillAmount < 1f);
-            if (targetFill < 1f) progressText.text = "+1"; 
-            
-            pupaProgressBar.DOKill();
-            if (isInstant)
-            {
-                // 界面刚打开，瞬间设置，不播平滑动画
-                pupaProgressBar.fillAmount = targetFill;
-                progressText.gameObject.SetActive(targetFill >= 1f); // 满了才显示数字
-                if (targetFill >= 1f) progressText.text = "+1";
-            }
-            else
-            {
-                // 游戏进行中加分，花 0.3 秒平滑过渡过去
-                // 平滑动画赋值（游戏中途）
-                pupaProgressBar.DOFillAmount(targetFill, 0.3f).SetEase(Ease.OutQuad).OnComplete(() => 
-                {
-                    progressText.gameObject.SetActive(targetFill >= 1f); // 动画涨满了才显示数字
-                    
-                    // 如果是这次才刚刚达标满格，触发发光粒子特效！
-                    if (isJustCompleted)
-                    {
-                        progressText.text = "+1";
-                        PlayPupaCompleteEffect();
-                    }
-                });
-            }
-        }
-    }
-    
-    /// <summary>
-    /// 🌟 预留接口：蝶蛹进度收集完成时的粒子发光散开特效
-    /// </summary>
-    private void PlayPupaCompleteEffect()
-    {
-        if (_pupaCompleteEffectNode != null)
-        {
-            // 1. 先关闭再打开，能自动重置很多 UI 动画状态
-            _pupaCompleteEffectNode.SetActive(false);
-            _pupaCompleteEffectNode.SetActive(true);
-            
-            // 2. 找到粒子并让它喷发
-            ParticleSystem ps = _pupaCompleteEffectNode.GetComponentInChildren<ParticleSystem>();
-            if (ps != null)
-            {
-                ps.Stop(); // 确保从头开始
-                ps.Play();
-            }
-            
-            DOVirtual.DelayedCall(2f, () => 
-            {
-                if (_pupaCompleteEffectNode != null)
-                {
-                    _pupaCompleteEffectNode.SetActive(false);
-                }
-            });
-        }
-    }
-    /// <summary>
-    /// 增加蝶蛹收集数量，并刷新文本 UI
-    /// </summary>
-    /// <param name="addCount">增加的数量</param>
-    public void AddPupaCountAndUpdateUI(int addCount = 1)
-    {
-        ButterflyGrow butterflyGrow = ButterfliesManager.Instance.GetCurrentGrow();
-        if(butterflyGrow == null) return;
-
-        // 1. 更新底层数据
-        GameDataManager.Instance.ButterflyData.AddPupa(addCount);
-        
-        // 可选：发送打点事件
-        GameDataManager.Instance.UserData.SendCurrencyEvent(addCount, "蝶蛹", "树叶化蛹收集");
-
-        // 2. 刷新界面文本
-        Pupatxt.text = $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow.Count}";
-
-        // 3. 🌟 增加一点 UI 表现力：让文字在增加时“跳动”一下，增加手感反馈
-        Pupatxt.transform.DOKill();
-        Pupatxt.transform.localScale = Vector3.one; // 恢复初始大小（假设初始是 1）
-        Pupatxt.transform.DOPunchScale(new Vector3(0.3f, 0.3f, 0.3f), 0.3f, 5, 1f);
-        
-        // 4. 播放收集音效
-        AudioManager.Instance.PlaySoundEffect("getPupa");
-    }
-    /// <summary>
-    /// 触发时间警告表现（红色背景 + 单次呼吸放大）
-    /// </summary>
-    public void ShowTimeWarning()
-    {
-        if (gameTimeBg != null)
-        {
-            gameTimeBg.gameObject.SetActive(true);
-            gameTimeBg.color = new Color(gameTimeBg.color.r, gameTimeBg.color.g, gameTimeBg.color.b, 1f);
-            // 2. 杀掉旧动画，执行一次呼吸效果 (变大再缩回)
-            gameTimeBg.transform.DOKill();
-            gameTimeBg.DOFade(.15f, 1.5f).SetEase(Ease.InOutSine).SetLoops(4, LoopType.Yoyo)
-                .OnComplete(()=>{ gameTimeBg.gameObject.SetActive(false); });
-        }
-    }
-    /// <summary>
-    /// 重置时间表现（恢复正常背景）
-    /// </summary>
-    public void ResetTimeWarning()
-    {
-        if (gameTimeBg != null)
-        {
-            // 停止动画，恢复缩放
-            gameTimeBg.transform.DOKill();
-            gameTimeBg.transform.localScale = new Vector3(0.9f,0.9f,0.9f);
-            gameTimeBg.gameObject.SetActive(false);
-        }
-    }
+ 
     private void OnClickPuzzleVocabulary()
     {
-        if(GameDataManager.Instance.UserData.levelMode == 1||GameDataManager.Instance.UserData.levelMode == 3)
+        if (GameDataManager.Instance.UserData.levelMode == 1)
             StageHexController.Instance.IsEnterVocabulary = false;
         else if (GameDataManager.Instance.UserData.levelMode == 2)
             ChessStageController.Instance.IsEnterVocabulary = false;
@@ -778,7 +545,7 @@ public class HeaderSection : UIWindow
     
     private void OnClickStagePuzzleScreen()
     {
-        if(GameDataManager.Instance.UserData.levelMode == 1||GameDataManager.Instance.UserData.levelMode == 3)
+        if(GameDataManager.Instance.UserData.levelMode == 1)
             StageHexController.Instance.IsEnterVocabulary = true;
         else if (GameDataManager.Instance.UserData.levelMode == 2)
             ChessStageController.Instance.IsEnterVocabulary = true;
@@ -798,14 +565,6 @@ public class HeaderSection : UIWindow
             SystemManager.Instance.ShowPanel(PanelType.DebugMenu);
         }
         //Debug.Log("TP-LINK 5G 当前IP地址: " + localIP + "设备是否在局域网内: " + isloaclIp);
-    }
-   
-
-    private void OnSetClick()
-    {
-        
-        SystemManager.Instance.ShowPanel(PanelType.OptionsView);
-        ChessGuideSystem.Instance.CloseGuide();
     }
 
     private void OnShopClick()
@@ -829,11 +588,13 @@ public class HeaderSection : UIWindow
 
         if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
         {
+            
             SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }
-        if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
+        if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
         {
-            SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
+            AudioManager.Instance.TriggerVibration(40, 50);
+            SystemManager.Instance.HidePanel(PanelType.GamePlayArea);
             GameDataManager.Instance.UserData.UpdateOnlineStageTime();
         }    
         
@@ -843,25 +604,12 @@ public class HeaderSection : UIWindow
         }   
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
         {
+            AudioManager.Instance.TriggerVibration(40, 50);
             SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
             GameDataManager.Instance.UserData.UpdateOnlineStageTime();
         }    
         
         ChessGuideSystem.Instance.CloseGuide();
-    }
-    
-    private void OnPauseClicked()
-    {
-        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea) && ChessPlayArea.Instance != null)
-        {
-            // 调用游戏内的暂停逻辑（里面包含了停住时间和弹出面板）
-            ChessPlayArea.Instance.OnPauseClick(); 
-        }
-        else
-        {
-            // 兜底保护
-            SystemManager.Instance.ShowPanel(PanelType.PauseGameScreen);
-        }
     }
 
     private void OnClickMyThemeBtn()
@@ -872,9 +620,9 @@ public class HeaderSection : UIWindow
         }else if (GameCoreManager.Instance.PanelState == PanelState.GamePingPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
-        }else if (GameCoreManager.Instance.PanelState == PanelState.GameHexPanel)
+        }else if (GameCoreManager.Instance.PanelState == PanelState.GameXiaoPanel)
         {
-            SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
+            SystemManager.Instance.HidePanel(PanelType.GamePlayArea);
         }
         
         SystemManager.Instance.HidePanel(PanelType.HeaderSection , true, () =>
@@ -887,7 +635,6 @@ public class HeaderSection : UIWindow
     public void ChangeBackBtnState(bool isshow)
     {
         BackBtn.gameObject.SetActive(isshow);
-        SetBtn.gameObject.SetActive(!isshow);
         //LevelPuzzleBtn.gameObject.SetActive(!isshow);
     }
 
@@ -902,53 +649,17 @@ public class HeaderSection : UIWindow
             GoldLeafredpoint.SetActive(show);
     }
     
-    /// <summary>
-    /// 仅视觉表现：蝶蛹 UI 文本 +1 并播放跳动特效（不修改底层真实数据）
-    /// </summary>
-    public void PlayPupaCollectVisualEffect(int addVisualValue = 1)
-    {
-        if (pupaObj == null) return;
-
-        // 1. 获取圆环进度条中间的那个文本
-        Text progressText = pupaObj.GetComponentInChildren<Text>(true);
-        if (progressText == null) return;
-
-        // 2. 只有当它已经处于显示状态（即已经满环弹出了）才去修改它
-        if (progressText.gameObject.activeSelf)
-        {
-            // 提取当前文本中的数字（去掉可能带有的 "+" 号和空格）
-            string currentStr = progressText.text.Replace("+", "").Trim();
-            
-            if (int.TryParse(currentStr, out int currentVisualCount))
-            {
-                // 在原有数字基础上加上新飞过来的数量
-                int nextCount = currentVisualCount + addVisualValue;
-                progressText.text = $"+{nextCount}";
-            }
-            else
-            {
-                // 兜底：如果原文本没数字或者解析失败，直接显示当前增加的值
-                progressText.text = $"+{addVisualValue}";
-            }
-
-            // 3. 给这个文本加一个 Q 弹的放大缩小反馈，增强“吸收”的手感
-            progressText.transform.DOKill();
-            progressText.transform.localScale = Vector3.one; // 恢复初始大小
-            progressText.transform.DOPunchScale(new Vector3(0.5f, 0.5f, 0.5f), 0.3f, 5, 1f);
-        }
-        // 3. 播放音效
-        // AudioManager.Instance.PlaySoundEffect("getPupa");
-    }
-    
     protected override void OnDisable()
     {
+        HighlightEnergy(false);
+        HighlightGoldAndEnergy(false);
         //EventManager.ChangeBackBtnHandler -= ChangeBackBtnState;
         CustomFlyInManager.Instance.GoldObj = null;
         EventDispatcher.instance.OnUpdateLayerCoin -= UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         EventDispatcher.instance.OnChangeTopRaycast -= ChangeTopRaycast;
         // EventDispatcher.instance.OnChessScoreChanged -= UpdatePupaProgress; // 🌟 千万别忘了注销！
-        EventDispatcher.instance.OnHighlightHeaderUI -= HighlightEnergyAndPupa;
+        EventDispatcher.instance.OnHighlightHeaderUI -= HighlightEnergy;
         EventDispatcher.instance.OnHighlightGoldAndEnergy -= HighlightGoldAndEnergy;
         
         if (ThemeManager.Instance != null)
@@ -957,7 +668,6 @@ public class HeaderSection : UIWindow
         LevelPuzzleBtn.gameObject.SetActive(false);
         // 禁用时取消调用
         CancelInvoke(nameof(CheckLevelPuzzleVisibility));
-        gameTimeBg.transform.DOKill();
         if(_energyCoroutine != null) StopCoroutine(_energyCoroutine);
         base.OnDisable();
     }

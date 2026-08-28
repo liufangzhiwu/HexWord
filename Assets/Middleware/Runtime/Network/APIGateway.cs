@@ -14,6 +14,7 @@ public class APIGateway: MonoBehaviour
     public LoginApi LoginApi { get; private set; }
     public GameConfigApi GameConfigApi { get; private set; }
     public LeaderboardApi LeaderboardApi { get; private set; }
+    public SocialApi SocialApi { get; private set; }
     public HTTPClient HttpClient { get; private set; }
 
     private void Awake()
@@ -43,6 +44,7 @@ public class APIGateway: MonoBehaviour
         LoginApi = new LoginApi(HttpClient);
         GameConfigApi = new GameConfigApi(HttpClient);
         LeaderboardApi = new LeaderboardApi(HttpClient);
+        SocialApi = new SocialApi(HttpClient);
         
         //StartCoroutine(HttpClient.Get<object>("", 
         // onSuccess=>

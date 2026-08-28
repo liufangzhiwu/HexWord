@@ -21,19 +21,15 @@ public class UserData
     public string PushToken; // 推送Token
     public string UserName;
     public int UserHeadId;
+    public int UserHeadBorderId;
     public string UserId; // 用户唯一标识
     public int Gold; // 当前金币数量
     public int TotalConsumedGold; // 历史累计消耗金币
     public int TotalEarnedGold; // 历史累计获得金币
     public int CurrentHexStage; // 当前六边形关卡进度
-
+    public int MaxComboCount;                       // 最长连击数
     public int CurrentChessStage; // 当前拼字关卡进度
     public int levelMode; // 当前游戏模式 1:普通模式 2:拼字模式 3:六边形模式
-    public int dayPassStageCount; // 每日通关数量
-    public int chessdayPassStageCount;                      // 拼字当日通关次数
-    public int showRateusCount; // 好评界面显示次数
-    public string showRateusTime; // 好评界面显示时间
-    public bool isChangeUserName; // 是否更改过用户名称
     public string Zenlevel; // 禅修榜等级
 
     // 👇 新增：体力系统基础字段
@@ -48,6 +44,8 @@ public class UserData
     public Dictionary<int, int> ThemeItemUses; // 单个主题累计使用次数
     public int userthemeid = 0;
     public bool ischangetheme = false;
+    public bool isGetNewHeadBorderIcon = false;
+    public bool isGetNewHeadIcon = false;
 
     // 👇 新增：禅修榜是否主动加入标识（旧版本读取不到会默认为 false，但这没关系，旧版后端会放行）
     public bool isJoinedZenRank = false;
@@ -82,10 +80,6 @@ public class UserData
 
     public int TotalPayTimes; //支付次数
     public float TotalRevenue; //累计付费金额
-    public int totallogin; // 总登录次数
-    public int totalSeeAds; // 总视频广告观看次数
-    public int totalInsetSeeAds; // 总插屏广告观看次数
-    public int activeDayCnt; //活跃天数
 
     // 生命周期事件相关数据
     public float TotalOnlineMinutes; // 累计在线总时长（分钟）
@@ -100,10 +94,6 @@ public class UserData
 
     public long LastInterstitialTimeTicks; // 上次看插屏的时间 (G5)
 
-    // 👇 新增：D规则（每日首关插屏概率）状态记录
-    public bool isDayFirstLevelAdChecked; // 今日首关是否已进行过插屏概率判定
-    public bool isDayFirstLevelAdAllowed; // 今日首关插屏概率判定的结果
-
     public int HighestZenScore = 0; // 历史最高禅意分
     public Dictionary<int, float> BestClearTimes = new Dictionary<int, float>(); // 极速通关记录字典
 
@@ -114,6 +104,32 @@ public class UserData
     //public WordVocabulary<string> wordVocabularyChinTra  = new WordVocabulary<string>(); 
     public WordVocabulary<string> wordVocabularyChinSim = new WordVocabulary<string>();
 
+    #endregion
+    
+    
+    #region 统计计数数据
+    
+    public string showRateusTime;                       // 好评界面显示时间
+    public int showRateusCount;                       // 好评界面显示次数
+    public int dayPassStageCount;                      // 当日通关次数
+    public int chessdayPassStageCount;                      // 拼字当日通关次数
+    public bool isChangeUserName;                       // 是否更改过用户名称
+    public int totallogin;                               // 总登录次数
+    public int totalSeeAds;                               // 总看广告次数
+    public int totalInsetSeeAds;                               // 总看广告次数
+    public int activeDayCnt;                               // 活跃天数
+    public int zenCount;                                    // 禅意值数量
+    public int overallZenScore;                            // 总榜分
+    public int likeCount;                                  // 点赞数量
+    public int fourWordCount;                                  // 掌握的四字成语
+    public int nofourWordCount;                                  // 掌握的非四字成语
+    // 👇 新增：D规则（每日首关插屏概率）状态记录
+    public bool isDayFirstLevelAdChecked;              // 今日首关是否已进行过插屏概率判定
+    public bool isDayFirstLevelAdAllowed;              // 今日首关插屏概率判定的结果
+    // 生命周期事件配置
+    private readonly int[] LIFE_CYCLE_MINUTES = { 1, 5, 10, 15, 20, 30, 40, 60, 120, 300, 600 };
+    private readonly string LIFE_CYCLE_EVENT_PREFIX = "time_level_";
+    
     #endregion
 
     #region 时间相关数据
@@ -131,10 +147,9 @@ public class UserData
     public string lastPayTime; //最后充值时间
     public string firstLoginTime; //首次登录时间
     public string lastLoginDay; //最后登录时间
-    public int zenCount; // 禅意值数量
-    public int likeCount; // 点赞数量
 
     #endregion
+    
 
     #region 道具数据
 
@@ -206,12 +221,6 @@ public class UserData
     }
 
     #endregion
-
-
-    // 生命周期事件配置
-    private readonly int[] LIFE_CYCLE_MINUTES = { 1, 5, 10, 15, 20, 30, 40, 60, 120, 300, 600 };
-    private readonly string LIFE_CYCLE_EVENT_PREFIX = "time_level_";
-
 
 
     #region 数据初始化方法
@@ -289,9 +298,11 @@ public class UserData
         ABName = "0";
         PushToken = "";
         UserHeadId = 0;
+        UserHeadBorderId=0;
         UserName = null;
         UserId = null;
         Gold = AppGameSettings.StartingGold;
+        MaxComboCount = 0;
         TotalConsumedGold = 0;
         TotalEarnedGold = 0;
         CurrentHexStage = AppGameSettings.FirstLevel;
@@ -315,6 +326,8 @@ public class UserData
         // 评价界面显示时间
         showRateusTime = null;
         isChangeUserName = false;
+        isGetNewHeadBorderIcon = false;
+        isGetNewHeadIcon = false;
         isJoinedZenRank = false;
         // 游戏进度
         TutorialProgress = 0;
@@ -447,6 +460,7 @@ public class UserData
         ABName = user.ABName;
         PushToken=user.PushToken;
         UserHeadId = user.UserHeadId;
+        UserHeadBorderId=user.UserHeadBorderId;
         UserName = user.UserName;
         UserId = user.UserId;
         Gold = user.Gold;
@@ -499,6 +513,8 @@ public class UserData
         ThemeItemUses=user.ThemeItemUses??new Dictionary<int,int>(){{0,1}};
         userthemeid = user.userthemeid;
         ischangetheme=user.ischangetheme;
+        isGetNewHeadBorderIcon = user.isGetNewHeadBorderIcon;
+        isGetNewHeadIcon = user.isGetNewHeadIcon;
         isJoinedZenRank = user.isJoinedZenRank;
         isChangeUserName = user.isChangeUserName;
         // 评价界面显示次数
@@ -817,7 +833,6 @@ public class UserData
 
             // 更新在线时长
             UpdateOnlineStageTime();
-            GameDataManager.Instance.CommitPushServerData();
 
             // 序列化并加密数据
             string json = JsonConvert.SerializeObject(this, Formatting.Indented);
@@ -860,9 +875,32 @@ public class UserData
             Debug.Log($"提示：头像ID {animalId} 已经拥有，无需重复添加");
             return false;
         }
+        
 
         // 执行添加
         _getAnimalsHeadIcons.Add(animalId);
+        
+        GameDataManager.Instance.UserData.isGetNewHeadIcon=true;
+        return true;
+    }
+    
+    /// <summary>
+    /// 直接新增指定的头像框ID（带有效性校验）
+    /// </summary>
+    /// <param name="borderId">要新增的头像框ID</param>
+    /// <returns>true表示添加成功，false表示ID无效或已拥有</returns>
+    public bool AddHeadBorderIcon(int borderId)
+    {
+        // 不能重复拥有（避免列表出现重复数据）
+        if (_getAnimalsHeadIcons.Contains(borderId))
+        {
+            Debug.Log($"提示：头像框ID {borderId} 已经拥有，无需重复添加");
+            return false;
+        }
+
+        // 执行添加
+        _getAnimalsHeadIcons.Add(borderId);
+        GameDataManager.Instance.UserData.isGetNewHeadBorderIcon = true;
         return true;
     }
 

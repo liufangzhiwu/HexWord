@@ -10,13 +10,17 @@ public class HTTPClient
 {
     private static readonly Lazy<HTTPClient> _instance =
        new Lazy<HTTPClient>(() => new HTTPClient());
-
     public static HTTPClient Instance => _instance.Value;
 
     private string _baseUrl = "http://127.0.0.1:8000/api/";
-    public string authToken = "";
-    private Dictionary<string, string> defaultHeaders = new Dictionary<string, string>();
-
+    private string _authToken;
+    private readonly Dictionary<string, string> defaultHeaders = new Dictionary<string, string>();
+    public bool IsLoggedIn => !string.IsNullOrEmpty(_authToken);
+    // 【新增】Token 过期时间戳（Unix 秒）
+    private long _tokenExpireTimestamp = 0;
+    
+    // 【新增】Token 过期事件，通知上层重新登录
+    public event Action OnTokenExpired;
     private HTTPClient() { }
  
     public HTTPClient Initialize(string baseUrl = null)
@@ -25,55 +29,60 @@ public class HTTPClient
         {
             _baseUrl = baseUrl;
         }
-
-        string platform = Application.platform.ToString();
-        
-#if UNITY_HUAWEI ||UNITY_hornor 
-        platform ="Android"; 
-#elif UNITY_OPENHARMONY
-    platform ="OpenHarmony"; 
-    // 如果是 Google Play 渠道包 (包括 PC 版)
-#elif UNITY_ANDROID || UNITY_STANDALONE_WIN
-        // 注意：Google Play Games PC 版也是 Google 厂商
-        platform ="Android"; 
-#elif UNITY_IOS
-     platform= "IPhonePlayer";
-#else
-     platform ="Android"; 
-#endif
-        
         string appVersion = Application.version ?? "1.0.0";
         SetDefaultHeaders("Content-Type", "application/json");
         SetDefaultHeaders("Accept", "application/json");
         // 添加标准版本头
         SetDefaultHeaders("X-Client-Version", appVersion);
         // 可选：添加平台标识
-        SetDefaultHeaders("X-Client-Platform",platform);
+        SetDefaultHeaders("X-Client-Platform",Application.platform.ToString());
         SetDefaultHeaders("X-Client-Env", "development");
 
         if (PlayerPrefs.HasKey("auth_token"))
         {
-            authToken = PlayerPrefs.GetString("auth_token");
+            _authToken = PlayerPrefs.GetString("auth_token");
+            string ts = PlayerPrefs.GetString("token_expire_ts", "0");
+            long.TryParse(ts, out _tokenExpireTimestamp);
             UpdateAuthHeader();
         }
         return this;
     }
 
-    public void SetAuthToken(string token,int offlineSeconds)
+    public void SetAuthToken(string token,int expiresIn)
     {
-        authToken = token;
+        _authToken = token;
+        _tokenExpireTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + expiresIn;
 
         PlayerPrefs.SetString("auth_token", token);
-        PlayerPrefs.SetInt("offline_Seconds", offlineSeconds);
+        PlayerPrefs.SetString("token_expire_ts", _tokenExpireTimestamp.ToString());
         PlayerPrefs.Save();
         UpdateAuthHeader();
     }
-
+    private void ClearAuth()
+    {
+        _authToken = "";
+        _tokenExpireTimestamp = 0;
+        PlayerPrefs.DeleteKey("auth_token");
+        PlayerPrefs.DeleteKey("token_expire_ts");
+        PlayerPrefs.Save();
+        defaultHeaders.Remove("Authorization");
+        Debug.Log("[HTTPClient] Token 已清除");
+        OnTokenExpired?.Invoke(); 
+    }
+    public bool IsTokenValid()
+    {
+        if (string.IsNullOrEmpty(_authToken)) return false;
+        
+        long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        // 提前 60 秒视为过期，留出网络延迟缓冲
+        return now < (_tokenExpireTimestamp - 60);
+    }
+    
     private void UpdateAuthHeader()
     {
-        if (!string.IsNullOrEmpty(authToken))
+        if (!string.IsNullOrEmpty(_authToken))
         {
-            SetDefaultHeaders("Authorization", $"Bearer {authToken}");
+            SetDefaultHeaders("Authorization", $"Bearer {_authToken}");
         }
     }
 
@@ -97,16 +106,27 @@ public class HTTPClient
         public string message;
     }
 
-    public IEnumerator Get<T>(string endpoint, Action<T> onSuccess, Action<string> onError, Dictionary<string, string> customHeaders = null)
+    public IEnumerator Get<T>(string endpoint, Action<T> onSuccess, Action<string> onError, 
+        Dictionary<string, string> customHeaders = null, bool needAuth = true)
     {
-        yield return SendRequest<T>(HTTPMethods.Get, endpoint, null, onSuccess, onError, customHeaders);
+        yield return SendRequest<T>(HTTPMethods.Get, endpoint, null, onSuccess, onError, customHeaders, needAuth);
     }
-    public IEnumerator Post<T>(string endpoint, object body, Action<T> onSuccess, Action<string> onError, Dictionary<string, string> customHeaders = null)
+    public IEnumerator Post<T>(string endpoint, object body, Action<T> onSuccess, Action<string> onError, 
+        Dictionary<string, string> customHeaders = null, bool needAuth = true)
     {
-        yield return SendRequest<T>(HTTPMethods.Post, endpoint, body, onSuccess, onError, customHeaders);
+        yield return SendRequest<T>(HTTPMethods.Post, endpoint, body, onSuccess, onError, customHeaders, needAuth);
     }
-    private IEnumerator SendRequest<T>(HTTPMethods method, string endpoint, object body, Action<T> onSuccess, Action<string> onError, Dictionary<string, string> customHeaders)
+    private IEnumerator SendRequest<T>(HTTPMethods method, string endpoint, object body, Action<T> onSuccess, Action<string> onError, 
+        Dictionary<string, string> customHeaders,bool needAuth)
     {
+        if (needAuth && !IsTokenValid())
+        {
+            Debug.LogWarning($"[HTTPClient] 拦截请求 {endpoint}：无有效Token，拒绝发送。");
+            onError?.Invoke("NO_TOKEN");
+            ClearAuth();
+            yield break; 
+        }
+        
         float startTime = Time.realtimeSinceStartup;
         var request = new HTTPRequest(new Uri(_baseUrl + endpoint), method, (req, resp) => {
             float duration = Time.realtimeSinceStartup - startTime;

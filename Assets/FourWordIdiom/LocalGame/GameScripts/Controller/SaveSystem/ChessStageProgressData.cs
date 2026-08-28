@@ -40,15 +40,19 @@ public class ChessStageProgressData
     public float RemainingTime = 300f;
     public float TotalActiveSeconds = 0f;
     public int CurrentCombo = 0;       // 🌟 新增：当前连击
+    public int TotalCumulativeCombos = 0; // 累计有效连击总次数
+    public int CurBreakIceCount = 0;       // 🌟 新增：当前破冰数量
+    public int CurPickFlowerLeavesCount = 0;      // 新增：当前收集花朵数量
+    public bool CurrPerfectCount;       // 🌟 新增：是否完美通关
     public int MaxCombo = 0;           // 🌟 新增：最高连击
     public int EarnedPupaCount = 0;    // 🌟 新增：已得蝶蛹数
-    
+
     public bool IsPausedOrFailed = false;
     
     public int FlowerActionCount = 0; // 记录花朵被消除机制触发的次数
     public int CollectedLeaves = 0;   // 记录本局收集的树叶数量
     
-    public int GoldLeafCount { get; set; } // 🌟 新增：已得蝶蛹数
+    public int GoldLeafCount { get; set; } // 🌟 新增：已得金叶数
     
     #endregion
 
@@ -76,6 +80,10 @@ public class ChessStageProgressData
         this.CollectedLeaves = 0;
         this.FlowerActionCount = 0;
         this.GoldLeafCount = 0;
+        this.CurBreakIceCount = 0;
+        this.CurPickFlowerLeavesCount = 0;
+        this.CurrPerfectCount = false;
+        TotalCumulativeCombos = 0;
     }
 
     public void InitializeFromExisting(ChessStageProgressData sourceData)
@@ -177,13 +185,16 @@ public class ChessStageProgressData
         this.RemainingTime = sourceData.RemainingTime;
         TotalActiveSeconds = sourceData.TotalActiveSeconds;
         this.CurrentCombo = sourceData.CurrentCombo; // 🌟 恢复
+        this.CurBreakIceCount = sourceData.CurBreakIceCount; // 🌟 恢复
+        this.CurPickFlowerLeavesCount = sourceData.CurPickFlowerLeavesCount; // 🌟 恢复
+        this.CurrPerfectCount = sourceData.CurrPerfectCount; // 🌟 恢复
         this.MaxCombo = sourceData.MaxCombo;         // 🌟 恢复
         this.EarnedPupaCount = sourceData.EarnedPupaCount; // 🌟 恢复
         this.PupaDatas=sourceData.PupaDatas;
         this.CollectedLeaves = sourceData.CollectedLeaves;
         this.FlowerActionCount = sourceData.FlowerActionCount;
         this.GoldLeafCount = sourceData.GoldLeafCount;
-        
+        this.TotalCumulativeCombos = sourceData.TotalCumulativeCombos; // 读档时恢复数据
         this.ChessGroup.Clear();
         this.ChessGroup=sourceData.ChessGroup;
         
@@ -191,6 +202,7 @@ public class ChessStageProgressData
             new List<string>(sourceData.FoundTargetPuzzles) : new List<string>();
         
         this.IsPausedOrFailed = sourceData.IsPausedOrFailed;
+       
     }
     #endregion
 

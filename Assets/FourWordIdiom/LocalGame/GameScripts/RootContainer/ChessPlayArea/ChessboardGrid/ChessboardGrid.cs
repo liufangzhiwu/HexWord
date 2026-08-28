@@ -323,7 +323,7 @@ public class ChessboardGrid : MonoBehaviour
                 List<List<ChessView>> correctGroups = new List<List<ChessView>>();
                 List<List<ChessView>> errorGroups = new List<List<ChessView>>();
 
-                // 🌟 修复 1：记录填入前，哪些相关组已经提前完成了（防止重复播通关动画）
+                // 记录填入前，哪些相关组已经提前完成了（防止重复播通关动画）
                 HashSet<string> previouslyCompletedIds = new HashSet<string>();
                 HashSet<PhraseGroup> affectedGroups = new HashSet<PhraseGroup>();
                 foreach (var targetTile in jumpTargets)
@@ -354,6 +354,28 @@ public class ChessboardGrid : MonoBehaviour
                     BowlView matchingBowl = GamePlayArea.puzzleTileTable.GridList.FirstOrDefault(v => 
                         v.letter == targetTile.Answer && v.bowl.status == 0);
 
+                    // 如果库存没了（说明玩家刚好把这个字错填到了其他格子里）
+                    if (matchingBowl == null)
+                    {
+                        // 去棋盘上把那个填错的格子揪出来
+                        var strayTile = GridList.Values.FirstOrDefault(v => 
+                            v != targetTile && 
+                            (v.CurrState == TileState.Fill || v.CurrState == TileState.Error) && 
+                            v.chesspiece.bowl != null && 
+                            v.chesspiece.bowl.letter == targetTile.Answer);
+
+                        if (strayTile != null)
+                        {
+                            // 强行把错放的字抠下来，归还库存
+                            GamePlayArea.puzzleTileTable.OnNotifyResult(strayTile.chesspiece.bowl, 0);
+                            strayTile.chesspiece.bowl = null;
+                            strayTile.SetTileState(TileState.None); // 让错放的格子变回空格
+                
+                            // 归还后，重新从字盘获取有了库存的字块
+                            matchingBowl = GamePlayArea.puzzleTileTable.GridList.FirstOrDefault(v => 
+                                v.letter == targetTile.Answer && v.bowl.status == 0);
+                        }
+                    }
                     if (matchingBowl != null)
                     {
                         targetTile.SetPuzzle(matchingBowl.bowl);
@@ -1347,6 +1369,7 @@ public class ChessboardGrid : MonoBehaviour
                 v.iceLogicBroken = false; // 顺手重置逻辑标记
                 ChessStageController.Instance.ModifyChreepiece(v.chesspiece);
                 StartCoroutine(v.PlayIceBreakAnim());
+                ChessStageController.Instance.CurrStageData.CurBreakIceCount++;
                 iceBroken = true;
             }
         }
@@ -2385,6 +2408,7 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
                 // neighbor.iceLogicBroken = false; // 🌟 顺手修复：清空逻辑破冰标记
                 ChessStageController.Instance.ModifyChreepiece(neighbor.chesspiece);
                 StartCoroutine(neighbor.PlayIceBreakAnim());
+                ChessStageController.Instance.CurrStageData.CurBreakIceCount++;
                 isBroken = true;
             }
         }
@@ -2459,6 +2483,7 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
             f.chesspiece.hasFlower = false; // 内存状态直接解锁
             ChessStageController.Instance.ModifyChreepiece(f.chesspiece);
             StartCoroutine(f.PlayFlowerBloomAnim());
+            currStageData.CurPickFlowerLeavesCount++;
             hasBlooming = true;
         }
         if (hasBlooming)
@@ -2486,14 +2511,36 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
             GamePlayArea.puzzleTileTable.OnNotifyResult(dummyBowl, 0); // 归还库存
             targetTile.chesspiece.bowl = null;
         }
-
-        // ------------------------------------------------------------------
-        // 流程二：双向绑定并彻底消除下方待填字盘中的对应字块
-        // ------------------------------------------------------------------
-        // 从字盘搜寻匹配当前格子正确答案、且未被用光的有效字块
+        
+        // 从字盘搜寻匹配当前格子正确答案、且未被用光的有效字块 先检查字盘库存，看看正确答案是不是被用光了
         BowlView matchingBowl = GamePlayArea.puzzleTileTable.GridList.FirstOrDefault(v => 
             v.letter == targetTile.Answer && v.bowl.status == 0);
 
+        // 如果库存没了（说明玩家刚好把这个字错填到了其他格子里）
+        if (matchingBowl == null)
+        {
+            // 去棋盘上把那个填错的格子揪出来
+            var strayTile = GridList.Values.FirstOrDefault(v => 
+                v != targetTile && 
+                (v.CurrState == TileState.Fill || v.CurrState == TileState.Error) && 
+                v.chesspiece.bowl != null && 
+                v.chesspiece.bowl.letter == targetTile.Answer);
+
+            if (strayTile != null)
+            {
+                // 强行把错放的字抠下来，归还库存
+                GamePlayArea.puzzleTileTable.OnNotifyResult(strayTile.chesspiece.bowl, 0);
+                strayTile.chesspiece.bowl = null;
+                strayTile.SetTileState(TileState.None); // 让错放的格子变回空格
+                
+                // 归还后，重新从字盘获取有了库存的字块
+                matchingBowl = GamePlayArea.puzzleTileTable.GridList.FirstOrDefault(v => 
+                    v.letter == targetTile.Answer && v.bowl.status == 0);
+            }
+        }
+        // ------------------------------------------------------------------
+        // 流程二：双向绑定并彻底消除下方待填字盘中的对应字块
+        // ------------------------------------------------------------------
         if (matchingBowl != null)
         {
             targetTile.SetPuzzle(matchingBowl.bowl); // 数据链绑定

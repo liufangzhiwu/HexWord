@@ -134,4 +134,16 @@ public partial class AnalyticMgr
         Game.self.Analytics.LogEvent("activity_complete", properties, Define.DataTarget.Think);
     }
     
+    ///  排行榜类型
+    /// </summary>
+    /// <param name="zenName">界面名称</param>
+    public static void ZenRankEnter(string zenName)
+    {
+        var properties = new Dictionary<string, object>()
+        {
+            { "ZenRank", zenName },
+        };
+        Game.self.Analytics.LogEvent("ui_open", properties,Define.DataTarget.Think);
+    }
+    
 }

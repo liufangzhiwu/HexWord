@@ -22,7 +22,7 @@ public class LimitDataItem
 public enum LimitRewordType
 {
     Coins,Butterfly,Tipstool,AutoComplete,Min5Double,Min15Double,RemoveAds,Remove7DayAds,Resettool,Pupas=11,
-    ZenScore=12,GoldLeaf,Energy,HeadIcon
+    ZenScore=12,GoldLeaf,Energy,HeadIcon,MonthlyGold,MonthlySilver,MonthlyBronze,
 }
 
 public class LimitTimeManager : Singleton<LimitTimeManager>

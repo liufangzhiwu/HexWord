@@ -13,7 +13,7 @@ public class PanelType  // Renamed class
     /* 系统功能界面 (System Function Screens) */
     public const string RateUsScreen = "RateUsScreen";  // Changed from RateUsScreen
     public const string PolicyView = "PolicyView";  // Changed from PrivacyScreen
-
+    public const string HistoryDataPanel = "HistoryDataPanel";  // Changed from HistoryDataPanel
 
     public const string LearningGuide = "LearningGuide";  // Changed from TutorialScreen
     /* 游戏状态界面 (Game State Screens) */
@@ -41,6 +41,10 @@ public class PanelType  // Renamed class
     public const string ZenSettlementScreen= "ZenSettlementScreen";
     public const string ZenRankStartScreen = "ZenRankStartScreen";
     public const string ZenRankChangePanel = "ZenRankChangePanel";
+    public const string OverallRankingScreen = "OverallRankingScreen";
+    public const string OverallRankingNames = "OverallRankingNames";
+    public const string OverallRankingHelp = "OverallRankingHelp";
+    public const string OverallSettlementScreen = "OverallSettlementScreen";
     
     // 已注释的旧界面常量 (Legacy commented constants)
     public const string GetItemScreen = "GetItemScreen"; 
@@ -67,8 +71,11 @@ public class PanelType  // Renamed class
      public const string SignAwardScreen = "SignAwardScreen";  
      public const string ReturnFirstWinScreen = "ReturnFirstWinScreen";  
      public const string AwardScreen = "AwardScreen";  
+   
      public const string PersonInfoScreen="PersonInfoScreen";
      public const string AchievementScreen="AchievementScreen";
+     public const string OtherPeopleScreen="OtherPeopleScreen";
+     public const string OtherPersonButterScreen="OtherPersonButterScreen";
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

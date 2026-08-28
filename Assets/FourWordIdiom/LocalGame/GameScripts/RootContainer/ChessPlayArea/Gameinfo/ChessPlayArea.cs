@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using FourWordIdiom.LocalGame.GameScripts.Controller;
 using Middleware;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -18,6 +19,19 @@ public partial class ChessPlayArea : UIWindow
     public static ChessPlayArea Instance;
     [SerializeField] private GameObject GameBase;
     [SerializeField] private Text Stagetxt;
+    [Header("游戏内专属：蝶蛹圆形进度条")]
+    public GameObject pupaObj;             // 进度条的总开关节点
+    public Image pupaProgressBar;          // 你的圆形 Fill 进度条 (Image Type = Filled)
+    public GameObject _pupaCompleteEffectNode;
+    
+    [Header("右侧按钮组")]
+    [SerializeField] private Button MyThemeBtn;
+    [SerializeField] private Button pauseBtn;
+    [SerializeField] private Image gameTimeBg;   // 时间的背景图组件
+    [SerializeField] private GameObject MyThemeRedPoint;
+    [Header("时间与控制")]
+    [SerializeField] private Text _timerText;    // 倒计时文本显示
+    
     [SerializeField] public Button HitsBtn;      // 提示按钮
     [SerializeField] public Button CompleteBtn;     // 完成按钮
     [SerializeField] private Button PuzzleBtn;   //  关内词语按钮
@@ -33,9 +47,6 @@ public partial class ChessPlayArea : UIWindow
     [Header("关卡难度常驻标签")]
     [SerializeField] private GameObject _hardTagObj;      // “困难”标签节点
     [SerializeField] private GameObject _extraHardTagObj; // “极难”标签节点
-    
-    [Header("时间与控制 (新增)")]
-    [HideInInspector] public Text _timerText;       // 倒计时文本显示 (由header赋值)
     
     [Header("禅意分数展示")]
     [SerializeField] private GameObject zentable;
@@ -140,6 +151,8 @@ public partial class ChessPlayArea : UIWindow
         HitsBtn.AddVibraClickAction(UseTips, "");
         CompleteBtn.AddVibraClickAction(() => UseComplete(), "");
         PuzzleBtn.AddClickAction(ClickLevelPuzzle);
+        MyThemeBtn.AddVibraClickAction(OnClickMyThemeBtn);
+        pauseBtn.AddClickAction(OnPauseClicked);
         BoardInitialize();
     }
     /// <summary>
@@ -245,11 +258,15 @@ public partial class ChessPlayArea : UIWindow
        
         _remainingTime = CurrStageData.RemainingTime;
         GameCoreManager.Instance.PanelState = PanelState.GamePingPanel;
+       
         EventDispatcher.instance.OnCheckShowChessTutorial += CheckShowChessTutorialEvent;
         EventDispatcher.instance.OnAutoPassLevel += AutoPassLevel;
         // 👇 新增：监听分数变化事件，并初始化当前分数
         EventDispatcher.instance.OnChessScoreChanged += OnChessScoreChanged;
         EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
+        ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
+        EventDispatcher.instance.OnHighlightHeaderUI += HighlightPupaUI;
+        
         _lastZenScore = ChessStageController.Instance.CurrentTotalScore;
         _zenScoreText.text = _lastZenScore.ToString();
         
@@ -269,6 +286,7 @@ public partial class ChessPlayArea : UIWindow
         UpdateTimerUI();
         ClearAndResetLeafSliderComponents();
         GameCoreManager.Instance.SetBackgroundImage(new Color(1,1,1,0.75f));
+        ThemeManager.Instance.CheckAndUpdateSkinRedPoint();
     }
     #endregion
    
@@ -308,6 +326,14 @@ public partial class ChessPlayArea : UIWindow
         // ==========================================
         HitsBtn.gameObject.SetActive(CurrStageData.StageId >= 2);
         CompleteBtn.gameObject.SetActive(CurrStageData.StageId >= 6);
+        
+        pauseBtn.gameObject.SetActive(ChessStageController.Instance.CurrentStage>1);
+        
+        // 刷新蝶蛹进度
+        bool showPupaProgress = ButterfliesManager.Instance.CanShowPupaProgressBarThisLevel(ChessStageController.Instance.OptimalTotalScore);
+        pupaObj.SetActive(showPupaProgress);
+        UpdatePupaProgress(ChessStageController.Instance.CurrentTotalScore, true);
+        OnRedPointChanged(ThemeManager.Instance.IsSkinRedPointActive);
         InitToolUI();
     }
 
@@ -369,7 +395,9 @@ public partial class ChessPlayArea : UIWindow
         EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
         EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
         EventDispatcher.instance.OnChessScoreChanged -= OnChessScoreChanged;
-
+        ThemeManager.Instance.OnSkinRedPointChanged -= OnRedPointChanged;
+        EventDispatcher.instance.OnHighlightHeaderUI -= HighlightPupaUI;
+        
         if (EffectButterFlays.Count > 0)
         {
             foreach (GameObject effect in EffectButterFlays)
@@ -467,13 +495,12 @@ public partial class ChessPlayArea : UIWindow
     /// <summary>
     /// 暂停/恢复 切换
     /// </summary>
-    public void OnPauseClick()
+    private void OnPauseClick()
     {
         _isTimerRunning = !_isTimerRunning;
-        
-        // TODO: 如果你有暂停面板，可以在这里弹出来
         SystemManager.Instance.ShowPanel(PanelType.PauseGameScreen);
     }
+    
     /// <summary>
     /// 供【暂停弹窗】调用：玩家点击了“继续游戏”
     /// </summary>

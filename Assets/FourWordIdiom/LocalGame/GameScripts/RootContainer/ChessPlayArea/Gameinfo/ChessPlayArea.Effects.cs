@@ -11,6 +11,36 @@ using UnityEngine.UI;
  */
 public partial class ChessPlayArea
 {
+    /// <summary>
+    /// 响应暂停界面的退出二次确认：将局内的蝶蛹进度条提层显示
+    /// </summary>
+    private void HighlightPupaUI(bool isHighlight)
+    {
+        Debug.Log($"🚨 [ChessPlayArea] 收到提层事件！isHighlight = {isHighlight}");
+        // 如果当前关卡本来就不显示蝶蛹（activeSelf 为 false），直接跳过，不用提层
+        if (pupaObj == null || !pupaObj.activeSelf) 
+            return;
+
+        // 获取或添加 Canvas 和 Raycaster 以便控制渲染层级
+        Canvas pupaCanvas = pupaObj.GetComponent<Canvas>();
+        if (pupaCanvas == null) pupaCanvas = pupaObj.AddComponent<Canvas>();
+        if (pupaObj.GetComponent<GraphicRaycaster>() == null) pupaObj.AddComponent<GraphicRaycaster>();
+
+        if (isHighlight)
+        {
+            // 提层穿透黑色遮罩，参数需与 HeaderSection 中体力的层级保持一致
+            pupaCanvas.overrideSorting = true;
+            pupaCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
+            pupaCanvas.sortingOrder = 101; // 保证在弹窗蒙版之上
+        }
+        else
+        {
+            // 恢复默认层级
+            pupaCanvas.overrideSorting = false;
+            pupaCanvas.sortingOrder = 0;
+        }
+    }
+    
       /// <summary>
     /// 播放入场动画, 建议在面板打开/初始化完成时调用这个方法
     /// </summary> 
@@ -133,9 +163,36 @@ public partial class ChessPlayArea
         }
         if (zentable != null) zentable.transform.localScale = Vector3.zero;
     }
-    
+    /// <summary>
+    /// 蝶蛹进度收集完成时的粒子发光散开特效
+    /// </summary>
+    private void PlayPupaCompleteEffect()
+    {
+        if (_pupaCompleteEffectNode != null)
+        {
+            // 1. 先关闭再打开，能自动重置很多 UI 动画状态
+            _pupaCompleteEffectNode.SetActive(false);
+            _pupaCompleteEffectNode.SetActive(true);
+            
+            // 2. 找到粒子并让它喷发
+            ParticleSystem ps = _pupaCompleteEffectNode.GetComponentInChildren<ParticleSystem>();
+            if (ps != null)
+            {
+                ps.Stop(); // 确保从头开始
+                ps.Play();
+            }
+            
+            DOVirtual.DelayedCall(2f, () => 
+            {
+                if (_pupaCompleteEffectNode != null)
+                {
+                    _pupaCompleteEffectNode.SetActive(false);
+                }
+            });
+        }
+    }
      /// <summary>
-    /// 🌟 新增：串联“禅意分位置起飞 ➔ 屏幕中心消失 ➔ 弹出常驻横幅”的视觉工作流
+    /// 串联“禅意分位置起飞 ➔ 屏幕中心消失 ➔ 弹出常驻横幅”的视觉工作流
     /// </summary>
     private IEnumerator PlayZenToCenterBannerFlow(Action onComplete)
     {
@@ -329,13 +386,9 @@ public partial class ChessPlayArea
         int curLeaves = ChessStageController.Instance.CurrStageData.CollectedLeaves;
         bool isButterflyTaskFinished = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining();
         
-        // Debug.Log($"<color=#FF5500>[飞行排查] 2. 当前树叶: {curLeaves}, 蝴蝶任务是否完成: {isButterflyTaskFinished}</color>");
-        HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
-        if (header == null) yield break;
-
         // 获取终点坐标
-        Transform pauseBtnPos = header.pauseBtn.transform;        // 金币终点（关卡暂停时间按钮处）
-        Transform pupaPos = header.pupaProgressBar.transform;     // 蝶蛹终点
+        Transform pauseBtnPos = pauseBtn.transform;        // 金币终点（关卡暂停时间按钮处）
+        Transform pupaPos = pupaProgressBar.transform;     // 蝶蛹终点
         Transform zenPos = _zenScoreText.transform;               // 禅意分/莲花终点
 
         // 1. 金币（2片叶子解锁）
@@ -356,7 +409,7 @@ public partial class ChessPlayArea
                 hasAnyFly = true;
                 FlyRewardNodeToTarget(leafPupa, pupaPos, flyDuration, () =>
                 {
-                    header.PlayPupaCollectVisualEffect(1);
+                    PlayPupaCollectVisualEffect(1);
                 });
             }
             else if (isButterflyTaskFinished && leafZenReplacement != null)
@@ -600,13 +653,12 @@ public partial class ChessPlayArea
     /// </summary>
     private void FlyToPupa(Vector3 startPos, int targetScore)
     {
-        HeaderSection header = SystemManager.Instance.GetPanel(PanelType.HeaderSection) as HeaderSection;
-        if (header == null || !header.pupaObj.activeSelf) return; // 蝶蛹没开启就不飞
+        if (pupaObj == null || !pupaObj.activeSelf) return; // 蝶蛹没开启就不飞
 
         GameObject particle = _pupaTrailPool.GetObject();
         if (particle == null)
         {
-            header.UpdatePupaProgress(targetScore, false); // 兜底
+            UpdatePupaProgress(targetScore, false); // 兜底
             return;
         }
         particle.SetActive(false);
@@ -618,7 +670,7 @@ public partial class ChessPlayArea
         particle.transform.SetAsLastSibling();
         particle.SetActive(true);
 
-        Vector3 endPos = header.pupaProgressBar.transform.position;
+        Vector3 endPos = pupaProgressBar.transform.position;
         // ==========================================
         // 🌟 核心动态时间计算：距离 ÷ 速度 = 时间
         // ==========================================
@@ -634,10 +686,47 @@ public partial class ChessPlayArea
         {
             _pupaTrailPool.ReturnObjectToPool(particle.GetComponent<PoolObject>());
             // 🌟 命中！通知头部 UI 更新蝶蛹进度！
-            header.UpdatePupaProgress(targetScore, false);
+            UpdatePupaProgress(targetScore, false);
         });
     }
     
+    /// <summary>
+    /// 仅视觉表现：蝶蛹 UI 文本 +1 并播放跳动特效（不修改底层真实数据）
+    /// </summary>
+    public void PlayPupaCollectVisualEffect(int addVisualValue = 1)
+    {
+        if (pupaObj == null) return;
+
+        // 1. 获取圆环进度条中间的那个文本
+        Text progressText = pupaObj.GetComponentInChildren<Text>(true);
+        if (progressText == null) return;
+
+        // 2. 只有当它已经处于显示状态（即已经满环弹出了）才去修改它
+        if (progressText.gameObject.activeSelf)
+        {
+            // 提取当前文本中的数字（去掉可能带有的 "+" 号和空格）
+            string currentStr = progressText.text.Replace("+", "").Trim();
+            
+            if (int.TryParse(currentStr, out int currentVisualCount))
+            {
+                // 在原有数字基础上加上新飞过来的数量
+                int nextCount = currentVisualCount + addVisualValue;
+                progressText.text = $"+{nextCount}";
+            }
+            else
+            {
+                // 兜底：如果原文本没数字或者解析失败，直接显示当前增加的值
+                progressText.text = $"+{addVisualValue}";
+            }
+
+            // 3. 给这个文本加一个 Q 弹的放大缩小反馈，增强“吸收”的手感
+            progressText.transform.DOKill();
+            progressText.transform.localScale = Vector3.one; // 恢复初始大小
+            progressText.transform.DOPunchScale(new Vector3(0.5f, 0.5f, 0.5f), 0.3f, 5, 1f);
+        }
+        // 3. 播放音效
+        // AudioManager.Instance.PlaySoundEffect("getPupa");
+    }
         /// <summary>
     /// 🌟 规范 API：供外部调用的棋盘飘字方法
     /// </summary>
@@ -1053,8 +1142,18 @@ public partial class ChessPlayArea
     private bool _isPraiseShowing = false;            // 是否正在展示鼓励分/横幅
     private Coroutine _praiseDisplayRoutine = null;   // 当前的生命周期协程参考
     // 轮询计数器
-    private int _applauseBgCounter = 1; // 鼓掌底板轮询 (1~5)
-    private int _longBannerCounter = 4; // 10号横幅轮询 (4~7)
+    private int _applauseBgCounter
+    {
+        get { return GameDataManager.Instance.OverallRank.applauseBgCounter; }
+        set { GameDataManager.Instance.OverallRank.applauseBgCounter = value; }
+    }
+
+    private int _longBannerCounter
+    {
+        get { return GameDataManager.Instance.OverallRank.longBannerCounter; }
+        set { GameDataManager.Instance.OverallRank.longBannerCounter = value; }
+    }
+
     private Dictionary<int, int> _praiseTextIndexMap = new Dictionary<int, int>();
     /// <summary>
     /// 对外接口：触发局内正反馈 UI
