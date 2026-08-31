@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using DG.Tweening;
+using FourWordIdiom.LocalGame.GameScripts.Controller.SaveSystem;
 using Middleware;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -43,13 +44,17 @@ public class LoadingController : MonoBehaviour
     private float loadStartTime;                      // 加载开始时间
     [SerializeField] private float minLoadingTime = 1.5f;
     
-    
+    private UserData serverData;               // 服务器数据
+    private UserData selectData;               // 选择的数据
     private LoginResponse loginResponse;       // 登录响应数据
     private bool isLogined = false;
     
     private UserData serverUserData;          // 解析后的主数据
     private FishUserSaveData serverFishData;      // 解析后的鱼数据 (假设你的类名叫 FishSaveData)
     private ButterflyData serverButterflyData;// 解析后的蝴蝶数据 (假设你的类名叫 ButterflyData)
+    private OverallRankData serverOverallRankData;// 解析后总榜数据 (假设你的类名叫 OverallRankData)
+    private AchieveSaveDatas serverAchieveSaveDatas;// 解析后成就数据 (假设你的类名叫 AchieveSaveDatas)
+    
     private bool IsLocalDataNull;// 本地数据是否为空
 
     private void Awake()
@@ -166,18 +171,28 @@ public class LoadingController : MonoBehaviour
         try
         {
             serverUserData = JsonConvert.DeserializeObject<UserData>(response.UserData);
+            Debug.Log("UserData 解析成功");
             if (response.ExtraData != null)
             {
+                Debug.Log("FishUserSave 开始解析");
                 if (!string.IsNullOrEmpty(response.ExtraData.FishUserSave))
                     serverFishData = JsonConvert.DeserializeObject<FishUserSaveData>(response.ExtraData.FishUserSave);
-                
+                Debug.Log("FishUserSave 解析成功");
+                Debug.Log("Butterfly 开始解析" + response.ExtraData.Butterfly);
                 if (!string.IsNullOrEmpty(response.ExtraData.Butterfly))
                     serverButterflyData = JsonConvert.DeserializeObject<ButterflyData>(response.ExtraData.Butterfly);
+                Debug.Log("Butterfly 解析成功");
+                Debug.Log("OverallRank 开始解析" + response.ExtraData.OverallRank);
+                if (!string.IsNullOrEmpty(response.ExtraData.OverallRank))
+                    serverOverallRankData = JsonConvert.DeserializeObject<OverallRankData>(response.ExtraData.OverallRank);
+                if (!string.IsNullOrEmpty(response.ExtraData.AchieveSaveDatas))
+                    serverAchieveSaveDatas = JsonConvert.DeserializeObject<AchieveSaveDatas>(response.ExtraData.AchieveSaveDatas);
+                Debug.Log("OverallRank 解析成功");
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"解析服务器数据失败: {ex.Message}，回退到本地数据");
+            Debug.LogError($"解析服务器数据失败: {ex.Message} {ex.ToString()} ，回退到本地数据");
             UserLocalData();
             return;
         }
@@ -211,17 +226,17 @@ public class LoadingController : MonoBehaviour
                 Debug.Log("本地关卡进度更优，使用本地数据");
             }
         }
-        else if (serverUserData.CurrentHexStage != GameDataManager.Instance.UserData.CurrentHexStage)
+        else if (serverUserData.overallZenScore != GameDataManager.Instance.UserData.overallZenScore)
         {
-            if (serverUserData.CurrentHexStage > GameDataManager.Instance.UserData.CurrentHexStage)
+            if (serverUserData.overallZenScore > GameDataManager.Instance.UserData.overallZenScore)
             {
                 UserServerData();
-                Debug.Log("服务器关卡进度更优，使用服务器数据, 服务器数据同步完成！");
+                Debug.Log("服务器禅意分更多，使用服务器数据, 服务器数据同步完成！");
             }
             else 
             {
                 UserLocalData();
-                Debug.Log("本地关卡进度更优，使用本地数据");
+                Debug.Log("本地禅意分更多，使用本地数据");
             }
         }
         else // B. 关卡进度相同时，比对离线时间
@@ -245,6 +260,8 @@ public class LoadingController : MonoBehaviour
     
     private void UserLocalData()
     {
+        GameDataManager.Instance.SetInitailized(true);
+        GameDataManager.HasSyncedThisSession = true;
         ModifyUserWithABtest();
         StartCoroutine(LoadingSequence());
         AnalyticMgr.Login();
@@ -257,7 +274,13 @@ public class LoadingController : MonoBehaviour
             GameDataManager.Instance.FishUserSave.InitData(serverFishData);
         if (serverButterflyData != null)
             GameDataManager.Instance.ButterflyData.InitData(serverButterflyData);
+        if (serverOverallRankData != null)
+            GameDataManager.Instance.OverallRank.InitData(serverOverallRankData);
+        if (serverAchieveSaveDatas != null)
+            GameDataManager.Instance.AchieveSaveDataList.InitData(serverAchieveSaveDatas);
         
+        GameDataManager.Instance.ClearAllLevelProgressFiles();
+        GameDataManager.HasSyncedThisSession = true;
         GameDataManager.Instance.SetInitailized(true);
         ModifyUserWithABtest();
         StartCoroutine(LoadingSequence());
@@ -422,6 +445,7 @@ public class LoadingController : MonoBehaviour
         
         //预加载关卡文件
          StageHexController.Instance.LoadPackInfos();
+         ChessStageController.Instance.Initialized();
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }

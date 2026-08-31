@@ -76,6 +76,7 @@ namespace Middleware
             LimitTimeManager.Instance.Init();
             StreakManager.Instance.Init();
             ThemeManager.Instance.Init();
+            AchievementManager.Instance.Init();
         }
         
         private void CreateAccounts()

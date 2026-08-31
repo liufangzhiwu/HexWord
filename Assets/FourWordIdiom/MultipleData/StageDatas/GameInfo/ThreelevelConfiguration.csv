@@ -1,0 +1,6 @@
+﻿三档标签文案key,"文案激励数值范围
+X1_X2_X3_X4_X5",长激励文案key,,,,,,,,,,,,,,,,,
+LabelKey,IncentiveValue,LongText,,,,,,,,,,,,,,,,,
+Ordinary,31_29_32_30_28,AchievementLongText2,,,,,,,,,,,,,,,,,
+Rare,12_10_13_11_9,AchievementLongText1,,,,,,,,,,,,,,,,,
+Infrequent,1_0.8_1_1.1_0.9,AchievementLongText1,,,,,,,,,,,,,,,,,

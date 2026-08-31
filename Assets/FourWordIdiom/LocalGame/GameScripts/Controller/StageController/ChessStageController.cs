@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using FourWordIdiom.LocalGame.GameScripts.Controller;
 using Middleware;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -38,8 +39,9 @@ public partial class ChessStageController
     public bool IsFirstEnterStage { get; private set; } = true;  // 是否首次进入当前关卡
 
     public int _limitPuzzleCount = 0;              // 限时活动连词计数
-    public int PuzzleComboCount { get;  set; } = 0;  // 连续正确次数
-    public int MaxComboCount { get; private set; } = 0;
+    public int PuzzleComboCount { get;  set; } = 0;  // 当前正在维持的连击 连续正确次数
+    public int TotalCumulativeCombos { get;  set; } = 0;  // 累计有效连击总次数
+    public int MaxComboCount { get; private set; } = 0;   // 本关达到过的最大连续数字
     public float LastCorrectWordTimestamp { get;  set; } // 记录上一个词找对的绝对时间点
     public int ComboErrorCount { get;  set; } = 0;   // 连续错误次数
     public int UseTipToolCount { get;  set; } = 0;   // 使用提示工具次数
@@ -68,9 +70,10 @@ public partial class ChessStageController
     private List<PraiseContext> _praiseQueue = new List<PraiseContext>();
     // 🌟 新增：标记当前关卡是否是被跳过的
     public bool IsCurrentStageSkipped { get; set; } = false;
+    
+    public List<string> CurrentLevelFourCharWords { get; private set; } = new List<string>();
+    public List<string> CurrentLevelOtherWords { get; private set; } = new List<string>();
     #endregion
-
- 
 
     #region 关卡管理
     /// <summary>
@@ -117,6 +120,9 @@ public partial class ChessStageController
         // 首次进入关卡的特殊处理, 重置关卡内的分析数据
         if (IsFirstEnterStage)
         {
+            CurrentLevelFourCharWords.Clear();
+            CurrentLevelOtherWords.Clear();
+            
             GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Clear();
             GameDataManager.Instance.UserData.curStageOnlineTime = 0;
             ResetStageState(StageIndex);
@@ -131,6 +137,16 @@ public partial class ChessStageController
             PuzzleComboCount = CurrStageData.CurrentCombo;
             MaxComboCount = CurrStageData.MaxCombo;
             EarnedPupaThisLevel = CurrStageData.EarnedPupaCount;
+            TotalCumulativeCombos = CurrStageData.TotalCumulativeCombos; 
+            
+            CurrentLevelFourCharWords.Clear();
+            CurrentLevelOtherWords.Clear();
+            
+            foreach (var puzzle in CurrStageData.FoundTargetPuzzles)
+            {
+                if (puzzle.Length == 4) CurrentLevelFourCharWords.Add(puzzle);
+                else CurrentLevelOtherWords.Add(puzzle);
+            }
         }
 
         GameDataManager.Instance.UpdateLevelProgress(CurrStageData);
@@ -146,7 +162,7 @@ public partial class ChessStageController
     /// <summary>
     /// 创建关卡数据
     /// </summary>
-    private ChessStageInfo CreateStageInfo(int stageIndex, bool isAi = false)
+    public ChessStageInfo CreateStageInfo(int stageIndex, bool isAi = false)
     {
         int wordCount= ChessDynamicHardManager.Instance.CheckLevelHardChange(stageIndex);
       
@@ -184,6 +200,7 @@ public partial class ChessStageController
         _limitPuzzleCount = 0;
         PuzzleComboCount = 0;
         MaxComboCount = 0; // 🌟 首次进入关卡，最高连击清零
+        TotalCumulativeCombos = 0; 
         ComboErrorCount = 0;
         UseCompleteCount = 0;
         UseTipToolCount = 0;
@@ -200,7 +217,7 @@ public partial class ChessStageController
     {
         var userData = GameDataManager.Instance.UserData;
 
-        // 第8关首次触发
+        // 第9关首次触发
         if (stageIndex == 8 && userData.showRateusCount <= 0)
         {
             SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
@@ -208,7 +225,7 @@ public partial class ChessStageController
         }
 
         // 每日通关条件
-        if (userData.dayPassStageCount == 5 && 
+        if (userData.dayPassStageCount == 8 && 
             userData.showRateusCount < 3 &&
             !string.IsNullOrEmpty(userData.showRateusTime))
         {
@@ -319,11 +336,16 @@ public partial class ChessStageController
         int currentScoreEarned = baseScore + comboBonus;
         CurrentTotalScore += currentScoreEarned;
         
+        if (PuzzleComboCount > 0)
+        {
+            TotalCumulativeCombos++;
+        }
         PuzzleComboCount++;
         MaxComboCount = Mathf.Max(MaxComboCount, PuzzleComboCount);
         CurrStageData.CurrentTotalScore = CurrentTotalScore;
         CurrStageData.CurrentCombo = PuzzleComboCount;
         CurrStageData.MaxCombo = MaxComboCount;
+        CurrStageData.TotalCumulativeCombos = TotalCumulativeCombos;
         CurrStageData.SaveToFile();
         EventDispatcher.instance.TriggerChessScoreChanged(CurrentTotalScore,currentScoreEarned );
     }
@@ -345,12 +367,17 @@ public partial class ChessStageController
             CurrentTotalScore = 0;
             PuzzleComboCount = 0;
             MaxComboCount = 0;
+            MaxComboCount = 0;
+            MaxComboCount = 0;
             EarnedPupaThisLevel = 0;
             _limitPuzzleCount = 0;
             if (CurrStageData != null)
             {
                 CurrStageData.CurrentTotalScore = 0;
                 CurrStageData.CollectedLeaves = 0;
+                CurrStageData.CurBreakIceCount = 0;
+                CurrStageData.CurPickFlowerLeavesCount = 0;
+                CurrStageData.CurrPerfectCount = false;
                 CurrStageData.EarnedPupaCount = 0;
             }
 
@@ -408,6 +435,7 @@ public partial class ChessStageController
 
         if (!isJump)
         {
+            // 保存数据
             bool isButterflyFinished = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining();
             // 1. 【优先计算树叶奖励】
             int collectedLeaves = CurrStageData.CollectedLeaves;
@@ -451,6 +479,11 @@ public partial class ChessStageController
             GameDataManager.Instance.UserData.chessdayPassStageCount++;
             // 👉 禅意分，在这里真正加进内存！
             GameDataManager.Instance.UserData.zenCount += CurrentTotalScore;
+            GameDataManager.Instance.UserData.overallZenScore += CurrentTotalScore;
+            GameDataManager.Instance.UserData.fourWordCount += CurrentLevelFourCharWords.Count;
+            GameDataManager.Instance.UserData.nofourWordCount += CurrentLevelOtherWords.Count;
+            GameDataManager.Instance.UserData.MaxComboCount = Mathf.Max(MaxComboCount, GameDataManager.Instance.UserData.MaxComboCount);
+
         }
         GameDataManager.Instance.CommitGameData();
         ClearCurrentLevelSave();
@@ -469,9 +502,19 @@ public partial class ChessStageController
         float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
         if (!isJump)
         {
+            GameDataManager.Instance.UserData.MaxComboCount =
+                Mathf.Max(GameDataManager.Instance.UserData.MaxComboCount, MaxComboCount);
             AnalyticMgr.LevelCompleted(duration, energy, CurrentTotalScore, MaxComboCount);
             if(ChessDynamicHardManager.Instance.IsOpenDynamicHard())
                 CheckDynamicDifficultyIntervention(stageNumber, ComboErrorCount, duration);
+
+            int perfect = CurrStageData.CurrPerfectCount ? 1 : 0;
+
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.DoubleHit1, TotalCumulativeCombos);
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.BreakIce1, CurrStageData.CurBreakIceCount);
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.CollectLeaves1, CurrStageData.CollectedLeaves);
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.PickFlowers1, CurrStageData.CurPickFlowerLeavesCount);
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.Perfect1, perfect);
         }
         yield return new WaitForSeconds(0.1f);
         // UI切换
@@ -544,6 +587,15 @@ public partial class ChessStageController
         CurrStageData.FoundTargetPuzzles ??= new List<string>();
         CurrStageData.FoundTargetPuzzles.Add(puzzle);
         GameDataManager.Instance.UserData.AddStagePuzzle(puzzle);
+        
+        if (!string.IsNullOrEmpty(puzzle))
+        {
+            if (puzzle.Length == 4) 
+                CurrentLevelFourCharWords.Add(puzzle);
+            else 
+                CurrentLevelOtherWords.Add(puzzle);
+        }
+        
         _limitPuzzleCount += 1;
 
         OnUpdateRewardPuzzle(true,0, timeSpent);
@@ -1060,6 +1112,7 @@ public partial class ChessStageController
         {
             CurrentBannerStyle = 1; // 兜底标准样式
         }
+        stageData.CurrPerfectCount = LinearZenPercent >= 99.98f || pureGameScore >= sMax;
         // =========================================================================
         // 🌟 新增：详细日志打印区
         // =========================================================================

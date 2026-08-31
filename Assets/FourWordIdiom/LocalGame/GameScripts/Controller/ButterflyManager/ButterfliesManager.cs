@@ -426,7 +426,7 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     {
         if (IsPupaSufficientForAllRemaining()) return false;
         //return true;
-        int levelId = GameDataManager.Instance.UserData.CurrentHexStage;
+        int levelId = GameDataManager.Instance.UserData.CurrentChessStage;
         switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
         {
             case LevelType.BlockWord:
@@ -475,23 +475,12 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         return able;
     }
     /// <summary>
-    /// 添加蛹数
+    /// 获取指定园子的蝴蝶列表
     /// </summary>
-    // public void AddObtainedPupa(Transform startPoint, int pupa = 1, Transform parent  = null)
-    // {
-    //     if (parent != null)
-    //     {
-    //         Debug.Log("看看调用几次");
-    //         StartCoroutine(ShowButterflyProcess(parent, startPoint,() =>
-    //         {
-    //             GameDataManager.Instance.ButterflyData.AddPupa(pupa);
-    //         }));
-    //     }
-    //     else
-    //     {
-    //         GameDataManager.Instance.ButterflyData.AddPupa(pupa);
-    //     }
-    // }
+    public List<ButterflyInfo> GetGardenButterflies(int gardenId)
+    {
+        return ButterfliesInfo.FindAll(x => x.SceneID == gardenId);
+    }
     
     /// <summary>
     /// 在玩法界面中添加蛹数

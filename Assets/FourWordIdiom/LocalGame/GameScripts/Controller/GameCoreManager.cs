@@ -143,8 +143,7 @@ public sealed class GameCoreManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (HTTPClient.Instance != null)
-            HTTPClient.Instance.OnTokenExpired -= HandleTokenExpired;
+        HTTPClient.Instance.OnTokenExpired -= HandleTokenExpired;
     }
 
 
@@ -183,31 +182,16 @@ public sealed class GameCoreManager : MonoBehaviour
     /// </summary>
     private IEnumerator InitializeGameRoutine()
     {
-        yield return new WaitForSeconds(0.1f);
-
+        yield return new WaitForSeconds(0.2f);
+        
         if (GameDataManager.Instance.UserData.IsFirstLaunch)
         {
-#if UNITY_ANDROID || UNITY_IOS
-            ShowPrivacyScreen();
-#else
             ShowGamePanel();
-            //SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
-#endif
-            AnalyticMgr.ActivityBegin("蝶园活动");
         }
         else
         {
-            //yield return new WaitForSeconds(0.5f);
             SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
         }
-
-        Game.self.Ads?.LoadBannerAD();
-
-        // yield return new WaitForSeconds(1.0f);
-        // if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.UserName))
-        // {
-        //     GameDataManager.Instance.UserData.UserName = FishInfoController.Instance.GeneratePlayerName();
-        // }
     }
 
     /// <summary>
@@ -217,10 +201,10 @@ public sealed class GameCoreManager : MonoBehaviour
     {
         // StageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentStage);
         // SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
-
+        GameDataManager.Instance.UserData.IsFirstLaunch = false;
         ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
         SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
-        GameDataManager.Instance.UserData.IsFirstLaunch = false;
+       
     }
 
     /// <summary>

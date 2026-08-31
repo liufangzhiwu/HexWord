@@ -100,6 +100,7 @@ SpriteAtlas:
     - da266004ddf84d848abc12de311fcfc8: 21300000
     - 037c7bd43f8221f41917b8b391d64bef: 21300000
     - 4b16373bc1c28344e9c5ec32bf56d556: 21300000
+    - aeccf7ae1f5ecdb4b8cc7d782235080c: 21300000
     - 9e9cec6f57aa62c4fbee0157d03ecce7: 21300000
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
@@ -114,6 +115,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: da266004ddf84d848abc12de311fcfc8, type: 3}
   - {fileID: 21300000, guid: 037c7bd43f8221f41917b8b391d64bef, type: 3}
   - {fileID: 21300000, guid: 4b16373bc1c28344e9c5ec32bf56d556, type: 3}
+  - {fileID: 21300000, guid: aeccf7ae1f5ecdb4b8cc7d782235080c, type: 3}
   - {fileID: 21300000, guid: 9e9cec6f57aa62c4fbee0157d03ecce7, type: 3}
   m_PackedSpriteNamesToIndex:
   - star_hide_1
@@ -127,6 +129,7 @@ SpriteAtlas:
   - bg
   - star_hide_2
   - item_bg
+  - "\u9000\u51FA\u53C2\u89C2"
   - star_hide_3
   m_RenderDataMap: {}
   m_Tag: Butterfly_UI

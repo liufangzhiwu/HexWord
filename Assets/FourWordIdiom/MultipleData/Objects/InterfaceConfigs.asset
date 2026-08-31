@@ -328,3 +328,39 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 2508230401924753788, guid: 4eff076de91516e4a89d5343e2c0e78d,
       type: 3}
+  - panelName: OverallRankingScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 8321296229112958444, guid: 73eaa6cb5f3dfa442882c322bdfb587d,
+      type: 3}
+  - panelName: OverallRankingNames
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 7054809803355641896, guid: 92cb6ab81f938fa4eaed44255b901ddc,
+      type: 3}
+  - panelName: OverallRankingHelp
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 7191544230075983706, guid: 1598082294825e24fbe204547384cb84,
+      type: 3}
+  - panelName: OverallSettlementScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 6527089118256139734, guid: 943449e538aca8d44be44daf4a5f2c42,
+      type: 3}
+  - panelName: OtherPeopleScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: b9103d8b49844364da384399b8e968fb,
+      type: 3}
+  - panelName: OtherPersonButterScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 7834268690713381915, guid: 65273a2dddb89c043bdceb8fce40926e,
+      type: 3}
