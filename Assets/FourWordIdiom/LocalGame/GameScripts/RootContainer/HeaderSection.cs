@@ -234,7 +234,7 @@ public class HeaderSection : UIWindow
     /// <summary>
     /// 更改金币显示层级
     /// </summary>
-    private void UpdateCoinLayer(bool istop, bool isshopbtnEnable = true, bool isshowPupa = false)
+    private void UpdateCoinLayer(bool istop, bool isshopbtnEnable = true, bool isshowPupa = false,bool shoGap=false)
     {
         
         GameObject coinObj = ShopBtn.gameObject;
@@ -259,7 +259,10 @@ public class HeaderSection : UIWindow
                               SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen) ||
                               SystemManager.Instance.PanelIsShowing(PanelType.EnergyScreen) ||
                               SystemManager.Instance.PanelIsShowing(PanelType.GetItemScreen);
-        Gap.gameObject.SetActive(!istop);
+        
+        bool isshowGap=!istop || shoGap;
+        Gap.gameObject.SetActive(isshowGap);
+        
         bool isFinish = false;
         if (istop || isActivityOpen)
         {

@@ -30,7 +30,7 @@ public class WordVocabularyScreen : UIWindow
         headTitle.text = MultilingualManager.Instance.GetString("WordNewIdioms");
         AudioManager.Instance.PlaySoundEffect("ShowUI");
         
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
     }
     
     protected override void InitializeUIComponents()
@@ -86,13 +86,6 @@ public class WordVocabularyScreen : UIWindow
     {
         base.OnDisable();
         EventDispatcher.instance.OnRemoveNotePuzzle -= RemoveBookWord;
-        
-        if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel||
-            GameCoreManager.Instance.PanelState == PanelState.FinishHexPanel||
-            GameCoreManager.Instance.PanelState == PanelState.FinishPingPanel)
-        {
-            EventDispatcher.instance.TriggerUpdateLayerCoin(true,true);
-        }
        
         if (NoteBooks.Count > 0)
         {

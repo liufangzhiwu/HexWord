@@ -57,6 +57,7 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private GameObject ButterflyTime;
     public GameObject GoldLeafredpoint;
     [SerializeField] private GameObject ButterflyRedpoint;
+    [SerializeField] private GameObject headRedpoint;
     [Header("UI Headers")]
     [SerializeField] private Button HeadBtn;
     [SerializeField] private Image headicon;
@@ -69,7 +70,7 @@ public class PrimaryInterface : UIWindow
     
     private void Start()
     {
-        logo.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_logo");
+        //logo.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromBundle(ToolUtil.GetLanguageBundle(),"ui_logo");
         if (!GameDataManager.Instance.UserData.IsFirstLaunch)
         {
             ModeIndicator.speed = 0.5f;
@@ -307,12 +308,9 @@ public class PrimaryInterface : UIWindow
             StageHexController.Instance.IsEnterVocabulary = false;
         else if (GameDataManager.Instance.UserData.levelMode == 2)
             ChessStageController.Instance.IsEnterVocabulary = false;
-        
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection, true, () =>
-        {
-            SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
-        });
-        SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+       
+        SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
+       
     }
     /// <summary>
     /// 点击选择游戏模式
@@ -521,6 +519,7 @@ public class PrimaryInterface : UIWindow
             if (pupaSlider != null) pupaSlider.value = progressValue;
             
             ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
+            headRedpoint.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon);
         }
        
     }
@@ -737,6 +736,9 @@ public class PrimaryInterface : UIWindow
             ModeBtn.GetComponent<Image>().sprite = sprite;
 
         UpdateWinTimes();
+        
+        ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
+        headRedpoint.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon);
     }
     
     private void UpdateWinTimes()

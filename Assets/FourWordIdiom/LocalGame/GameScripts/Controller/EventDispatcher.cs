@@ -17,7 +17,7 @@ public class EventDispatcher:MonoBehaviour
     private Action _onFakeBonusEvent;
     private Action<string> _onRemoveNotePuzzle;
     private Action<bool> _onUpdateRewardPuzzle;
-    private Action<bool, bool,bool> _onUpdateLayerCoin;
+    private Action<bool, bool,bool,bool> _onUpdateLayerCoin;
     
     private Action _onCheckShowChessTutorial; // 填字教程检查
     private Action _onAutoPassLevel; // 自动通过关卡事件
@@ -107,7 +107,7 @@ public class EventDispatcher:MonoBehaviour
     }
 
     /// <summary>更新金币层级事件</summary>
-    public event Action<bool, bool,bool> OnUpdateLayerCoin
+    public event Action<bool, bool,bool,bool> OnUpdateLayerCoin
     {
         add => _onUpdateLayerCoin += value;
         remove => _onUpdateLayerCoin -= value;
@@ -227,8 +227,8 @@ public class EventDispatcher:MonoBehaviour
     public void TriggerUpdateRewardPuzzle(bool state)
         => _onUpdateRewardPuzzle?.Invoke(state);
 
-    public void TriggerUpdateLayerCoin(bool istop, bool btnshow,bool isshowpupa=false)
-        => _onUpdateLayerCoin?.Invoke(istop, btnshow,isshowpupa);
+    public void TriggerUpdateLayerCoin(bool istop, bool btnshow,bool isshowpupa=false,bool showgap=false)
+        => _onUpdateLayerCoin?.Invoke(istop, btnshow,isshowpupa,showgap);
 
     public void TriggerChoicePuzzleSetStatus(bool visible)
         => _onChoicePuzzleSetStatus?.Invoke(visible);
