@@ -6,7 +6,7 @@ SpriteAtlas:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: UI_ZenRanks
+  m_Name: ZenRanks
   m_EditorData:
     serializedVersion: 2
     textureSettings:
@@ -90,5 +90,5 @@ SpriteAtlas:
   - zen3
   - zen11
   m_RenderDataMap: {}
-  m_Tag: UI_ZenRanks
+  m_Tag: ZenRanks
   m_IsVariant: 0

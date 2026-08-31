@@ -85296,6 +85296,7 @@ GameObject:
   - component: {fileID: 963194230}
   - component: {fileID: 963194233}
   - component: {fileID: 963194234}
+  - component: {fileID: 963194235}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -85386,9 +85387,53 @@ MonoBehaviour:
   blurMaterial: {fileID: 2100000, guid: d4d82a3c178583b44b5c1cbbd42f0727, type: 2}
   downSample: 4
   blurIterations: 3
+  IsNetworkActive: 0
+  PanelState: 0
   IsTrueAuto: 0
   AutoLevelTalbe: {fileID: 1369706649}
-  PanelState: 0
+  userProfile:
+    uid: 0
+    nickname: 
+    avatar: 
+    zen_count: 0
+    highest_zen_score: 0
+    max_win_streak: 0
+    max_chess_combo: 0
+    likes_count: 0
+    join_date_text: 
+    hof_awards:
+      gold: 0
+      silver: 0
+      bronze: 0
+    highest_zen_level: 
+    zen_level: 
+    has_settlement: 0
+    settlement_type: 
+    old_zen_level: 
+    old_rank: 0
+  otherPersonProfile:
+    user_id: 
+    nickname: 
+    avatar: 
+    avatar_frame: 
+    zen_level: 
+    zen_count: 0
+    overallZenScore: 0
+    join_date_text: 
+    likes_count: 0
+    max_win_streak: 0
+    max_chess_combo: 0
+    four_char_count: 0
+    other_char_count: 0
+    chess_stage: 
+    highest_zen_level: 
+    current_garden_id: 0
+    collected_butterflies: []
+    hof_awards:
+      gold: 0
+      silver: 0
+      bronze: 0
+    has_liked: 0
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -85445,6 +85490,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f6d85394fc670741bfd956d972146b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &963194235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963194225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f58867acc6a3723469066cc929fba3eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &964057926

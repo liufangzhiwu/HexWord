@@ -9,6 +9,10 @@ using UnityEngine;
 public class LoginApi
 {
     private HTTPClient httpClient;
+    
+    private bool _isLoggingIn = false; 
+    private LoginResponse _lastSuccessResponse; 
+    
     public LoginApi(HTTPClient client)
     {
         httpClient = client;
@@ -36,67 +40,88 @@ public class LoginApi
      */
     public IEnumerator Login(Action<object> action)
     {
-      
-        string platform = Application.platform.ToString();
-        
-        string openId = GameDataManager.Instance.UserData.UserId;
-        string factory = GetCurrentFactory();
-        string push_token = GameDataManager.Instance.UserData.PushToken;
-        
-        //  获取稳定设备ID，优先使用你写的 GetUniqueId()
-        string stableDeviceId = Game.self.GetUniqueId();
-        if (string.IsNullOrEmpty(stableDeviceId))
+        if (_isLoggingIn)
         {
-            // 如果读不到 OAID，再用原生 API 兜底
-            stableDeviceId = SystemInfo.deviceUniqueIdentifier;
+            Debug.Log("[LoginApi] 检测到并发登录请求，等待当前登录完成...");
+            // 阻塞等待，直到 _isLoggingIn 变为 false
+            yield return new WaitUntil(() => !_isLoggingIn);
+            
+            // 等待结束后，如果已经有了有效 Token，说明之前的登录已经成功了，直接复用结果，不再发网络请求
+            if (httpClient.IsTokenValid())
+            {
+                // 构造一个伪响应返回给调用方，让它以为是自己请求成功的
+                action?.Invoke(_lastSuccessResponse); 
+                yield break;
+            }
         }
-
-        if (string.IsNullOrEmpty(openId))
+        _isLoggingIn = true;
+        try
         {
-            openId = stableDeviceId;
-            Debug.LogError(string.Format("[{0}] - {1} OpenId为空！请检查登录逻辑。", factory, openId));
-        }
+            string platform = Application.platform.ToString();
+            string openId = GameDataManager.Instance.UserData.UserId;
+            string factory = GetCurrentFactory();
+            //  获取稳定设备ID，优先使用你写的 GetUniqueId()
+            string stableDeviceId = Game.self.GetUniqueId();
+            if (string.IsNullOrEmpty(stableDeviceId))
+            {
+                // 如果读不到 OAID，再用原生 API 兜底
+                stableDeviceId = SystemInfo.deviceUniqueIdentifier;
+            }
 
-        
-#if UNITY_HUAWEI ||UNITY_hornor 
-     platform ="Android"; 
+            if (string.IsNullOrEmpty(openId))
+            {
+                openId = Game.self.GetUniqueId();
+                Debug.LogError(string.Format("[{0}] - {1} OpenId为空！请检查登录逻辑。", factory, openId));
+            }
+
+
+#if UNITY_HUAWEI ||UNITY_hornor
+     platform = "Android";
 #elif UNITY_OPENHARMONY
-    platform ="OpenHarmony"; 
+    platform = "OpenHarmony"; 
     // 如果是 Google Play 渠道包 (包括 PC 版)
 #elif UNITY_ANDROID || UNITY_STANDALONE_WIN
-        // 注意：Google Play Games PC 版也是 Google 厂商
-        platform ="Android"; 
+            // 注意：Google Play Games PC 版也是 Google 厂商
+            platform = "Android";
 #elif UNITY_IOS
-     platform= "IPhonePlayer";
+     platform = "apple";
 #else
-     platform ="Android"; 
+     platform = "Android";
 #endif
-        
-        var data = new LoginRequest
+
+            var data = new LoginRequest
+            {
+                factory = factory,
+                // openId = "66bcdef7477127aec526a7c489d2ed06",
+                openId = openId,
+                deviceId = stableDeviceId,
+                push_token = stableDeviceId,
+                platform = platform,
+                version = Application.version ?? "1.0.0",
+                language = Application.systemLanguage.ToString(),
+            };
+
+            yield return httpClient.Post<LoginResponse>("auth/device-login",
+                data,
+                response =>
+                {
+                    // 保存Token
+                    PlayerPrefs.SetInt("offline_Seconds", response.offline_Seconds);
+                    HTTPClient.Instance.SetAuthToken(response.token, response.expiresIn);
+                    Debug.Log("Login success!" + response.token);
+                    action?.Invoke(response);
+                    _lastSuccessResponse = response;
+                },
+                error =>
+                {
+                    Debug.Log($"Login failed: {error}");
+                    action?.Invoke(null);
+                }, needAuth: false);
+        }
+        finally
         {
-            factory = factory,
-            openId = openId,
-            deviceId = stableDeviceId,
-            platform = platform,
-            version = Application.version ?? "1.0.0",
-            language = Application.systemLanguage.ToString(),
-            push_token = push_token,
-        };
-       
-        yield return httpClient.Post<LoginResponse>("auth/device-login",
-            data,
-            response =>
-            {
-                // 保存Token
-                HTTPClient.Instance.SetAuthToken(response.token,response.offline_Seconds);
-                Debug.Log("Login success!" + response.token);
-                action?.Invoke(response);
-            },
-            error =>
-            {
-                Debug.Log($"Login failed: {error}");
-                action?.Invoke(null);
-            });
+            _isLoggingIn = false; 
+        }
     }
 
     /**
@@ -169,7 +194,7 @@ public class LoginApi
             });
     }
     
-    // 登录后获取用户信息
+    // 清理获取用户信息
     public IEnumerator ClearUserProfile(Action<bool> action)
     {
         yield return httpClient.Post<bool>("auth/debug/clear-data",

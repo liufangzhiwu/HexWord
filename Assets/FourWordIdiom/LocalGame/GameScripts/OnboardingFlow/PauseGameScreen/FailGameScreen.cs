@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using FourWordIdiom.LocalGame.GameScripts.Controller;
 using Middleware;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -74,6 +75,9 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         
         if (failPanel != null) failPanel.SetActive(showFailPanel);
         if (continuePanel != null) continuePanel.SetActive(!showFailPanel);
+        
+        if(showFailPanel)
+            SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
         
         EventDispatcher.instance.TriggerHighlightHeaderUI(!showFailPanel);
     }
@@ -158,16 +162,15 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             // 锁死下方的待填字盘
             ChessBowlGrid.IsTutorialBlocking = true; 
         }
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection, true, () =>
-        {
-            ChessPlayArea.Instance.QuitGameAndDeductEnergy();
-            EventDispatcher.instance.TriggerHighlightHeaderUI(false);
-        });
+        EventDispatcher.instance.TriggerHighlightHeaderUI(false);
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection,false);
+        ChessPlayArea.Instance.QuitGameAndDeductEnergy();
         if (ChessStageController.Instance.CurrStageData != null && 
             ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0)
         {
             AnalyticMgr.LevelExit();
         }
+        
         SystemManager.Instance.HidePanel(PanelType.FailGameScreen);
         ChessGuideSystem.Instance.CloseGuide();
     }
@@ -199,7 +202,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     // ==========================================
     // 🌟 4. 长按隐藏逻辑核心实现
     // ==========================================
-    public void OnPointerDown(PointerEventData eventData)
+    public new void OnPointerDown(PointerEventData eventData)
     {
         // 当玩家手指按下弹窗的空白背景时触发 (点在按钮上会被按钮拦截，不会触发这里)
         if (_longPressCoroutine != null) StopCoroutine(_longPressCoroutine);

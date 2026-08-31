@@ -183,7 +183,7 @@ public class PauseGameScreen : UIWindow
     /// 在二次确认面板点击【取消退出/继续游戏】
     /// </summary>
     private void OnRealExitClicked()
-    {
+    { 
         if (ChessPlayArea.Instance != null)
         {
             if (ChessPlayArea.Instance.chessboardGrid != null)
@@ -193,18 +193,15 @@ public class PauseGameScreen : UIWindow
             // 锁死下方的待填字盘
             ChessBowlGrid.IsTutorialBlocking = true; 
         }
+        EventDispatcher.instance.TriggerHighlightHeaderUI(false);
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection,false);
         // 退出损失体力和连击分, 并清理当前关卡游戏状态
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection, true, () =>
-        {
-            ChessPlayArea.Instance.QuitGameAndDeductEnergy();
-            EventDispatcher.instance.TriggerHighlightHeaderUI(false);
-        });
+        ChessPlayArea.Instance.QuitGameAndDeductEnergy();
         if (ChessStageController.Instance.CurrStageData != null && 
             ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0)
         {
             AnalyticMgr.LevelExit();
         }
-       
         SystemManager.Instance.HidePanel(PanelType.PauseGameScreen);
         ChessGuideSystem.Instance.CloseGuide();
         

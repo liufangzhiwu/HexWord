@@ -66,7 +66,7 @@ public class HTTPClient
         PlayerPrefs.DeleteKey("token_expire_ts");
         PlayerPrefs.Save();
         defaultHeaders.Remove("Authorization");
-        Debug.Log("[HTTPClient] Token 已清除");
+        // Debug.Log("[HTTPClient] Token 已清除");   // 已注释，避免临时内存泄漏
         OnTokenExpired?.Invoke(); 
     }
     public bool IsTokenValid()
@@ -121,7 +121,7 @@ public class HTTPClient
     {
         if (needAuth && !IsTokenValid())
         {
-            Debug.LogWarning($"[HTTPClient] 拦截请求 {endpoint}：无有效Token，拒绝发送。");
+            //Debug.Log($"[HTTPClient] 拦截请求 {endpoint}：无有效Token，拒绝发送。");
             onError?.Invoke("NO_TOKEN");
             ClearAuth();
             yield break; 
@@ -135,13 +135,15 @@ public class HTTPClient
                 onError?.Invoke("Network Error!!!");
                 return;
             }
-            // 控制台输出格式化日志
+#if UNITY_EDITOR
+            // 仅在编辑器中输出详细日志，避免发布版产生大量临时内存分配
             Debug.Log($"[API] {method} {req.Uri} \n" +
                       $"Request Header: {req.DumpHeaders()}\n" +
                       $"Request Body: {(body != null ? JsonConvert.SerializeObject(body) : "N/A")}\n" +
                       $"Response Header: {JsonConvert.SerializeObject(resp.Headers)}\n" +
                       $"Response Body: {(resp != null ? resp.DataAsText : "N/A")}\n" +
                       $"Code: {resp.StatusCode} Time: {duration:F2}s");
+#endif
             HandleResponse(resp, onSuccess, onError);
         });
         foreach (var header in defaultHeaders)
