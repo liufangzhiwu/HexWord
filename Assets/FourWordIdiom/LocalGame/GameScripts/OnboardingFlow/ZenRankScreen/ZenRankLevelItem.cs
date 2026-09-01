@@ -138,14 +138,13 @@ public class ZenRankLevelItem : MonoBehaviour
                         AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("hehua_" + flowerIndex);
                     Image flowerImg = FindImageInChildren(currentHehua.transform, "hehua01");
                     flowerImg.sprite = newFlowerSprite;
-                    flowerImg.gameObject.SetActive(true);
                     // ==========================================
                     // 3. 动态替换 Spine 图片
                     // ==========================================
                     // 假设你把荷花的图片打包在了一个叫 "ZenAtlas" 的图集里
 
                     // Sprite newLeafSprite =
-                    //     AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("lotus_leaf_" + leafIndex);
+                    //     AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("lotus_leaf_" + leafIndex);
                     // if (newLeafSprite != null)
                     // 🌟 核心新增：调用段位密度控制器，动态隐藏/显示场景元素！
                     ApplyRankDensity(skeletonGraphic, tierIndex, flowerImg);

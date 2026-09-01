@@ -59,8 +59,6 @@ public class ZenSettlementScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
-        
-        AudioManager.Instance.PlaySoundEffect("ShowUI");
     
         step1CanvasGroup.gameObject.SetActive(false);
         step2CanvasGroup.gameObject.SetActive(false);
@@ -268,10 +266,13 @@ public class ZenSettlementScreen : UIWindow
         else
         {
             // 如果请求失败（比如断网），解锁界面让玩家重试
-            isAnimating = false;
             if (nextBtn != null) 
                 nextBtn.GetComponentInChildren<Text>().text = "网络异常，点击重试";
+            
+            yield return new WaitForSeconds(2.5f);
+            OnClose();
         }
+       
     }
     private IEnumerator ShowHeaderSection()
     {
@@ -337,7 +338,7 @@ public class ZenSettlementScreen : UIWindow
     {
         return id switch
         {
-            3 => LimitRewordType.Tipstool,     // 重置
+            3 => LimitRewordType.AutoComplete,     // 重置
             2 => LimitRewordType.Tipstool,      // 提示
             1 => LimitRewordType.Butterfly,     // 蝴蝶
             4 => LimitRewordType.AutoComplete,  // 自动拼字
@@ -374,7 +375,7 @@ public class ZenSettlementScreen : UIWindow
     }
     protected override void OnDisable()
     {
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false,false);
         if (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankScreen))
         {
             SystemManager.Instance.HidePanel(PanelType.HeaderSection);

@@ -17,6 +17,7 @@ public class ZenRankStartScreen : UIWindow
     [Header("UI 面板 (阶段2 - 雷达匹配)")]
     [SerializeField] private GameObject stage2Panel;
     [SerializeField] private Image stage2MyAvatar;
+    [SerializeField] private Image stage2MyFrame;
     [SerializeField] private Text stage2TipText;
     [SerializeField] private Text stage2ProgressText;
     [SerializeField] private Slider progressBar;          // 进度条
@@ -99,6 +100,7 @@ public class ZenRankStartScreen : UIWindow
     private void InitLanguageAndData()
     {
         stage2MyAvatar.sprite = LoadheadIcon("head" + GameDataManager.Instance.UserData.UserHeadId);
+        stage2MyFrame.sprite = LoadheadIcon("AvatarFrameIcon" + GameDataManager.Instance.UserData.UserHeadBorderId);
         
         if (stage1TitleText != null) stage1TitleText.text = MultilingualManager.Instance.GetString("MeditationList");
         if (stage1DescText != null) stage1DescText.text = MultilingualManager.Instance.GetString("ZenMatchRule");
@@ -346,12 +348,14 @@ public class ZenRankStartScreen : UIWindow
         GameObject newAvatar = avatarPool.GetObject(radarCenter);
         RectTransform rectTransform = newAvatar.GetComponent<RectTransform>();
         rectTransform.anchoredPosition = targetPos;
-            
-        Image avatarImage = newAvatar.transform.GetChild(0).GetComponent<Image>();
+        Image avatarImage = newAvatar.GetComponent<Image>();
+        Image frame = newAvatar.transform.GetChild(0).GetComponent<Image>();
         if (avatarImage != null)
         {
             // 随机抽取一个 1 到 maxHeadIconId 之间的头像
             int randomHeadId = Random.Range(0, 24);
+            int randomFrameId = Random.Range(0, 8);
+            frame.sprite = LoadheadIcon("AvatarFrameIcon" + randomFrameId);
             avatarImage.sprite = LoadheadIcon("head" + randomHeadId);
         }
             
@@ -384,6 +388,6 @@ public class ZenRankStartScreen : UIWindow
     
     private Sprite LoadheadIcon(string showIcon)
     {
-        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon, "UserHeadIcons");
     }
 }

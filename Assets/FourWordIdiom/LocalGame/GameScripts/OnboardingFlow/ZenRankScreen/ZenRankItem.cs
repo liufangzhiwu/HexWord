@@ -10,6 +10,7 @@ public class ZenRankState
     public int PlayerId;
     public int Rank;
     public int Avatar;
+    public string Frame;
     public string Name;
     public string Level;
     public int Score;
@@ -20,6 +21,7 @@ public class ZenRankItem : MonoBehaviour
 {
     [SerializeField] private GameObject Rank;
     [SerializeField] private Image Avatar;
+    [SerializeField] private Image Frame;
     [SerializeField] private Text Name;
     [SerializeField] private Text Score;
     [SerializeField] private Button BoxReward;
@@ -34,6 +36,7 @@ public class ZenRankItem : MonoBehaviour
     public Text ScoreText => Score;
     public Text RankText { get; private set; }
     public Image RankIcon { get; private set; }
+    private Text _goldRewardText;
     
     private bool boxLocked = false;   // 🌟 宝箱动画锁
 
@@ -41,25 +44,32 @@ public class ZenRankItem : MonoBehaviour
     private int currentRank;
     private bool isMe; // 🌟 标识这条数据是不是玩家自己
     private Sprite _sprite;
-
+    private int _playerId; // 缓存当前玩家的ID，用于查询资料
+    private bool _isDisplayOnly; // 缓存当前条目是否为"仅展示"(即是否在结算页)
     private void Awake()
     {
         _sprite = GetComponent<Image>().sprite;
         RankText = Rank.GetComponentInChildren<Text>(true);
         RankIcon = Rank.GetComponentInChildren<Image>(true);
+        _goldRewardText = GoldReward.GetComponentInChildren<Text>(true);
     }
 
     private void Start()
     {
         BoxReward.AddClickAction(OnBoxClicked);
+        BindClickEvent(Avatar);
+        BindClickEvent(Name);
     }
     
     public void SetRankInfo(ZenRankState state, bool isDisplayOnly = false)
     {
+        _playerId = state.PlayerId; // 记录PlayerId
+        _isDisplayOnly = isDisplayOnly; // 存下来，留给点击头像时判断使用
         currentRank = state.Rank;
         // GoPlay.gameObject.SetActive(false);
         // isMe = state.Name == GameDataManager.Instance.UserData.UserName;
-        isMe = state.PlayerId == int.Parse(GameDataManager.Instance.UserData.PlayerId);
+        isMe = !string.IsNullOrEmpty(GameDataManager.Instance.UserData.PlayerId) && 
+               state.PlayerId == int.Parse(GameDataManager.Instance.UserData.PlayerId);
         if (isDisplayOnly)
         {
             BoxReward.interactable = false; // 禁用宝箱点击
@@ -86,15 +96,23 @@ public class ZenRankItem : MonoBehaviour
             RankText.text = state.Rank.ToString();
             if (state.Reward > 0 )
             {
-                GoldReward.GetComponentInChildren<Text>(true).text = $"×{state.Reward}";
+                _goldRewardText.text = $"×{state.Reward}";
                 GoldReward.SetActive(true);
             }
         }
-        Avatar.sprite = LoadheadIcon(state.Avatar);
-        string displayName = state.Name;
-        if (!string.IsNullOrEmpty(displayName) && displayName.Length > 6)
+        Avatar.sprite = LoadheadIcon("head"+state.Avatar);
+
+        if (string.IsNullOrEmpty(state.Frame))
         {
-            displayName = displayName.Substring(0, 5) + "...";
+            state.Frame = "0";
+        }
+        
+        Frame.sprite = LoadheadIcon("AvatarFrameIcon"+ state.Frame);
+        string displayName = state.Name;
+        int showNumber = _isDisplayOnly ? 5 : 8;
+        if (!string.IsNullOrEmpty(displayName) && displayName.Length > showNumber)
+        {
+            displayName = displayName.Substring(0, showNumber) + "..";
         }
         Name.text = displayName;
         Score.text = state.Score.ToString();
@@ -117,6 +135,7 @@ public class ZenRankItem : MonoBehaviour
                 Name.color = newColor;
                 Score.color = newColor;
                 RankText.color = newColor;
+                _goldRewardText.color = newColor;
             }
 
             zenscoreBg.sprite = selectedSprite;
@@ -127,6 +146,7 @@ public class ZenRankItem : MonoBehaviour
             Name.color = Color.white;
             Score.color = Color.white;
             RankText.color = Color.white;
+            _goldRewardText.color = Color.white;
             zenscoreBg.sprite = normalSprite;
         }
             
@@ -170,11 +190,12 @@ public class ZenRankItem : MonoBehaviour
             }
         }
     }
-
-    private Sprite LoadheadIcon(int idx)
+    
+    private Sprite LoadheadIcon(string showIcon)
     {
-        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + idx);
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon,"UserHeadIcons");
     }
+    
     private Sprite LoadRankIcon(int idx, string iconName = "RankBox")
     {
         return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(iconName + idx);
@@ -213,5 +234,53 @@ public class ZenRankItem : MonoBehaviour
         seq.SetTarget(BoxReward.transform); 
           
         
+    }
+    
+    // 辅助方法：给UI元素自动检查并绑定点击事件
+    private void BindClickEvent(Component uiElement)
+    {
+        if (uiElement == null) return;
+        
+        Button btn = uiElement.GetComponent<Button>();
+        if (btn == null)
+        {
+            // 如果预制体上没有挂载Button，代码自动添加一个
+            btn = uiElement.gameObject.AddComponent<Button>();
+            // 注意：自动添加的Button由于没有设置Target Graphic，可能没有点击按压的颜色变化
+            // 如果需要颜色变化，建议在Prefab上手动挂载Button组件并设置过渡
+        }
+        
+        btn.onClick.RemoveAllListeners();
+        btn.onClick.AddListener(OnUserProfileClicked);
+    }
+    private void OnUserProfileClicked()
+    {
+        // 如果是在结算页（仅展示），直接返回，不触发点击
+        if (_isDisplayOnly) return;
+        // 防错：如果是空数据则不响应
+        if (_playerId <= 0) return;
+
+        UnityEngine.Debug.Log($"[RankItem] 点击了玩家，准备弹出气泡。 玩家ID: {_playerId}");
+        
+        if (_playerId.ToString() == GameDataManager.Instance.UserData.PlayerId)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.PersonInfoScreen);
+            return;
+        };
+        
+        StartCoroutine(APIGateway.Instance.SocialApi.GetPublicProfile(_playerId.ToString(),(res) =>
+        {
+            GameCoreManager.Instance.otherPersonProfile = res;
+            Debug.Log("其他用户信息 " + res);
+
+            if (GameCoreManager.Instance.otherPersonProfile != null)
+            {
+                SystemManager.Instance.ShowPanel(PanelType.OtherPeopleScreen);
+            }
+            else
+            {
+                MessageSystem.Instance.ShowTip("该用户信息不存在，可能为假数据！请自行排查");
+            }
+        }));
     }
 }

@@ -66,7 +66,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
     m_FontSize: 45
     m_FontStyle: 0
     m_BestFit: 0
@@ -111,7 +111,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8823207204765440739}
-  - {fileID: 160482589426311210}
+  - {fileID: 8506914638197073070}
   - {fileID: 9194721559185139314}
   - {fileID: 4454244391765183764}
   - {fileID: 1229054549667148420}
@@ -175,6 +175,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Rank: {fileID: 7255268152852516226}
   Avatar: {fileID: 8846108210975995274}
+  Frame: {fileID: 3833231646868274887}
   Name: {fileID: 8657118591457752985}
   Score: {fileID: 3710275423083268964}
   BoxReward: {fileID: 4980092583017690447}
@@ -194,7 +195,7 @@ GameObject:
   - component: {fileID: 6960118952817628847}
   - component: {fileID: 8846108210975995274}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Atatar_
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -207,17 +208,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1009884151879108782}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 160482589426311210}
+  m_Children:
+  - {fileID: 160482589426311210}
+  m_Father: {fileID: 6909063402693672523}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -12, y: -12}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 245, y: 0}
+  m_SizeDelta: {x: 149, y: 149}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6960118952817628847
 CanvasRenderer:
@@ -249,7 +251,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: 6e37c9bcdba6cc546b7c412a93f5afd1, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -486,7 +488,7 @@ GameObject:
   - component: {fileID: 926306171709765524}
   - component: {fileID: 3833231646868274887}
   m_Layer: 5
-  m_Name: Atatar
+  m_Name: fream
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -499,18 +501,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3260544157577089245}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 8506914638197073070}
-  m_Father: {fileID: 6909063402693672523}
+  m_Children: []
+  m_Father: {fileID: 8506914638197073070}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 245, y: 0}
-  m_SizeDelta: {x: 149, y: 149}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0.7783966, y: -0.7782974}
+  m_SizeDelta: {x: 19.2017, y: 36.8465}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &926306171709765524
 CanvasRenderer:
@@ -540,15 +541,15 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: e9f2e1393e16bed4991391c6b6d823c7, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e98d009f07336824c82643438ad47187, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  m_UseSpriteMesh: 1
+  m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
 --- !u!1 &4274257764558031529
 GameObject:
@@ -616,7 +617,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
     m_FontSize: 70
     m_FontStyle: 0
     m_BestFit: 0
@@ -5547,7 +5548,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
     m_FontSize: 60
     m_FontStyle: 0
     m_BestFit: 1
@@ -10716,7 +10717,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 08f24f3723bce694ba165e89d00922b2, type: 3}
+  m_Sprite: {fileID: 21300000, guid: d2830ca8f89dcb74ca68c596cb29a203, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

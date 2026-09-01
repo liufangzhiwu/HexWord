@@ -38,6 +38,7 @@ public class ZenRankScreen : UIWindow
     [SerializeField] private Image MyRankIcon;
     [SerializeField] private Text MyRank;
     [SerializeField] private Image MyAvatar;
+    [SerializeField] private Image NyFrame;
     [SerializeField] private Text MyName;
     [SerializeField] private Text MyScore;
     [SerializeField] private Button MyGoPlay;
@@ -61,7 +62,7 @@ public class ZenRankScreen : UIWindow
     // Start is called before the first frame update
     
     private ObjectPool hehuaObjectPool;
-    public GameObject hehuaPrefab;
+    private GameObject hehuaPrefab;
     
     // 顶部的滑动组件
     private ScrollRect topScrollRect;
@@ -129,6 +130,7 @@ public class ZenRankScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+        
         ResetUIBeforeLoading();
         StartCoroutine(CheckSettlementAndLoadRank());
         // GetComponentInChildren<HorizontalScrollSnap>(true).OnEventTriggered += OnScrollRollingListen;
@@ -136,6 +138,8 @@ public class ZenRankScreen : UIWindow
         // 🌟 注册事件
         if (ZenRankManager.Instance != null)
             ZenRankManager.Instance.OnRankTimerTick += UpdateTimerUI;
+        
+        AnalyticMgr.ZenRankEnter("莲心榜");
     }
     // 🌟 新增：根据当前索引，动态更新左右箭头的显示状态
     private void UpdateArrowVisibility()
@@ -396,7 +400,7 @@ public class ZenRankScreen : UIWindow
         if (!shouldShowPrompt)
         {
             // 1. 生成顶部玩家
-            foreach (var state in TopRanks) { SpawnRankItem(state); }
+            foreach (var state in TopRanks) { SpawnRankItem(state, true); }
             // 2. 将 Up 标签移动到当前列表的最后面显示！
             if (TopRanks.Count > 0 && cachedUpTag != null)
             {
@@ -421,14 +425,14 @@ public class ZenRankScreen : UIWindow
         StopLoading();
     }
     // 提炼了一个公共的小方法，避免重复写三遍生成逻辑
-    private void SpawnRankItem(ZenRankState state)
+    private void SpawnRankItem(ZenRankState state, bool topUp = false)
     {
         GameObject itemObj = RankObjectPool.GetObject(RankParent);
         ZenRankItem item = itemObj.GetComponent<ZenRankItem>();
         state.Level = currrentState.Name ?? "ZenState01";
         
         var rewardConfig = ZenRankManager.Instance.RewardDatas.FirstOrDefault(r => r.State == currrentState.Id && r.Rank == state.Rank);
-        if (rewardConfig != null && rewardConfig.rewards.TryGetValue(0, out var reward))
+        if (topUp && rewardConfig != null && rewardConfig.rewards.TryGetValue(0, out var reward))
             state.Reward = reward;
         else
             state.Reward = 0;
@@ -444,7 +448,8 @@ public class ZenRankScreen : UIWindow
         {
             isMeUnranked = true; // 🌟 我未上榜
             MyRank.text = "-";
-            MyAvatar.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + GameDataManager.Instance.UserData.UserHeadId); // 给个默认头像
+            MyAvatar.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + GameDataManager.Instance.UserData.UserHeadId,"UserHeadIcons"); // 给个默认头像
+            NyFrame.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("AvatarFrameIcon" + GameDataManager.Instance.UserData.UserHeadBorderId,"UserHeadIcons"); // 给个默认头像
             MyName.text =  "未上榜";
             MyScore.text = "0";
             MyRankIcon.gameObject.SetActive(false);
@@ -474,7 +479,8 @@ public class ZenRankScreen : UIWindow
                 break;
         }
         
-        MyAvatar.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + GameDataManager.Instance.UserData.UserHeadId);
+        MyAvatar.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + GameDataManager.Instance.UserData.UserHeadId, "UserHeadIcons");
+        NyFrame.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("AvatarFrameIcon" + GameDataManager.Instance.UserData.UserHeadBorderId,"UserHeadIcons"); // 给个默认头像
         string displayName = GameDataManager.Instance.UserData.UserName;
         if (!string.IsNullOrEmpty(displayName) && displayName.Length > 6)
         {

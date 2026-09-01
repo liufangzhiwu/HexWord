@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using DG.Tweening;
-using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -69,7 +68,7 @@ public class ZenRankButton : MonoBehaviour
 
     private void OnRankButtonClick()
     {
-        if (!Game.IsNetworkActive)
+        if (!GameCoreManager.Instance.IsNetworkActive)
         {
             MessageSystem.Instance.ShowTip(MultilingualManager.Instance.GetString("RestorePurchasesTips01"), false);
             return;
@@ -174,7 +173,7 @@ public class ZenRankButton : MonoBehaviour
             GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.ZenOpenLevel ||
             GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ZenOpenLevel;
         
-        //rankBtn.transform.parent.gameObject.SetActive(isShow);
+        rankBtn.transform.parent.gameObject.SetActive(isShow);
         rankBtn.gameObject.SetActive(isShow);
 
         string zenName = MultilingualManager.Instance.GetString(GameDataManager.Instance.UserData.Zenlevel);
@@ -187,7 +186,7 @@ public class ZenRankButton : MonoBehaviour
         
         bool isJoined = GameDataManager.Instance.UserData.isJoinedZenRank;
         
-        if (Game.IsNetworkActive)
+        if (GameCoreManager.Instance.IsNetworkActive)
         {
             wifi.SetActive(false);
             if (!isJoined)
@@ -210,7 +209,7 @@ public class ZenRankButton : MonoBehaviour
     // 🌟 新增：从 Manager 缓存直接恢复文字，避免显示 "..."
     public void SyncTextFromCache()
     {
-        if (!Game.IsNetworkActive) return;
+        if (!GameCoreManager.Instance.IsNetworkActive) return;
 
         // 状态 1：没加入
         if (!GameDataManager.Instance.UserData.isJoinedZenRank)

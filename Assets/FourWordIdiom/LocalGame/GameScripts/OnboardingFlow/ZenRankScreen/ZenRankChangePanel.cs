@@ -211,7 +211,6 @@ private void ResetUIForReplay()
             }
         
             AnalyticMgr.SetCommonProperties();
-            Debug.LogError("查看报了几次 " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
             AnalyticMgr.ActivityProgress("连心榜活动", newScore, duration);
         
             // 埋点完毕后，更新最后一次得分的时间戳，为下次做准备
@@ -269,6 +268,8 @@ private void ResetUIForReplay()
             return scoreComp;
         });
         StartCoroutine(RankChangeRoutine(oldRank, newRank, oldScore, newScore, levelCode, levelName, remainingSeconds, passedPlayers));
+        
+        AchievementManager.Instance.AddAvatarFrameItems(AvatarUnlockType.FlowerRank,newRank);
     }
    
     // ==========================================
@@ -338,8 +339,9 @@ private void ResetUIForReplay()
         // bool isDown = (oldRank > 0 && oldRank < newRank);
         // 2. 准备 UI 节点
         PrepareRankItems(surpassedPlayers.Count);
-        
-        ZenRankState myState = new ZenRankState { PlayerId = int.Parse(GameDataManager.Instance.UserData.PlayerId), Rank = newRank, Score = oldScore, Name = GameDataManager.Instance.UserData.UserName, Avatar = GameDataManager.Instance.UserData.UserHeadId };
+        var user = GameDataManager.Instance.UserData;
+        ZenRankState myState = new ZenRankState { PlayerId = int.Parse(user.PlayerId), Rank = newRank, Score = oldScore, 
+            Name = user.UserName, Avatar = user.UserHeadId, Frame = user.UserHeadBorderId.ToString()};
         myRankItem.SetRankInfo(myState, true);
         RectTransform myRect = myRankItem.GetComponent<RectTransform>();
 

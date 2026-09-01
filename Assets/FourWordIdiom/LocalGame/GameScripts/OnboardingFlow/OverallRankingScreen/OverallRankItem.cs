@@ -121,7 +121,7 @@ public class OverallRankItem : MonoBehaviour
             // }
             // else
             // {
-                bgImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("over_rank_me", "OnboardingFlow");
+                bgImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("over_rank_me");
             // }
            
             // 修改自己排行的文字颜色
