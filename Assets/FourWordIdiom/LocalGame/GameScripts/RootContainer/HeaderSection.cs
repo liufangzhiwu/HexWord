@@ -360,6 +360,8 @@ public class HeaderSection : UIWindow
     /// </summary>
     public void HighlightEnergy(bool isHighlight)
     {
+        if(GameDataManager.Instance==null) return;
+        
         energyAdd.SetActive(!isHighlight);
         // 1. 给体力按钮挂载 Canvas 以便提层
         Canvas energyCanvas = energyBtn.GetComponent<Canvas>();
