@@ -220,11 +220,11 @@ public class OverallRankItem : MonoBehaviour
 
         UnityEngine.Debug.Log($"[RankItem] 点击了玩家，准备弹出气泡。 玩家ID: {_playerId}");
 
-        // if (_playerId.ToString() == GameDataManager.Instance.UserData.PlayerId)
-        // {
-        //     SystemManager.Instance.ShowPanel(PanelType.PersonInfoScreen);
-        //     return;
-        // };
+        if (_playerId.ToString() == GameDataManager.Instance.UserData.PlayerId)
+        {
+            SystemManager.Instance.ShowPanel(PanelType.PersonInfoScreen);
+            return;
+        };
         
         
         StartCoroutine(APIGateway.Instance.SocialApi.GetPublicProfile(_playerId.ToString(),(res) =>

@@ -13,7 +13,7 @@ public class OverallRankingBannerUI : MonoBehaviour
     [SerializeField] private Text currentTip;
     [SerializeField] private Text nextTip;
     [Header("Top Info (顶部信息)")]
-    [SerializeField] private Text levelTitleText; // 左上角，例如 "第1级 蝉眠"
+    // [SerializeField] private Text levelTitleText; // 左上角，例如 "第1级 蝉眠"
     [SerializeField] private GameObject timerRoot; // 右上角，倒计时节点的父物体
     [SerializeField] private Text timerText;       // 右上角倒计时文本，例如 "12天07时"
 
@@ -42,8 +42,13 @@ public class OverallRankingBannerUI : MonoBehaviour
 
     private void Start()
     {
-        currentTip.text = MultilingualManager.Instance.GetString("Current", "hudie");
+        // currentTip.text = MultilingualManager.Instance.GetString("Current", "hudie");
         nextTip.text = MultilingualManager.Instance.GetString("NextLevel", "hudie");
+    }
+
+    private void OnEnable()
+    {
+        SetTimer(false);
     }
 
     /// <summary>
@@ -71,19 +76,18 @@ public class OverallRankingBannerUI : MonoBehaviour
             string llDesc = MultilingualManager.Instance.GetString("Level", "hudie");
             
             // 左上角和左下角名字
-            levelTitleText.text = $"{string.Format(llDesc, currentRealm.Level)} {currentName}";
+            currentTip.text = $"{string.Format(llDesc, currentRealm.Level)}";
             currentLevelText.text = currentName;
             
             // 禅意之境描述
             string prefix = MultilingualManager.Instance.GetString("ZenState", "hudie") ?? "禅意之境：";
             stateDescText.text = $"{prefix} {feelDesc}";
-
+            OverallRankingManager.Instance.GetZenProgress(myScore, out int curScore, out int maxScore);
             // 判断是否还有下一级 (查表看有没有 Level + 1)
             var nextRealm = realmList.FirstOrDefault(r => r.Level == currentRealm.Level + 1);
             if (nextRealm != null)
             {
                 nextLevelText.text = MultilingualManager.Instance.GetString(nextRealm.NameKey, "hudie");
-                OverallRankingManager.Instance.GetZenProgress(myScore, out int curScore, out int maxScore);
                 progressText.text = $"{curScore} / {maxScore}";
                 
                 // 防止除以0的防御性代码
@@ -91,13 +95,40 @@ public class OverallRankingBannerUI : MonoBehaviour
                 {
                     progressBar.value = Mathf.Clamp01((float)curScore / maxScore);
                 }
+
+                if (!nextTip.gameObject.activeInHierarchy)
+                {
+                    nextTip.gameObject.SetActive(true);
+                    progressText.gameObject.SetActive(true);
+                    Start();
+                }
             }
             else
             {
                 // 已满级处理
-                nextLevelText.text = "已满级";
-                progressBar.value = 1f;
-                progressText.text = "MAX";
+                string maxText = MultilingualManager.Instance.GetString("HighestLevel", "hudie");
+                if(maxText == "HighestLevel") maxText = MultilingualManager.Instance.GetString("MaxLevel", "hudie");
+                currentTip.text = maxText;
+                nextTip.gameObject.SetActive(false);
+                nextLevelText.text = "";
+                
+                if (curScore < maxScore)
+                {
+                    // 【新增逻辑】最后一级分数还未收满，继续展示进度
+                    progressText.text = $"{curScore} / {maxScore}";
+                    progressText.gameObject.SetActive(true);
+                    
+                    if (maxScore > 0)
+                    {
+                        progressBar.value = Mathf.Clamp01((float)curScore / maxScore);
+                    }
+                }
+                else
+                {
+                    // 分数已经彻底集满/溢出，隐藏进度文本，进度条满盈
+                    progressBar.value = 1f;
+                    progressText.gameObject.SetActive(false);
+                }
             }
         }
     }
@@ -115,11 +146,23 @@ public class OverallRankingBannerUI : MonoBehaviour
             _timerCoroutine = null;
         }
 
-        timerRoot.SetActive(isActive);
-
-        if (isActive && remainingSeconds > 0)
+        if (isActive)
         {
-            _timerCoroutine = StartCoroutine(TimerRoutine(remainingSeconds));
+            timerRoot.SetActive(true); // 打开节点
+            if (remainingSeconds > 0)
+            {
+                // 有时间，启动倒计时覆盖文本
+                _timerCoroutine = StartCoroutine(TimerRoutine(remainingSeconds));
+            }
+            else
+            {
+                // 🚨 核心修复：时间为0时，直接显示结算提示，强制覆盖掉预制体里的默认字
+                timerText.text = MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中...";
+            }
+        }
+        else
+        {
+            timerRoot.SetActive(false); // 关闭节点
         }
     }
     
@@ -133,6 +176,7 @@ public class OverallRankingBannerUI : MonoBehaviour
         string minStr = MultilingualManager.Instance.GetString("TimeM") ?? "分";
         string secStr = MultilingualManager.Instance.GetString("TimeS") ?? "秒";
 
+        
         while (seconds > 0)
         {
             timerText.text = FormatTime(seconds, dayStr, hourStr, minStr, secStr);

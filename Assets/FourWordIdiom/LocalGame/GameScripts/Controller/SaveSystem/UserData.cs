@@ -356,6 +356,7 @@ public class UserData
         curStageOnlineTime = 0;
         curIsEnter = false;
         zenCount = 0;
+        overallZenScore = 0;
         likeCount = 0;
         passLevelUseTime = new Dictionary<int, int>();
         //限时商店数据
@@ -470,6 +471,7 @@ public class UserData
         CurrentChessStage = user.CurrentChessStage;
         levelMode = user.levelMode;
         zenCount = user.zenCount;
+        overallZenScore = user.overallZenScore;
         likeCount = user.likeCount;
         Zenlevel = user.Zenlevel ?? "ZenState01";
         dayPassStageCount = user.dayPassStageCount;
@@ -900,7 +902,7 @@ public class UserData
 
         // 执行添加
         _getAnimalsHeadIcons.Add(borderId);
-        GameDataManager.Instance.UserData.isGetNewHeadBorderIcon = true;
+        GameDataManager.Instance.UserData.isGetNewHeadBorderIcon = false;
         return true;
     }
 

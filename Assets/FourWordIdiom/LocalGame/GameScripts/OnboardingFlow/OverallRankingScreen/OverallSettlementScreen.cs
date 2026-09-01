@@ -140,8 +140,8 @@ public class OverallSettlementScreen : UIWindow
             var slot = Instantiate(rewardSlotTemplate, step2RewardsContent);
             slot.gameObject.SetActive(true);
             Image icon = slot.transform.GetChild(0).GetComponent<Image>();
-
-            icon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(kvp.Key == 0 ? "gold" : "give_" + kvp.Key);
+            
+            icon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_"+kvp.Key);
             icon.SetNativeSize();
             slot.GetComponentInChildren<Text>().text = "× " + kvp.Value;
         }
@@ -171,8 +171,10 @@ public class OverallSettlementScreen : UIWindow
     private void CloseAndFinish()
     {
         OverallRankingManager.Instance.InvalidateMonthlyCache(); // 关键：让主榜重拉新月数据
+        OverallRankingManager.Instance.InvalidateHallOfFameCache(); // 清空名人堂缓存，确保能刷出刚刚结算产生的新名人！
         SystemManager.Instance.HidePanel(PanelType.OverallSettlementScreen);
         // Manager.CheckMonthlySettlementRoutine 正 WaitUntil 这个面板关闭，会自动继续往下走
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, false, false);
     }
 
     // ============== 工具 ==============
@@ -181,7 +183,7 @@ public class OverallSettlementScreen : UIWindow
         return new OverallRankState
         {
             PlayerId = e.user_id, Rank = e.rank, Avatar = e.avatar,
-            Name = e.nickname, Score = e.score,
+            Name = e.nickname, Score = e.score, Frame = e.avatar_frame,
             Reward = 0 // 前3由 OverallRankItem 显示宝箱
         };
     }
@@ -190,9 +192,10 @@ public class OverallSettlementScreen : UIWindow
         return new OverallRankState
         {
             PlayerId = int.Parse(GameDataManager.Instance.UserData.PlayerId), // isMe=true → 金色底 + 棕字
-            Rank     = data.myRank,    // 0=未上榜，>6=榜外真实名次
-            Avatar   = data.myAvatar,
+            Avatar   = GameDataManager.Instance.UserData.UserHeadId,
+            Frame    = GameDataManager.Instance.UserData.UserHeadBorderId.ToString(),
             Name     = GameDataManager.Instance.UserData.UserName,
+            Rank     = data.myRank,    // 0=未上榜，>6=榜外真实名次
             Score    = data.myScore,
             Reward   = 0
         };

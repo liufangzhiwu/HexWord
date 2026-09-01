@@ -413,7 +413,7 @@ GameObject:
   - component: {fileID: 5001239464366157240}
   - component: {fileID: 737354867274294834}
   m_Layer: 5
-  m_Name: achieveProgress
+  m_Name: achieveTime
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -479,7 +479,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u5DF2\u5B8C\u621060%"
+  m_Text: 2026/7/8
 --- !u!114 &737354867274294834
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -614,6 +614,7 @@ GameObject:
   m_Component:
   - component: {fileID: 720081189557819351}
   - component: {fileID: 5646868711271719589}
+  - component: {fileID: 1438207565028912191}
   m_Layer: 5
   m_Name: HorGetAchieveItem
   m_TagString: Untagged
@@ -654,6 +655,25 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6496320106299734102}
   m_CullTransparentMesh: 1
+--- !u!114 &1438207565028912191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6496320106299734102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ad4de91140309a49951e7e44ae0f994, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  achieveicon: {fileID: 7297288120798927687}
+  achievetag: {fileID: 7574083056831775562}
+  achieveTitle: {fileID: 5311580071524161507}
+  achieveDes: {fileID: 4218658426393978949}
+  achieveTime: {fileID: 5001239464366157240}
+  achievejiliText: {fileID: 5740717322782506162}
+  achievetagText: {fileID: 602226020601902361}
 --- !u!1 &8479718314304765021
 GameObject:
   m_ObjectHideFlags: 0

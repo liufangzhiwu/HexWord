@@ -42,7 +42,7 @@ public class OverallRankingManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            //DontDestroyOnLoad(gameObject);
             LoadConfigs(); // 启动时自动解析 CSV 配置
         }
         else
@@ -336,32 +336,6 @@ public class OverallRankingManager : MonoBehaviour
         onComplete?.Invoke(data.HasReward);
     }
     
-    /// <summary>
-    /// 领取月榜奖励
-    /// </summary>
-    public IEnumerator ClaimMonthlyRewardRoutine(Action<bool> onComplete = null)
-    {
-        IsFetching = true;
-        bool isSuccess = false;
-
-        yield return APIGateway.Instance.LeaderboardApi.ClaimMonthlyReward((res) =>
-        {
-            if (res != null && res.status == "success")
-            {
-                Debug.Log("【Overall Ranking】月榜奖励领取成功！");
-                // TODO: 可以在这里处理将奖励塞入背包的逻辑，或者由后端直接发奖，前端仅做UI刷新
-                isSuccess = true;
-            }
-            else
-            {
-                Debug.LogError("【Overall Ranking】月榜奖励领取失败！");
-            }
-        });
-
-        IsFetching = false;
-        onComplete?.Invoke(isSuccess);
-    }
-    
     // ==========================================
     // 🌟 辅助工具方法
     // ==========================================
@@ -393,6 +367,24 @@ public class OverallRankingManager : MonoBehaviour
         // 清理月榜快照
         _originalMonthlyScoreFromServer = 0;
         _monthlySnapshotTotalScore = -1;
+    }
+    // 清理名人堂缓存的方法
+    public void InvalidateHallOfFameCache()
+    {
+        _hasFetchedHallOfFame = false; // 标记为未请求，下次打开强制重拉
+        HallOfFameRanks.Clear();
+    }
+    // 强制使所有榜单缓存失效
+    public void InvalidateAllRanksCache()
+    {
+        // 1. 清理总榜缓存
+        _lastTotalFetchTime = -9999f;
+        TotalRanks.Clear();
+        MyTotalRankData = null;
+        
+        // 2. 复用已有的清理月榜和名人堂方法
+        InvalidateMonthlyCache();
+        InvalidateHallOfFameCache();
     }
     
     public static string Format(int rank)
@@ -488,7 +480,7 @@ public class OverallRankingManager : MonoBehaviour
         // 获取本地最新分数和玩家ID
         int latestTotalScore = GameDataManager.Instance.UserData.overallZenScore;
         if (!int.TryParse(GameDataManager.Instance.UserData.PlayerId, out int myUserId)) return;
-
+        
         // 1. 世界榜：直接用最新总分进行本地插榜
         UpdateSingleListCache(TotalRanks, MyTotalRankData, latestTotalScore, myUserId);
         // 2. 月榜：利用快照差值(Delta)计算最新月榜分，进行本地插榜
@@ -498,36 +490,33 @@ public class OverallRankingManager : MonoBehaviour
             int scoreDelta = latestTotalScore - _monthlySnapshotTotalScore;
             
             // 只要分涨了，就把涨的部分加到服务器下发的原始月分上
-            if (scoreDelta > 0)
-            {
-                int latestMonthlyScore = _originalMonthlyScoreFromServer + scoreDelta;
-                UpdateSingleListCache(MonthlyRanks, MyMonthlyRankData, latestMonthlyScore, myUserId);
-            }
+            int latestMonthlyScore = _originalMonthlyScoreFromServer + scoreDelta;
+            UpdateSingleListCache(MonthlyRanks, MyMonthlyRankData, latestMonthlyScore, myUserId);
         }
     }
 
     private void UpdateSingleListCache(List<LeaderboardEntry> list, LeaderboardEntry myData, int latestScore, int myUserId)
     {
-        if (list == null || list.Count == 0 || myData == null) return;
+        if (list == null || myData == null) return;
 
-        // 1. 如果本地分数根本没变，或者比服务端拉下来的还低(极少见异常)，直接跳过
-        if (myData.score >= latestScore) return; 
-
+        // 1. 取服务端返回分数和本地最新分数的最大值
+        int realScore = Mathf.Max(myData.score, latestScore);
         // 更新我自己的独立数据
-        myData.score = latestScore;
+        myData.score = realScore;
 
         // 2. 查找我是否在当前显示的列表(如前100名)中
         var meInList = list.FirstOrDefault(x => x.user_id == myUserId);
         
         if (meInList != null)
         {
+            if (meInList.score == realScore) return;
             // 在榜单中，直接更新分数
-            meInList.score = latestScore;
+            meInList.score = realScore;
         }
         else
         {
             // 我没在榜单中，判断我的新分数是否击败了榜单最后一名（俗称：挤进榜单）
-            if (latestScore > list.Last().score)
+            if (realScore > 0)
             {
                 // 创建一个分身塞进榜单参与排序
                 list.Add(new LeaderboardEntry 
@@ -535,6 +524,7 @@ public class OverallRankingManager : MonoBehaviour
                     user_id = myUserId,
                     avatar = myData.avatar,
                     nickname = myData.nickname,
+                    avatar_frame = myData.avatar_frame,
                     score = latestScore
                 });
             }
@@ -549,11 +539,11 @@ public class OverallRankingManager : MonoBehaviour
         list.Sort((a, b) => b.score.CompareTo(a.score));
 
         // 如果挤进了新人，把超出原本长度（如第101名）的人剔除
-        if (list.Count > 100) 
-        {
-            // 注：如果没有 GroupSize 限制，你可以固定写 100，或者省略这步
-            list.RemoveAt(list.Count - 1); 
-        }
+        // if (list.Count > 100) 
+        // {
+        //     // 注：如果没有 GroupSize 限制，你可以固定写 100，或者省略这步
+        //     list.RemoveAt(list.Count - 1); 
+        // }
 
         // 4. 重新赋予以 1 开始的名次
         for (int i = 0; i < list.Count; i++)

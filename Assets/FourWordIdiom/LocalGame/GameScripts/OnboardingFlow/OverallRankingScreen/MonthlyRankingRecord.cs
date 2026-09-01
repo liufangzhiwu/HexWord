@@ -8,6 +8,7 @@ public class MonthlyTopPlayer
 {
     public int Rank;      // 排名 (1, 2, 或 3)
     public int Avatar;    // 头像ID
+    public string Frame;
     public string Name;   // 玩家昵称
     public int Score;     // 禅意分数
 }
@@ -24,6 +25,7 @@ public class MonthlyRankingRecord : MonoBehaviour
         public Text NameText;            // 对应 RankXNameText
         public Text ScoreText;           // 对应 RankXScoreText
         public Image AvatarImage;        // 对应 RankXPohto 下的 Image
+        public Image FrameImage;
     }
     
     [Header("Top 3 Players UI")]
@@ -80,26 +82,23 @@ public class MonthlyRankingRecord : MonoBehaviour
                 string displayName = player.Name;
                 if (!string.IsNullOrEmpty(displayName) && displayName.Length > 6)
                 {
-                    displayName = displayName.Substring(0, 6) + "..";
+                    displayName = displayName.Substring(0, 5) + "..";
                 }
                 ui.NameText.text = displayName;
                 ui.ScoreText.text = player.Score.ToString();
-                
                 // 加载头像
-                if (ui.AvatarImage != null)
-                {
+                ui.AvatarImage.sprite = LoadHeadIcon("head" + player.Avatar);
                     // string avaStr = UIUtilities.ExtractNumber(player.Avatar);
                     // int avaIdx = string.IsNullOrEmpty(avaStr) ? 0 : int.Parse(avaStr);
-                    ui.AvatarImage.sprite = LoadHeadIcon(player.Avatar);
-                }
+               if(player.Frame != null) ui.FrameImage.sprite = LoadHeadIcon("AvatarFrameIcon" + player.Frame);
             }
         }
     }
 
     // 复用之前的头像加载方法
-    private Sprite LoadHeadIcon(int idx)
+    private Sprite LoadHeadIcon(string idx)
     {
         // 请确保 AdvancedBundleLoader 在当前环境可用
-        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("head" + idx, "UserHeadIcons");
+        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(idx, "UserHeadIcons");
     }
 }

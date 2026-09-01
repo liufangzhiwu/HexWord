@@ -13,7 +13,7 @@ public class UserHeadScreen : UIWindow
     [SerializeField] private Image headBorderIcon; // 确认按钮
     [SerializeField] private Image headBorderSpacialIcon; // 确认按钮
     [SerializeField] private Image headBorderRedPoint; // 头像框红点
-    //[SerializeField] private Image redPointHeadImage; // 头像红点
+    [SerializeField] private Image redPointHeadImage; // 头像红点
    
     [SerializeField] private InputField NameText; //标题文本
     [SerializeField] private Text HeaderText; //标题文本
@@ -207,9 +207,9 @@ public class UserHeadScreen : UIWindow
         HeadBorderChoiceItem.gameObject.SetActive(false);
         HeadBorderItemList.gameObject.SetActive(false);
         
-        // GameDataManager.Instance.UserData.isGetNewHeadIcon = false;
-        //
-        // redPointHeadImage.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon);
+        GameDataManager.Instance.UserData.isGetNewHeadIcon = false;
+        
+        redPointHeadImage.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon);
     }
     
     private void ClickHeadBorderBtn()
@@ -368,6 +368,7 @@ public class UserHeadScreen : UIWindow
  
     private void OnCloseBtn()
     {
+        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
         EventDispatcher.instance.TriggerChangeHeadIconUpdateEvent();
         base.Close(); // 隐藏面板
     }

@@ -54,7 +54,6 @@ public class AchievementScreen : UIWindow
         }
         // 初始化对象池
         horLockobjectPool = new ObjectPool(horLockAchievePerfab.gameObject, ObjectPool.CreatePoolContainer(transform, "AchieveLockItemPool"));
-      
     }
 
     protected override void OnEnable()

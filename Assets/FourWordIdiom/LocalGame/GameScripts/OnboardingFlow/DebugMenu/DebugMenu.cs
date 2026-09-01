@@ -31,13 +31,20 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button OnlineTimeBtn; //蝴蝶道具
     [SerializeField] private Button LightLimtBtn; //蝴蝶道具
     [SerializeField] private Button UseButterflyBtn; //蝴蝶道具
-    [SerializeField] private Button ShopBuyBtn;
+    
     [SerializeField] private Button AddPupaBtn;
     [SerializeField] private Button AddGoldLeafBtn;
     [SerializeField] private Button AddStreakWinDays;
     [SerializeField] private Button GetAllHeadIcons;
     [SerializeField] private Button PushTestBtn;
     [SerializeField] private Toggle AutoToggle;
+    
+    [SerializeField] private Button AddZenScoreBtn;
+    [SerializeField] private Button AddComboCountBtn;
+    [SerializeField] private Button AddCollectLeafBtn;
+    [SerializeField] private Button AddBreakIceBtn;
+    [SerializeField] private Button AddPickFlowerBtn;
+    [SerializeField] private Button AddPerfectBtn;
 
     public InputField EmailText; 
     public Text FPSText; 
@@ -83,7 +90,7 @@ public class DebugMenu : UIWindow
         OnlineTimeBtn.AddClickAction(OnLineTimeTaskClick);
         LightLimtBtn.AddClickAction(OnLightLimitClick);
         UseButterflyBtn.AddClickAction(OnUserButterflyClick);
-        ShopBuyBtn.AddClickAction(OnShopBuyClick);
+      
         AddPupaBtn.AddClickAction(OnAddPupaClick);
         ChessEBtn.AddClickAction(OnChessEnergyClick);
         setAbBtButton.AddClickAction(OnSetABBtnClick);
@@ -91,6 +98,13 @@ public class DebugMenu : UIWindow
         AddStreakWinDays.AddClickAction(OnAddStreakWinDays);
         GetAllHeadIcons.AddClickAction(OnGetAllHeadIcons);
         PushTestBtn.AddClickAction(OnPushTestBtn);
+        
+        AddComboCountBtn.AddClickAction(OnComboCountClick);
+        AddCollectLeafBtn.AddClickAction(OnCollectLeafClick);
+        AddBreakIceBtn.AddClickAction(OnBreakIceClick);
+        AddPickFlowerBtn.AddClickAction(OnPickFlowerClick);
+        AddPerfectBtn.AddClickAction(OnPerfectClick);
+        AddZenScoreBtn.AddClickAction(OnAddZenCount);
     }
 
     private void InitUIData()
@@ -105,10 +119,14 @@ public class DebugMenu : UIWindow
         InitBtnData(OnlineTimeBtn, "10");
         InitBtnData(LightLimtBtn, "10");
         InitBtnData(UseButterflyBtn, "10");
-        InitBtnData(ShopBuyBtn, "10");
         InitBtnData(AddPupaBtn, "10");
         InitBtnData(AddGoldLeafBtn, "10");
         InitBtnData(AddStreakWinDays, "10");
+        InitBtnData(AddComboCountBtn, "10");
+        InitBtnData(AddCollectLeafBtn, "10");
+        InitBtnData(AddBreakIceBtn, "10");
+        InitBtnData(AddPickFlowerBtn, "10");
+        InitBtnData(AddPerfectBtn, "10");
         ChessEBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue.ToString("0.00");
         ChessStageBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.UserData.CurrentChessStage.ToString();
         
@@ -136,12 +154,66 @@ public class DebugMenu : UIWindow
         logText.text = "拼字玩法当前为"+bagName+"\n 其中0为A包 1为B包"; // 清空 UI 文本
     }
     
+    
+    private void OnComboCountClick()
+    {
+        InputField Stagenumtxt = AddComboCountBtn.GetComponentInChildren<InputField>();
+        int value = int.Parse(Stagenumtxt.text);
+        GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.DoubleHit1, value);
+        MessageSystem.Instance.ShowTip($"添加成功连击数量 {value} 个");
+    }
+    
+    private void OnCollectLeafClick()
+    {
+        InputField Stagenumtxt = AddCollectLeafBtn.GetComponentInChildren<InputField>();
+        int value = int.Parse(Stagenumtxt.text);
+        GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.CollectLeaves1, value);
+        MessageSystem.Instance.ShowTip($"添加成功连击数量 {value} 个");
+    }
+    
+    private void OnBreakIceClick()
+    {
+        InputField Stagenumtxt = AddBreakIceBtn.GetComponentInChildren<InputField>();
+        int value = int.Parse(Stagenumtxt.text);
+        GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.BreakIce1, value);
+        MessageSystem.Instance.ShowTip($"添加成功连击数量 {value} 个");
+    }
+    
     private void OnGetAllHeadIcons()
     { 
         for (int i = 25; i < 40; i++)
         {
             GameDataManager.Instance.UserData.AddHeadIcon(i);
         }
+        
+        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+    }
+    
+    private void OnPickFlowerClick()
+    {
+        InputField Stagenumtxt = AddPickFlowerBtn.GetComponentInChildren<InputField>();
+        int value = int.Parse(Stagenumtxt.text);
+        GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.PickFlowers1, value);
+        MessageSystem.Instance.ShowTip($"添加成功连击数量 {value} 个");
+    }
+    
+    private void OnPerfectClick()
+    {
+        InputField Stagenumtxt = AddPerfectBtn.GetComponentInChildren<InputField>();
+        int value = int.Parse(Stagenumtxt.text);
+        GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.Perfect1, value);
+        MessageSystem.Instance.ShowTip($"添加成功连击数量 {value} 个");
+    }
+    
+    private void OnAddZenCount()
+    { 
+        InputField Stagenumtxt = AddZenScoreBtn.GetComponentInChildren<InputField>();
+        int value = int.Parse(Stagenumtxt.text);
+
+        int old = GameDataManager.Instance.UserData.overallZenScore;
+        GameDataManager.Instance.UserData.overallZenScore = value;
+        
+        MessageSystem.Instance.ShowTip($"添加成功  原分数{old}, 最新{GameDataManager.Instance.UserData.overallZenScore}");
     }
     
     private void OnPushTestBtn()
@@ -187,12 +259,6 @@ public class DebugMenu : UIWindow
         int value = int.Parse(Stagenumtxt.text);
         GameDataManager.Instance.ButterflyData.AddPupa(value);
         MessageSystem.Instance.ShowTip($"添加成功 {value} 个");
-    }
-    private void OnShopBuyClick()
-    {
-        InputField Stagenumtxt = ShopBuyBtn.GetComponentInChildren<InputField>();
-        int value = int.Parse(Stagenumtxt.text);
-        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,value);
     }
     
     private void OnUserButterflyClick()

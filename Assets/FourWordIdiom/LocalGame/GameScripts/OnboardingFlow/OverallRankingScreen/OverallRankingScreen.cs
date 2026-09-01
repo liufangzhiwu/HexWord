@@ -16,6 +16,7 @@ public class OverallRankingScreen : UIWindow
     [Header("Top Bar UI")]
     [SerializeField] private Button backHome;
     [SerializeField] private Button helpButton;
+    [SerializeField] private Text titleText;
     
     [Header("Banner Component")]
     [SerializeField] private OverallRankingBannerUI bannerUI;
@@ -71,13 +72,15 @@ public class OverallRankingScreen : UIWindow
         worldTab.onValueChanged.AddListener((isOn) => { if(isOn) SwitchTab(RankTabType.World); });
         monthlyTab.onValueChanged.AddListener((isOn) => { if(isOn) SwitchTab(RankTabType.Monthly); });
         hallOfFameTab.onValueChanged.AddListener((isOn) => { if(isOn) SwitchTab(RankTabType.HallOfFame); });
+
+        titleText.text = MultilingualManager.Instance.GetString("ZenBoard", "hudie");
     }
 
     protected override void OnEnable()
     {
         base.OnEnable();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
-        
+        OverallRankingManager.Instance.InvalidateAllRanksCache();
         bannerUI.RefreshBannerInfo();
         // 1. 获取玩家分数与各榜单的解锁条件
         int myScore = GameDataManager.Instance.UserData.overallZenScore;
@@ -91,30 +94,20 @@ public class OverallRankingScreen : UIWindow
                 targetTab = RankTabType.Monthly; // 月榜已达标，降级看月榜
             }
         }
-        worldTab.isOn = false;
-        monthlyTab.isOn = false;
-        hallOfFameTab.isOn = false;
-        if (targetTab == RankTabType.World) 
-        {
-            worldTab.isOn = true;
-        }
-        else if (targetTab == RankTabType.Monthly) 
-        {
-            monthlyTab.isOn = true;
-        }
-        else 
-        {
-            hallOfFameTab.isOn = true;
-        }
+        
+        worldTab.isOn = (targetTab == RankTabType.World);
+        monthlyTab.isOn = (targetTab == RankTabType.Monthly);
+        hallOfFameTab.isOn = (targetTab == RankTabType.HallOfFame);
+        
         // 默认打开世界榜
-        // SwitchTab(_currentTab);
+        SwitchTab(targetTab);
         AnalyticMgr.ZenRankEnter("禅意榜");
     }
 
-    private IEnumerator CheckOpenHelp()
+    private IEnumerator CheckOpenHelp(bool isUnlocked, int ranks = 0)
     {
         yield return new WaitForSeconds(0.5f);
-        if (!GameDataManager.Instance.OverallRank.HasShowZenHelp)
+        if (!GameDataManager.Instance.OverallRank.HasShowZenHelp && _currentTab != RankTabType.World) 
         {
             SystemManager.Instance.ShowPanel(PanelType.OverallRankingHelp);
             GameDataManager.Instance.OverallRank.HasShowZenHelp = true;
@@ -124,7 +117,7 @@ public class OverallRankingScreen : UIWindow
             GameDataManager.Instance.OverallRank.HasShowZenHelp &&
             !SystemManager.Instance.PanelIsShowing(PanelType.OverallRankingHelp));
         
-        if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.UserName))
+        if (isUnlocked && ranks > 0 && string.IsNullOrEmpty(GameDataManager.Instance.UserData.UserName))
         {
          
             if (!GameDataManager.Instance.OverallRank.HasShowName)
@@ -143,13 +136,13 @@ public class OverallRankingScreen : UIWindow
     // ==========================================
     // 🌟 Tab 切换与数据加载调度
     // ==========================================
+    private Coroutine _currentLoadCoroutine;
     private void SwitchTab(RankTabType tabType)
     {
         _currentTab = tabType;
         int myScore = GameDataManager.Instance.UserData.overallZenScore;
         bool isUnlocked = true;
         
-        Debug.Log($"[RankingDebug] ==== 切换到页签: {tabType} ==== 我的当前禅意分: {myScore}");
         // 1. 优先判断当前请求的页签是否在 Manager 中存在有效的缓存
         bool hasCache = false;
         if (tabType == RankTabType.World) hasCache = OverallRankingManager.Instance.IsTotalRankCached();
@@ -181,7 +174,7 @@ public class OverallRankingScreen : UIWindow
         }
         else if (tabType == RankTabType.Monthly)
         {
-            StartCoroutine(CheckOpenHelp());
+            
             int unlockScore = OverallRankingManager.Instance.RankConfig.MonthlyRankUnlockScore;
             // int unlockScore = 10;
             Debug.Log($"[RankingDebug] 月榜所需分数: {unlockScore}");
@@ -198,7 +191,6 @@ public class OverallRankingScreen : UIWindow
         }
         else if (tabType == RankTabType.HallOfFame)
         {
-            StartCoroutine(CheckOpenHelp());
             ShowNoneState(false);
             footerTipsText.text = MultilingualManager.Instance.GetString("HallOfFameDesc", "hudie") ?? "历代宗师云集之地";
         }
@@ -208,9 +200,18 @@ public class OverallRankingScreen : UIWindow
             // 面板显隐控制
             worldAndMonthlyPanel.SetActive(tabType is RankTabType.World or RankTabType.Monthly);
             hallOfFamePanel.SetActive(tabType == RankTabType.HallOfFame);
-            
             bannerUI.SetTimer(false); // 默认关闭倒计时
-            StartCoroutine(LoadTabDataRoutine(tabType));
+            
+            if (_currentLoadCoroutine != null)
+            {
+                StopCoroutine(_currentLoadCoroutine);
+                _currentLoadCoroutine = null;
+            
+                // 兜底：如果掐死旧协程时 loading 还在，强制关掉，防止卡屏幕
+                MessageSystem.Instance.HideLoadingAnimation(); 
+            }
+            // 记录新的协程引用
+            _currentLoadCoroutine = StartCoroutine(LoadTabDataRoutine(tabType));
         }
         else
         {
@@ -218,6 +219,7 @@ public class OverallRankingScreen : UIWindow
             hallOfFamePanel.SetActive(false);
             if (mainRankingList != null) mainRankingList.ClearAllUiItem();
             if (hallOfFameList != null) hallOfFameList.ClearAllUiItem();
+            StartCoroutine(CheckOpenHelp(false, 0));
         }
     }
     
@@ -244,6 +246,7 @@ public class OverallRankingScreen : UIWindow
                 if (!isCached) MessageSystem.Instance.ShowLoadingAnimation(); // 仅在无缓存时显示
                 yield return OverallRankingManager.Instance.FetchTotalRankRoutine();
                 if (!isCached) MessageSystem.Instance.HideLoadingAnimation(); // 数据请求完毕后隐藏
+                if (_currentTab != tabType) yield break;
                 // 确保无论是新拉取的数据，还是20分钟内的缓存，都在渲染前将最新分数同步进去
                 OverallRankingManager.Instance.SyncLocalScoreToCache();
                 // 1. 将底层网络数据转换为 UI 展示数据
@@ -252,10 +255,13 @@ public class OverallRankingScreen : UIWindow
                 {
                     worldStates.Add(ConvertEntryToState(entry, false));
                 }
-                    
+                StartCoroutine(CheckOpenHelp(true, worldStates.Count));
+                
                 // 2. 传给列表渲染
                 mainRankingList.IsMonthly = false;
-                mainRankingList.Initlize(worldStates, true); 
+                if (worldStates.Count > 0) mainRankingList.Initlize(worldStates, true); 
+                else mainRankingList.ClearAllUiItem(); // 如果没有数据，清空列表表现
+               
                 // 3. 单独刷新底部的"我自己"的常驻UI
                 UpdateMyRankItem(OverallRankingManager.Instance.MyTotalRankData, false);
                 break;
@@ -264,22 +270,25 @@ public class OverallRankingScreen : UIWindow
                 if (!isCached) MessageSystem.Instance.ShowLoadingAnimation();
                 yield return OverallRankingManager.Instance.FetchMonthlyRankRoutine();
                 if (!isCached) MessageSystem.Instance.HideLoadingAnimation();
-                
+                if (_currentTab != tabType) yield break;
                 // 假设后端返回了倒计时字段 (由于没有直接引用 Response，这里使用你 Manager 里的属性，如果没有请自行补充)
                 bannerUI.SetTimer(true, OverallRankingManager.Instance.GetActualMonthlyRemainingSeconds()); 
                 // 确保无论是新拉取的数据，还是20分钟内的缓存，都在渲染前将最新分数同步进去
                 OverallRankingManager.Instance.SyncLocalScoreToCache();
-                
+            
                 //  1. 转换数据
                 var monthlyStates = new List<OverallRankState>();
                 foreach (var entry in OverallRankingManager.Instance.MonthlyRanks)
                 {
                     monthlyStates.Add(ConvertEntryToState(entry, true));
                 }
-                    
+                StartCoroutine(CheckOpenHelp(true,monthlyStates.Count));
+                
                 //  2. 传给列表渲染
                 mainRankingList.IsMonthly = true;
-                mainRankingList.Initlize(monthlyStates, true);
+                if (monthlyStates.Count > 0) mainRankingList.Initlize(monthlyStates, true);
+                else mainRankingList.ClearAllUiItem();
+               
                 // 3. 单独刷新底部的"我自己"的常驻UI
                 UpdateMyRankItem(OverallRankingManager.Instance.MyMonthlyRankData, true);
                 break;
@@ -289,7 +298,7 @@ public class OverallRankingScreen : UIWindow
                 if (!isCached) MessageSystem.Instance.ShowLoadingAnimation();
                 yield return OverallRankingManager.Instance.FetchHallOfFameRoutine();
                 if (!isCached) MessageSystem.Instance.HideLoadingAnimation();
-                
+                if (_currentTab != tabType) yield break;
                 // 1. 按月份分组，并转换为循环列表需要的 HallOfFameGroupData 结构
                 var list = OverallRankingManager.Instance.HallOfFameRanks;
                 var groupedData = list.GroupBy(x => x.period_date).ToList();
@@ -303,13 +312,15 @@ public class OverallRankingScreen : UIWindow
                         {
                             Rank = entry.rank,
                             Avatar = entry.avatar,
+                            Frame = entry.avatar_frame,
                             Name = entry.nickname,
                             Score = entry.score
                         }).ToList()
                     });
                 }
                 // 2. 注入名人堂循环列表并刷新
-                hallOfFameList.Initlize(hallOfFameStates, true);
+                if (hallOfFameStates.Count > 0) hallOfFameList.Initlize(hallOfFameStates, true);
+                else hallOfFameList.ClearAllUiItem();
                 break;
         }
     }
