@@ -218,7 +218,10 @@ public class DebugMenu : UIWindow
     
     private void OnPushTestBtn()
     {
-       Game.self.Pushs.Push("成语消：禅意之境","成语消：禅意之境 推送测试！！！！！");
+        string codePointStr = "1F60A";
+        int code = Convert.ToInt32(codePointStr, 16);
+        string emoji = char.ConvertFromUtf32(code);
+        Game.self.Pushs.Push("成语消：禅意之境",emoji+"成语消：禅意之境 推送测试！！！！！");
     }
     
     private void OnAddStreakWinDays()

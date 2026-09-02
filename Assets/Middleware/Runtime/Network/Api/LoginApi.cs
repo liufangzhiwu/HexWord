@@ -95,7 +95,7 @@ public class LoginApi
                 // openId = "66bcdef7477127aec526a7c489d2ed06",
                 openId = openId,
                 deviceId = stableDeviceId,
-                push_token = stableDeviceId,
+                push_token = GameDataManager.Instance.UserData.PushToken,
                 platform = platform,
                 version = Application.version ?? "1.0.0",
                 language = Application.systemLanguage.ToString(),
