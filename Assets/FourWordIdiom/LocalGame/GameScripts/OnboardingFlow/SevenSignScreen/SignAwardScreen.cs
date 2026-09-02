@@ -138,7 +138,7 @@ public class SignAwardScreen : UIWindow
             case LimitRewordType.Resettool:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
             case LimitRewordType.HeadIcon:
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(headIconstr);
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(headIconstr,"UserHeadIcons");
             case LimitRewordType.Pupas:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Pupas");
         }
