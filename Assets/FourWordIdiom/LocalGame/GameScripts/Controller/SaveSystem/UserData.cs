@@ -204,7 +204,14 @@ public class UserData
 
     public SignSaveData _signSaveData = new SignSaveData();
     public LoadTimeIndex _loadTimeIndexData = new LoadTimeIndex();
-    public List<int> _getAnimalsHeadIcons = new List<int>();
+    /// <summary>
+    /// 特殊头像
+    /// </summary>
+    public List<int> _getAnimalsHeadIcons=new List<int>();
+    /// <summary>
+    /// 头像框
+    /// </summary>
+    public List<int> _getHeadBorderIcons=new List<int>();
     
     private static readonly Random _random = new Random();
 
@@ -444,7 +451,7 @@ public class UserData
         _signSaveData=new SignSaveData();
         _loadTimeIndexData=new LoadTimeIndex();
         _getAnimalsHeadIcons=new List<int>();
-
+        _getHeadBorderIcons = new List<int>() { 0, 1, 2, 3 };
         #endregion
     }
 
@@ -652,6 +659,7 @@ public class UserData
         _signSaveData = user._signSaveData?.Clone() ?? new SignSaveData();
         _loadTimeIndexData = user._loadTimeIndexData?.Clone() ?? new LoadTimeIndex();
         _getAnimalsHeadIcons = user._getAnimalsHeadIcons;
+        _getHeadBorderIcons = user._getHeadBorderIcons ?? new List<int>() { 0, 1, 2, 3 };
         
         // 检查并初始化缺失的生命周期事件
         InitializeLifecycleEvents();
@@ -894,14 +902,14 @@ public class UserData
     public bool AddHeadBorderIcon(int borderId)
     {
         // 不能重复拥有（避免列表出现重复数据）
-        if (_getAnimalsHeadIcons.Contains(borderId))
+        if (_getHeadBorderIcons.Contains(borderId))
         {
             Debug.Log($"提示：头像框ID {borderId} 已经拥有，无需重复添加");
             return false;
         }
 
         // 执行添加
-        _getAnimalsHeadIcons.Add(borderId);
+        _getHeadBorderIcons.Add(borderId);
         GameDataManager.Instance.UserData.isGetNewHeadBorderIcon = false;
         return true;
     }

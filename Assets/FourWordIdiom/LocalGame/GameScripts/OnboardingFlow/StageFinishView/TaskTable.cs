@@ -26,6 +26,7 @@ public class TaskTable : MonoBehaviour
     private void OnTaskClick()
     {
         SystemManager.Instance.ShowPanel(PanelType.DailyTasksScreen);
+        AchievementManager.Instance.DisableFinishAchieveTable();
     }
     
     public void CheckTasksScreen()

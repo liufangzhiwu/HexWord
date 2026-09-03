@@ -158,7 +158,7 @@ public class HeaderSection : UIWindow
         EventDispatcher.instance.TriggerChangeTopRaycast(true);
         EventDispatcher.instance.TriggerChangeGoldUI(0,false);       
         
-        if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
+        if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea)||SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
         { 
             BackBtn.gameObject.SetActive(true);
             LevelPuzzleBtn.gameObject.SetActive(false);
@@ -266,7 +266,7 @@ public class HeaderSection : UIWindow
         if (istop || isActivityOpen)
         {
             coinObj.gameObject.SetActive(true);
-            bool isOldGamePupa = SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea) && 
+            bool isOldGamePupa = SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea)||SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea) && 
                                  StageHexController.Instance.CurStageData.PupaDatas != null;
                              
             bool shouldShowPupa = isshowPupa || SystemManager.Instance.PanelIsShowing(PanelType.ButterflyHome) || isOldGamePupa;
@@ -278,7 +278,7 @@ public class HeaderSection : UIWindow
             PupaTable.gameObject.SetActive(false);
             BackBtn.gameObject.SetActive(true);
         }
-        else if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
+        else if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea)||SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
         {
             coinObj.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(StageHexController.Instance.CurStageData.PupaDatas != null);
@@ -351,10 +351,11 @@ public class HeaderSection : UIWindow
             InitPupaUI();
         }
 
-        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)
+            ||SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea)
+            ||SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
         {
             energyBtn.gameObject.SetActive(false);
-            BackBtn.gameObject.SetActive(false);
         }
         else
         {
@@ -362,6 +363,8 @@ public class HeaderSection : UIWindow
                                            !SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView));
         }
         
+        BackBtn.gameObject.SetActive(!SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)&&
+                                     !SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface));
         PupaTable.interactable = !isshowPupa;
        
     }
@@ -608,6 +611,13 @@ public class HeaderSection : UIWindow
         {
             AudioManager.Instance.TriggerVibration(40, 50);
             SystemManager.Instance.HidePanel(PanelType.GamePlayArea);
+            GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+        }    
+        
+        if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
+        {
+            AudioManager.Instance.TriggerVibration(40, 50);
+            SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
             GameDataManager.Instance.UserData.UpdateOnlineStageTime();
         }    
         

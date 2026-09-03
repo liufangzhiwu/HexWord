@@ -61,6 +61,7 @@ public class PrimaryInterface : UIWindow
     [Header("UI Headers")]
     [SerializeField] private Button HeadBtn;
     [SerializeField] private Image headicon;
+    [SerializeField] private Image headBorder;
     [Header("底部按钮")]
     [SerializeField] private Button myThemeBtn; // 皮肤
     [SerializeField] private Button Puzzlebook;  // 生词本
@@ -310,7 +311,6 @@ public class PrimaryInterface : UIWindow
             ChessStageController.Instance.IsEnterVocabulary = false;
        
         SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
-       
     }
     /// <summary>
     /// 点击选择游戏模式
@@ -435,6 +435,15 @@ public class PrimaryInterface : UIWindow
         else
         {
             headicon.transform.gameObject.SetActive(false);
+        }
+        
+        if (GameDataManager.Instance.UserData.UserHeadBorderId > 0)
+        {
+            headBorder.sprite = LoadheadIcon("AvatarFrameIcon" + GameDataManager.Instance.UserData.UserHeadBorderId);
+            headBorder.transform.gameObject.SetActive(true);
+        } else
+        {
+            headBorder.transform.gameObject.SetActive(false);
         }
     }
     private void UpdateTaskBtnUI()

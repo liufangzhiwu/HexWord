@@ -38,6 +38,8 @@ public class MatchSuccess : UIWindow
         StartCoroutine(PlayBoxSpineAnim());
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedWinMatch, 1);
         AudioManager.Instance.PlaySoundEffect("ShowUI");
+        
+        AchievementManager.Instance.AddAvatarFrameItems(AvatarUnlockType.FishMatch,GameDataManager.Instance.FishUserSave.rank);
     }
 
     IEnumerator PlayBoxSpineAnim()

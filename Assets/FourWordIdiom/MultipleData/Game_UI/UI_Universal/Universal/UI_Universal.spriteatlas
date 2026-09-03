@@ -121,7 +121,6 @@ SpriteAtlas:
     - d9606254a6dca7a499e7da8f995a4f04: 21300000
     - e08c1164dbd97014c993e7a698de8d6b: 21300000
     - 1735cd74da7f00548882698267bbc5ff: 21300000
-    - 09e58494e41045b40a27c3bba7f4e40c: 21300000
     - e0c661f44746cb147be7fee3c8e17fdf: 21300000
     - 160f80150170d5943ada26a87a0a0533: 21300000
     - f98cb01544bf7a141aed9a82b3b94819: 21300000
@@ -337,7 +336,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: d9606254a6dca7a499e7da8f995a4f04, type: 3}
   - {fileID: 21300000, guid: e08c1164dbd97014c993e7a698de8d6b, type: 3}
   - {fileID: 21300000, guid: 1735cd74da7f00548882698267bbc5ff, type: 3}
-  - {fileID: 21300000, guid: 09e58494e41045b40a27c3bba7f4e40c, type: 3}
   - {fileID: 21300000, guid: e0c661f44746cb147be7fee3c8e17fdf, type: 3}
   - {fileID: 21300000, guid: 160f80150170d5943ada26a87a0a0533, type: 3}
   - {fileID: 21300000, guid: f98cb01544bf7a141aed9a82b3b94819, type: 3}
@@ -552,7 +550,6 @@ SpriteAtlas:
   - fishbg
   - goldItembg
   - Rankdi3
-  - Logo
   - puzzleBook
   - fishicon
   - Reset1

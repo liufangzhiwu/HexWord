@@ -11,7 +11,7 @@ public class UserHeadScreen : UIWindow
     [SerializeField] private Button headBorderBtn; // 确认按钮
     [SerializeField] private Image headIcon; // 确认按钮
     [SerializeField] private Image headBorderIcon; // 确认按钮
-    [SerializeField] private Image headBorderSpacialIcon; // 确认按钮
+  
     [SerializeField] private Image headBorderRedPoint; // 头像框红点
     [SerializeField] private Image redPointHeadImage; // 头像红点
    
@@ -59,6 +59,7 @@ public class UserHeadScreen : UIWindow
         UpdateHeadName();
         
         headBorderRedPoint.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadBorderIcon);
+        redPointHeadImage.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon);
     }
     
     private void UpdateHeadName()
@@ -76,17 +77,8 @@ public class UserHeadScreen : UIWindow
         
         int userHeadBorderId = newHeadBorderIonIndex;
         
-        headBorderIcon.gameObject.SetActive(userHeadBorderId <= 3);
-        headBorderSpacialIcon.gameObject.SetActive(userHeadBorderId > 3);
-
-        if (userHeadBorderId > 3)
-        {
-            headBorderSpacialIcon.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
-        }
-        else
-        {
-            headBorderIcon.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
-        }
+        headBorderIcon.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
+    
     }
 
     private void InitHeadIconList()
@@ -177,7 +169,7 @@ public class UserHeadScreen : UIWindow
             
             if (index > 3)
             {
-                if (!GameDataManager.Instance.UserData._getAnimalsHeadIcons.Contains(iconindex))
+                if (!GameDataManager.Instance.UserData._getHeadBorderIcons.Contains(iconindex))
                 {
                     isUnLock = true;
                 }
@@ -232,6 +224,10 @@ public class UserHeadScreen : UIWindow
         UpdateHeadIconList(index);
 
         AnalyticMgr.HeadChange();
+        
+        GameDataManager.Instance.UserData.isGetNewHeadIcon = false;
+        
+        redPointHeadImage.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon);
     }
     
     private void ClickHeadBorderItemBtn(int index,int iconindex)
@@ -241,7 +237,7 @@ public class UserHeadScreen : UIWindow
 
         if (index > 3)
         {
-            if (!GameDataManager.Instance.UserData._getAnimalsHeadIcons.Contains(iconindex))
+            if (!GameDataManager.Instance.UserData._getHeadBorderIcons.Contains(iconindex))
             {
                 AvatarFrameItem avatarFrameItem=  AchievementManager.Instance.GetAvatarSomeFrameById(iconindex);
                 tisstr = avatarFrameItem.unlockTipText;
@@ -303,7 +299,7 @@ public class UserHeadScreen : UIWindow
             bool isUnLock=false;
             if (index > 3)
             {
-                if (!GameDataManager.Instance.UserData._getAnimalsHeadIcons.Contains(iconindex))
+                if (!GameDataManager.Instance.UserData._getHeadBorderIcons.Contains(iconindex))
                 {
                     isUnLock = true;
                 }

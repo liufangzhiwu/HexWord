@@ -12,7 +12,6 @@ public class NameInfoTable : MonoBehaviour
     [SerializeField] private Button CopyAccountIdBtn;
     [SerializeField] private Image headIcon;
     [SerializeField] private Image headBorder;
-    [SerializeField] private Image headSpecialBorder;
     [SerializeField] private Image redPoint;
     
     [SerializeField] private Text firstLoginTimeText;
@@ -82,19 +81,7 @@ public class NameInfoTable : MonoBehaviour
         headIcon.sprite = LoadheadIcon("head"+GameDataManager.Instance.UserData.UserHeadId);
 
         int userHeadBorderId = GameDataManager.Instance.UserData.UserHeadBorderId;
-        
-        headBorder.gameObject.SetActive(userHeadBorderId <= 3);
-        headSpecialBorder.gameObject.SetActive(userHeadBorderId > 3);
-
-        if (userHeadBorderId > 4)
-        {
-            headSpecialBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
-        }
-        else
-        {
-            headBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
-        }
-
+        headBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
         if (GameDataManager.Instance.UserData.UserName.Length > 8)
         {
             nameText.text=GameDataManager.Instance.UserData.UserName.Substring(0,8)+"...";
@@ -116,7 +103,7 @@ public class NameInfoTable : MonoBehaviour
         zenScoreText.text=GameCoreManager.Instance.otherPersonProfile.overallZenScore.ToString();
         winStreakText.text=GameCoreManager.Instance.otherPersonProfile.max_win_streak.ToString();
         
-        if (GameCoreManager.Instance.otherPersonProfile.nickname.Length > 8)
+        if (GameCoreManager.Instance.otherPersonProfile.nickname?.Length > 8)
         {
             nameText.text=GameCoreManager.Instance.otherPersonProfile.nickname.Substring(0,8)+"...";
         }
@@ -133,26 +120,12 @@ public class NameInfoTable : MonoBehaviour
         headIcon.sprite = LoadheadIcon("head"+GameCoreManager.Instance.otherPersonProfile.avatar);
 
         int userHeadBorderId = int.Parse(GameCoreManager.Instance.otherPersonProfile.avatar_frame);
-        
-        headBorder.gameObject.SetActive(userHeadBorderId <= 3);
-        headSpecialBorder.gameObject.SetActive(userHeadBorderId > 3);
-
-        if (userHeadBorderId > 4)
-        {
-            headSpecialBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
-        }
-        else
-        {
-            headBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
-        }
+        headBorder.sprite = LoadheadIcon("AvatarFrameIcon"+userHeadBorderId);
     }
 
     private void OnClickChangeHeadIconBtn()
     {
         SystemManager.Instance.ShowPanel(PanelType.HeadScreen);
-        
-        GameDataManager.Instance.UserData.isGetNewHeadIcon = false;
-        
         redPoint.gameObject.SetActive(false);
     }
     

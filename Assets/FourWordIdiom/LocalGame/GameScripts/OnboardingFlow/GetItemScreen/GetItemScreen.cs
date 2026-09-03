@@ -41,7 +41,12 @@ public class GetItemScreen : UIWindow
         //     isshowpupa=ChessStageController.Instance.CurrStageData.PupaDatas!=null;
         // }
         
-        SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        {
+            SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        }
+        
+      
         EventDispatcher.instance.TriggerUpdateLayerCoin(true,true,false,true);
     }
 
@@ -257,6 +262,10 @@ public class GetItemScreen : UIWindow
         closeBtn.interactable = true;
         EventDispatcher.instance.TriggerChangeGoldUI(0, true);
         EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        {
+            SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+        }
+       
     }
 }
