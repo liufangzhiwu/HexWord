@@ -483,6 +483,15 @@ public partial class ChessStageController
             GameDataManager.Instance.UserData.fourWordCount += CurrentLevelFourCharWords.Count;
             GameDataManager.Instance.UserData.nofourWordCount += CurrentLevelOtherWords.Count;
             GameDataManager.Instance.UserData.MaxComboCount = Mathf.Max(MaxComboCount, GameDataManager.Instance.UserData.MaxComboCount);
+            
+            
+            int perfect = CurrStageData.CurrPerfectCount ? 1 : 0;
+
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.DoubleHit1, TotalCumulativeCombos);
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.BreakIce1, CurrStageData.CurBreakIceCount);
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.CollectLeaves1, CurrStageData.CollectedLeaves);
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.PickFlowers1, CurrStageData.CurPickFlowerLeavesCount);
+            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.Perfect1, perfect);
 
         }
         GameDataManager.Instance.CommitGameData();
@@ -507,14 +516,6 @@ public partial class ChessStageController
             AnalyticMgr.LevelCompleted(duration, energy, CurrentTotalScore, MaxComboCount);
             if(ChessDynamicHardManager.Instance.IsOpenDynamicHard())
                 CheckDynamicDifficultyIntervention(stageNumber, ComboErrorCount, duration);
-
-            int perfect = CurrStageData.CurrPerfectCount ? 1 : 0;
-
-            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.DoubleHit1, TotalCumulativeCombos);
-            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.BreakIce1, CurrStageData.CurBreakIceCount);
-            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.CollectLeaves1, CurrStageData.CollectedLeaves);
-            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.PickFlowers1, CurrStageData.CurPickFlowerLeavesCount);
-            GameDataManager.Instance.AchieveSaveDataList.UpdateAchieveItemData(AchieveType.Perfect1, perfect);
         }
         yield return new WaitForSeconds(0.1f);
         // UI切换

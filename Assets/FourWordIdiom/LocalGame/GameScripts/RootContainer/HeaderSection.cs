@@ -236,7 +236,6 @@ public class HeaderSection : UIWindow
     /// </summary>
     private void UpdateCoinLayer(bool istop, bool isshopbtnEnable = true, bool isshowPupa = false,bool shoGap=false)
     {
-        
         GameObject coinObj = ShopBtn.gameObject;
         Canvas canvas = coinObj.GetComponent<Canvas>();
         if (canvas == null)
@@ -261,8 +260,8 @@ public class HeaderSection : UIWindow
                               SystemManager.Instance.PanelIsShowing(PanelType.GetItemScreen);
         
         bool isshowGap=!istop || shoGap;
-        Gap.gameObject.SetActive(isshowGap);
         
+        Gap.gameObject.SetActive(isshowGap);
         bool isFinish = false;
         if (istop || isActivityOpen)
         {
@@ -351,17 +350,26 @@ public class HeaderSection : UIWindow
         {
             InitPupaUI();
         }
+
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
+        {
+            energyBtn.gameObject.SetActive(false);
+            BackBtn.gameObject.SetActive(false);
+        }
+        else
+        {
+            energyBtn.gameObject.SetActive(!PupaTable.gameObject.activeInHierarchy && 
+                                           !SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView));
+        }
+        
         PupaTable.interactable = !isshowPupa;
-        energyBtn.gameObject.SetActive(!PupaTable.gameObject.activeInHierarchy && 
-                                       !SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView));
+       
     }
     /// <summary>
     /// 供退出/重连弹窗调用：将体力槽和蝶蛹进度条提到最顶层高亮显示，穿透黑色半透明蒙版
     /// </summary>
     public void HighlightEnergy(bool isHighlight)
     {
-        if(GameDataManager.Instance==null) return;
-        
         energyAdd.SetActive(!isHighlight);
         // 1. 给体力按钮挂载 Canvas 以便提层
         Canvas energyCanvas = energyBtn.GetComponent<Canvas>();
@@ -659,7 +667,6 @@ public class HeaderSection : UIWindow
         HighlightEnergy(false);
         HighlightGoldAndEnergy(false);
         //EventManager.ChangeBackBtnHandler -= ChangeBackBtnState;
-        CustomFlyInManager.Instance.GoldObj = null;
         EventDispatcher.instance.OnUpdateLayerCoin -= UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         EventDispatcher.instance.OnChangeTopRaycast -= ChangeTopRaycast;

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using FourWordIdiom.LocalGame.GameScripts.Controller;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -74,7 +75,12 @@ public class ChessFinishView : UIWindow
         nextBtn.AddVibraClickAction(OnNextButtonClick);
         _limitBtnTable._limitTimeEventButton.AddClickAction(OnLimitTimeEventButtonClicked);
        
-        Content.onClick.AddListener(() => { SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen); });
+        Content.onClick.AddListener(() =>
+        {
+            SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
+            
+            AchievementManager.Instance.DisableFinishAchieveTable();
+        });
         butterflyBtn.AddClickAction(OnButterflyClick);
         
         // 初始化莲花状态（放在屏幕中央或者特定初始位置）
@@ -141,24 +147,10 @@ public class ChessFinishView : UIWindow
 
             AnalyticMgr.ThemeUse(GameDataManager.Instance.UserData.userthemeid, times);
         }
-
-        // nextBtn.gameObject.SetActive(false);
+      
         StartCoroutine(CheckZenRankBtn());
         
         isShowWinSign = StreakManager.Instance.IsCanShowWinSign();
-        // bool isJump = ChessStageController.Instance.IsJump;
-
-        //if (isShowWinSign&&!isJump)
-        // if (isShowWinSign)
-        // {
-        //     SystemManager.Instance.ShowPanel(PanelType.SignWinScreen);
-        // }
-        // else
-        // {
-        //     CheckReturnFirstWinScreen();
-        // }
-        
-        // StartCoroutine(PlayRewardSequence(isShowWinSign));
         CheckFishiTable();
     }
 
@@ -171,7 +163,6 @@ public class ChessFinishView : UIWindow
         {
             _matchFishtable.CheckFishBtn();
         }
-        
     }
     
     private void CheckReturnFirstWinScreen()
@@ -189,16 +180,6 @@ public class ChessFinishView : UIWindow
         
         Debug.Log("是否触发回归奖励: "+isTriggerFirstWin+"离线时间(秒数): "+offlineSeconds+"今日拼字玩法通关次数: "+todaywinTime+"金币数量: "+goldcount+"道具数量: "+toolcount+"连胜天数: "+curStreak);
         
-        // switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
-        // {
-        //     case LevelType.ChessWord:
-        //         if (isTriggerFirstWin)
-        //         {
-        //             SystemManager.Instance.ShowPanel(PanelType.ReturnFirstWinScreen);
-        //         }
-        //         break;
-        // }
-
     }
 
     /// <summary>
@@ -310,8 +291,11 @@ public class ChessFinishView : UIWindow
         }
 
         levelText.text = MultilingualManager.Instance.GetString("Level") + " " + Stage;
-        zenScoreText.text = ChessStageController.Instance.CurrentTotalScore.ToString();
-
+        // 先设置原始分数 (注意防负数保护)
+        int addZenCount = ChessStageController.Instance.CurrentTotalScore;
+        int oldZenScore = Mathf.Max(0, GameDataManager.Instance.UserData.overallZenScore - addZenCount);
+        zenScoreText.text = oldZenScore.ToString();
+     
         if (!LimitTimeManager.Instance.IsComplete() && _limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
         {
             Content.gameObject.SetActive(true);
@@ -383,7 +367,7 @@ public class ChessFinishView : UIWindow
         int rollPhrase = UnityEngine.Random.Range(0, 100);
 
         // 3. 处理位置5（顶部标题）
-        if (rule.TitleRate > 0 && rollTitle < rule.TitleRate)
+        if (rule.Type != 5 && rule.TitleRate > 0 && rollTitle < rule.TitleRate)
         {
             if (_encourageTitleRoot != null)
             {
@@ -489,10 +473,24 @@ public class ChessFinishView : UIWindow
         // 5. 设置文字 (例如 "10 / 60")
         if (pupaText != null)
         {
-            pupaText.text = $"{targetCount} / {butterflyGrow?.Count.ToString() ?? "&"}";
+            string newText = $"{targetCount} / {butterflyGrow?.Count.ToString() ?? "&"}";
+            if (!isInit && pupaText.text != newText)
+            {
+                pupaText.text = newText;
+            
+                // 杀掉旧动画，防止快速连续飞入时动画冲突
+                pupaText.transform.DOKill();
+                pupaText.transform.localScale = Vector3.one; 
+                // 文字瞬间放大 1.3 倍并弹回
+                pupaText.transform.DOPunchScale(Vector3.one * 0.03f, 0.3f, 10, 1);
+            }
+            else
+            {
+                pupaText.text = newText;
+            }
         }
-        
-        ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
+        bool canSynthesize = butterflyGrow != null && displayCount >= butterflyGrow.Count;
+        ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint || canSynthesize);
     }
     
     private void UpdateSliderProgress()
@@ -598,9 +596,17 @@ public class ChessFinishView : UIWindow
                 GetCompletedWordCount() >= LimitTimeManager.Instance.CurlimitData.num)
             {
                 Showlimiticon.SetActive(true);
+                int pupaBeforeLimit = GameDataManager.Instance.ButterflyData.currPupa;
+                
                 SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
-
                 yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.LimitTimeScreen));
+                
+                int pupaEarnedFromLimit = GameDataManager.Instance.ButterflyData.currPupa - pupaBeforeLimit;
+                if (pupaEarnedFromLimit > 0 && butterflyBtn.gameObject.activeSelf)
+                {
+                    // 从限时活动按钮(世界坐标)起飞向蝴蝶按钮
+                    yield return StartCoroutine(PlayPupaFlyAnim(pupaEarnedFromLimit, _limitBtnTable._limitTimeEventButton.transform.position, true));
+                }
             }
             else
             {
@@ -618,19 +624,50 @@ public class ChessFinishView : UIWindow
                 nextBtn.gameObject.GetComponent<CanvasGroup>().DOFade(1, 0.3f);
             }
         }
+        
+        if(!isJump)
+            AchievementManager.Instance.InitFinishAchieveTable(transform);
+        
+        // ==========================================
+        // “新版禅意总分”数字滚动
+        // ==========================================
+        if (ChessStageController.Instance.CurrentTotalScore > 0)
+        {
+            int addZenCount = ChessStageController.Instance.CurrentTotalScore;
+            
+            // 读取新版独立总分
+            int targetZenScore = GameDataManager.Instance.UserData.overallZenScore;
+            int oldZenScore = Mathf.Max(0, targetZenScore - addZenCount);
+            
+            bool isRolling = true;
+            DOTween.To(() => oldZenScore, x => 
+                {
+                    zenScoreText.text = x.ToString();
+                }, targetZenScore, 1.0f)
+                .SetEase(Ease.OutQuad)
+                .OnComplete(() => 
+                {
+                    isRolling = false;
+                    zenScoreText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f);
+                });
+                
+            yield return new WaitUntil(() => !isRolling);
+            yield return new WaitForSeconds(0.3f);
+        }
+      
+        // // ==========================================
+        // // 播放莲花飞向禅意榜的动画！
+        // // ==========================================
         bool isRankActive = GameDataManager.Instance.UserData.isJoinedZenRank && 
                             ZenRankManager.Instance.RemainingSeconds > 0;
-        // // ==========================================
-        // // 🌟 新增：先播放莲花飞向禅意榜的动画！
-        // // ==========================================
-        if (isRankActive && _zenRankBtn.gameObject.activeSelf && ChessStageController.Instance.CurrentTotalScore > 0)
-        {
+        if (isRankActive && _zenRankBtn != null && _zenRankBtn.gameObject.activeSelf && ChessStageController.Instance.CurrentTotalScore > 0)
+        { 
             yield return StartCoroutine(PlayZenLotusFlyAnim());
         }
 
         if (butterflyBtn.gameObject.activeSelf && ChessStageController.Instance.EarnedPupaThisLevel > 0)
         {
-            yield return StartCoroutine(PlayPupaFlyAnim());
+            yield return StartCoroutine(PlayPupaFlyAnim(ChessStageController.Instance.EarnedPupaThisLevel,Vector3.zero, false));
         }
 
         // 🌟 步骤三：树叶额外金币起飞（从中央飞向 Header 金币槽）
@@ -741,6 +778,8 @@ public class ChessFinishView : UIWindow
     private void OnLimitTimeEventButtonClicked()
     {
         SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
+        
+        AchievementManager.Instance.DisableFinishAchieveTable();
     }
 
     /// <summary>
@@ -862,11 +901,9 @@ public class ChessFinishView : UIWindow
     /// <summary>
     /// 播放蝶蛹飞向蝴蝶按钮，并增加进度的动画
     /// </summary>
-    private IEnumerator PlayPupaFlyAnim()
+    private IEnumerator PlayPupaFlyAnim(int earnedPupa, Vector3 startPos, bool useWorldPos)
     {
         if (ButterfliesManager.Instance.IsAllButterfliesCollected()) yield break;
-        int earnedPupa = ChessStageController.Instance.EarnedPupaThisLevel;
-
         // 如果本局获得了蝶蛹，才播放动画
         if (earnedPupa > 0 && butterflyBtn != null)
         {
@@ -879,18 +916,17 @@ public class ChessFinishView : UIWindow
                 GameObject pupaInstance = _pupaPool.GetObject();
 
                 Canvas canvas = pupaInstance.GetComponent<Canvas>();
-                // 2. 只有真没找到，才去添加
-                if (canvas == null)
-                {
-                    canvas = pupaInstance.AddComponent<Canvas>();
-                }
-
+                if (canvas == null) canvas = pupaInstance.AddComponent<Canvas>();
+                
                 canvas.overrideSorting = true;
                 canvas.sortingLayerName = "PopPanel";
                 canvas.sortingOrder = 10;
-
                 pupaInstance.SetActive(true);
-                pupaInstance.transform.localPosition = Vector3.zero; // 从屏幕中间开始
+                if (useWorldPos)
+                    pupaInstance.transform.position = startPos; // 比如从限时按钮飞出
+                else
+                    pupaInstance.transform.localPosition = startPos; // 比如从屏幕中间飞出
+                
                 pupaInstance.transform.localScale = Vector3.one;
 
                 Sequence seq = DOTween.Sequence();
@@ -909,10 +945,7 @@ public class ChessFinishView : UIWindow
                     AudioManager.Instance.PlaySoundEffect("getPupa"); // 播放获得音效
                     completedCount++;
                     int currentVisualPupa = initialPupa + completedCount;
-                    // 🌟 核心：飞到一个，进度条就涨一点！
-                    // int oldPupaCount = GameDataManager.Instance.ButterflyData.currPupa - earnedPupa;
-                    // int currentVisualPupa = oldPupaCount + (i + 1); 
-                    UpdateButterflyProgressUI(GameDataManager.Instance.ButterflyData.currPupa); // 触发 UI 更新动画
+                    UpdateButterflyProgressUI(currentVisualPupa); // 触发 UI 更新动画
 
                     // 可选：让按钮有个被击中的弹跳反馈
                     butterflyBtn.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 10, 1);
@@ -1119,6 +1152,12 @@ public class ChessFinishView : UIWindow
             // ZenRankManager.Instance.SyncCachedRank();
             Debug.Log($"【Rank Debug - Cache】动画播放完毕，已将最新预测值存入缓存。当前 Cache 旧分数变更为: {ZenRankManager.Instance.CachedOldScore}");
         }
+    }
+
+    public override void Close()
+    {
+        base.Close();
+        AchievementManager.Instance.DisableFinishAchieveTable();
     }
 
     protected override void OnDisable()
