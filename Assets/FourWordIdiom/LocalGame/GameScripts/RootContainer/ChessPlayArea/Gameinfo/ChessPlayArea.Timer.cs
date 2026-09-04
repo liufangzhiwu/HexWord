@@ -12,6 +12,8 @@ using UnityEngine.UI;
  */
 public partial class ChessPlayArea
 {
+    private int _lastDisplayedSeconds = -1;
+    private Image _pupaIcon;
     private void Update()
     {
         // 防抖：限制单帧最大时间流逝为 0.5 秒，防止切后台回来瞬间蒸发大量时间
@@ -135,9 +137,14 @@ public partial class ChessPlayArea
         if (_timerText == null) return;
         
         float safeTime = Mathf.Max(0, _remainingTime);
-        int minutes = Mathf.FloorToInt(safeTime / 60F);
-        int seconds = Mathf.FloorToInt(safeTime % 60f);
-        _timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+        int totalSeconds = Mathf.CeilToInt(safeTime);
+        if (totalSeconds == _lastDisplayedSeconds) return;
+        
+        _lastDisplayedSeconds = totalSeconds;
+        int minutes = totalSeconds / 60;
+        int seconds = _lastDisplayedSeconds % 60;
+        // _timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+        _timerText.text = $"{minutes:00}:{seconds:00}";
         
         bool hasLevelWords = ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0;
         // 只有当状态发生改变（从隐藏变成需要显示）时，才重新重置并播放动画
@@ -223,44 +230,76 @@ public partial class ChessPlayArea
     /// </summary>
     /// <param name="currentScore">当前获得的总分</param>
     /// <param name="isInstant">是否瞬间刷满(不播动画，用于界面刚打开时)</param>
-    public void UpdatePupaProgress(int currentScore, bool isInstant)
+    private void UpdatePupaProgress(int currentScore, bool isInstant)
     {
-        if (pupaObj.activeSelf)
+        if (!pupaObj.activeSelf) return;
+        int threshold = ButterfliesManager.Instance.GetScoreThresholdForPupa();
+            
+        // 核心机制：如果总分超过了阈值(比如拿了150分，阈值60)，取余数得出30，让进度条循环显示！
+        // 防止除以0报错，且保留当 currentScore 正好等于 threshold 时，视觉上呈现满环
+        float targetFill = Mathf.Clamp01((float)currentScore / threshold);
+            
+        Text progressText = pupaObj.GetComponentInChildren<Text>(true);
+        bool isJustCompleted = (targetFill >= 1f && pupaProgressBar.fillAmount < 1f);
+        
+        pupaProgressBar.DOKill();
+        if (isInstant)
         {
-            int threshold = ButterfliesManager.Instance.GetScoreThresholdForPupa();
-            
-            // 🌟 核心机制：如果总分超过了阈值(比如拿了150分，阈值60)，取余数得出30，让进度条循环显示！
-            // 防止除以0报错，且保留当 currentScore 正好等于 threshold 时，视觉上呈现满环
-            float targetFill = Mathf.Clamp01((float)currentScore / threshold);
-            
-            Text progressText = pupaObj.GetComponentInChildren<Text>(true);
-            bool isJustCompleted = (targetFill >= 1f && pupaProgressBar.fillAmount < 1f);
-            if (targetFill < 1f) progressText.text = "+1"; 
-            
-            pupaProgressBar.DOKill();
-            if (isInstant)
+            pupaProgressBar.fillAmount = targetFill;
+            // 瞬间刷新时，如果是满的且之前没文字，强行显示+1
+            if (targetFill >= 1f)
             {
-                // 界面刚打开，瞬间设置，不播平滑动画
-                pupaProgressBar.fillAmount = targetFill;
-                progressText.gameObject.SetActive(targetFill >= 1f); // 满了才显示数字
-                if (targetFill >= 1f) progressText.text = "+1";
+                progressText.gameObject.SetActive(true);
+                progressText.text = "+1";
+                _pupaIcon.color = Color.white;
             }
+            // 没满且没有叶子奖励时，才安全隐藏文字
             else
             {
-                // 游戏进行中加分，花 0.3 秒平滑过渡过去
-                // 平滑动画赋值（游戏中途）
-                pupaProgressBar.DOFillAmount(targetFill, 0.3f).SetEase(Ease.OutQuad).OnComplete(() => 
-                {
-                    progressText.gameObject.SetActive(targetFill >= 1f); // 动画涨满了才显示数字
-                    
-                    // 如果是这次才刚刚达标满格，触发发光粒子特效！
-                    if (isJustCompleted)
-                    {
-                        progressText.text = "+1";
-                        PlayPupaCompleteEffect();
-                    }
-                });
+                progressText.gameObject.SetActive(false);
+                progressText.text = "+0"; // 强行清空数值，防止下一次解析错误
+                _pupaIcon.color = new Color(1f, 1f, 1f, 0.7f);
             }
+        }
+        else
+        {
+            // ==============================================
+            // 游戏进行中模式：兼顾叶子奖励与正常涨分
+            // ==============================================
+            // 1. 获取当前是否已经有奖励在展示（比如刚才叶子飞过来的）
+            int currentVisualCount = 0;
+            if (progressText.gameObject.activeSelf)
+            {
+                string currentStr = progressText.text.Replace("+", "").Trim();
+                int.TryParse(currentStr, out currentVisualCount);
+            }
+            // 2. 只要进度满了，或者已经有叶子奖励展示了，就保持高亮状态
+            Color targetColor = (targetFill >= 1f || currentVisualCount > 0) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 1f);
+            _pupaIcon.color = targetColor;
+            
+            // 3. 游戏进行中加分，花 0.3 秒平滑过渡过去
+            pupaProgressBar.DOFillAmount(targetFill, 0.3f).SetEase(Ease.OutQuad).OnComplete(() => 
+            {
+                if (isJustCompleted)
+                {
+                    // 刚刚涨满时，利用叠加特效方法增加数值，并播放爆点！
+                    PlayPupaCollectVisualEffect(1);
+                    PlayPupaCompleteEffect();
+                }
+                else
+                {
+                    // 没涨满的情况，做一次安全检查，绝对不隐藏掉叶子已经给的奖励
+                    if (progressText.gameObject.activeSelf)
+                    {
+                        string currentStr = progressText.text.Replace("+", "").Trim();
+                        int.TryParse(currentStr, out int count);
+                        if (count == 0 && targetFill < 1f)
+                        {
+                            progressText.gameObject.SetActive(false);
+                        }
+                    }
+                }
+            });
         }
     }
 

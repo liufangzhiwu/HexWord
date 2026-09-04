@@ -153,6 +153,7 @@ public partial class ChessPlayArea : UIWindow
         PuzzleBtn.AddClickAction(ClickLevelPuzzle);
         MyThemeBtn.AddVibraClickAction(OnClickMyThemeBtn);
         pauseBtn.AddClickAction(OnPauseClicked);
+        _pupaIcon = pupaObj.GetComponent<Image>();
         BoardInitialize();
     }
     /// <summary>
