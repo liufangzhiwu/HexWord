@@ -37,6 +37,7 @@ public class ZenRankItem : MonoBehaviour
     public Text RankText { get; private set; }
     public Image RankIcon { get; private set; }
     private Text _goldRewardText;
+    private Image _goldRewardBg;
     
     private bool boxLocked = false;   // 🌟 宝箱动画锁
 
@@ -52,6 +53,7 @@ public class ZenRankItem : MonoBehaviour
         RankText = Rank.GetComponentInChildren<Text>(true);
         RankIcon = Rank.GetComponentInChildren<Image>(true);
         _goldRewardText = GoldReward.GetComponentInChildren<Text>(true);
+        _goldRewardBg = GoldReward.transform.GetChild(1).GetComponent<Image>();
     }
 
     private void Start()
@@ -100,14 +102,19 @@ public class ZenRankItem : MonoBehaviour
                 GoldReward.SetActive(true);
             }
         }
-        Avatar.sprite = LoadheadIcon("head"+state.Avatar);
 
-        if (string.IsNullOrEmpty(state.Frame))
+        if (isMe)
         {
-            state.Frame = "0";
+            Avatar.sprite = LoadheadIcon("head" + GameDataManager.Instance.UserData.UserHeadId);
+            Frame.sprite = LoadheadIcon("AvatarFrameIcon" + GameDataManager.Instance.UserData.UserHeadBorderId); // 给个默认头像
+        }
+        else
+        {
+            Avatar.sprite = LoadheadIcon("head"+state.Avatar);
+            Frame.sprite = LoadheadIcon("AvatarFrameIcon"+ state.Frame);
         }
         
-        Frame.sprite = LoadheadIcon("AvatarFrameIcon"+ state.Frame);
+       
         string displayName = state.Name;
         int showNumber = _isDisplayOnly ? 5 : 8;
         if (!string.IsNullOrEmpty(displayName) && displayName.Length > showNumber)
@@ -139,6 +146,7 @@ public class ZenRankItem : MonoBehaviour
             }
 
             zenscoreBg.sprite = selectedSprite;
+            _goldRewardBg.sprite = selectedSprite;
         }
         else
         {
@@ -148,6 +156,7 @@ public class ZenRankItem : MonoBehaviour
             RankText.color = Color.white;
             _goldRewardText.color = Color.white;
             zenscoreBg.sprite = normalSprite;
+            _goldRewardBg.sprite = normalSprite;
         }
             
     }

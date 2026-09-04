@@ -568,7 +568,7 @@ SpriteAtlas:
   - OverRankIcon1
   - UI_Icon_PingWord
   - UI_Icon_SeleWord
-  - RankBox3
+  - RankBox2
   - bookbtn
   - give_16
   - goldLeaf
@@ -700,7 +700,7 @@ SpriteAtlas:
   - zenicon_8
   - OverRankBox1
   - fishbtngrey
-  - RankBox2
+  - RankBox3
   - change_rank_me
   - gold3
   - give_1
