@@ -236,6 +236,7 @@ public partial class AnalyticMgr
 
         var properties = new Dictionary<string, object>
         {
+            { "role_name", userData.UserId },
             { "gold", userData.Gold },
             { "tipItem", tipCount },
             { "resetItem", resetCount },
@@ -259,7 +260,7 @@ public partial class AnalyticMgr
         if (string.IsNullOrEmpty(cacheUid) || cacheUid != uid)
         {
             GameDataManager.Instance.UserData.UserId = uid;
-            Game.self.Analytics.Login(GameDataManager.Instance.UserData.UserId);
+            //Game.self.Analytics.Login(GameDataManager.Instance.UserData.UserId);
         }
 
         if (!GameDataManager.Instance.UserData.Rigister)
@@ -300,7 +301,7 @@ public partial class AnalyticMgr
         {
             Debug.Log("赋值中用户唯一id为："+uid);
             GameDataManager.Instance.UserData.UserId = uid;
-            Game.self.Analytics.Login(GameDataManager.Instance.UserData.UserId);
+            //Game.self.Analytics.Login(GameDataManager.Instance.UserData.UserId);
         }
         
         Debug.Log("赋值后用户唯一id为："+ GameDataManager.Instance.UserData.UserId);

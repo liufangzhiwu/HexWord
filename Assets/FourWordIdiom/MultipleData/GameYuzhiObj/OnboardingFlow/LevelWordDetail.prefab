@@ -158,7 +158,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -425, y: 796}
-  m_SizeDelta: {x: 150, y: 150}
+  m_SizeDelta: {x: 121, y: 121}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8871442928757730263
 CanvasRenderer:
@@ -188,7 +188,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 3636b56bf61c9cb499ee1f6e8eabca83, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 524126d56a0f90b49a308211f80ee91a, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -314,7 +314,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 425, y: 796}
-  m_SizeDelta: {x: 150, y: 150}
+  m_SizeDelta: {x: 121, y: 121}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3220626464904428832
 CanvasRenderer:
@@ -1137,7 +1137,6 @@ GameObject:
   - component: {fileID: 1472787599642772985}
   - component: {fileID: 380863744629994255}
   - component: {fileID: 1969248918020362605}
-  - component: {fileID: 4579145894007613147}
   m_Layer: 5
   m_Name: LevelWordDetail
   m_TagString: Untagged
@@ -1246,34 +1245,11 @@ MonoBehaviour:
   rightBtn: {fileID: 2856578909535760472}
   PageCount: {fileID: 3642485733150643923}
   HeadTitle: {fileID: 552214475073641724}
-  wordProfab: {fileID: 2979191187597927257, guid: 3694f0c58586df84ba9b0b2e01b2e31d,
-    type: 3}
   wordsParent: {fileID: 4738573849604297750}
   scrollRect: {fileID: 6970881821098320466}
   viewList: {fileID: 3778359787410333492}
   width: 0
   curPage: 0
---- !u!95 &4579145894007613147
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4165248868016293823}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 71e973c0f5db88f42ba1c36917896284, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &4455218364459171501
 GameObject:
   m_ObjectHideFlags: 0

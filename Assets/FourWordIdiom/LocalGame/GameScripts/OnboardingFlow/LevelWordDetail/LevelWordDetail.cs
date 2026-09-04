@@ -1,6 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Middleware;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,55 +16,58 @@ public class LevelWordDetail : UIWindow
     [SerializeField] private Button rightBtn; // 关闭按钮
     [SerializeField] private Text PageCount; // 页面文本
     [SerializeField] private Text HeadTitle;
-    [SerializeField] private WordDetailTable wordProfab; // 词语预设
     [SerializeField] private Transform wordsParent; // 词语父对象
     [SerializeField] private ScrollRect scrollRect; // 滚动视图
     [SerializeField] private ViewListMove viewList;
     
+    private WordDetailTable _wordPrefab; // 词语预设
     public float width; //当前页面ID
     public int curPage; //当前页面ID
     private List<string> words = new List<string>(); // 词语集合
   
     protected override void OnEnable()
     {
-        bool isEnter = false;
-        if (GameDataManager.Instance.UserData.levelMode is 1 or 3)
-        {
-            isEnter = StageHexController.Instance.PuzzleData.IsVocabularyPuzzle;
-        }
-        else
-        {
-            isEnter = ChessStageController.Instance.PuzzleData.IsVocabularyPuzzle;
-        }
-        Debug.LogWarning("是否进入 " + isEnter);
-        if (isEnter)
+        bool isVocabularyPuzzle = false;
+        if(GameDataManager.Instance.UserData.levelMode == 1)
+            isVocabularyPuzzle = StageHexController.Instance.PuzzleData.IsVocabularyPuzzle;
+        else if (GameDataManager.Instance.UserData.levelMode == 2)
+            isVocabularyPuzzle = ChessStageController.Instance.PuzzleData.IsVocabularyPuzzle;
+        if (isVocabularyPuzzle)
         {               
             ShowVocabularyWords();
-            HeadTitle.text = MultilingualManager.Instance.GetString("LevelWord");                
+            HeadTitle.text = MultilingualManager.Instance.GetString("IdiomExplain", "pingzi");                
         }           
-        UpdateVisibleWords();
 
-        EventDispatcher.instance.OnWordVocabularyStatus += UpdateWordVocabularyStatus;
-        //EventDispatcher.instance.OnWordVocabularyStatus?.Invoke();
+        // EventDispatcher.OnWordVocabularyStatus += UpdateWordVocabularyStatus;
+        //EventManager.OnWordVocabularyStatus?.Invoke();
 
-        if (StageHexController.Instance.IsEnterPuzzle || ChessStageController.Instance.IsEnterPuzzle)
+        bool isEnter = false;
+        if (GameDataManager.Instance.UserData.levelMode == 1)
+            isEnter = StageHexController.Instance.IsEnterPuzzle;
+        else if (GameDataManager.Instance.UserData.levelMode == 2)
+            isEnter = ChessStageController.Instance.IsEnterPuzzle;
+        if (isEnter)
         {
-            _windowAnimator.Play("levelShow");
+            _windowAnimator?.Play("levelShow");
         }
         else
         {
-            _windowAnimator.Play("idle");
+            _windowAnimator?.Play("idle");
         }
 
-        UpdateWordVocabularyStatus();
+        // UpdateWordVocabularyStatus();
+        
+         StartCoroutine(UpdateVisibleWords());
     }
     
     protected override void InitializeUIComponents()
     {
+        _wordPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject(ToolUtil.GetLanguageBundle(), "item_levelWordDTable").GetComponent<WordDetailTable>();
         closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
         leftBtn.AddClickAction(()=>MovePage(true)); // 左
         rightBtn.AddClickAction(()=>MovePage(false)); // 右
         wordBookBtn.AddClickAction(ShowWordVocabulary); // 绑定关闭按钮事件
+        
     }
 
     private void UpdateWordVocabularyStatus()
@@ -71,14 +77,19 @@ public class LevelWordDetail : UIWindow
 
     private void ShowWordVocabulary()
     {
-        StageHexController.Instance.IsEnterVocabulary = false;
-        ChessStageController.Instance.IsEnterVocabulary = false;
-        SystemManager.Instance.ShowPanel(PanelType.WordVocabularyScreen);
+        // if (GameDataManager.Instance.UserData.levelMode == 1)
+        //     StageController.Instance.IsEnterVocabulary = false;
+        // else if (GameDataManager.Instance.UserData.levelMode == 2)
+        //     ChessStageController.Instance.IsEnterVocabulary = false;
+        
+        SystemManager.Instance.ShowPanel(PanelType.LevelWordScreen);
         OnHideAnimationEnd();
     }
 
     private void ShowVocabularyWords()
     {
+        List<string> wordsss = GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords;
+        Debug.Log("是否有值" + JsonConvert.SerializeObject(wordsss));
         foreach (var word in GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords)
         {
             if (!words.Contains(word))
@@ -127,26 +138,48 @@ public class LevelWordDetail : UIWindow
     
     public void PageChange(bool isLeftMove)
     {
-        width = wordProfab.GetComponent<RectTransform>().rect.width;
+        if (_wordPrefab==null) return;
+        
+        width = _wordPrefab.GetComponent<RectTransform>().rect.width;
         wordsParent.DOLocalMoveX( width* -(curPage-1), 0.2f);
         PageCount.text= curPage+"/"+ words.Count;
     }
 
-    private void UpdateVisibleWords()
+    IEnumerator UpdateVisibleWords()
     {
-        width = wordProfab.GetComponent<RectTransform>().rect.width;
-        switch (GameDataManager.Instance.UserData.levelMode)
+        // yield return new WaitForSeconds(0.1f);
+        width = _wordPrefab.GetComponent<RectTransform>().rect.width;
+        if (GameDataManager.Instance.UserData.levelMode == 1)
         {
-            case  1 or 3:
-                curPage = StageHexController.Instance.PuzzleData.PageIndex;
-                break;
-            case 2 :
-                curPage = ChessStageController.Instance.PuzzleData.PageIndex;
-                break;
+            curPage = StageHexController.Instance.PuzzleData.PageIndex;
+        }else if (GameDataManager.Instance.UserData.levelMode == 2)
+        {
+            curPage = ChessStageController.Instance.PuzzleData.PageIndex;
         }
-        viewList.InitList(words);
+        Debug.Log("当前打开的words " + JsonConvert.SerializeObject(words));
+        Debug.Log("滚动视图组件" + viewList);
+        try
+        {
+            viewList.InitList(words);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"异常类型：{e.GetType().Name}\n" +
+                           $"消息：{e.Message}\n" +
+                           $"堆栈：\n{e.StackTrace}");
+    
+            // 如果有内部异常，也一并打出
+            if (e.InnerException != null)
+                Debug.LogError($"内部异常：{e.InnerException}");
+        }
+
+        Debug.Log($"宽度： {width} - 当前页{curPage}" );
         ParentMovePos(width * -(curPage-1),false);
-        PageCount.text= curPage+"/"+ words.Count;            
+        Debug.Log("父物体？" + wordsParent.localPosition);
+        PageCount.text= curPage+"/"+ words.Count;   
+        Debug.Log("文本" + PageCount.text);
+
+        yield return null;
     }
 
 
@@ -165,7 +198,7 @@ public class LevelWordDetail : UIWindow
     {
         words.Clear();
         base.OnDisable();
-        EventDispatcher.instance.OnWordVocabularyStatus -= UpdateWordVocabularyStatus;
+        // EventDispatcher.OnWordVocabularyStatus -= UpdateWordVocabularyStatus;
         StageHexController.Instance.IsEnterPuzzle = false;
     }
 

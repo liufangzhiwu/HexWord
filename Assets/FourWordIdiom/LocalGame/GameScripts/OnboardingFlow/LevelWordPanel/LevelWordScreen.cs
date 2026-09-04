@@ -35,7 +35,7 @@ public class LevelWordScreen : UIWindow
     protected override void InitializeUIComponents()
     {
         closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
-        VocabularyBtn.AddClickAction(ShowWordVocabulary); // 绑定关闭按钮事件
+        VocabularyBtn.AddVibraClickAction(ShowWordVocabulary); // 绑定关闭按钮事件
     }
 
     private void ShowWordVocabulary()

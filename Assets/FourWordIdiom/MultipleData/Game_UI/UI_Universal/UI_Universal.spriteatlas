@@ -153,6 +153,7 @@ SpriteAtlas:
     - 5fe2a7c6d358b1f4fb0a0e6a75726f8a: 21300000
     - 82e70fc6d2f2cd440ad74bfe9280c237: 21300000
     - 279e4ad6815553f4ab650ae2f87254ca: 21300000
+    - e4c8811793cb9e64d91a8b107dae1dbc: 21300000
     - 51203d17bd18e124e9fdc2e370fa94fd: 21300000
     - 1558383726023af47b7f92d65ca5279b: 21300000
     - 08f24f3723bce694ba165e89d00922b2: 21300000
@@ -234,6 +235,7 @@ SpriteAtlas:
     - d1ccd3ac131afab42925641c767e79f8: 21300000
     - 452370bcb3b278440bf9eac1442e4839: 21300000
     - fbbe57bcbeea2a34bb9296c77bf50d76: 21300000
+    - eb8bb0cca9b47e44e91b5b91f54377a4: 21300000
     - 52f106fc0a9c51b47be046b413110611: 21300000
     - 0481131d8e02e4543bd383574c6c56f7: 21300000
     - 16f6f52da815d6346a1fe5c951f19921: 21300000
@@ -368,6 +370,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 5fe2a7c6d358b1f4fb0a0e6a75726f8a, type: 3}
   - {fileID: 21300000, guid: 82e70fc6d2f2cd440ad74bfe9280c237, type: 3}
   - {fileID: 21300000, guid: 279e4ad6815553f4ab650ae2f87254ca, type: 3}
+  - {fileID: 21300000, guid: e4c8811793cb9e64d91a8b107dae1dbc, type: 3}
   - {fileID: 21300000, guid: 51203d17bd18e124e9fdc2e370fa94fd, type: 3}
   - {fileID: 21300000, guid: 1558383726023af47b7f92d65ca5279b, type: 3}
   - {fileID: 21300000, guid: 08f24f3723bce694ba165e89d00922b2, type: 3}
@@ -449,6 +452,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: d1ccd3ac131afab42925641c767e79f8, type: 3}
   - {fileID: 21300000, guid: 452370bcb3b278440bf9eac1442e4839, type: 3}
   - {fileID: 21300000, guid: fbbe57bcbeea2a34bb9296c77bf50d76, type: 3}
+  - {fileID: 21300000, guid: eb8bb0cca9b47e44e91b5b91f54377a4, type: 3}
   - {fileID: 21300000, guid: 52f106fc0a9c51b47be046b413110611, type: 3}
   - {fileID: 21300000, guid: 0481131d8e02e4543bd383574c6c56f7, type: 3}
   - {fileID: 21300000, guid: 16f6f52da815d6346a1fe5c951f19921, type: 3}
@@ -582,6 +586,7 @@ SpriteAtlas:
   - tipicon
   - UI_Icon_JianWord
   - bigfishline
+  - rank_item_di
   - hehua_2
   - UI_Icon_butterflybg
   - lotus_icon
@@ -663,6 +668,7 @@ SpriteAtlas:
   - UI_Icon_CloseToggle
   - give_17
   - zenicon_4
+  - over_rank_me
   - leaf_skin_04
   - UI_Icon_JianSeleWord
   - lotus_p5

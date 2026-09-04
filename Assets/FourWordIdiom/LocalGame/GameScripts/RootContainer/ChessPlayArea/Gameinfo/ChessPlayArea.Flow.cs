@@ -165,49 +165,10 @@ public partial class ChessPlayArea
         
         if (ChessStageController.Instance.IsFirstEnterStage)
         {
-            yield return new WaitForSeconds(1f);
-            ShopManager.shopManager.ShowLimitAdsPanel();
+            // yield return new WaitForSeconds(1f);
+            // ShopManager.shopManager.ShowLimitAdsPanel();
         }
         
-        // bool gotoNext = false;
-        // if (!ChessStageController.Instance.IsFirstEnterStage)
-        // {
-        //     _isTimerRunning = false;
-        //     yield return new WaitForSeconds(0.1f);
-        //     // 1. 先冻结时间，屏蔽底下的棋盘点击
-        //     // EventDispatcher.instance.TriggerChangeTopRaycast(false);
-        //     RectTransform captureArea = chessboardGrid.GetComponent<RectTransform>();
-        //     Sprite snapshot = null;
-        //     yield return CaptureBoardSnapshot(captureArea, (sprite) => {
-        //         snapshot = sprite;
-        //     });
-        //     
-        //     // 2. 呼出重连弹窗
-        //     SystemManager.Instance.ShowPanel(PanelType.ContinueGameWindow);
-        //     var continueWindow = SystemManager.Instance.GetPanel(PanelType.ContinueGameWindow).GetComponent<ContinueGameWindow>();
-        //     continueWindow.Init(
-        //         remainTime: _remainingTime, // 传入刚才恢复的剩余时间
-        //         boardSnapshot: snapshot, // 传给弹窗脚本
-        //         onContinue: () => 
-        //         {
-        //             // 玩家点击【继续】：时间开始流逝，解除屏幕屏蔽
-        //             _isTimerRunning = true;
-        //             gotoNext = true;
-        //             // EventDispatcher.instance.TriggerChangeTopRaycast(true);
-        //         },
-        //         onQuit: () =>
-        //         {
-        //             QuitGameAndDeductEnergy();
-        //         }
-        //     );
-        // }
-        // else
-        // {
-        //     // 如果是全新开局，没有任何阻挡，直接让时间开跑
-        //     _isTimerRunning = false;
-        //     gotoNext = true;
-        // }
-        // yield return new WaitUntil(() => gotoNext);
         if (ChessStageController.Instance.IsFirstEnterStage)
         {
             ChessStageController.Instance.CurLevelMode =
@@ -403,6 +364,7 @@ public partial class ChessPlayArea
             ChessGuideSystem.Instance.activeToolObject = HitsBtn.gameObject;
             ChessGuideSystem.Instance.toolSourceName = "UseTips";
             ChessGuideSystem.Instance.DisplayGuide();
+            SetToolButtonsEnabled(true);
         }
         else if (CurrStageData.StageId == 6 && !GameDataManager.Instance.UserData.ChessTutorialProgress[5])
         {
@@ -410,6 +372,7 @@ public partial class ChessPlayArea
             ChessGuideSystem.Instance.activeToolObject = CompleteBtn.gameObject;
             ChessGuideSystem.Instance.toolSourceName = "UseComplete";
             ChessGuideSystem.Instance.DisplayGuide();
+            SetToolButtonsEnabled(true);
         }
 
         // 👇 🌟 触发特殊玩法的新手引导

@@ -718,7 +718,6 @@ GameObject:
   - component: {fileID: 1472787599642772985}
   - component: {fileID: 380863744629994255}
   - component: {fileID: 3658180886736000135}
-  - component: {fileID: 2231471747923121479}
   m_Layer: 5
   m_Name: LevelWordScreen
   m_TagString: Untagged
@@ -827,27 +826,6 @@ MonoBehaviour:
   wordLevelBtn: {fileID: -264340919059113538, guid: 9d730604d530c8141a5653baf2813e20,
     type: 3}
   wordsVocabularyParent: {fileID: 5167766362088589079}
---- !u!95 &2231471747923121479
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4165248868016293823}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 5aa0b95a48a8d744d9d0cdf89a69d2b2, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &4229517213762772530
 GameObject:
   m_ObjectHideFlags: 0

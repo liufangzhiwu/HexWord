@@ -42,6 +42,7 @@ public class ZenRankScreen : UIWindow
     [SerializeField] private Text MyName;
     [SerializeField] private Text MyScore;
     [SerializeField] private Button MyGoPlay;
+    [SerializeField] private GameObject hehuaPrefab;
     
     // 🌟 缓存的升降级标签实例
     private GameObject cachedUpTag;
@@ -62,7 +63,7 @@ public class ZenRankScreen : UIWindow
     // Start is called before the first frame update
     
     private ObjectPool hehuaObjectPool;
-    private GameObject hehuaPrefab;
+  
     
     // 顶部的滑动组件
     private ScrollRect topScrollRect;

@@ -797,6 +797,8 @@ MonoBehaviour:
   MyName: {fileID: 2294794562439346799}
   MyScore: {fileID: 1817060380120102310}
   MyGoPlay: {fileID: 6012539004780785272}
+  hehuaPrefab: {fileID: 7789647493305736829, guid: c6140264f8affee42b55ffb5c7d935d2,
+    type: 3}
 --- !u!222 &1037855296299943636
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3514,7 +3516,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &9191326967400836048
 RectTransform:
   m_ObjectHideFlags: 0
