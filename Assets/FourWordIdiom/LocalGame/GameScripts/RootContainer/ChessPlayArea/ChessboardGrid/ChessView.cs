@@ -387,7 +387,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         cloneRT.localScale = selfRT.localScale * 0.9f;
         clone.transform.position = selfRT.position;
     
-        AudioManager.Instance.PlaySoundEffect("GoldLeafFly",0,1); // ⚠️ 请替换为金箔起飞真实音效名
+        AudioManager.Instance.PlaySoundEffect("GoldLeafFly",0); // ⚠️ 请替换为金箔起飞真实音效名
         
         Vector3 endWorld = TargetBtn.GetComponent<RectTransform>().position;
         Vector3 startPos = clone.transform.position;

@@ -53,7 +53,7 @@ public sealed class GameCoreManager : MonoBehaviour
     private Sprite _blurredBgSprite;
     private bool _isBlurred = false; // 当前模糊状态
 
-    [HideInInspector] public bool IsNetworkActive;
+    [HideInInspector] public bool IsNetworkActive=true;
     public PanelState PanelState = PanelState.Null;
 
     public bool IsTrueAuto;
@@ -136,14 +136,31 @@ public sealed class GameCoreManager : MonoBehaviour
     {
         StartCoroutine(APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
         {
-            userProfile = res;
-            Debug.Log("用户信息 " + res);
+            if (res == null)
+            {
+                UserData userData = GameDataManager.Instance.UserData;
+                
+                // 拉取失败，可使用本地缓存的旧数据，或构造默认空数据
+                userProfile = new UserProfile()
+                {
+                    zen_level = userData.Zenlevel,
+                    highest_zen_level = userData.Zenlevel,
+                    old_zen_level = userData.Zenlevel,
+                    hof_awards = new HofAwardsDto()
+                };
+            }
+            else
+            {
+                userProfile = res;
+                Debug.Log("用户信息 " + res);
+            }
         }));
     }
 
     private void OnDestroy()
     {
-        HTTPClient.Instance.OnTokenExpired -= HandleTokenExpired;
+        if (HTTPClient.Instance != null)
+            HTTPClient.Instance.OnTokenExpired -= HandleTokenExpired;
     }
 
 
@@ -201,10 +218,10 @@ public sealed class GameCoreManager : MonoBehaviour
     {
         // StageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentStage);
         // SystemManager.Instance.ShowPanel(PanelType.GamePlayArea);
-        GameDataManager.Instance.UserData.IsFirstLaunch = false;
+
         ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
         SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
-       
+        GameDataManager.Instance.UserData.IsFirstLaunch = false;
     }
 
     /// <summary>
@@ -246,9 +263,10 @@ public sealed class GameCoreManager : MonoBehaviour
                 Debug.Log("<color=green>网络恢复！</color>");
 
                 // 如果当前没有Token（比如之前是纯单机/游客模式），且设备有ID，尝试登录
-                bool needSync = !HTTPClient.Instance.IsTokenValid() || !GameDataManager.HasSyncedThisSession;
+                //bool needSync = !HTTPClient.Instance.IsTokenValid() || !GameDataManager.HasSyncedThisSession;
+                //bool needSync = !GameDataManager.HasSyncedThisSession;
 
-                if (needSync && !string.IsNullOrEmpty(Game.self.GetUniqueId()) && _bgLoginCoroutine == null)
+                //if (needSync && !string.IsNullOrEmpty(Game.self.GetUniqueId()) && _bgLoginCoroutine == null)
                 {
                     Debug.Log("检测到网络恢复且未登录，尝试后台登录并同步数据...");
                     _bgLoginCoroutine = StartCoroutine(TryBackgroundLoginAndSync());
@@ -725,7 +743,7 @@ public sealed class GameCoreManager : MonoBehaviour
 
     private void ShowGlobalHistoryPanel(UserData serverUserData, ExtraDataDto serverExtraData, LoginResponse loginResponse)
     {
-        if (serverUserData.overallZenScore < GameDataManager.Instance.UserData.overallZenScore)
+        if (serverUserData.overallZenScore <= GameDataManager.Instance.UserData.overallZenScore)
         {
             // 无变化
             GameDataManager.Instance.IsWaitingForHistoryResolution = false;

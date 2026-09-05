@@ -258,6 +258,13 @@ public class PrimaryInterface : UIWindow
         {
             yield return new WaitForSeconds(0.5f);
             FishInfoController.Instance.RoundResultFishRank();
+            yield return new WaitForSeconds(0.8f);
+            
+            foreach (var ai in GameDataManager.Instance.FishUserSave.aiSaveDatas)
+            {
+                FishInfoController.Instance.CheckAIPassLevel(ai.aiid,null);
+            }
+            
             UpdateFishRank();
         }
     }

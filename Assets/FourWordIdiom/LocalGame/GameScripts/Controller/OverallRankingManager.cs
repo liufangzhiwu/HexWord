@@ -391,15 +391,15 @@ public class OverallRankingManager : MonoBehaviour
     {
         if (rank <= 0) return null;
     
-        if (rank >= 10000)
+        if (rank > 10000)
         {
             return $"{rank / 10000}万+";
         }
-        else if (rank >= 1000)
+        else if (rank > 1000)
         {
             return $"{rank / 1000}千+";
         }
-        else if (rank >= 100)
+        else if (rank > 100)
         {
             return $"{rank / 100}00+";
         }
@@ -539,11 +539,11 @@ public class OverallRankingManager : MonoBehaviour
         list.Sort((a, b) => b.score.CompareTo(a.score));
 
         // 如果挤进了新人，把超出原本长度（如第101名）的人剔除
-        // if (list.Count > 100) 
-        // {
-        //     // 注：如果没有 GroupSize 限制，你可以固定写 100，或者省略这步
-        //     list.RemoveAt(list.Count - 1); 
-        // }
+        if (list.Count > 100) 
+        {
+            // 注：如果没有 GroupSize 限制，你可以固定写 100，或者省略这步
+            list.RemoveAt(list.Count - 1); 
+        }
 
         // 4. 重新赋予以 1 开始的名次
         for (int i = 0; i < list.Count; i++)

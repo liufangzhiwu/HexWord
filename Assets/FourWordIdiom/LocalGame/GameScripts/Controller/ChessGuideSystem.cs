@@ -19,7 +19,7 @@ public class ChessGuideSystem : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(this);
+        //DontDestroyOnLoad(this);
     }
     #endregion
 

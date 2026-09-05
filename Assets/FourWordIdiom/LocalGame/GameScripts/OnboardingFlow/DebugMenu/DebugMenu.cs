@@ -307,6 +307,7 @@ public class DebugMenu : UIWindow
         GameDataManager.Instance.ChessDynamicHardSave.SetEnergy(value);
         GameDataManager.Instance.ChessDynamicHardSave.SaveData();
     }
+    
     private void OnPassStageClick()
     {
         GameDataManager.Instance.UserData.UpdateHexStage();
@@ -328,7 +329,7 @@ public class DebugMenu : UIWindow
         DailyTaskManager.Instance.isResetDailyTask = true;
 
         //同步到服务器
-        GameDataManager.Instance.CommitGameData();
+        //GameDataManager.Instance.CommitGameData();
        
         GameDataManager.Instance.UserData.ABName = ABName;
         ChessStageController.Instance.ClearCurrentLevelSave();
@@ -467,7 +468,7 @@ public class DebugMenu : UIWindow
             // 发送者和接收者的电子邮件地址
             string emailFrom = "f2608544640@foxmail.com"; // 发送者的QQ邮箱
             string password = "grwdqvewgxwzeagc"; // QQ邮箱的授权码
-            string emailTo = "Lfzw2025@163.com"; // 接收者的邮箱
+            string emailTo = "f2608544640@foxmail.com"; // 接收者的邮箱
             string subject = EmailText.text;
             string body = "Please find the attached log file.";
 

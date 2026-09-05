@@ -29,6 +29,7 @@ namespace Knivt.Tools.UI
                 {
                     cell.gameObject.SetActive(false);
                 }
+                
             }
         }
     }
@@ -71,10 +72,13 @@ namespace Knivt.Tools.UI
         /// <param name="resetPos"></param>
         public virtual void Initlize(ICollection<D> datas, bool resetPos = false)
         {
-            if (datas == null)
+            if (datas == null || datas.Count == 0)
             {
-                throw new System.Exception("Error,Datas is vaild!");
+                // throw new System.Exception("Error,Datas is vaild!");
+                ClearAllUiItem(); // 调用你已有的清理逻辑
+                return;
             }
+          
             _cellRectTransform = _cellObject.GetComponent<RectTransform>();
             Datas = datas;
             RecalculateContentSize(resetPos);
@@ -122,7 +126,8 @@ namespace Knivt.Tools.UI
         public void RefreshAllCellInViewRange()
         {
             int itemCount = ItemCount;
-            Vector2 viewRangeSize = _viewRange.sizeDelta;
+            // Vector2 viewRangeSize = _viewRange.sizeDelta;
+            Vector2 viewRangeSize = _viewRange.rect.size;
             Vector2 itemSize = ItemSize;
             Vector2 cellSize = CellSize;
             Vector2 cellSpace = _cellSpace;
@@ -286,12 +291,14 @@ namespace Knivt.Tools.UI
 
         private void RemoveItemOutOfListRange()
         {
-            if (viewCellBundles.Count() == 0)
+            if (viewCellBundles.Count == 0)
                 return;
-            var bundle = viewCellBundles.Last.Value;
+            
             int lastItemIndex = ItemCount - 1;
-            while (bundle.index > lastItemIndex && viewCellBundles.Count() > 0)
+            // 修正 while 循环判定条件，防止引用不更新导致的裁剪失败或死循环
+            while (viewCellBundles.Count > 0 && viewCellBundles.Last.Value.index > lastItemIndex)
             {
+                var bundle = viewCellBundles.Last.Value; // 每次循环都要重新获取最新的尾部
                 viewCellBundles.RemoveLast();
                 ReleaseViewBundle(bundle);
             }
@@ -335,7 +342,8 @@ namespace Knivt.Tools.UI
         public bool UnderViewRange(Vector2 position)
         {
             Vector2 relativePos = CaculateRelativePostion(position);
-            return relativePos.y < -_viewRange.sizeDelta.y;
+            // return relativePos.y < -_viewRange.sizeDelta.y;
+            return relativePos.y < -_viewRange.rect.height;
         }
 
         public bool InViewRangeLeft(Vector2 position)
@@ -347,7 +355,8 @@ namespace Knivt.Tools.UI
         public bool InViewRangeRight(Vector2 position)
         {
             Vector2 relativePos = CaculateRelativePostion(position);
-            return relativePos.x > _viewRange.sizeDelta.x;
+            // return relativePos.x > _viewRange.sizeDelta.x;
+            return relativePos.x > _viewRange.rect.width;
         }
 
         public bool OnViewRange(Vector2 position)

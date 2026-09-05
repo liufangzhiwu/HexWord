@@ -53,6 +53,7 @@ SpriteAtlas:
     - 27608b00758ab7d48bd959e743cc40f0: 21300000
     - d9c75b6022bbbcb4fa3b4ee04f451306: 21300000
     - 43cc8f70f7118394684640569b9be814: 21300000
+    - de312e907844d004e99001904c6fc724: 21300000
     - 547f42a044c39cf49b311b5d7312282e: 21300000
     - 94b3c8c02dd6449459fa3cb2fe13b3f6: 21300000
     - f4527c01889363947b7457b4488642cf: 21300000
@@ -142,6 +143,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 27608b00758ab7d48bd959e743cc40f0, type: 3}
   - {fileID: 21300000, guid: d9c75b6022bbbcb4fa3b4ee04f451306, type: 3}
   - {fileID: 21300000, guid: 43cc8f70f7118394684640569b9be814, type: 3}
+  - {fileID: 21300000, guid: de312e907844d004e99001904c6fc724, type: 3}
   - {fileID: 21300000, guid: 547f42a044c39cf49b311b5d7312282e, type: 3}
   - {fileID: 21300000, guid: 94b3c8c02dd6449459fa3cb2fe13b3f6, type: 3}
   - {fileID: 21300000, guid: f4527c01889363947b7457b4488642cf, type: 3}
@@ -230,6 +232,7 @@ SpriteAtlas:
   - anPickFlowersIcon2
   - head27
   - anBreakIceIcon1
+  - AvatarFrameIcon
   - anBreakIceIcon2
   - head9
   - AvatarFrameIcon7

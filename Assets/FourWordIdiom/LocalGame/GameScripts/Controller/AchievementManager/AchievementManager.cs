@@ -164,7 +164,13 @@ public class AchievementManager : Singleton<AchievementManager>
                 achieveIcon = icon
             };
             // 添加到类型字典（若类型重复则覆盖并警告）
-            achieveItemsByType.Add(achieveType,item);
+
+            if (!achieveItemsByType.ContainsKey(achieveType))
+            {
+                achieveItemsByType.Add(achieveType,item);
+            }
+            
+            
         }
 
         Debug.Log($"Loaded {achieveItemsByType.Count} achievement items.");

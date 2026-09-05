@@ -148,6 +148,7 @@ SpriteAtlas:
     - a979c09657473b641b89148b53ea5518: 21300000
     - aab181a61b17fa54387b089b109f6849: 21300000
     - 069c27e65cefe5f49b662323545e97a3: 21300000
+    - efd808e65506f8743afc9e6dc7fc9092: 21300000
     - a47603f66a9e9c34783cd10ecd377200: 21300000
     - fc0a4df667774de43995a2b81919b38c: 21300000
     - 8fe7cf0744d216649a976ca050de7ef4: 21300000
@@ -329,6 +330,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: a979c09657473b641b89148b53ea5518, type: 3}
   - {fileID: 21300000, guid: aab181a61b17fa54387b089b109f6849, type: 3}
   - {fileID: 21300000, guid: 069c27e65cefe5f49b662323545e97a3, type: 3}
+  - {fileID: 21300000, guid: efd808e65506f8743afc9e6dc7fc9092, type: 3}
   - {fileID: 21300000, guid: a47603f66a9e9c34783cd10ecd377200, type: 3}
   - {fileID: 21300000, guid: fc0a4df667774de43995a2b81919b38c, type: 3}
   - {fileID: 21300000, guid: 8fe7cf0744d216649a976ca050de7ef4, type: 3}
@@ -509,6 +511,7 @@ SpriteAtlas:
   - style1
   - themeBtn
   - "\u8BBE\u7F6E"
+  - history_data_di
   - Difficulty2
   - ciahua
   - redpoint

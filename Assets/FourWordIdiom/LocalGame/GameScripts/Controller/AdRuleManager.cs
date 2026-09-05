@@ -46,7 +46,7 @@ public class AdRuleManager : MonoBehaviour
         }
         
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
 
         // 🌟 2. 冷启动保护：给应用刚启动时加上 30 秒绝对安全期
         _lastAppResumeTime = DateTime.Now;

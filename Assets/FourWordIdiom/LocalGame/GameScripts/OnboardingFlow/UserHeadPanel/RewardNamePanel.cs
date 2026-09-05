@@ -97,8 +97,11 @@ public class RewardNamePanel : UIWindow
 
     protected override void OnDisable()
     {
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false, false, false);
-        SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false);
+        if (SystemManager.Instance.PanelIsShowing(PanelType.OverallRankingScreen))
+        {
+            SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+        }
         base.OnDisable();
     }
 }

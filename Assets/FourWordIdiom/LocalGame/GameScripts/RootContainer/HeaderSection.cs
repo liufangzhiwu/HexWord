@@ -393,6 +393,9 @@ public class HeaderSection : UIWindow
             // 恢复默认层级
             energyCanvas.overrideSorting = false;
             energyCanvas.sortingOrder = 0;
+            
+            if(GameDataManager.Instance==null) return;
+            
             var userData = GameDataManager.Instance.UserData;
             int stage = Mathf.Max(userData.CurrentHexStage, userData.CurrentChessStage);
             bool isAdequate = (userData.Energy >= UserData.MAX_NATURAL_ENERGY) || (stage == 1);
@@ -407,6 +410,8 @@ public class HeaderSection : UIWindow
     /// </summary>
     private void HighlightGoldAndEnergy(bool isHighlight)
     {
+        if(GameDataManager.Instance==null) return;
+        
         // 1. 获取/添加 体力的 Canvas
         Canvas energyCanvas = energyBtn.GetComponent<Canvas>();
         if (energyCanvas == null) energyCanvas = energyBtn.gameObject.AddComponent<Canvas>();

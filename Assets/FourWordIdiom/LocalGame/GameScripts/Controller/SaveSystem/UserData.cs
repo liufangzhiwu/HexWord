@@ -306,7 +306,7 @@ public class UserData
         PushToken = "";
         UserHeadId = 0;
         UserHeadBorderId=0;
-        UserName = null;
+        UserName = "";
         UserId = null;
         Gold = AppGameSettings.StartingGold;
         MaxComboCount = 0;

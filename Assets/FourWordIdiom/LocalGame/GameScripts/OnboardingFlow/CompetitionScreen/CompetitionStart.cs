@@ -53,7 +53,7 @@ public class CompetitionStart : UIWindow
     {
         GameDataManager.Instance.FishUserSave.OpenRoundTime();
         SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
-        
+        AchievementManager.Instance.DisableFinishAchieveTable();
         AnalyticMgr.ActivityBegin("竞速活动");
         
         OnCloseBtn();

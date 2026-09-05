@@ -1166,7 +1166,7 @@ public class ChessFinishView : UIWindow
         DailyTaskManager.Instance.OnDailyButterflyTaskUI -= UpdateButterflyTime;
         LimitTimeManager.Instance.OnLimitTimeBtnUI -= UpdateSliderProgress;
         FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
-
+        ChessStageController.Instance.LimitPuzzleCount = 0;
         //GameDataManager.Instance?.UserData.ClearPuzzleVocabulary();
 
         // EventDispatcher.instance.TriggerUpdateLayerCoin(false,false,false);

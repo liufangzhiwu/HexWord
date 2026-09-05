@@ -34,6 +34,7 @@ public class MatchFishTable : MonoBehaviour
             else
             {
                 SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
+                AchievementManager.Instance.DisableFinishAchieveTable();
             }
         }
         else
@@ -81,9 +82,9 @@ public class MatchFishTable : MonoBehaviour
                     ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
                 {
                     if(GameDataManager.Instance.UserData.levelMode == 3)
-                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageHexController.Instance.CurStageInfo.Puzzles.Count);
+                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageHexController.Instance.LimitPuzzlecount);
                     else if(GameDataManager.Instance.UserData.levelMode == 2)
-                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(ChessStageController.Instance.CurrStageInfo.PhraseGroups.Count);
+                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(ChessStageController.Instance.LimitPuzzleCount);
                 }
             }
         }
@@ -193,6 +194,7 @@ public class MatchFishTable : MonoBehaviour
                 AudioManager.Instance.PlaySoundEffect("levelOverLimitwordAward");
                 matchfishImage.transform.DOScale(new Vector3(1.2f,1.15f,1.15f), 0.3f).OnComplete(() =>
                 {
+                    matchEffect.gameObject.SetActive(false);
                     matchfishImage.transform.DOScale(Vector3.one, 0.2f);
                 });
             });

@@ -35,7 +35,7 @@ public class ZenRankManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // 保证切场景不销毁
+            //DontDestroyOnLoad(gameObject); // 保证切场景不销毁
             LoadZenConfigs(); // 启动时自动解析 CSV 配置
         }
         else

@@ -33,14 +33,21 @@ namespace Middleware
         public static bool IsNetworkActive { private set; get; }
 
         private GameObject NetErrorView;
-
+        
+        
         private void Awake()
         {
-            self = this;
-            DontDestroyOnLoad(gameObject);
-            gameObject.AddComponent<UnityTimer>();
-         
-            
+            if (self == null)
+            {
+                self = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                Destroy(gameObject);   // 销毁重复实例
+                return;
+            }
+                        
 #if UNITY_HUAWEI&&!UNITY_EDITOR
             HuaweiGameService.AppInit();
 #endif
@@ -49,6 +56,7 @@ namespace Middleware
             CreateAnalytic();
             InitManagers();
         }
+
 
         public void InitGame()
         { 

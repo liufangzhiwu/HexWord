@@ -462,12 +462,16 @@ public class FishInfoController : MonoBehaviour
             needtime += aiSaveData.updatePuzzleusetime;
             
             DateTime rtargetTime = DateTime.Parse(GameDataManager.Instance.FishUserSave.roundstarttime).AddSeconds(needtime);
+
+            if (aiSaveData.Puzzleprogress<fishTargetWordCount)
+            {
+                callback?.Invoke();
+            }
+            
             if (rtargetTime <= DateTime.Now&&aiSaveData.Puzzleprogress<fishTargetWordCount)
             {
                 aiSaveData.UpdateFishProgress(aiLevelInfo.Puzzles.Count);
                 aiSaveData.UpdatePassLvTime((int)needtime);
-                callback?.Invoke();
-
                 if (aiSaveData.Puzzleprogress >= fishTargetWordCount)
                 {
                     RoundResultFishRank();

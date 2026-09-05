@@ -497,7 +497,7 @@ public class StageFinishView : UIWindow
             FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
 
         //GameDataManager.Instance?.UserData.ClearPuzzleVocabulary();
-       
+        StageHexController.Instance.LimitPuzzlecount = 0;
         EventDispatcher.instance.TriggerChangeGoldUI(AppGameSettings.LevelCompleteBonus, false);
         if (_treasureBoxEffect != null)
             _treasureBoxEffect.gameObject.SetActive(false);

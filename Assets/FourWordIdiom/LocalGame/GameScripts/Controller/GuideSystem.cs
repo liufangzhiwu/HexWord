@@ -31,7 +31,7 @@ public class GuideSystem : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject); // 跨场景持久化
+        //DontDestroyOnLoad(gameObject); // 跨场景持久化
         Debug.Log($"教程管理器初始化完成：{GetInstanceID()}");
     }
     #endregion

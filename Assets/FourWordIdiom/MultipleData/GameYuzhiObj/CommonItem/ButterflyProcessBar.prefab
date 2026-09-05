@@ -420,7 +420,7 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 0
-  m_TargetGraphic: {fileID: 0}
+  m_TargetGraphic: {fileID: 8814446382798721094}
   m_FillRect: {fileID: 787196973429852668}
   m_HandleRect: {fileID: 0}
   m_Direction: 0
@@ -547,7 +547,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: f7941b4d962181a4ca74dd998ecb2723, type: 3}
+    m_Font: {fileID: 12800000, guid: e3265ab4bf004d28a9537516768c1c75, type: 3}
     m_FontSize: 54
     m_FontStyle: 0
     m_BestFit: 0

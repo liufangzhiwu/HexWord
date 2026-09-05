@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Knivt.Tools.UI
@@ -58,8 +60,8 @@ namespace Knivt.Tools.UI
                     break;
                 }
                 count++;
-                int startIndex = bundle.index * _ItemCellCount;
-                int endIndex = startIndex + bundle.Cells.Length - 1;
+                int startIndex = Math.Clamp(bundle.index * _ItemCellCount, 0, Datas.Count - 1);
+                int endIndex = Math.Clamp(startIndex + bundle.Cells.Length - 1, 0, Datas.Count - 1);
 
                 //防止越界...
                 if (endIndex >= Datas.Count)

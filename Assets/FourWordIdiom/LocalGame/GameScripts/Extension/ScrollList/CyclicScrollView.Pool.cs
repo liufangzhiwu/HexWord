@@ -108,8 +108,13 @@ namespace Knivt.Tools.UI
         }
         public void ClearAllUiItem()
         {
+            Datas = null;
+            foreach (var bundle in viewCellBundles)
+            {
+                bundle.Clear(); // 将预制体隐藏
+                _cellBundlePool.Enqueue(bundle); // 丢进对象池留给下次复用，不要直接销毁
+            }
             viewCellBundles.Clear();
-            _cellBundlePool.Clear();
         }
     }
 }
