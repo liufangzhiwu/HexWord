@@ -172,16 +172,12 @@ namespace Middleware
             appPlayerInfo.PlayerId = _player.PlayerId;
             appPlayerInfo.OpenId = _player.OpenId;
             Game.self.Accounts.UserId = _player.OpenId;
-            Game.self.Accounts.IsLogin = true;
         
             Debug.LogFormat("[HuaweiAccount] 登录华为安卓用户时的数据: {0}", JsonConvert.SerializeObject(appPlayerInfo));
             HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));
             Debug.Log("[HuaweiAccount] 数据上报完成, 当前状态" + _flowStatus );
             yield return new WaitUntil(() => _flowStatus is GameFlowStatus.Ready);
-    
         }
-        
-        
 
         /// <summary>
         /// 登录入口（异步非阻塞）

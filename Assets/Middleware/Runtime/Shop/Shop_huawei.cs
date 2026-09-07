@@ -352,6 +352,7 @@ namespace Middleware
             {
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
+                Debug.Log("奖励发放类型"+type+"奖励发放数值"+count);
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:

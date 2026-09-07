@@ -56,6 +56,9 @@ public class LoadingController : MonoBehaviour
     private AchieveSaveDatas serverAchieveSaveDatas;// 解析后成就数据 (假设你的类名叫 AchieveSaveDatas)
     
     private bool IsLocalDataNull;// 本地数据是否为空
+    
+    public float loginStart;
+    public float loginTimeout;
 
     private void Awake()
     {
@@ -96,6 +99,29 @@ public class LoadingController : MonoBehaviour
     {
         StartCoroutine(InitializeLoadingProcess());
     }
+    
+    
+    private void OnApplicationFocus(bool focusStatus)
+    {
+        HandleFocusChange(focusStatus);
+    }
+    
+    private void HandleFocusChange(bool hasFocus)
+    {
+        // 应用进入后台
+        if (!hasFocus)
+        {
+            loginStart=Time.time;
+            loginTimeout = 10f;
+            Debug.Log("应用进入后台，数据已保存"+loginStart);
+        }
+        else
+        {
+            loginStart=Time.time;
+            loginTimeout = 10f;
+            Debug.Log("应用回到前台，验证数据"+loginStart);
+        }
+    }
 
     /// <summary>
     /// 初始化加载流程
@@ -112,13 +138,15 @@ public class LoadingController : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         
         // 等待 Accounts 登录完成（无论成功或失败，可增加超时处理）
-        float loginTimeout = 30f;
-        float loginStart = Time.time;
+        loginTimeout = 10f;
+        loginStart=Time.time;
         
         while (!Game.self.Accounts.IsLogin && (Time.time - loginStart) < loginTimeout)
         {
+            Debug.Log("应用回到前台，超时数据"+loginStart);
             yield return null;
         }
+        
         if (!Game.self.Accounts.IsLogin)
         {
             Debug.LogError("登录超时或失败");
@@ -136,7 +164,6 @@ public class LoadingController : MonoBehaviour
         });
 
         yield return new WaitUntil(() => isLogined);
-        
         
         yield return APIGateway.Instance.LoginApi.GetUserData(LoadUserData);
         yield return APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
