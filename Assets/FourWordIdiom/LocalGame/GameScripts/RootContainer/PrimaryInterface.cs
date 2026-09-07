@@ -360,14 +360,21 @@ public class PrimaryInterface : UIWindow
     
     private void UpdateFishTime(string time="")
     {
-        fishtimetext.text = time;
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel||
-            GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel||
-            !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
+        if (!FishInfoController.Instance.RoundFishIsOver())
         {
-            FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
+            fishtimetext.text = time;
+            if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel||
+                GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel||
+                !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
+            {
+                FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
+            }
         }
-
+        else
+        {
+            fishtimetext.text="已结束";
+        }
+        
         // if (!fishtimetext.transform.parent.gameObject.activeSelf)
         // {
         //     fishtimetext.transform.parent.gameObject.SetActive(true);
@@ -411,7 +418,8 @@ public class PrimaryInterface : UIWindow
                 else
                 {
                     FishClaim.gameObject.SetActive(true);
-                    fishtimetext.transform.parent.gameObject.SetActive(false);
+                    //fishtimetext.transform.parent.gameObject.SetActive(false);
+                    fishtimetext.text = "已结束";
                     fishrankimage.gameObject.SetActive(false);
                 }
             }

@@ -141,7 +141,7 @@ public class DashCompetition : UIWindow
         // }
 
         // 优化循环间隔为1秒，提升响应速度
-        var waitInterval = new WaitForSeconds(1);
+        var waitInterval = new WaitForSeconds(2);
 
         // 提取重复使用的SaveData引用
         var fishSave = GameDataManager.Instance.FishUserSave;
@@ -152,8 +152,12 @@ public class DashCompetition : UIWindow
             InitializeAIData(fishSave.curround);
         }
 
-        //更新玩家UI
-        userfishItem.UpdateUI(true);       
+        progressComplete=FishInfoController.Instance.RoundFishIsOver();
+        if (!progressComplete)
+        {
+            //更新玩家UI
+            userfishItem.UpdateUI(true);       
+        }
 
         while (!fishSave.iscliam)
         {
@@ -173,6 +177,8 @@ public class DashCompetition : UIWindow
             }
             yield return waitInterval;
         }
+        
+        yield return waitInterval;
     }
    
     // 提取AI初始化逻辑

@@ -159,7 +159,7 @@ public class FishItem : MonoBehaviour
        
         isclaim = false;
 
-        userLevel.transform.DOMoveZ(0, 1f).OnComplete(() =>
+        userLevel.transform.DOMoveZ(0, 0.5f).OnComplete(() =>
         {
             FishMove(out float waittime);
             
@@ -201,7 +201,7 @@ public class FishItem : MonoBehaviour
         float duration = ismove ? 1.0f : 0.5f;
         if (curisai)
         {
-            if (!FishInfoController.Instance.RoundFishIsOver())
+            if (!FishInfoController.Instance.RoundFishIsOver()&&fishaiSaveData.Puzzleprogress < AppGameSettings.FishTargetWordCount)
             {
                 FishInfoController.Instance.CheckAIPassLevel(fishaiSaveData.aiid,()=>
                 {
@@ -210,6 +210,17 @@ public class FishItem : MonoBehaviour
                 });
                 userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {fishaiSaveData.ailevel}";
                 targetcount.text = fishaiSaveData.Puzzleprogress.ToString();
+                
+                if (fishaiSaveData.Puzzleprogress <= AppGameSettings.FishTargetWordCount)
+                {
+                    box.gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                FishMove(out float waittime, true);
+                duration=waittime;
+                targetcount.text = fishaiSaveData.Puzzleprogress.ToString();
             }
             //if(offlevel>fishaiSaveData.ailevel)
             //    FishMove();
@@ -217,8 +228,12 @@ public class FishItem : MonoBehaviour
         else
         {
             userName.text = GameDataManager.Instance.UserData.UserName;
-            userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {GameDataManager.Instance.UserData.CurrentHexStage}";
-            targetcount.text = GameDataManager.Instance.FishUserSave.Puzzleprogress.ToString();     
+            userLevel.text = $"{MultilingualManager.Instance.GetString("Level")} {GameDataManager.Instance.UserData.CurrentChessStage}";
+            targetcount.text = GameDataManager.Instance.FishUserSave.Puzzleprogress.ToString();
+            if (GameDataManager.Instance.FishUserSave.Puzzleprogress <= AppGameSettings.FishTargetWordCount)
+            {
+                box.gameObject.SetActive(false);
+            }
             // userLevel.transform.DOMoveZ(0, 0.5f).OnComplete(() =>
             // {
                 FishMove(out float waittime, ismove);
@@ -279,11 +294,12 @@ public class FishItem : MonoBehaviour
         {
             point= GameDataManager.Instance.FishUserSave.Puzzleprogress /(float) fishTargetWordCount;
         }
+        
+        
+        targetx=distanceX*point+startx;
 
         if (point > 0&&isneedmove)
         {
-            targetx=distanceX*point+startx;
-            
             if(Mathf.Approximately(fishRect.anchoredPosition.x, targetx)) {
                 Debug.LogWarning("目标位置相同");
                 waittime = 0;
@@ -311,6 +327,19 @@ public class FishItem : MonoBehaviour
             waittime = moveDuration;
             return;
         }
+        else
+        {
+            SkeletonAnimation fishSpine = spinefishitem.GetComponent<SkeletonAnimation>();
+            
+            // 开始移动
+            fishRect.DOAnchorPosX(targetx, 0.1f).OnComplete(() =>
+            {
+                // 强制切换到idle动画
+                TrackEntry idleTrack= fishSpine.AnimationState.SetAnimation(0, "idle", true);
+                fishSpine.DOPlay();                   
+            });
+        }
+        
         waittime = 0;
     }
     
@@ -376,7 +405,9 @@ public class FishItem : MonoBehaviour
     {
         if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
         {
-            fishRect.anchoredPosition = new Vector2(startx, fishRect.anchoredPosition.y);
+            float targetx=distanceX*0+startx;
+            
+            fishRect.anchoredPosition = new Vector2(targetx, fishRect.anchoredPosition.y);
             isclaim = false;
             if (curisai&&fishaiSaveData!=null)
             {               

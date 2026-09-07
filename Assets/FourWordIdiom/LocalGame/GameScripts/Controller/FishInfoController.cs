@@ -363,7 +363,7 @@ public class FishInfoController : MonoBehaviour
         if (fishAISaves.Count <= 0)
         {
             // 获取当前玩家真实关卡数
-            int playerLevel = GameDataManager.Instance.UserData.CurrentHexStage;
+            int playerLevel = GameDataManager.Instance.UserData.CurrentChessStage;
             int maxLevel = playerLevel+100; // 从配置获取最大关卡
             
             List<FishaiInfoItem>  fishaiInfos = GetRoundFishaiItems(roundindex);

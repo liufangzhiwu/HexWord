@@ -60,6 +60,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         
         ChessStageController.Instance.CurrStageData.IsPausedOrFailed = true;
         GameDataManager.Instance.CommitGameData();
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false,true);
     }
     /// <summary>
     /// 面板切换助手

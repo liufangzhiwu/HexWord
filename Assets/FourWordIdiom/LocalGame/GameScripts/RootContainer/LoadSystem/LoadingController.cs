@@ -112,7 +112,7 @@ public class LoadingController : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         
         // 等待 Accounts 登录完成（无论成功或失败，可增加超时处理）
-        float loginTimeout = 10f;
+        float loginTimeout = 30f;
         float loginStart = Time.time;
         
         while (!Game.self.Accounts.IsLogin && (Time.time - loginStart) < loginTimeout)
