@@ -365,6 +365,8 @@ public class UserData
         zenCount = 0;
         overallZenScore = 0;
         likeCount = 0;
+        fourWordCount = 0;
+        nofourWordCount = 0;
         passLevelUseTime = new Dictionary<int, int>();
         //限时商店数据
         limitShopItems = new List<ShopLimitData>();
@@ -480,6 +482,9 @@ public class UserData
         zenCount = user.zenCount;
         overallZenScore = user.overallZenScore;
         likeCount = user.likeCount;
+        MaxComboCount = user.MaxComboCount;
+        fourWordCount = user.fourWordCount;
+        nofourWordCount=user.nofourWordCount;
         Zenlevel = user.Zenlevel ?? "ZenState01";
         dayPassStageCount = user.dayPassStageCount;
         chessdayPassStageCount = user.chessdayPassStageCount;

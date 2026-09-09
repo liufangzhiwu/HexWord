@@ -47,10 +47,7 @@ namespace Middleware
                 Destroy(gameObject);   // 销毁重复实例
                 return;
             }
-                        
-#if UNITY_HUAWEI&&!UNITY_EDITOR
-            HuaweiGameService.AppInit();
-#endif
+
             StartCoroutine(CheckNetworkConnection());
             
             CreateAnalytic();

@@ -163,7 +163,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -0.25032}
-  m_SizeDelta: {x: 85, y: 380.52}
+  m_SizeDelta: {x: 63, y: 380.52}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3294540222218917451
 CanvasRenderer:
@@ -197,7 +197,7 @@ MonoBehaviour:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 50
     m_FontStyle: 0
-    m_BestFit: 1
+    m_BestFit: 0
     m_MinSize: 50
     m_MaxSize: 300
     m_Alignment: 4
@@ -206,7 +206,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u5341\u4EBA\u5341\u8272"
+  m_Text: "\u5341\u4EBA\u5341\u8272\u5341\u4EBA\u5341\u8272"
 --- !u!114 &3882666017292981917
 MonoBehaviour:
   m_ObjectHideFlags: 0

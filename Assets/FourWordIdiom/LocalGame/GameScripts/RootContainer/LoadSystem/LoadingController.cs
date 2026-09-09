@@ -130,6 +130,11 @@ public class LoadingController : MonoBehaviour
     {
         SetupRandomLoadingHint();
         
+                                
+#if UNITY_HUAWEI&&!UNITY_EDITOR
+            HuaweiGameService.AppInit();
+#endif
+        
         loadStartTime = Time.time;
         // 本地化
         MultilingualManager.Instance.LoadLocalization();

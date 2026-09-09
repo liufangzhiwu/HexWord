@@ -45,6 +45,7 @@ public class WordButton : MonoBehaviour
     {
         wordData.CurPuzzle = str;
         wordText.text = wordData.CurPuzzle;
+        
         wordData.IsVocabularyPuzzle= isVocabulary;
         wordData.PageIndex= index;
         if (wordData.IsVocabularyPuzzle)
@@ -55,6 +56,7 @@ public class WordButton : MonoBehaviour
             {
                 pinText.text = string.IsNullOrEmpty(entry.Pinyin)?"": entry.Pinyin;
             }
+            wordText.fontSize = wordData.CurPuzzle.Length>7 ? 42 : 50;
             //wordBtn.GetComponent<Image>().color = Color.white;
         }
         else
@@ -63,7 +65,7 @@ public class WordButton : MonoBehaviour
             {
                 pinText.text ="";
             }
-            
+            wordText.fontSize = wordData.CurPuzzle.Length>7 ? 58 : 70;
             //wordBtn.GetComponent<Image>().color = Color.green;
         }
     }
