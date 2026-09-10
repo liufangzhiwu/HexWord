@@ -174,7 +174,7 @@ public class OverallSettlementScreen : UIWindow
         OverallRankingManager.Instance.InvalidateHallOfFameCache(); // 清空名人堂缓存，确保能刷出刚刚结算产生的新名人！
         SystemManager.Instance.HidePanel(PanelType.OverallSettlementScreen);
         // Manager.CheckMonthlySettlementRoutine 正 WaitUntil 这个面板关闭，会自动继续往下走
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false, false, false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false);
     }
 
     // ============== 工具 ==============

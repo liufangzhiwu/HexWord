@@ -192,6 +192,29 @@ public class AdRuleManager : MonoBehaviour
             onComplete?.Invoke(success);
         });
     }
+    
+    // 展示激励视频时的标准写法
+    public void TryShowTipToolRewardVideo(Define.AdKey adKey, Action<bool> onComplete)
+    {
+        // 1. 激励视频一般不拦截，直接让玩家看
+        Game.self.Ads.ShowTipToolReward(adKey, (success) => 
+        {
+            if (success)
+            {
+                // 2. 🌟 核心：播成功了，向大脑报账！
+                // 这句代码执行后：
+                // - 疲劳度会自动 +2
+                // - LastRewardAdTimeTicks 会刷新
+                // - G1 规则 (120秒内不准弹插屏) 会瞬间生效！
+                ReportAdShown(Define.AdType.Reward);
+            }
+    
+            // 3. 把结果传给原有的业务层（比如发金币、发道具）
+            onComplete?.Invoke(success);
+        });
+    }
+    
+    
     /// <summary>
     /// 🌟 拦截审核：当前是否允许播放插屏？
     /// </summary>

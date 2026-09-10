@@ -799,7 +799,8 @@ public class PrimaryInterface : UIWindow
         UIWindow uiWindow = SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
         Debug.Log("查看是否展示" + uiWindow.IsWindowVisible + " " + uiWindow.gameObject.activeSelf);
         
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.3f);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
         //AdsManager.Instance.HideBannerAd();
     }
     

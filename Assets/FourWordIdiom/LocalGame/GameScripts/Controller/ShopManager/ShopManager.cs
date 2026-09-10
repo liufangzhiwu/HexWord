@@ -497,29 +497,34 @@ public class ShopManager : MonoBehaviour
     {
         //todo 关闭loading界面
         Debug.Log("购买成功: " + item.ProductId);
-        var items = new List<AnalyticMgr.Item>();
+      
         ShopDataItem shopDataItem=GetProduct(item.ProductId);
+        
+        Debug.Log("获取恢复购买商品ID: " + shopDataItem.produceNameId);
         if (shopDataItem!=null)
         {
+            Game.self.Shop.CurrentShopDataItem=shopDataItem.DeepCopy();
+            
+            SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
+            
             foreach (var dataitem in shopDataItem.productContent)
             {
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
-                items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
+                //items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count);
-                        EventDispatcher.instance.TriggerChangeGoldUI(count,true);
+                        GameDataManager.Instance.UserData.UpdateGold(count, false,false,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.Butterfly:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count);
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count,"商店购买"+item.ItemName);
                         break;
-                    case (int)LimitRewordType.Tipstool:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count);
+                    case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,"商店购买"+item.ItemName);
                         break;
-                    case (int)LimitRewordType.AutoComplete:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,count);
+                    case (int)LimitRewordType.AutoComplete://提示灯道具，单个字符提示
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,count,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:
@@ -540,6 +545,7 @@ public class ShopManager : MonoBehaviour
         if (!UIUtilities.isEditMode)
         {
              AnalyticMgr.PurchaseFinished(item, firstPay);
+             
 #if UNITY_HUAWEI
          // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);

@@ -375,7 +375,7 @@ public class ZenSettlementScreen : UIWindow
     }
     protected override void OnDisable()
     {
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false,false,false);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
         if (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankScreen))
         {
             SystemManager.Instance.HidePanel(PanelType.HeaderSection);

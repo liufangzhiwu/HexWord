@@ -140,7 +140,7 @@ public class GetItemScreen : UIWindow
     IEnumerator ShowAdsRewardUI()
     {
         yield return new WaitForSeconds(0.05f);
-        AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+        AdRuleManager.Instance.TryShowTipToolRewardVideo(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
     }
 
     private void ClickClaimGoldBtn()
