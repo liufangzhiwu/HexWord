@@ -79,6 +79,11 @@ namespace Middleware
             // }
         }
 
+        public void OnEnterGameScene()
+        {
+            throw new NotImplementedException();
+        }
+
         public void ShowBanner()
         {
             Debug.Log("Show the banner AD view.");

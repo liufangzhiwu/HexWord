@@ -11,6 +11,17 @@ namespace Middleware
 {
     public class Ads_harmony : IAds
     {
+        // ================== 配置常量 ==================
+        private const int MAX_POOL_SIZE = 1;                              // 每个广告位预加载池最大数量
+        private const int MAX_RETRY_COUNT = 3;                            // 单个预加载失败最大重试次数
+        private static readonly float[] RETRY_DELAYS = { 1f, 3f, 5f };    // 重试间隔
+
+        // 广告位 ID
+        private const string REWARD_AD_ID = "s1emwq0ad9";
+        private const string TIP_TOOL_REWARD_AD_ID = "e5dojfoi6c";
+        private const string INTERSTITIAL_AD_ID = "i0tgl4g0bw";
+
+        // ================== 基础字段 ==================
         public bool isLoadReady;
         public bool IsPlaying { get; set; }
         private string _uniqueId;
@@ -19,15 +30,28 @@ namespace Middleware
         SignalHandler SignalHandlerObj;
         AdsStatusSignalHandle SignalReceiveObj;
 
-        // 预加载相关字段
-        private Dictionary<AdType, Advertisement> _preloadedAds = new Dictionary<AdType, Advertisement>();
-        private bool _isNeedShow = false;
-        private float _preloadInterval = 5f; // 预加载间隔时间（秒）
-        private DateTime _lastPreloadTime = DateTime.MinValue;
-        private DateTime _lastShowRewardAdsTime = DateTime.MinValue;
-        private bool _isGetRewarded = false;
-        private bool _isPreloadingReward = false; // 激励视频预加载中标记
+        // ================== 预加载池（按广告位管理） ==================
+        private class AdPreloadInfo
+        {
+            public string adId;
+            public AdType adType;
+            public Advertisement readyAd;   // 池中已就绪广告
+            public bool isLoading;          // 是否有在途预加载请求（含重试中）
+            public bool pendingPreload;     // 结束后是否需要补池
+            public int retryCount;          // 已重试次数
+        }
 
+        private readonly Dictionary<string, AdPreloadInfo> _preloadInfos = new Dictionary<string, AdPreloadInfo>();
+        private bool _isInGameScene = false;    // 是否已进入游戏场景
+        private bool _isGetRewarded = false;
+        private DateTime _lastShowRewardAdsTime = DateTime.MinValue;
+
+        // 通用回调
+        private Action<bool> _completeCallback;
+        private AdType _adType;
+        private AdPreloadInfo _currentSlot;     // 当前播放所对应的预加载槽
+
+        // ================== 生命周期 ==================
         public void Init(float delay)
         {
             CreateAdsObj();
@@ -39,15 +63,13 @@ namespace Middleware
                 SignalHandler.Instance.RegisterSignalDelegate<AdsStatusSignal>(OnAdsStatusTrigger);
                 _uniqueId = Game.self.GetUniqueId();
 
-                // 初始化后立即预加载广告
-                PreloadAds();
+                // 广告 SDK 初始化完成，加载第 1 个
+                Debug.Log("[AD] SDK 初始化完成，发起预加载");
+                TryPreload(REWARD_AD_ID, AdType.Reward);
             });
         }
 
-        public bool IsReady(Define.AdKey key)
-        {
-            return true;
-        }
+        public bool IsReady(Define.AdKey key) => true;
 
         public void DestoryAdsObj()
         {
@@ -66,210 +88,258 @@ namespace Middleware
             Object.DontDestroyOnLoad(SignalReceiveObj);
         }
 
-        #region 预加载逻辑
+        #region 预加载池管理
 
-        /// <summary>
-        /// 预加载广告（目前恢复激励视频预加载）
-        /// </summary>
-        public void PreloadAds()
+        private AdPreloadInfo GetOrCreateInfo(string adId, AdType adType)
         {
-            if (_isPreloadingReward) return;
-
-            // 如果已经有预加载好的激励视频，并且还没到预加载间隔，就跳过
-            if (HasPreloadedAd(AdType.Reward) &&
-                (DateTime.Now - _lastPreloadTime).TotalSeconds < _preloadInterval)
+            if (!_preloadInfos.TryGetValue(adId, out var info))
             {
-                return;
+                info = new AdPreloadInfo { adId = adId, adType = adType };
+                _preloadInfos[adId] = info;
             }
-
-            _lastPreloadTime = DateTime.Now;
-            Debug.Log("[AD]开始预加载激励视频广告");
-            PreloadRewardVideo();
+            return info;
         }
 
         /// <summary>
-        /// 预加载激励视频广告
+        /// 池计数：已就绪 + 在途（含重试中）
         /// </summary>
-        private void PreloadRewardVideo()
+        private int GetPoolCount(AdPreloadInfo info)
         {
-            if (_isPreloadingReward) return;
+            int count = 0;
+            if (info.readyAd != null) count++;
+            if (info.isLoading) count++;
+            return count;
+        }
 
-            if (HasPreloadedAd(AdType.Reward))
+        /// <summary>
+        /// 外部接口：用户点击【开始游戏/下一关】
+        /// </summary>
+        public void OnEnterGameScene()
+        {
+            _isInGameScene = true;
+            Debug.Log("[AD] 进入游戏场景，检查补池");
+            TryPreload(REWARD_AD_ID, AdType.Reward);
+            TryPreload(TIP_TOOL_REWARD_AD_ID, AdType.Reward);
+        }
+
+        /// <summary>
+        /// 预加载核心入口：满足条件才发起请求
+        /// </summary>
+        private void TryPreload(string adId, AdType adType)
+        {
+            var info = GetOrCreateInfo(adId, adType);
+
+            // 播放中禁止预加载
+            if (IsPlaying)
             {
-                Debug.Log("[AD]激励视频已预加载，跳过");
+                info.pendingPreload = true;
+                Debug.Log($"[AD] 播放中，延后预加载，pending={adId}");
                 return;
             }
 
-            _isPreloadingReward = true;
-            _lastPreloadTime = DateTime.Now;
+            // 池已满（已就绪 + 在途）
+            if (GetPoolCount(info) >= MAX_POOL_SIZE)
+            {
+                Debug.Log($"[AD] 池已满({GetPoolCount(info)}/{MAX_POOL_SIZE})，跳过 {adId}");
+                return;
+            }
+
+            // 已有在途请求，标记 pending
+            if (info.isLoading)
+            {
+                info.pendingPreload = true;
+                Debug.Log($"[AD] 已有在途请求，pending={adId}");
+                return;
+            }
+
+            DoPreload(info);
+        }
+
+        private void DoPreload(AdPreloadInfo info)
+        {
+            info.isLoading = true;
+
+            var adRequestParams = new AdRequestParams()
+            {
+                adType = (int)info.adType,
+                adId = info.adId,
+                oaid = _uniqueId,
+                isPreload = true
+            };
+            var adOptions = new AdOptions();
+
+            Debug.Log($"[AD] 发起预加载 {info.adId}，已重试 {info.retryCount} 次");
+            OHSDKKitManager.Instance.LoadAds(adRequestParams, adOptions);
+        }
+
+        /// <summary>
+        /// 预加载请求结束（成功或彻底失败）统一处理
+        /// </summary>
+        private void OnPreloadFinished(AdPreloadInfo info, Advertisement ad, bool isNoFill)
+        {
+            info.isLoading = false;
+
+            if (ad != null)
+            {
+                // 成功入池
+                info.readyAd = ad;
+                info.retryCount = 0;
+                Debug.Log($"[AD] 预加载成功：{info.adId}");
+                CheckPendingAndRefill(info);
+                return;
+            }
+
+            // 失败
+            Debug.Log($"[AD] 预加载失败：{info.adId}，noFill={isNoFill}，retry={info.retryCount}");
+
+            // 无填充/无广告：不重试
+            if (isNoFill)
+            {
+                info.retryCount = 0;
+                CheckPendingAndRefill(info);
+                return;
+            }
+
+            // 重试
+            if (info.retryCount < MAX_RETRY_COUNT)
+            {
+                int idx = Math.Min(info.retryCount, RETRY_DELAYS.Length - 1);
+                float delay = RETRY_DELAYS[idx];
+                info.retryCount++;
+
+                Debug.Log($"[AD] {delay}s 后第 {info.retryCount} 次重试：{info.adId}");
+
+                UnityTimer.Delay(delay, () =>
+                {
+                    // 重试前置检查
+                    if (info.readyAd != null)
+                    {
+                        Debug.Log($"[AD] 重试时池中已有广告，取消 {info.adId}");
+                        return;
+                    }
+                    if (info.isLoading || IsPlaying)
+                    {
+                        Debug.Log($"[AD] 重试时在途/播放中，标记 pending：{info.adId}");
+                        info.pendingPreload = true;
+                        return;
+                    }
+                    DoPreload(info);
+                });
+            }
+            else
+            {
+                Debug.Log($"[AD] 重试耗尽，放弃 {info.adId}");
+                info.retryCount = 0;
+                // 释放"在途"状态
+                CheckPendingAndRefill(info);
+            }
+        }
+
+        /// <summary>
+        /// pending 检查补池
+        /// </summary>
+        private void CheckPendingAndRefill(AdPreloadInfo info)
+        {
+            if (info.pendingPreload &&
+                GetPoolCount(info) < MAX_POOL_SIZE &&
+                !info.isLoading)
+            {
+                info.pendingPreload = false;
+                Debug.Log($"[AD] 补池：{info.adId}");
+                TryPreload(info.adId, info.adType);
+            }
+        }
+
+        /// <summary>
+        /// 广告播放结束后统一检查：所有槽位补池
+        /// </summary>
+        private void OnAdPlaybackEnded()
+        {
+            foreach (var kv in _preloadInfos)
+            {
+                var info = kv.Value;
+                if (info.pendingPreload)
+                {
+                    CheckPendingAndRefill(info);
+                }
+                else if (GetPoolCount(info) < MAX_POOL_SIZE && !info.isLoading)
+                {
+                    TryPreload(info.adId, info.adType);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 立即停止某个广告位的重试循环（用于用户点播走实时加载）
+        /// </summary>
+        private void CancelRetry(AdPreloadInfo info)
+        {
+            info.retryCount = MAX_RETRY_COUNT;
+        }
+
+        #endregion
+
+        #region Show 接口
+
+        public void ShowTipToolReward(Define.AdKey key, Action<bool> callback)
+        {
+            ShowRewardInternal(key, TIP_TOOL_REWARD_AD_ID, callback);
+        }
+
+        public void ShowReward(Define.AdKey key, Action<bool> callback)
+        {
+            ShowRewardInternal(key, REWARD_AD_ID, callback);
+        }
+
+        private void ShowRewardInternal(Define.AdKey key, string adId, Action<bool> callback)
+        {
+            CreateAdsObj();
+
+            _currentAdKey = key;
+            _completeCallback = callback;
+            _adType = AdType.Reward;
+            _isGetRewarded = false;
+            IsPlaying = true;
+            _isNeedShow_Field = true;
+            _lastShowRewardAdsTime = DateTime.Now;
+
+            var info = GetOrCreateInfo(adId, AdType.Reward);
+            _currentSlot = info;
+
+            // 1. 池中已有就绪广告 → 立即展示
+            if (info.readyAd != null)
+            {
+                var ad = info.readyAd;
+                info.readyAd = null;
+                Debug.Log($"[AD] 使用预加载广告：{adId}");
+                DisplayAd(ad);
+                return;
+            }
+
+            // 2. 池中无就绪广告 → 立即停止重试
+            CancelRetry(info);
+
+            // 3. 若有在途请求 → 等待完成后直接展示
+            if (info.isLoading)
+            {
+                MessageSystem.Instance.ShowLoadingAnimation();
+                Debug.Log($"[AD] 预加载在途，等待完成后展示：{adId}");
+                return;
+            }
+
+            // 4. 无在途请求 → 走实时加载
+            info.isLoading = true;
+            MessageSystem.Instance.ShowLoadingAnimation();
 
             var adRequestParams = new AdRequestParams()
             {
                 adType = (int)AdType.Reward,
-                adId = "s1emwq0ad9", // 与 ShowReward 中保持一致
-                oaid = _uniqueId,
-                isPreload = true
-            };
-
-            var adOptions = new AdOptions();
-
-            Debug.Log("[AD]预加载激励视频广告");
-            OHSDKKitManager.Instance.LoadAds(adRequestParams, adOptions);
-        }
-
-        /// <summary>
-        /// 预加载插屏广告（保留原方法，暂未启用）
-        /// </summary>
-        private void PreloadInterstitial()
-        {
-            if (_preloadedAds.ContainsKey(AdType.Interstitial) && _preloadedAds[AdType.Interstitial] != null)
-            {
-                Debug.Log("[AD]插屏广告已预加载，跳过");
-                return;
-            }
-
-            var adRequestParams = new AdRequestParams()
-            {
-                adType = (int)AdType.Interstitial,
-                adId = "i0tgl4g0bw",
+                adId = adId,
                 oaid = _uniqueId,
                 isPreload = true
             };
             var adOptions = new AdOptions();
-            _isNeedShow = false;
-            Debug.Log("[AD]预加载插屏广告");
-            OHSDKKitManager.Instance.LoadAds(adRequestParams, adOptions);
-        }
-
-        /// <summary>
-        /// 获取预加载的广告
-        /// </summary>
-        private Advertisement GetPreloadedAd(AdType adType)
-        {
-            if (_preloadedAds.ContainsKey(adType) && _preloadedAds[adType] != null)
-            {
-                var ad = _preloadedAds[adType];
-                _preloadedAds.Remove(adType); // 使用后移除，需要重新预加载
-                return ad;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 检查是否有预加载的广告可用
-        /// </summary>
-        public bool HasPreloadedAd(AdType adType)
-        {
-            return _preloadedAds.ContainsKey(adType) && _preloadedAds[adType] != null;
-        }
-
-        /// <summary>
-        /// 手动触发重新预加载（例如在广告展示失败后）
-        /// </summary>
-        public void ForcePreloadAds()
-        {
-            _lastPreloadTime = DateTime.MinValue; // 重置时间，强制重新预加载
-            PreloadAds();
-        }
-
-        #endregion
-        
-        public void ShowTipToolReward(Define.AdKey key, Action<bool> callback)
-        {
-            CreateAdsObj();
-
-            _currentAdKey = key;
-            _completeCallback = callback;
-            _adType = AdType.Reward;
-            _isGetRewarded = false;
-            IsPlaying = true;
-            _lastShowRewardAdsTime = DateTime.Now;
-
-            // 1. 已经有预加载好的激励视频，直接展示
-            var preloadedAd = GetPreloadedAd(AdType.Reward);
-            if (preloadedAd != null)
-            {
-                _isNeedShow = true;
-                Debug.Log("[AD]使用预加载的激励视频广告");
-                DisplayAd(preloadedAd);
-
-                // 展示后重新预加载
-                UnityTimer.Delay(1f, () => PreloadRewardVideo());
-                return;
-            }
-
-            // 2. 预加载正在进行，等待预加载完成后直接展示
-            if (_isPreloadingReward)
-            {
-                _isNeedShow = true;
-                MessageSystem.Instance.ShowLoadingAnimation();
-                Debug.Log("[AD]激励视频预加载中，等待完成后直接展示");
-                return;
-            }
-
-            // 3. 没有预加载，正常加载并展示
-            _isNeedShow = true;
-
-            var adRequestParams = new AdRequestParams()
-            {
-                adType = (int)_adType,
-                adId = "e5dojfoi6c",
-                oaid = _uniqueId,
-                isPreload = true
-            };
-
-            var adOptions = new AdOptions();
-            MessageSystem.Instance.ShowLoadingAnimation();
-            OHSDKKitManager.Instance.LoadAds(adRequestParams, adOptions);
-        }
-        
-
-        public void ShowReward(Define.AdKey key, Action<bool> callback)
-        {
-            CreateAdsObj();
-
-            _currentAdKey = key;
-            _completeCallback = callback;
-            _adType = AdType.Reward;
-            _isGetRewarded = false;
-            IsPlaying = true;
-            _lastShowRewardAdsTime = DateTime.Now;
-
-            // 1. 已经有预加载好的激励视频，直接展示
-            var preloadedAd = GetPreloadedAd(AdType.Reward);
-            if (preloadedAd != null)
-            {
-                _isNeedShow = true;
-                Debug.Log("[AD]使用预加载的激励视频广告");
-                DisplayAd(preloadedAd);
-
-                // 展示后重新预加载
-                UnityTimer.Delay(1f, () => PreloadRewardVideo());
-                return;
-            }
-
-            // 2. 预加载正在进行，等待预加载完成后直接展示
-            if (_isPreloadingReward)
-            {
-                _isNeedShow = true;
-                MessageSystem.Instance.ShowLoadingAnimation();
-                Debug.Log("[AD]激励视频预加载中，等待完成后直接展示");
-                return;
-            }
-
-            // 3. 没有预加载，正常加载并展示
-            _isNeedShow = true;
-
-            var adRequestParams = new AdRequestParams()
-            {
-                adType = (int)_adType,
-                adId = "s1emwq0ad9",
-                oaid = _uniqueId,
-                isPreload = true
-            };
-
-            var adOptions = new AdOptions();
-            MessageSystem.Instance.ShowLoadingAnimation();
+            Debug.Log($"[AD] 实时加载激励视频：{adId}");
             OHSDKKitManager.Instance.LoadAds(adRequestParams, adOptions);
         }
 
@@ -279,101 +349,59 @@ namespace Middleware
 
             _completeCallback = callback;
             _adType = AdType.Interstitial;
-            _isNeedShow = true;
+            _isNeedShow_Field = true;
             _isGetRewarded = false;
             IsPlaying = true;
 
-            // 检查是否有预加载的插屏广告
-            var preloadedAd = GetPreloadedAd(AdType.Interstitial);
-            if (preloadedAd != null)
-            {
-                Debug.Log("[AD]使用预加载的插屏广告");
-                DisplayAd(preloadedAd);
+            var info = GetOrCreateInfo(INTERSTITIAL_AD_ID, AdType.Interstitial);
+            _currentSlot = info;
 
-                // 展示后立即重新预加载新的广告
-                UnityTimer.Delay(1f, () => PreloadInterstitial());
+            if (info.readyAd != null)
+            {
+                var ad = info.readyAd;
+                info.readyAd = null;
+                Debug.Log("[AD] 使用预加载插屏广告");
+                DisplayAd(ad);
                 return;
             }
 
-            // 没有预加载的广告，正常加载
+            CancelRetry(info);
+
+            if (info.isLoading)
+            {
+                MessageSystem.Instance.ShowLoadingAnimation();
+                return;
+            }
+
+            info.isLoading = true;
+
             var adRequestParams = new AdRequestParams()
             {
                 adType = (int)_adType,
-                adId = "i0tgl4g0bw",
+                adId = INTERSTITIAL_AD_ID,
                 oaid = _uniqueId,
                 isPreload = true
             };
             var adOptions = new AdOptions();
+            Debug.Log("[AD] 实时加载插屏广告");
             OHSDKKitManager.Instance.LoadAds(adRequestParams, adOptions);
         }
 
-        public void LoadBannerAD()
-        {
-
-        }
-
+        public void LoadBannerAD() { }
         private AdRequestParams BanneradRequestParams;
+        public void ShowBanner() { }
+        public void HideBanner() { }
 
-        public void ShowBanner()
-        {
-            // CreateAdsObj();
-            //
-            // // if(_isBannerShow) return;
-            // // _isBannerShow = true;
-            // _adType = AdType.Banner;
-            //
-            // BanneradRequestParams = new AdRequestParams()
-            // {
-            //     adType = (int)_adType,
-            //     adId = "a3czsxbndo",
-            //     oaid = _uniqueId,
-            //     isPreload = true
-            // };
-            //
-            // BanneradRequestParams.adWidth = 360;
-            // BanneradRequestParams.adHeight = 57;
-            // _isNeedShow = true;
-            // var adOptions = new AdOptions();
-            // var adDisplayOptions = new AdDisplayOptions();
-            //
-            // OHSDKKitManager.Instance.LoadBanner(BanneradRequestParams, adOptions, adDisplayOptions);
-        }
-
-        public void HideBanner()
-        {
-            // if(!_isBannerShow) return;
-            // DestoryAdsObj();
-        }
+        #endregion
 
         #region 通用逻辑
-        private Action<bool> _completeCallback;
-        private AdType _adType;
 
-        private string GetAdId(Define.AdKey key)
-        {
-            var adId = "";
-            //#if Unity_Release
-            return ConfigManager.Instance.GetString(key.ToString());
-            //#else
-            // switch (key)
-            // {
-            //     case Define.AdKey.BannerAdUnitId:
-            //         adId = Define.ConfigHarmony.TestBannerAdId;
-            //         break;
-            //     case Define.AdKey.InterstitialAdId:
-            //         adId = Define.ConfigHarmony.TestInterstitialAdId;
-            //         break;
-            //     default:
-            //         adId = Define.ConfigHarmony.TestRewardAdId;
-            //         break;
-            // }
-            // return adId;
-            //#endif
-        }
+        // 保留 _isNeedShow 字段（沿用原代码结构）
+        private bool _isNeedShow_Field = false;
 
         private void DisplayAd(Advertisement ad)
         {
-            if (!_isNeedShow) return;
+            if (!_isNeedShow_Field) return;
 
             Debug.Log("[AD]展示广告: " + (AdType)ad.adType);
             var adDisplayOptions = new AdDisplayOptions();
@@ -385,21 +413,11 @@ namespace Middleware
                 string desc = "";
                 switch (_currentAdKey)
                 {
-                    case Define.AdKey.RewardAdIdStoreGold:
-                        desc = "奖励广告-商店金币";
-                        break;
-                    case Define.AdKey.RewardAdIdItemGold:
-                        desc = "奖励广告-物品金币";
-                        break;
-                    case Define.AdKey.RewardAdIdCheckinGold1:
-                        desc = "奖励广告-签到金币1";
-                        break;
-                    case Define.AdKey.RewardAdIdCheckinGold2:
-                        desc = "奖励广告-签到金币2";
-                        break;
-                    case Define.AdKey.RewardAdIdCheckinGold3:
-                        desc = "奖励广告-签到金币3";
-                        break;
+                    case Define.AdKey.RewardAdIdStoreGold: desc = "奖励广告-商店金币"; break;
+                    case Define.AdKey.RewardAdIdItemGold: desc = "奖励广告-物品金币"; break;
+                    case Define.AdKey.RewardAdIdCheckinGold1: desc = "奖励广告-签到金币1"; break;
+                    case Define.AdKey.RewardAdIdCheckinGold2: desc = "奖励广告-签到金币2"; break;
+                    case Define.AdKey.RewardAdIdCheckinGold3: desc = "奖励广告-签到金币3"; break;
                 }
                 AnalyticMgr.VideoStart(desc);
             }
@@ -412,13 +430,16 @@ namespace Middleware
 
         private void CallbackAd(bool success)
         {
+            var endedType = _adType;
+            var slot = _currentSlot;
+
             IsPlaying = false;
-            _isNeedShow = false; // 重置展示标记
+            _isNeedShow_Field = false;
 
             if (_completeCallback != null)
             {
                 var tempCallback = _completeCallback;
-                _completeCallback = null; // 立即置空，防止多次回调
+                _completeCallback = null;
 
                 try
                 {
@@ -426,74 +447,122 @@ namespace Middleware
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[AD] 业务逻辑回调报错: {e.Message}");
+                    Debug.LogError($"[AD] 业务回调报错: {e.Message}");
                 }
             }
 
-            // 广告展示完成后，触发重新预加载
-            if (success && _adType == AdType.Reward)
+            _currentSlot = null;
+
+            // 激励视频关闭后（成功、失败、中途关闭都算），补池
+            if (endedType == AdType.Reward)
             {
-                UnityTimer.Delay(2f, () => PreloadRewardVideo());
+                UnityTimer.Delay(0.5f, () => OnAdPlaybackEnded());
             }
+        }
+
+        /// <summary>
+        /// 只有"手动关闭且未获得奖励"时走此分支：不回调业务，但要补池
+        /// </summary>
+        private void HandleManualCloseNoReward()
+        {
+            var slot = _currentSlot;
+
+            IsPlaying = false;
+            _isNeedShow_Field = false;
+            _completeCallback = null;
+            _currentSlot = null;
+
+            Debug.Log("[AD] 玩家手动关闭激励视频且未获得奖励，不回调 false");
+
+            UnityTimer.Delay(0.5f, () => OnAdPlaybackEnded());
         }
 
         private void OnLoadAdsTrigger(SignalBase signal)
         {
-            if (!signal.hasError())
+            bool hasError = signal.hasError();
+            string msg = signal.message;
+
+            if (!hasError)
             {
                 var targetSignal = (AdsLoadSignal)signal;
-                var ad = targetSignal.ads[0];
+                var ad = (targetSignal.ads != null && targetSignal.ads.Count > 0) ? targetSignal.ads[0] : null;
 
                 if (ad != null)
                 {
                     var adType = (AdType)ad.adType;
+                    Debug.Log($"[OnLoadAdsTrigger] type={adType}, uniqueId={ad.uniqueId}, rewarded={ad.rewarded}, clicked={ad.clicked}");
 
-                    Debug.Log($"[OnLoadAdsTrigger]type：{adType},uniqueId：{ad.uniqueId},rewarded：{ad.rewarded},clicked：{ad.clicked}");
+                    // 匹配到当前正在加载的槽位
+                    var matched = FindLoadingSlot(adType);
 
-                    // 激励视频预加载完成
-                    if (_isPreloadingReward && adType == AdType.Reward)
+                    if (matched != null)
                     {
-                        _isPreloadingReward = false;
+                        matched.isLoading = false;
+                        matched.retryCount = 0;
 
-                        // 如果此时有 ShowReward 在等待，就直接展示
-                        if (_isNeedShow && _adType == AdType.Reward && _completeCallback != null)
+                        // 用户正在等待展示
+                        if (_isNeedShow_Field && _adType == adType && _completeCallback != null)
                         {
+                            Debug.Log($"[AD] 加载完成，直接展示：{matched.adId}");
                             DisplayAd(ad);
+                            return;
                         }
-                        else
-                        {
-                            // 纯预加载，缓存起来
-                            _preloadedAds[adType] = ad;
-                            Debug.Log("[AD]激励视频预加载完成，已缓存");
-                            // 预加载不显示 loading，无需隐藏
-                        }
+
+                        // 纯预加载 → 入池
+                        matched.readyAd = ad;
+                        Debug.Log($"[AD] 预加载完成，入池：{matched.adId}");
+                        CheckPendingAndRefill(matched);
                         return;
                     }
-                    // 非预加载流程，立即展示
+
+                    // 没有匹配槽位，兜底直接展示
                     DisplayAd(ad);
-                }
-                else
-                {
-                    Debug.Log($"[OnLoadAdsTrigger]targetSignal Ad null, Code :{signal.code} Message : {signal.message}");
-
-                    _isPreloadingReward = false;
-
-                    if (_isNeedShow && _adType != AdType.Banner)
-                        CallbackAd(false);
-
-                    MessageSystem.Instance.HideLoadingAnimation();
+                    return;
                 }
             }
-            else
+
+            // 加载失败
+            Debug.Log($"[OnLoadAdsTrigger] 加载失败，code={signal.code}, msg={msg}");
+            HandleLoadFail(IsNoFillMessage(msg));
+        }
+
+        private AdPreloadInfo FindLoadingSlot(AdType adType)
+        {
+            foreach (var kv in _preloadInfos)
             {
-                Debug.Log($"[OnLoadAdsTrigger]LoadAds Error, Code :{signal.code} Message : {signal.message}");
+                if (kv.Value.isLoading && kv.Value.adType == adType)
+                    return kv.Value;
+            }
+            return null;
+        }
 
-                _isPreloadingReward = false;
+        private bool IsNoFillMessage(string msg)
+        {
+            if (string.IsNullOrEmpty(msg)) return false;
+            var lower = msg.ToLower();
+            return lower.Contains("no fill") || lower.Contains("nofill") || lower.Contains("no ad")
+                || lower.Contains("无填充") || lower.Contains("无广告");
+        }
 
-                if (_isNeedShow && _adType != AdType.Banner)
-                    CallbackAd(false);
+        private void HandleLoadFail(bool isNoFill)
+        {
+            MessageSystem.Instance.HideLoadingAnimation();
 
-                MessageSystem.Instance.HideLoadingAnimation();
+            var matched = FindLoadingSlot(_adType);
+            if (matched == null) matched = _currentSlot;
+
+            // 用户点播的实时加载失败
+            if (_isNeedShow_Field && _completeCallback != null && matched == _currentSlot)
+            {
+                if (matched != null) matched.isLoading = false;
+                CallbackAd(false);
+                return;
+            }
+
+            // 纯预加载失败
+            if (matched != null)
+            {
+                OnPreloadFinished(matched, null, isNoFill);
             }
         }
 
@@ -502,7 +571,7 @@ namespace Middleware
             if (!signal.hasError())
             {
                 var targetSignal = (AdsShowSignal)signal;
-                Debug.Log($"[OnShowAdsTrigger] type:{(AdType)targetSignal.adType},uniqueId：{targetSignal.uniqueId}");
+                Debug.Log($"[OnShowAdsTrigger] type={(AdType)targetSignal.adType}, uniqueId={targetSignal.uniqueId}");
             }
 
             Game.self.PauseGame();
@@ -514,6 +583,7 @@ namespace Middleware
             {
                 var targetSignal = signal as AdsStatusSignal;
                 if (targetSignal == null) return;
+
                 string currentStatus = targetSignal.AdStatus ?? "";
                 string statusLower = currentStatus.ToLower();
                 Debug.LogError($"[AD] 收到鸿蒙底层状态: status={currentStatus}");
@@ -523,7 +593,7 @@ namespace Middleware
                     bool isClose = statusLower.Contains("close");
                     bool isFail = statusLower.Contains("fail");
 
-                    // 1. 无条件解除锁定和UI，不管是什么广告
+                    // 1. 释放锁定和UI
                     if (isClose || isFail)
                     {
                         Game.self.ResumeGame();
@@ -531,17 +601,17 @@ namespace Middleware
                         if (MessageSystem.Instance != null) MessageSystem.Instance.HideLoadingAnimation();
                     }
 
-                    // 2. 视频达标，打上发奖标记
+                    // 2. 视频达标标记
                     if (statusLower.Contains("reward") || statusLower.Contains("videoplayend"))
                     {
                         if (_adType == AdType.Reward)
                         {
                             _isGetRewarded = true;
-                            Debug.Log("[AD] 激励视频已达标，标记为可发奖！");
+                            Debug.Log("[AD] 激励视频达标，标记可发奖");
                         }
                     }
 
-                    // 3. 关闭广告结算发奖
+                    // 3. 关闭/失败结算
                     if (isClose || isFail)
                     {
                         if (_adType == AdType.Reward)
@@ -552,55 +622,37 @@ namespace Middleware
                             }
                             else if (isFail)
                             {
-                                // 只有真正失败时才回调 false
                                 CallbackAd(false);
                             }
                             else if (isClose)
                             {
-                                // 玩家手动关闭且未获得奖励，不调用 CallbackAd(false)
-                                // 但需要清理回调，避免残留
-                                _completeCallback = null;
-                                _isNeedShow = false;
-                                Debug.Log("[AD] 玩家手动关闭激励视频且未获得奖励，不回调 false");
+                                // 玩家手动关闭且未获得奖励 → 不回调 false
+                                HandleManualCloseNoReward();
                             }
                         }
                         else if (_adType == AdType.Interstitial)
                         {
-                            // 插屏广告只要没 fail，关闭时就发奖
                             CallbackAd(!isFail);
-                        }
-
-                        // 广告关闭或失败后，尝试重新预加载激励视频
-                        if (isFail && _adType == AdType.Reward)
-                        {
-                            Debug.Log("[AD] 激励视频展示失败，重新预加载");
-                            UnityTimer.Delay(3f, () => ForcePreloadAds());
                         }
                     }
                 }
                 else
                 {
-                    // Error 分支，必须释放锁定状态！
-                    Debug.LogError("[AD] 鸿蒙发送信号附带 Error！");
+                    // Error 分支
+                    Debug.LogError("[AD] 鸿蒙信号附带 Error！");
                     Game.self.ResumeGame();
                     IsPlaying = false;
                     if (MessageSystem.Instance != null) MessageSystem.Instance.HideLoadingAnimation();
-                    if (_adType != AdType.Banner)
+
+                    if (_adType != AdType.Banner && _completeCallback != null)
                     {
                         CallbackAd(false);
-                    }
-
-                    // 发生错误时重新预加载激励视频
-                    if (_adType == AdType.Reward)
-                    {
-                        UnityTimer.Delay(5f, () => ForcePreloadAds());
                     }
                 }
             }
             catch (Exception ex)
             {
-                // 保命大绝招，万一解析崩了，也要让游戏跑下去
-                Debug.LogError($"[AD] OnAdsStatusTrigger 崩溃啦: {ex.Message}");
+                Debug.LogError($"[AD] OnAdsStatusTrigger 异常: {ex.Message}");
                 Game.self.ResumeGame();
                 IsPlaying = false;
                 if (MessageSystem.Instance != null) MessageSystem.Instance.HideLoadingAnimation();
@@ -608,7 +660,6 @@ namespace Middleware
         }
 
         #endregion
-
     }
 }
 #endif
