@@ -11,6 +11,7 @@ namespace Middleware
         void Init(float delay);
         bool IsReady(Define.AdKey key);
         void ShowReward(Define.AdKey key, Action<bool> callback);
+        void ShowTipToolReward(Define.AdKey key, Action<bool> callback);
         void ShowInterstitial(Action<bool> callback);
         
         void LoadBannerAD();

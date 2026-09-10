@@ -58,6 +58,11 @@ namespace Middleware
             // }
         }
 
+        public void ShowTipToolReward(Define.AdKey key, Action<bool> callback)
+        {
+            throw new NotImplementedException();
+        }
+
         public void ShowInterstitial(Action<bool> callback)
         {
             _adCompletedCallBackI = callback;

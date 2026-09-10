@@ -199,9 +199,6 @@ public class Account_harmony : IAccounts
         // Debug.Log($"上传角色信息: ID={gSKPlayerRole.roleId}, 名称={gSKPlayerRole.roleName}, 等级={gSKPlayerRole.roleLevel}");
         // OHSDKKitManager.Instance.SavePlayerInfo(gSKPlayerRole);
         
-       
-       
-       
         OHSDKKitManager.Instance.UpdateGameInfo(gameConfigInfo);
     }
 
@@ -236,14 +233,12 @@ public class Account_harmony : IAccounts
             AnalyticMgr.SetLoginUser(UserId);
             IsLogin = true;
             VerifyPlayer();
-            
         }
         else
         {
             Debug.Log("Login Error" + "\n "
                 +"Code : " + signal.code + " \n Message : " + signal.message + "\n");
         }
-
     }
 
     public void OnLogoutSignalTrigger(SignalBase signal)

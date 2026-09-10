@@ -160,8 +160,8 @@ namespace Middleware
 #elif UNITY_IOS
             
 #elif UNITY_OPENHARMONY
-            Pushs = new Push_harmony();
-            Pushs.Init(0.5f);
+            // Pushs = new Push_harmony();
+            // Pushs.Init(0.5f);
 #endif
            
         }
