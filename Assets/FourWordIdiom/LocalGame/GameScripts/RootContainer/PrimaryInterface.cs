@@ -879,8 +879,8 @@ public class PrimaryInterface : UIWindow
                 OnEnterStageClick();
             }
         }
-       
-       
+
+        Game.self.Ads.OnEnterGameScene();
     }
     
     private Sprite LoadheadIcon(string showIcon)
