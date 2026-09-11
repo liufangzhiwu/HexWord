@@ -214,6 +214,8 @@ public class DebugMenu : UIWindow
         GameDataManager.Instance.UserData.overallZenScore = value;
         
         MessageSystem.Instance.ShowTip($"添加成功  原分数{old}, 最新{GameDataManager.Instance.UserData.overallZenScore}");
+        
+        GameDataManager.Instance.CommitGameData();
     }
     
     private void OnPushTestBtn()
