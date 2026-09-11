@@ -210,8 +210,9 @@ public sealed class GameCoreManager : MonoBehaviour
             SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
             
             yield return new WaitForSeconds(0.5f);
-            Game.self.Shop.Restore(null);
         }
+        
+        Game.self.Shop.Restore(null);
     }
 
     /// <summary>
