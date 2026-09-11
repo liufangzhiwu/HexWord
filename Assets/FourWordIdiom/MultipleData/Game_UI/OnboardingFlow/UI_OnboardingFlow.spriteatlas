@@ -1,5 +1,5 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!687078895 &4343727234628468602
 SpriteAtlas:
   m_ObjectHideFlags: 0
@@ -7,10 +7,11 @@ SpriteAtlas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: UI_OnboardingFlow
+  serializedVersion: 2
   m_EditorData:
     serializedVersion: 2
     textureSettings:
-      serializedVersion: 2
+      serializedVersion: 3
       anisoLevel: 1
       compressionQuality: 50
       maxTextureSize: 2048
@@ -19,11 +20,13 @@ SpriteAtlas:
       generateMipMaps: 0
       readable: 0
       crunchedCompression: 0
+      webStreaming: 0
       sRGB: 1
     platformSettings:
     - serializedVersion: 3
       m_BuildTarget: Android
       m_MaxTextureSize: 8192
+      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 49
       m_TextureCompression: 1
@@ -37,6 +40,7 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: OpenHarmony
       m_MaxTextureSize: 8192
+      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 65
       m_TextureCompression: 1
@@ -50,6 +54,7 @@ SpriteAtlas:
     - serializedVersion: 3
       m_BuildTarget: iPhone
       m_MaxTextureSize: 8192
+      m_MaxPlaceholderSize: 32
       m_ResizeAlgorithm: 0
       m_TextureFormat: 49
       m_TextureCompression: 1
@@ -119,6 +124,7 @@ SpriteAtlas:
     - 089ccbc241301544588046b97ef922c3: 21300000
     - fa09f6d2ff43d9048ada00317fb6761d: 21300000
     - 4d7aa9f267811884994374a1f5093306: 21300000
+    - 0a4f6703ef3b75942a7f29abb59e1f62: 21300000
     - 2ba19d03c3401cb4caa46dffbfdcc9c5: 21300000
     - 06fbb923a7a7a3f40a675327e617e2ae: 21300000
     - 810813339c669ff41a0fa4c998303752: 21300000
@@ -148,12 +154,14 @@ SpriteAtlas:
     - 3757b924ba5ca10458233aa64cfd96eb: 21300000
     - 91a7ba34030586247bf45522e9446e25: 21300000
     - ff261644f0b717b4facb2763f40cfa8d: 21300000
+    - e91fb844ebbc69540b686ea5b61b8f5b: 21300000
     - ebc41b44831ca834d8c07ddd27e3b3e2: 21300000
     - d69dbe447ed1d1b4c9a0bea83cf1e48a: 21300000
     - 8d885354fcf422b47ba2d82a5e8c858e: 21300000
     - 26484b54e07ba024ab546bbd6bb25728: 21300000
     - be8808a463ad7484c9a87e23256c3fa3: 21300000
     - dd0eddc4c88c89247abd49c897e71604: 21300000
+    - 3412edc43ad693c4191de7c9609aa2bc: 21300000
     - fbe9d3d437439104ab17e2312543001f: 21300000
     - 628aa5d43690b7e43b0b5c08d838f31b: 21300000
     - 367ef9d471110d540876d791caffb3b7: 21300000
@@ -239,6 +247,7 @@ SpriteAtlas:
     - a08d6b4905aa9ca408135cd084424783: 21300000
     - 2df4656989b009247a07f7b7941e9680: 21300000
     - 389a166953106884db248664033276e6: 21300000
+    - f0a616894d86b194e882fc5f8ba361a7: 21300000
     - 5457cc89645587b4d94ae80c6ffd472d: 21300000
     - 9fb011998004a27409d05c7381537d0d: 21300000
     - fa40cea93e2d19d4fb3a7f8b8fc7a8c8: 21300000
@@ -254,6 +263,7 @@ SpriteAtlas:
     - f14c07daadffe4b45acd7c3789760739: 21300000
     - 439057ea768f8da4591bb6100024a570: 21300000
     - c9ab62faa287d174d96fe39aeb2452b1: 21300000
+    - 63c44a0b347529243a04f8494adbc0fd: 21300000
     - 39395c0b67f74e0438228c903d1a6880: 21300000
     - d2c7184b6d2ece0479e2695c50d9337a: 21300000
     - a3ce0e4b7ae6f44478f4cc98f732a3c9: 21300000
@@ -382,6 +392,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 089ccbc241301544588046b97ef922c3, type: 3}
   - {fileID: 21300000, guid: fa09f6d2ff43d9048ada00317fb6761d, type: 3}
   - {fileID: 21300000, guid: 4d7aa9f267811884994374a1f5093306, type: 3}
+  - {fileID: 21300000, guid: 0a4f6703ef3b75942a7f29abb59e1f62, type: 3}
   - {fileID: 21300000, guid: 2ba19d03c3401cb4caa46dffbfdcc9c5, type: 3}
   - {fileID: 21300000, guid: 06fbb923a7a7a3f40a675327e617e2ae, type: 3}
   - {fileID: 21300000, guid: 810813339c669ff41a0fa4c998303752, type: 3}
@@ -411,12 +422,14 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 3757b924ba5ca10458233aa64cfd96eb, type: 3}
   - {fileID: 21300000, guid: 91a7ba34030586247bf45522e9446e25, type: 3}
   - {fileID: 21300000, guid: ff261644f0b717b4facb2763f40cfa8d, type: 3}
+  - {fileID: 21300000, guid: e91fb844ebbc69540b686ea5b61b8f5b, type: 3}
   - {fileID: 21300000, guid: ebc41b44831ca834d8c07ddd27e3b3e2, type: 3}
   - {fileID: 21300000, guid: d69dbe447ed1d1b4c9a0bea83cf1e48a, type: 3}
   - {fileID: 21300000, guid: 8d885354fcf422b47ba2d82a5e8c858e, type: 3}
   - {fileID: 21300000, guid: 26484b54e07ba024ab546bbd6bb25728, type: 3}
   - {fileID: 21300000, guid: be8808a463ad7484c9a87e23256c3fa3, type: 3}
   - {fileID: 21300000, guid: dd0eddc4c88c89247abd49c897e71604, type: 3}
+  - {fileID: 21300000, guid: 3412edc43ad693c4191de7c9609aa2bc, type: 3}
   - {fileID: 21300000, guid: fbe9d3d437439104ab17e2312543001f, type: 3}
   - {fileID: 21300000, guid: 628aa5d43690b7e43b0b5c08d838f31b, type: 3}
   - {fileID: 21300000, guid: 367ef9d471110d540876d791caffb3b7, type: 3}
@@ -502,6 +515,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: a08d6b4905aa9ca408135cd084424783, type: 3}
   - {fileID: 21300000, guid: 2df4656989b009247a07f7b7941e9680, type: 3}
   - {fileID: 21300000, guid: 389a166953106884db248664033276e6, type: 3}
+  - {fileID: 21300000, guid: f0a616894d86b194e882fc5f8ba361a7, type: 3}
   - {fileID: 21300000, guid: 5457cc89645587b4d94ae80c6ffd472d, type: 3}
   - {fileID: 21300000, guid: 9fb011998004a27409d05c7381537d0d, type: 3}
   - {fileID: 21300000, guid: fa40cea93e2d19d4fb3a7f8b8fc7a8c8, type: 3}
@@ -517,6 +531,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: f14c07daadffe4b45acd7c3789760739, type: 3}
   - {fileID: 21300000, guid: 439057ea768f8da4591bb6100024a570, type: 3}
   - {fileID: 21300000, guid: c9ab62faa287d174d96fe39aeb2452b1, type: 3}
+  - {fileID: 21300000, guid: 63c44a0b347529243a04f8494adbc0fd, type: 3}
   - {fileID: 21300000, guid: 39395c0b67f74e0438228c903d1a6880, type: 3}
   - {fileID: 21300000, guid: d2c7184b6d2ece0479e2695c50d9337a, type: 3}
   - {fileID: 21300000, guid: a3ce0e4b7ae6f44478f4cc98f732a3c9, type: 3}
@@ -644,6 +659,7 @@ SpriteAtlas:
   - rewardicon
   - UI_Icon_huiStar
   - signbg
+  - bg
   - timebg
   - sliderbg
   - header_bg
@@ -673,12 +689,14 @@ SpriteAtlas:
   - taskjd
   - "\u6392\u884C"
   - help
+  - month_bronze_di
   - word
   - gift
   - left
   - rank_item_di
   - UI_Icon_music
   - pupa
+  - img_v3_0215d_4d02df66-2ef3-4b35-a8fc-600a0178c98g
   - change_up_di
   - process_di
   - butterflyjd
@@ -764,6 +782,7 @@ SpriteAtlas:
   - scroll_bar_di
   - right
   - rank_list_bg
+  - month_gold_di
   - buttertiembg
   - tipsbg
   - UI_Icon_message
@@ -779,6 +798,7 @@ SpriteAtlas:
   - start_di
   - line
   - word
+  - month_sliver_di
   - timebg
   - rightjian
   - cate_normal
@@ -865,3 +885,4 @@ SpriteAtlas:
   m_RenderDataMap: {}
   m_Tag: UI_OnboardingFlow
   m_IsVariant: 0
+  m_IsPlaceholder: 0

@@ -101,9 +101,33 @@ public class OverallRankingScreen : UIWindow
         
         // 默认打开世界榜
         SwitchTab(targetTab);
+        AdaptBanner();
         AnalyticMgr.ZenRankEnter("禅意榜");
     }
+    private void AdaptBanner()
+    {
+        // 1. 找到该物体 (建议在脚本中用 public RectTransform overallRankingBanner; 拖拽赋值以提高性能。这里提供动态查找方法)
+        Transform bannerTransform = transform.Find("OverallRankingBanner");
+        if (bannerTransform == null) return;
 
+        RectTransform bannerRect = bannerTransform.GetComponent<RectTransform>();
+
+        // 2. 计算屏幕比例 (竖屏游戏通常 宽/高 < 1)
+        // 传统的 16:9 比例约为 0.5625 (较宽)，而现代全面屏 19.5:9 约为 0.46 (较窄)
+        float aspectRatio = (float)Screen.width / Screen.height;
+        float targetMargin = 30f; // 默认给窄屏的 30
+        // 设定分界线，0.5 约等于 18:9，大于它通常视为较宽的屏幕 (如 iPad, 老款 16:9 手机)
+        if (UIUtilities.IsiPad())
+        {
+            targetMargin = 50f;
+        }
+
+        // 3. 设置 Left 和 Right
+        // Left = offsetMin.x
+        bannerRect.offsetMin = new Vector2(targetMargin, bannerRect.offsetMin.y);
+        // Right = -offsetMax.x (向内缩进必须是负数)
+        bannerRect.offsetMax = new Vector2(-targetMargin, bannerRect.offsetMax.y);
+    }
     private IEnumerator CheckOpenHelp(bool isUnlocked, int ranks = 0)
     {
         yield return new WaitForSeconds(0.5f);

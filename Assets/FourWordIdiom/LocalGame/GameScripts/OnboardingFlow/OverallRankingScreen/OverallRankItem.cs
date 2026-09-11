@@ -55,8 +55,28 @@ public class OverallRankItem : MonoBehaviour
         // 2. 绑定头像和名称的点击事件
         BindClickEvent(avatar);
         BindClickEvent(nameText);
+        AdaptToParentWidth();
     }
 
+    private void OnEnable()
+    {
+        AdaptToParentWidth();
+    }
+
+    private void AdaptToParentWidth()
+    {
+        RectTransform rect = GetComponent<RectTransform>();
+        if (rect == null || transform.parent == null) return;
+        if (transform.parent.name == "Content")
+        {
+            RectTransform parentRect = transform.parent.GetComponent<RectTransform>();
+            if (parentRect != null)
+            {
+                // 保持当前的高度不变，将宽度强制设置为父物体的宽度
+                rect.sizeDelta = new Vector2(parentRect.rect.width, rect.sizeDelta.y);
+            }
+        }
+    }
     public void SetRankInfo(OverallRankState state,bool isMonthly, bool isDisplayOnly = false)
     {
         _playerId = state.PlayerId; // 记录PlayerId

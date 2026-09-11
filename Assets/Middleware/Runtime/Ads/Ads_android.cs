@@ -81,7 +81,7 @@ namespace Middleware
 
         public void OnEnterGameScene()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public void ShowBanner()

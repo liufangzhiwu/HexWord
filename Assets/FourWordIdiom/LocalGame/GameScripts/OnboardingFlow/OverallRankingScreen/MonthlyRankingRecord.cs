@@ -41,6 +41,24 @@ public class MonthlyRankingRecord : MonoBehaviour
         // 初始化数组，索引 0 对应第一名，1 对应第二名，2 对应第三名
         _rankUIs = new RankUIElements[] { rank1UI, rank2UI, rank3UI };
     }
+    private void OnEnable()
+    {
+        AdaptToParentWidth();
+    }
+
+    private void AdaptToParentWidth()
+    {
+        RectTransform rect = GetComponent<RectTransform>();
+        if (rect != null && transform.parent != null)
+        {
+            RectTransform parentRect = transform.parent.GetComponent<RectTransform>();
+            if (parentRect != null)
+            {
+                // 保持当前的高度不变，将宽度强制设置为父物体的宽度
+                rect.sizeDelta = new Vector2(parentRect.rect.width, rect.sizeDelta.y);
+            }
+        }
+    }
     /// <summary>
     /// 外部调用此方法来刷新整个月份的数据卡片
     /// </summary>
@@ -53,44 +71,75 @@ public class MonthlyRankingRecord : MonoBehaviour
         {
             dateText.text = date;
         }
-
-        // 2. 为了防止数据不满3个人的情况（比如新开服只有2个人），先将所有排名的根节点隐藏
-        for (int i = 0; i < _rankUIs.Length; i++)
+        // 将玩家数据转换为字典，方便按名次 (Rank) 快速匹配
+        Dictionary<int, MonthlyTopPlayer> playerDict = new Dictionary<int, MonthlyTopPlayer>();
+        if (topPlayers != null)
         {
-            if (_rankUIs[i].RankRoot != null)
+            foreach (var player in topPlayers)
             {
-                _rankUIs[i].RankRoot.SetActive(false);
+                // 防御性判断，只记录 1-3 名的数据
+                if (player.Rank >= 1 && player.Rank <= 3)
+                {
+                    playerDict[player.Rank] = player;
+                }
             }
         }
+        // 2. 为了防止数据不满3个人的情况（比如新开服只有2个人），先将所有排名的根节点隐藏
+        // for (int i = 0; i < _rankUIs.Length; i++)
+        // {
+        //     if (_rankUIs[i].RankRoot != null)
+        //     {
+        //         _rankUIs[i].RankRoot.SetActive(false);
+        //     }
+        // }
 
-        if (topPlayers == null || topPlayers.Count == 0) return;
+        // if (topPlayers == null || topPlayers.Count == 0) return;
 
         // 3. 遍历传入的玩家数据，激活对应的 UI 并赋值
-        foreach (var player in topPlayers)
+        for (int i = 0; i < _rankUIs.Length; i++)
         {
-            // 防御性判断，确保排名在 1-3 之间
-            if (player.Rank < 1 || player.Rank > 3) continue;
+            RankUIElements ui = _rankUIs[i];
+            if (ui.RankRoot == null) continue;
 
-            // 数组的索引等于 排名减1 (Rank 1 -> Index 0)
-            int index = player.Rank - 1;
-            RankUIElements ui = _rankUIs[index];
+            // 确保 UI 节点始终处于激活展示状态
+            if (!ui.RankRoot.activeSelf) ui.RankRoot.SetActive(true);
 
-            if (ui.RankRoot != null)
+            int targetRank = i + 1; // 数组索引 0 对应 Rank 1
+
+            // 3. 判断该名次是否有对应的玩家数据
+            if (playerDict.TryGetValue(targetRank, out MonthlyTopPlayer player))
             {
-                ui.RankRoot.SetActive(true); // 激活该名次的 UI 显示
-                
+                // 【有数据】进行正常赋值
                 string displayName = player.Name;
                 if (!string.IsNullOrEmpty(displayName) && displayName.Length > 6)
                 {
                     displayName = displayName.Substring(0, 5) + "..";
                 }
-                ui.NameText.text = displayName;
-                ui.ScoreText.text = player.Score.ToString();
-                // 加载头像
-                ui.AvatarImage.sprite = LoadHeadIcon("head" + player.Avatar);
-                    // string avaStr = UIUtilities.ExtractNumber(player.Avatar);
-                    // int avaIdx = string.IsNullOrEmpty(avaStr) ? 0 : int.Parse(avaStr);
-               if(player.Frame != null) ui.FrameImage.sprite = LoadHeadIcon("AvatarFrameIcon" + player.Frame);
+                if (ui.NameText != null) ui.NameText.text = displayName;
+                if (ui.ScoreText != null) ui.ScoreText.text = player.Score.ToString();
+
+                // 激活并加载头像/相框
+                if (ui.AvatarImage != null)
+                {
+                    ui.AvatarImage.gameObject.SetActive(true);
+                    ui.AvatarImage.sprite = LoadHeadIcon("head" + player.Avatar);
+                }
+                if (ui.FrameImage != null)
+                {
+                    ui.FrameImage.gameObject.SetActive(true);
+                    if (player.Frame != null) 
+                        ui.FrameImage.sprite = LoadHeadIcon("AvatarFrameIcon" + player.Frame);
+                }
+            }
+            else
+            {
+                // 【无数据】置空预制体数据 (虚位以待状态)
+                if (ui.NameText != null) ui.NameText.text = ""; // 可根据需求改成 "" 或 "---"
+                if (ui.ScoreText != null) ui.ScoreText.text = ""; // 可根据需求改成 "0" 或 ""
+
+                // 隐藏头像与相框，避免给 Image.sprite 赋 null 导致出现白色方块
+                if (ui.AvatarImage != null) ui.AvatarImage.gameObject.SetActive(false);
+                if (ui.FrameImage != null) ui.FrameImage.gameObject.SetActive(false);
             }
         }
     }
