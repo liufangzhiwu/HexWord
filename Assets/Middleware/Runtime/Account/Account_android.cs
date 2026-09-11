@@ -14,6 +14,7 @@ namespace Middleware
     {
         public string UserId { get; set; }
         public bool IsLogin { get; set; } = true;
+        public LoginState State { get; set; }
         string teamPlayerId = string.Empty;
         string thirdOpenId = "";
 
@@ -29,7 +30,7 @@ namespace Middleware
 
         public void Login(bool isShowLoginPanel = false)
         {
-
+            State = LoginState.Success;
         }
 
         public void Logout()

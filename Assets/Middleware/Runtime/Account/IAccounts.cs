@@ -12,6 +12,8 @@ namespace Middleware
         /// </summary>
         public string UserId { get; set; }
         public bool IsLogin { get; set; }
+        // ✅ 新的枚举状态
+        //public LoginState State { get; set; }
         void Init(float delay);
         void Login(bool isShowLoginPanel = false);
         void Logout();

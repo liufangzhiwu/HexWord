@@ -8,14 +8,30 @@ using System;
 using System.Collections.Generic;
 using Middleware;
 using Newtonsoft.Json;
+using Unity.VisualScripting;
 
 namespace Middleware
 {
+    
+    /// <summary>
+    /// 登录状态枚举
+    /// 用于替代原先的 bool IsLogin，能区分"登录中/成功/失败/取消/超时"
+    /// </summary>
+    public enum LoginState
+    {
+        None,       // 还没开始 / 未登录
+        Logging,    // 已调用 SDK，等待回调（用户正在登录界面操作）
+        Success,    // 登录成功
+        Failed,     // SDK 明确返回错误
+        Canceled,   // 用户主动取消
+        Timeout     // 本地计时超时（不代表 SDK 失败）
+    }
     
 public class Account_harmony : IAccounts
 {
     public string UserId { get; set; }
     public bool IsLogin { get; set; } = false;
+    
     string teamPlayerId = string.Empty;
     string thirdOpenId="";
     
@@ -28,6 +44,7 @@ public class Account_harmony : IAccounts
             
         UnityTimer.Delay(delay, () =>
         {
+            Game.self.State = LoginState.None;
             InitGameService();
             InitGamePerformance();  
             Register();
@@ -37,6 +54,10 @@ public class Account_harmony : IAccounts
 
     void Register()
     {
+        if (Game.self.isRigistered) return;
+        
+        Game.self.isRigistered = true;
+        
         SignalHandler.Instance.RegisterSignalDelegate<GamePlayerInitSignal>(OnGamePlayerInitTrigger);
         SignalHandler.Instance.RegisterSignalDelegate<LoginSignal>(OnLoginSignalTrigger);
         SignalHandler.Instance.RegisterSignalDelegate<LogoutSignal>(OnLogoutSignalTrigger);
@@ -72,7 +93,8 @@ public class Account_harmony : IAccounts
     {
         OHThirdAccountInfo info = new OHThirdAccountInfo();
         info.accountName = "Tuanjie";
-        
+        Game.self.State = LoginState.Logging;
+        Game.self.HideLoginErrorPanel();
         // if(GameDataManager.Instance.UserData.IsFirstLaunch||isShowLoginPanel)
         //     OHSDKKitManager.Instance.Login(info,true, LoginPanelType.ICON);
         // else
@@ -232,12 +254,17 @@ public class Account_harmony : IAccounts
             //设置登录用户ID（需要等待游戏数据获取后）
             AnalyticMgr.SetLoginUser(UserId);
             IsLogin = true;
+            Game.self.State=LoginState.Success;
+            Game.self.HideLoginErrorPanel();
             VerifyPlayer();
         }
         else
         {
             Debug.Log("Login Error" + "\n "
                 +"Code : " + signal.code + " \n Message : " + signal.message + "\n");
+
+           Game.self.State=LoginState.Failed;
+           
         }
     }
 

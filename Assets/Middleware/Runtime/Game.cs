@@ -34,6 +34,10 @@ namespace Middleware
 
         private GameObject NetErrorView;
         
+        public bool isRigistered = false;
+        
+        public LoginState State { get; set; }
+        
         
         private void Awake()
         {
@@ -254,6 +258,16 @@ namespace Middleware
             }
             
             NetErrorView.SetActive(true);
+        }
+        
+        public void HideLoginErrorPanel()
+        {
+            if(_uiRoot == null) return;
+           
+            if (NetErrorView != null)
+            {
+                NetErrorView.SetActive(false);
+            }
         }
         
         public void ShowQuitGamePanel()

@@ -16,10 +16,6 @@ namespace Middleware
         private const int MAX_RETRY_COUNT = 3;
         private static readonly float[] RETRY_DELAYS = { 1f, 3f, 5f };
 
-        /// <summary>
-        /// true  ：同 adType 全局串行（绝对不串台，但同类型广告位不能并行预加载）
-        /// false ：允许同 adType 并行（依赖 SDK 按提交顺序返回，效率高，实践中可用）
-        /// </summary>
         private const bool STRICT_SERIAL_PER_ADTYPE = false;
 
         private const string REWARD_AD_ID = "s1emwq0ad9";
@@ -40,10 +36,10 @@ namespace Middleware
         {
             public string adId;
             public AdType adType;
-            public Advertisement readyAd;       // 池中已就绪广告
-            public bool isLoading;              // 该槽位在途
-            public bool wantPreload;            // 触发标记
-            public bool pendingShow;            // 用户点播等待
+            public List<Advertisement> readyAds = new List<Advertisement>();
+            public bool isLoading;
+            public bool wantPreload;
+            public bool pendingShow;
             public Define.AdKey pendingKey;
             public Action<bool> pendingCallback;
             public int retryCount;
@@ -52,7 +48,6 @@ namespace Middleware
         private readonly Dictionary<string, AdPreloadInfo> _preloadInfos
             = new Dictionary<string, AdPreloadInfo>();
 
-        // ★ 提交顺序队列（FIFO 匹配返回信号）
         private readonly Queue<AdPreloadInfo> _submitQueue = new Queue<AdPreloadInfo>();
 
         private bool _isInGameScene = false;
@@ -76,7 +71,7 @@ namespace Middleware
                 SignalHandler.Instance.RegisterSignalDelegate<AdsStatusSignal>(OnAdsStatusTrigger);
                 _uniqueId = Game.self.GetUniqueId();
 
-                Debug.Log("[AD] SDK 初始化完成，发起预加载");
+                Debug.Log("[AD] SDK 初始化完成，两个激励位都发起预加载");
                 TryPreload(REWARD_AD_ID, AdType.Reward);
                 TryPreload(TIP_TOOL_REWARD_AD_ID, AdType.Reward);
             });
@@ -115,8 +110,7 @@ namespace Middleware
 
         private int GetPoolCount(AdPreloadInfo info)
         {
-            int count = 0;
-            if (info.readyAd != null) count++;
+            int count = info.readyAds.Count;
             if (info.isLoading) count++;
             return count;
         }
@@ -139,16 +133,22 @@ namespace Middleware
                 Debug.Log($"[AD] 播放中，标记 wantPreload：{adId}");
                 return;
             }
-
-            if (GetPoolCount(info) >= MAX_POOL_SIZE)
+            
+            int maxpool = MAX_POOL_SIZE;
+            if (info.adId == REWARD_AD_ID)
             {
-                Debug.Log($"[AD] 池已满，跳过 {adId}");
+                maxpool = 1;
+            }
+
+            //通用广告点最多缓存一个广告
+            if (GetPoolCount(info) >= maxpool)
+            {
+                Debug.Log($"[AD] 池已满({GetPoolCount(info)}/{maxpool})，跳过 {adId}");
                 return;
             }
 
             if (info.isLoading)
             {
-                // 已有在途，等它完成后再判断（PumpPreload 会在结束回调里被调）
                 Debug.Log($"[AD] 已在途，跳过 {adId}");
                 return;
             }
@@ -157,10 +157,6 @@ namespace Middleware
             PumpPreload();
         }
 
-        /// <summary>
-        /// ★ 核心泵：一次可发多个请求（每个广告位最多 1 个）
-        /// 优先级：pendingShow > wantPreload
-        /// </summary>
         private void PumpPreload()
         {
             if (IsPlaying)
@@ -169,11 +165,11 @@ namespace Middleware
                 return;
             }
 
-            // 1) 用户点播优先（点播槽位先发）
+            // 1) 用户点播优先
             foreach (var kv in _preloadInfos)
             {
                 var info = kv.Value;
-                if (info.pendingShow && !info.isLoading && info.readyAd == null)
+                if (info.pendingShow && !info.isLoading && info.readyAds.Count == 0)
                 {
                     if (CanSubmitNow(info))
                     {
@@ -182,28 +178,33 @@ namespace Middleware
                     }
                 }
             }
+            
+        
 
             // 2) 常规预加载
             foreach (var kv in _preloadInfos)
             {
                 var info = kv.Value;
+                int maxpool = MAX_POOL_SIZE;
+                if (info.adId == REWARD_AD_ID)
+                {
+                    maxpool = 1;
+                }
+                
                 if (info.wantPreload
                     && !info.isLoading
-                    && info.readyAd == null
-                    && GetPoolCount(info) < MAX_POOL_SIZE)
+                    && GetPoolCount(info) < maxpool)
                 {
                     if (CanSubmitNow(info))
                     {
-                        Debug.Log($"[AD] Pump 预加载：{info.adId}");
+                        Debug.Log($"[AD] Pump 预加载：{info.adId}，当前池={GetPoolCount(info)}/{maxpool}");
+                      
                         DoPreload(info);
                     }
                 }
             }
         }
 
-        /// <summary>
-        /// 是否允许现在提交（STRICT 模式下同 adType 至多 1 个在途）
-        /// </summary>
         private bool CanSubmitNow(AdPreloadInfo info)
         {
             if (!STRICT_SERIAL_PER_ADTYPE) return true;
@@ -220,7 +221,13 @@ namespace Middleware
         {
             info.isLoading = true;
             info.wantPreload = false;
-            _submitQueue.Enqueue(info);   // ★ 记录提交顺序
+            _submitQueue.Enqueue(info);
+            
+            int maxpool = MAX_POOL_SIZE;
+            if (info.adId == REWARD_AD_ID)
+            {
+                maxpool = 1;
+            }
 
             var adRequestParams = new AdRequestParams()
             {
@@ -231,23 +238,25 @@ namespace Middleware
             };
             var adOptions = new AdOptions();
 
-            Debug.Log($"[AD] 发起预加载 {info.adId}，在途队列长度={_submitQueue.Count}");
+            Debug.Log($"[AD] 发起预加载 {info.adId}，队列长度={_submitQueue.Count}，当前池={GetPoolCount(info)}/{maxpool}");
             OHSDKKitManager.Instance.LoadAds(adRequestParams, adOptions);
         }
 
-        /// <summary>
-        /// 请求结束统一处理
-        /// </summary>
         private void OnPreloadFinished(AdPreloadInfo info, Advertisement ad, bool isNoFill)
         {
             info.isLoading = false;
+            
+            int maxpool = MAX_POOL_SIZE;
+            if (info.adId == REWARD_AD_ID)
+            {
+                maxpool = 1;
+            }
 
             // ---------- 成功 ----------
             if (ad != null)
             {
                 info.retryCount = 0;
 
-                // 用户点播在等待 → 立即展示
                 if (info.pendingShow)
                 {
                     Debug.Log($"[AD] 点播请求完成，立即展示：{info.adId}");
@@ -255,9 +264,16 @@ namespace Middleware
                     return;
                 }
 
-                // 纯预加载 → 入池
-                info.readyAd = ad;
-                Debug.Log($"[AD] 预加载入池：{info.adId}");
+                info.readyAds.Add(ad);
+                
+               
+                
+                Debug.Log($"[AD] 预加载入池：{info.adId}，池大小={info.readyAds.Count}/{maxpool}");
+
+                if (GetPoolCount(info) < maxpool)
+                {
+                    info.wantPreload = true;
+                }
                 PumpPreload();
                 return;
             }
@@ -296,8 +312,8 @@ namespace Middleware
 
                 UnityTimer.Delay(delay, () =>
                 {
-                    if (info.readyAd != null) return;
                     if (info.isLoading) return;
+                    if (GetPoolCount(info) >= maxpool) return;
                     info.wantPreload = true;
                     PumpPreload();
                 });
@@ -335,14 +351,10 @@ namespace Middleware
 
         #region FIFO 匹配
 
-        /// <summary>
-        /// 成功返回：按 adType 从队列中匹配最早的槽位
-        /// </summary>
         private AdPreloadInfo DequeueForReturnedAd(Advertisement ad)
         {
             var adType = (AdType)ad.adType;
 
-            // 优先看队首（最符合 FIFO 场景）
             if (_submitQueue.Count > 0)
             {
                 var head = _submitQueue.Peek();
@@ -354,7 +366,6 @@ namespace Middleware
                 }
             }
 
-            // 队首不是（可能多类型交叉），遍历找第一个匹配 adType 的
             var tmp = new List<AdPreloadInfo>();
             AdPreloadInfo result = null;
             while (_submitQueue.Count > 0)
@@ -377,9 +388,6 @@ namespace Middleware
             return result;
         }
 
-        /// <summary>
-        /// 失败返回：信号里没有 adType 信息，只能 FIFO 出队最早的一个
-        /// </summary>
         private AdPreloadInfo DequeueForFailedAd()
         {
             while (_submitQueue.Count > 0)
@@ -411,9 +419,9 @@ namespace Middleware
         private void ShowRewardInternal(Define.AdKey key, string adId, Action<bool> callback)
         {
             CreateAdsObj();
-            
+
             Debug.Log($"[AD] 点击视频点：{adId}");
-            
+
             _currentAdKey = key;
             _completeCallback = callback;
             _adType = AdType.Reward;
@@ -423,29 +431,26 @@ namespace Middleware
             var info = GetOrCreateInfo(adId, AdType.Reward);
             _currentSlot = info;
 
-            // 1) 池中已就绪 → 立即展示
-            if (info.readyAd != null)
+            if (info.readyAds.Count > 0)
             {
-                var ad = info.readyAd;
-                info.readyAd = null;
+                var ad = info.readyAds[0];
+                info.readyAds.RemoveAt(0);
+
                 IsPlaying = true;
                 _isNeedShow_Field = true;
-                Debug.Log($"[AD] 使用预加载广告（命中池）：{adId}");
+                Debug.Log($"[AD] 使用预加载广告（命中池）：{adId}，剩余池={info.readyAds.Count}");
+
                 DisplayAd(ad);
                 return;
             }
 
-            // 2) 池空 → 停止重试
             CancelRetry(info);
 
-            // 3) 标记用户点播
             info.pendingShow = true;
             info.pendingKey = key;
             info.pendingCallback = callback;
             info.wantPreload = true;
 
-            // 播放中禁止 pump，但用户点播必须 pump（会发新请求）
-            // IsPlaying 暂不置 true，等 DisplayAd 才置
             MessageSystem.Instance.ShowLoadingAnimation();
 
             Debug.Log($"[AD] 点播等待：{adId}，本槽在途={info.isLoading}");
@@ -464,12 +469,12 @@ namespace Middleware
             var info = GetOrCreateInfo(INTERSTITIAL_AD_ID, AdType.Interstitial);
             _currentSlot = info;
 
-            if (info.readyAd != null)
+            if (info.readyAds.Count > 0)
             {
-                var ad = info.readyAd;
-                info.readyAd = null;
+                var ad = info.readyAds[0];
+                info.readyAds.RemoveAt(0);
                 IsPlaying = true;
-                Debug.Log("[AD] 使用预加载插屏广告");
+                Debug.Log($"[AD] 使用预加载插屏广告，剩余池={info.readyAds.Count}");
                 DisplayAd(ad);
                 return;
             }
@@ -480,7 +485,6 @@ namespace Middleware
             info.pendingCallback = callback;
             info.wantPreload = true;
 
-            MessageSystem.Instance.ShowLoadingAnimation();
             PumpPreload();
         }
 
@@ -542,15 +546,12 @@ namespace Middleware
 
             if (endedType == AdType.Reward)
             {
-                // 播放结束后补池：所有 Reward 槽位
                 UnityTimer.Delay(0.5f, () =>
                 {
                     foreach (var kv in _preloadInfos)
                     {
                         var info = kv.Value;
-                        if (info.adType == AdType.Reward
-                            && info.readyAd == null
-                            && !info.isLoading)
+                        if (info.adType == AdType.Reward && !info.isLoading)
                         {
                             info.wantPreload = true;
                         }
@@ -574,9 +575,7 @@ namespace Middleware
                 foreach (var kv in _preloadInfos)
                 {
                     var info = kv.Value;
-                    if (info.adType == AdType.Reward
-                        && info.readyAd == null
-                        && !info.isLoading)
+                    if (info.adType == AdType.Reward && !info.isLoading)
                     {
                         info.wantPreload = true;
                     }
@@ -600,7 +599,6 @@ namespace Middleware
                 {
                     Debug.Log($"[AD] [OnLoadAdsTrigger] type={(AdType)ad.adType}, uniqueId={ad.uniqueId}");
 
-                    // ★ FIFO 匹配
                     var matched = DequeueForReturnedAd(ad);
 
                     if (matched != null)
@@ -609,16 +607,29 @@ namespace Middleware
                         return;
                     }
 
-                    // 兜底：无匹配（异常情况），直接展示
-                    Debug.LogWarning("[AD] 无匹配在途槽位，兜底展示");
-                    _adType = (AdType)ad.adType;
-                    _isNeedShow_Field = true;
-                    DisplayAd(ad);
+                    // =========================================================
+                    // ★ 关键修复：无匹配时不再无条件播放！
+                    //   仅当确实存在"用户点播等待"，且与当前 slot 的 adType 匹配时，
+                    //   才允许兜底展示；否则直接忽略该信号。
+                    // =========================================================
+                    bool userWaiting = _isNeedShow_Field
+                                       && _completeCallback != null
+                                       && _currentSlot != null
+                                       && _currentSlot.pendingShow
+                                       && (AdType)ad.adType == _currentSlot.adType;
+
+                    if (userWaiting)
+                    {
+                        Debug.LogWarning($"[AD] 无匹配但有点播等待，兜底展示：{_currentSlot.adId}");
+                        ShowInternalFromSlot(_currentSlot, ad);
+                        return;
+                    }
+
+                    Debug.LogWarning("[AD] 无匹配在途槽位，忽略该加载信号（不播放）");
                     return;
                 }
             }
 
-            // 加载失败
             Debug.Log($"[OnLoadAdsTrigger] 加载失败，code={signal.code}, msg={msg}");
 
             var failSlot = DequeueForFailedAd();
@@ -628,7 +639,6 @@ namespace Middleware
                 return;
             }
 
-            // 无在途但有用户等待
             if (_isNeedShow_Field && _completeCallback != null)
             {
                 MessageSystem.Instance.HideLoadingAnimation();
