@@ -38,6 +38,7 @@ public class Launch : MonoBehaviour
              GameDataManager.Instance.UserData.IsAgreePrivacy = true;
              isTiming = true;
 #elif UNITY_huawei||UNITY_ANDROID
+            yield return new WaitForSeconds(2f);
             GameObject pg = Resources.Load<GameObject>("Privacy/PrivacyGuidance");
             GameObject ps = Instantiate(pg, transform);
             ps.SetActive(true);

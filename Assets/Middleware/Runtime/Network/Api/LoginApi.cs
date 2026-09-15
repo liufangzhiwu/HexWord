@@ -25,7 +25,7 @@ public class LoginApi
     // 如果是 Google Play 渠道包 (包括 PC 版)
 #elif UNITY_ANDROID || UNITY_STANDALONE_WIN
         // 注意：Google Play Games PC 版也是 Google 厂商
-        return "google"; 
+        return "xiaomi"; 
 #elif UNITY_IOS
     return "apple";
 #else
@@ -46,12 +46,12 @@ public class LoginApi
         string openId = GameDataManager.Instance.UserData.UserId;
         string factory = GetCurrentFactory();
         
-        #if UNITY_EDITOR
+        //#if UNITY_EDITOR
         if (string.IsNullOrEmpty(openId))
         {
             openId = SystemInfo.deviceUniqueIdentifier;
         }
-        #endif
+        //#endif
         
         var data = new LoginRequest
         {

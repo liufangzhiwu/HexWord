@@ -14,7 +14,7 @@ public class MyLoginCallback : IMiSDKLoginCallback
                 //登陆成功
                 Debug.Log("login succeed: id=" + var2.uid + " session=" + var2.sessionId);
                 
-                //GameDataManager.Instance.UserData.UserId=var2.uid.ToString();
+                GameDataManager.Instance.UserData.UserId=var2.uid.ToString();
                 break;
             default:
                 Debug.Log("login failed");

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class APIGateway: MonoBehaviour
@@ -8,11 +7,14 @@ public class APIGateway: MonoBehaviour
     private static APIGateway _instance;
     public static APIGateway Instance => _instance;
 
-    [SerializeField] private string APIUrl = "https://zen.test.mindwordplay.cn/api/";
+    private string APIUrl = "https://zen.prod.mindwordplay.cn/api/";
+    //测试服："https://zen.test.mindwordplay.cn/api/";
+    //正式服："https://hex.prod.mindwordplay.cn/api/";
 
     public LoginApi LoginApi { get; private set; }
     public GameConfigApi GameConfigApi { get; private set; }
     public LeaderboardApi LeaderboardApi { get; private set; }
+    //public SocialApi SocialApi { get; private set; }
     public HTTPClient HttpClient { get; private set; }
 
     private void Awake()
@@ -29,12 +31,20 @@ public class APIGateway: MonoBehaviour
     }
     private void Start()
     {
+        
+#if Unity_ShowLog
+            APIUrl = "https://hex.prod.mindwordplay.cn/api/";
+#else
+        APIUrl = "https://hex.prod.mindwordplay.cn/api/";
+#endif
+        
         HttpClient = HTTPClient.Instance.Initialize(APIUrl);
         //HttpClient = HTTPClient.Instance.Initialize();
 
         LoginApi = new LoginApi(HttpClient);
         GameConfigApi = new GameConfigApi(HttpClient);
         LeaderboardApi = new LeaderboardApi(HttpClient);
+        //SocialApi = new SocialApi(HttpClient);
         
         //StartCoroutine(HttpClient.Get<object>("", 
         // onSuccess=>
