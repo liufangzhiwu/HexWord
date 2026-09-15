@@ -53,11 +53,9 @@ namespace Middleware
             }
 
             StartCoroutine(CheckNetworkConnection());
-            
             CreateAnalytic();
             InitManagers();
         }
-
 
         public void InitGame()
         { 
@@ -140,7 +138,7 @@ namespace Middleware
 #elif UNITY_OPENHARMONY
             Analytics = new Analytics_harmony();
 #endif
-            Analytics.Init(1f);
+            Analytics.Init(0.15f);
         }
         
         private void CreateShop()

@@ -67,6 +67,11 @@ namespace Middleware
        
         }
 
+        public void ShowTipToolReward(Define.AdKey key, Action<bool> callback)
+        {
+            ShowReward(key,callback);
+        }
+
         private void LoadRewardAd(Define.AdKey key, bool autoShow)
         {
             if (_isLoadingReward) return;
@@ -90,6 +95,11 @@ namespace Middleware
             ad.setAdId(GetAdId(Define.AdKey.InterstitialAdId));
             ad.setAdListener(new MAdListener(ad, _completeCallback));
             ad.loadAd(new AdParam.Builder().build());
+        }
+
+        public void OnEnterGameScene()
+        {
+            throw new NotImplementedException();
         }
 
         public void LoadBannerAD()
