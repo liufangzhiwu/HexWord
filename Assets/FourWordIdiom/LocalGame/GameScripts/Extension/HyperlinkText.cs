@@ -34,7 +34,7 @@ public class HyperlinkText : Text, IPointerClickHandler
     protected StringBuilder s_TextBuilder = new StringBuilder();
 
     [Tooltip("超链接文本颜色")]
-    private Color32 innerTextColor = new Color32(25, 26, 215, 255);
+    //private Color32 innerTextColor = new Color32(25, 26, 215, 255);
 
     /// 超链接正则
     private static readonly Regex s_HrefRegex = new Regex(@"<href=([^>\n\s]+)>(.*?)(</href>)", RegexOptions.Singleline);
@@ -83,7 +83,7 @@ public class HyperlinkText : Text, IPointerClickHandler
                     break;
 
                 toFill.PopulateUIVertex(ref vert, i);
-                vert.color = innerTextColor;
+                //vert.color = innerTextColor;
                 toFill.SetUIVertex(vert, i);
 
                 pos = vert.position;
@@ -190,7 +190,7 @@ public class HyperlinkText : Text, IPointerClickHandler
         for (int i = 0; i < 4; i++)
         {
             tempVerts[i] = lineVer[i];
-            tempVerts[i].color = innerTextColor; // 设置下划线颜色
+            //tempVerts[i].color = innerTextColor; // 设置下划线颜色
             tempVerts[i].position = pos[i];     // 设置顶点位置
         }
 

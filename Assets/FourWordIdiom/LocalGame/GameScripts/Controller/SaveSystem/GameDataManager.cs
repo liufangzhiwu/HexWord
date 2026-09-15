@@ -54,6 +54,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public override void Init()
     {
         lastSaveTime = DateTime.Now;
+        Game.self.Analytics.OnSdkInit += AnalyticMgr.OnAnalyticsSdkInit;
         Application.wantsToQuit += OnWantsToQuit;
         // needLogout = false;
         // 游戏启动时开始追踪
@@ -141,6 +142,16 @@ public class GameDataManager : SingletonMono<GameDataManager>
         _currentSessionTime = 0f;
     }
     
+    
+    void Update() 
+    {
+        if (Input.GetKeyDown(KeyCode.Escape)) 
+        {
+            CommitGameData();
+            Debug.Log("点击退出,保存数据成功！");
+            SDKAndroid.Instance.OnAppExit(new MyExitCallback());
+        }
+    }
 
     private void OnApplicationFocus(bool focusStatus)
     {

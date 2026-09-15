@@ -72,6 +72,8 @@ public class MultilingualManager:MonoBehaviour
         // 从AssetBundle中加载CSV文件
         TextAsset csvFile = AssetBundleLoader.SharedInstance.LoadTextFile("gameinfo", "config_choiceNiCheng");
         localizedNames = ToolUtil.ParseCvsLanguage(csvFile,"config_choiceNiCheng");
+
+        InitbiddenWords();
     }
 
     

@@ -105,8 +105,8 @@ public class ChessStageController
             UseTipToolCount = 0;
             ComboErrorCount = 0;
             PuzzleSumCount = 0;
-            // float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
-            AnalyticMgr.LevelStart();
+            float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
+            AnalyticMgr.LevelStart(energy);
             CurrStageData.IsFirstEnter = false;
             GameDataManager.Instance.UserData.curIsEnter = true;
             GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
@@ -188,26 +188,26 @@ public class ChessStageController
     /// </summary>
     private void CheckRateUsConditions(int stageIndex)
     {
-        var userData = GameDataManager.Instance.UserData;
-
-        // 第9关首次触发
-        if (stageIndex == 6 && userData.showRateusCount <= 0)
-        {
-            SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
-            return;
-        }
-
-        // 每日通关条件
-        if (userData.dayPassStageCount == 6 && 
-            userData.showRateusCount < 3 &&
-            !string.IsNullOrEmpty(userData.showRateusTime))
-        {
-            DateTime lastTime = DateTime.Parse(userData.showRateusTime).Date;
-            if ((DateTime.Now.Date - lastTime).TotalDays >= 1)
-            {
-                SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
-            }
-        }
+        // var userData = GameDataManager.Instance.UserData;
+        //
+        // // 第9关首次触发
+        // if (stageIndex == 6 && userData.showRateusCount <= 0)
+        // {
+        //     SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
+        //     return;
+        // }
+        //
+        // // 每日通关条件
+        // if (userData.dayPassStageCount == 6 && 
+        //     userData.showRateusCount < 3 &&
+        //     !string.IsNullOrEmpty(userData.showRateusTime))
+        // {
+        //     DateTime lastTime = DateTime.Parse(userData.showRateusTime).Date;
+        //     if ((DateTime.Now.Date - lastTime).TotalDays >= 1)
+        //     {
+        //         SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
+        //     }
+        // }
     }
     
     /// <summary>
@@ -289,8 +289,8 @@ public class ChessStageController
         
         float duration = (float)(DateTime.Now - startTime).TotalSeconds +
                          GameDataManager.Instance.UserData.curStageOnlineTime;
-        // float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
-        AnalyticMgr.LevelCompleted(duration);
+        float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
+        AnalyticMgr.LevelCompleted(duration, energy);
         
         GameDataManager.Instance.UserData.dayPassStageCount++;
         
@@ -298,7 +298,8 @@ public class ChessStageController
             CheckDynamicDifficultyIntervention(stageNumber,ComboErrorCount, duration);
         
         if (stageNumber >= 15)
-        {                
+        {              
+            AnalyticMgr.InsetAdStart("关卡插屏");
             // 显示插屏广告
             Game.self.Ads?.ShowInterstitial((bool issuccess) => 
             {

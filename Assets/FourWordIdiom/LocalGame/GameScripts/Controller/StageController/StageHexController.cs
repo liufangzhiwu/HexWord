@@ -170,7 +170,8 @@ public class StageHexController
             PuzzleComboCount = 0;
             PuzzleZenCount = 0;
             // 可在此处添加分析事件...
-            AnalyticMgr.LevelStart();
+            float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
+            AnalyticMgr.LevelStart(energy);
             GameDataManager.Instance.UserData.curIsEnter = true;
             GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
         }
@@ -277,31 +278,31 @@ public class StageHexController
                          GameDataManager.Instance.UserData.curStageOnlineTime;
         
         Debug.LogError("关卡id:"+StageNumber+"关卡进行时间(秒)"+duration);
-            
+        float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
         // 发送分析事件（示例）
-        AnalyticMgr.LevelCompleted(duration);
+        AnalyticMgr.LevelCompleted(duration,energy);
         
         GameDataManager.Instance.UserData.UpdateLevelUseTimes(StageNumber,(int)duration);
         
         if (StageNumber >= 1)
         {
 
-#if UNITY_OPENHARMONY || UNITY_huawei
+#if UNITY_OPENHARMONY || UNITY_ANDROID
 
-            // AnalyticMgr.InsetAdStart("关卡插屏");
-            // // 显示插屏广告
-            // Game.Ads.ShowInterstitial((bool issuccess) => 
-            // {
-            //     if (issuccess)
-            //     {
-            //         AnalyticMgr.InsetAdSuccess("关卡插屏");
-            //         GameDataManager.Instance.UserData.totalSeeAds++;
-            //     }
-            //     else
-            //     {
-            //         AnalyticMgr.InsetAdFail("关卡插屏");
-            //     }
-            // });
+            AnalyticMgr.InsetAdStart("关卡插屏");
+            // 显示插屏广告
+            Game.self.Ads.ShowInterstitial((bool issuccess) => 
+            {
+                if (issuccess)
+                {
+                    AnalyticMgr.InsetAdSuccess("关卡插屏");
+                    GameDataManager.Instance.UserData.totalSeeAds++;
+                }
+                else
+                {
+                    AnalyticMgr.InsetAdFail("关卡插屏");
+                }
+            });
 #endif
         }
 
@@ -329,26 +330,26 @@ public class StageHexController
     /// </summary>
     private void CheckRateUsConditions(int StageIndex)
     {
-        var userData = GameDataManager.Instance.UserData;
-
-        // 第5关首次触发
-        if (StageIndex == 6 && userData.showRateusCount <= 0)
-        {
-            SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
-            return;
-        }
-
-        // 每日通关条件
-        if (userData.dayPassStageCount == 5 && 
-            userData.showRateusCount < 3 &&
-            !string.IsNullOrEmpty(userData.showRateusTime))
-        {
-            DateTime lastTime = DateTime.Parse(userData.showRateusTime).Date;
-            if ((DateTime.Now.Date - lastTime).TotalDays >= 1)
-            {
-                SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
-            }
-        }
+        // var userData = GameDataManager.Instance.UserData;
+        //
+        // // 第5关首次触发
+        // if (StageIndex == 6 && userData.showRateusCount <= 0)
+        // {
+        //     SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
+        //     return;
+        // }
+        //
+        // // 每日通关条件
+        // if (userData.dayPassStageCount == 5 && 
+        //     userData.showRateusCount < 3 &&
+        //     !string.IsNullOrEmpty(userData.showRateusTime))
+        // {
+        //     DateTime lastTime = DateTime.Parse(userData.showRateusTime).Date;
+        //     if ((DateTime.Now.Date - lastTime).TotalDays >= 1)
+        //     {
+        //         SystemManager.Instance.ShowPanel(PanelType.RateUsScreen);
+        //     }
+        // }
     }
     
     #endregion

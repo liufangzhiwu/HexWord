@@ -64,7 +64,6 @@ public class Launch : MonoBehaviour
     public void OpenNextPage()
     {
         // 移除登录逻辑，直接初始化游戏
-        Game.self.InitGame();
         Debug.Log("完成初始化游戏服务流程");
         flowStatus = GameFlowStatus.LoggingIn;
         gameObject.SetActive(false);

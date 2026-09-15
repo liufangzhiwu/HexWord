@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.mi.unitydevlib"
-    android:versionCode="1"
-    android:versionName="1.0" >
+          xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:allowBackup="true"
-        android:supportsRtl="true"
-        android:label="@string/app_name">
+            android:allowBackup="true"
+            android:supportsRtl="true"
+            android:label="@string/app_name"
+            tools:replace="android:allowBackup">
 
+        <!-- Unity 默认 Activity，使用 tools:replace 强制覆盖冲突属性 -->
         <activity android:name="com.unity3d.player.UnityPlayerActivity"
-            android:exported="true"
-            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density"
-            android:hardwareAccelerated="false"
-            android:launchMode="singleTask"
-            android:screenOrientation="sensorLandscape">
+                  android:exported="true"
+                  android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density"
+                  android:hardwareAccelerated="false"
+                  android:launchMode="singleTask"
+                  android:screenOrientation="sensorLandscape"
+                  tools:replace="android:exported,android:configChanges,android:hardwareAccelerated,android:launchMode,android:screenOrientation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -23,19 +24,20 @@
             <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
         </activity>
 
+        <!-- 小米游戏 SDK 配置 -->
         <meta-data
-            android:name="miGameAppId"
-            android:value="mi_2882303761520479149" />
+                android:name="miGameAppId"
+                android:value="mi_2882303761520479149" />
         <meta-data
-            android:name="miGameAppKey"
-            android:value="mi_5592047971149" />
+                android:name="miGameAppKey"
+                android:value="mi_5592047971149" />
 
-        <!--        ${applicationId}  替换为游戏包名        -->
+        <!-- 使用 ${applicationId} 占位符，确保 authorities 与最终包名一致 -->
         <provider
-            android:name="com.xiaomi.gamecenter.sdk.MiOauthProvider"
-            android:authorities="chengyu.idiom.hexa.zen.mi.mi_provider"
-            android:enabled="true"
-            android:exported="false" />
+                android:name="com.xiaomi.gamecenter.sdk.MiOauthProvider"
+                android:authorities="${applicationId}.mi.mi_provider"
+                android:enabled="true"
+                android:exported="false" />
 
     </application>
 

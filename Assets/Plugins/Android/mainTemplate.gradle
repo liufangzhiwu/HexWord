@@ -8,7 +8,16 @@ dependencies {
     implementation 'com.alipay.sdk:alipaysdk-android:15.8.09@aar'
     implementation 'com.xiaomi.gamecenter.sdk:mioauth:3.4.3'
     implementation 'com.xiaomi.gamecenter.sdk:onetrack-sdk:2.2.1'
+    implementation(name: 'mimo-bridge-release', ext: 'aar')
+    implementation(name: 'mimo_sdk', ext: 'aar')
+
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'  
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.1' 
+
     **DEPS**}
+
 
 android {
 	namespace "com.unity3d.player"

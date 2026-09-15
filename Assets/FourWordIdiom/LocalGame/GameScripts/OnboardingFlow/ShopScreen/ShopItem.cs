@@ -165,7 +165,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             GameDataManager.Instance.UserData.isDayFreeGet=true;
             btntagicon.gameObject.SetActive(true);
             AnalyticMgr.VideoAdSuccess("看广告领取商店金币");
-            MessageSystem.Instance.ShowTip("购买成功！");
+            //MessageSystem.Instance.ShowTip("购买成功！");
         }
         else
         {

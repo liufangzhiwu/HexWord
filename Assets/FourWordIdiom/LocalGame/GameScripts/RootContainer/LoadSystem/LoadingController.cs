@@ -109,6 +109,8 @@ public class LoadingController : MonoBehaviour
         StartCoroutine(SimulateLoadingProgress());
         
         InitAgreed();
+        
+        Game.self.InitGame();
 
         // 等待启动流程完成
         yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.LoggingIn);

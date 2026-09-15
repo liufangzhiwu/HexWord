@@ -48,6 +48,7 @@ public class UserData
     public Dictionary<int, bool> ChessTutorialProgress;   // 填字引导进度
     public int GetTutorialProgress() { return TutorialProgress; }
     public bool Rigister;   // 注册标志
+    public string first_version; // 注册标志
     public bool IsFirstLaunch = true;   // 首次启动标志
     public bool isShowVocabulary;       // 是否显示词库标志
     
@@ -327,6 +328,7 @@ public class UserData
         IsSoundOn = user.IsSoundOn;
         IsAgreePrivacy = user.IsAgreePrivacy;
         Rigister = user.Rigister;
+        first_version = user.first_version;
         firstLoginTime = user.firstLoginTime ?? DateTime.Now.ToString();
         lastLoginDay = user.lastLoginDay;
         firstPayTime = user.firstPayTime;
@@ -737,17 +739,16 @@ public class UserData
     /// <summary>
     /// 发送货币事件（用于统计）
     /// </summary>
-    public void SendCurrencyEvent(int value, string currencyName,string message = "")
+    public void SendCurrencyEvent(int value, string currencyName, string message = "", string word = "")
     {
         AnalyticMgr.SetCommonProperties();
-        
         if (value <= 0)
         {
-            AnalyticMgr.ResourceReduce(currencyName,Mathf.Abs(value),message);
+            AnalyticMgr.ResourceReduce(currencyName, Mathf.Abs(value), message, word);
         }
         else
         {
-            AnalyticMgr.ResourceGet(currencyName,value,message);
+            AnalyticMgr.ResourceGet(currencyName, value, message, word);
         }
     }
     

@@ -41,9 +41,6 @@ namespace Middleware
 #endif
             // StartCoroutine(ShowLoadingScreen());
             StartCoroutine(CheckNetworkConnection());
-            
-            
-            InitManagers();
         }
         
 
@@ -53,6 +50,9 @@ namespace Middleware
             //StartCoroutine(WaitLoginedCreateShop());
 
             CreateAnalytic();
+            CreateAd();
+            
+            InitManagers();
         }
         
 //        private IEnumerator WaitLoginedCreateShop()
@@ -82,9 +82,6 @@ namespace Middleware
 	        LimitTimeManager.Instance.Init();
             
             ChessStageController.Instance.Init();
-            #if UNITY_EDITOR
-            CreateAnalytic();
-            #endif
         }
         
         private void CreateAccounts()
@@ -101,9 +98,9 @@ namespace Middleware
     
         private void CreateAd()
         {
-#if UNITY_huawei
-            // Ads = new Ads_android();
-            Ads = new Ads_huawei();
+#if UNITY_ANDROID
+            //Ads = new Ads_android();
+            Ads = new Ads_xiaomi();
 #elif UNITY_IOS
             //Ads = new Ads_ios();
 #elif UNITY_OPENHARMONY
@@ -121,7 +118,7 @@ namespace Middleware
 #elif UNITY_OPENHARMONY
             Analytics = new Analytics_harmony();
 #endif
-            Analytics.Init(1f);
+            Analytics.Init(0.1f);
         }
         
         private void CreateShop()
