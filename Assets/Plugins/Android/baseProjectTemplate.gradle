@@ -5,9 +5,18 @@ buildscript {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven {
+            url "https://repos.xiaomi.com/maven"
+            credentials {
+                username 'mi-gamesdk'
+                password 'AKCp8mYeLuhuaGj6bK1XK7t2w4CsPuGwg6GpQdZ9cat7K59y5sD7Tx3dHjJcFrBGj3TQ4vi7g'
+            }
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.2'
+        // AGP < 8.0 必须使用 gradle7 版本
+        classpath 'com.xiaomi.ad.mediation.plugin.gradle7:mimo-process:1.0.0'
         // **BUILD_SCRIPT_DEPS**
     }
 }
@@ -19,5 +28,12 @@ allprojects {
         }
         google()
         mavenCentral()
+        maven {
+            url "https://repos.xiaomi.com/maven"
+            credentials {
+                username 'mi-gamesdk'
+                password 'AKCp8mYeLuhuaGj6bK1XK7t2w4CsPuGwg6GpQdZ9cat7K59y5sD7Tx3dHjJcFrBGj3TQ4vi7g'
+            }
+        }
     }
 }
