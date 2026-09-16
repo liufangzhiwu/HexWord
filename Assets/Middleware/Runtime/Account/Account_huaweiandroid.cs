@@ -173,7 +173,7 @@ namespace Middleware
             appPlayerInfo.OpenId = _player.OpenId;
             Game.self.Accounts.UserId = _player.OpenId;
             Game.self.Accounts.IsLogin = true;
-            
+            Game.self.State=LoginState.Success;
             Debug.LogFormat("[HuaweiAccount] 登录华为安卓用户时的数据: {0}", JsonConvert.SerializeObject(appPlayerInfo));
             HuaweiGameService.SavePlayerInfo(appPlayerInfo.ConvertToJavaObject(), new SavePlayerInfoListener(statusSetter));
             Debug.Log("[HuaweiAccount] 数据上报完成, 当前状态" + _flowStatus );
@@ -207,7 +207,7 @@ namespace Middleware
             IsLogin = false;
             UserId = null;
             CurrentAuthAccount = null;
-    
+            Game.self.State=LoginState.Failed;
             Debug.Log("[HuaweiAccount] 状态已重置，可以重新开始登录流程");
         }
 
@@ -221,6 +221,7 @@ namespace Middleware
                 mAuthService.signOut();
                 Debug.Log("[HuaweiAccount] Signed out via AuthService");
             }
+            Game.self.State=LoginState.Failed;
             IsLogin = false;
             UserId = null;
             CurrentAuthAccount = null;
@@ -389,7 +390,6 @@ namespace Middleware
             {
                 MessageSystem.Instance.ShowTip(msg);
                 _onLoginCompleted?.Invoke(GameFlowStatus.SilentFailed);
-                Game.self.ShowLoginErrorPanel(); //等错误处理
             });
         }
     }
