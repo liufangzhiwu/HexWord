@@ -13,6 +13,7 @@ namespace Middleware
         /// 获取Token
         /// </summary>
         void GetToken();
+        void RequestEnableNotification();
 
         void Push(string title, string body);
 
