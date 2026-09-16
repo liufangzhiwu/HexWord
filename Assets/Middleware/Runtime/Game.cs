@@ -26,6 +26,8 @@ namespace Middleware
         public CommonErrorType CurrentErrorType { private set; get; }
 
         public static bool IsNetworkActive { private set; get; }
+        
+        public LoginState State { get; set; }
 
         private GameObject ps;
 
@@ -46,8 +48,8 @@ namespace Middleware
 
         public void InitGame()
         {
-            //CreateAccounts();
-            //StartCoroutine(WaitLoginedCreateShop());
+            CreateAccounts();
+            StartCoroutine(WaitLoginedCreateShop());
 
             CreateAnalytic();
             CreateAd();
@@ -55,19 +57,12 @@ namespace Middleware
             InitManagers();
         }
         
-//        private IEnumerator WaitLoginedCreateShop()
-//        {
-//            yield return new WaitUntil(()=>Accounts.IsLogin);
+        private IEnumerator WaitLoginedCreateShop()
+        {
+            yield return new WaitUntil(()=>Accounts.IsLogin);
 
-//            CreateAnalytic();
-
-//#if UNITY_EDITOR
-//#elif UNITY_OPENHARMONY||UNITY_huawei
-           
-//            CreateAd();
-//            CreateShop();
-//#endif
-//        }
+            CreateShop();
+        }
 
         // IEnumerator  ShowLoadingScreen()
         // {
@@ -123,8 +118,8 @@ namespace Middleware
         
         private void CreateShop()
         {
-#if UNITY_huawei
-            Shop = new Shop_huawei();
+#if UNITY_ANDROID
+            Shop = new Shop_xiaomi();
 #elif UNITY_IOS
             //Shop = new Shop_ios();
 #elif UNITY_OPENHARMONY

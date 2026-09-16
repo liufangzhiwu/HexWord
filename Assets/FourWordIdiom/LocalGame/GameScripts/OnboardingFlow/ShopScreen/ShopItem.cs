@@ -406,7 +406,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             {
                 if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
                 {
-                    //shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
+                    shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
                 }
                 else
                 {

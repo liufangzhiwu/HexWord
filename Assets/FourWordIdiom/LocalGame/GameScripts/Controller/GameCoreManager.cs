@@ -63,6 +63,7 @@ public sealed class GameCoreManager: MonoBehaviour
         AutoLevelTalbe.gameObject.SetActive(false);
         Debug.unityLogger.logEnabled = false;
 #endif
+        StartCoroutine(CheckOrderShipmentCompleted());
     }
 
     public void SetAutoLevelTalbe(bool isShow)
@@ -129,7 +130,7 @@ public sealed class GameCoreManager: MonoBehaviour
     // 检查发货是否完成
     private IEnumerator CheckOrderShipmentCompleted()
     {
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(0.22f);
         Game.self.Shop.Restore((ok, items) =>
         {
             foreach (ProductItem item in items)

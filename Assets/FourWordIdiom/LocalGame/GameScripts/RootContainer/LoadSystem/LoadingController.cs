@@ -72,6 +72,9 @@ public class LoadingController : MonoBehaviour
     private UserData serverUserData;          // 解析后的主数据
     private FishUserSaveData serverFishData;      // 解析后的鱼数据
     private ButterflyData serverButterflyData;// 解析后的蝴蝶数据
+    
+    public float loginStart;
+    public float loginTimeout;
 
     private void Awake()
     {
@@ -111,16 +114,51 @@ public class LoadingController : MonoBehaviour
         InitAgreed();
         
         Game.self.InitGame();
+        yield return new WaitForSeconds(0.5f);
 
-        // 等待启动流程完成
-        yield return new WaitUntil(() => Launch.Instance.flowStatus is GameFlowStatus.LoggingIn);
-        Debug.Log($"进入游戏流程 " + Launch.Instance.flowStatus);
-        AnalyticMgr.SetLoginUser(null);
+        // ================= 等待登录（基于 LoginState 枚举）=================
+        loginTimeout = 10f;        // ← 超时时间保持不变
+        loginStart = Time.time;
+        
+        while (true)
+        {
+            var state = Game.self.State;
 
-        // 加载词库
-        LoadWordVocabulary();
+            // 1) 登录成功 → 跳出
+            if (state == LoginState.Success) break;
 
-        // API 登录请求
+            // 3) None / Logging / Timeout → 继续等待
+            float elapsed = Time.time - loginStart;
+            if (elapsed >= loginTimeout)
+            {
+                if (!Application.isFocused)
+                {
+                    // 应用在后台，说明用户正在华为登录界面输入账号 → 重置计时
+                    loginStart = Time.time;
+                }
+                else
+                {
+                    // 回到游戏仍超时：不报错，只打日志，继续等用户完成登录
+                    Debug.LogWarning("[Loading] 登录等待已超过10秒，但状态仍为 " + state + "，继续等待用户完成登录");
+                    loginStart = Time.time; // 重置，避免日志刷屏
+                }
+                
+                // 2) 明确失败 / 用户取消 → 跳出，走错误流程
+                if (state == LoginState.Failed || state == LoginState.Canceled)
+                    break;
+            }
+
+            yield return new WaitForSeconds(0.2f);
+        }
+        // =================================================================
+
+        if (Game.self.State != LoginState.Success)
+        {
+            Debug.LogError("登录失败，State = " + Game.self.State);
+            Game.self.ShowLoginErrorPanel();
+            yield break;
+        }
+
         yield return APIGateway.Instance.LoginApi.Login((res) =>
         {
             if (res != null)
@@ -129,7 +167,11 @@ public class LoadingController : MonoBehaviour
             }
             isLogined = true;
         });
+
         yield return new WaitUntil(() => isLogined);
+
+        // 加载词库
+        LoadWordVocabulary();
 
         // 获取用户数据
         yield return APIGateway.Instance.LoginApi.GetUserData(LoadUserData);

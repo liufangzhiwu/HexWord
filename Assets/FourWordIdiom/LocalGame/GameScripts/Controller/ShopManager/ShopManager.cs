@@ -425,7 +425,7 @@ public class ShopManager : MonoBehaviour
     public void OnPurchaseSuccess(ProductItem item)
     {
         //todo 关闭loading界面
-        Debug.Log("购买成功: " + item.ProductId);
+        Debug.Log("[Shop] 购买成功: " + item.ProductId);
         var items = new List<AnalyticMgr.Item>();
         ShopDataItem shopDataItem=GetProduct(item.ProductId);
         if (shopDataItem!=null)
@@ -481,11 +481,11 @@ public class ShopManager : MonoBehaviour
             if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
             {
                 GameDataManager.Instance.UserData.isDayMoneyBuy = true;
-                ///shopPriceText.text = "已购买";
+                //shopPriceText.text = "已购买";
             }
         }
         
-        MessageSystem.Instance.ShowTip($"{shopDataItem.name} 购买成功！");
+        MessageSystem.Instance.ShowTip($"{shopDataItem.name} 恢复购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
     }
     
