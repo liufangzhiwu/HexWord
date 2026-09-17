@@ -58,6 +58,7 @@ public class UserData
     public bool IsSoundOn = true; // 音效开关
     public bool IsVibrationOn =true;    // 震动反馈开关
     public bool IsPushRequested =false;    // 推送权限是否已经请求
+    public bool IsAutoPush =false;    // 自动提醒是否开启
     public bool HasUnclaimedUpdateJoin;       // 是否升级版本
     public string LanguageCode; // 当前语言代码
     public bool IsAgreePrivacy; // 同意用户隐私协议
@@ -323,6 +324,7 @@ public class UserData
         IsSoundOn = true;
         IsVibrationOn = true;
         IsPushRequested = false;
+        IsAutoPush = false;
         IsAgreePrivacy = false;
         Zenlevel = "ZenState01";
         first_version = "";
@@ -496,6 +498,7 @@ public class UserData
         IsSoundOn = user.IsSoundOn;
         IsVibrationOn= user.IsVibrationOn;
         IsPushRequested= user.IsPushRequested;
+        IsAutoPush= user.IsAutoPush;
         HasUnclaimedUpdateJoin=user.HasUnclaimedUpdateJoin;
         IsAgreePrivacy = user.IsAgreePrivacy;
         Rigister = user.Rigister;

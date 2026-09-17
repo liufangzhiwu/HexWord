@@ -76,6 +76,7 @@ public class PanelType  // Renamed class
      public const string AchievementScreen="AchievementScreen";
      public const string OtherPeopleScreen="OtherPeopleScreen";
      public const string OtherPersonButterScreen="OtherPersonButterScreen";
+     public const string AutoPushScreen="AutoPushScreen";
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

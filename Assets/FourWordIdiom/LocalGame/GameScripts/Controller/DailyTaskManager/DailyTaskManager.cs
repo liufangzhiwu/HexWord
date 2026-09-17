@@ -76,6 +76,7 @@ public class DailyTaskManager : MonoBehaviour
             TextAsset csvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "dailytask");
             csvData = csvFile?.text;
         }
+        
         if (!string.IsNullOrEmpty(csvData))
         {
             ParseLimitItems(csvData);

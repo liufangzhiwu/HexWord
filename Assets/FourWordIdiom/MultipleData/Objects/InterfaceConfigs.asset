@@ -370,3 +370,9 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 6666876271285913305, guid: 544a6484d18e62a409c31fe974636ce8,
       type: 3}
+  - panelName: AutoPushScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2078426036942281601, guid: b2b5a1f71031c8b49aa6e394f70c4b2e,
+      type: 3}
