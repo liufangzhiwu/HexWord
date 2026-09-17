@@ -78,6 +78,9 @@ namespace Middleware
             _currentProductId = productId;
             _currentCpOrderId = GenerateOrderId();
 
+            // ★★★ 关键改动：在调用支付之前先落盘，防止支付中途进程被杀导致订单丢失 ★★★
+            AddPendingOrder(_currentCpOrderId, _currentProductId);
+
             try
             {
                 SDKAndroid.Instance.OnProduceCodePay(
@@ -87,6 +90,8 @@ namespace Middleware
             catch (Exception e)
             {
                 Debug.LogError("[Shop_xiaomi] Purchase exception: " + e);
+                // 调用支付接口抛异常，说明订单没发起，直接移除
+                RemovePendingOrder(_currentCpOrderId);
                 InvokeFailed(e.Message);
             }
         }
@@ -97,7 +102,6 @@ namespace Middleware
             UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
                 Debug.Log("[Shop_xiaomi] Restore triggered.");
-                restoreCallback?.Invoke(true, new ProductItem[0]);
             });
 
             LoadPendingOrders();
@@ -117,6 +121,7 @@ namespace Middleware
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             });
             SavePendingOrders();
+            Debug.Log("[Shop_xiaomi] Add _pendingOrders triggered."+cpOrderId+" 商品ID"+productId);
         }
 
         private void RemovePendingOrder(string cpOrderId)
@@ -170,16 +175,28 @@ namespace Middleware
             switch (status)
             {
                 case "TRADE_SUCCESS":
+                    // 支付成功，执行补发
                     RestoreShipment(cpOrderId);
                     break;
 
                 case "WAIT_BUYER_PAY":
+                    // ★ 未付款：用户点了支付但没完成。
+                    RemovePendingOrder(cpOrderId);
+                    Debug.Log($"[Shop_xiaomi] Order {cpOrderId}, removed it.");
+                    break;
+
                 case "TRADE_CLOSED":
                 case "TRADE_FAIL":
                 case "TRADE_TIMEOUT":
                 case "REPEAT_PURCHASE":
+                    // 终态：不可能再成功，移除
                     RemovePendingOrder(cpOrderId);
                     Debug.Log($"[Shop_xiaomi] Order {cpOrderId} is terminal ({status}), removed.");
+                    break;
+
+                default:
+                    // 未知状态，保守保留，下次再查
+                    Debug.LogWarning($"[Shop_xiaomi] Order {cpOrderId} unknown status: {status}, keep it.");
                     break;
             }
         }
@@ -280,27 +297,26 @@ namespace Middleware
             {
                 Debug.Log("[Shop_xiaomi] pay succeed, orderId=" + _currentCpOrderId);
 
-                // 支付成功，先加入待补单列表（发货成功后移除）
-                AddPendingOrder(_currentCpOrderId, _currentProductId);
+                int price = (int)ShopManager.shopManager.GetProduct(_currentProductId).price*100;
 
+                // ★ 订单已在 Purchase 时落盘，这里不再 AddPendingOrder，只负责发货
                 var item = new ProductItem
                 {
                     order_id        = _currentCpOrderId,
                     ProductId       = _currentProductId,
                     ItemName        = _currentProductId,
                     IsoCurrencyCode = string.Empty,
-                    LocalizedPrice  = 0f,
+                    LocalizedPrice  = price,
 
                     OnShipmentCompleted = (bool ok) =>
                     {
                         try
                         {
                             SDKAndroid.Instance.OnReportOrder(
-                                _currentCpOrderId,
-                                ok,
-                                ok ? null : "shipment failed");
+                                _currentCpOrderId, ok, ok ? null : "shipment failed");
                             Debug.Log("[Shop_xiaomi] miReportOrder, delivery=" + ok);
 
+                            // ★ 发货成功后移除；发货失败保留，下次启动补单
                             if (ok)
                                 RemovePendingOrder(_currentCpOrderId);
                         }
@@ -318,7 +334,9 @@ namespace Middleware
             }
             else
             {
+                // ★ 支付失败/取消，订单不会成功，从待补单列表移除
                 Debug.LogWarning("[Shop_xiaomi] pay failed, code=" + code);
+                RemovePendingOrder(_currentCpOrderId);
                 InvokeFailed(code.ToString());
             }
         }

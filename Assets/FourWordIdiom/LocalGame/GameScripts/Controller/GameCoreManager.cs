@@ -45,6 +45,8 @@ public sealed class GameCoreManager: MonoBehaviour
 
     private void Start()
     {
+        StartCoroutine(CheckOrderShipmentCompleted());
+        
 #if UNITY_huawei && !UNITY_EDITOR
         HuaweiGameService.ShowFloatWindow();
         StartCoroutine(CheckOrderShipmentCompleted());
@@ -63,7 +65,7 @@ public sealed class GameCoreManager: MonoBehaviour
         AutoLevelTalbe.gameObject.SetActive(false);
         Debug.unityLogger.logEnabled = false;
 #endif
-        StartCoroutine(CheckOrderShipmentCompleted());
+      
     }
 
     public void SetAutoLevelTalbe(bool isShow)
@@ -131,13 +133,7 @@ public sealed class GameCoreManager: MonoBehaviour
     private IEnumerator CheckOrderShipmentCompleted()
     {
         yield return new WaitForSeconds(0.22f);
-        Game.self.Shop.Restore((ok, items) =>
-        {
-            foreach (ProductItem item in items)
-            {
-                ShopManager.shopManager.OnPurchaseSuccess(item);
-            }
-        });
+        Game.self.Shop.Restore(null);
     }
     #endregion
 

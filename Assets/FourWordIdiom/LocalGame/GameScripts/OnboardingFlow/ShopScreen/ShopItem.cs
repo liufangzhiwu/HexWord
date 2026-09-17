@@ -542,7 +542,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 IsoCurrencyCode = "",
                 ItemName = data.produceNameId,
                 ProductId = data.produceNameId,
-                LocalizedPrice = 0,
+                LocalizedPrice = data.price,
             };
             OnPurchaseSuccess(productItem);
         }
@@ -578,6 +578,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.SingleTipsttool://提示灯道具，单个字符提示
+                        Debug.Log("[Shop] 当前数量"+GameDataManager.Instance.UserData.toolInfo[101].count+"购买数量"+count);
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.SingleTipsttool,count,"商店购买"+item.ItemName);
                         break;
                     case (int)LimitRewordType.RemoveAds:
@@ -599,7 +600,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         if (!UIUtilities.isEditMode)
         {
             AnalyticMgr.PurchaseFinished(item, firstPay);
-#if UNITY_huawei
+#if UNITY_huawei||UNITY_ANDROID
          // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);
 #endif
