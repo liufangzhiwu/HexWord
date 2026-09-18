@@ -130,10 +130,9 @@ public sealed class GameCoreManager : MonoBehaviour
             // 保存原始发射率（用于淡入时恢复）
             originalRates.Add(ps.emission.rateOverTime.constant);
         }
-        
-        // ② 满足「关卡进度 ≥ 1 + 已过 Loading」后
-        SystemManager.Instance.ShowPanel(PanelType.AutoPushScreen);
        
+        // ② 满足「关卡进度 ≥ 1 + 已过 Loading」后
+        Game.self.Pushs.RequestEnableNotification();
     }
 
     public void UpdateMyPersonInfo()
@@ -215,7 +214,7 @@ public sealed class GameCoreManager : MonoBehaviour
             
             yield return new WaitForSeconds(0.5f);
         }
-        
+       
         Game.self.Shop.Restore(null);
     }
 
