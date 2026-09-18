@@ -1,116 +1,168 @@
 // PushHarmonyProxy.tslib
-import reminderAgentManager from '@ohos.reminderAgentManager';
-import notificationManager from '@ohos.notificationManager';
-import { BusinessError } from '@ohos.base';
-import { WantAgent, wantAgent } from '@ohos.app.ability.wantAgent';
-import { common } from '@ohos.app.ability.common';
+// ============================================================
+// OpenHarmony 代理提醒桥接层
+// 供 Unity C# 侧 Push_harmony.cs 调用
+//
+// 关键设计：
+//   - 所有数据（bundleName / abilityName）由 Unity 通过 Bridge 传入，
+//     存储在 Bridge 实例字段中。
+//   - SetConfig 与 PublishCalendarReminder 经同一个 Bridge 实例调用，
+//     运行在同一 JS 引擎实例，实例字段可正常共享。
+//   - 不再依赖 SetContext / AppStorage / globalThis 等跨引擎机制。
+// ============================================================
 
-const UNITY_GAMEOBJECT = "PushManager"; // 场景中挂载 Push_harmony 接收方法的 GameObject 名
+import { reminderAgentManager } from '@kit.BackgroundTasksKit';
+import { notificationManager } from '@kit.NotificationKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 export class PushHarmonyProxy {
-    private static cachedContext: common.UIAbilityContext | null = null;
 
-    /** 在 EntryAbility.onCreate 里调用一次，注入 context */
-    static SetContext(context: common.UIAbilityContext): void {
-        PushHarmonyProxy.cachedContext = context;
-        console.info('[PushHarmonyProxy] context set');
-    }
+  // ★ 实例字段，非静态字段
+  // 同一 Bridge 实例内的多个方法调用共享这些字段
+  private bundleName: string = '';
+  private abilityName: string = '';
 
-    /** 请求通知权限 */
-    static RequestNotificationPermission(): void {
-        notificationManager.requestEnableNotification()
-            .then(() => console.info('[PushHarmonyProxy] notification permission granted'))
-            .catch((err: BusinessError) =>
-                console.error(`[PushHarmonyProxy] permission err: code=${err.code}, msg=${err.message}`));
-    }
+  // ============================================================
+  // 配置注入
+  // ============================================================
 
-    /** 初始化代理提醒（预留） */
-    static InitReminderAgent(): void {
-        console.info('[PushHarmonyProxy] reminder agent initialized');
-    }
+  /**
+   * 由 Unity 侧通过 Bridge 调用，传入 bundleName 和 abilityName。
+   * 必须在 PublishCalendarReminder 之前调用一次。
+   */
+  SetConfig(bundleName: string, abilityName: string): void {
+    this.bundleName = bundleName;
+    this.abilityName = abilityName;
+    console.info('[PushHarmonyProxy] config set, bundleName=' + bundleName +
+      ', abilityName=' + abilityName);
+  }
 
-    /** 发布日历类型代理提醒 */
-    static async PublishCalendarReminder(
-        year: number, month: number, day: number,
-        hour: number, minute: number, second: number,
-        title: string, content: string, pushKey: string,
-        ringDuration: number
-    ): Promise<void> {
-        try {
-            if (!PushHarmonyProxy.cachedContext) {
-                console.error('[PushHarmonyProxy] context is null; call SetContext first');
-                PushHarmonyProxy.SendToUnity("OnReminderPublished",
-                    JSON.stringify({ success: false, pushKey: pushKey, errorMsg: 'context null' }));
-                return;
-            }
+  // ============================================================
+  // 代理提醒初始化
+  // ============================================================
 
-            const bundleName = PushHarmonyProxy.cachedContext.abilityInfo.bundleName;
-            const abilityName = PushHarmonyProxy.cachedContext.abilityInfo.name;
+  /**
+   * 初始化代理提醒。
+   * reminderAgentManager 会按 slotType 自动使用/创建对应通知渠道。
+   */
+  InitReminderAgent(): void {
+    console.info('[PushHarmonyProxy] reminder agent initialized');
+  }
 
-            const wantAgentInfo: wantAgent.WantAgentInfo = {
-                wants: [{
-                    bundleName: bundleName,
-                    abilityName: abilityName,
-                    parameters: { pushKey: pushKey }
-                }],
-                actionType: wantAgent.OperationType.START_ABILITY,
-                requestCode: 0,
-                wantAgentFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
-            };
-            const wantAgentObj: WantAgent = await wantAgent.getWantAgent(wantAgentInfo);
+  // ============================================================
+  // 发布日历类型代理提醒
+  // ============================================================
 
-            const reminder: reminderAgentManager.ReminderRequestCalendar = {
-                reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_CALENDAR,
-                dateTime: { year, month, day, hour, minute, second },
-                title: title,
-                content: content,
-                expiredContent: content,
-                notificationId: 0,
-                slotType: notificationManager.SlotType.SOCIAL_COMMUNICATION, // 横幅+铃声
-                ringDuration: ringDuration > 0 ? ringDuration : 5,
-                wantAgent: wantAgentObj,
-                actionButton: []
-            };
+  /**
+   * 发布一条日历类型的代理提醒。
+   * 由 C# 侧 Push_harmony.RegisterAgentReminders() 逐条调用。
+   */
+  async PublishCalendarReminder(
+    year: number, month: number, day: number,
+    hour: number, minute: number, second: number,
+    title: string, content: string, pushKey: string,
+    ringDuration: number
+  ): Promise<void> {
+    try {
+      if (!this.bundleName || !this.abilityName) {
+        console.error('[PushHarmonyProxy] config not set; call SetConfig first');
+        this.SendToUnity("OnReminderPublished",
+          JSON.stringify({ success: false, pushKey: pushKey, errorMsg: 'config not set' }));
+        return;
+      }
 
-            const reminderId = await reminderAgentManager.publishReminder(reminder);
-            console.info(`[PushHarmonyProxy] published id=${reminderId}, key=${pushKey}`);
-
-            PushHarmonyProxy.SendToUnity("OnReminderPublished",
-                JSON.stringify({ success: true, reminderId: reminderId, pushKey: pushKey }));
-        } catch (err) {
-            const e = err as BusinessError;
-            console.error(`[PushHarmonyProxy] publish failed code=${e.code}, msg=${e.message}`);
-            PushHarmonyProxy.SendToUnity("OnReminderPublished",
-                JSON.stringify({ success: false, pushKey: pushKey, errorCode: e.code, errorMsg: e.message }));
+      const reminderWantAgent: reminderAgentManager.WantAgent = {
+        pkgName: this.bundleName,
+        abilityName: this.abilityName,
+        parameters: {
+          'pushKey': pushKey
         }
-    }
+      };
 
-    /** 取消所有代理提醒 */
-    static async CancelAllReminders(): Promise<void> {
-        try {
-            await reminderAgentManager.cancelAllReminders();
-            console.info('[PushHarmonyProxy] all reminders cancelled');
-        } catch (err) {
-            const e = err as BusinessError;
-            console.error(`[PushHarmonyProxy] cancelAll failed: ${e.message}`);
-        }
-    }
+      const reminder: reminderAgentManager.ReminderRequestCalendar = {
+        reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_CALENDAR,
+        dateTime: {
+          year: year, month: month, day: day,
+          hour: hour, minute: minute, second: second
+        },
+        title: title,
+        content: content,
+        expiredContent: content,
+        notificationId: 0,
+        slotType: notificationManager.SlotType.SOCIAL_COMMUNICATION,
+        ringDuration: ringDuration > 0 ? ringDuration : 5,
+        wantAgent: reminderWantAgent,
+        actionButton: []
+      };
 
-    /** 查询有效提醒 */
-    static async GetValidReminders(): Promise<void> {
-        try {
-            const list = await reminderAgentManager.getValidReminders();
-            const ids = list.map(r => (r as reminderAgentManager.ReminderRequest).notificationId ?? 0);
-            PushHarmonyProxy.SendToUnity("OnValidReminders", JSON.stringify({ ids: ids }));
-        } catch (err) {
-            const e = err as BusinessError;
-            console.error(`[PushHarmonyProxy] getValid failed: ${e.message}`);
-        }
-    }
+      const reminderId: number = await reminderAgentManager.publishReminder(reminder);
+      console.info('[PushHarmonyProxy] reminder published, id=' + reminderId +
+        ', key=' + pushKey + ', trigger=' + year + '-' + month + '-' + day +
+        ' ' + hour + ':' + minute + ':' + second);
 
-    private static SendToUnity(method: string, data: string): void {
-        // 按项目的 Unity 桥接 API 调用，通常为：
-        // UnityPlayer.UnitySendMessage(UNITY_GAMEOBJECT, method, data);
-        console.info(`[PushHarmonyProxy] SendToUnity ${method}: ${data}`);
+      this.SendToUnity("OnReminderPublished",
+        JSON.stringify({ success: true, reminderId: reminderId, pushKey: pushKey }));
+
+    } catch (err) {
+      const e = err as BusinessError;
+      console.error('[PushHarmonyProxy] publish failed: code=' + e.code +
+        ', msg=' + e.message + ', key=' + pushKey);
+      this.SendToUnity("OnReminderPublished",
+        JSON.stringify({
+          success: false, pushKey: pushKey,
+          errorCode: e.code, errorMsg: e.message
+        }));
     }
+  }
+
+  // ============================================================
+  // 取消所有代理提醒
+  // ============================================================
+
+  async CancelAllReminders(): Promise<void> {
+    try {
+      await reminderAgentManager.cancelAllReminders();
+      console.info('[PushHarmonyProxy] all reminders cancelled');
+    } catch (err) {
+      const e = err as BusinessError;
+      console.error('[PushHarmonyProxy] cancelAll failed: code=' + e.code +
+        ', msg=' + e.message);
+    }
+  }
+
+  // ============================================================
+  // 查询系统有效提醒
+  // ============================================================
+
+  async GetValidReminders(): Promise<void> {
+    try {
+      const list = await reminderAgentManager.getValidReminders();
+      const ids: number[] = [];
+      for (let i = 0; i < list.length; i++) {
+        ids.push(list[i].notificationId ?? 0);
+      }
+      console.info('[PushHarmonyProxy] valid reminders count=' + ids.length);
+      this.SendToUnity("OnValidReminders", JSON.stringify({ ids: ids }));
+    } catch (err) {
+      const e = err as BusinessError;
+      console.error('[PushHarmonyProxy] getValid failed: code=' + e.code +
+        ', msg=' + e.message);
+    }
+  }
+
+  // ============================================================
+  // Unity 消息回传
+  // ============================================================
+
+  SendToUnity(method: string, data: string): void {
+    console.info('[PushHarmonyProxy] SendToUnity ' + method + ': ' + data);
+  }
+}
+
+// ============================================================
+// 注册函数
+// ============================================================
+export function RegisterPushHarmonyProxy(): Record<string, Object> {
+  const bridge: PushHarmonyProxy = new PushHarmonyProxy();
+  return { 'PushHarmonyProxy': bridge };
 }

@@ -5,6 +5,7 @@ using System.Globalization;
 using Middleware;
 using OpenHarmonyKits.Signal;
 using UnityEngine;
+using UnityEngine.OpenHarmony;
 
 namespace Middleware
 {
@@ -129,10 +130,13 @@ namespace Middleware
         private int _notificationIdCounter = 0;
 
         /// <summary> ArkTS 桥接类（代理提醒原生接口），由 PushHarmonyProxy.tslib 提供 </summary>
-        private static OpenHarmonyJSClass _harmonyProxy;
+        private static OpenHarmonyJSObject _harmonyProxy;
 
         /// <summary> 代理提醒已注册映射：key = "{slotId}_{ticks}"，value = 文案 Key </summary>
         private readonly Dictionary<string, string> _agentRegisteredMap = new Dictionary<string, string>();
+        
+        private const string BUNDLE_NAME = "chengyu.idiom.hexa.zen.huawei";
+        private const string ABILITY_NAME = "TuanjiePlayerAbility";
 
         // ============================================================
         // 生命周期
@@ -148,7 +152,8 @@ namespace Middleware
                 // 1. 注册 Token 回调
                 SignalHandler.Instance.RegisterSignalDelegate<Push_GetTokenSignal>(OnGetTokenTrigger);
                 GetToken();
-
+                Debug.Log("[Push_harmony] Agent reminder initialized.");
+                
                 // 2. 初始化代理提醒（系统级离线推送）
                 InitAgentReminder();
 
@@ -180,8 +185,39 @@ namespace Middleware
         /// </summary>
         public void RequestEnableNotification()
         {
+            // // 1. 检查是否已授权
+            // if (Permission.HasUserAuthorizedPermission("ohos.permission.NOTIFICATION"))
+            // {
+            //     GameDataManager.Instance.UserData.IsAutoPush = true;
+            //     Debug.Log("[Push_harmony] Notification permission already enabled.");
+            //     return;
+            // }
+
+            // 2. 创建回调实例
+            var callbacks = new PermissionCallbacks();
+
+            // 3. 订阅授权成功事件
+            callbacks.PermissionGranted += (permissionName) =>
+            {
+                Debug.Log($"[Push_harmony] Permission granted: {permissionName}");
+                GameDataManager.Instance.UserData.IsAutoPush = true;
+                // 可以在这里继续执行需要通知权限的逻辑，例如注册代理提醒
+                // RegisterAgentReminders();
+            };
+
+            // 4. 订阅授权被拒绝事件
+            callbacks.PermissionDenied += (permissionName) =>
+            {
+                Debug.Log($"[Push_harmony] Permission denied: {permissionName}");
+                GameDataManager.Instance.UserData.IsAutoPush = false;
+                // 引导用户去设置页面的逻辑
+                //OHSDKKitManager.Instance.OpenNotificationSettings(); 
+            };
+
             OHSDKKitManager.Instance.RequestEnableNotification();
-            Debug.Log("[Push_harmony] RequestEnableNotification issued.");
+            
+            // 5. 发起权限请求并传入回调
+            //Permission.RequestUserPermission("ohos.permission.NOTIFICATION", callbacks);
         }
 
         /// <summary> 获取 Push Token（本地通知不依赖，保留用于服务端上报） </summary>
@@ -343,7 +379,6 @@ namespace Middleware
         // ============================================================
         /// <summary>
         /// 初始化代理提醒：
-        ///   1) 通过 ArkTS 桥接请求通知权限
         ///   2) 创建高优先级通知渠道（横幅 + 铃声）
         ///   3) 恢复已注册映射
         ///   4) 首次注册提醒队列
@@ -352,10 +387,25 @@ namespace Middleware
         {
             try
             {
-                _harmonyProxy = new OpenHarmonyJSClass("PushHarmonyProxy");
 
-                _harmonyProxy.CallStatic("RequestNotificationPermission");
-                _harmonyProxy.CallStatic("InitReminderAgent");
+                
+                // 1. 构造 Bridge 实例（OpenHarmonyJSObject，匹配实例方法）
+                _harmonyProxy = new OpenHarmonyJSObject("PushHarmonyProxy");
+
+                // 2. 先注入配置（关键：必须在 PublishCalendarReminder 之前）
+                _harmonyProxy.Call("SetConfig", BUNDLE_NAME, ABILITY_NAME);
+                Debug.Log($"[Push_harmony] SetConfig sent: {BUNDLE_NAME} / {ABILITY_NAME}");
+
+                // 3. 初始化代理提醒
+                _harmonyProxy.Call("InitReminderAgent");
+
+                // 4. 清理一次历史脏数据（仅首次调试时保留，正式版请删掉）
+                // PlayerPrefs.DeleteKey(KEY_AGENT_REGISTERED_MAP);
+                // PlayerPrefs.Save();
+
+                // 5. 恢复映射并注册提醒
+                RestoreAgentRegisteredMap();
+                RegisterAgentReminders();
 
                 RestoreAgentRegisteredMap();
                 RegisterAgentReminders();
@@ -451,7 +501,7 @@ namespace Middleware
             try
             {
                 // 参数：年 月 日 时 分 秒 标题 文案 文案Key 响铃时长
-                _harmonyProxy.CallStatic(
+                _harmonyProxy.Call(
                     "PublishCalendarReminder",
                     trigger.Year, trigger.Month, trigger.Day,
                     trigger.Hour, trigger.Minute, trigger.Second,
@@ -585,7 +635,7 @@ namespace Middleware
 
             try
             {
-                _harmonyProxy.CallStatic("CancelAllReminders");
+                _harmonyProxy.Call("CancelAllReminders");
                 _agentRegisteredMap.Clear();
                 SaveAgentRegisteredMap();
                 Debug.Log("[Push_harmony] All agent reminders cancelled.");
@@ -602,7 +652,7 @@ namespace Middleware
             if (_harmonyProxy == null) return;
             try
             {
-                _harmonyProxy.CallStatic("GetValidReminders");
+                _harmonyProxy.Call("GetValidReminders");
             }
             catch (Exception e)
             {
