@@ -66,6 +66,7 @@ namespace Middleware
 
             int loaded = 0, skipped = 0;
             for (int i = 1; i < lines.Length; i++) // 跳过表头
+            //for (int i = 1; i < 28; i++) // 跳过表头
             {
                 var values = ParseCsvLine(lines[i]);
                 if (values.Count < 3) { skipped++; continue; }
