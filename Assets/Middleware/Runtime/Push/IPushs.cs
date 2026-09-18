@@ -14,6 +14,8 @@ namespace Middleware
         /// </summary>
         void GetToken();
         void RequestEnableNotification();
+        void CancelAllReminders();
+        void ReSetRequestEnableNotification();
 
         void Push(string title, string body);
 

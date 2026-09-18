@@ -1,10 +1,12 @@
 #if UNITY_OPENHARMONY
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using Middleware;
 using OpenHarmonyKits.Signal;
 using UnityEngine;
+using System.IO;
 using UnityEngine.OpenHarmony;
 
 namespace Middleware
@@ -125,43 +127,131 @@ namespace Middleware
         // ============================================================
         // 接收 Bridge 回传的授权结果
         // ============================================================
-        public void OnNotificationEnableResult(bool granted)
+        // ============================================================
+        private IEnumerator CheckNotificationAndInit()
         {
-            // 解析 JSON: { "granted": true/false, "alreadyEnabled": true/false }
-            //var result = JsonUtility.FromJson<NotificationEnableResult>(json);
-
-            if (granted)
+            // ★ 从 PlayerPrefs 写入的值（0/1）
+            int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
+           
+            
+            // ★ 使用泛型指定返回类型为 bool
+            _harmonyProxy.Call("RequestNotificationEnable");
+            yield return new WaitForSeconds(0.1f);
+            //Debug.Log("[Push_harmony] 通知权限弹窗是否完成"+task);
+            int pushNumber = ReadIsAutoPushFromFile();
+            bool enabled =pushNumber==1;
+            
+            GameDataManager.Instance.UserData.IsAutoPush = enabled;
+            
+            if (enabled)
             {
                 Debug.Log("[Push_harmony] 通知权限已授权");
-                GameDataManager.Instance.UserData.IsAutoPush = true;
+                
+                if(isPushRequested==0)
+                    AnalyticMgr.PopAccept(popName: "消息推送");
+                
+                KEY_IS_PUSH_REQUESTED = "1";
+                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 0);
 
-                // ★ 埋点：同意推送
-                AnalyticMgr.PopAccept("消息推送");
-
-                // ★ 授权成功，立即注册代理提醒
                 UnityTimer.Delay(0.5f, () =>
                 {
                     RestoreAgentRegisteredMap();
                     RegisterAgentReminders();
                     Debug.Log("[Push_harmony] Agent reminder initialized after notification enable.");
+
                 });
             }
             else
             {
-                Debug.Log("[Push_harmony] 通知权限未授权");
-                GameDataManager.Instance.UserData.IsAutoPush = false;
+                Debug.Log("[Push_harmony] 通知未授权，3秒后重试...");
+                
+                if(isPushRequested==0)
+                    AnalyticMgr.PopRefuse(popName: "消息推送");
+                
+                KEY_IS_PUSH_REQUESTED = "1";
+                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 0);
+               
+                yield return new WaitForSeconds(3f);
+                Game.self.StartCoroutine(CheckNotificationAndInit());
+               
+            }
+        }
+        
+          // ============================================================
+        // 接收 Bridge 回传的授权结果
+        // ============================================================
+        // ============================================================
+        private IEnumerator ResetCheckNotificationAndInit()
+        {
+            // ★ 使用泛型指定返回类型为 bool
+            _harmonyProxy.Call("RequestNotificationEnable");
+            yield return new WaitForSeconds(0.1f);
+            //Debug.Log("[Push_harmony] 通知权限弹窗是否完成"+task);
+            int pushNumber = ReadIsAutoPushFromFile();
+            bool enabled =pushNumber==1;
+            
+            GameDataManager.Instance.UserData.IsAutoPush = enabled;
+            
+            if (enabled)
+            {
+                Debug.Log("[Push_harmony] 通知权限已授权");
+                AnalyticMgr.PopAccept(popName: "消息推送");
 
-                // ★ 埋点：拒绝推送
-                AnalyticMgr.PopRefuse("消息推送");
+                UnityTimer.Delay(0.5f, () =>
+                {
+                    RestoreAgentRegisteredMap();
+                    RegisterAgentReminders();
+                    Debug.Log("[Push_harmony] Agent reminder initialized after notification enable.");
+
+                    EventDispatcher.instance.TriggerChangeGoldUI(0,false);
+                });
+            }
+            else
+            {
+                Debug.Log("[Push_harmony] 通知未授权，3秒后重试...");
+                AnalyticMgr.PopRefuse(popName: "消息推送");
+                
+                EventDispatcher.instance.TriggerChangeGoldUI(0,false);
+                
+                yield return new WaitForSeconds(3f);
+                Game.self.StartCoroutine(CheckNotificationAndInit());
+               
             }
         }
 
-        [System.Serializable]
-        private class NotificationEnableResult
+        /// <summary> 从 JSON 文件读取 IsAutoPush 值（0/1） </summary>
+        public int ReadIsAutoPushFromFile()
         {
-            public bool granted;
-            public bool alreadyEnabled;
+            try
+            {
+                // ★ 路径与 ArkTS 侧 ctx.filesDir 保持一致
+                string path = Path.Combine(Application.persistentDataPath, "is_auto_push.json");
+
+                if (!File.Exists(path))
+                {
+                    Debug.Log($"[Push_harmony] is_auto_push.json not found at {path}");
+                    return 0;
+                }
+
+                string json = File.ReadAllText(path);
+                var data = JsonUtility.FromJson<IsAutoPushData>(json);
+                int value = data != null ? data.IsAutoPush : 0;
+                Debug.Log($"[Push_harmony] Read IsAutoPush from file: {value}");
+                return value;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[Push_harmony] ReadIsAutoPushFromFile failed: {e.Message}");
+                return 0;
+            }
         }
+
+        [Serializable]
+        private class IsAutoPushData
+        {
+            public int IsAutoPush;
+        }
+
 
         // ============================================================
         // 权限请求
@@ -173,29 +263,36 @@ namespace Middleware
 
             if (isPushRequested == 0)
             {
+                AnalyticMgr.PopShow(popName: "消息推送");
                 OHSDKKitManager.Instance.RequestEnableNotification();
                 Debug.Log("[Push_harmony] RequestEnableNotification issued.");
-                
-                KEY_IS_PUSH_REQUESTED = "1";
-                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 0);
             }
             else
             {
                 Debug.Log("[Push_harmony] Push disabled by config, skip RequestEnableNotification.");
             }
-
-            // 授权成功后注册代理提醒
+            
             UnityTimer.Delay(5f, () =>
             {
-                if (_harmonyProxy != null)
-                {
-                    OnNotificationEnableResult(true);
-                    // 调用 Bridge 方法，内部会先查询状态，已授权直接回调，未授权弹窗
-                    _harmonyProxy.Call("RequestNotificationEnable");
-
-                }
+                Game.self.StartCoroutine(CheckNotificationAndInit());
             });
         }
+        
+        // ============================================================
+        // 重置推送权限请求
+        // ============================================================
+        public void ReSetRequestEnableNotification()
+        {
+            AnalyticMgr.PopShow(popName: "消息推送");
+            OHSDKKitManager.Instance.RequestEnableNotification();
+            Debug.Log("[Push_harmony] RequestEnableNotification issued.");
+            
+            UnityTimer.Delay(5f, () =>
+            {
+                Game.self.StartCoroutine(ResetCheckNotificationAndInit());
+            });
+        }
+   
 
         public void GetToken()
         {
@@ -325,13 +422,22 @@ namespace Middleware
 
             try
             {
+                
                 _harmonyProxy = new OpenHarmonyJSObject("PushHarmonyProxy");
-                _harmonyProxy.Call("SetConfig", BUNDLE_NAME, ABILITY_NAME);
+
+                string filesDir = Application.persistentDataPath;
+                if (string.IsNullOrEmpty(filesDir))
+                {
+                    // ★ OpenHarmony 沙箱固定路径
+                    filesDir = "/data/storage/el2/base/haps/entry/files";
+                    Debug.LogWarning($"[Push_harmony] persistentDataPath empty, using fallback: {filesDir}");
+                }
+
+                Debug.Log($"[Push_harmony] filesDir = '{filesDir}'");
+                _harmonyProxy.Call("SetConfig", BUNDLE_NAME, ABILITY_NAME, filesDir);
                 _harmonyProxy.Call("InitReminderAgent");
 
-                // ★ 先取消系统内所有旧提醒，避免数量累积超限
-                _harmonyProxy.Call("CancelAllReminders");
-                Debug.Log("[Push_harmony] CancelAllReminders issued.");
+                CancelAllReminders();
             }
             catch (Exception e)
             {
@@ -396,6 +502,13 @@ namespace Middleware
 
             SaveAgentRegisteredMap();
             Debug.Log($"[Push_harmony] Agent reminders registered: {registeredCount}, Total={_agentRegisteredMap.Count}, Segment={segment}");
+        }
+
+        public void CancelAllReminders()
+        {
+            // ★ 先取消系统内所有旧提醒，避免数量累积超限
+            _harmonyProxy.Call("CancelAllReminders");
+            Debug.Log("[Push_harmony] CancelAllReminders issued.");
         }
 
         private bool PublishAgentReminder(DateTime trigger, PushData data)
