@@ -2,6 +2,11 @@
 import { reminderAgentManager } from '@kit.BackgroundTasksKit';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { emitter } from '@kit.BasicServicesKit';
+
+// Emitter 事件 ID（与 TuanjiePlayerAbility.ets 保持一致）
+const EVENT_REQUEST_NOTIFICATION_ENABLE: number = 100;
+const EVENT_NOTIFICATION_ENABLE_RESULT: number = 101;
 
 export class PushHarmonyProxy {
 
@@ -11,14 +16,39 @@ export class PushHarmonyProxy {
   SetConfig(bundleName: string, abilityName: string): void {
     this.bundleName = bundleName;
     this.abilityName = abilityName;
-    console.info('[PushHarmonyProxy] config set, bundleName=' + bundleName +
-      ', abilityName=' + abilityName);
+    console.info('[PushHarmonyProxy] config set, bundleName=' +
+      bundleName + ', abilityName=' + abilityName);
   }
 
   InitReminderAgent(): void {
     console.info('[PushHarmonyProxy] reminder agent initialized');
   }
 
+  // ============================================================
+  // 请求通知使能
+  // - 已授权：直接回调 Unity，通知侧立即注册代理提醒
+  // - 未授权：通过 Emitter 通知 Ability 侧拉起系统弹窗
+  // ============================================================
+  async RequestNotificationEnable(): Promise<void> {
+
+      const enabled: boolean = await notificationManager.isNotificationEnabled();
+      console.info('[PushHarmonyProxy] notification enabled: ' + enabled);
+
+      if (enabled) {
+        // 已授权，直接回调 Unity
+        this.SendToUnity("OnNotificationEnableResult",
+          JSON.stringify({ granted: true, alreadyEnabled: true }));
+        return;
+      }
+
+      // 未授权，通过 Emitter 通知 Ability 侧拉起弹窗
+      this.SendToUnity("OnNotificationEnableResult",
+        JSON.stringify({ granted: false}));
+  }
+
+  // ============================================================
+  // 发布日历类型代理提醒
+  // ============================================================
   async PublishCalendarReminder(
     year: number, month: number, day: number,
     hour: number, minute: number, second: number,
@@ -27,7 +57,7 @@ export class PushHarmonyProxy {
   ): Promise<void> {
     try {
       if (!this.bundleName || !this.abilityName) {
-        console.error('[PushHarmonyProxy] config not set');
+        console.error('[PushHarmonyProxy] config not set; call SetConfig first');
         this.SendToUnity("OnReminderPublished",
           JSON.stringify({ success: false, pushKey: pushKey, errorMsg: 'config not set' }));
         return;
@@ -36,26 +66,23 @@ export class PushHarmonyProxy {
       const reminderWantAgent: reminderAgentManager.WantAgent = {
         pkgName: this.bundleName,
         abilityName: this.abilityName,
-        parameters: { 'pushKey': pushKey }
+        parameters: {
+          'pushKey': pushKey
+        }
       };
 
       const reminder: reminderAgentManager.ReminderRequestCalendar = {
         reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_CALENDAR,
-        dateTime: { year, month, day, hour, minute, second },
+        dateTime: {
+          year: year, month: month, day: day,
+          hour: hour, minute: minute, second: second
+        },
         title: title,
         content: content,
         expiredContent: content,
         notificationId: 0,
-
-        // ★ 关键修改 1：改为 SERVICE_INFORMATION（普通服务通知）
-        //   SOCIAL_COMMUNICATION 会触发横幅 + 响铃，最打扰
-        //   SERVICE_INFORMATION 只有普通提示音，符合"普通推送音效"
-        slotType: notificationManager.SlotType.SERVICE_INFORMATION,
-
-        // ★ 关键修改 2：ringDuration 设为 0，关闭振铃
-        //   0 表示不响铃，但通知本身仍会发出系统默认提示音
-        ringDuration: 0,
-
+        slotType: notificationManager.SlotType.SOCIAL_COMMUNICATION,
+        ringDuration: ringDuration > 0 ? ringDuration : 5,
         wantAgent: reminderWantAgent,
         actionButton: []
       };
@@ -73,8 +100,10 @@ export class PushHarmonyProxy {
       console.error('[PushHarmonyProxy] publish failed: code=' + e.code +
         ', msg=' + e.message + ', key=' + pushKey);
       this.SendToUnity("OnReminderPublished",
-        JSON.stringify({ success: false, pushKey: pushKey,
-          errorCode: e.code, errorMsg: e.message }));
+        JSON.stringify({
+          success: false, pushKey: pushKey,
+          errorCode: e.code, errorMsg: e.message
+        }));
     }
   }
 
@@ -108,6 +137,9 @@ export class PushHarmonyProxy {
   }
 }
 
+// ============================================================
+// 注册函数
+// ============================================================
 export function RegisterPushHarmonyProxy(): Record<string, Object> {
   const bridge: PushHarmonyProxy = new PushHarmonyProxy();
   return { 'PushHarmonyProxy': bridge };
