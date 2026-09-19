@@ -161,7 +161,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -335.6, y: -600.2}
+  m_AnchoredPosition: {x: -335.6, y: -587.1}
   m_SizeDelta: {x: 0, y: 74}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2687840112996669171
@@ -1244,6 +1244,7 @@ MonoBehaviour:
   _openDuration: 0.3
   _closeDuration: 0.3
   HideButton: {fileID: 6043342328112555402}
+  autopushBtn: {fileID: 5693975400316801156}
   vibrateToggle: {fileID: 6153081153375049287}
   musicToggle: {fileID: 4515884921757662582}
   soundsToggle: {fileID: 3628143504653542480}
@@ -1255,6 +1256,7 @@ MonoBehaviour:
   muHandle: {fileID: 3919504440936078169}
   soHandle: {fileID: 9219049277533156247}
   viHandle: {fileID: 7473134427456659475}
+  auHandle: {fileID: 5582999926195940878}
   VersionText: {fileID: 9010896396305360195}
   HeaderText: {fileID: 899973376308756124}
   musicText: {fileID: 8462855625891447763}
@@ -2047,7 +2049,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 335.6, y: -600.2}
+  m_AnchoredPosition: {x: 335.6, y: -587.1}
   m_SizeDelta: {x: 0, y: 74}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4391603026772468634
@@ -2315,7 +2317,7 @@ GameObject:
   - component: {fileID: 1841066099262296511}
   m_Layer: 5
   m_HasEditorInfo: 1
-  m_Name: VibrateHandle
+  m_Name: autopushHandle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2744,7 +2746,7 @@ GameObject:
   - component: {fileID: 7945728263538578372}
   m_Layer: 5
   m_HasEditorInfo: 1
-  m_Name: vibrateText
+  m_Name: autopushText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2810,7 +2812,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u81EA\u52A8\u63D0\u9192"
+  m_Text: "\u6D88\u606F\u63A8\u9001"
 --- !u!1 &7096665322824775441
 GameObject:
   m_ObjectHideFlags: 0
@@ -2849,7 +2851,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -600.2}
+  m_AnchoredPosition: {x: 0, y: -587.1}
   m_SizeDelta: {x: 0, y: 74}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3877408454578474725
@@ -2988,7 +2990,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -453}
+  m_AnchoredPosition: {x: 0, y: -418.5}
   m_SizeDelta: {x: 974, y: 175}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5557303179569384814
@@ -3303,7 +3305,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &42361463592303719
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3320,7 +3322,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -453}
+  m_AnchoredPosition: {x: 0, y: -418.5}
   m_SizeDelta: {x: 550, y: 167}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7029124501257762500
@@ -3769,10 +3771,10 @@ GameObject:
   serializedVersion: 7
   m_Component:
   - component: {fileID: 8776763394665844352}
-  - component: {fileID: 6535262477612888730}
+  - component: {fileID: 5693975400316801156}
   m_Layer: 5
   m_HasEditorInfo: 1
-  m_Name: vibrateSwitch
+  m_Name: autopushBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3798,7 +3800,7 @@ RectTransform:
   m_AnchoredPosition: {x: 245, y: 0}
   m_SizeDelta: {x: 258, y: 93}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &6535262477612888730
+--- !u!114 &5693975400316801156
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3807,7 +3809,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8811326591267160815}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Navigation:
@@ -3827,11 +3829,10 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 21300000, guid: d1ccd3ac131afab42925641c767e79f8,
-      type: 3}
-    m_PressedSprite: {fileID: 21300000, guid: ca585e8e1c8edea47a47b488d6693f9b, type: 3}
-    m_SelectedSprite: {fileID: 21300000, guid: ca585e8e1c8edea47a47b488d6693f9b, type: 3}
-    m_DisabledSprite: {fileID: 21300000, guid: d1ccd3ac131afab42925641c767e79f8, type: 3}
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -3840,13 +3841,9 @@ MonoBehaviour:
     m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 6171347572623163553}
-  toggleTransition: 1
-  graphic: {fileID: 0}
-  m_Group: {fileID: 0}
-  onValueChanged:
+  m_OnClick:
     m_PersistentCalls:
       m_Calls: []
-  m_IsOn: 1
 --- !u!1 &9219049277533156247
 GameObject:
   m_ObjectHideFlags: 0

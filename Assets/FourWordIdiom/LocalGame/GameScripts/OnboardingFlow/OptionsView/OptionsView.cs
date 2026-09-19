@@ -7,10 +7,11 @@ using Middleware;
 public class OptionsView : UIWindow
 {
     [SerializeField] private Button HideButton; // 关闭按钮
+    [SerializeField] private Button autopushBtn; // 推送开关
+    
     [SerializeField] private Toggle vibrateToggle; // 震动开关
     [SerializeField] private Toggle musicToggle; // 音乐开关
     [SerializeField] private Toggle soundsToggle; // 音效开关
-    [SerializeField] private Toggle autoPushToggle; // 音效开关
 
     [SerializeField] private Button privacyBtn; // 隐私条款按钮
     [SerializeField] private Button termsBtn; // 服务协议按钮
@@ -66,8 +67,7 @@ public class OptionsView : UIWindow
 
     private void UpdateAutoPushToggle(int value=0,bool enable=false)
     {
-        autoPushToggle.isOn = GameDataManager.Instance.UserData.IsAutoPush; // 更新音效开关状态
-        SetToggleVisuals(auHandle, autoPushToggle.isOn); // 带动画更新音效手柄视觉
+        SetToggleVisuals(auHandle, GameDataManager.Instance.UserData.IsAutoPush); // 带动画更新音效手柄视觉
     }
     
     private void UpdateToggleStates(bool animate)
@@ -75,7 +75,6 @@ public class OptionsView : UIWindow
         musicToggle.isOn = GameDataManager.Instance.UserData.IsMusicOn; // 更新音乐开关状态
         soundsToggle.isOn = GameDataManager.Instance.UserData.IsSoundOn; // 更新音效开关状态
         vibrateToggle.isOn = GameDataManager.Instance.UserData.IsVibrationOn; // 更新音效开关状态
-        autoPushToggle.isOn = GameDataManager.Instance.UserData.IsAutoPush; // 更新音效开关状态
         
         // 根据当前开关状态更新视觉效果
         if (animate)
@@ -83,7 +82,7 @@ public class OptionsView : UIWindow
             UpdateToggleVisuals(muHandle, musicToggle.isOn); // 带动画更新音乐手柄视觉
             UpdateToggleVisuals(soHandle, soundsToggle.isOn); // 带动画更新音效手柄视觉
             UpdateToggleVisuals(viHandle, vibrateToggle.isOn); // 带动画更新音效手柄视觉
-            UpdateToggleVisuals(auHandle, autoPushToggle.isOn); // 带动画更新音效手柄视觉
+            UpdateToggleVisuals(auHandle, GameDataManager.Instance.UserData.IsAutoPush); // 带动画更新音效手柄视觉
         }
         else
         {
@@ -91,7 +90,7 @@ public class OptionsView : UIWindow
             SetToggleVisuals(muHandle, musicToggle.isOn);
             SetToggleVisuals(soHandle, soundsToggle.isOn);
             SetToggleVisuals(viHandle, vibrateToggle.isOn); // 带动画更新音效手柄视觉
-            SetToggleVisuals(auHandle, autoPushToggle.isOn); // 带动画更新音效手柄视觉
+            SetToggleVisuals(auHandle, GameDataManager.Instance.UserData.IsAutoPush); // 带动画更新音效手柄视觉
         }
     }
 
@@ -107,7 +106,6 @@ public class OptionsView : UIWindow
         musicToggle.onValueChanged.AddListener(ToggleMusic); // 绑定音乐开关变更事件
         soundsToggle.onValueChanged.AddListener(ToggleSounds); // 绑定音效开关变更事件
         vibrateToggle.onValueChanged.AddListener(ToggleVibrate); // 绑定音效开关变更事件
-        autoPushToggle.onValueChanged.AddListener(ToggleAutoPush); // 绑定音效开关变更事件
 
         // 添加无用的点击监听器
         foreach (var toggle in new Toggle[] { musicToggle, soundsToggle, vibrateToggle })
@@ -147,20 +145,9 @@ public class OptionsView : UIWindow
         UpdateToggleVisuals(viHandle, isOn); // 更新音效手柄视觉
     }
     
-    private void ToggleAutoPush(bool isOn)
+    private void ToggleAutoPush()
     {
-        // GameDataManager.Instance.UserData.IsAutoPush = isOn; // 保存音效开关状态
-        // GameDataManager.Instance.UserData.IsHandOpenAutoPush = isOn; // 保存音效开关状态
-        // UpdateToggleVisuals(auHandle, isOn); // 更新音效手柄视觉
-
-        // if (!GameDataManager.Instance.UserData.IsHandOpenAutoPush)
-        // {
-        //     Game.self.Pushs.CancelAllReminders();
-        // }
-        // else
-        // {
-            Game.self.Pushs.ReSetRequestEnableNotification();
-        //}
+        Game.self.Pushs.ReSetRequestEnableNotification();
     }
 
     private void ToggleSounds(bool isOn)
@@ -188,6 +175,9 @@ public class OptionsView : UIWindow
         opinionBtn.AddClickAction(OnOpinionBtn);
         restoreBuyBtn.AddClickAction(OnRestoreBuyBtn);
         copyButton.AddClickAction(OnCopyPackageAndOpenId);
+        
+        autopushBtn.onClick.AddListener(ToggleAutoPush); // 绑定音效开关变更事件
+        
         // 添加无用的点击监听器
         var buttons = new Button[] { HideButton, privacyBtn, termsBtn };
         foreach (var btn in buttons)
