@@ -47,10 +47,21 @@ namespace Middleware
 
         private const string KEY_AGENT_REGISTERED_MAP = "push_agent_registered_map";
 
-        /// <summary> 是否已经向用户请求推送授权（由 prefab 配置写入，0/1） </summary>
-        private string KEY_IS_PUSH_REQUESTED = "is_push_requested";
+        /// <summary> 是否已向用户请求过推送授权（由 prefab 配置写入，0/1） </summary>
+        private const string KEY_IS_PUSH_REQUESTED = "is_push_requested";
 
+        /// <summary> 活跃用户阈值：最近 N 天内（含当天）有登录 → 活跃 </summary>
         private const int ACTIVE_DAYS = 5;
+
+        /// <summary> 代理提醒预注册天数（第一段活跃 = ACTIVE_DAYS 天；第二段衰退 = ACTIVE_DAYS 天） </summary>
+        private const int AGENT_REFRESH_DAYS = ACTIVE_DAYS;
+
+        /// <summary> 代理提醒注册上限（系统上限 30，留 2 个余量） </summary>
+        private const int AGENT_MAX_REMINDERS = 90;
+
+        /// <summary> 代理提醒响铃时长（秒），设为 0 表示只发通知不响铃 </summary>
+        private const int AGENT_RING_DURATION = 0;
+
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private const long TIMESTAMP_MS_THRESHOLD = 99999999999L;
 
@@ -61,25 +72,52 @@ namespace Middleware
         private const int SLOT_TOLERANCE_SECONDS = 60;
         private const float TICK_INTERVAL = 30f;
         private const string DEFAULT_TITLE = "游戏提醒";
-        private const int AGENT_REFRESH_WEEKS = 2;
-        private const int AGENT_MAX_REMINDERS = 82;
-        private const int AGENT_RING_DURATION = 5;
 
         // ---- 活跃用户排期 ----
+        // 周一至周五：早 6:58、午 14:00、晚 21:00
+        // 周六、周日：午 14:00、晚 21:00
         private static readonly PushSlot[] ActiveSchedule = new PushSlot[]
         {
-            new PushSlot { Days = new[]{ DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday }, Time = MORNING_TIME, Pool = PushTextPool.Morning },
-            new PushSlot { Days = new[]{ DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday }, Time = NOON_TIME, Pool = PushTextPool.Noon },
-            new PushSlot { Days = new[]{ DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday }, Time = NIGHT_TIME, Pool = PushTextPool.Night },
+            // 周一至周五 早 6:58
+            new PushSlot {
+                Days = new[]{ DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday },
+                Time = MORNING_TIME, Pool = PushTextPool.Morning
+            },
+            // 周一至周日 午 14:00
+            new PushSlot {
+                Days = new[]{ DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
+                              DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday },
+                Time = NOON_TIME, Pool = PushTextPool.Noon
+            },
+            // 周一至周日 晚 21:00
+            new PushSlot {
+                Days = new[]{ DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
+                              DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday },
+                Time = NIGHT_TIME, Pool = PushTextPool.Night
+            },
         };
 
         // ---- 衰退/预流失用户排期 ----
+        // 周一、周三：早 6:58
+        // 周二、周四：午 14:00
+        // 周五、周六、周日：晚 21:00
         private static readonly PushSlot[] ChurnSchedule = new PushSlot[]
         {
-            new PushSlot { Days = new[]{ DayOfWeek.Monday, DayOfWeek.Wednesday }, Time = MORNING_TIME, Pool = PushTextPool.Morning },
-            new PushSlot { Days = new[]{ DayOfWeek.Tuesday, DayOfWeek.Thursday }, Time = NOON_TIME, Pool = PushTextPool.Noon },
-            new PushSlot { Days = new[]{ DayOfWeek.Saturday }, Time = NIGHT_TIME, Pool = PushTextPool.Recall },
-            new PushSlot { Days = new[]{ DayOfWeek.Friday, DayOfWeek.Sunday }, Time = NIGHT_TIME, Pool = PushTextPool.Night },
+            // 周一、周三 早 6:58
+            new PushSlot {
+                Days = new[]{ DayOfWeek.Monday, DayOfWeek.Wednesday },
+                Time = MORNING_TIME, Pool = PushTextPool.Morning
+            },
+            // 周二、周四 午 14:00
+            new PushSlot {
+                Days = new[]{ DayOfWeek.Tuesday, DayOfWeek.Thursday },
+                Time = NOON_TIME, Pool = PushTextPool.Noon
+            },
+            // 周五、周六、周日 晚 21:00
+            new PushSlot {
+                Days = new[]{ DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday },
+                Time = NIGHT_TIME, Pool = PushTextPool.Recall
+            },
         };
 
         // ============================================================
@@ -109,6 +147,7 @@ namespace Middleware
                 GetToken();
 
                 InitAgentReminder();
+                
                 _initialized = true;
                 StartScheduler();
             });
@@ -127,71 +166,60 @@ namespace Middleware
         // ============================================================
         // 接收 Bridge 回传的授权结果
         // ============================================================
-        // ============================================================
         private IEnumerator CheckNotificationAndInit()
         {
-            // ★ 从 PlayerPrefs 写入的值（0/1）
             int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
-           
-            
-            // ★ 使用泛型指定返回类型为 bool
+
             _harmonyProxy.Call("RequestNotificationEnable");
             yield return new WaitForSeconds(0.1f);
-            //Debug.Log("[Push_harmony] 通知权限弹窗是否完成"+task);
+
             int pushNumber = ReadIsAutoPushFromFile();
-            bool enabled =pushNumber==1;
-            
+            bool enabled = pushNumber == 1;
+
             GameDataManager.Instance.UserData.IsAutoPush = enabled;
-            
+
             if (enabled)
             {
                 Debug.Log("[Push_harmony] 通知权限已授权");
-                
-                if(isPushRequested==0)
+
+                if (isPushRequested == 0)
                     AnalyticMgr.PopAccept(popName: "消息推送");
-                
-                KEY_IS_PUSH_REQUESTED = "1";
-                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 0);
+
+                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
+                PlayerPrefs.Save();
 
                 UnityTimer.Delay(0.5f, () =>
                 {
                     RestoreAgentRegisteredMap();
                     RegisterAgentReminders();
                     Debug.Log("[Push_harmony] Agent reminder initialized after notification enable.");
-
                 });
             }
             else
             {
                 Debug.Log("[Push_harmony] 通知未授权，3秒后重试...");
-                
-                if(isPushRequested==0)
+
+                if (isPushRequested == 0)
                     AnalyticMgr.PopRefuse(popName: "消息推送");
-                
-                KEY_IS_PUSH_REQUESTED = "1";
-                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 0);
-               
+
+                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
+                PlayerPrefs.Save();
+
                 yield return new WaitForSeconds(3f);
                 Game.self.StartCoroutine(CheckNotificationAndInit());
-               
             }
         }
-        
-          // ============================================================
-        // 接收 Bridge 回传的授权结果
-        // ============================================================
-        // ============================================================
+
         private IEnumerator ResetCheckNotificationAndInit()
         {
-            // ★ 使用泛型指定返回类型为 bool
             _harmonyProxy.Call("RequestNotificationEnable");
             yield return new WaitForSeconds(0.1f);
-            //Debug.Log("[Push_harmony] 通知权限弹窗是否完成"+task);
+
             int pushNumber = ReadIsAutoPushFromFile();
-            bool enabled =pushNumber==1;
-            
+            bool enabled = pushNumber == 1;
+
             GameDataManager.Instance.UserData.IsAutoPush = enabled;
-            
+
             if (enabled)
             {
                 Debug.Log("[Push_harmony] 通知权限已授权");
@@ -203,19 +231,18 @@ namespace Middleware
                     RegisterAgentReminders();
                     Debug.Log("[Push_harmony] Agent reminder initialized after notification enable.");
 
-                    EventDispatcher.instance.TriggerChangeGoldUI(0,false);
+                    EventDispatcher.instance.TriggerChangeGoldUI(0, false);
                 });
             }
             else
             {
                 Debug.Log("[Push_harmony] 通知未授权，3秒后重试...");
                 AnalyticMgr.PopRefuse(popName: "消息推送");
-                
-                EventDispatcher.instance.TriggerChangeGoldUI(0,false);
-                
+
+                EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+
                 yield return new WaitForSeconds(3f);
-                Game.self.StartCoroutine(CheckNotificationAndInit());
-               
+                Game.self.StartCoroutine(ResetCheckNotificationAndInit());
             }
         }
 
@@ -224,7 +251,6 @@ namespace Middleware
         {
             try
             {
-                // ★ 路径与 ArkTS 侧 ctx.filesDir 保持一致
                 string path = Path.Combine(Application.persistentDataPath, "is_auto_push.json");
 
                 if (!File.Exists(path))
@@ -252,13 +278,11 @@ namespace Middleware
             public int IsAutoPush;
         }
 
-
         // ============================================================
         // 权限请求
         // ============================================================
         public void RequestEnableNotification()
         {
-            // ★ 从 PlayerPrefs 写入的值（0/1）
             int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
 
             if (isPushRequested == 0)
@@ -269,25 +293,25 @@ namespace Middleware
             }
             else
             {
-                Debug.Log("[Push_harmony] Push disabled by config, skip RequestEnableNotification.");
+                Debug.Log("[Push_harmony] Push already requested, skip RequestEnableNotification.");
             }
-            
+
             UnityTimer.Delay(5f, () =>
             {
                 Game.self.StartCoroutine(CheckNotificationAndInit());
             });
         }
-        
-        // ============================================================
-        // 重置推送权限请求
-        // ============================================================
+
+        /// <summary>
+        /// 重置推送权限请求（引导用户去系统设置开启通知）
+        /// </summary>
         public void ReSetRequestEnableNotification()
         {
             AnalyticMgr.PopShow(popName: "消息推送");
-            
-            OHSDKKitManager.Instance.CancelNotification(0,0);
+
+            OHSDKKitManager.Instance.CancelNotification(0, 0);
             Debug.Log("[Push_harmony] OpenNotificationSettingsPanel");
-            
+
             UnityTimer.Delay(5f, () =>
             {
                 Game.self.StartCoroutine(ResetCheckNotificationAndInit());
@@ -317,6 +341,13 @@ namespace Middleware
         // ============================================================
         // 用户分层判断
         // ============================================================
+        /// <summary>
+        /// 用户分层判断：
+        ///   活跃：离线时间 ≤ 4 天（含当天）
+        ///   衰退：离线时间 ≥ 5 天
+        /// 注意：此方法只在需要区分 slotId 前缀时使用，
+        ///       代理提醒的注册由 RegisterAgentReminders 显式指定两段，不依赖此返回值。
+        /// </summary>
         private UserSegment GetUserSegment()
         {
             string raw = GameDataManager.Instance?.UserData?.logoutTime;
@@ -433,17 +464,15 @@ namespace Middleware
         // ============================================================
         private void InitAgentReminder()
         {
-            Debug.Log("[Push_harmony] Agent reminder initialized.");
+            Debug.Log("[Push_harmony] InitAgentReminder start.");
 
             try
             {
-                
                 _harmonyProxy = new OpenHarmonyJSObject("PushHarmonyProxy");
 
                 string filesDir = Application.persistentDataPath;
                 if (string.IsNullOrEmpty(filesDir))
                 {
-                    // ★ OpenHarmony 沙箱固定路径
                     filesDir = "/data/storage/el2/base/haps/entry/files";
                     Debug.LogWarning($"[Push_harmony] persistentDataPath empty, using fallback: {filesDir}");
                 }
@@ -452,7 +481,11 @@ namespace Middleware
                 _harmonyProxy.Call("SetConfig", BUNDLE_NAME, ABILITY_NAME, filesDir);
                 _harmonyProxy.Call("InitReminderAgent");
 
-                CancelAllReminders();
+                // ★ 全取消：清空系统侧旧提醒 + 清空本地映射
+                _harmonyProxy.Call("CancelAllReminders");
+                _agentRegisteredMap.Clear();
+                SaveAgentRegisteredMap();
+                Debug.Log("[Push_harmony] CancelAllReminders issued, will re-register.");
             }
             catch (Exception e)
             {
@@ -461,7 +494,9 @@ namespace Middleware
         }
 
         // ============================================================
-        // 代理提醒：注册队列
+        // 代理提醒：注册队列（两段式）
+        //   第一段：今天 ~ 第 ACTIVE_DAYS 天 → 活跃用户排期
+        //   第二段：第 ACTIVE_DAYS 天 ~ 第 2*ACTIVE_DAYS 天 → 衰退用户排期
         // ============================================================
         private void RegisterAgentReminders()
         {
@@ -471,21 +506,48 @@ namespace Middleware
                 return;
             }
 
-            UserSegment segment = GetUserSegment();
-            PushSlot[] schedule = segment == UserSegment.Active ? ActiveSchedule : ChurnSchedule;
             DateTime now = DateTime.Now;
             DateTime today = now.Date;
             CleanupExpiredAgentMap(now);
             int registeredCount = 0;
 
+            // ★ 第一段：今天 ~ 第 5 天，用活跃用户排期
+            registeredCount += RegisterScheduleRange(
+                ActiveSchedule, UserSegment.Active, today, now, 0, ACTIVE_DAYS);
+
+            // ★ 第二段：第 6 天 ~ 第 10 天，用衰退用户排期
+            registeredCount += RegisterScheduleRange(
+                ChurnSchedule, UserSegment.Churn, today, now, ACTIVE_DAYS, ACTIVE_DAYS * 6);
+
+            SaveAgentRegisteredMap();
+            Debug.Log($"[Push_harmony] Agent reminders registered: {registeredCount}, " +
+                      $"Total={_agentRegisteredMap.Count}");
+        }
+
+        /// <summary>
+        /// 注册指定日期范围内的排期
+        /// </summary>
+        /// <param name="schedule">排期数组</param>
+        /// <param name="segment">该段属于哪个用户分层（用于区分 slotId 前缀）</param>
+        /// <param name="today">今天</param>
+        /// <param name="now">当前时间</param>
+        /// <param name="startDayOffset">起始天偏移（含）</param>
+        /// <param name="endDayOffset">结束天偏移（不含）</param>
+        private int RegisterScheduleRange(
+            PushSlot[] schedule, UserSegment segment,
+            DateTime today, DateTime now,
+            int startDayOffset, int endDayOffset)
+        {
+            int count = 0;
+
             foreach (var slot in schedule)
             {
-                for (int i = 0; i < AGENT_REFRESH_WEEKS * 7; i++)
+                for (int i = startDayOffset; i < endDayOffset; i++)
                 {
                     if (_agentRegisteredMap.Count >= AGENT_MAX_REMINDERS)
                     {
                         Debug.LogWarning($"[Push_harmony] Reached AGENT_MAX_REMINDERS ({AGENT_MAX_REMINDERS}), stop.");
-                        break;
+                        return count;
                     }
 
                     DateTime d = today.AddDays(i);
@@ -509,21 +571,12 @@ namespace Middleware
                     if (ok)
                     {
                         _agentRegisteredMap[triggerKey] = data.Key;
-                        registeredCount++;
+                        count++;
                     }
                 }
-                if (_agentRegisteredMap.Count >= AGENT_MAX_REMINDERS) break;
             }
 
-            SaveAgentRegisteredMap();
-            Debug.Log($"[Push_harmony] Agent reminders registered: {registeredCount}, Total={_agentRegisteredMap.Count}, Segment={segment}");
-        }
-
-        public void CancelAllReminders()
-        {
-            // ★ 先取消系统内所有旧提醒，避免数量累积超限
-            _harmonyProxy.Call("CancelAllReminders");
-            Debug.Log("[Push_harmony] CancelAllReminders issued.");
+            return count;
         }
 
         private bool PublishAgentReminder(DateTime trigger, PushData data)
@@ -549,6 +602,7 @@ namespace Middleware
             }
         }
 
+        /// <summary> slotId 映射：活跃用户 1-4，衰退用户 11-14 </summary>
         private int GetSlotId(PushTextPool pool, UserSegment segment)
         {
             int baseId = segment == UserSegment.Active ? 0 : 10;
@@ -636,6 +690,10 @@ namespace Middleware
         // ============================================================
         // 代理提醒：对外刷新 / 取消
         // ============================================================
+        /// <summary>
+        /// 刷新代理提醒队列：全部取消 → 重新注册两段。
+        /// 建议在游戏回到前台、用户登录完成后调用。
+        /// </summary>
         public void RefreshAgentReminders()
         {
             if (_harmonyProxy == null)
@@ -643,9 +701,26 @@ namespace Middleware
                 Debug.LogWarning("[Push_harmony] RefreshAgentReminders skipped: proxy not ready.");
                 return;
             }
-            RestoreAgentRegisteredMap();
-            RegisterAgentReminders();
-            Debug.Log("[Push_harmony] Agent reminders refreshed.");
+
+            // 全部取消，避免状态切换时残留
+            _harmonyProxy.Call("CancelAllReminders");
+            _agentRegisteredMap.Clear();
+            SaveAgentRegisteredMap();
+
+            UnityTimer.Delay(0.5f, () =>
+            {
+                RegisterAgentReminders();
+                Debug.Log("[Push_harmony] Agent reminders refreshed.");
+            });
+        }
+
+        public void CancelAllReminders()
+        {
+            if (_harmonyProxy == null) return;
+            _harmonyProxy.Call("CancelAllReminders");
+            _agentRegisteredMap.Clear();
+            SaveAgentRegisteredMap();
+            Debug.Log("[Push_harmony] CancelAllReminders issued.");
         }
 
         public void CancelAllAgentReminders()
