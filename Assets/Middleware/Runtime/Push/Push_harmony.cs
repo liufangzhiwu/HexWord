@@ -284,13 +284,28 @@ namespace Middleware
         public void ReSetRequestEnableNotification()
         {
             AnalyticMgr.PopShow(popName: "消息推送");
-            OHSDKKitManager.Instance.RequestEnableNotification();
-            Debug.Log("[Push_harmony] RequestEnableNotification issued.");
+            
+            OHSDKKitManager.Instance.CancelNotification(0,0);
+            Debug.Log("[Push_harmony] OpenNotificationSettingsPanel");
             
             UnityTimer.Delay(5f, () =>
             {
                 Game.self.StartCoroutine(ResetCheckNotificationAndInit());
             });
+        }
+        
+        // ============================================================
+        // ★ 用户点击"去设置"按钮时调用
+        // 将应用退至后台，用户在系统设置中开启通知后切回前台
+        // Ability 的 onForeground 会重新检查通知状态
+        // ============================================================
+        public void OpenNotificationSettings()
+        {
+            Debug.Log("[Push_harmony] 引导用户去系统设置开启通知");
+            // 将应用退至后台，用户手动切回前台时 onForeground 触发重新检查
+            Application.OpenURL("appsettings://notification");
+            // 或者使用 Unity 的方式退至后台
+            // HandheldCommand.Quit(); // 不推荐，会退出应用
         }
    
 

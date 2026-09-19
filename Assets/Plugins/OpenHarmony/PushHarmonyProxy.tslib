@@ -3,6 +3,7 @@ import { reminderAgentManager } from '@kit.BackgroundTasksKit';
 import { notificationManager } from '@kit.NotificationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import fs from '@ohos.file.fs';
+import { common } from '@kit.AbilityKit';
 
 export class PushHarmonyProxy {
 
@@ -30,7 +31,7 @@ export class PushHarmonyProxy {
   // ============================================================
   async RequestNotificationEnable(): Promise<boolean> {
     try {
-      const enabled: boolean = await notificationManager.isNotificationEnabled();
+      const enabled: boolean = await notificationManager.isNotificationEnabledSync();
       console.info('[PushHarmonyProxy] notification enabled: ' + enabled);
       this.WriteIsAutoPushJson(enabled);
       return true;
@@ -42,6 +43,37 @@ export class PushHarmonyProxy {
       return true;
     }
   }
+
+  // ============================================================
+  // 拉起通知设置面板（二次申请）
+  // ============================================================
+  OpenNotificationSettingsPanel(): void {
+      notificationManager.openNotificationSettings(
+        globalThis.abilityContext as common.UIAbilityContext
+      ).then(() => {
+        console.info('[Push] openNotificationSettings success');
+      }).catch((err2: BusinessError) => {
+        console.error('[Push] openNotificationSettings failed: code=' +
+        err2.code + ', msg=' + err2.message);
+      });
+    }
+
+
+/*  // ============================================================
+  // 请求开启通知设置面板
+  //  ============================================================
+  async OpenSetNotificationEnable(): Promise<boolean> {
+    try {
+      notificationManager.openNotificationSettings();
+      console.info('[PushHarmonyProxy] openNotificationSettings');
+      return true;
+    } catch (err) {
+      const e = err as BusinessError;
+      console.error('[PushHarmonyProxy] openNotificationSettings failed: code=' +
+      e.code + ', msg=' + e.message);
+      return true;
+    }
+  }*/
 
   // ============================================================
   // 写 IsAutoPush 到 JSON 文件（使用 C# 传入的 filesDir）

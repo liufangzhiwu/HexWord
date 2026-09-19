@@ -50,15 +50,26 @@ public class OptionsView : UIWindow
 
     protected override void OnEnable()
     {
+        base.OnEnable();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
-        //EventManager.OnChangeLanguageUpdateUI += OnChangeLanguage; // 订阅语言更新事件           
+        EventDispatcher.instance.OnChangeGoldUI += UpdateAutoPushToggle; // 订阅语言更新事件           
         OnChangeLanguage(); // 更新语言显示
         opinionBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("EvaluateButton03");
         privacyBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("PrivacyPolicy");
         termsBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("TermsAndService");
         VersionText.text = "Ver " + Application.version;
+
+        UpdateAutoPushToggle();
+
     }
 
+
+    private void UpdateAutoPushToggle(int value=0,bool enable=false)
+    {
+        autoPushToggle.isOn = GameDataManager.Instance.UserData.IsAutoPush; // 更新音效开关状态
+        SetToggleVisuals(auHandle, autoPushToggle.isOn); // 带动画更新音效手柄视觉
+    }
+    
     private void UpdateToggleStates(bool animate)
     {
         musicToggle.isOn = GameDataManager.Instance.UserData.IsMusicOn; // 更新音乐开关状态
@@ -138,8 +149,18 @@ public class OptionsView : UIWindow
     
     private void ToggleAutoPush(bool isOn)
     {
-        GameDataManager.Instance.UserData.IsAutoPush = isOn; // 保存音效开关状态
-        UpdateToggleVisuals(auHandle, isOn); // 更新音效手柄视觉
+        // GameDataManager.Instance.UserData.IsAutoPush = isOn; // 保存音效开关状态
+        // GameDataManager.Instance.UserData.IsHandOpenAutoPush = isOn; // 保存音效开关状态
+        // UpdateToggleVisuals(auHandle, isOn); // 更新音效手柄视觉
+
+        // if (!GameDataManager.Instance.UserData.IsHandOpenAutoPush)
+        // {
+        //     Game.self.Pushs.CancelAllReminders();
+        // }
+        // else
+        // {
+            Game.self.Pushs.ReSetRequestEnableNotification();
+        //}
     }
 
     private void ToggleSounds(bool isOn)
@@ -260,5 +281,11 @@ public class OptionsView : UIWindow
         // 示例：如果你有飘字组件，可以加上
         // ToastManager.Show("信息已复制");
         MessageSystem.Instance.ShowTip("信息已复制");
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+        EventDispatcher.instance.OnChangeGoldUI += UpdateAutoPushToggle; // 订阅语言更新事件           
     }
 }
