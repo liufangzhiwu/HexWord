@@ -1,9 +1,10 @@
 // PushHarmonyProxy.tslib
 import { reminderAgentManager } from '@kit.BackgroundTasksKit';
 import { notificationManager } from '@kit.NotificationKit';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { BusinessError, systemDateTime } from '@kit.BasicServicesKit';
 import fs from '@ohos.file.fs';
-import { common } from '@kit.AbilityKit';
+import { TDOpenHarmonyProxy } from './TDOpenHarmonyProxy';
+import { DateData } from '@kit.ArkUI';
 
 export class PushHarmonyProxy {
 
@@ -31,49 +32,22 @@ export class PushHarmonyProxy {
   // ============================================================
   async RequestNotificationEnable(): Promise<boolean> {
     try {
-      const enabled: boolean = await notificationManager.isNotificationEnabledSync();
+      const enabled: boolean = await notificationManager.isNotificationEnabled();
       console.info('[PushHarmonyProxy] notification enabled: ' + enabled);
       this.WriteIsAutoPushJson(enabled);
+      var data=systemDateTime.getTime();
+      TDOpenHarmonyProxy.track("Pop_accept","消息推送",data,"Local","2c3fcbfea2ff4842b9e526a7f2e4ee64");
       return true;
     } catch (err) {
       const e = err as BusinessError;
       console.error('[PushHarmonyProxy] check notification failed: code=' +
       e.code + ', msg=' + e.message);
       this.WriteIsAutoPushJson(false);
+      var data=systemDateTime.getTime();
+      TDOpenHarmonyProxy.track("Pop_refuse","消息推送",data,"Local","2c3fcbfea2ff4842b9e526a7f2e4ee64");
       return true;
     }
   }
-
-  // ============================================================
-  // 拉起通知设置面板（二次申请）
-  // ============================================================
-  OpenNotificationSettingsPanel(): void {
-      notificationManager.openNotificationSettings(
-        globalThis.abilityContext as common.UIAbilityContext
-      ).then(() => {
-        console.info('[Push] openNotificationSettings success');
-      }).catch((err2: BusinessError) => {
-        console.error('[Push] openNotificationSettings failed: code=' +
-        err2.code + ', msg=' + err2.message);
-      });
-    }
-
-
-/*  // ============================================================
-  // 请求开启通知设置面板
-  //  ============================================================
-  async OpenSetNotificationEnable(): Promise<boolean> {
-    try {
-      notificationManager.openNotificationSettings();
-      console.info('[PushHarmonyProxy] openNotificationSettings');
-      return true;
-    } catch (err) {
-      const e = err as BusinessError;
-      console.error('[PushHarmonyProxy] openNotificationSettings failed: code=' +
-      e.code + ', msg=' + e.message);
-      return true;
-    }
-  }*/
 
   // ============================================================
   // 写 IsAutoPush 到 JSON 文件（使用 C# 传入的 filesDir）
@@ -105,7 +79,7 @@ export class PushHarmonyProxy {
   }
 
   // ============================================================
-  // 发布日历类型代理提醒
+  // 发布日历类型代理提醒（使用普通通知音效）
   // ============================================================
   async PublishCalendarReminder(
     year: number, month: number, day: number,
@@ -127,6 +101,7 @@ export class PushHarmonyProxy {
         parameters: { 'pushKey': pushKey }
       };
 
+
       const reminder: reminderAgentManager.ReminderRequestCalendar = {
         reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_CALENDAR,
         dateTime: { year, month, day, hour, minute, second },
@@ -134,8 +109,9 @@ export class PushHarmonyProxy {
         content: content,
         expiredContent: content,
         notificationId: 0,
-        slotType: notificationManager.SlotType.SOCIAL_COMMUNICATION,
-        ringDuration: ringDuration > 0 ? ringDuration : 5,
+        // ★ 普通通知音效：使用 SERVICE_INFORMATION 通道
+        slotType: notificationManager.SlotType.SERVICE_INFORMATION,
+        ringDuration: 0,
         wantAgent: reminderWantAgent,
         actionButton: []
       };
