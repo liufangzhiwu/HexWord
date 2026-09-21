@@ -53,9 +53,6 @@ namespace Middleware
         /// <summary> 活跃用户阈值：最近 N 天内（含当天）有登录 → 活跃 </summary>
         private const int ACTIVE_DAYS = 5;
 
-        /// <summary> 代理提醒预注册天数（第一段活跃 = ACTIVE_DAYS 天；第二段衰退 = ACTIVE_DAYS 天） </summary>
-        private const int AGENT_REFRESH_DAYS = ACTIVE_DAYS;
-
         /// <summary> 代理提醒注册上限（系统上限 30，留 2 个余量） </summary>
         private const int AGENT_MAX_REMINDERS = 90;
 
@@ -133,6 +130,10 @@ namespace Middleware
 
         private const string BUNDLE_NAME = "chengyu.idiom.hexa.zen.huawei";
         private const string ABILITY_NAME = "TuanjiePlayerAbility";
+        
+        /// <summary> 检查推送状态次数
+        private int CheckPushStateTimes = 0;
+        private int CheckPushStateTimesMax = 10;
 
         // ============================================================
         // 生命周期
@@ -168,8 +169,11 @@ namespace Middleware
         // ============================================================
         private IEnumerator CheckNotificationAndInit()
         {
+            //超过重试次数就返回
+            if(CheckPushStateTimes>CheckPushStateTimesMax) yield break;
+            
             int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
-
+            CheckPushStateTimes++;
             // 调 JS 查通知是否启用，写入 is_auto_push.json
             _harmonyProxy.Call("RequestNotificationEnable");
             yield return new WaitForSeconds(0.3f);
@@ -207,16 +211,20 @@ namespace Middleware
 
                 PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
                 PlayerPrefs.Save();
-
-                // ★ 不再无限递归重试
+               
+                // ★ 限递归重试
+                Game.self.StartCoroutine(CheckNotificationAndInit());
             }
         }
 
         private IEnumerator ResetCheckNotificationAndInit()
         {
+            //超过重试次数就返回
+            if(CheckPushStateTimes>CheckPushStateTimesMax) yield break;
+            
             _harmonyProxy.Call("RequestNotificationEnable");
             yield return new WaitForSeconds(0.3f);
-
+            CheckPushStateTimes++;
             int pushNumber = ReadIsAutoPushFromFile();
             bool enabled = pushNumber == 1;
 
@@ -240,10 +248,13 @@ namespace Middleware
             {
                 Debug.Log("[Push_harmony] 通知未授权");
                 AnalyticMgr.PopRefuse(popName: "消息推送");
-
+                
+                yield return new WaitForSeconds(1f);
+                
                 EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-
-                // ★ 不再无限递归重试
+               
+                // ★ 递归重试
+                Game.self.StartCoroutine(ResetCheckNotificationAndInit());
             }
         }
 
@@ -285,7 +296,7 @@ namespace Middleware
         public void RequestEnableNotification()
         {
             int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
-
+            CheckPushStateTimes = 0;
             if (isPushRequested == 0)
             {
                 AnalyticMgr.PopShow(popName: "消息推送");
@@ -310,7 +321,7 @@ namespace Middleware
         public void ReSetRequestEnableNotification()
         {
             AnalyticMgr.PopShow(popName: "消息推送");
-
+            CheckPushStateTimes = 0;
             OHSDKKitManager.Instance.CancelNotification(0, 0);
             Debug.Log("[Push_harmony] OpenNotificationSettingsPanel");
 
@@ -320,17 +331,6 @@ namespace Middleware
             });
         }
 
-        // ============================================================
-        // ★ 用户点击"去设置"按钮时调用
-        // 将应用退至后台，用户在系统设置中开启通知后切回前台
-        // Ability 的 onForeground 会重新检查通知状态
-        // ============================================================
-        public void OpenNotificationSettings()
-        {
-            Debug.Log("[Push_harmony] 引导用户去系统设置开启通知");
-            // 将应用退至后台，用户手动切回前台时 onForeground 触发重新检查
-            Application.OpenURL("appsettings://notification");
-        }
 
         public void GetToken()
         {
