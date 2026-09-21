@@ -15,7 +15,10 @@ namespace Middleware
         private const int MAX_POOL_SIZE = 2;
         private const int MAX_RETRY_COUNT = 3;
         private static readonly float[] RETRY_DELAYS = { 1f, 3f, 5f };
+        private const float AD_CACHE_EXPIRE_MINUTES = 60f;   // 预加载广告有效期
+        private const float SHOW_TIMEOUT_SECONDS = 12f;      // 展示超时兜底
 
+        //保持广告串行加载值为false
         private const bool STRICT_SERIAL_PER_ADTYPE = false;
 
         private const string REWARD_AD_ID = "s1emwq0ad9";
@@ -32,11 +35,17 @@ namespace Middleware
         AdsStatusSignalHandle SignalReceiveObj;
 
         // ================== 预加载槽位 ==================
+        private class CachedAd
+        {
+            public Advertisement ad;
+            public DateTime loadTime;
+        }
+
         private class AdPreloadInfo
         {
             public string adId;
             public AdType adType;
-            public List<Advertisement> readyAds = new List<Advertisement>();
+            public List<CachedAd> readyAds = new List<CachedAd>();
             public bool isLoading;
             public bool wantPreload;
             public bool pendingShow;
@@ -59,6 +68,12 @@ namespace Middleware
         private AdType _adType;
         private bool _isNeedShow_Field = false;
 
+        // ================== 展示状态跟踪 ==================
+        private DateTime _adShowStartTime;
+        private bool _adOpenReceived;
+        private bool _adVideoStartReceived;
+        private bool _adShowTimeoutTriggered;
+
         // ================== 生命周期 ==================
         public void Init(float delay)
         {
@@ -69,7 +84,7 @@ namespace Middleware
                 SignalHandler.Instance.RegisterSignalDelegate<AdsLoadSignal>(OnLoadAdsTrigger);
                 SignalHandler.Instance.RegisterSignalDelegate<AdsShowSignal>(OnShowAdsTrigger);
                 SignalHandler.Instance.RegisterSignalDelegate<AdsStatusSignal>(OnAdsStatusTrigger);
-                _uniqueId = Game.self.GetUniqueId();
+                _uniqueId = Game.self.GetOAID();
 
                 Debug.Log("[AD] SDK 初始化完成，两个激励位都发起预加载");
                 TryPreload(REWARD_AD_ID, AdType.Reward);
@@ -133,14 +148,13 @@ namespace Middleware
                 Debug.Log($"[AD] 播放中，标记 wantPreload：{adId}");
                 return;
             }
-            
+
             int maxpool = MAX_POOL_SIZE;
             if (info.adId == REWARD_AD_ID)
             {
                 maxpool = 1;
             }
 
-            //通用广告点最多缓存一个广告
             if (GetPoolCount(info) >= maxpool)
             {
                 Debug.Log($"[AD] 池已满({GetPoolCount(info)}/{maxpool})，跳过 {adId}");
@@ -165,7 +179,6 @@ namespace Middleware
                 return;
             }
 
-            // 1) 用户点播优先
             foreach (var kv in _preloadInfos)
             {
                 var info = kv.Value;
@@ -178,10 +191,7 @@ namespace Middleware
                     }
                 }
             }
-            
-        
 
-            // 2) 常规预加载
             foreach (var kv in _preloadInfos)
             {
                 var info = kv.Value;
@@ -190,7 +200,7 @@ namespace Middleware
                 {
                     maxpool = 1;
                 }
-                
+
                 if (info.wantPreload
                     && !info.isLoading
                     && GetPoolCount(info) < maxpool)
@@ -198,7 +208,6 @@ namespace Middleware
                     if (CanSubmitNow(info))
                     {
                         Debug.Log($"[AD] Pump 预加载：{info.adId}，当前池={GetPoolCount(info)}/{maxpool}");
-                      
                         DoPreload(info);
                     }
                 }
@@ -222,11 +231,20 @@ namespace Middleware
             info.isLoading = true;
             info.wantPreload = false;
             _submitQueue.Enqueue(info);
-            
+
             int maxpool = MAX_POOL_SIZE;
             if (info.adId == REWARD_AD_ID)
             {
                 maxpool = 1;
+            }
+
+            int adWidth = 720;
+            int adHeight = 1280;
+
+            if (info.adType == AdType.Reward || info.adType == AdType.Interstitial)
+            {
+                adWidth = 720;
+                adHeight = 1280;
             }
 
             var adRequestParams = new AdRequestParams()
@@ -234,25 +252,26 @@ namespace Middleware
                 adType = (int)info.adType,
                 adId = info.adId,
                 oaid = _uniqueId,
-                isPreload = true
+                isPreload = true,
+                adWidth = adWidth,
+                adHeight = adHeight
             };
             var adOptions = new AdOptions();
 
-            Debug.Log($"[AD] 发起预加载 {info.adId}，队列长度={_submitQueue.Count}，当前池={GetPoolCount(info)}/{maxpool}");
+            Debug.Log($"[AD] 发起预加载 {info.adId}，尺寸={adWidth}x{adHeight}，队列长度={_submitQueue.Count}，当前池={GetPoolCount(info)}/{maxpool}");
             OHSDKKitManager.Instance.LoadAds(adRequestParams, adOptions);
         }
 
         private void OnPreloadFinished(AdPreloadInfo info, Advertisement ad, bool isNoFill)
         {
             info.isLoading = false;
-            
+
             int maxpool = MAX_POOL_SIZE;
             if (info.adId == REWARD_AD_ID)
             {
                 maxpool = 1;
             }
 
-            // ---------- 成功 ----------
             if (ad != null)
             {
                 info.retryCount = 0;
@@ -264,10 +283,8 @@ namespace Middleware
                     return;
                 }
 
-                info.readyAds.Add(ad);
-                
-               
-                
+                info.readyAds.Add(new CachedAd { ad = ad, loadTime = DateTime.Now });
+
                 Debug.Log($"[AD] 预加载入池：{info.adId}，池大小={info.readyAds.Count}/{maxpool}");
 
                 if (GetPoolCount(info) < maxpool)
@@ -278,7 +295,6 @@ namespace Middleware
                 return;
             }
 
-            // ---------- 失败 ----------
             Debug.Log($"[AD] 预加载失败：{info.adId}，noFill={isNoFill}，retry={info.retryCount}");
 
             if (info.pendingShow)
@@ -433,14 +449,31 @@ namespace Middleware
 
             if (info.readyAds.Count > 0)
             {
-                var ad = info.readyAds[0];
+                var cached = info.readyAds[0];
+                // 检查是否过期
+                if ((DateTime.Now - cached.loadTime).TotalMinutes > AD_CACHE_EXPIRE_MINUTES)
+                {
+                    Debug.LogWarning($"[AD] 预加载广告已过期，丢弃并重新加载：{adId}");
+                    info.readyAds.RemoveAt(0);
+                    info.wantPreload = true;
+                    // 走点播等待流程
+                    CancelRetry(info);
+                    info.pendingShow = true;
+                    info.pendingKey = key;
+                    info.pendingCallback = callback;
+                    info.wantPreload = true;
+                    MessageSystem.Instance.ShowLoadingAnimation();
+                    PumpPreload();
+                    return;
+                }
+
                 info.readyAds.RemoveAt(0);
 
                 IsPlaying = true;
                 _isNeedShow_Field = true;
                 Debug.Log($"[AD] 使用预加载广告（命中池）：{adId}，剩余池={info.readyAds.Count}");
 
-                DisplayAd(ad);
+                DisplayAd(cached.ad);
                 return;
             }
 
@@ -471,12 +504,23 @@ namespace Middleware
 
             if (info.readyAds.Count > 0)
             {
-                var ad = info.readyAds[0];
-                info.readyAds.RemoveAt(0);
-                IsPlaying = true;
-                Debug.Log($"[AD] 使用预加载插屏广告，剩余池={info.readyAds.Count}");
-                DisplayAd(ad);
-                return;
+                var cached = info.readyAds[0];
+                if ((DateTime.Now - cached.loadTime).TotalMinutes > AD_CACHE_EXPIRE_MINUTES)
+                {
+                    Debug.LogWarning($"[AD] 插屏预加载广告已过期，丢弃：{INTERSTITIAL_AD_ID}");
+                    info.readyAds.RemoveAt(0);
+                    info.wantPreload = true;
+                    PumpPreload();
+                    // 继续走点播等待
+                }
+                else
+                {
+                    info.readyAds.RemoveAt(0);
+                    IsPlaying = true;
+                    Debug.Log($"[AD] 使用预加载插屏广告，剩余池={info.readyAds.Count}");
+                    DisplayAd(cached.ad);
+                    return;
+                }
             }
 
             CancelRetry(info);
@@ -502,9 +546,27 @@ namespace Middleware
             if (!_isNeedShow_Field) return;
 
             Debug.Log("[AD]展示广告: " + (AdType)ad.adType);
+
+            // 重置展示状态跟踪
+            _adShowStartTime = DateTime.Now;
+            _adOpenReceived = false;
+            _adVideoStartReceived = false;
+            _adShowTimeoutTriggered = false;
+
             var adDisplayOptions = new AdDisplayOptions();
-            ad.isFullScreen = true;
+
             OHSDKKitManager.Instance.ShowAds(ad, adDisplayOptions);
+
+            // 启动展示超时兜底
+            UnityTimer.Delay(SHOW_TIMEOUT_SECONDS, () =>
+            {
+                if (IsPlaying && !_adShowTimeoutTriggered)
+                {
+                    _adShowTimeoutTriggered = true;
+                    Debug.LogError($"[AD] 展示超时 {SHOW_TIMEOUT_SECONDS}s，强制回调 false");
+                    CallbackAd(false);
+                }
+            });
 
             if ((AdType)ad.adType == AdType.Reward)
             {
@@ -533,6 +595,7 @@ namespace Middleware
 
             IsPlaying = false;
             _isNeedShow_Field = false;
+            _adShowTimeoutTriggered = false;
 
             if (_completeCallback != null)
             {
@@ -563,25 +626,8 @@ namespace Middleware
 
         private void HandleManualCloseNoReward()
         {
-            IsPlaying = false;
-            _isNeedShow_Field = false;
-            _completeCallback = null;
-            _currentSlot = null;
-
-            Debug.Log("[AD] 玩家手动关闭激励视频且未获得奖励，不回调 false");
-
-            UnityTimer.Delay(0.5f, () =>
-            {
-                foreach (var kv in _preloadInfos)
-                {
-                    var info = kv.Value;
-                    if (info.adType == AdType.Reward && !info.isLoading)
-                    {
-                        info.wantPreload = true;
-                    }
-                }
-                PumpPreload();
-            });
+            Debug.Log("[AD] 玩家手动关闭激励视频且未获得奖励，回调 false");
+            //CallbackAd(false);
         }
 
         private void OnLoadAdsTrigger(SignalBase signal)
@@ -607,11 +653,6 @@ namespace Middleware
                         return;
                     }
 
-                    // =========================================================
-                    // ★ 关键修复：无匹配时不再无条件播放！
-                    //   仅当确实存在"用户点播等待"，且与当前 slot 的 adType 匹配时，
-                    //   才允许兜底展示；否则直接忽略该信号。
-                    // =========================================================
                     bool userWaiting = _isNeedShow_Field
                                        && _completeCallback != null
                                        && _currentSlot != null
@@ -677,18 +718,25 @@ namespace Middleware
 
                 if (!signal.hasError())
                 {
+                    bool isOpen = statusLower.Contains("open");
                     bool isClose = statusLower.Contains("close");
                     bool isFail = statusLower.Contains("fail");
+                    bool isReward = statusLower.Contains("reward") || statusLower.Contains("videoplayend");
+                    bool isVideoStart = statusLower.Contains("videoplaybegin") || statusLower.Contains("videostart");
 
-                    if (isClose || isFail)
+                    if (isOpen)
                     {
-                        Game.self.ResumeGame();
-                        IsPlaying = false;
-                        if (MessageSystem.Instance != null)
-                            MessageSystem.Instance.HideLoadingAnimation();
+                        _adOpenReceived = true;
+                        Debug.Log("[AD] 广告已打开 onAdOpen");
                     }
 
-                    if (statusLower.Contains("reward") || statusLower.Contains("videoplayend"))
+                    if (isVideoStart)
+                    {
+                        _adVideoStartReceived = true;
+                        Debug.Log("[AD] 广告视频开始播放 onVideoPlayBegin");
+                    }
+
+                    if (isReward)
                     {
                         if (_adType == AdType.Reward)
                         {
@@ -699,11 +747,39 @@ namespace Middleware
 
                     if (isClose || isFail)
                     {
+                        Game.self.ResumeGame();
+                        IsPlaying = false;
+                        if (MessageSystem.Instance != null)
+                            MessageSystem.Instance.HideLoadingAnimation();
+                    }
+
+                    if (isClose || isFail)
+                    {
                         if (_adType == AdType.Reward)
                         {
-                            if (_isGetRewarded) CallbackAd(true);
-                            else if (isFail) CallbackAd(false);
-                            else if (isClose) HandleManualCloseNoReward();
+                            if (_isGetRewarded)
+                            {
+                                CallbackAd(true);
+                            }
+                            else if (isFail)
+                            {
+                                CallbackAd(false);
+                            }
+                            else if (isClose)
+                            {
+                                // 判断是否为异常关闭
+                                var duration = (DateTime.Now - _adShowStartTime).TotalSeconds;
+                                bool isAbnormal = !_adOpenReceived || !_adVideoStartReceived || duration < 2.0;
+                                if (isAbnormal)
+                                {
+                                    Debug.LogWarning($"[AD] 检测到异常关闭（未打开/未播放/时长过短 duration={duration:F2}s），回调 false");
+                                    CallbackAd(false);
+                                }
+                                else
+                                {
+                                    HandleManualCloseNoReward();
+                                }
+                            }
                         }
                         else if (_adType == AdType.Interstitial)
                         {
@@ -732,6 +808,7 @@ namespace Middleware
                 IsPlaying = false;
                 if (MessageSystem.Instance != null)
                     MessageSystem.Instance.HideLoadingAnimation();
+                CallbackAd(false);
             }
         }
 

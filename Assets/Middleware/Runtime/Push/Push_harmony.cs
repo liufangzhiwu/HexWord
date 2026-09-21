@@ -170,9 +170,9 @@ namespace Middleware
         {
             int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
 
-            _harmonyProxy.Call("RequestNotificationEnable");
+            bool finish= _harmonyProxy.Call<bool>("RequestNotificationEnable");
             yield return new WaitForSeconds(0.1f);
-
+            Debug.Log("[Push_harmony] 通知权限已完成"+finish);
             int pushNumber = ReadIsAutoPushFromFile();
             bool enabled = pushNumber == 1;
 
@@ -199,14 +199,13 @@ namespace Middleware
             {
                 Debug.Log("[Push_harmony] 通知未授权，3秒后重试...");
 
-                if (isPushRequested == 0)
-                    AnalyticMgr.PopRefuse(popName: "消息推送");
-
-                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
-                PlayerPrefs.Save();
-
                 yield return new WaitForSeconds(3f);
                 Game.self.StartCoroutine(CheckNotificationAndInit());
+                
+                if (isPushRequested == 0)
+                    AnalyticMgr.PopRefuse(popName: "消息推送");
+                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
+                PlayerPrefs.Save();
             }
         }
 
@@ -241,7 +240,7 @@ namespace Middleware
 
                 EventDispatcher.instance.TriggerChangeGoldUI(0, false);
 
-                yield return new WaitForSeconds(3f);
+                yield return new WaitForSeconds(2f);
                 Game.self.StartCoroutine(ResetCheckNotificationAndInit());
             }
         }
@@ -312,7 +311,7 @@ namespace Middleware
             OHSDKKitManager.Instance.CancelNotification(0, 0);
             Debug.Log("[Push_harmony] OpenNotificationSettingsPanel");
 
-            UnityTimer.Delay(5f, () =>
+            UnityTimer.Delay(2f, () =>
             {
                 Game.self.StartCoroutine(ResetCheckNotificationAndInit());
             });
