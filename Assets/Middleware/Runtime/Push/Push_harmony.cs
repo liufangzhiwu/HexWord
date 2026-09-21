@@ -170,9 +170,10 @@ namespace Middleware
         {
             int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
 
-            bool finish= _harmonyProxy.Call<bool>("RequestNotificationEnable");
-            yield return new WaitForSeconds(0.1f);
-            Debug.Log("[Push_harmony] 通知权限已完成"+finish);
+            // 调 JS 查通知是否启用，写入 is_auto_push.json
+            _harmonyProxy.Call("RequestNotificationEnable");
+            yield return new WaitForSeconds(0.3f);
+
             int pushNumber = ReadIsAutoPushFromFile();
             bool enabled = pushNumber == 1;
 
@@ -182,6 +183,7 @@ namespace Middleware
             {
                 Debug.Log("[Push_harmony] 通知权限已授权");
 
+                // ★ 用户同意：只在首次弹窗时发 PopAccept
                 if (isPushRequested == 0)
                     AnalyticMgr.PopAccept(popName: "消息推送");
 
@@ -197,22 +199,23 @@ namespace Middleware
             }
             else
             {
-                Debug.Log("[Push_harmony] 通知未授权，3秒后重试...");
+                Debug.Log("[Push_harmony] 通知未授权");
 
-                yield return new WaitForSeconds(3f);
-                Game.self.StartCoroutine(CheckNotificationAndInit());
-                
+                // ★ 用户拒绝：只在首次弹窗时发 PopRefuse
                 if (isPushRequested == 0)
                     AnalyticMgr.PopRefuse(popName: "消息推送");
+
                 PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
                 PlayerPrefs.Save();
+
+                // ★ 不再无限递归重试
             }
         }
 
         private IEnumerator ResetCheckNotificationAndInit()
         {
             _harmonyProxy.Call("RequestNotificationEnable");
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.3f);
 
             int pushNumber = ReadIsAutoPushFromFile();
             bool enabled = pushNumber == 1;
@@ -235,13 +238,12 @@ namespace Middleware
             }
             else
             {
-                Debug.Log("[Push_harmony] 通知未授权，3秒后重试...");
+                Debug.Log("[Push_harmony] 通知未授权");
                 AnalyticMgr.PopRefuse(popName: "消息推送");
 
                 EventDispatcher.instance.TriggerChangeGoldUI(0, false);
 
-                yield return new WaitForSeconds(2f);
-                Game.self.StartCoroutine(ResetCheckNotificationAndInit());
+                // ★ 不再无限递归重试
             }
         }
 
@@ -295,7 +297,8 @@ namespace Middleware
                 Debug.Log("[Push_harmony] Push already requested, skip RequestEnableNotification.");
             }
 
-            UnityTimer.Delay(5f, () =>
+            // 系统弹窗需要用户操作时间，延迟 3 秒再检查结果
+            UnityTimer.Delay(3f, () =>
             {
                 Game.self.StartCoroutine(CheckNotificationAndInit());
             });
@@ -316,7 +319,7 @@ namespace Middleware
                 Game.self.StartCoroutine(ResetCheckNotificationAndInit());
             });
         }
-        
+
         // ============================================================
         // ★ 用户点击"去设置"按钮时调用
         // 将应用退至后台，用户在系统设置中开启通知后切回前台
@@ -327,10 +330,7 @@ namespace Middleware
             Debug.Log("[Push_harmony] 引导用户去系统设置开启通知");
             // 将应用退至后台，用户手动切回前台时 onForeground 触发重新检查
             Application.OpenURL("appsettings://notification");
-            // 或者使用 Unity 的方式退至后台
-            // HandheldCommand.Quit(); // 不推荐，会退出应用
         }
-   
 
         public void GetToken()
         {
@@ -478,12 +478,9 @@ namespace Middleware
 
                 Debug.Log($"[Push_harmony] filesDir = '{filesDir}'");
                 _harmonyProxy.Call("SetConfig", BUNDLE_NAME, ABILITY_NAME, filesDir);
-                _harmonyProxy.Call("InitReminderAgent");
-
                 // ★ 全取消：清空系统侧旧提醒 + 清空本地映射
                 _harmonyProxy.Call("CancelAllReminders");
                 _agentRegisteredMap.Clear();
-                SaveAgentRegisteredMap();
                 Debug.Log("[Push_harmony] CancelAllReminders issued, will re-register.");
             }
             catch (Exception e)
@@ -495,7 +492,7 @@ namespace Middleware
         // ============================================================
         // 代理提醒：注册队列（两段式）
         //   第一段：今天 ~ 第 ACTIVE_DAYS 天 → 活跃用户排期
-        //   第二段：第 ACTIVE_DAYS 天 ~ 第 2*ACTIVE_DAYS 天 → 衰退用户排期
+        //   第二段：第 ACTIVE_DAYS 天 ~ 第 6*ACTIVE_DAYS 天 → 衰退用户排期
         // ============================================================
         private void RegisterAgentReminders()
         {
@@ -514,7 +511,7 @@ namespace Middleware
             registeredCount += RegisterScheduleRange(
                 ActiveSchedule, UserSegment.Active, today, now, 0, ACTIVE_DAYS);
 
-            // ★ 第二段：第 6 天 ~ 第 10 天，用衰退用户排期
+            // ★ 第二段：第 5 天 ~ 第 30 天，用衰退用户排期
             registeredCount += RegisterScheduleRange(
                 ChurnSchedule, UserSegment.Churn, today, now, ACTIVE_DAYS, ACTIVE_DAYS * 6);
 
