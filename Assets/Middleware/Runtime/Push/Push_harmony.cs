@@ -285,9 +285,6 @@ namespace Middleware
                 AnalyticMgr.PopShow(popName: "消息推送");
                 OHSDKKitManager.Instance.RequestEnableNotification();
                 
-                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
-                PlayerPrefs.Save();
-                
                 Debug.Log("[Push_harmony] RequestEnableNotification issued.");
             }
             else
@@ -299,8 +296,9 @@ namespace Middleware
                     RegisterAgentReminders();
                     
                     EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+                    
+                    Debug.Log("[Push_harmony] Push Open, Enter RestoreAgentRegisteredMap.");
                 }
-                Debug.Log("[Push_harmony] Push already requested, skip RequestEnableNotification.");
             }
         }
 
@@ -338,6 +336,9 @@ namespace Middleware
             }
 
             EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+              
+            PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
+            PlayerPrefs.Save();
         }
 
         public void GetToken()
@@ -496,7 +497,7 @@ namespace Middleware
                 Debug.Log($"[Push_harmony] filesDir = '{filesDir}'");
                 _harmonyProxy.Call("SetConfig", BUNDLE_NAME, ABILITY_NAME, filesDir);
                 _harmonyProxy.Call("CancelAllReminders");
-                _agentRegisteredMap.Clear();
+                SaveAgentRegisteredMap();
                 Debug.Log("[Push_harmony] CancelAllReminders issued, will re-register.");
             }
             catch (Exception e)
