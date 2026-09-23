@@ -16,6 +16,7 @@ namespace Middleware
         void RequestEnableNotification();
         void CancelAllReminders();
         void ReSetRequestEnableNotification();
+        void HandleSettingsClosedFromJS(bool enableNotification);
 
         void Push(string title, string body);
 

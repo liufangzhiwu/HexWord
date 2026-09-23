@@ -450,7 +450,10 @@ public class GameDataManager : SingletonMono<GameDataManager>
             CommitGameData();
             //StopTracking();
             Debug.Log("应用暂停，数据已保存");
-          
+        }
+        else
+        {
+            Debug.Log("应用运行中");
         }
     }
 

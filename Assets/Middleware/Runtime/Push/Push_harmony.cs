@@ -199,6 +199,8 @@ namespace Middleware
                     RestoreAgentRegisteredMap();
                     RegisterAgentReminders();
                     Debug.Log("[Push_harmony] Agent reminder initialized after notification enable.");
+                    
+                    EventDispatcher.instance.TriggerChangeGoldUI(0, false);
                 });
             }
             else
@@ -211,7 +213,8 @@ namespace Middleware
 
                 PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
                 PlayerPrefs.Save();
-               
+                
+                EventDispatcher.instance.TriggerChangeGoldUI(0, false);
                 // ★ 限递归重试
                 Game.self.StartCoroutine(CheckNotificationAndInit());
             }
@@ -232,24 +235,37 @@ namespace Middleware
 
             if (enabled)
             {
-                Debug.Log("[Push_harmony] 通知权限已授权");
-                AnalyticMgr.PopAccept(popName: "消息推送");
 
-                UnityTimer.Delay(0.5f, () =>
+                yield return new WaitForSeconds(1f);
+                
+                Debug.Log("[Push_harmony] 通知权限已授权");
+                //AnalyticMgr.PopAccept(popName: "消息推送");
+
+                if (CheckPushStateTimes == 5)
                 {
                     RestoreAgentRegisteredMap();
                     RegisterAgentReminders();
+                }
+
+                if (CheckPushStateTimes <= 6)
+                {
+                    
                     Debug.Log("[Push_harmony] Agent reminder initialized after notification enable.");
 
                     EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-                });
+                
+                    // ★ 递归重试
+                    Game.self.StartCoroutine(ResetCheckNotificationAndInit());
+                }
+               
             }
             else
             {
-                Debug.Log("[Push_harmony] 通知未授权");
-                AnalyticMgr.PopRefuse(popName: "消息推送");
-                
                 yield return new WaitForSeconds(1f);
+                
+                Debug.Log("[Push_harmony] 通知未授权");
+                //AnalyticMgr.PopRefuse(popName: "消息推送");
+                GameDataManager.Instance.UserData.IsAutoPush = enabled;
                 
                 EventDispatcher.instance.TriggerChangeGoldUI(0, false);
                
@@ -308,11 +324,11 @@ namespace Middleware
                 Debug.Log("[Push_harmony] Push already requested, skip RequestEnableNotification.");
             }
 
-            // 系统弹窗需要用户操作时间，延迟 3 秒再检查结果
-            UnityTimer.Delay(3f, () =>
-            {
-                Game.self.StartCoroutine(CheckNotificationAndInit());
-            });
+            // // 系统弹窗需要用户操作时间，延迟 3 秒再检查结果
+            // UnityTimer.Delay(3f, () =>
+            // {
+            //     Game.self.StartCoroutine(CheckNotificationAndInit());
+            // });
         }
 
         /// <summary>
@@ -325,10 +341,40 @@ namespace Middleware
             OHSDKKitManager.Instance.CancelNotification(0, 0);
             Debug.Log("[Push_harmony] OpenNotificationSettingsPanel");
 
-            UnityTimer.Delay(2f, () =>
+            // UnityTimer.Delay(2f, () =>
+            // {
+            //     Game.self.StartCoroutine(ResetCheckNotificationAndInit());
+            // });
+        }
+        
+        // ============================================================
+        // ★ 供 PushMessageReceiver 调用（由 ArkTS 侧 TuanjieSendMessage 触发）
+        // ============================================================
+        public void HandleSettingsClosedFromJS(bool enabled)
+        {
+            Debug.Log($"[Push_harmony] HandleSettingsClosedFromJS, enabled={enabled}");
+
+            // 更新用户数据
+            if (GameDataManager.Instance != null && GameDataManager.Instance.UserData != null)
             {
-                Game.self.StartCoroutine(ResetCheckNotificationAndInit());
-            });
+                GameDataManager.Instance.UserData.IsAutoPush = enabled;
+            }
+
+            if (enabled)
+            {
+                AnalyticMgr.PopAccept(popName: "消息推送");
+               
+                RestoreAgentRegisteredMap();     // 原私有方法，需改为 internal
+                RegisterAgentReminders();        // 原私有方法，需改为 internal
+                EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+                
+            }
+            else
+            {
+                AnalyticMgr.PopRefuse(popName: "消息推送");
+            }
+
+            EventDispatcher.instance.TriggerChangeGoldUI(0, false);
         }
 
 
@@ -830,6 +876,7 @@ namespace Middleware
                 Debug.LogError($"[Push_harmony] GetToken Error. Code: {signal.code}, Message: {signal.message}");
             }
         }
+       
     }
 }
 #endif
