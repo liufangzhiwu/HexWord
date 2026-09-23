@@ -419,8 +419,14 @@ public class GameDataManager : SingletonMono<GameDataManager>
             if(Game.self.Ads?.IsPlaying==true) return; //播放广告中
            
             StopTracking();   
-            // 应用暂停时，刷新一下代理推送文案
-            Game.self.Pushs.RequestEnableNotification();
+            
+            int isPushRequested = PlayerPrefs.GetInt("is_push_requested", 0);
+            if (isPushRequested == 1)
+            {
+                // 应用暂停时，刷新一下代理推送文案
+                Game.self.Pushs.RequestEnableNotification();
+            }
+           
             
             Debug.Log("应用进入后台，数据已保存");
         }
@@ -434,8 +440,15 @@ public class GameDataManager : SingletonMono<GameDataManager>
             Debug.Log("应用回到前台，验证数据");
             requireFocusCheck = false;
             playerProfile?.CheckResetDailyTime();
-            // 应用暂停时，刷新一下代理推送文案
-            Game.self.Pushs.RequestEnableNotification();
+            
+               
+            int isPushRequested = PlayerPrefs.GetInt("is_push_requested", 0);
+            if (isPushRequested == 1)
+            {
+                // 应用暂停时，刷新一下代理推送文案
+                Game.self.Pushs.RequestEnableNotification();
+            }
+          
         }
     }
 
