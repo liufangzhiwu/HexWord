@@ -163,7 +163,7 @@ namespace Middleware
           
             CheckPushStateTimes++;
             _harmonyProxy.Call("RequestNotificationEnable");
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(0.8f);
 
             int pushNumber = ReadIsAutoPushFromFile();
             bool enabled = pushNumber == 1;
@@ -279,6 +279,7 @@ namespace Middleware
         {
             int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
             CheckPushStateTimes = 0;
+            //首次进入游戏if (isPushRequested == 0)
             if (isPushRequested == 0)
             {
                 AnalyticMgr.PopShow(popName: "消息推送");
@@ -291,8 +292,14 @@ namespace Middleware
             }
             else
             {
-                
-                //Game.self.StartCoroutine(CheckNotificationAndInit());
+
+                if (GameDataManager.Instance.UserData.IsAutoPush)
+                {
+                    RestoreAgentRegisteredMap();
+                    RegisterAgentReminders();
+                    
+                    EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+                }
                 Debug.Log("[Push_harmony] Push already requested, skip RequestEnableNotification.");
             }
         }
