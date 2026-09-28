@@ -151,12 +151,15 @@ namespace Middleware
             {
                 if (_destroyed) return;
                 SignalHandler.Instance.RegisterSignalDelegate<Push_GetTokenSignal>(OnGetTokenTrigger);
+              
+#if UNITY_OPENHARMONY&&!UNITY_EDITOR
                 GetToken();
 
                 InitAgentReminder();
 
                 _initialized = true;
                 StartScheduler();
+#endif
             });
         }
 
@@ -202,7 +205,7 @@ namespace Middleware
 
         public void ReSetRequestEnableNotification()
         {
-            AnalyticMgr.PopShow(popName: "消息推送");
+            //AnalyticMgr.PopShow(popName: "消息推送");
             CheckPushStateTimes = 0;
             OHSDKKitManager.Instance.CancelNotification(0, 0);
             Debug.Log("[Push_harmony] OpenNotificationSettingsPanel");
@@ -219,13 +222,12 @@ namespace Middleware
             {
                 GameDataManager.Instance.UserData.IsAutoPush = enabled;
             }
-            
-            PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
-            PlayerPrefs.Save();
+            int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
 
             if (enabled)
             {
-                AnalyticMgr.PopAccept(popName: "消息推送");
+               if(isPushRequested == 0) 
+                   AnalyticMgr.PopAccept(popName: "消息推送");
 
                 //后台时才进行注册
                 //if (!Application.isFocused)
@@ -238,11 +240,14 @@ namespace Middleware
             }
             else
             {
-                AnalyticMgr.PopRefuse(popName: "消息推送");
+                if(isPushRequested == 0) 
+                    AnalyticMgr.PopRefuse(popName: "消息推送");
             }
 
             EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-
+            
+            PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
+            PlayerPrefs.Save();
           
         }
 
