@@ -496,10 +496,7 @@ public class LoadingController : MonoBehaviour
         yield return AdvancedBundleLoader.SharedInstance.LoadMaterialResource(
             "effectsitemmats",
             "Circle");
-
-        yield return AdvancedBundleLoader.SharedInstance.LoadMaterialResource(
-            "materials",
-            "lizi01");
+       
 
         //预加载关卡文件
         StageHexController.Instance.LoadPackInfos();
