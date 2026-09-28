@@ -77,6 +77,7 @@ public class LoadingController : MonoBehaviour
         UnityMainThreadDispatcher.Instance();
         StartLoading();
     }
+    
 
     private IEnumerator InitBg()
     {
@@ -137,8 +138,11 @@ public class LoadingController : MonoBehaviour
         MultilingualManager.Instance.LoadLocalization();
         LoadWordVocabulary();
         Game.self.InitGame();
+        
+        Game.self.LoadAds_OAID();
+        
         yield return new WaitForSeconds(0.5f);
-
+       
         // ================= 等待登录（基于 LoginState 枚举）=================
         loginTimeout = 10f;        // ← 超时时间保持不变
         loginStart = Time.time;
@@ -181,7 +185,7 @@ public class LoadingController : MonoBehaviour
             Game.self.ShowLoginErrorPanel();
             yield break;
         }
-
+        
         yield return APIGateway.Instance.LoginApi.Login((res) =>
         {
             if (res != null)
@@ -500,6 +504,7 @@ public class LoadingController : MonoBehaviour
         //预加载关卡文件
         StageHexController.Instance.LoadPackInfos();
         ChessStageController.Instance.Initialized();
+        ChessDynamicHardManager.Instance.Initialized();
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }

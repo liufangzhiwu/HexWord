@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using OpenHarmonyKits.Param;
 using UnityEngine;
 #if UNITY_HUAWEI
 using UnityEngine.HuaweiAppGallery;
@@ -46,11 +47,7 @@ namespace Middleware
                 self = this;
                 DontDestroyOnLoad(gameObject);
             }
-            else
-            {
-                Destroy(gameObject);   // 销毁重复实例
-                return;
-            }
+            //gameObject.AddComponent<UnityTimer>();
 
             StartCoroutine(CheckNetworkConnection());
             CreateAnalytic();
@@ -75,6 +72,24 @@ namespace Middleware
         }
 
 
+        public void LoadAds_OAID()
+        {
+            int showAdsRequest=PlayerPrefs.GetInt("ShowAdsRequest",0);
+            if (showAdsRequest == 0)
+            {
+                AnalyticMgr.PopShow(popName: "广告追踪");
+                
+                PlayerPrefs.SetInt("ShowAdsRequest",1);
+                PlayerPrefs.Save();
+            }
+            
+            AdRequestParams adRequestParams=new AdRequestParams();
+            AdOptions adOptions=new AdOptions(); 
+            AdDisplayOptions adDisplayOptions=new AdDisplayOptions();
+            
+            OHSDKKitManager.Instance.LoadBanner(adRequestParams, adOptions,adDisplayOptions);
+        }
+        
         private void InitManagers()
         {
 	        GameDataManager.Instance.Init();
@@ -139,7 +154,7 @@ namespace Middleware
 #elif UNITY_OPENHARMONY
             Analytics = new Analytics_harmony();
 #endif
-            Analytics.Init(0.15f);
+            Analytics.Init(0.5f);
         }
         
         private void CreateShop()

@@ -45,4 +45,32 @@ public class PushMessageReceiver : MonoBehaviour
         // 转发给 Push_harmony 处理
         Game.self.Pushs.HandleSettingsClosedFromJS(enabled == 1);
     }
+    
+    // ============================================================
+    // ★ 由 ArkTS 侧 TuanjieSendMessage 调用
+    //   ArkTS 侧调用：
+    //     Tuanjie.TuanjieSendMessage('PushMessageReceiver',
+    //                                'OnOAIDClosedSignal',
+    //                                '1' or '0')
+    //
+    //   注意：
+    //   1. 方法必须是 public
+    //   2. 参数必须是 string（SendMessage 只支持字符串）
+    //   3. 方法名要和 ArkTS 侧传的第二个参数完全一致
+    // ============================================================
+    public void OnOAIDClosedSignal(string enabledStr)
+    {
+        int enabled = 0;
+        int.TryParse(enabledStr, out enabled);
+        Debug.Log($"[PushMessageReceiver] OnOAIDClosedSignal 收到, enabledStr={enabledStr}, enabled={enabled}");
+
+        if (enabled == 1)
+        {
+            AnalyticMgr.PopAccept(popName: "广告追踪");
+        }
+        else
+        {
+            AnalyticMgr.PopRefuse(popName: "广告追踪");
+        }
+    }
 }

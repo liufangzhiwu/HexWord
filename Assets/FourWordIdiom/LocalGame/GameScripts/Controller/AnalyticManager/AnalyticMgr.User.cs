@@ -15,6 +15,7 @@ public partial class AnalyticMgr
 {
     #region 进度相关
     private static DateTime? _startTime;// 使用 记录开始时间
+    private static DateTime firstLoginTime = DateTime.MinValue;
     
     public static void GameStart()
     {
@@ -77,20 +78,17 @@ public partial class AnalyticMgr
 
         // 记录本次登录开始时间
         _startTime = now;
+        firstLoginTime = DateTime.Parse(userData.firstLoginTime);
 
         // 计算生命周期天数（基于首次登录时间）
-        int lifeDays = 0;
-        if (!string.IsNullOrEmpty(userData.firstLoginTime) &&
-            DateTime.TryParse(userData.firstLoginTime, out var firstLoginDate))
-        {
-            lifeDays = (today - firstLoginDate.Date).Days+ 1; // +1 表示第1天
-            Debug.Log("当前时间："+today.ToString("yyyy-MM-dd HH:mm:ss")+"周期天数 life:"+lifeDays);
-        }
+        int lifeDays = (today - firstLoginTime.Date).Days+ 1; // +1 表示第1天
+        Debug.Log("当前时间："+today.ToString("yyyy-MM-dd HH:mm:ss")+"周期天数 life:"+lifeDays);
+        
         
         var properties = new Dictionary<string, object>
         {
             //时间类
-            { "first_login_time",userData.firstLoginTime},
+            { "first_login_time",firstLoginTime.ToString("yyyy-MM-dd HH:mm:ss") },
             { "last_login_time", now.ToString("yyyy-MM-dd HH:mm:ss")},
             { "first_pay_time", GameDataManager.Instance.UserData.firstPayTime},
             { "last_pay_time", GameDataManager.Instance.UserData.lastPayTime},
@@ -219,12 +217,13 @@ public partial class AnalyticMgr
         }
         
 
-        int lifeDays = 0;
-        if (!string.IsNullOrEmpty(userData.firstLoginTime) &&
-            DateTime.TryParse(userData.firstLoginTime, out var firstLoginDate))
-        {
-            lifeDays = (DateTime.Now.Date - firstLoginDate.Date).Days + 1;
-        }
+        // 记录本次登录开始时间
+        _startTime = now;
+        firstLoginTime = DateTime.Parse(userData.firstLoginTime);
+
+        // 计算生命周期天数（基于首次登录时间）
+        int lifeDays = (today - firstLoginTime.Date).Days+ 1; // +1 表示第1天
+        Debug.Log("当前时间："+today.ToString("yyyy-MM-dd HH:mm:ss")+"周期天数 life:"+lifeDays);
         
         if (lifeDays == 2)
         {

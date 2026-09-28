@@ -40,20 +40,28 @@ namespace Middleware
         // ============================================================
         // 常量
         // ============================================================
-        private const string KEY_IDX_MORNING = "push_idx_morning";
-        private const string KEY_IDX_NOON    = "push_idx_noon";
-        private const string KEY_IDX_NIGHT   = "push_idx_night";
-        private const string KEY_IDX_RECALL  = "push_idx_recall";
-
         private const string KEY_AGENT_REGISTERED_MAP = "push_agent_registered_map";
 
         private const string KEY_IS_PUSH_REQUESTED = "is_push_requested";
 
+        /// <summary> ★ 新增：首次注册日期（yyyy-MM-dd） </summary>
+        private const string KEY_BASE_DATE = "push_base_date";
+
         private const int ACTIVE_DAYS = 5;
 
-        private const int AGENT_MAX_REMINDERS = 90;
-
         private const int AGENT_RING_DURATION = 0;
+
+        // ============================================================
+        // 各文案池长度（用于循环取模）
+        //   M1-M20：20 条
+        //   A1-A28：28 条
+        //   E1-E28：28 条
+        //   R1-R5 ：5 条
+        // ============================================================
+        private const int POOL_LEN_MORNING = 20;
+        private const int POOL_LEN_NOON    = 28;
+        private const int POOL_LEN_NIGHT   = 28;
+        private const int POOL_LEN_RECALL  = 5;
 
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private const long TIMESTAMP_MS_THRESHOLD = 99999999999L;
@@ -86,6 +94,10 @@ namespace Middleware
         };
 
         // ---- 衰退/预流失用户排期 ----
+        // 周一、周三：早 6:58
+        // 周二、周四：午 14:00
+        // 周六：晚 21:00（召回文案 R1-R5 循环）
+        // 周五、周日：晚 21:00（夜晚文案 E1-E28 循环）
         private static readonly PushSlot[] ChurnSchedule = new PushSlot[]
         {
             new PushSlot {
@@ -96,9 +108,15 @@ namespace Middleware
                 Days = new[]{ DayOfWeek.Tuesday, DayOfWeek.Thursday },
                 Time = NOON_TIME, Pool = PushTextPool.Noon
             },
+            // ★ 周六 晚 21:00 → 召回池 R1-R5（循环）
             new PushSlot {
-                Days = new[]{ DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday },
+                Days = new[]{ DayOfWeek.Saturday },
                 Time = NIGHT_TIME, Pool = PushTextPool.Recall
+            },
+            // ★ 周五、周日 晚 21:00 → 夜晚池 E1-E28（循环）
+            new PushSlot {
+                Days = new[]{ DayOfWeek.Friday, DayOfWeek.Sunday },
+                Time = NIGHT_TIME, Pool = PushTextPool.Night
             },
         };
 
@@ -120,9 +138,7 @@ namespace Middleware
         private int CheckPushStateTimes = 0;
         private int CheckPushStateTimesMax = 10;
 
-        // ============================================================
-        // ★ 新增：前台状态相关的日志去重标记
-        // ============================================================
+        /// <summary> 前台状态日志去重标记 </summary>
         private bool _skipForegroundLogged = false;
 
         // ============================================================
@@ -154,123 +170,6 @@ namespace Middleware
             }
         }
 
-        // ============================================================
-        // 接收 Bridge 回传的授权结果
-        // ============================================================
-        private IEnumerator CheckNotificationAndInit()
-        {
-            if (CheckPushStateTimes > CheckPushStateTimesMax) yield break;
-          
-            CheckPushStateTimes++;
-            _harmonyProxy.Call("RequestNotificationEnable");
-            yield return new WaitForSeconds(0.8f);
-
-            int pushNumber = ReadIsAutoPushFromFile();
-            bool enabled = pushNumber == 1;
-
-            GameDataManager.Instance.UserData.IsAutoPush = enabled;
-
-            if (enabled)
-            {
-                Debug.Log("[Push_harmony] 通知权限已授权");
-               
-                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
-                PlayerPrefs.Save();
-
-                UnityTimer.Delay(0.5f, () =>
-                {
-                    RestoreAgentRegisteredMap();
-                    RegisterAgentReminders();
-                    Debug.Log("[Push_harmony] Agent reminder initialized after notification enable.");
-
-                    EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-                });
-            }
-            else
-            {
-                Debug.Log("[Push_harmony] 通知未授权");
-
-                PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
-                PlayerPrefs.Save();
-
-                EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-                Game.self.StartCoroutine(CheckNotificationAndInit());
-            }
-        }
-
-        private IEnumerator ResetCheckNotificationAndInit()
-        {
-            if (CheckPushStateTimes > CheckPushStateTimesMax) yield break;
-
-            _harmonyProxy.Call("RequestNotificationEnable");
-            yield return new WaitForSeconds(0.3f);
-            CheckPushStateTimes++;
-            int pushNumber = ReadIsAutoPushFromFile();
-            bool enabled = pushNumber == 1;
-
-            GameDataManager.Instance.UserData.IsAutoPush = enabled;
-
-            if (enabled)
-            {
-                yield return new WaitForSeconds(1f);
-
-                Debug.Log("[Push_harmony] 通知权限已授权");
-
-                if (CheckPushStateTimes == 5)
-                {
-                    RestoreAgentRegisteredMap();
-                    RegisterAgentReminders();
-                }
-
-                if (CheckPushStateTimes <= 6)
-                {
-                    Debug.Log("[Push_harmony] Agent reminder initialized after notification enable.");
-                    EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-                    Game.self.StartCoroutine(ResetCheckNotificationAndInit());
-                }
-            }
-            else
-            {
-                yield return new WaitForSeconds(1f);
-
-                Debug.Log("[Push_harmony] 通知未授权");
-                GameDataManager.Instance.UserData.IsAutoPush = enabled;
-                EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-                Game.self.StartCoroutine(ResetCheckNotificationAndInit());
-            }
-        }
-
-        /// <summary> 从 JSON 文件读取 IsAutoPush 值（0/1） </summary>
-        public int ReadIsAutoPushFromFile()
-        {
-            try
-            {
-                string path = Path.Combine(Application.persistentDataPath, "is_auto_push.json");
-
-                if (!File.Exists(path))
-                {
-                    Debug.Log($"[Push_harmony] is_auto_push.json not found at {path}");
-                    return 0;
-                }
-
-                string json = File.ReadAllText(path);
-                var data = JsonUtility.FromJson<IsAutoPushData>(json);
-                int value = data != null ? data.IsAutoPush : 0;
-                Debug.Log($"[Push_harmony] Read IsAutoPush from file: {value}");
-                return value;
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[Push_harmony] ReadIsAutoPushFromFile failed: {e.Message}");
-                return 0;
-            }
-        }
-
-        [Serializable]
-        private class IsAutoPushData
-        {
-            public int IsAutoPush;
-        }
 
         // ============================================================
         // 权限请求
@@ -279,24 +178,23 @@ namespace Middleware
         {
             int isPushRequested = PlayerPrefs.GetInt(KEY_IS_PUSH_REQUESTED, 0);
             CheckPushStateTimes = 0;
-            //首次进入游戏if (isPushRequested == 0)
+
             if (isPushRequested == 0)
             {
                 AnalyticMgr.PopShow(popName: "消息推送");
                 OHSDKKitManager.Instance.RequestEnableNotification();
-                
+
                 Debug.Log("[Push_harmony] RequestEnableNotification issued.");
             }
             else
             {
-
                 if (GameDataManager.Instance.UserData.IsAutoPush)
                 {
                     RestoreAgentRegisteredMap();
                     RegisterAgentReminders();
-                    
+
                     EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-                    
+
                     Debug.Log("[Push_harmony] Push Open, Enter RestoreAgentRegisteredMap.");
                 }
             }
@@ -321,13 +219,21 @@ namespace Middleware
             {
                 GameDataManager.Instance.UserData.IsAutoPush = enabled;
             }
+            
+            PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
+            PlayerPrefs.Save();
 
             if (enabled)
             {
                 AnalyticMgr.PopAccept(popName: "消息推送");
 
-                RestoreAgentRegisteredMap();
-                RegisterAgentReminders();
+                //后台时才进行注册
+                //if (!Application.isFocused)
+                //{
+                    RestoreAgentRegisteredMap();
+                    RegisterAgentReminders();
+                //}
+             
                 EventDispatcher.instance.TriggerChangeGoldUI(0, false);
             }
             else
@@ -336,9 +242,8 @@ namespace Middleware
             }
 
             EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-              
-            PlayerPrefs.SetInt(KEY_IS_PUSH_REQUESTED, 1);
-            PlayerPrefs.Save();
+
+          
         }
 
         public void GetToken()
@@ -384,19 +289,16 @@ namespace Middleware
         {
             if (!_initialized) return;
 
-            // ============================================================
-            // ★ 新增：App 在前台运行时，跳过当前时间点的本地推送
-            // 用户正在使用游戏，不需要推送打扰
-            // ============================================================
-            if (Application.isFocused)
-            {
-                if (!_skipForegroundLogged)
-                {
-                    Debug.Log("[Push_harmony] App 在前台，TickScheduler 跳过本地推送");
-                    _skipForegroundLogged = true;
-                }
-                return;
-            }
+            // App 在前台运行时，跳过当前时间点的本地推送
+            // if (Application.isFocused)
+            // {
+            //     if (!_skipForegroundLogged)
+            //     {
+            //         Debug.Log("[Push_harmony] App 在前台，TickScheduler 跳过本地推送");
+            //         _skipForegroundLogged = true;
+            //     }
+            //     return;
+            // }
             _skipForegroundLogged = false;
 
             DateTime now = DateTime.Now;
@@ -408,35 +310,91 @@ namespace Middleware
                 if (Array.IndexOf(slot.Days, now.DayOfWeek) < 0) continue;
                 var diff = now.TimeOfDay - slot.Time;
                 if (diff.TotalSeconds < 0 || diff.TotalSeconds > SLOT_TOLERANCE_SECONDS) continue;
-                var data = PeekText(slot.Pool);
+
+                // ★ 按日期取文案
+                var data = GetTextForDate(slot.Pool, now);
                 if (data == null) continue;
-                DoLocalPush(slot.Pool, data);
+                //DoLocalPush(slot.Pool, data);
                 Debug.Log($"[Push_harmony] Local push. Segment={segment}, Slot={slot.Pool}, Key={data.Key}");
                 return;
             }
         }
 
         // ============================================================
-        // 文案池
+        // ★ 按日期分配文案
         // ============================================================
-        private PushData PeekText(PushTextPool pool)
+        /// <summary>
+        /// 获取基准日期（首次注册日）
+        /// 首次调用时写入 PlayerPrefs，后续沿用
+        /// </summary>
+        private DateTime GetBaseDate()
         {
-            string prefix = GetPoolPrefix(pool);
-            string key    = GetIndexKey(pool);
-            int idx = PlayerPrefs.GetInt(key, 0);
-            return PushManaer.Instance.GetPoolItem(prefix, idx);
+            string baseStr = PlayerPrefs.GetString(KEY_BASE_DATE, "");
+            DateTime baseDate;
+            if (string.IsNullOrEmpty(baseStr) || !DateTime.TryParse(baseStr, out baseDate))
+            {
+                baseDate = DateTime.Now.Date;
+                PlayerPrefs.SetString(KEY_BASE_DATE, baseDate.ToString("yyyy-MM-dd"));
+                PlayerPrefs.Save();
+                Debug.Log($"[Push_harmony] ★ 首次注册，记录 baseDate = {baseDate:yyyy-MM-dd}");
+            }
+            return baseDate.Date;
         }
 
-        private PushData PeekAndAdvanceText(PushTextPool pool)
+        /// <summary>
+        /// 计算指定日期距基准日期的天数差
+        /// </summary>
+        private int GetDayIndexForDate(DateTime date)
+        {
+            DateTime baseDate = GetBaseDate();
+            int dayOffset = (date.Date - baseDate).Days;
+            if (dayOffset < 0) dayOffset = 0;
+            return dayOffset;
+        }
+
+        /// <summary>
+        /// ★ 按日期取文案：
+        ///   dayIdx = (date - baseDate).Days
+        ///   realIdx = dayIdx % poolLen
+        ///   例：24 号安装，则 24 号 dayIdx=0 → M1/A1/N1
+        ///       25 号 dayIdx=1 → M2/A2/N2
+        ///       26 号 dayIdx=2 → M3/A3/N3
+        /// </summary>
+        private PushData GetTextForDate(PushTextPool pool, DateTime date)
         {
             string prefix = GetPoolPrefix(pool);
-            string key    = GetIndexKey(pool);
-            int idx = PlayerPrefs.GetInt(key, 0);
-            var data = PushManaer.Instance.GetPoolItem(prefix, idx);
-            if (data == null) return null;
-            PlayerPrefs.SetInt(key, idx + 1);
-            PlayerPrefs.Save();
+            int poolLen = GetPoolLength(pool);
+            if (poolLen <= 0)
+            {
+                Debug.LogWarning($"[Push_harmony] 文案池 {pool} 长度为 0");
+                return null;
+            }
+
+            int dayIdx = GetDayIndexForDate(date);
+            int realIdx = dayIdx % poolLen;
+
+            var data = PushManaer.Instance.GetPoolItem(prefix, realIdx);
+            if (data == null)
+            {
+                Debug.LogWarning($"[Push_harmony] 文案池 {pool} 取不到数据, dayIdx={dayIdx}, realIdx={realIdx}");
+                return null;
+            }
+
+            Debug.Log($"[Push_harmony] 按日期取文案: pool={pool}, date={date:yyyy-MM-dd}, dayIdx={dayIdx}, realIdx={realIdx}, key={data.Key}");
             return data;
+        }
+
+        /// <summary> 各文案池长度 </summary>
+        private int GetPoolLength(PushTextPool pool)
+        {
+            switch (pool)
+            {
+                case PushTextPool.Morning: return POOL_LEN_MORNING;
+                case PushTextPool.Noon:    return POOL_LEN_NOON;
+                case PushTextPool.Night:   return POOL_LEN_NIGHT;
+                case PushTextPool.Recall:  return POOL_LEN_RECALL;
+            }
+            return 0;
         }
 
         private string GetPoolPrefix(PushTextPool pool)
@@ -451,30 +409,18 @@ namespace Middleware
             return PushManaer.POOL_MORNING;
         }
 
-        private string GetIndexKey(PushTextPool pool)
-        {
-            switch (pool)
-            {
-                case PushTextPool.Morning: return KEY_IDX_MORNING;
-                case PushTextPool.Noon:    return KEY_IDX_NOON;
-                case PushTextPool.Night:   return KEY_IDX_NIGHT;
-                case PushTextPool.Recall:  return KEY_IDX_RECALL;
-            }
-            return KEY_IDX_MORNING;
-        }
-
-        // ============================================================
-        // 本地即时推送
-        // ============================================================
-        private void DoLocalPush(PushTextPool pool, PushData data)
-        {
-            int notificationId = _notificationIdCounter++;
-            _activeNotificationIds.Add(notificationId);
-            string title = string.IsNullOrEmpty(data.Title) ? DEFAULT_TITLE : data.Title;
-            string body  = string.IsNullOrEmpty(data.Text)  ? data.Key : data.Text;
-            OHSDKKitManager.Instance.PublishNotification(notificationId, title, body, string.Empty);
-            Debug.Log($"[Push_harmony] Local notification published. Id={notificationId}, Pool={pool}, Key={data.Key}, Title={title}");
-        }
+        // // ============================================================
+        // // 本地即时推送
+        // // ============================================================
+        // private void DoLocalPush(PushTextPool pool, PushData data)
+        // {
+        //     int notificationId = _notificationIdCounter++;
+        //     _activeNotificationIds.Add(notificationId);
+        //     string title = string.IsNullOrEmpty(data.Title) ? DEFAULT_TITLE : data.Title;
+        //     string body  = string.IsNullOrEmpty(data.Text)  ? data.Key : data.Text;
+        //     //OHSDKKitManager.Instance.PublishNotification(notificationId, title, body, string.Empty);
+        //     Debug.Log($"[Push_harmony] Local notification published. Id={notificationId}, Pool={pool}, Key={data.Key}, Title={title}");
+        // }
 
         // ============================================================
         // 代理提醒：初始化
@@ -496,9 +442,15 @@ namespace Middleware
 
                 Debug.Log($"[Push_harmony] filesDir = '{filesDir}'");
                 _harmonyProxy.Call("SetConfig", BUNDLE_NAME, ABILITY_NAME, filesDir);
-                _harmonyProxy.Call("CancelAllReminders");
-                SaveAgentRegisteredMap();
-                Debug.Log("[Push_harmony] CancelAllReminders issued, will re-register.");
+
+                // 恢复 map，清理已过期
+                RestoreAgentRegisteredMap();
+                CleanupExpiredAgentMap(DateTime.Now);
+
+                // 确保 baseDate 存在（首次安装时写入）
+                GetBaseDate();
+
+                Debug.Log($"[Push_harmony] InitAgentReminder done. Restored map={_agentRegisteredMap.Count}");
             }
             catch (Exception e)
             {
@@ -533,6 +485,10 @@ namespace Middleware
                       $"Total={_agentRegisteredMap.Count}");
         }
 
+        /// <summary>
+        /// 注册指定日期范围内的排期
+        /// ★ 按日期分配文案（同一天的早中晚用同一编号）
+        /// </summary>
         private int RegisterScheduleRange(
             PushSlot[] schedule, UserSegment segment,
             DateTime today, DateTime now,
@@ -544,22 +500,13 @@ namespace Middleware
             {
                 for (int i = startDayOffset; i < endDayOffset; i++)
                 {
-                    if (_agentRegisteredMap.Count >= AGENT_MAX_REMINDERS)
-                    {
-                        Debug.LogWarning($"[Push_harmony] Reached AGENT_MAX_REMINDERS ({AGENT_MAX_REMINDERS}), stop.");
-                        return count;
-                    }
-
                     DateTime d = today.AddDays(i);
                     if (Array.IndexOf(slot.Days, d.DayOfWeek) < 0) continue;
 
                     DateTime trigger = d.Date + slot.Time;
                     if (trigger <= now) continue;
 
-                    // ============================================================
-                    // ★ 新增：如果 App 在前台，且触发时间很近（1 分钟内），
-                    // 跳过注册这个 slot，避免用户正在玩时系统弹代理提醒
-                    // ============================================================
+                    // App 在前台，且触发时间很近（1 分钟内），跳过注册
                     if (Application.isFocused && (trigger - now).TotalSeconds <= 60)
                     {
                         Debug.Log($"[Push_harmony] Skip imminent reminder (App in foreground): {trigger:yyyy-MM-dd HH:mm:ss}");
@@ -568,12 +515,12 @@ namespace Middleware
 
                     int slotId = GetSlotId(slot.Pool, segment);
                     string triggerKey = $"{slotId}_{trigger.Ticks}";
-                    if (_agentRegisteredMap.ContainsKey(triggerKey)) continue;
 
-                    var data = PeekAndAdvanceText(slot.Pool);
+                    // ★ 按日期取文案
+                    var data = GetTextForDate(slot.Pool, d);
                     if (data == null)
                     {
-                        Debug.LogWarning($"[Push_harmony] 文案池 {slot.Pool} 为空，跳过注册");
+                        Debug.LogWarning($"[Push_harmony] 文案池 {slot.Pool} 取不到数据，跳过注册");
                         continue;
                     }
 
@@ -582,6 +529,8 @@ namespace Middleware
                     {
                         _agentRegisteredMap[triggerKey] = data.Key;
                         count++;
+
+                        Debug.Log($"[Push_harmony] 分配并注册: {triggerKey} -> {data.Key} (date={d:yyyy-MM-dd})");
                     }
                 }
             }
@@ -612,6 +561,11 @@ namespace Middleware
             }
         }
 
+        /// <summary>
+        /// slotId 映射：
+        ///   活跃用户：Morning=1, Noon=2, Night=3, Recall=4
+        ///   衰退用户：Morning=11, Noon=12, Night=13, Recall=14
+        /// </summary>
         private int GetSlotId(PushTextPool pool, UserSegment segment)
         {
             int baseId = segment == UserSegment.Active ? 0 : 10;
@@ -835,7 +789,7 @@ namespace Middleware
             }
             else
             {
-                Debug.LogError($"[Push_harmony] GetToken Error. Code: {signal.code}, Message: {signal.message}");
+                Debug.LogError($"[Push_harmony] GetToken error. Code: {signal.code}");
             }
         }
     }

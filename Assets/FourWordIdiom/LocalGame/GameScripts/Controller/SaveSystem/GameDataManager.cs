@@ -421,12 +421,11 @@ public class GameDataManager : SingletonMono<GameDataManager>
             StopTracking();   
             
             int isPushRequested = PlayerPrefs.GetInt("is_push_requested", 0);
-            if (isPushRequested == 1)
+            if (isPushRequested == 1&&UserData.IsAutoPush)
             {
-                // 应用暂停时，刷新一下代理推送文案
+                // 应用后台时，刷新一下代理推送文案
                 Game.self.Pushs.RequestEnableNotification();
             }
-           
             
             Debug.Log("应用进入后台，数据已保存");
         }
@@ -445,10 +444,9 @@ public class GameDataManager : SingletonMono<GameDataManager>
             int isPushRequested = PlayerPrefs.GetInt("is_push_requested", 0);
             if (isPushRequested == 1)
             {
-                // 应用暂停时，刷新一下代理推送文案
-                Game.self.Pushs.RequestEnableNotification();
+                // 应用前台时，关闭代理推送文案
+                Game.self.Pushs.CancelAllReminders();
             }
-          
         }
     }
 
