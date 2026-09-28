@@ -126,7 +126,7 @@ public class AudioManager : MonoBehaviour
 
     private void OnEnable()
     {
-        // 预加载背景音乐
+        /*// 预加载背景音乐
         string[] musicNames =
         {
             "music", "Button","ShowUI","Puzzle1","Puzzle2","Puzzle3" ,"Puzzle4","lianci",
@@ -136,23 +136,23 @@ public class AudioManager : MonoBehaviour
         
         StartCoroutine(PlayMusic(1.5f)); // 初始化音乐开关
 
-        ApplyCriticalFixes();
+        ApplyCriticalFixes();*/
     }
     
     private void ApplyCriticalFixes()
     {
         
-        //修复1：确保使用正确的音频配置
+        /*//修复1：确保使用正确的音频配置
         FixAudioConfiguration();
         
         
         // 修复4：监控和自动恢复
-        StartCoroutine(AudioHealthMonitor());
+        StartCoroutine(AudioHealthMonitor());*/
     }
     
     private void FixAudioConfiguration()
     {
-        // 这是最关键的一步！修正音频配置
+        /*// 这是最关键的一步！修正音频配置
         AudioConfiguration config = AudioSettings.GetConfiguration();
         
         // 针对华为设备的特定配置
@@ -179,11 +179,11 @@ public class AudioManager : MonoBehaviour
         {
             Debug.Log($"音频配置: 缓冲区={config.dspBufferSize}, " +
                       $"采样率={config.sampleRate / 1000}kHz");
-        }
+        }*/
     }
     
     
-    private IEnumerator AudioHealthMonitor()
+    /*private IEnumerator AudioHealthMonitor()
     {
         float lastCountTime = Time.time;
         int lastFrameCount = Time.frameCount;
@@ -219,9 +219,9 @@ public class AudioManager : MonoBehaviour
         
         // 恢复
         QualitySettings.SetQualityLevel(2, true);
-    }
+    }*/
     
-    private IEnumerator PlayMusic(float transitionTime = 0.1f)
+    /*private IEnumerator PlayMusic(float transitionTime = 0.1f)
     {             
         yield return new WaitForSeconds(transitionTime);
         
@@ -233,7 +233,7 @@ public class AudioManager : MonoBehaviour
         {
             PlayBackgroundMusic("music"); // 播放默认音乐
         }
-    }
+    }*/
     
     public void ToggleMusic()
     {   
@@ -249,23 +249,19 @@ public class AudioManager : MonoBehaviour
 
     private IEnumerator ReleaseAudioSourceAfterPlay(AudioSource source)
     {
-        // 等待音频播放完成 + 额外缓冲时间
-        float waitTime = source.clip.length + 0.1f;
+        AudioClip cachedClip = source.clip;
+        float waitTime = (cachedClip != null ? cachedClip.length : 0f) + 0.1f;
         yield return new WaitForSeconds(waitTime);
-        
-        // 停止并回收
-        if (source != null && source.isPlaying)
-        {
-            source.Stop();
-        }
-        
-        // 返回对象池
+    
+        if (source == null) yield break;
+        if (source != null && source.isPlaying) source.Stop();
+    
         PoolObject poolObj = source.GetComponent<PoolObject>();
         if (poolObj != null)
         {
             audioSourcePool.ReturnObjectToPool(poolObj);
-            activeSoundSources.Remove(source);
         }
+        activeSoundSources.Remove(source);
     }
     
     // 播放背景音乐（确保连续）
