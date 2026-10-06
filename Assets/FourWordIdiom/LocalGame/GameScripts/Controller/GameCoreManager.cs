@@ -132,7 +132,7 @@ public sealed class GameCoreManager : MonoBehaviour
         }
        
         // ② 满足「关卡进度 ≥ 1 + 已过 Loading」后
-        Game.self.Pushs.RequestEnableNotification();
+        Game.self.Pushs?.RequestEnableNotification();
     }
 
     public void UpdateMyPersonInfo()

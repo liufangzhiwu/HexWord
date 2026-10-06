@@ -1,4 +1,4 @@
-#if UNITY_OPENHARMONY
+//#if UNITY_OPENHARMONY
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -92,4 +92,4 @@ namespace Middleware
         }
     }
 }
-#endif
+//#endif

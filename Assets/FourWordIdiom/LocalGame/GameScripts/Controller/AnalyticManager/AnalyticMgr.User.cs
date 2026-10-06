@@ -34,6 +34,7 @@ public partial class AnalyticMgr
     public static void GameEnd()
     {
         if(GameDataManager.Instance.UserData == null||Game.self == null) return;
+        SetCommonProperties();
         SetLogoutProperties();
     }
 
@@ -42,8 +43,10 @@ public partial class AnalyticMgr
     /// </summary>
     private static void SetLoginProperties()
     {
-        var userData = GameDataManager.Instance.UserData;
+        // 记录本次登录开始时间
         var now = DateTime.Now;
+        _startTime = now;
+        var userData = GameDataManager.Instance.UserData;
         var today = now.Date;
 
         // 处理首次登录（仅在首次时设置，避免 OnAnalyticsSdkInit 中重复覆盖）
@@ -75,9 +78,7 @@ public partial class AnalyticMgr
             userData.totallogin++;
             userData.lastLoginDay = today.ToString("yyyy-MM-dd");
         }
-
-        // 记录本次登录开始时间
-        _startTime = now;
+      
         firstLoginTime = DateTime.Parse(userData.firstLoginTime);
 
         // 计算生命周期天数（基于首次登录时间）
@@ -153,8 +154,8 @@ public partial class AnalyticMgr
         {
             _startTime = DateTime.Now;
         }
-        TimeSpan span = new TimeSpan(DateTime.Now.Ticks - _startTime.Value.Ticks);
-        float durationSeconds = Math.Max(0, (float)span.TotalSeconds); // 确保非负
+        var durationSeconds = (float)(DateTime.Now - _startTime.Value).TotalSeconds;
+        durationSeconds = Math.Max(0, durationSeconds);
         
         var outproperties = new Dictionary<string, object>(){{"#duration", durationSeconds.ToString("0.00")}};
         Game.self.Analytics?.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
@@ -215,10 +216,7 @@ public partial class AnalyticMgr
             userData.totallogin++;
             userData.lastLoginDay = today.ToString("yyyy-MM-dd");
         }
-        
-
-        // 记录本次登录开始时间
-        _startTime = now;
+       
         firstLoginTime = DateTime.Parse(userData.firstLoginTime);
 
         // 计算生命周期天数（基于首次登录时间）
@@ -228,7 +226,7 @@ public partial class AnalyticMgr
         if (lifeDays == 2)
         {
 #if UNITY_HUAWEI
-            long nowTimeMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            long nowTimeMilliseconds = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             Game.self.Attributes?.ReportRetention(nowTimeMilliseconds);
 #endif
         }

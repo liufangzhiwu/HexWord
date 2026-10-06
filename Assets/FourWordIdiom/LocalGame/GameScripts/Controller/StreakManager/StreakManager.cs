@@ -473,7 +473,7 @@ public class StreakManager : Singleton<StreakManager>
         if (first == 0) return result;
 
         DateTime start = UIUtilities.DayIndexToDateTime(first);
-        DateTime end = DateTime.UtcNow;
+        DateTime end = DateTime.Now;
         DateTime current = new DateTime(start.Year, start.Month, 1);
         DateTime endMonth = new DateTime(end.Year, end.Month, 1);
 

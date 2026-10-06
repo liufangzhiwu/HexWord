@@ -418,13 +418,21 @@ public class GameDataManager : SingletonMono<GameDataManager>
             
             if(Game.self.Ads?.IsPlaying==true) return; //播放广告中
            
-            StopTracking();   
-            
-            int isPushRequested = PlayerPrefs.GetInt("is_push_requested", 0);
-            if (isPushRequested == 1&&UserData.IsAutoPush)
+            StopTracking();
+
+            try
             {
-                // 应用后台时，刷新一下代理推送文案
-                Game.self.Pushs.RequestEnableNotification();
+                int isPushRequested = PlayerPrefs.GetInt("is_push_requested", 0);
+                if (isPushRequested == 1&&UserData.IsAutoPush)
+                {
+                    // 应用后台时，刷新一下代理推送文案
+                    Game.self.Pushs.RequestEnableNotification();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
             }
             
             Debug.Log("应用进入后台，数据已保存");

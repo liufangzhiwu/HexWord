@@ -34,10 +34,10 @@ public static class UIUtilities
 
             if (includeAnimation)
             {
-                targetButton.transform.DOScale(new Vector3(0.85f, 0.85f, 0.85f), 0.11f).OnComplete(() =>
+                onClickAction?.Invoke();
+                targetButton.transform.DOScale(new Vector3(0.9f, 0.9f, 0.9f), 0.15f).OnComplete(() =>
                 {
-                    onClickAction?.Invoke();
-                    targetButton.transform.DOScale(Vector3.one, 0.11f);
+                    targetButton.transform.DOScale(Vector3.one, 0.15f);
                     EventDispatcher.instance.TriggerChangeFreeTipsPanel();
                 });
             }

@@ -34,7 +34,8 @@ public class SignSaveData
             currentStreak = this.currentStreak,
             curAwardid = this.curAwardid,
             totalSignDays = this.totalSignDays,
-            winAwardClaims = this.winAwardClaims
+            winAwardClaims = this.winAwardClaims,
+            historyWinDayTimes = this.historyWinDayTimes
         };
         // 深拷贝字典
         foreach (var kv in this.signMonthDatas)
@@ -43,6 +44,14 @@ public class SignSaveData
             monthData.signedDays = new List<int>(kv.Value.signedDays); // 复制列表
             clone.signMonthDatas[kv.Key] = monthData;
         }
+
+        int gethistoryWinDayTimes = RecalculateHistoryWinDayTimes();
+
+        Debug.Log("计算出来的最长连胜天数为"+gethistoryWinDayTimes+"当前数据存储的最长连胜天数为"+clone.historyWinDayTimes);
+       
+        clone.historyWinDayTimes = gethistoryWinDayTimes;
+        
+        
         return clone;
     }
 
@@ -65,6 +74,66 @@ public class SignSaveData
         {
             winAwardClaims[curAwardid] = true;
         }
+    }
+    
+    /// <summary>
+    /// 计算历史最长连胜天数（在li）
+    /// </summary>
+    /// <returns></returns>
+    public int RecalculateHistoryWinDayTimes()
+    {
+        var allDates = new List<DateTime>();
+
+        foreach (var kv in signMonthDatas)
+        {
+            long monthKey = kv.Key;
+
+            // 和 IsSigned 里的 monthKey = date.Year * 100 + date.Month 对应
+            int year = (int)(monthKey / 100);
+            int month = (int)(monthKey % 100);
+
+            if (year <= 0 || month < 1 || month > 12)
+                continue;
+
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+
+            foreach (int day in kv.Value.signedDays)
+            {
+                if (day >= 1 && day <= daysInMonth)
+                {
+                    allDates.Add(new DateTime(year, month, day));
+                }
+            }
+        }
+
+        // 排序并去重
+        allDates = allDates.Distinct().OrderBy(d => d).ToList();
+
+        int maxStreak = 0;
+        int currentStreak = 0;
+        DateTime? prev = null;
+
+        foreach (var date in allDates)
+        {
+            if (prev.HasValue && date == prev.Value.AddDays(1))
+            {
+                currentStreak++;
+            }
+            else
+            {
+                currentStreak = 1;
+            }
+
+            if (currentStreak > maxStreak)
+            {
+                maxStreak = currentStreak;
+            }
+
+            prev = date;
+        }
+
+        historyWinDayTimes = maxStreak;
+        return maxStreak;
     }
     
     

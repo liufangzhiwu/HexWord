@@ -645,6 +645,7 @@ namespace Middleware
             if (firstPay)
                 GameDataManager.Instance.UserData.firstPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             GameDataManager.Instance.UserData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            GameDataManager.Instance.UserData.LastPayTimeTicks = DateTime.Now.Ticks;
             GameDataManager.Instance.UserData.TotalPayTimes++;
             GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
             DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy, 1);

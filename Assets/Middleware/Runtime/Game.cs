@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+#if UNITY_OPENHARMONY
 using OpenHarmonyKits.Param;
+#endif
 using UnityEngine;
 #if UNITY_HUAWEI
 using UnityEngine.HuaweiAppGallery;
@@ -74,6 +76,9 @@ namespace Middleware
 
         public void LoadAds_OAID()
         {
+            
+#if UNITY_OPENHARMONY
+  
             int showAdsRequest=PlayerPrefs.GetInt("ShowAdsRequest",0);
             if (showAdsRequest == 0)
             {
@@ -88,6 +93,8 @@ namespace Middleware
             AdDisplayOptions adDisplayOptions=new AdDisplayOptions();
             
             OHSDKKitManager.Instance.LoadBanner(adRequestParams, adOptions,adDisplayOptions);
+#endif
+            
         }
         
         private void InitManagers()

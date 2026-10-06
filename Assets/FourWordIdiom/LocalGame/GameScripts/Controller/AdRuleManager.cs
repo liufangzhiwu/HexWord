@@ -262,10 +262,11 @@ public class AdRuleManager : MonoBehaviour
         // 【G3】付费保护：付费后 T3 内不播
         if (userData.LastPayTimeTicks > 0)
         {
-            TimeSpan paySpan = now - new DateTime(userData.LastPayTimeTicks);
+            DateTime lastPayTim =new DateTime(userData.LastPayTimeTicks);
+            TimeSpan paySpan = now.Subtract(lastPayTim);
             if (paySpan.TotalSeconds < T3_PayProtect)
             {
-                Debug.Log("[AdRule] 被拦截(G3)：处于付费保护期");
+                Debug.Log("[AdRule] 被拦截(G3)：处于付费保护期 保护期时长：" +T3_PayProtect+"(秒) 上次付费时间:"+lastPayTim);
                 return false;
             }
         }
