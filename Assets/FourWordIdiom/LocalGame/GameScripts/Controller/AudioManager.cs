@@ -126,7 +126,7 @@ public class AudioManager : MonoBehaviour
 
     private void OnEnable()
     {
-        /*// 预加载背景音乐
+        // 预加载背景音乐
         string[] musicNames =
         {
             "music", "Button","ShowUI","Puzzle1","Puzzle2","Puzzle3" ,"Puzzle4","lianci",
@@ -136,7 +136,7 @@ public class AudioManager : MonoBehaviour
         
         StartCoroutine(PlayMusic(1.5f)); // 初始化音乐开关
 
-        ApplyCriticalFixes();*/
+        //ApplyCriticalFixes();
     }
     
     private void ApplyCriticalFixes()
@@ -221,7 +221,7 @@ public class AudioManager : MonoBehaviour
         QualitySettings.SetQualityLevel(2, true);
     }*/
     
-    /*private IEnumerator PlayMusic(float transitionTime = 0.1f)
+    private IEnumerator PlayMusic(float transitionTime = 0.1f)
     {             
         yield return new WaitForSeconds(transitionTime);
         
@@ -233,7 +233,7 @@ public class AudioManager : MonoBehaviour
         {
             PlayBackgroundMusic("music"); // 播放默认音乐
         }
-    }*/
+    }
     
     public void ToggleMusic()
     {   

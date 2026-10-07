@@ -83,10 +83,12 @@ SpriteAtlas:
     - 7028a1b2d46a4f542af943946f30112c: 21300000
     - cce75d033c7892e479143c3281996314: 21300000
     - 41eeb96355affe146994259b958b3cd1: 21300000
+    - d914dad3aa1532e4cb43233feb99c787: 21300000
     - cbf282542f431ec4aa137e7ec831771f: 21300000
     - 8b2e4d940b0939a4e901b30b0ae4a277: 21300000
     - 343e90b4db08ecd4eab4a5435ffff585: 21300000
     - 5731f625f9afe12408a4891d42b7c41f: 21300000
+    - 3109f535996687445aeab6e9bc50c6a7: 21300000
     - c8f716d5006724d4d92e7d8bc6682ebc: 21300000
     - 351da7f5e06c2164a8509b7f10bce2de: 21300000
     - 0d7aea76f4c42c14391e17b589ff2eb7: 21300000
@@ -98,10 +100,10 @@ SpriteAtlas:
     - b6be50586f68c7241953ad404fa2d569: 21300000
     - 22893298bad47fc4dbc51022b55dc273: 21300000
     - fc33deb8db416744c9c82045c7b7ce2a: 21300000
+    - 752d62d87e861f048b5553fe67d7fa26: 21300000
     - bc973789fb989b9409387f3116b93d5c: 21300000
     - f4904bc9ebc496a40bc16a025063a239: 21300000
     - 7f58480ae60ede24e950943a27cc9210: 21300000
-    - ea8e254c86c384440af0f54134718e8d: 21300000
     - abf1879c5615a6849a0ec27cec4fd8f3: 21300000
     - c284c1cc752394f44adac48704bff912: 21300000
     - e1e7397d80a5afa42a01ea24e3809b55: 21300000
@@ -118,10 +120,12 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 7028a1b2d46a4f542af943946f30112c, type: 3}
   - {fileID: 21300000, guid: cce75d033c7892e479143c3281996314, type: 3}
   - {fileID: 21300000, guid: 41eeb96355affe146994259b958b3cd1, type: 3}
+  - {fileID: 21300000, guid: d914dad3aa1532e4cb43233feb99c787, type: 3}
   - {fileID: 21300000, guid: cbf282542f431ec4aa137e7ec831771f, type: 3}
   - {fileID: 21300000, guid: 8b2e4d940b0939a4e901b30b0ae4a277, type: 3}
   - {fileID: 21300000, guid: 343e90b4db08ecd4eab4a5435ffff585, type: 3}
   - {fileID: 21300000, guid: 5731f625f9afe12408a4891d42b7c41f, type: 3}
+  - {fileID: 21300000, guid: 3109f535996687445aeab6e9bc50c6a7, type: 3}
   - {fileID: 21300000, guid: c8f716d5006724d4d92e7d8bc6682ebc, type: 3}
   - {fileID: 21300000, guid: 351da7f5e06c2164a8509b7f10bce2de, type: 3}
   - {fileID: 21300000, guid: 0d7aea76f4c42c14391e17b589ff2eb7, type: 3}
@@ -133,10 +137,10 @@ SpriteAtlas:
   - {fileID: 21300000, guid: b6be50586f68c7241953ad404fa2d569, type: 3}
   - {fileID: 21300000, guid: 22893298bad47fc4dbc51022b55dc273, type: 3}
   - {fileID: 21300000, guid: fc33deb8db416744c9c82045c7b7ce2a, type: 3}
+  - {fileID: 21300000, guid: 752d62d87e861f048b5553fe67d7fa26, type: 3}
   - {fileID: 21300000, guid: bc973789fb989b9409387f3116b93d5c, type: 3}
   - {fileID: 21300000, guid: f4904bc9ebc496a40bc16a025063a239, type: 3}
   - {fileID: 21300000, guid: 7f58480ae60ede24e950943a27cc9210, type: 3}
-  - {fileID: 21300000, guid: ea8e254c86c384440af0f54134718e8d, type: 3}
   - {fileID: 21300000, guid: abf1879c5615a6849a0ec27cec4fd8f3, type: 3}
   - {fileID: 21300000, guid: c284c1cc752394f44adac48704bff912, type: 3}
   - {fileID: 21300000, guid: e1e7397d80a5afa42a01ea24e3809b55, type: 3}
@@ -152,10 +156,12 @@ SpriteAtlas:
   - theme05
   - decal_scorch
   - Leaflight
+  - "\u4E3B\u9898\u4ECB\u7ECD"
   - namebg
   - namebg2
   - newtittle
   - themeup
+  - 3
   - point2
   - theme13
   - theme06
@@ -167,10 +173,10 @@ SpriteAtlas:
   - theme07
   - theme11
   - choice
+  - goldLeafTip1
   - theme12
   - whiteTexture
   - point3
-  - newthemetip
   - theme04
   - theme15
   - theme02

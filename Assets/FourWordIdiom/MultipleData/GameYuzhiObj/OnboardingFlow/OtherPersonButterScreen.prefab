@@ -1,17 +1,18 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!1 &2352188104583016363
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2052980181468606740}
   - component: {fileID: 743012812612107362}
   - component: {fileID: 1654746841938970215}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -85,7 +86,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1749694451242573633}
   - component: {fileID: 7946252183597505186}
@@ -94,6 +95,7 @@ GameObject:
   - component: {fileID: 5419299411802418384}
   - component: {fileID: 6957809005120040951}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: QuitSeeBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -222,7 +224,7 @@ Canvas:
   m_VertexColorAlwaysGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: -1698276591
+  m_SortingLayerID: -506211957
   m_SortingOrder: 2
   m_TargetDisplay: 0
 --- !u!114 &6957809005120040951
@@ -248,10 +250,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6142427937914592219}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: FlyStartPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -283,7 +286,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3077500352185585721}
   - component: {fileID: 6823365798708071549}
@@ -293,6 +296,7 @@ GameObject:
   - component: {fileID: 6511313336022782168}
   - component: {fileID: 2382950905420789170}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: OtherPersonButterScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -383,7 +387,7 @@ CanvasGroup:
   m_IgnoreParentGroups: 0
 --- !u!95 &6511313336022782168
 Animator:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -394,6 +398,8 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 9574d8ce10bd09c459d28379ff89b4ed, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
+  m_UpdateFrequencyMode: 0
+  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0

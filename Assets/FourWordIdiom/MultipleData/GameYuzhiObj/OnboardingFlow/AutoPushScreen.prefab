@@ -6,13 +6,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 559504749498050841}
   - component: {fileID: 7185068629690311827}
   - component: {fileID: 2751900531826844234}
   - component: {fileID: 5203782038747951960}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Refuse
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -127,13 +128,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2677179549087165685}
   - component: {fileID: 1238087841850490903}
   - component: {fileID: 109785021246504036}
   - component: {fileID: 1833343860513340868}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -222,15 +224,16 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6558734518227589905}
   - component: {fileID: 3738920292213737436}
   - component: {fileID: 7021820550543374275}
   - component: {fileID: 2524500565783454422}
-  - component: {fileID: 6298517370083877868}
   - component: {fileID: 139136043145030034}
+  - component: {fileID: 5243320370699844306}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: AutoPushScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -306,26 +309,9 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &6298517370083877868
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2078426036942281601}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7151741af46273e4a8b95fb45d0d7161, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _openDuration: 0.3
-  _closeDuration: 0.3
-  agreeButton: {fileID: 3676640515480756946}
-  refuseButton: {fileID: 5203782038747951960}
-  closeButton: {fileID: 3985929575734212533}
 --- !u!95 &139136043145030034
 Animator:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -336,6 +322,8 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 5aa0b95a48a8d744d9d0cdf89a69d2b2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
+  m_UpdateFrequencyMode: 0
+  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -344,18 +332,36 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5243320370699844306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2078426036942281601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d884c175902108a4fa6cb735622012c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _openDuration: 0.3
+  _closeDuration: 0.3
+  agreeButton: {fileID: 3676640515480756946}
+  refuseButton: {fileID: 5203782038747951960}
+  closeButton: {fileID: 3985929575734212533}
 --- !u!1 &2811849525013719462
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3488428350725111228}
   - component: {fileID: 4017752289754936620}
   - component: {fileID: 5895250182897289109}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -429,13 +435,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6874245396709218087}
   - component: {fileID: 8341293306056780289}
   - component: {fileID: 3791204634689185692}
   - component: {fileID: 3676640515480756946}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Confirm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -550,11 +557,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3729852367551888879}
   - component: {fileID: 5281582337781475376}
   m_Layer: 0
+  m_HasEditorInfo: 1
   m_Name: HorizontalGroup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -614,13 +622,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6661616160197438907}
   - component: {fileID: 3153059529358765157}
   - component: {fileID: 8766833493826329126}
   - component: {fileID: 941591814360700677}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: BackUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -706,13 +715,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 9211080050563832369}
   - component: {fileID: 4083919860147121756}
   - component: {fileID: 8545122826430831070}
   - component: {fileID: 3038146031450105596}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: di
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -826,13 +836,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3987662173066277452}
   - component: {fileID: 2178966467604095521}
   - component: {fileID: 2950746894703893802}
   - component: {fileID: 3985929575734212533}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Close
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -946,13 +957,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4150395521606030421}
   - component: {fileID: 2824893262310616425}
   - component: {fileID: 8419263530316368097}
   - component: {fileID: 8414236718309165527}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: tips
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1041,12 +1053,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1120550949915807927}
   - component: {fileID: 8828683511055117051}
   - component: {fileID: 1645045090829485390}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

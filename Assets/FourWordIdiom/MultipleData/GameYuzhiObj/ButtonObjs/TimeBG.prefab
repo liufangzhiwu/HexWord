@@ -6,13 +6,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5009840841998948275}
   - component: {fileID: 4477474536760613461}
   - component: {fileID: 8437656092913192881}
   - component: {fileID: 6049323502552029552}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: TimeBG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -110,12 +111,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2802925590676840290}
   - component: {fileID: 7289345437889008610}
   - component: {fileID: 7826698001765856525}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: TimeIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -185,13 +187,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1079530828862733424}
   - component: {fileID: 6240272514305811773}
   - component: {fileID: 4253614946596845379}
   - component: {fileID: 1219595340104597793}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: TimeText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -215,7 +218,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 171.3, y: -37}
-  m_SizeDelta: {x: 160, y: 49}
+  m_SizeDelta: {x: 0, y: 49}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6240272514305811773
 CanvasRenderer:
