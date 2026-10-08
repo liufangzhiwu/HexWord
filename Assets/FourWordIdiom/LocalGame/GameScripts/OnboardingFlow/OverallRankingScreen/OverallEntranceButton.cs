@@ -111,6 +111,15 @@ public class OverallEntranceButton : MonoBehaviour
         SystemManager.Instance.HidePanel(PanelType.HeaderSection);
         SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
         // 打开排行榜主界面
+
+        StartCoroutine(ShowRankingScreen());
+
+        //SystemManager.Instance.ShowPanel(PanelType.OverallRankingScreen);
+    }
+
+    IEnumerator ShowRankingScreen()
+    {
+        yield return new WaitForSeconds(0.1f);
         SystemManager.Instance.ShowPanel(PanelType.OverallRankingScreen);
     }
 }

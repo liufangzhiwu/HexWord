@@ -677,7 +677,9 @@ public class PrimaryInterface : UIWindow
             SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
         });
     }
+    
     #endregion
+    
     /// <summary>
     /// 当对象禁用时调用
     /// </summary>
