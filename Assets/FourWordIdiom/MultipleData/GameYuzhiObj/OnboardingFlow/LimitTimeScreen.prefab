@@ -10380,7 +10380,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u70B9\u51FB\u5173\u95ED"
+  m_Text: "\u70B9\u51FB\u4EFB\u610F\u7A7A\u767D\u5904\u5173\u95ED"
 --- !u!1 &537799432153022002
 GameObject:
   m_ObjectHideFlags: 0
@@ -25863,7 +25863,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 1
+  m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -57737,7 +57737,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2019488098175664533
 RectTransform:
   m_ObjectHideFlags: 0
@@ -73041,7 +73041,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 3.6000671, y: 0}
+  m_AnchoredPosition: {x: 3.6000366, y: 0}
   m_SizeDelta: {x: 79, y: 78}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7899249258022233307

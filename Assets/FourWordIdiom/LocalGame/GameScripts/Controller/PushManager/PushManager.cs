@@ -21,7 +21,7 @@ namespace Middleware
         }
     }
 
-    public class PushManaer : Singleton<PushManaer>
+    public class PushManager : Singleton<PushManager>
     {
         // ============================================================
         // 文案池前缀常量（对应配置表真实 Key 前缀）

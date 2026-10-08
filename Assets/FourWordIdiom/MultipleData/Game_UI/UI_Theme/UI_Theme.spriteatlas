@@ -83,7 +83,6 @@ SpriteAtlas:
     - 7028a1b2d46a4f542af943946f30112c: 21300000
     - cce75d033c7892e479143c3281996314: 21300000
     - 41eeb96355affe146994259b958b3cd1: 21300000
-    - d914dad3aa1532e4cb43233feb99c787: 21300000
     - cbf282542f431ec4aa137e7ec831771f: 21300000
     - 8b2e4d940b0939a4e901b30b0ae4a277: 21300000
     - 343e90b4db08ecd4eab4a5435ffff585: 21300000
@@ -120,7 +119,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 7028a1b2d46a4f542af943946f30112c, type: 3}
   - {fileID: 21300000, guid: cce75d033c7892e479143c3281996314, type: 3}
   - {fileID: 21300000, guid: 41eeb96355affe146994259b958b3cd1, type: 3}
-  - {fileID: 21300000, guid: d914dad3aa1532e4cb43233feb99c787, type: 3}
   - {fileID: 21300000, guid: cbf282542f431ec4aa137e7ec831771f, type: 3}
   - {fileID: 21300000, guid: 8b2e4d940b0939a4e901b30b0ae4a277, type: 3}
   - {fileID: 21300000, guid: 343e90b4db08ecd4eab4a5435ffff585, type: 3}
@@ -156,7 +154,6 @@ SpriteAtlas:
   - theme05
   - decal_scorch
   - Leaflight
-  - "\u4E3B\u9898\u4ECB\u7ECD"
   - namebg
   - namebg2
   - newtittle

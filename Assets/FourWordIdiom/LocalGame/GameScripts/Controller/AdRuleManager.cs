@@ -9,46 +9,69 @@ public class AdRuleManager : MonoBehaviour
 {
     public static AdRuleManager Instance { get; private set; }
     private Dictionary<string, float> _adConfigMap = new Dictionary<string, float>();
+
     // ==========================================
     // 配表数值 (实际开发中这些值可以通过 ConfigManager 读取 JSON/CSV)
     // ==========================================
     // 【T系列：时间限制规则（单位：秒）】
-    private float T1_RewardCD => GetConfig("T1", 120f);         // 互斥期：看完激励视频后，多久之内绝对不弹插屏 (防打扰)
-    private float T2_MinPlayTime => GetConfig("T2", 2400f);     // 新手期：玩家总游戏时长不足多久时，绝对不弹插屏/Banner
-    private float T3_PayProtect => GetConfig("T3", 86400f);     // 免广期：玩家氪金付费后，保护多久不弹插屏 (默认24小时)
-    private float T4_ResumeProtect => GetConfig("T4", 20f);     // 切回期：玩家从手机桌面切回游戏时，保护多久不弹插屏 (防骑脸)
-    private float T5_BaseInterstitialCD => GetConfig("T5", 180f); // 基础CD：两次插屏广告之间，最基本的冷却等待时间
+    private float T1_RewardCD => GetConfig("T1", 120f);            // 互斥期：看完激励视频后，多久之内绝对不弹插屏
+    private float T2_MinPlayTime => GetConfig("T2", 2400f);        // 新手期：总时长不足多久不弹插屏/Banner
+    private float T3_PayProtect => GetConfig("T3", 86400f);        // 免广期：付费后保护多久不弹插屏
+    private float T4_ResumeProtect => GetConfig("T4", 20f);        // 切回期：从桌面切回后保护多久不弹插屏
+    private float T5_BaseInterstitialCD => GetConfig("T5", 180f);  // 基础CD：两次插屏之间最小间隔
 
     // 【A系列：疲劳度增减规则（单位：分）】
-    private int A1_InterstitialFatigue => (int)GetConfig("A1", 3f); // 播一次【插屏广告】给玩家增加几点疲劳度
-    private int A2_RewardFatigue => (int)GetConfig("A2", 2f);       // 播一次【激励视频】给玩家增加几点疲劳度
-    private int A3_MaxFatigue => (int)GetConfig("A3", 100f);        // 疲劳度满级上限 (超过这个分数不再累加)
-    
-    // 【L系列：根据疲劳度，额外惩罚的插屏CD时间（单位：秒）】
-    // 策划目的：疲劳度越低说明是新用户，要加长CD保护他们；疲劳度高说明是老油条，CD短一点多弹广告。
-    private float L1_ExtraCD => GetConfig("L1", 60f); // 新手保护：疲劳度在 0~30 分时，插屏冷却时间要额外加多少秒
-    private float L2_ExtraCD => GetConfig("L2", 30f); // 过渡期：疲劳度在 31~60 分时，插屏冷却时间额外加多少秒
-    private float L3_ExtraCD => GetConfig("L3", 0f);  // 成熟期：疲劳度大于 60 分时，无额外惩罚（插屏会弹得更频繁）
-    // 👇 新增：【D系列：每日首关概率规则】
-    // 每日玩家打第一关时，展示插屏的概率。假设配表填 0~100 的数值，默认给 100 代表 100% 弹。
+    private int A1_InterstitialFatigue => (int)GetConfig("A1", 3f);
+    private int A2_RewardFatigue => (int)GetConfig("A2", 2f);
+    private int A3_MaxFatigue => (int)GetConfig("A3", 100f);
+
+    // 【L系列：根据疲劳度额外惩罚的插屏CD时间（单位：秒）】
+    private float L1_ExtraCD => GetConfig("L1", 60f); // 疲劳度 0~30 分
+    private float L2_ExtraCD => GetConfig("L2", 30f); // 疲劳度 31~60 分
+    private float L3_ExtraCD => GetConfig("L3", 0f);  // 疲劳度 >60 分
+
+    // 【D系列：每日首关概率规则】
     private float D1_FirstLevelAdProb => GetConfig("D", 100f);
+
     // 运行时状态 (不需要存档的 Session 级数据)
     private DateTime _lastAppResumeTime = DateTime.MinValue;
     private bool _isAppInBackground = false;
 
+
+    // ==========================================
+    // 【赠礼系统配置】（硬编码，不走配表）
+    // ==========================================
+    // G6: 首个广告（激励视频 or 插屏）一次性感谢金
+    private const int G6_FirstAdGiftGold = 50;
+
+    // R系列：灯泡激励视频每日赠礼（每天前3次，金额阶梯）
+    private const int R1_DailyMaxRewardGift = 3;
+    private const int R2_Gold_Step1 = 50;
+    private const int R2_Gold_Step2 = 30;
+    private const int R2_Gold_Step3 = 20;
+
+    // I系列：插屏每日赠礼（每天前5次，30关后解锁）
+    private const int I1_DailyMaxInterstitialGift = 5;
+    private const int I2_InterstitialGiftGold = 10;
+    private const int I3_InterstitialUnlockStage = 30;
+
+    // 通用提示语
+    private const string GIFT_TIP_TEXT = "广告并不友好，但您的确帮到了我们。";
+
+
     private void Awake()
     {
-        // 🌟 1. 标准单例防重复检查
+        // 1. 标准单例防重复检查
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
-        
+
         Instance = this;
         //DontDestroyOnLoad(gameObject);
 
-        // 🌟 2. 冷启动保护：给应用刚启动时加上 30 秒绝对安全期
+        // 2. 冷启动保护：应用刚启动时加上安全期
         _lastAppResumeTime = DateTime.Now;
     }
 
@@ -57,9 +80,9 @@ public class AdRuleManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         string csvData = null;
         bool isCsvDone = false;
-        StartCoroutine( APIGateway.Instance.GameConfigApi.GetGameConfig("adv_general_config",
-            onSuccess: (response) => { csvData = response.CsvString; isCsvDone = true;},
-            onError:   (error) => { isCsvDone = true; Debug.Log("服务器拉取 广告 配置失败，准备兜底 " + error); }
+        StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("adv_general_config",
+            onSuccess: (response) => { csvData = response.CsvString; isCsvDone = true; },
+            onError: (error) => { isCsvDone = true; Debug.Log("服务器拉取 广告 配置失败，准备兜底 " + error); }
         ));
         float timeout = 5f;
         while (!isCsvDone && timeout > 0)
@@ -84,7 +107,7 @@ public class AdRuleManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 获取配置核心方法：如果表里有配，用表里的；如果表里找不到，用 defaultValue 兜底保命。
+    /// 获取配置核心方法：表里有配就用表里的，否则用 defaultValue 兜底。
     /// </summary>
     private float GetConfig(string key, float defaultValue)
     {
@@ -92,18 +115,16 @@ public class AdRuleManager : MonoBehaviour
             return val;
         return defaultValue;
     }
-    
+
     /// <summary>
-    /// 加载 CSV 配置（请在游戏初始化 ConfigManager 时调用此方法传入 CSV 文本）
+    /// 加载 CSV 配置
     /// </summary>
     public void LoadConfigFromCSV(string csvText)
     {
         if (string.IsNullOrEmpty(csvText)) return;
 
-        // 统一处理换行符
         string[] lines = csvText.Replace("\r", "").Split('\n');
-        
-        // 确保至少有 3 行（1行注释，1行Key，1行Value）
+
         if (lines.Length >= 3)
         {
             string[] keys = lines[1].Split(',');
@@ -124,127 +145,141 @@ public class AdRuleManager : MonoBehaviour
             Debug.Log("[AdRule] 广告规则配表加载成功！共加载配置项：" + _adConfigMap.Count);
         }
     }
+
     private void Update()
     {
-        // 🌟 G2: 累计游戏时间计算 (切后台不计入)
+        // G2: 累计游戏时间 (切后台不计入)
         if (!_isAppInBackground)
         {
             GameDataManager.Instance.UserData.TotalPlayTimeSeconds += Time.deltaTime;
         }
     }
 
-    // 🌟 G4: 切后台与切回来的时间记录
+    // G4: 切后台与切回来的时间记录
     private void OnApplicationFocus(bool hasFocus)
     {
         _isAppInBackground = !hasFocus;
         if (hasFocus)
         {
-            _lastAppResumeTime = DateTime.Now; // 记录切回前台的瞬间
+            _lastAppResumeTime = DateTime.Now;
         }
     }
 
+    // ==========================================
+    // 广告展示入口
+    // ==========================================
+
+    /// <summary>
+    /// 展示插屏广告
+    /// 流程：拦截审核 → 播广告 → onComplete 立即回调（业务继续）→ 再尝试弹赠礼
+    /// </summary>
     public void TryShowInterstitial(Action<bool> onComplete)
     {
-        // 1. 先问大脑让不让播
+        // 1. 拦截审核
         if (!CanShowInterstitial())
         {
             Debug.Log($"[AdRule] 插屏拦截掉了");
-            onComplete?.Invoke(false); // 拦截掉了，直接执行回调，让游戏继续
+            onComplete?.Invoke(false);
             return;
         }
-        
+
 #if !UNITY_OPENHARMONY
         AnalyticMgr.InsetAdStart("关卡插屏");
 #endif
 
-        // 2. 大脑放行了，调底层 SDK (不管是鸿蒙、安卓还是 iOS)
-        Game.self.Ads.ShowInterstitial((success) => 
+        // 2. 播广告
+        Game.self.Ads.ShowInterstitial((success) =>
         {
             if (success)
             {
-                // 3. 播成功了，向大脑报账，增加疲劳度并记录时间！
                 ReportAdShown(Define.AdType.Interstitial);
             }
+
+            // ① 先让业务立即继续（广告播完的"立即执行"语义）
             onComplete?.Invoke(success);
+
+            // ② 玩家关闭插屏后，才尝试弹赠礼（不阻塞业务）
+            if (success)
+            {
+                TryShowInterstitialGift();
+            }
         });
     }
-    // 展示 Banner 时的标准写法
+
+    /// <summary>
+    /// 展示 Banner
+    /// </summary>
     public void TryShowBanner()
     {
         if (!CanShowBanner()) return;
         Game.self.Ads.ShowBanner();
     }
-    // 展示激励视频时的标准写法
+
+    /// <summary>
+    /// 展示激励视频
+    /// 注意：赠礼不由这里触发——因为需求是"玩家领奖后，灯泡道具发生作用并完成提示效果后"才弹，
+    /// 所以由业务侧在道具生效完成后主动调用 TryShowRewardVideoGift()。
+    /// </summary>
     public void TryShowRewardVideo(Define.AdKey adKey, Action<bool> onComplete)
     {
-        // 1. 激励视频一般不拦截，直接让玩家看
-        Game.self.Ads.ShowReward(adKey, (success) => 
+        Game.self.Ads.ShowReward(adKey, (success) =>
         {
             if (success)
             {
-                // 2. 🌟 核心：播成功了，向大脑报账！
-                // 这句代码执行后：
-                // - 疲劳度会自动 +2
-                // - LastRewardAdTimeTicks 会刷新
-                // - G1 规则 (120秒内不准弹插屏) 会瞬间生效！
                 ReportAdShown(Define.AdType.Reward);
             }
-    
-            // 3. 把结果传给原有的业务层（比如发金币、发道具）
+
             onComplete?.Invoke(success);
         });
     }
-    
-    // 展示激励视频时的标准写法
+
+    /// <summary>
+    /// 展示提示灯道具激励视频
+    /// </summary>
     public void TryShowTipToolRewardVideo(Define.AdKey adKey, Action<bool> onComplete)
     {
-        // 1. 激励视频一般不拦截，直接让玩家看
-        Game.self.Ads.ShowTipToolReward(adKey, (success) => 
+        Game.self.Ads.ShowTipToolReward(adKey, (success) =>
         {
             if (success)
             {
-                // 2. 🌟 核心：播成功了，向大脑报账！
-                // 这句代码执行后：
-                // - 疲劳度会自动 +2
-                // - LastRewardAdTimeTicks 会刷新
-                // - G1 规则 (120秒内不准弹插屏) 会瞬间生效！
                 ReportAdShown(Define.AdType.Reward);
+
+                TryShowRewardVideoGift();
             }
-    
-            // 3. 把结果传给原有的业务层（比如发金币、发道具）
+
             onComplete?.Invoke(success);
         });
     }
-    
-    
+
+
+    // ==========================================
+    // 拦截审核
+    // ==========================================
+
     /// <summary>
-    /// 🌟 拦截审核：当前是否允许播放插屏？
+    /// 拦截审核：当前是否允许播放插屏？
     /// </summary>
     public bool CanShowInterstitial()
     {
         var userData = GameDataManager.Instance.UserData;
         DateTime now = DateTime.Now;
-        
+
         Debug.Log($"[AdRule] 进入插屏拦截逻辑");
-        
-        // 👇 新增：【D规则】每日首关插屏概率保护
-        // 依据 dayPassStageCount == 0 代表玩家今天一关都还没通关，处于“每日第一个关卡”状态
+
+        // 【D规则】每日首关插屏概率保护
         if (userData.dayPassStageCount == 0)
         {
-            // 如果今天还没进行过判定，则掷骰子
             if (!userData.isDayFirstLevelAdChecked)
             {
                 userData.isDayFirstLevelAdChecked = true;
                 float rand = UnityEngine.Random.Range(0f, 100f);
                 userData.isDayFirstLevelAdAllowed = rand < D1_FirstLevelAdProb;
-                
+
                 Debug.Log($"[AdRule] (D规则) 每日首关插屏判定：配置概率 {D1_FirstLevelAdProb}%, 随机点数 {rand:F1}, 是否允许: {userData.isDayFirstLevelAdAllowed}");
-                
-                // ⚠️ 立即存盘！防止玩家发现首关有广告，直接杀后台重开游戏反复刷概率避开广告
-                GameDataManager.Instance.CommitGameData(); 
+
+                GameDataManager.Instance.CommitGameData();
             }
 
-            // 如果判定的结果是不允许，则直接拦截
             if (!userData.isDayFirstLevelAdAllowed)
             {
                 Debug.Log("[AdRule] 被拦截(D规则)：每日首关插屏概率未命中");
@@ -252,26 +287,26 @@ public class AdRuleManager : MonoBehaviour
             }
         }
 
-        // 【G2】游戏时间不足 T2，不展示
+        // 【G2】游戏时间不足 T2
         if (userData.TotalPlayTimeSeconds < T2_MinPlayTime)
         {
             Debug.Log($"[AdRule] 被拦截(G2)：累计时长不足 {T2_MinPlayTime}s");
             return false;
         }
 
-        // 【G3】付费保护：付费后 T3 内不播
+        // 【G3】付费保护
         if (userData.LastPayTimeTicks > 0)
         {
-            DateTime lastPayTim =new DateTime(userData.LastPayTimeTicks);
+            DateTime lastPayTim = new DateTime(userData.LastPayTimeTicks);
             TimeSpan paySpan = now.Subtract(lastPayTim);
             if (paySpan.TotalSeconds < T3_PayProtect)
             {
-                Debug.Log("[AdRule] 被拦截(G3)：处于付费保护期 保护期时长：" +T3_PayProtect+"(秒) 上次付费时间:"+lastPayTim);
+                Debug.Log("[AdRule] 被拦截(G3)：处于付费保护期 保护期时长：" + T3_PayProtect + "(秒) 上次付费时间:" + lastPayTim);
                 return false;
             }
         }
 
-        // 【G4】切回前台保护：T4 内不播
+        // 【G4】切回前台保护
         TimeSpan resumeSpan = now - _lastAppResumeTime;
         if (resumeSpan.TotalSeconds < T4_ResumeProtect)
         {
@@ -279,7 +314,7 @@ public class AdRuleManager : MonoBehaviour
             return false;
         }
 
-        // 【G1】激励视频互斥：看过激励视频后 T1 内不播插屏
+        // 【G1】激励视频互斥
         if (userData.LastRewardAdTimeTicks > 0)
         {
             TimeSpan rewardSpan = now - new DateTime(userData.LastRewardAdTimeTicks);
@@ -290,11 +325,11 @@ public class AdRuleManager : MonoBehaviour
             }
         }
 
-        // 【G5 + 疲劳度】插屏冷却时间计算
+        // 【G5 + 疲劳度】插屏冷却
         float extraCD = 0f;
         if (userData.AdFatigueScore <= 30) extraCD = L1_ExtraCD;
         else if (userData.AdFatigueScore <= 60) extraCD = L2_ExtraCD;
-        else extraCD = L3_ExtraCD; // 60分以上成熟用户，不再增加额外CD
+        else extraCD = L3_ExtraCD;
 
         float totalCD = T5_BaseInterstitialCD + extraCD;
 
@@ -308,23 +343,23 @@ public class AdRuleManager : MonoBehaviour
             }
         }
 
-        return true; // 恭喜，通过所有审核！
+        return true;
     }
 
     /// <summary>
-    /// 🌟 拦截审核：当前是否允许展示 Banner
+    /// 拦截审核：当前是否允许展示 Banner
     /// </summary>
     public bool CanShowBanner()
     {
-        // 【G2】游戏时间不足 T2，不展示
         if (GameDataManager.Instance.UserData.TotalPlayTimeSeconds < T2_MinPlayTime)
             return false;
 
         return true;
     }
 
+
     // ==========================================
-    // 广告播完后的账单上报（用于累加疲劳和重置时间）
+    // 广告账单上报
     // ==========================================
     public void ReportAdShown(Define.AdType type)
     {
@@ -343,7 +378,105 @@ public class AdRuleManager : MonoBehaviour
             Debug.Log($"[AdRule] 记录激励视频，当前疲劳度：{userData.AdFatigueScore}");
         }
 
-        // 重要：每次修改这些关键数据后，最好触发一次存档操作，防止杀后台丢数据
-        GameDataManager.Instance.CommitGameData(); 
+        GameDataManager.Instance.CommitGameData();
+    }
+
+
+    /// <summary>
+    /// 灯泡激励视频赠礼
+    /// 调用时机：玩家领奖 + 灯泡道具发生作用 + 完成提示效果之后，由业务侧调用。
+    /// </summary>
+    /// <param name="onGiftClosed">玩家关闭赠礼弹窗后的回调（可空）</param>
+    public void TryShowRewardVideoGift(Action onGiftClosed = null)
+    {
+        var userData = GameDataManager.Instance.UserData;
+
+        // 优先级 1：首个广告一次性 50 金币（激励视频 / 插屏谁先触发归谁）
+        if (!userData.HasShownFirstAdGift)
+        {
+            userData.HasShownFirstAdGift = true;
+            GameDataManager.Instance.CommitGameData();
+            ShowGiftWindow(G6_FirstAdGiftGold, onGiftClosed);
+            return;
+        }
+
+        // 优先级 2：每日前 3 次灯泡激励视频赠礼
+        if (userData.DayRewardVideoGiftCount >= R1_DailyMaxRewardGift)
+        {
+            onGiftClosed?.Invoke();
+            return;
+        }
+
+        int giftGold;
+        switch (userData.DayRewardVideoGiftCount)
+        {
+            case 0: giftGold = R2_Gold_Step1; break;
+            case 1: giftGold = R2_Gold_Step2; break;
+            case 2: giftGold = R2_Gold_Step3; break;
+            default: giftGold = 0; break;
+        }
+        userData.DayRewardVideoGiftCount++;
+        GameDataManager.Instance.CommitGameData();
+
+        ShowGiftWindow(giftGold, onGiftClosed);
+    }
+
+    /// <summary>
+    /// 插屏赠礼
+    /// 调用时机：由 TryShowInterstitial 内部在 onComplete 之后自动调用（玩家关闭插屏后）。
+    /// </summary>
+    /// <param name="onGiftClosed">玩家关闭赠礼弹窗后的回调（可空）</param>
+    public void TryShowInterstitialGift(Action onGiftClosed = null)
+    { 
+        var userData = GameDataManager.Instance.UserData;
+
+        // 优先级 1：首个广告一次性 50 金币
+        if (!userData.HasShownFirstAdGift)
+        {
+            userData.HasShownFirstAdGift = true;
+            GameDataManager.Instance.CommitGameData();
+            ShowGiftWindow(G6_FirstAdGiftGold, onGiftClosed);
+            return;
+        }
+
+        // 关卡门槛：填字玩法 30 关之后才触发
+        // ⚠️ 字段名请按项目实际替换（这里假设是累计通关数 TotalPassStageCount）
+        if (userData.CurrentChessStage < I3_InterstitialUnlockStage)
+        {
+            onGiftClosed?.Invoke();
+            return;
+        }
+
+        // 每日前 5 次插屏
+        if (userData.DayInterstitialGiftCount >= I1_DailyMaxInterstitialGift)
+        {
+            onGiftClosed?.Invoke();
+            return;
+        }
+
+        userData.DayInterstitialGiftCount++;
+        GameDataManager.Instance.CommitGameData();
+
+        ShowGiftWindow(I2_InterstitialGiftGold, onGiftClosed);
+    }
+
+    /// <summary>
+    /// 打开赠礼小弹窗
+    /// </summary>
+    /// <param name="gold">赠送金币数</param>
+    /// <param name="onGiftClosed">玩家关闭赠礼弹窗后的回调（可空）</param>
+    private void ShowGiftWindow(int gold, Action onGiftClosed = null)
+    {
+        // ⚠️ UIManager.OpenWindow 请按项目实际 API 替换
+        var window = SystemManager.Instance.ShowPanel(PanelType.AdsAwardScreen).GetComponent<AdsAwardScreen>();
+        window.SetContent(gold, GIFT_TIP_TEXT, () =>
+        {
+            // 发金币（关闭按钮和下方按钮走同一回调，效果一致）
+            // ⚠️ 金币字段名请按项目实际替换
+            GameDataManager.Instance.UserData.Gold += gold;
+            GameDataManager.Instance.CommitGameData();
+            Debug.Log($"[AdRule] 赠礼发放：+{gold} 金币");
+            onGiftClosed?.Invoke();
+        });
     }
 }

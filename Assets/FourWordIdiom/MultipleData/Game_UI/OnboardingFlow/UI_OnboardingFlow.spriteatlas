@@ -102,7 +102,6 @@ SpriteAtlas:
     - 98cc86c16306dd1429751b31513d094c: 21300000
     - 60c98cd15d0e0b04f80598d02b45db97: 21300000
     - a200d2020c3cc7147885ab53fef872ee: 21300000
-    - e94a8512f9fd768449a4648b066c87da: 21300000
     - 23504a22ce6839f4b81aee6313fcfb0c: 21300000
     - 84414432a2265f64dbe32241087ac902: 21300000
     - c129643216c40f443ba0ccb057cad223: 21300000
@@ -160,7 +159,6 @@ SpriteAtlas:
     - 367ef9d471110d540876d791caffb3b7: 21300000
     - 534fcad4023235349908b7f5a3a69b7a: 21300000
     - d5bb59e4e4d438840b13381541f8b18f: 7907697629907157490
-    - 3a24dbe447e4cff4493b088a7473d6c0: 21300000
     - 12a432f45f88d754793df73fdc00c863: 21300000
     - cb95eb058ab0e6a46be8fcaeb7de9759: 21300000
     - edffb2151d6bf6f45b5157920a086272: 21300000
@@ -365,7 +363,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 98cc86c16306dd1429751b31513d094c, type: 3}
   - {fileID: 21300000, guid: 60c98cd15d0e0b04f80598d02b45db97, type: 3}
   - {fileID: 21300000, guid: a200d2020c3cc7147885ab53fef872ee, type: 3}
-  - {fileID: 21300000, guid: e94a8512f9fd768449a4648b066c87da, type: 3}
   - {fileID: 21300000, guid: 23504a22ce6839f4b81aee6313fcfb0c, type: 3}
   - {fileID: 21300000, guid: 84414432a2265f64dbe32241087ac902, type: 3}
   - {fileID: 21300000, guid: c129643216c40f443ba0ccb057cad223, type: 3}
@@ -423,7 +420,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 367ef9d471110d540876d791caffb3b7, type: 3}
   - {fileID: 21300000, guid: 534fcad4023235349908b7f5a3a69b7a, type: 3}
   - {fileID: 7907697629907157490, guid: d5bb59e4e4d438840b13381541f8b18f, type: 3}
-  - {fileID: 21300000, guid: 3a24dbe447e4cff4493b088a7473d6c0, type: 3}
   - {fileID: 21300000, guid: 12a432f45f88d754793df73fdc00c863, type: 3}
   - {fileID: 21300000, guid: cb95eb058ab0e6a46be8fcaeb7de9759, type: 3}
   - {fileID: 21300000, guid: edffb2151d6bf6f45b5157920a086272, type: 3}
@@ -627,7 +623,6 @@ SpriteAtlas:
   - diban
   - arrow_new
   - time
-  - "\u6708\u699C\u4ECB\u7ECD"
   - desc_di
   - fishshadow
   - radar_fill
@@ -685,7 +680,6 @@ SpriteAtlas:
   - butterflyjd
   - UI_Icon_circle
   - timebg
-  - "\u706F\u660E\u5FC3\u609F (1)"
   - anbox
   - butterflydi
   - rightTop_bg

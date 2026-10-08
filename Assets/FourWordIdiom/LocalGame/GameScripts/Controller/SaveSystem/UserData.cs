@@ -216,6 +216,11 @@ public class UserData
     public List<int> _getHeadBorderIcons=new List<int>();
     
     private static readonly Random _random = new Random();
+    
+    // ==== 广告赠礼相关 ====
+    public int DayRewardVideoGiftCount;   // 当日灯泡激励视频赠礼已发次数
+    public int DayInterstitialGiftCount;  // 当日插屏赠礼已发次数
+    public bool HasShownFirstAdGift;      // 是否已发过"首个广告"50金币一次性奖励
 
     #endregion
 
@@ -458,6 +463,10 @@ public class UserData
         _loadTimeIndexData=new LoadTimeIndex();
         _getAnimalsHeadIcons=new List<int>();
         _getHeadBorderIcons = new List<int>() { 0, 1, 2, 3 };
+        DayRewardVideoGiftCount = 0;
+        DayInterstitialGiftCount = 0;
+        HasShownFirstAdGift = false;
+
         #endregion
     }
 
@@ -672,6 +681,10 @@ public class UserData
         _getAnimalsHeadIcons = user._getAnimalsHeadIcons;
         _getHeadBorderIcons = user._getHeadBorderIcons ?? new List<int>() { 0, 1, 2, 3 };
         
+        DayRewardVideoGiftCount=user.DayRewardVideoGiftCount;
+        DayInterstitialGiftCount=user.DayInterstitialGiftCount;
+        HasShownFirstAdGift=user.HasShownFirstAdGift;
+        
         // 检查并初始化缺失的生命周期事件
         InitializeLifecycleEvents();
 
@@ -726,10 +739,6 @@ public class UserData
             ResetDailyTaskDate();
 
             UpdatePanelUI();
-            isDayFreeGet = false;
-            isDayGoldBuy = false;
-            isDayMoneyBuy = false;
-            isHideShopRedPoint = false;
         }
     }
 
@@ -768,6 +777,13 @@ public class UserData
         // 👇 新增：每日重置首关插屏判定状态
         isDayFirstLevelAdChecked = false;
         isDayFirstLevelAdAllowed = false;
+        
+        isDayFreeGet = false;
+        isDayGoldBuy = false;
+        isDayMoneyBuy = false;
+        isHideShopRedPoint = false;
+        DayRewardVideoGiftCount = 0;
+        DayInterstitialGiftCount = 0;
     }
 
     private void UpdatePanelUI()

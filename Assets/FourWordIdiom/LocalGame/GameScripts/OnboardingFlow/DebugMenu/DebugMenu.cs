@@ -326,12 +326,11 @@ public class DebugMenu : UIWindow
         StageHexController.Instance.LimitPuzzlecount = 0;
         LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
         //AdsManager.Instance.HideBannerAd();
-        //WaterManager.instance.ClearWater();
         DailyTaskManager.Instance.GetTaskSaveData();
         DailyTaskManager.Instance.isResetDailyTask = true;
 
         //同步到服务器
-        //GameDataManager.Instance.CommitGameData();
+        GameDataManager.Instance.CommitGameData();
        
         GameDataManager.Instance.UserData.ABName = ABName;
         ChessStageController.Instance.ClearCurrentLevelSave();

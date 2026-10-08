@@ -145,7 +145,6 @@ SpriteAtlas:
     - 61a658e5f4a3cf547a6d0225f579473d: 21300000
     - 2e475516bc52916458a09cb134cdcbed: 21300000
     - 5c401d66ad60ed54cb3e3359b00983a2: 21300000
-    - a979c09657473b641b89148b53ea5518: 21300000
     - aab181a61b17fa54387b089b109f6849: 21300000
     - 069c27e65cefe5f49b662323545e97a3: 21300000
     - efd808e65506f8743afc9e6dc7fc9092: 21300000
@@ -327,7 +326,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 61a658e5f4a3cf547a6d0225f579473d, type: 3}
   - {fileID: 21300000, guid: 2e475516bc52916458a09cb134cdcbed, type: 3}
   - {fileID: 21300000, guid: 5c401d66ad60ed54cb3e3359b00983a2, type: 3}
-  - {fileID: 21300000, guid: a979c09657473b641b89148b53ea5518, type: 3}
   - {fileID: 21300000, guid: aab181a61b17fa54387b089b109f6849, type: 3}
   - {fileID: 21300000, guid: 069c27e65cefe5f49b662323545e97a3, type: 3}
   - {fileID: 21300000, guid: efd808e65506f8743afc9e6dc7fc9092, type: 3}
@@ -508,7 +506,6 @@ SpriteAtlas:
   - "\u5E95"
   - UI_Icon_circle
   - UI_btn_pupa_fill
-  - style1
   - themeBtn
   - "\u8BBE\u7F6E"
   - history_data_di
