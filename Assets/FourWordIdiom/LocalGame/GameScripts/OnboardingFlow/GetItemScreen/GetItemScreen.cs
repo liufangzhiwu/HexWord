@@ -126,15 +126,8 @@ public class GetItemScreen : UIWindow
 
     private void ClickClaimBtn()
     {
-        if (UIUtilities.isEditMode)
-        {
-            UpdateAdsRewardUI(true);
-        }
-        else
-        {
-            AnalyticMgr.VideoAdClick(eventDes);
-            StartCoroutine(ShowAdsRewardUI());
-        }
+        AnalyticMgr.VideoAdClick(eventDes);
+        StartCoroutine(ShowAdsRewardUI());
     }
 
     IEnumerator ShowAdsRewardUI()

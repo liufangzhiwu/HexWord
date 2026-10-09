@@ -106,7 +106,7 @@ namespace Middleware
             StreakManager.Instance.Init();
             ThemeManager.Instance.Init();
             AchievementManager.Instance.Init();
-            PushManaer.Instance.Init();
+            PushManager.Instance.Init();
         }
         
         private void CreateAccounts()

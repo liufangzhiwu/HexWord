@@ -31,7 +31,7 @@ public class AdRuleManager : MonoBehaviour
     private float L3_ExtraCD => GetConfig("L3", 0f);  // 疲劳度 >60 分
 
     // 【D系列：每日首关概率规则】
-    private float D1_FirstLevelAdProb => GetConfig("D", 100f);
+    private float D1_FirstLevelAdProb => GetConfig("D", 30f);
 
     // 运行时状态 (不需要存档的 Session 级数据)
     private DateTime _lastAppResumeTime = DateTime.MinValue;
@@ -80,16 +80,19 @@ public class AdRuleManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         string csvData = null;
         bool isCsvDone = false;
+        
+#if Unity_Release
         StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("adv_general_config",
             onSuccess: (response) => { csvData = response.CsvString; isCsvDone = true; },
             onError: (error) => { isCsvDone = true; Debug.Log("服务器拉取 广告 配置失败，准备兜底 " + error); }
         ));
-        float timeout = 5f;
+        float timeout = 2f;
         while (!isCsvDone && timeout > 0)
         {
             timeout -= Time.deltaTime;
             yield return null;
         }
+#endif
 
         if (string.IsNullOrEmpty(csvData))
         {
@@ -244,11 +247,18 @@ public class AdRuleManager : MonoBehaviour
             {
                 ReportAdShown(Define.AdType.Reward);
 
-                TryShowRewardVideoGift();
+                StartCoroutine(WaitShowRewardVideoGift());
             }
 
             onComplete?.Invoke(success);
         });
+    }
+
+    IEnumerator WaitShowRewardVideoGift()
+    {
+        yield return new WaitForSecondsRealtime(0.5f);
+        
+        TryShowRewardVideoGift();
     }
 
 
@@ -396,7 +406,7 @@ public class AdRuleManager : MonoBehaviour
         {
             userData.HasShownFirstAdGift = true;
             GameDataManager.Instance.CommitGameData();
-            ShowGiftWindow(G6_FirstAdGiftGold, onGiftClosed);
+            ShowGiftWindow(true,G6_FirstAdGiftGold, onGiftClosed);
             return;
         }
 
@@ -418,7 +428,7 @@ public class AdRuleManager : MonoBehaviour
         userData.DayRewardVideoGiftCount++;
         GameDataManager.Instance.CommitGameData();
 
-        ShowGiftWindow(giftGold, onGiftClosed);
+        ShowGiftWindow(false, giftGold, onGiftClosed);
     }
 
     /// <summary>
@@ -435,7 +445,7 @@ public class AdRuleManager : MonoBehaviour
         {
             userData.HasShownFirstAdGift = true;
             GameDataManager.Instance.CommitGameData();
-            ShowGiftWindow(G6_FirstAdGiftGold, onGiftClosed);
+            ShowGiftWindow(true,G6_FirstAdGiftGold, onGiftClosed);
             return;
         }
 
@@ -457,7 +467,7 @@ public class AdRuleManager : MonoBehaviour
         userData.DayInterstitialGiftCount++;
         GameDataManager.Instance.CommitGameData();
 
-        ShowGiftWindow(I2_InterstitialGiftGold, onGiftClosed);
+        ShowGiftWindow(false,I2_InterstitialGiftGold, onGiftClosed);
     }
 
     /// <summary>
@@ -465,11 +475,11 @@ public class AdRuleManager : MonoBehaviour
     /// </summary>
     /// <param name="gold">赠送金币数</param>
     /// <param name="onGiftClosed">玩家关闭赠礼弹窗后的回调（可空）</param>
-    private void ShowGiftWindow(int gold, Action onGiftClosed = null)
+    private void ShowGiftWindow(bool firstAds,int gold, Action onGiftClosed = null)
     {
         // ⚠️ UIManager.OpenWindow 请按项目实际 API 替换
         var window = SystemManager.Instance.ShowPanel(PanelType.AdsAwardScreen).GetComponent<AdsAwardScreen>();
-        window.SetContent(gold, GIFT_TIP_TEXT, () =>
+        window.SetContent(firstAds,gold, GIFT_TIP_TEXT, () =>
         {
             // 发金币（关闭按钮和下方按钮走同一回调，效果一致）
             // ⚠️ 金币字段名请按项目实际替换

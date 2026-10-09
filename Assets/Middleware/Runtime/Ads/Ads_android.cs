@@ -60,11 +60,22 @@ namespace Middleware
 
         public void ShowTipToolReward(Define.AdKey key, Action<bool> callback)
         {
-            throw new NotImplementedException();
+            if (UIUtilities.isEditMode)
+            {
+                callback?.Invoke(true);
+                return;
+            }
         }
 
         public void ShowInterstitial(Action<bool> callback)
         {
+            
+            if (UIUtilities.isEditMode)
+            {
+                callback?.Invoke(true);
+                return;
+            }
+            
             _adCompletedCallBackI = callback;
             // if (_interstitialAd != null && _interstitialAd.CanShowAd())
             // {

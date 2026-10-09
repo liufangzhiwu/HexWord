@@ -424,6 +424,12 @@ namespace Middleware
 
         public void ShowTipToolReward(Define.AdKey key, Action<bool> callback)
         {
+            if (UIUtilities.isEditMode)
+            {
+                callback?.Invoke(true);
+                return;
+            }
+         
             ShowRewardInternal(key, TIP_TOOL_REWARD_AD_ID, callback);
         }
 
@@ -492,6 +498,14 @@ namespace Middleware
 
         public void ShowInterstitial(Action<bool> callback)
         {
+            
+            if (UIUtilities.isEditMode)
+            {
+                callback?.Invoke(true);
+                return;
+            }
+            
+            
             CreateAdsObj();
 
             _completeCallback = callback;

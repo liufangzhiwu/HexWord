@@ -138,6 +138,11 @@ public class TaskTable : MonoBehaviour
 
     private void OnDisable()
     {
+        if (GameDataManager.Instance == null)
+        {
+            return;
+        }
+        
         if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions)
         {
             DailyTaskManager.Instance.OnDailyTaskBtnUI -= InitTaskBtnUI;              

@@ -63,6 +63,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         
         EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false,true);
     }
+    
     /// <summary>
     /// 面板切换助手
     /// </summary>

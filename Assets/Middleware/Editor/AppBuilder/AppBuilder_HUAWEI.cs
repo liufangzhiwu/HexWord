@@ -70,6 +70,18 @@ namespace Middleware
         /// </summary>
         private static void CopyHuaweiFolderIfEmpty()
         {
+            
+            BuildParam vBuildParam = new BuildParam()
+            {
+                BuildVersion = "1.0.0",
+                IsBuildRelease = false,
+                IsBuildShowLog = true,
+                Channel = Channel.HuaweiAndroid
+            };
+            
+            // 设置宏（包含渠道宏）
+            SetDefineSymbols(BuildTargetGroup.Android,vBuildParam);
+            
             string targetHuaweiPath = Path.Combine(Application.dataPath, "PlatformPlugins", "Huawei");
             string sourceHuaweiPath = Path.Combine(
                 Directory.GetParent(Application.dataPath).FullName, // 项目根目录（Assets 的父级）
@@ -105,7 +117,7 @@ namespace Middleware
         private static void ApplyPlatformHuaweiAndroidSettings(Channel channel)
         {
             if (channel != Channel.HuaweiAndroid) return;
-
+            
             // 华为渠道特有设置
             PlayerSettings.applicationIdentifier = "chengyu.idiom.hexa.zen.huawei";
             PlayerSettings.productName = "成语消：禅意之境";

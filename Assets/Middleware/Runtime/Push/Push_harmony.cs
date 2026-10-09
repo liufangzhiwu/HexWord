@@ -378,7 +378,7 @@ namespace Middleware
             int dayIdx = GetDayIndexForDate(date);
             int realIdx = dayIdx % poolLen;
 
-            var data = PushManaer.Instance.GetPoolItem(prefix, realIdx);
+            var data = PushManager.Instance.GetPoolItem(prefix, realIdx);
             if (data == null)
             {
                 Debug.LogWarning($"[Push_harmony] 文案池 {pool} 取不到数据, dayIdx={dayIdx}, realIdx={realIdx}");
@@ -406,12 +406,12 @@ namespace Middleware
         {
             switch (pool)
             {
-                case PushTextPool.Morning: return PushManaer.POOL_MORNING;
-                case PushTextPool.Noon:    return PushManaer.POOL_NOON;
-                case PushTextPool.Night:   return PushManaer.POOL_NIGHT;
-                case PushTextPool.Recall:  return PushManaer.POOL_RECALL;
+                case PushTextPool.Morning: return PushManager.POOL_MORNING;
+                case PushTextPool.Noon:    return PushManager.POOL_NOON;
+                case PushTextPool.Night:   return PushManager.POOL_NIGHT;
+                case PushTextPool.Recall:  return PushManager.POOL_RECALL;
             }
-            return PushManaer.POOL_MORNING;
+            return PushManager.POOL_MORNING;
         }
 
         // // ============================================================

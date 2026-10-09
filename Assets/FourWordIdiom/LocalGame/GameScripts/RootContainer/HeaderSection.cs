@@ -73,6 +73,8 @@ public class HeaderSection : UIWindow
     
     private void InitUI(int value=0,bool isanim=false)
     {
+        if(GameDataManager.Instance==null) return;
+        
         if (_coinAnimCoroutine != null)
         {
             StopCoroutine(_coinAnimCoroutine);
