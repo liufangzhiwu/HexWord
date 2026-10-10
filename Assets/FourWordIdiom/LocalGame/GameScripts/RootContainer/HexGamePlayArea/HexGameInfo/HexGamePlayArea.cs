@@ -733,47 +733,29 @@ public class HexGamePlayArea : UIWindow
             return;
         }
 
-        bool useCoins =false;
+        bool useCoins =CanUseTool(toolInfo);
 
-        if (toolInfo.count <= 0) 
+        if (toolInfo.count <= 0&&useCoins) 
         {
-            // if (CanUseTool(toolInfo))
-            // {
-            //     //PopupManager.Instance.Show("not_enough_coins");
-            //     useCoins = true;                    
-            // }
-            // else
-            // {
             GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
-                
-// #if UNITY_OPENHARMONY&&!UNITY_EDITOR
-//         AnalyticMgr.VideoAdClick("提示灯道具广告");
-//         Game.self.Ads.ShowReward(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
-// #elif Unity_ShowLog||UNITY_EDITOR
-//                 UpdateAdsRewardUI(true);
-// #endif
-                
-                TipsButton.enabled = true;
-                return;
-            //}
+            TipsButton.enabled = true;
+            return;
         }
+        
+        if (!useCoins)
+        {
+            ShopManager.shopManager.OpenDynamicStore();
+            return;
+        }
+        
         usetoolCount++;
 
         string Str = GetRandomTipsPuzzle();
         if (!string.IsNullOrEmpty(Str))
         {
-            if (useCoins) 
-            {
-                GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1,"关卡内使用");
-            }
-            else
-            {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用");
-                InitToolUI();
-            }
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用");
+            InitToolUI();
             
             DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipWordTool,1);
             AudioManager.Instance.PlaySoundEffect("chongzhidaoju");
@@ -884,22 +866,19 @@ public class HexGamePlayArea : UIWindow
             Debug.LogError("[GameManager] There is no hint with the given hint id: ");
             return;
         }
-        bool useCoins = false;
+        bool useCoins = CanUseTool(toolInfo);
 
-        if (toolInfo.count <= 0)
+        if (toolInfo.count <= 0&&useCoins)
         {
-            // if (CanUseTool(toolInfo))
-            // {
-            //     //PopupManager.Instance.Show("not_enough_coins");
-            //     useCoins = true;                   
-            // }
-            // else
-            // {
-            //     MessageSystem.Instance.ShowTip("TipGoldInsufficient", false);
             GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
-                SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
-                return;
-            //}
+            SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
+            return;
+        }
+
+        if (!useCoins)
+        {
+            ShopManager.shopManager.OpenDynamicStore();
+            return;
         }
 
         usetoolCount++;

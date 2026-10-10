@@ -80,6 +80,7 @@ public class PanelType  // Renamed class
      public const string CancelPurchase="CancelPurchase";
      public const string AdFailed="AdFailed";
      public const string SpecialOfferPopup="SpecialOfferPopup";
+     public const string BuyListScreen="BuyListScreen";
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

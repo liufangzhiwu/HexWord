@@ -388,7 +388,12 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             giftsParent.GetComponent<RectTransform>().anchoredPosition = new Vector2(50f, 65);
         }
         
-        giftsParent.GetComponent<Image>().sprite = LoadShopIcon("itemdi"+data.id);
+        var icon = LoadShopIcon(shopDataItem.showIcon);
+        if (icon != null)
+        {
+            giftsParent.GetComponent<Image>().sprite = icon;
+        }
+       
     }
 
     private void HandleDiscountDisplay(ShopDataItem data)
@@ -824,7 +829,10 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
     private Sprite LoadShopIcon(string showIcon)
     {
-        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        Sprite sprite=null;
+        sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+
+        return sprite;
     }
 
     private void OnDisable()

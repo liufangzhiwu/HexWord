@@ -57,11 +57,12 @@ public class GiftItem : MonoBehaviour
         
         
         // 假设您有一个方法来加载图标
-        shopIcon.sprite = LoadShopIcon(spritename);
+        Sprite sprite = LoadShopIcon(spritename);
+        if (sprite != null)
+            shopIcon.sprite = sprite;
+        
         //shopIcon.SetNativeSize();
-       
-       
-       
+
         // if (buyButton != null)
         // {
         //     buyButton.AddClick(()=>OnBuyButtonClicked(data));

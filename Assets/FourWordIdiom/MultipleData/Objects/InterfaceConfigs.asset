@@ -376,3 +376,9 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 2078426036942281601, guid: b2b5a1f71031c8b49aa6e394f70c4b2e,
       type: 3}
+  - panelName: BuyListScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 1ca4c99448ea466419db6dc1b6e94cc1,
+      type: 3}

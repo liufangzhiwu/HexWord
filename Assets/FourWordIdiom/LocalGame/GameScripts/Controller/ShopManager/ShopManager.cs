@@ -42,6 +42,14 @@ public class ShopDiscountConfig
     public int unlockLevel = 7;             // 第7关解锁
 }
 
+// ======================= 商店模式 =======================
+
+public enum ShopMode
+{
+    FixedStore,     // 固定商店页（金币栏进入）
+    DynamicStore    // 动态商店弹窗（道具金币不足进入）
+}
+
 /// <summary>
 /// 商店管理器主脚本（核心）。
 /// 已按模块拆分为 partial 类，配套脚本：
@@ -160,6 +168,9 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>非消耗型权益持久化 key（PlayerPrefs；TODO：迁移到 UserData 序列化字段）</summary>
     private const string SaveKey = "ShopNonConsumableState_v1";
+    
+    [Header("商店模式")]
+    public ShopMode shopMode = ShopMode.FixedStore;
 
     private void Awake()
     {
@@ -1302,5 +1313,22 @@ public partial class ShopManager : MonoBehaviour
         // AdsManager.Instance.HideBannerAd();
         // AdsManager.Instance.RemoveInterstitialAndSplash();
     }
+    
+    // ======================= 静态打开入口 =======================
+
+    /// <summary>打开固定商店（金币栏入口）</summary>
+    public void OpenFixedStore()
+    {
+        shopMode= ShopMode.FixedStore;
+        SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
+        
+    }
+
+    /// <summary>打开动态商店（道具金币不足入口）</summary>
+    public void OpenDynamicStore()
+    {
+        shopMode= ShopMode.DynamicStore;
+        SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
+    }
 }
-//（注：内容由AI生成）
+

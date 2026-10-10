@@ -599,7 +599,7 @@ public class HeaderSection : UIWindow
 
     private void OnShopClick()
     {
-        SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
+        ShopManager.shopManager.OpenFixedStore();
         if (SystemManager.Instance.PanelIsShowing(PanelType.GetItemScreen))
         {
             SystemManager.Instance.HidePanel(PanelType.GetItemScreen);

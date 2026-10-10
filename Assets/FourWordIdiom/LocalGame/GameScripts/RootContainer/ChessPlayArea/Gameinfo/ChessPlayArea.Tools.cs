@@ -129,17 +129,21 @@ public partial class ChessPlayArea
         ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[104];
         if(toolInfo == null) return;
         
-        if(toolInfo.count <= 0)
+        if(toolInfo.count <= 0&&GameDataManager.Instance.UserData.Gold >= toolInfo.cost)
         {
             GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
-            // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             return;
         }
-
+        
+        if (GameDataManager.Instance.UserData.Gold < toolInfo.cost)
+        {
+            ShopManager.shopManager.OpenDynamicStore();
+            return;
+        }
+        
         if (CurrStageInfo.StageNumber == 5)
         {
-     
             if (GameDataManager.Instance.UserData.ChessTutorialProgress[5])
             {
                 usetoolCount++;
@@ -261,11 +265,17 @@ public partial class ChessPlayArea
         ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
         if (toolInfo == null) return;
         
-        if(toolInfo.count <= 0)
+        if(toolInfo.count <= 0&&GameDataManager.Instance.UserData.Gold >= toolInfo.cost)
         {
             GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
             // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
+            return;
+        }
+
+        if (GameDataManager.Instance.UserData.Gold < toolInfo.cost&&toolInfo.count <= 0)
+        {
+            ShopManager.shopManager.OpenDynamicStore();
             return;
         }
 
@@ -304,7 +314,7 @@ public partial class ChessPlayArea
      
     }
     
-        private IEnumerator FlyHintEffect(ChessView targetTile)
+    private IEnumerator FlyHintEffect(ChessView targetTile)
     {
         if (lightParticlePrefab == null) yield break;
 
