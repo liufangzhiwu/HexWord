@@ -356,9 +356,15 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    private void HandleTimeLimitedItems(ShopDataItem data)
+    private void HandleTimeLimitedItems(ShopDataItem data)  
     {
         if (timebg == null) return;
+
+        if (data.unlocked.Count <= 0)
+        {
+            timebg.gameObject.SetActive(false);
+            return;
+        }
 
         bool shouldShowTimeBg = !string.IsNullOrEmpty(data.unlocked?[0]);
         timebg.SetActive(shouldShowTimeBg);
@@ -415,7 +421,9 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         else if (data.type == 2)
         {
             shopCountText.text = MultilingualManager.Instance?.GetString(data.name) ?? data.name;
-            dibg.sprite =LoadShopIcon("giftdi"+data.id);
+            Sprite sprite = LoadShopIcon("giftdi"+data.id);
+            if (sprite != null)
+                dibg.sprite =sprite;
             
             // Color color = new Color(40.0f/255,144.0f/255,1);
             //

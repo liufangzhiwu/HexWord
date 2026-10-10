@@ -200,8 +200,8 @@ public class UserData
     public bool isDayFreeGet; // 商店每日免费商品是否获得
     public bool isDayGoldBuy; // 商店每日金币购买商品是否买过
     public bool isDayMoneyBuy; // 商店每日现金购买商品是否买过
-    public bool isShowDiscountPanel; // 折扣礼包是否显示
-    public bool isShowChessDiscountPanel; // 折扣礼包是否显示
+    public bool isShowDiscountGift; // 折扣礼包是否显示
+    //public bool isShowChessDiscountPanel; // 折扣礼包是否显示
 
 
     public SignSaveData _signSaveData = new SignSaveData();
@@ -382,8 +382,7 @@ public class UserData
         isDayFreeGet = false;
         isDayGoldBuy = false;
         isDayMoneyBuy = false;
-        isShowDiscountPanel = false;
-        isShowChessDiscountPanel = false;
+        isShowDiscountGift = false;
         isHideShopRedPoint = false;
 
         ThemeSaveItems = new List<ThemeSaveItem>
@@ -515,8 +514,7 @@ public class UserData
         lastLoginDay = user.lastLoginDay;
         firstPayTime = user.firstPayTime;
         lastPayTime = user.lastPayTime;
-        isShowDiscountPanel = user.isShowDiscountPanel;
-        isShowChessDiscountPanel = user.isShowChessDiscountPanel;
+        isShowDiscountGift = user.isShowDiscountGift;
 
         // 👇 🌟 核心修复：通过时间戳是否存在，来精准判断是不是老玩家首次更新
         if (string.IsNullOrEmpty(user.LastEnergyUpdateTime))

@@ -9,7 +9,7 @@ using Button = UnityEngine.UI.Button;
 public class ShopScreen : UIWindow
 {
     [SerializeField] private Button closeBtn; // 关闭按钮
-    [SerializeField] private Button pageBtn; // 关闭按钮
+    //[SerializeField] private Button pageBtn; // 关闭按钮
     [SerializeField] private Button adsbtn; // 关闭按钮
     [SerializeField] private Image CoinIcon;
     [SerializeField] private Image TipIcon;
@@ -22,6 +22,7 @@ public class ShopScreen : UIWindow
     [SerializeField] private Text ButteryText;
     [SerializeField] private ShopItem ShopGiftItemPrefab;
     [SerializeField] private ShopItem ShopItemPrefab;
+    [SerializeField] private ShopItem ShopAdsItemPrefab;
     [SerializeField] private Transform parent;
     [SerializeField] private ScrollRect shopScrollView;
     [SerializeField] private FreeItemTable freeItemTable;
@@ -29,11 +30,10 @@ public class ShopScreen : UIWindow
     [SerializeField] private GameObject goldItemTable2;
     private ObjectPool objectPool; // 对象池实例
     private ObjectPool giftobjectPool; // 对象池实例
-    Dictionary<int, ShopItem> shophomeItems = new Dictionary<int, ShopItem>();
+    private ObjectPool adsObjectPool; // 对象池实例
     Dictionary<int, ShopItem> shopallItems = new Dictionary<int, ShopItem>();
-    private List<ShopDataItem> shopDataItems=new List<ShopDataItem>();
+    Dictionary<int, ShopItem> shopDynamicItems = new Dictionary<int, ShopItem>();
     List<ShopDataItem> shopallDataItems=new List<ShopDataItem>();
-    HashSet<int> homeItemKeys=new HashSet<int>();
    
 
     protected void Start()
@@ -47,13 +47,19 @@ public class ShopScreen : UIWindow
         {
             ShopGiftItemPrefab= AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ShopGiftItem").GetComponent<ShopItem>();
         }
+        
+        if (ShopAdsItemPrefab == null)
+        {
+            ShopAdsItemPrefab= AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ShopAdsItem").GetComponent<ShopItem>();
+        }
+        
         // 初始化对象池
         objectPool = new ObjectPool(ShopItemPrefab.gameObject, ObjectPool.CreatePoolContainer(transform, "ShopItemPool"));
         giftobjectPool = new ObjectPool(ShopGiftItemPrefab.gameObject, ObjectPool.CreatePoolContainer(transform, "ShopGiftItemPool"));
+        adsObjectPool = new ObjectPool(ShopAdsItemPrefab.gameObject, ObjectPool.CreatePoolContainer(transform, "ShopAdsItemPool"));
         
         shopallDataItems  =  ShopManager.shopManager.GetShopItems();
-        shopDataItems =  ShopManager.shopManager.GetShopHomeItems();
-        CrateShopItem(shopDataItems,true);
+        CrateShopItem(shopallDataItems);
 
         CustomFlyInManager.Instance.ShopAutoObj = AutoIcon.gameObject;
         CustomFlyInManager.Instance.ShopGoldObj = CoinIcon.gameObject;
@@ -67,28 +73,18 @@ public class ShopScreen : UIWindow
         AudioManager.Instance.PlaySoundEffect("ShowUI");
         InitUI();
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
-        ShopManager.shopManager.UpdateAdsBtnUI += InitAdsBtnUI;
+       
         HeaderText.text = MultilingualManager.Instance.GetString("Shop");
-        //AdsManager.Instance.HideBannerAd();
         ShopManager.shopManager.paysuccess = false;
-        shopScrollView.enabled=false;
-        pageBtn.gameObject.SetActive(true);
+      
         adsbtn.gameObject.SetActive(false);
-        
-        if (shopDataItems.Count > 0)
-        {
-            shopDataItems = ShopManager.shopManager.GetShopHomeItems();
-            CrateShopItem(shopDataItems,true);
-            // 重置滚动位置到顶部
-            shopScrollView.normalizedPosition = new Vector2(0, 1);
-        }
 
         BuyRemoveAdsEvent();
         CustomFlyInManager.Instance.GoldObj=CoinIcon.gameObject;
-        //GameDataManager.Instance.UserData.CheckShopBuyData();
         
         GameDataManager.Instance.UserData.CheckShopBuyData();
         GameDataManager.Instance.UserData.isHideShopRedPoint=true;
+        GameDataManager.Instance.UserData.isShowDiscountGift=false;
         
         EventDispatcher.instance.TriggerUpdateLayerCoin(false,true);
     }
@@ -125,58 +121,12 @@ public class ShopScreen : UIWindow
         }
         GoldText.text = targetValue.ToString(); // 确保最终值正确显示
     }
+   
 
-    private void InitAdsBtnUI(string gettime,bool updateui=false)
-    {
-        if (string.IsNullOrEmpty(gettime))
-        {
-            if (pageBtn.gameObject.activeSelf)
-            {
-                if (updateui)
-                {
-                    foreach (var item in shopallItems)
-                    {
-                        if (item.Key == 8 || item.Key == 13 || item.Key == 14)
-                            // 根据是否在homeItemKeys中来设置active状态
-                            item.Value.gameObject.SetActive(false);
-                    }
-                    shopDataItems = ShopManager.shopManager.GetShopHomeItems();
-                    CrateShopItem(shopDataItems, true);
-                }
-            }
-            else
-            {
-                if (updateui)
-                {
-                    foreach (var item in shophomeItems)
-                    {
-                        if (item.Key == 8 || item.Key == 13 || item.Key == 14)
-                            // 根据是否在homeItemKeys中来设置active状态
-                            item.Value.gameObject.SetActive(false);
-                    }
-                    shopDataItems = ShopManager.shopManager.GetShopItems();
-                    CrateShopItem(shopDataItems, false);
-                }                   
-            }
-            string redesday = MultilingualManager.Instance.GetString("RemoveADSign02");
-            adsbtn.GetComponentInChildren<Text>().text = redesday;                
-            adsbtn.gameObject.SetActive(true);
-            return;
-        }           
-        
-        int hour = 24*7;
-        DateTime buyendTime = DateTime.Parse(gettime).AddHours(hour);
-        TimeSpan timeSpan = buyendTime.Subtract(DateTime.Now);
-        int day = (int)timeSpan.TotalDays + 1;
-        string desday = MultilingualManager.Instance.GetString("RemoveADSign01");
-        adsbtn.GetComponentInChildren<Text>().text = string.Format(desday,day);
-        adsbtn.gameObject.SetActive(true);           
-    }
-
-    private void CrateShopItem(List<ShopDataItem> shopDataItems, bool isHome)
+    private void CrateShopItem(List<ShopDataItem> shopDataItems)
     {
         // 确定目标字典
-        var targetDict = isHome ? shophomeItems : shopallItems;
+        var targetDict = shopallItems;
         
         for (int i = 0; i < shopDataItems.Count; i++)
         {
@@ -184,10 +134,17 @@ public class ShopScreen : UIWindow
             // 跳过不需要处理的类型
             if (shopDataItem.type != 0 && shopDataItem.type != 1 && shopDataItem.type != 2) 
                 continue;
+
             
             // 根据类型选择对象池
             var pool = shopDataItem.type == 2 ? giftobjectPool : objectPool;
             Transform itemparent = shopDataItem.type == 2 ? parent : goldItemTable.transform;
+            
+            if (shopDataItem.type == 1)
+            {
+                pool = adsObjectPool;
+                itemparent = parent;
+            }
     
             // 尝试获取或创建商品项
             if (targetDict.TryGetValue(shopDataItem.id, out var shopItem))
@@ -198,7 +155,7 @@ public class ShopScreen : UIWindow
             }
             else
             {
-                if (shopDataItem.id>=3&&shopDataItem.type==0)
+                if (shopDataItem.id>=5&&shopDataItem.type==0)
                 {
                     itemparent =goldItemTable2.transform;
                 }
@@ -210,25 +167,14 @@ public class ShopScreen : UIWindow
                 targetDict.TryAdd(shopDataItem.id, shopItem);
         
                 // 如果是首页商品，同时添加到完整字典
-                if (isHome && !shopallItems.ContainsKey(shopDataItem.id))
+                if (!shopallItems.ContainsKey(shopDataItem.id))
                 {
                     shopallItems.TryAdd(shopDataItem.id, shopItem);
                 }
             }
         }
-
-        if (isHome && homeItemKeys.Count <= 0)
-        {
-            // 创建shophomeItems的键集合用于快速查找
-            homeItemKeys = new HashSet<int>(shophomeItems.Keys);
-        }
-
-        if (UIUtilities.GetScreenRatio()<=0.95f)
-        {
-            pageBtn.transform.SetParent(parent);
-        }
         
-        freeItemTable.transform.SetAsFirstSibling();
+        freeItemTable.transform.SetAsLastSibling();
         
         goldItemTable.transform.SetAsLastSibling();
         goldItemTable2.transform.SetAsLastSibling();
@@ -237,17 +183,10 @@ public class ShopScreen : UIWindow
     protected override void InitializeUIComponents()
     {
         closeBtn.AddVibraClickAction(OnCloseBtn); // 绑定关闭按钮事件
-        pageBtn.AddClickAction(ClickOnPageBtn);
+        //pageBtn.AddClickAction(ClickOnPageBtn);
         //adsbtn.AddClick(OnAdsBtn);
     }
 
-    private void ClickOnPageBtn()
-    {
-        pageBtn.gameObject.SetActive(false);
-        shopScrollView.enabled=true;
-        shopallDataItems  =  ShopManager.shopManager.GetShopItems();
-        CrateShopItem(shopallDataItems,false);
-    }
 
     private void OnCloseBtn()
     {
@@ -322,7 +261,7 @@ public class ShopScreen : UIWindow
     protected override void OnDisable()
     {
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
-        ShopManager.shopManager.UpdateAdsBtnUI -= InitAdsBtnUI;
+    
         ShowBanner();
 
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea) ||

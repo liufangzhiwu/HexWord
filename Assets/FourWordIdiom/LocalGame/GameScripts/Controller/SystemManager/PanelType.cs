@@ -77,6 +77,9 @@ public class PanelType  // Renamed class
      public const string OtherPeopleScreen="OtherPeopleScreen";
      public const string OtherPersonButterScreen="OtherPersonButterScreen";
      public const string AdsAwardScreen="AdsAwardScreen";
+     public const string CancelPurchase="CancelPurchase";
+     public const string AdFailed="AdFailed";
+     public const string SpecialOfferPopup="SpecialOfferPopup";
 
     /// <summary>
     /// 获取所有可用界面名称 (Get all available panel names)

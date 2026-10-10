@@ -147,7 +147,8 @@ namespace Middleware
 #elif UNITY_IOS
             Attributes = new AndoridAttribution();
 #elif UNITY_OPENHARMONY
-            Attributes = new HuaweiHarAttribution();
+            //Attributes = new HuaweiHarAttribution();
+            Attributes = new AndoridAttribution();
 #endif
             Attributes.Init(0.1f);
         }

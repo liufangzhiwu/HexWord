@@ -81,6 +81,7 @@ public class AdRuleManager : MonoBehaviour
         string csvData = null;
         bool isCsvDone = false;
         
+        //避免测试服没有更新配置，导致广告参数不对
 #if Unity_Release
         StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("adv_general_config",
             onSuccess: (response) => { csvData = response.CsvString; isCsvDone = true; },
@@ -201,10 +202,10 @@ public class AdRuleManager : MonoBehaviour
             // ① 先让业务立即继续（广告播完的"立即执行"语义）
             onComplete?.Invoke(success);
 
-            // ② 玩家关闭插屏后，才尝试弹赠礼（不阻塞业务）
+            // ② 玩家关闭插屏后，才尝试弹赠礼（不阻塞业务） 9月需求B
             if (success)
             {
-                TryShowInterstitialGift();
+                //TryShowInterstitialGift();
             }
         });
     }
@@ -247,7 +248,8 @@ public class AdRuleManager : MonoBehaviour
             {
                 ReportAdShown(Define.AdType.Reward);
 
-                StartCoroutine(WaitShowRewardVideoGift());
+                //9月需求B
+                //StartCoroutine(WaitShowRewardVideoGift());
             }
 
             onComplete?.Invoke(success);
@@ -258,7 +260,8 @@ public class AdRuleManager : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(0.5f);
         
-        TryShowRewardVideoGift();
+        //9月需求B
+        //TryShowRewardVideoGift();
     }
 
 
@@ -393,7 +396,7 @@ public class AdRuleManager : MonoBehaviour
 
 
     /// <summary>
-    /// 灯泡激励视频赠礼
+    /// 灯泡激励视频赠礼(9月需求B)
     /// 调用时机：玩家领奖 + 灯泡道具发生作用 + 完成提示效果之后，由业务侧调用。
     /// </summary>
     /// <param name="onGiftClosed">玩家关闭赠礼弹窗后的回调（可空）</param>
@@ -428,7 +431,8 @@ public class AdRuleManager : MonoBehaviour
         userData.DayRewardVideoGiftCount++;
         GameDataManager.Instance.CommitGameData();
 
-        ShowGiftWindow(false, giftGold, onGiftClosed);
+        //9月需求B
+        //ShowGiftWindow(false, giftGold, onGiftClosed);
     }
 
     /// <summary>
@@ -467,7 +471,8 @@ public class AdRuleManager : MonoBehaviour
         userData.DayInterstitialGiftCount++;
         GameDataManager.Instance.CommitGameData();
 
-        ShowGiftWindow(false,I2_InterstitialGiftGold, onGiftClosed);
+         //9月需求B
+        //ShowGiftWindow(false,I2_InterstitialGiftGold, onGiftClosed);
     }
 
     /// <summary>

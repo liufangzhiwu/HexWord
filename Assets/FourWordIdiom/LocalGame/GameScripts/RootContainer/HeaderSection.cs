@@ -30,6 +30,8 @@ public class HeaderSection : UIWindow
     public GameObject addObj;
     public GameObject redpoint;
     public GameObject sale;
+    public Text discountText;
+    
     [Header("未知的")]
     public GameObject GoldLeafredpoint;
     // [Header("右侧按钮组 (词库)")]
@@ -93,7 +95,12 @@ public class HeaderSection : UIWindow
         }
         
         redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
-        sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
+        sale.SetActive(GameDataManager.Instance.UserData.isShowDiscountGift);
+        
+        if (GameDataManager.Instance.UserData.isShowDiscountGift)
+        {
+            discountText.text = "节日5折";
+        }
         
         // MyThemeBtn.gameObject.SetActive(SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)&&ThemeManager.Instance.CanShowThemeBtn());
     }

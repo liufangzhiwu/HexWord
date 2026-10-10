@@ -1,104 +1,51 @@
-// AttributionBridge.ts
 import { attributionManager } from '@kit.StoreKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { util } from '@kit.ArkTS';
-import { hilog } from '@kit.PerformanceAnalysisKit';
 
-const TAG = '[HuaweiAttr]';
-const DOMAIN = 0x0001;
-
-// ===== 配置常量 =====
-// 以下值需要您替换为实际值，从华为开发者后台获取
-const AD_TECH_ID: string = '20****e8';       // 归因角色ID，8位
-const DESTINATION_ID: string = '10******';   // 应用ID（不带C）
-const PRIVATE_KEY: string = 'YOUR_PRIVATE_KEY'; // 私钥（生产环境需安全存储）
-const SERVICE_TAG: string = '123***2';        // 业务标签
-
-// ===== 签名生成函数（概念性，实际需根据私钥实现） =====
-async function generateSignature(signData: string): Promise<string> {
-    // 注意：私钥不应硬编码在客户端，应通过服务端获取签名
-    // 这里仅作演示，实际应调用服务端接口获取签名
-    // 您可以使用 cryptoFramework 实现 RSA 签名
-    // 示例返回模拟签名，实际请替换为真实签名
-    return 'MEQCIEQlmZ****zKBSE8QnhLTIHZZZ****ZpRqRxHss65Ko****JgJKjdrWdkL****juEx2RmFS7da****ZRVZ8RyMyUXg==';
-}
+declare function require(module: string): any;
+// 引用 C# 的静态方法（包名需与实际命名空间一致）
+const CSharpBridge = require('middleware').Middleware.HuaWeiHarAttribution;
 
 export class AttributionBridge {
-    private isSourceRegistered: boolean = false;
-
-    // 登记归因来源（registerSource）
-    async registerSource(): Promise<void> {
-        if (this.isSourceRegistered) {
-            hilog.info(DOMAIN, TAG, 'Source already registered, skip.');
-            return;
-        }
-
-        try {
-            const campaignId = '123456'; // 根据实际替换
-            const nonce: string = util.generateRandomUUID().replace(/-/g, '').toLowerCase();
-            const timestamp: number = Date.now();
-
-            // 构造待签名字符串
-            const mmpIds = ['2f****5', '2f7***5']; // 可选
-            const mmpStr = mmpIds.join(',');
-            const signData = `adTechId=${AD_TECH_ID}&campaignId=${campaignId}&destinationId=${DESTINATION_ID}&mmpIds=${mmpStr}&serviceTag=${SERVICE_TAG}&nonce=${nonce}&timestamp=${timestamp}`;
-            hilog.info(DOMAIN, TAG, `Sign data: ${signData}`);
-
-            // 生成签名
-            const signature = await generateSignature(signData);
-
-            const adSourceInfo: attributionManager.AdSourceInfo = {
-                adTechId: AD_TECH_ID,
-                campaignId: campaignId,
-                destinationId: DESTINATION_ID,
-                sourceType: attributionManager.SourceType.IMPRESSION, // 或 CLICK
-                mmpIds: mmpIds,
-                serviceTag: SERVICE_TAG,
-                nonce: nonce,
-                timestamp: timestamp,
-                signature: signature
-            };
-
-            await attributionManager.registerSource(adSourceInfo);
-            this.isSourceRegistered = true;
-            hilog.info(DOMAIN, TAG, 'registerSource succeeded.');
-        } catch (error) {
-            let e = error as BusinessError;
-            hilog.error(DOMAIN, TAG, `registerSource failed: ${e.code}, ${e.message}`);
-        }
-    }
-
-    // 上报转化事件（registerTrigger）
+    // 原有上报转化方法
     reportConversion(eventCode: number): void {
-        // 如果来源未登记，可先自动登记（但需注意 registerSource 是异步）
-        // 建议应用启动时显式调用 registerSource
-        if (!this.isSourceRegistered) {
-            hilog.warn(DOMAIN, TAG, 'Source not registered, call registerSource first.');
-            // 可异步尝试登记，但这里仅警告
-        }
-
         const triggerInfo: attributionManager.AdTriggerInfo = {
             businessScene: 5,
             triggerData: eventCode,
-            // timestamp: Date.now(), // API 22+ 可选
-            // serviceTag: SERVICE_TAG  // API 22+ 可选
+            //timestamp: Date.now(),
         };
-
         attributionManager.registerTrigger(triggerInfo)
             .then(() => {
-                hilog.info(DOMAIN, TAG, `Attribution event ${eventCode} reported successfully.`);
+                console.info(`Attribution event ${eventCode} reported successfully`);
             })
             .catch((err: BusinessError) => {
-                hilog.error(DOMAIN, TAG, `Failed to report event ${eventCode}: ${err.code}, ${err.message}`);
+                console.error(`Failed to report event ${eventCode}: ${err.message}`);
+            });
+    }
+
+    // 新增：请求归因信息，传入应用包名
+    requestAttributionInfo(packageName: string): void {
+        attributionManager.getAttributionInfo(packageName)
+            .then((info) => {
+                const json = JSON.stringify(info);
+                console.info('AttributionInfo received: ' + json);
+                // 回调给 C# 的静态方法
+                if (CSharpBridge && CSharpBridge.OnAttributionReceived) {
+                    CSharpBridge.OnAttributionReceived(json);
+                }
+            })
+            .catch((err: BusinessError) => {
+                console.error(`getAttributionInfo failed: ${err.message}`);
+                // 失败时也可以回调，传空字符串
+                if (CSharpBridge && CSharpBridge.OnAttributionReceived) {
+                    CSharpBridge.OnAttributionReceived('');
+                }
             });
     }
 }
 
-// ===== 供 Unity 注册的工厂函数 =====
-export function RegisterAttributionBridge(): Record<string, Object> {
-    const bridge = new AttributionBridge();
-    // 返回一个对象，键为 "AttributionBridge"，值为 bridge 实例
-    return {
-        'AttributionBridge': bridge
-    };
+// 注册函数保持不变
+export function RegisterAttributionBridge() {
+    let register = {}
+    register["AttributionBridge"] = new AttributionBridge();
+    return register;
 }

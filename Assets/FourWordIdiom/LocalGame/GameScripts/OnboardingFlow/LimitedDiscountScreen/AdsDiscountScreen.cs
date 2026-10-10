@@ -61,14 +61,14 @@ public class AdsDiscountScreen : UIWindow
         AudioManager.Instance.PlaySoundEffect("ShowUI");
 
         
-        if (GameDataManager.Instance.UserData.levelMode == 3)
-        {
-            GameDataManager.Instance.UserData.isShowDiscountPanel = true;
-        }
-        else
-        {
-            GameDataManager.Instance.UserData.isShowChessDiscountPanel = true;
-        }
+        // if (GameDataManager.Instance.UserData.levelMode == 3)
+        // {
+        //     GameDataManager.Instance.UserData.isShowDiscountPanel = true;
+        // }
+        // else
+        // {
+        //     GameDataManager.Instance.UserData.isShowChessDiscountPanel = true;
+        // }
     }
 
     private void InitUI()
