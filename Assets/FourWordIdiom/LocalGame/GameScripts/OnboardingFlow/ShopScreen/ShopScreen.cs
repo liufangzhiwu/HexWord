@@ -309,14 +309,8 @@ public class ShopScreen : UIWindow
         {
             ShopDataItem data = collapsedItems[i];
             if (data == null) continue;
-
-            // 金币档：以 Gold 开头且非礼包
-            bool isGold = data.produceNameId != null
-                && data.produceNameId.StartsWith("Gold")
-                && data.type != 2;
-         
-           
-            CreateDynamicItem(data, parent, -1);
+            slotIndex = i;
+            CreateDynamicItem(data, parent, slotIndex);
         }
 
         // 3. 兜底：即使推荐位为空，也展示配置中的金币档
@@ -336,6 +330,8 @@ public class ShopScreen : UIWindow
                 
                 if (gold.id >= 5 && gold.type == 0)
                 {
+                    if(slotIndex>=1) break;
+                    
                     transform = goldItemTable2.transform;
                 }
                 
@@ -353,10 +349,22 @@ public class ShopScreen : UIWindow
 
         _isExpanded = true;
 
-        ClearDynamicItems();
-
-        List<ShopDataItem> expandedItems = ShopManager.shopManager.GetDynamicStoreExpandedItems();
-        if (expandedItems == null) expandedItems = new List<ShopDataItem>();
+        // List<ShopDataItem> expandedItems = ShopManager.shopManager.GetDynamicStoreExpandedItems();
+        // if (expandedItems == null) expandedItems = new List<ShopDataItem>();
+        
+        
+        // 1. 动态商店收起状态商品（内部处理一号位兜底：去广告/二号位前2权重）
+        // List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetDynamicStoreCollapsedItems();
+        //
+        // // 2. 按顺序填充一号位、二号位
+        // int slotIndex = 0;
+        // for (int i = 0; i < collapsedItems.Count; i++)
+        // {
+        //     ShopDataItem data = collapsedItems[i];
+        //     if (data == null) continue;
+        //     slotIndex = i;
+        //     CreateDynamicItem(data, parent, slotIndex);
+        // }
 
         // // 去广告：若未购买且未在列表中，追加
         // ShopDataItem removeAds = ShopManager.shopManager.GetProduct(ShopManager.ProductRemoveAds);
@@ -388,16 +396,31 @@ public class ShopScreen : UIWindow
     private void CreateDynamicItem(ShopDataItem data, Transform parent, int siblingIndex)
     {
         if (data == null || parent == null) return;
-
+        var targetDict = shopallItems;
+        
+        if (targetDict.TryGetValue(data.id, out var shopItem))
+        {
+            if (shopItem != null)
+            {
+                if (siblingIndex >= 0) shopItem.transform.SetSiblingIndex(siblingIndex);
+                shopItem.gameObject.SetActive(true);
+                return;
+            }
+        }
+        
         ObjectPool pool = objectPool;
         if (data.type == 2) pool = giftobjectPool;
         else if (data.type == 1) pool = adsObjectPool;
+       
 
         ShopItem item = pool.GetObject<ShopItem>(parent);
         item.SetShopData(data);
 
         if (siblingIndex >= 0) item.transform.SetSiblingIndex(siblingIndex);
         item.gameObject.SetActive(true);
+        
+          
+        targetDict.TryAdd(data.id, item);
 
         if (!_dynamicItems.ContainsKey(data.id))
             _dynamicItems.Add(data.id, item);

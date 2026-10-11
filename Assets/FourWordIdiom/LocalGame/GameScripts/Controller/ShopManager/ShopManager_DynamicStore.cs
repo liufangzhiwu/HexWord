@@ -26,10 +26,13 @@ public partial class ShopManager : MonoBehaviour
     private bool IsDynamicStorePack(string nameId)
     {
         // 动态商店推荐位配置表内的礼包：NewcomerBox / SpecialPackageA / SpecialPackageB / BoxTime / Box0~Box4
-        return nameId.StartsWith("Newcomer")
-            || nameId.StartsWith("SpecialPackage")
-            || nameId == "BoxTime"
-            || (nameId.StartsWith("Box") && nameId.Length == 4 && char.IsDigit(nameId[3]));
+        
+        bool IsPack =  nameId.StartsWith("Newcomer")
+                       || nameId.StartsWith("SpecialPackage")
+                       || nameId == "BoxTime"
+                       || (nameId.StartsWith("Box") && nameId.Length == 4 && char.IsDigit(nameId[3]));;
+
+        return IsPack;
     }
 
     /// <summary>
