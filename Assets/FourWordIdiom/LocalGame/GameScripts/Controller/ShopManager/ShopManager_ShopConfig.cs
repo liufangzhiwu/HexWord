@@ -319,7 +319,7 @@ public partial class ShopManager : MonoBehaviour
     public List<ShopDataItem> GetShopItems()
     {
         List<ShopDataItem> shopDataItems = shopItems
-            .Where(item => !string.IsNullOrEmpty(item.isHomeDisplay)&&string.IsNullOrEmpty(item.limitedTime))
+            .Where(item => item.sort!=0)
             .OrderBy(item => item.sort)
             .ToList();
         
