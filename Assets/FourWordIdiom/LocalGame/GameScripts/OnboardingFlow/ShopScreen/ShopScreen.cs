@@ -94,14 +94,8 @@ public class ShopScreen : UIWindow
                 .LoadGameObject("commonitem", "ShopAdsItem").GetComponent<ShopItem>();
         }
 
-        // 初始化对象池
-        objectPool = new ObjectPool(ShopItemPrefab.gameObject,
-            ObjectPool.CreatePoolContainer(transform, "ShopItemPool"));
-        giftobjectPool = new ObjectPool(ShopGiftItemPrefab.gameObject,
-            ObjectPool.CreatePoolContainer(transform, "ShopGiftItemPool"));
-        adsObjectPool = new ObjectPool(ShopAdsItemPrefab.gameObject,
-            ObjectPool.CreatePoolContainer(transform, "ShopAdsItemPool"));
-
+        InitPool();
+      
         // 固定商店：Start 阶段直接创建商品列表
         shopallDataItems = ShopManager.shopManager.GetShopItems();
         if (ShopManager.shopManager.shopMode == ShopMode.FixedStore)
@@ -118,6 +112,7 @@ public class ShopScreen : UIWindow
     {
         base.OnEnable();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
+        InitPool();
         InitUI();
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
 
@@ -139,10 +134,14 @@ public class ShopScreen : UIWindow
         {
             OnPanelClosed();
             ShowCollapsedState();
+            
+            freeItemTable.gameObject.SetActive(false);
         }
         else
         {
             CrateShopItem(shopallDataItems);
+            
+            freeItemTable.gameObject.SetActive(true);
         }
         
         moreChoiceBtn.gameObject.SetActive(ShopManager.shopManager.shopMode == ShopMode.DynamicStore);
@@ -150,6 +149,9 @@ public class ShopScreen : UIWindow
         
         // 进入商店消费入口角标（需求：进店消失）
         ShopManager.shopManager.OnShopEntered();
+        
+        // 重置滚动位置到顶部
+        shopScrollView.normalizedPosition = new Vector2(0, 1);
     }
 
     protected override void OnDisable()
@@ -163,6 +165,29 @@ public class ShopScreen : UIWindow
         {
             EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false);
         }
+    }
+
+    private void InitPool()
+    {
+        // 初始化对象池
+        if (objectPool == null)
+        {
+            objectPool = new ObjectPool(ShopItemPrefab.gameObject,
+                ObjectPool.CreatePoolContainer(transform, "ShopItemPool"),6);
+        }
+        
+        if (giftobjectPool == null)
+        {
+            giftobjectPool  = new ObjectPool(ShopGiftItemPrefab.gameObject,
+                ObjectPool.CreatePoolContainer(transform, "ShopGiftItemPool"));
+        }
+
+        if (adsObjectPool == null)
+        {
+            adsObjectPool = new ObjectPool(ShopAdsItemPrefab.gameObject,
+                ObjectPool.CreatePoolContainer(transform, "ShopAdsItemPool"));
+        }
+
     }
 
     protected override void InitializeUIComponents()
@@ -274,8 +299,6 @@ public class ShopScreen : UIWindow
         if (ShopManager.shopManager.shopMode != ShopMode.DynamicStore) return;
 
         _isExpanded = false;
-
-        ClearDynamicItems();
 
         // 1. 动态商店收起状态商品（内部处理一号位兜底：去广告/二号位前2权重）
         List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetDynamicStoreCollapsedItems();
