@@ -1233,57 +1233,6 @@ public class UserData
         limitMinPeriod = minutes;
     }
 
-    // /// <summary>
-    // /// 更新道具数量
-    // /// </summary>
-    // /// <param name="type">道具类型</param>
-    // /// <param name="value">变化值</param>
-    // public void UpdateTool(LimitRewordType type, int value,string message = "")
-    // {
-    //     int toolId = GetToolIdByType(type);
-    //     
-    //     if (toolInfo.ContainsKey(toolId))
-    //     {
-    //         toolInfo[toolId].count += value;
-    //         Debug.Log($"{type}道具{(value > 0 ? "增加" : "减少")}: {Math.Abs(value)}, 当前数量: {toolInfo[toolId].count}");
-    //         if (value > 0)
-    //         {
-    //             toolInfo[toolId].addcount += value;
-    //         }
-    //         else
-    //         {
-    //             toolInfo[toolId].reducecount += Mathf.Abs(value);
-    //         }
-    //
-    //         string toolName = null;
-    //
-    //         switch (type)
-    //         {
-    //             case LimitRewordType.SingleTipsttool:
-    //                 toolName = "重置(提示灯)道具";
-    //                 break;
-    //             case LimitRewordType.Tipstool:
-    //                 toolName = "提示（放大镜）道具";
-    //                 break;
-    //             case LimitRewordType.Butterfly:
-    //                 toolName = "蝴蝶道具";
-    //                 break;
-    //             case LimitRewordType.AutoComplete:
-    //                 toolName = "自动拼字";
-    //                 break;
-    //         }
-    //         
-    //         // 发送道具统计事件
-    //         SendCurrencyEvent(value, toolName,message); // 假设货币类型从1开始
-    //         
-    //         //刷新道具
-    //         EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-    //         
-    //         GameDataManager.Instance.CommitGameData();
-    //     }
-    // }
-
-
     /// <summary>
     /// 更新道具数量
     /// </summary>
@@ -1320,7 +1269,7 @@ public class UserData
                     toolName = "蝴蝶道具";
                     break;
                 case LimitRewordType.AutoComplete:
-                    toolName = "自动拼字";
+                    toolName = "火箭道具";
                     break;
             }
 

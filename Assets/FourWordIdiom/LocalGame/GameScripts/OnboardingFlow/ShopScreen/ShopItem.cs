@@ -359,39 +359,29 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     private void HandleTimeLimitedItems(ShopDataItem data)  
     {
         if (timebg == null) return;
-
-        if (data.unlocked.Count <= 0)
+      
+        _shopLimitData = GameDataManager.Instance.UserData.limitShopItems?
+            .Find(item => item.nameid == data.produceNameId);
+        
+        if (_shopLimitData != null &&
+            !string.IsNullOrEmpty(_shopLimitData.endtime) &&
+            _shopLimitData.isopen)
         {
-            timebg.gameObject.SetActive(false);
-            return;
-        }
-
-        bool shouldShowTimeBg = !string.IsNullOrEmpty(data.unlocked?[0]);
-        timebg.SetActive(shouldShowTimeBg);
-
-        if (shouldShowTimeBg)
-        {
-            _shopLimitData = GameDataManager.Instance.UserData.limitShopItems?
-                .Find(item => item.nameid == data.produceNameId);
-            
-            if (_shopLimitData != null &&
-                !string.IsNullOrEmpty(_shopLimitData.endtime) &&
-                _shopLimitData.isopen)
-            {
-                StartCoroutine(UpdateTime());
-            }
-            
+            timebg.gameObject.SetActive(true);
+            StartCoroutine(UpdateTime());
             giftsParent.GetComponent<RectTransform>().anchoredPosition = new Vector2(50f, 40);
         }
         else
         {
+            timebg.gameObject.SetActive(false);
             giftsParent.GetComponent<RectTransform>().anchoredPosition = new Vector2(50f, 65);
         }
+       
         
         var icon = LoadShopIcon(shopDataItem.showIcon);
         if (icon != null)
         {
-            giftsParent.GetComponent<Image>().sprite = icon;
+            //giftsParent.GetComponent<Image>().sprite = icon;
         }
        
     }
@@ -773,6 +763,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         if (limitData != null)
         {
             limitData.isget = true;
+            limitData.buyCount += 1;
             transform.gameObject.SetActive(false);
         }
         

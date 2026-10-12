@@ -40,6 +40,9 @@ public struct AdFailedParams
 /// 商店管理器 - 用户分层设计部分类。
 /// 职责：用户分层配置加载与查询、广告获取失败策略（提示道具视频/金币视频/分享）、
 ///      破冰礼包策略、复购/升层策略。分层与分层跳转（L层升级）由外部分层模块驱动。
+///
+/// 注意：破冰/复购弹窗记录（_lastBreakIcePopupTime / _breakIcePopupCount / _lastRepurchasePopupTime）
+/// 目前为运行时状态，非持久化。如需跨启动保留，请迁移到 GameDataManager.UserData 序列化字段。
 /// </summary>
 public partial class ShopManager : MonoBehaviour
 {
@@ -90,9 +93,11 @@ public partial class ShopManager : MonoBehaviour
         if (layer != null)
         {
             ParseLayerConfigs(layer.text);
+            LogShop($"LoadLayerConfig: 从 Bundle 加载 shop_layer, layer={_layerConfig.userLayer}");
             return;
         }
         LoadDefaultLayerConfig();
+        LogShop($"LoadLayerConfig: 未找到 shop_layer, 使用默认 layer={_layerConfig.userLayer}");
     }
 
     private void ParseLayerConfigs(string data)
@@ -168,6 +173,7 @@ public partial class ShopManager : MonoBehaviour
     public void RefreshLayer()
     {
         LoadLayerConfig();
+        LogShop($"RefreshLayer: 分层={_layerConfig.userLayer}");
     }
 
     /// <summary>是否 IAA 层（纯广告变现层；破冰礼包只对 IAA 层生效）</summary>
@@ -232,14 +238,21 @@ public partial class ShopManager : MonoBehaviour
         AdFailedParams p = GetAdFailedParams();
         // 每关次数已满则不弹
         if (p.toolVideoPerLevel >= 0 && GetToolVideoUsedCount(toolType) >= p.toolVideoPerLevel)
+        {
+            LogShop($"ShowAdFailedPanel 跳过: toolType={toolType} 每关次数已满");
             return;
+        }
 
         DateTime now = DateTime.Now;
         // 状态 C：累计失败 3600 秒后若 C 允许则继续弹，否则不再弹
         if (p.cooldownState < 0 && now < _adFailBlockedUntil)
+        {
+            LogShop($"ShowAdFailedPanel 跳过: toolType={toolType} 冷却中(截止={_adFailBlockedUntil:HH:mm:ss})");
             return;
+        }
 
         _adFailBlockedUntil = now.AddSeconds(p.tipFailCooldown);
+        LogShop($"ShowAdFailedPanel: toolType={toolType}, 冷却={p.tipFailCooldown}s, 截止={_adFailBlockedUntil:HH:mm:ss}");
         SystemManager.Instance.ShowPanel(PanelType.AdFailed);
     }
 
@@ -247,6 +260,7 @@ public partial class ShopManager : MonoBehaviour
     public void OnToolVideoWatched(LimitRewordType toolType)
     {
         IncreaseToolVideoUsed(toolType);
+        LogShop($"OnToolVideoWatched: toolType={toolType}, 本次已看={GetToolVideoUsedCount(toolType)}");
         // 发放道具由调用方（弹窗关闭回调）完成，此处仅维护次数
     }
 
@@ -274,10 +288,15 @@ public partial class ShopManager : MonoBehaviour
     public void OnShopGoldClaimed()
     {
         ShopGoldVideoState s = GetShopGoldVideoState();
-        if (s.used) return;
+        if (s.used)
+        {
+            LogShop("OnShopGoldClaimed 跳过: 今日已达上限");
+            return;
+        }
         _shopGoldUsedToday++;
         GameDataManager.Instance.UserData.UpdateGold(ShopGoldVideoReward, false, false, "商店金币视频");
         MessageSystem.Instance.ShowTip("+100 金币");
+        LogShop($"OnShopGoldClaimed: 今日已领={_shopGoldUsedToday}, 上限={GetAdFailedParams().shopGoldVideoDailyLimit}");
     }
 
     // ======================= 分享奖励 =======================
@@ -286,6 +305,7 @@ public partial class ShopManager : MonoBehaviour
     public void OnShareClicked()
     {
         _shareClickedTime = DateTime.Now;
+        LogShop($"OnShareClicked: {_shareClickedTime:HH:mm:ss}");
     }
 
     private DateTime _shareClickedTime;
@@ -302,21 +322,37 @@ public partial class ShopManager : MonoBehaviour
             _shareSuccessDate = today;
             _shareSuccessToday = 0;
         }
-        if (_shareSuccessToday >= GetAdFailedParams().shareDailyLimit) return;
+        if (_shareSuccessToday >= GetAdFailedParams().shareDailyLimit)
+        {
+            LogShop("OnShareReturned 跳过: 今日分享已达上限");
+            return;
+        }
 
-        if (!fromBackground) return;
-        if ((DateTime.Now - _shareClickedTime).TotalSeconds < ShareSuccessMinSeconds) return;
+        if (!fromBackground)
+        {
+            LogShop("OnShareReturned 跳过: 非切回前台");
+            return;
+        }
+        if ((DateTime.Now - _shareClickedTime).TotalSeconds < ShareSuccessMinSeconds)
+        {
+            LogShop("OnShareReturned 跳过: 切回间隔不足3秒");
+            return;
+        }
 
         _shareSuccessToday++;
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1, "分享奖励");
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "分享奖励");
         GameDataManager.Instance.UserData.UpdateGold(50, false, false, "分享奖励");
         MessageSystem.Instance.ShowTip("分享成功 +1灯泡 +1复活 +50金币");
+        LogShop($"OnShareReturned: 分享成功, 今日次数={_shareSuccessToday}");
     }
 
     // ======================= 破冰礼包策略 =======================
 
-    /// <summary>破冰礼包弹窗记录（冷却 7+N 天，N 每次 +3）</summary>
+    /// <summary>
+    /// 破冰礼包弹窗记录（冷却 7+N 天，N 每次 +3）。
+    /// 注意：当前为运行时状态，非持久化；如需跨启动保留请迁移到 UserData。
+    /// </summary>
     private DateTime _lastBreakIcePopupTime = DateTime.MinValue;
     private int _breakIcePopupCount;
 
@@ -331,34 +367,60 @@ public partial class ShopManager : MonoBehaviour
     {
         // 分层表 BrokenIce 开关（1=开）
         string[] bi = _layerConfig.brokenIce.Split('_');
-        if (bi.Length < 1 || bi[0] != "1") return false;
-        if (!IsIaaLayer()) return false;              // 仅 IAA 层
-        if (interAdsCountThisSession <= 3) return false; // 插屏>3
+        if (bi.Length < 1 || bi[0] != "1")
+        {
+            LogShop("TryShowBreakIcePopup 跳过: BrokenIce 开关关闭");
+            return false;
+        }
+        if (!IsIaaLayer())
+        {
+            LogShop("TryShowBreakIcePopup 跳过: 非 IAA 层");
+            return false;
+        }
+        if (interAdsCountThisSession <= 3)
+        {
+            LogShop($"TryShowBreakIcePopup 跳过: 本次插屏={interAdsCountThisSession} <= 3");
+            return false;
+        }
 
         // 周末/节假日触发概率更高
-        if (!IsHolidayOrWeekend() && UnityEngine.Random.value > 0.3f) return false;
+        if (!IsHolidayOrWeekend() && UnityEngine.Random.value > 0.3f)
+        {
+            LogShop("TryShowBreakIcePopup 跳过: 非周末/节日且随机未命中");
+            return false;
+        }
 
         // 冷却：7+N 天（N = 弹窗次数 × 3）
         int cooldownDays = BreakIceCooldownBaseDays + _breakIcePopupCount * BreakIceCooldownStepDays;
         if (_lastBreakIcePopupTime != DateTime.MinValue
             && DateTime.Now.Subtract(_lastBreakIcePopupTime).TotalDays < cooldownDays)
+        {
+            LogShop($"TryShowBreakIcePopup 跳过: 冷却中, 需要{cooldownDays}天");
             return false;
+        }
 
         ShopDataItem pack = allShopItems.FirstOrDefault(x => x.produceNameId == ProductRemoveAdsWeekly);
-        if (pack == null) return false;
+        if (pack == null)
+        {
+            LogShop("TryShowBreakIcePopup 跳过: 未找到 RemoveAdsWeekly 商品");
+            return false;
+        }
 
         _breakIcePopupCount++;
         _lastBreakIcePopupTime = DateTime.Now;
-        SaveNonConsumableState();
 
         // TODO：确认 PanelType.SpecialOfferPopup 已注册，并透传 pack 到弹窗
         SystemManager.Instance.ShowPanel(PanelType.SpecialOfferPopup);
+        LogShop($"TryShowBreakIcePopup: 展示破冰礼包, 累计次数={_breakIcePopupCount}, 下次冷却={BreakIceCooldownBaseDays + _breakIcePopupCount * BreakIceCooldownStepDays}天");
         return true;
     }
 
     // ======================= 复购/升层策略 =======================
 
-    /// <summary>复购/升层弹窗记录（冷却 7 天）</summary>
+    /// <summary>
+    /// 复购/升层弹窗记录（冷却 7 天）。
+    /// 注意：当前为运行时状态，非持久化；如需跨启动保留请迁移到 UserData。
+    /// </summary>
     private DateTime _lastRepurchasePopupTime = DateTime.MinValue;
 
     /// <summary>
@@ -371,12 +433,31 @@ public partial class ShopManager : MonoBehaviour
     /// </summary>
     public bool TryShowRepurchasePopup(ShopDataItem lastPurchasedPack)
     {
-        if (lastPurchasedPack == null) return false;
-        if (IsIaaLayer()) return false;               // 仅 IAP 层
-        if (GetPlayerGold() >= 100) return false;     // 金币<100
+        if (lastPurchasedPack == null)
+        {
+            LogShop("TryShowRepurchasePopup 跳过: lastPurchasedPack 为空");
+            return false;
+        }
+        if (IsIaaLayer())
+        {
+            LogShop("TryShowRepurchasePopup 跳过: 非 IAP 层");
+            return false;
+        }
+
+        int Gold = GameDataManager.Instance.UserData.Gold;
+        
+        if ( Gold>= 100)
+        {
+            LogShop($"TryShowRepurchasePopup 跳过: 金币={Gold} >= 100");
+            return false;
+        }
+        
         if (_lastRepurchasePopupTime != DateTime.MinValue
             && DateTime.Now.Subtract(_lastRepurchasePopupTime).TotalDays < RepurchaseCooldownDays)
+        {
+            LogShop($"TryShowRepurchasePopup 跳过: 冷却中, 需要{RepurchaseCooldownDays}天");
             return false;
+        }
 
         ShopDataItem a = lastPurchasedPack;
         float basePrice = Math.Max(a.price, 10);
@@ -384,11 +465,15 @@ public partial class ShopManager : MonoBehaviour
         // 候选：价格更高档的礼包（type=2 礼包；排除去广告、限时礼包、活动礼包、限购商品）
         List<ShopDataItem> candidates = shopItems
             .Where(x => x.type == 2 && x.price >= basePrice && !IsRemoveAdsProduct(x.produceNameId)
-                && !IsLimitedOut(x) && !x.isActivityPack && x.limited == 0)
+                && !IsLimitedOut(x) && !IsActivityPack(x) && x.limited == 0)
             .OrderBy(x => x.price)
             .ToList();
 
-        if (candidates.Count == 0) return false;
+        if (candidates.Count == 0)
+        {
+            LogShop("TryShowRepurchasePopup 跳过: 无候选礼包");
+            return false;
+        }
 
         // 首选：A 的下一个更高档位礼包（giftType = a.giftType + 1）
         ShopDataItem chosen = candidates.FirstOrDefault(x => x.giftType == a.giftType + 1);
@@ -407,10 +492,10 @@ public partial class ShopManager : MonoBehaviour
         AddPackBonus(chosen, a, Mathf.RoundToInt(chosen.price * 0.1f));
 
         _lastRepurchasePopupTime = DateTime.Now;
-        SaveNonConsumableState();
 
         // TODO：确认 PanelType.SpecialOfferPopup 已注册，并透传 chosen 到弹窗（加量不加价展示）
         SystemManager.Instance.ShowPanel(PanelType.SpecialOfferPopup);
+        LogShop($"TryShowRepurchasePopup: 展示复购礼包, a={a.produceNameId}, chosen={chosen.produceNameId}, price={chosen.price}");
         return true;
     }
 
@@ -432,23 +517,7 @@ public partial class ShopManager : MonoBehaviour
 
         // 同时记录 basePack 的原始内容用于 UI 展示"加量不加价"对比
         // TODO：UI 展示时对比 basePack 内容与 target 内容
-        Debug.Log($"[ShopManager] 加量不加价: {target.produceNameId} 追加价值 {bonusValue}");
+        LogShop($"AddPackBonus: {target.produceNameId} 追加价值 {bonusValue}, 基准礼包={basePack?.produceNameId}");
     }
 
-    // ======================= 数据访问桩（TODO 接入 UserData 后替换） =======================
-
-    /// <summary>获取玩家金币数（TODO：按 GameDataManager.UserData 实际金币字段实现）</summary>
-    protected virtual long GetPlayerGold()
-    {
-        // TODO：return GameDataManager.Instance.UserData.goldCount;
-        return 0;
-    }
-
-    /// <summary>获取玩家道具持有数（TODO：按 UserData 实际道具字段实现）</summary>
-    protected virtual int GetPlayerToolCount()
-    {
-        // TODO：return GameDataManager.Instance.UserData.toolCount;
-        return 0;
-    }
 }
-//（注：内容由AI生成）

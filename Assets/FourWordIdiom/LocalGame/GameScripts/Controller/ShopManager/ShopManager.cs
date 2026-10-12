@@ -60,6 +60,10 @@ public enum ShopMode
 ///  - ShopManager_ClockBox.cs        （复活礼盒默认配置在主脚本内）
 ///  - ShopManager_HolidayWeekend.cs  特殊节日&周末配置
 ///  - ShopManager_UserLayer.cs       用户分层设计（广告失败策略、破冰/复购）
+///
+/// 购买跟踪数据（buyCount / payTendencyScore / exploreScore / conversionFailScore /
+/// lastFailScoreTime / lastBuyTime / limitEndTime / isActivityPack / pushStateIndex）
+/// 统一存储在 ShopLimitData 中，并挂在 GameDataManager.UserData.limitShopItems 下持久化。
 /// </summary>
 public partial class ShopManager : MonoBehaviour
 {
@@ -166,9 +170,6 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>首个灯泡激励视频/插屏是否已赠送过 50 金币（感谢弹窗）</summary>
     private bool _firstBulbVideoGifted;
 
-    /// <summary>非消耗型权益持久化 key（PlayerPrefs；TODO：迁移到 UserData 序列化字段）</summary>
-    private const string SaveKey = "ShopNonConsumableState_v1";
-
     [Header("商店模式")]
     public ShopMode shopMode = ShopMode.FixedStore;
 
@@ -200,9 +201,6 @@ public partial class ShopManager : MonoBehaviour
         LoadRuntimeConfigs();
 
         Initialize();
-
-        // 恢复本地持久化的非消耗型权益（去广告/无限体力等）
-        LoadNonConsumableState();
 
         LogShop($"Start 完成: shopMode={shopMode}, 推荐位配置数={_recommendConfigs.Count}, 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
     }
@@ -247,7 +245,9 @@ public partial class ShopManager : MonoBehaviour
     public void Initialize()
     {
         shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
-            .ToDictionary(x => x.id, x => x);
+            .Where(x => x != null)
+            .GroupBy(x => x.id)
+            .ToDictionary(g => g.Key, g => g.First());
         _limitAdsGifts = GetLimitAdsGifts();
 
         LogShop($"Initialize: 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
@@ -259,7 +259,9 @@ public partial class ShopManager : MonoBehaviour
     public void RefreshLimitData()
     {
         shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
-            .ToDictionary(x => x.id, x => x);
+            .Where(x => x != null)
+            .GroupBy(x => x.id)
+            .ToDictionary(g => g.Key, g => g.First());
         _limitAdsGifts = GetLimitAdsGifts();
 
         LogShop($"RefreshLimitData: 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
@@ -271,6 +273,58 @@ public partial class ShopManager : MonoBehaviour
     private void LogShop(string message)
     {
         Debug.Log($"[Shop] {message}");
+    }
+
+    // ======================= ShopLimitData 读写辅助 =======================
+
+    /// <summary>
+    /// 获取商品对应的限购/跟踪数据；不存在则新建并加入 UserData.limitShopItems（自动持久化）。
+    /// </summary>
+    private ShopLimitData GetOrCreateLimitData(ShopDataItem item)
+    {
+        if (item == null) return null;
+
+        ShopLimitData data;
+        if (shoplimitDatas.TryGetValue(item.id, out data) && data != null)
+            return data;
+
+        data = GameDataManager.Instance.UserData.limitShopItems
+            .FirstOrDefault(x => x != null && x.id == item.id);
+
+        if (data == null)
+        {
+            data = new ShopLimitData
+            {
+                id = item.id,
+                nameid = item.produceNameId,
+                pushStateIndex = 1f,
+            };
+            GameDataManager.Instance.UserData.limitShopItems.Add(data);
+            LogShop($"GetOrCreateLimitData 新建跟踪数据: id={item.id}, nameid={item.produceNameId}");
+        }
+
+        shoplimitDatas[item.id] = data;
+        return data;
+    }
+
+    /// <summary>
+    /// 只读获取商品对应的限购/跟踪数据；不存在返回 null（不创建）。
+    /// </summary>
+    private ShopLimitData GetLimitData(ShopDataItem item)
+    {
+        if (item == null) return null;
+
+        ShopLimitData data;
+        if (shoplimitDatas.TryGetValue(item.id, out data) && data != null)
+            return data;
+
+        data = GameDataManager.Instance.UserData.limitShopItems
+            .FirstOrDefault(x => x != null && x.id == item.id);
+
+        if (data != null)
+            shoplimitDatas[item.id] = data;
+
+        return data;
     }
 
     // ======================= 去广告（非消耗型内购） =======================
@@ -308,8 +362,9 @@ public partial class ShopManager : MonoBehaviour
             if (!item.isget || item.isoverdate) continue;
             if (item.adstype != (int)LimitRewordType.RemoveAds && item.adstype != (int)LimitRewordType.Remove7DayAds && item.adstype != RemoveAds1DayType)
                 continue;
-            DateTime end;
-            if (!string.IsNullOrEmpty(item.endtime) && DateTime.TryParse(item.endtime, out end))
+
+            DateTime end = item.GetEndTime();
+            if (end != DateTime.MinValue)
             {
                 remain = Math.Max(remain, end.Subtract(DateTime.Now).TotalSeconds);
             }
@@ -336,7 +391,8 @@ public partial class ShopManager : MonoBehaviour
         Bulb,       // 灯泡道具弹窗（一号主力/二号锚点/三号诱饵）
         Rocket,     // 火箭道具弹窗
         Clock,      // 复活道具弹窗
-        DynamicStore// 动态商店（一号位/二号位）
+        DynamicStore,// 动态商店（一号位/二号位）
+        FixedStore  // 固定商店（一号位）
     }
 
     /// <summary>
@@ -453,6 +509,7 @@ public partial class ShopManager : MonoBehaviour
                 case RecommendSlot.Rocket: inSlot = IsRocketPack(kv.Key); break;
                 case RecommendSlot.Clock: inSlot = IsClockPack(kv.Key); break;
                 case RecommendSlot.DynamicStore: inSlot = IsDynamicStorePack(kv.Key); break;
+                case RecommendSlot.FixedStore: inSlot = IsDynamicStorePack(kv.Key); break;
                 default: inSlot = false; break;
             }
             if (!inSlot) continue;
@@ -473,11 +530,13 @@ public partial class ShopManager : MonoBehaviour
         return nameId.StartsWith("ClockBox");
     }
 
-    /// <summary>限购判断：配置限购次数且已买满</summary>
+    /// <summary>限购判断：配置限购次数且已买满（buyCount 从 ShopLimitData 读取）</summary>
     private bool IsLimitedOut(ShopDataItem item)
     {
-        if (item.limited <= 0) return false;
-        return item.buyCount >= item.limited;
+        if (item == null || item.limited <= 0) return false;
+        ShopLimitData data = GetLimitData(item);
+        int buyCount = data?.buyCount ?? 0;
+        return buyCount >= item.limited;
     }
 
     /// <summary>推荐位当关锁定（购买后当关不刷新新礼包）</summary>
@@ -508,6 +567,10 @@ public partial class ShopManager : MonoBehaviour
     /// 礼包权重 = 基础权重 + 付费倾向积分（火箭、复活）
     ///          基础权重 + 付费倾向积分 + 探价加分 - 转化失败分（灯泡、动态商店）
     /// 每次弹窗或进入动态商店时临时计算。
+    /// 跟踪数据从 ShopLimitData 读取。
+    ///
+    /// 特别说明：限购已满的商品在此处直接返回 0，不参与决策；
+    /// 与 GetSlotCandidates 的限购过滤形成双重保护，避免外部直接调用本方法时限购商品胜出。
     /// </summary>
     public float CalculateDecisionWeight(ShopDataItem item, ShopRecommendConfig cfg, RecommendSlot slot)
     {
@@ -517,10 +580,24 @@ public partial class ShopManager : MonoBehaviour
             return 0;
         }
 
-        float packWeight = cfg.baseWeight + item.payTendencyScore;
+        // 限购已满：不参与决策（决策权重 = 0）
+        if (IsLimitedOut(item))
+        {
+            ShopLimitData ld = GetLimitData(item);
+            LogShop($"CalculateDecisionWeight 跳过: {item.produceNameId} 限购已满(limited={item.limited}, buyCount={ld?.buyCount ?? 0})");
+            return 0;
+        }
+
+        ShopLimitData limit = GetLimitData(item);
+        float payTendency = limit?.payTendencyScore ?? 0f;
+        float explore = limit?.exploreScore ?? 0f;
+        float fail = limit?.conversionFailScore ?? 0f;
+        float pushIndex = limit?.pushStateIndex ?? 1f;
+
+        float packWeight = cfg.baseWeight + payTendency;
         if (slot == RecommendSlot.Bulb || slot == RecommendSlot.DynamicStore)
         {
-            packWeight += item.exploreScore - item.conversionFailScore;
+            packWeight += explore - fail;
         }
         packWeight = Mathf.Max(0, packWeight); // 礼包权重最低=0
 
@@ -537,11 +614,11 @@ public partial class ShopManager : MonoBehaviour
         float ret = IsChurnReturn() ? cfg.returnWeight : 0;
 
         float cooldown = GetCooldownCoefficient(item);
-        float decision = (packWeight + special + peak + ret) * cooldown * item.pushStateIndex;
+        float decision = (packWeight + special + peak + ret) * cooldown * pushIndex;
 
         LogShop($"CalculateDecisionWeight {item.produceNameId} [slot={slot}]: " +
-                $"base={cfg.baseWeight}, pay={item.payTendencyScore:F1}, explore={item.exploreScore:F1}, fail={item.conversionFailScore:F1} => pack={packWeight:F2}(cap={cap}), " +
-                $"special={special:F2}, peak={peak:F2}, ret={ret:F2}, cooldown={cooldown:F2}, pushIndex={item.pushStateIndex:F2} => decision={decision:F2}");
+                $"base={cfg.baseWeight}, pay={payTendency:F1}, explore={explore:F1}, fail={fail:F1} => pack={packWeight:F2}(cap={cap}), " +
+                $"special={special:F2}, peak={peak:F2}, ret={ret:F2}, cooldown={cooldown:F2}, pushIndex={pushIndex:F2} => decision={decision:F2}");
 
         return decision;
     }
@@ -560,24 +637,28 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 冷却系数：
+    /// 冷却系数（数据来自 ShopLimitData）：
     ///  - 礼包被购买后：12小时内=0.2；12-72小时=0.5；72小时后=1
     ///  - 礼包限时结束后：48小时内=0；48-120小时=0.5；120小时后=1
     /// </summary>
     private float GetCooldownCoefficient(ShopDataItem item)
     {
+        ShopLimitData limit = GetLimitData(item);
+        DateTime limitEndTime = limit?.GetLimitEndTime() ?? DateTime.MinValue;
+        DateTime lastBuyTime = limit?.GetLastBuyTime() ?? DateTime.MinValue;
+
         // 限时结束后冷却优先（权重为0，直接不展示）
-        if (item.limitEndTime != default(DateTime) && item.limitEndTime <= DateTime.Now)
+        if (limitEndTime != DateTime.MinValue && limitEndTime <= DateTime.Now)
         {
-            double hours = DateTime.Now.Subtract(item.limitEndTime).TotalHours;
+            double hours = DateTime.Now.Subtract(limitEndTime).TotalHours;
             if (hours <= 48) return 0f;
             if (hours <= 120) return 0.5f;
             return 1f;
         }
 
-        if (item.lastBuyTime != default(DateTime))
+        if (lastBuyTime != DateTime.MinValue)
         {
-            double hours = DateTime.Now.Subtract(item.lastBuyTime).TotalHours;
+            double hours = DateTime.Now.Subtract(lastBuyTime).TotalHours;
             if (hours <= 12) return 0.2f;
             if (hours <= 72) return 0.5f;
         }
@@ -596,7 +677,23 @@ public partial class ShopManager : MonoBehaviour
     {
         LogShop($"========== GetRecommendPacks 开始: slot={slot}, shopMode={shopMode}, 时间={DateTime.Now:HH:mm:ss} ==========");
 
-        int maxFeatured = (slot == RecommendSlot.DynamicStore) ? 2 : 3;
+        int maxFeatured = 1;
+
+        switch (slot)
+        {
+            case RecommendSlot.Bulb:
+                maxFeatured = 3;
+                break;
+            case RecommendSlot.DynamicStore:
+                maxFeatured = 2;
+                break;
+            case RecommendSlot.Rocket:
+            case RecommendSlot.Clock:
+            case RecommendSlot.FixedStore:
+                maxFeatured = 1;
+                break;
+        }
+
         List<ShopDataItem> result = new List<ShopDataItem>();
         bool slot1Empty = false;
 
@@ -607,14 +704,14 @@ public partial class ShopManager : MonoBehaviour
 
             if (candidates.Count == 0) continue;
 
-            // 动态商店一号位特殊规则
-            if (slot == RecommendSlot.DynamicStore && featured == 1)
+            // 动态商店/固定商店一号位特殊规则
+            if ((slot == RecommendSlot.DynamicStore || slot == RecommendSlot.FixedStore) && featured == 1)
             {
                 var winners = DecideWinner(candidates, slot);
                 if (winners == null || winners.Count == 0)
                 {
                     slot1Empty = true;
-                    LogShop($"  动态商店一号位无胜出礼包, 判定去广告补位, IsRemoveAdsOwned={IsRemoveAdsOwned()}");
+                    LogShop($"  {slot} 一号位无胜出礼包, 判定去广告补位, IsRemoveAdsOwned={IsRemoveAdsOwned()}");
                     // 一号位不推荐任何礼包：去广告未购买则展示去广告（已购买则二号位放开，见末尾）
                     if (!IsRemoveAdsOwned())
                     {
@@ -622,7 +719,7 @@ public partial class ShopManager : MonoBehaviour
                         if (ad != null)
                         {
                             result.Add(ad);
-                            LogShop($"  动态商店一号位补位去广告: {ad.produceNameId}");
+                            LogShop($"  {slot} 一号位补位去广告: {ad.produceNameId}");
                         }
                     }
                     continue;
@@ -699,10 +796,11 @@ public partial class ShopManager : MonoBehaviour
         foreach (var kv in scored)
         {
             var item = kv.Key;
+            ShopLimitData limit = GetLimitData(item);
             LogShop($"      候选明细 {item.produceNameId}: 权重={kv.Value:F2}, " +
                     $"giftType={item.giftType}, price={item.price}, " +
-                    $"payTendency={item.payTendencyScore:F1}, explore={item.exploreScore:F1}, fail={item.conversionFailScore:F1}, " +
-                    $"pushIndex={item.pushStateIndex:F2}, cooldown={GetCooldownCoefficient(item):F2}, label={item.labelZh}");
+                    $"payTendency={limit?.payTendencyScore ?? 0f:F1}, explore={limit?.exploreScore ?? 0f:F1}, fail={limit?.conversionFailScore ?? 0f:F1}, " +
+                    $"pushIndex={limit?.pushStateIndex ?? 1f:F2}, cooldown={GetCooldownCoefficient(item):F2}, label={item.labelZh}");
         }
 
         float max = scored.Max(x => x.Value);
@@ -713,14 +811,21 @@ public partial class ShopManager : MonoBehaviour
 
         // 活动礼包判定：节日/周末权重≠0 且决策胜出 → 显示限时与活动标签
         ShopRecommendConfig cfg = GetCfg(winner.produceNameId);
-        winner.isActivityPack = cfg != null && cfg.specialWeight != 0 && IsHolidayOrWeekend();
-        if (winner.isActivityPack)
+        bool isActivity = cfg != null && cfg.specialWeight != 0 && IsHolidayOrWeekend();
+
+        ShopLimitData winnerLimit = GetOrCreateLimitData(winner);
+        winnerLimit.isActivityPack = isActivity;
+        if (isActivity)
         {
             // 限时时间 = 本次节日/周末的截至时间 - 当前时间（基于预设表连续日期计算）
-            winner.limitEndTime = GetCurrentHolidayEndTime();
+            winnerLimit.SetLimitEndTime(GetCurrentHolidayEndTime());
+        }
+        else
+        {
+            winnerLimit.SetLimitEndTime(DateTime.MinValue);
         }
 
-        LogShop($"    --- DecideWinner 结果: 胜出={winner.produceNameId}, 权重={max:F2}, isActivityPack={winner.isActivityPack}, isHolidayOrWeekend={IsHolidayOrWeekend()} ---");
+        LogShop($"    --- DecideWinner 结果: 胜出={winner.produceNameId}, 权重={max:F2}, isActivityPack={isActivity}, isHolidayOrWeekend={IsHolidayOrWeekend()} ---");
 
         return new List<ShopDataItem> { winner };
     }
@@ -792,21 +897,27 @@ public partial class ShopManager : MonoBehaviour
             LogShop($"AddConversionFail 跳过: {item.produceNameId} giftType={item.giftType} <= 1");
             return;
         }
-        if ((DateTime.Now - item.lastFailScoreTime).TotalSeconds < FailScoreChangeInterval)
+
+        ShopLimitData limit = GetOrCreateLimitData(item);
+        DateTime lastFail = limit.GetLastFailScoreTime();
+
+        if (lastFail != DateTime.MinValue && (DateTime.Now - lastFail).TotalSeconds < FailScoreChangeInterval)
         {
             LogShop($"AddConversionFail 跳过: {item.produceNameId} 距上次不足{FailScoreChangeInterval}s");
             return;
         }
-        item.conversionFailScore += 5;
-        item.lastFailScoreTime = DateTime.Now;
-        LogShop($"AddConversionFail: {item.produceNameId} 转化失败分={item.conversionFailScore:F1}");
+
+        limit.conversionFailScore += 5;
+        limit.SetLastFailScoreTime(DateTime.Now);
+        LogShop($"AddConversionFail: {item.produceNameId} 转化失败分={limit.conversionFailScore:F1}");
     }
 
     /// <summary>重置转化失败分 F（购买成功 / 推荐位更换）</summary>
     public void ResetConversionFail(ShopDataItem item)
     {
         if (item == null) return;
-        item.conversionFailScore = 0;
+        ShopLimitData limit = GetOrCreateLimitData(item);
+        limit.conversionFailScore = 0;
     }
 
     // ======================= 购买流程 =======================
@@ -834,7 +945,7 @@ public partial class ShopManager : MonoBehaviour
 
         LogShop($"匹配到商店商品: id={shopDataItem.id}, produceNameId={shopDataItem.produceNameId}, type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}, label={shopDataItem.labelZh}");
 
-        // ---------- 非消耗型商品：去广告 / 无限体力，购买后立即生效并持久化 ----------
+        // ---------- 非消耗型商品：去广告 / 无限体力，购买后立即生效 ----------
         if (IsRemoveAdsProduct(shopDataItem.produceNameId))
         {
             LogShop($"非消耗型: 去广告 {shopDataItem.produceNameId}");
@@ -936,7 +1047,7 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>
     /// 去广告购买处理：
-    ///  - 终身去广告：写入 limitShopItems（isget=true, adstype=RemoveAds），并持久化；
+    ///  - 终身去广告：写入 limitShopItems（isget=true, adstype=RemoveAds）；
     ///  - 限时去广告（7天/1天）：在之前剩余时间基础上额外增加限时时间（需求：刷新限时）。
     /// </summary>
     private void HandleRemoveAdsPurchase(ShopDataItem shopDataItem)
@@ -967,29 +1078,32 @@ public partial class ShopManager : MonoBehaviour
         {
             // 限时去广告：在剩余时间基础上额外增加（永久去广告重复购买直接续期，逻辑一致）
             DateTime baseEnd = DateTime.Now;
-            DateTime oldEnd;
-            if (!string.IsNullOrEmpty(exist.endtime) && DateTime.TryParse(exist.endtime, out oldEnd) && oldEnd > DateTime.Now)
+            DateTime oldEnd = exist.GetEndTime();
+            if (oldEnd != DateTime.MinValue && oldEnd > DateTime.Now)
                 baseEnd = oldEnd;
-            exist.endtime = baseEnd.AddHours(hours).ToString();
+
+            DateTime newEnd = baseEnd.AddHours(hours);
+            exist.SetEndTime(newEnd);
             exist.isget = true;
             exist.isopen = false;
             exist.isoverdate = false;
-            LogShop($"  续期: 原结束={exist.endtime}, 新结束={baseEnd.AddHours(hours)}");
+            LogShop($"  续期: 原结束={oldEnd}, 新结束={newEnd}");
         }
         else
         {
+            DateTime newEnd = hours > 0 ? DateTime.Now.AddHours(hours) : DateTime.MinValue;
             GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData()
             {
                 id = shopDataItem.id,
                 nameid = shopDataItem.produceNameId,
-                endtime = hours > 0 ? DateTime.Now.AddHours(hours).ToString() : "",
+                endtime = hours > 0 ? newEnd.ToString("yyyy-MM-dd HH:mm:ss") : "",
                 isopen = false,
-                gettime = DateTime.Now.ToString(),
+                gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 adstype = adstype,
                 isget = true,
                 isoverdate = false,
             });
-            LogShop($"  新增记录: adstype={adstype}, endtime={(hours > 0 ? DateTime.Now.AddHours(hours).ToString() : "永久")}");
+            LogShop($"  新增记录: adstype={adstype}, endtime={(hours > 0 ? newEnd.ToString("yyyy-MM-dd HH:mm:ss") : "永久")}");
         }
 
         // 生效广告表现
@@ -997,7 +1111,6 @@ public partial class ShopManager : MonoBehaviour
         UpdateAdsBtnUI?.Invoke(permanent ? null : DateTime.Now.ToString(), true);
 
         RefreshLimitData();
-        SaveNonConsumableState();
     }
 
     /// <summary>无限体力购买处理（TODO：接入体力系统）</summary>
@@ -1006,10 +1119,12 @@ public partial class ShopManager : MonoBehaviour
         // TODO：设置 UserData 无限体力状态（体力图标无穷、限时显示、退出/复活无二次确认）
         // GameDataManager.Instance.UserData.unlimitedEnergyEndTime = DateTime.Now.AddHours(hours).ToString();
         LogShop($"HandleUnlimitedEnergyPurchase: {shopDataItem.produceNameId} (TODO 体力系统)");
-        SaveNonConsumableState();
     }
 
-    /// <summary>礼包购买后的推荐位状态更新（付费倾向、探价加分、冷却、上次购买）</summary>
+    /// <summary>
+    /// 礼包购买后的推荐位状态更新（付费倾向、探价加分、冷却、上次购买）。
+    /// 所有跟踪数据写入 ShopLimitData（挂在 UserData.limitShopItems 下持久化）。
+    /// </summary>
     private void OnPackPurchased(ShopDataItem shopDataItem)
     {
         LogShop($"OnPackPurchased 开始: {shopDataItem.produceNameId}, type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
@@ -1021,8 +1136,11 @@ public partial class ShopManager : MonoBehaviour
             LogShop($"  记录上次购买礼包: {_lastPurchasedPack.produceNameId}");
         }
 
+        // 当前购买商品对应的跟踪数据
+        ShopLimitData limit = GetOrCreateLimitData(shopDataItem);
+
         // 冷却系数：记录购买时间
-        shopDataItem.lastBuyTime = DateTime.Now;
+        limit.SetLastBuyTime(DateTime.Now);
 
         // 付费倾向积分：基于 GiftType 档位 a，a档+2、a+1档+1、a+2档+0.5（所有该档位礼包）
         int a = shopDataItem.giftType;
@@ -1030,17 +1148,18 @@ public partial class ShopManager : MonoBehaviour
         {
             foreach (var cfg in _recommendConfigs)
             {
-                ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == cfg.Key);
-                if (item == null) continue;
-                if (cfg.Value.giftType == a) item.payTendencyScore += 2f;
-                else if (cfg.Value.giftType == a + 1) item.payTendencyScore += 1f;
-                else if (cfg.Value.giftType == a + 2) item.payTendencyScore += 0.5f;
+                ShopDataItem it = allShopItems.FirstOrDefault(x => x.produceNameId == cfg.Key);
+                if (it == null) continue;
+                ShopLimitData ld = GetOrCreateLimitData(it);
+                if (cfg.Value.giftType == a) ld.payTendencyScore += 2f;
+                else if (cfg.Value.giftType == a + 1) ld.payTendencyScore += 1f;
+                else if (cfg.Value.giftType == a + 2) ld.payTendencyScore += 0.5f;
             }
             LogShop($"  付费倾向积分更新: 基准档 a={a}, 已更新所有相关礼包");
         }
 
         // 探价加分：该礼包 +3；"第X档"每发生3次，下一档 +6（一次性）
-        shopDataItem.exploreScore += 3f;
+        limit.exploreScore += 3f;
         if (a > 0)
         {
             // 记录档位购买次数
@@ -1053,11 +1172,12 @@ public partial class ShopManager : MonoBehaviour
                 {
                     if (cfg.Value.giftType == a + 1)
                     {
-                        ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == cfg.Key);
-                        if (item != null)
+                        ShopDataItem it = allShopItems.FirstOrDefault(x => x.produceNameId == cfg.Key);
+                        if (it != null)
                         {
-                            item.exploreScore += 6f; // 一次性加6分
-                            LogShop($"    探价加分: 下一档 {item.produceNameId} +6");
+                            ShopLimitData ld = GetOrCreateLimitData(it);
+                            ld.exploreScore += 6f; // 一次性加6分
+                            LogShop($"    探价加分: 下一档 {it.produceNameId} +6");
                         }
                     }
                 }
@@ -1065,14 +1185,14 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // 转化失败分归零（购买成功）
-        ResetConversionFail(shopDataItem);
+        limit.conversionFailScore = 0;
 
         // 购买次数（限购）
-        shopDataItem.buyCount++;
+        limit.buyCount++;
 
         // 限时活动礼包：购买后清除活动状态（12小时内冷却 0.2）
-        shopDataItem.isActivityPack = false;
-        shopDataItem.limitEndTime = default(DateTime);
+        limit.isActivityPack = false;
+        limit.SetLimitEndTime(DateTime.MinValue);
 
         // 当关推荐位锁定
         LockSlot(RecommendSlot.Bulb);
@@ -1080,9 +1200,7 @@ public partial class ShopManager : MonoBehaviour
         LockSlot(RecommendSlot.Clock);
         LockSlot(RecommendSlot.DynamicStore);
 
-        SaveNonConsumableState();
-
-        LogShop($"OnPackPurchased 结束: {shopDataItem.produceNameId}, payTendency={shopDataItem.payTendencyScore:F1}, explore={shopDataItem.exploreScore:F1}, fail={shopDataItem.conversionFailScore:F1}, buyCount={shopDataItem.buyCount}");
+        LogShop($"OnPackPurchased 结束: {shopDataItem.produceNameId}, payTendency={limit.payTendencyScore:F1}, explore={limit.exploreScore:F1}, fail={limit.conversionFailScore:F1}, buyCount={limit.buyCount}");
     }
 
     private int GetTierBuyCount(int tier)
@@ -1334,82 +1452,6 @@ public partial class ShopManager : MonoBehaviour
     {
         LogShop("[ShopManager] ShowLimitAdsPanel 原主动弹出逻辑已删除（需求 C 章节：删除原逻辑），请接入破冰/复购策略");
         await Task.Delay(1);
-    }
-
-    // ======================= 非消耗型权益持久化 =======================
-
-    /// <summary>
-    /// 数据存储（需求：去广告礼包和限时体力这类非消耗型商品需存个人数据，卸载重装可恢复）。
-    /// 本地 PlayerPrefs 兜底 + 建议迁移到 UserData 序列化字段。
-    /// </summary>
-    [Serializable]
-    private class NonConsumableState
-    {
-        public bool removeAdsOwned;
-        public string removeAdsEndTime;
-        public string unlimitedEnergyEndTime;
-        public int breakIcePopupCount;
-        public string lastBreakIceTime;
-        public string lastRepurchaseTime;
-        public string lastPurchasedPack;
-    }
-
-    private void SaveNonConsumableState()
-    {
-        try
-        {
-            NonConsumableState s = new NonConsumableState();
-            s.removeAdsOwned = IsRemoveAdsOwned();
-            s.removeAdsEndTime = GetRemoveAdsEndTime();
-            s.breakIcePopupCount = _breakIcePopupCount;
-            s.lastBreakIceTime = _lastBreakIcePopupTime == DateTime.MinValue ? "" : _lastBreakIcePopupTime.ToString();
-            s.lastRepurchaseTime = _lastRepurchasePopupTime == DateTime.MinValue ? "" : _lastRepurchasePopupTime.ToString();
-            s.lastPurchasedPack = _lastPurchasedPack != null ? _lastPurchasedPack.produceNameId : "";
-            PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(s));
-            PlayerPrefs.Save();
-
-            LogShop($"SaveNonConsumableState: removeAdsOwned={s.removeAdsOwned}, removeAdsEndTime={s.removeAdsEndTime}, lastPurchasedPack={s.lastPurchasedPack}");
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning("保存商店非消耗型状态失败: " + e.Message);
-        }
-    }
-
-    private void LoadNonConsumableState()
-    {
-        try
-        {
-            if (!PlayerPrefs.HasKey(SaveKey))
-            {
-                LogShop("LoadNonConsumableState: 无本地存档");
-                return;
-            }
-            NonConsumableState s = JsonUtility.FromJson<NonConsumableState>(PlayerPrefs.GetString(SaveKey));
-            if (s == null) return;
-            _breakIcePopupCount = s.breakIcePopupCount;
-            DateTime t;
-            if (DateTime.TryParse(s.lastBreakIceTime, out t)) _lastBreakIcePopupTime = t;
-            if (DateTime.TryParse(s.lastRepurchaseTime, out t)) _lastRepurchasePopupTime = t;
-            if (!string.IsNullOrEmpty(s.lastPurchasedPack))
-                _lastPurchasedPack = allShopItems.FirstOrDefault(x => x.produceNameId == s.lastPurchasedPack);
-
-            LogShop($"LoadNonConsumableState: removeAdsOwned={s.removeAdsOwned}, lastPurchasedPack={s.lastPurchasedPack}, breakIceCount={s.breakIcePopupCount}");
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning("读取商店非消耗型状态失败: " + e.Message);
-        }
-    }
-
-    private string GetRemoveAdsEndTime()
-    {
-        foreach (var item in GameDataManager.Instance.UserData.limitShopItems)
-        {
-            if (item.isget && !item.isoverdate && !string.IsNullOrEmpty(item.endtime))
-                return item.endtime;
-        }
-        return "";
     }
 
     // ======================= 工具方法 =======================

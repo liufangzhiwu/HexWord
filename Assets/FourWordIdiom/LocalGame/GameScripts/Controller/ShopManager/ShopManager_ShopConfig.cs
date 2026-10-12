@@ -37,17 +37,6 @@ public class ShopDataItem
     public int giftType;          // 礼包档位类型（付费倾向积分/探价加分使用）
     public int coinValue;         // 金币价值（性价比排序用）
 
-    // ==================== 运行时字段（不进序列化） ====================
-    [NonSerialized] public int buyCount;                 // 已购买次数（限购判断）
-    [NonSerialized] public float payTendencyScore;       // 付费倾向积分
-    [NonSerialized] public float exploreScore;           // 探价加分
-    [NonSerialized] public float conversionFailScore;    // 转化失败分 F
-    [NonSerialized] public DateTime lastFailScoreTime;   // F 值最近变化时间（30秒间隔）
-    [NonSerialized] public DateTime lastBuyTime;         // 最近购买时间（冷却系数）
-    [NonSerialized] public DateTime limitEndTime;        // 限时活动礼包截至时间
-    [NonSerialized] public bool isActivityPack;          // 当前是否为活动礼包（节日X折/周末X折）
-    [NonSerialized] public float pushStateIndex = 1f;    // 推送状态指数（优惠推送=0，默认1）
-
     /// <summary>
     /// 获取商品购买id
     /// </summary>
@@ -78,7 +67,6 @@ public class ShopDataItem
         copy.limited = this.limited;
         copy.giftType = this.giftType;
         copy.coinValue = this.coinValue;
-        copy.buyCount = this.buyCount;
 
         // 字符串（不可变，直接引用即可，也可显式复制）
         copy.produceNameId = this.produceNameId;

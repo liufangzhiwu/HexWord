@@ -16,23 +16,23 @@ public class ShopEntryBadgeInfo
 /// <summary>
 /// 商店管理器 - 动态商店配置部分类。
 /// 职责：动态商店推荐位列表（收起/展开、一号位兜底规则）、商店入口角标、活动礼包命名。
+/// 购买跟踪数据（isActivityPack / limitEndTime / buyCount / lastBuyTime 等）统一从 ShopLimitData 读取。
 /// </summary>
 public partial class ShopManager : MonoBehaviour
 {
     /// <summary>本次进入商店是否已消费入口角标（进店消失）</summary>
     private bool _shopEntryBadgeConsumed;
 
-    /// <summary>动态商店（DynamicStore 动态商店配置）候选归属判断</summary>
+    /// <summary>动态商店/固定商店1号推荐位（DynamicStore 动态商店配置）候选归属判断</summary>
     private bool IsDynamicStorePack(string nameId)
     {
         // 动态商店推荐位配置表内的礼包：NewcomerBox / SpecialPackageA / SpecialPackageB / BoxTime / Box0~Box4
-        
-        bool IsPack =  nameId.StartsWith("Newcomer")
-                       || nameId.StartsWith("SpecialPackage")
-                       || nameId == "BoxTime"
-                       || (nameId.StartsWith("Box") && nameId.Length == 4 && char.IsDigit(nameId[3]));;
+        bool isPack = nameId.StartsWith("Newcomer")
+                      || nameId.StartsWith("SpecialPackage")
+                      || nameId == "BoxTime"
+                      || (nameId.StartsWith("Box") && nameId.Length == 4 && char.IsDigit(nameId[3]));
 
-        return IsPack;
+        return isPack;
     }
 
     /// <summary>
@@ -46,7 +46,24 @@ public partial class ShopManager : MonoBehaviour
         if (rec != null)
         {
             ParseRecommendConfigs(rec.text);
+            LogShop($"LoadDynamicStoreConfig: 从 Bundle 加载 shop_dynamicstore");
         }
+        else
+        {
+            LogShop($"LoadDynamicStoreConfig: 未找到 shop_dynamicstore, 使用默认值");
+        }
+    }
+
+    /// <summary>
+    /// 固定商店 - 1号推荐位。
+    /// </summary>
+    public List<ShopDataItem> GetFixedStoreExpandedItems()
+    {
+        // 展开后加入二号位剩余候选礼包（价格升序）
+        List<ShopDataItem> result = GetRecommendPacks(RecommendSlot.FixedStore);
+        return result
+            .OrderBy(item => item.price)
+            .ToList();
     }
 
     /// <summary>
@@ -89,25 +106,56 @@ public partial class ShopManager : MonoBehaviour
     public ShopEntryBadgeInfo GetShopEntryBadge()
     {
         if (_shopEntryBadgeConsumed)
+        {
+            LogShop("GetShopEntryBadge: 已消费, 不展示");
             return new ShopEntryBadgeInfo { showBadge = false };
+        }
+
+        if (!IsHolidayOrWeekend())
+        {
+            LogShop("GetShopEntryBadge: 非节日/周末, 不展示");
+            return new ShopEntryBadgeInfo { showBadge = false };
+        }
 
         // 动态商店候选活动礼包（节日/周末权重≠0 且当天是节日/周末）
+        // 按决策权重降序挑选最优的活动礼包
         ShopDataItem activityPack = null;
+        float bestWeight = -1f;
+
         foreach (var kv in _recommendConfigs)
         {
             if (!IsDynamicStorePack(kv.Key)) continue;
             if (kv.Value.specialWeight == 0) continue;
+
             ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == kv.Key);
             if (item == null || IsRemoveAdsProduct(item.produceNameId) || IsLimitedOut(item)) continue;
             if (GetCooldownCoefficient(item) <= 0f) continue;
-            activityPack = item;
-            break;
+
+            float weight = CalculateDecisionWeight(item, kv.Value, RecommendSlot.DynamicStore);
+            if (weight > bestWeight)
+            {
+                bestWeight = weight;
+                activityPack = item;
+            }
         }
 
-        if (activityPack == null || !IsHolidayOrWeekend())
+        if (activityPack == null)
+        {
+            LogShop("GetShopEntryBadge: 无可用活动礼包, 不展示");
             return new ShopEntryBadgeInfo { showBadge = false };
+        }
+
+        // 标记该礼包为活动礼包，并写入限时截至时间（与 DecideWinner 保持一致）
+        ShopLimitData limit = GetOrCreateLimitData(activityPack);
+        if (limit != null)
+        {
+            limit.isActivityPack = true;
+            limit.SetLimitEndTime(GetCurrentHolidayEndTime());
+        }
 
         string text = GetDiscountZheText(activityPack);
+        LogShop($"GetShopEntryBadge: 展示, pack={activityPack.produceNameId}, weight={bestWeight:F2}, text={text}");
+
         return new ShopEntryBadgeInfo
         {
             showBadge = true,
@@ -120,6 +168,7 @@ public partial class ShopManager : MonoBehaviour
     public void OnShopEntered()
     {
         _shopEntryBadgeConsumed = true;
+        LogShop("OnShopEntered: 入口角标已消费");
     }
 
     /// <summary>
@@ -137,7 +186,7 @@ public partial class ShopManager : MonoBehaviour
             // 用价格反推折扣：原价/售价（新表）
             if (item.originalPrice > 0 && item.price > 0 && item.originalPrice >= item.price)
             {
-                float ratio = item.price / item.originalPrice;
+                float ratio = (float)item.price / item.originalPrice;
                 int zheNum = Mathf.CeilToInt(ratio * 10);
                 zhe = zheNum.ToString();
             }
@@ -158,10 +207,11 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>
     /// 活动礼包名称规则（需求：{0}特惠礼包 key=SpecialOffer）：
     /// 平时展示"特惠礼包"；节日替换为"XX节特惠礼包"；周末为"周末特惠礼包"。
+    /// 活动礼包状态从 ShopLimitData 读取。
     /// </summary>
     public string GetActivityPackName(ShopDataItem item)
     {
-        if (item == null || !item.isActivityPack)
+        if (item == null || !IsActivityPack(item))
             return Localize("SpecialOffer");
 
         string label = GetTodayHolidayLabel();
@@ -171,5 +221,14 @@ public partial class ShopManager : MonoBehaviour
             return label + "特惠礼包";
         return "特惠礼包";
     }
+
+    /// <summary>
+    /// 读取指定商品是否为活动礼包（统一从 ShopLimitData 读取）。
+    /// </summary>
+    private bool IsActivityPack(ShopDataItem item)
+    {
+        if (item == null) return false;
+        ShopLimitData limit = GetLimitData(item);
+        return limit != null && limit.isActivityPack;
+    }
 }
-//（注：内容由AI生成）

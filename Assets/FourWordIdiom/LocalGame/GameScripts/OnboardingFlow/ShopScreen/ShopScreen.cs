@@ -139,8 +139,7 @@ public class ShopScreen : UIWindow
         }
         else
         {
-            CrateShopItem(shopallDataItems);
-            
+            ShowFixedStore();
             freeItemTable.gameObject.SetActive(true);
         }
         
@@ -287,6 +286,28 @@ public class ShopScreen : UIWindow
         if (freeItemTable != null) freeItemTable.transform.SetAsLastSibling();
         if (goldItemTable != null) goldItemTable.transform.SetAsLastSibling();
         if (goldItemTable2 != null) goldItemTable2.transform.SetAsLastSibling();
+    }
+    
+    /// <summary>
+    /// 收起状态：一号推荐位 + 二号推荐位 + 金币档 + “更多选择”
+    /// </summary>
+    private void ShowFixedStore()
+    {
+        if (ShopManager.shopManager.shopMode != ShopMode.FixedStore) return;
+       
+        // 1. 固定商店收起状态商品（内部处理一号位兜底）
+        List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetFixedStoreExpandedItems();
+
+        // 2. 按顺序填充一号位
+        for (int i = 0; i < collapsedItems.Count; i++)
+        {
+            ShopDataItem data = collapsedItems[i];
+            if (data == null) continue;
+            CreateDynamicItem(data, parent, 0);
+        }
+        
+        CrateShopItem(shopallDataItems);
+     
     }
 
     // ======================= 动态商店：收起 / 展开 =======================
