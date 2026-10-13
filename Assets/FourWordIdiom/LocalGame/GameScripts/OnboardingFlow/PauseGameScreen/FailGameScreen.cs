@@ -69,6 +69,13 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     /// </summary>
     private void SwitchPanel(bool showFailPanel)
     {
+        //是否处于无限体力中
+        if (GameDataManager.Instance.UserData.HasUnlimitedEnergy()&&!showFailPanel)
+        {
+            OnRealExitClicked();
+            return;
+        }
+        
         float rawTime = ChessStageController.Instance.CurrStageData.RemainingTime;
         float safeTime = Mathf.Max(0, rawTime);
         int minutes = Mathf.FloorToInt(safeTime / 60F);

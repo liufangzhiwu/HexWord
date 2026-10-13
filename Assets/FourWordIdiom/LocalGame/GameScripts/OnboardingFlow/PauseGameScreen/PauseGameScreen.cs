@@ -177,13 +177,22 @@ public class PauseGameScreen : UIWindow
         pausePanel.SetActive(false);
         continuePanel.SetActive(true);
         gameTimeText.gameObject.SetActive(false);
-        EventDispatcher.instance.TriggerHighlightHeaderUI(true);
+        
+        if (GameDataManager.Instance.UserData.HasUnlimitedEnergy())
+        {
+            OnRealExitClicked();
+        }
+        else
+        {
+            EventDispatcher.instance.TriggerHighlightHeaderUI(true);
+        }
+       
     }
     /// <summary>
     /// 在二次确认面板点击【取消退出/继续游戏】
     /// </summary>
     private void OnRealExitClicked()
-    { 
+    {
         if (ChessPlayArea.Instance != null)
         {
             if (ChessPlayArea.Instance.chessboardGrid != null)

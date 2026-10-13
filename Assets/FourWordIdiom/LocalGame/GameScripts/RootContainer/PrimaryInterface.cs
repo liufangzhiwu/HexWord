@@ -826,7 +826,8 @@ public class PrimaryInterface : UIWindow
     public void OnPlayClick()
     {
         bool hasUnfinishedSave = (GameDataManager.Instance.UserData.levelMode == 2 && ChessStageController.Instance.HasUnfinishedSave());
-        if (!hasUnfinishedSave)
+        bool hasUnlimitedEnergy = GameDataManager.Instance.UserData.HasUnlimitedEnergy();
+        if (!hasUnfinishedSave&& !hasUnlimitedEnergy)
         {
             // 🌟 核心拦截：检查并扣除体力！
             // ConsumeEnergy 会自动处理：如果是第一关返回 true 不扣体力，如果体力>=1返回 true 并扣除。

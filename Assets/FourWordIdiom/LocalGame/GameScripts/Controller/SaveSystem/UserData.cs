@@ -40,7 +40,6 @@ public class UserData
     public string charInfoPopupLastTime; // 上次弹出时间
     /// <summary>无限体力结束时间（"yyyy-MM-dd HH:mm:ss"；空字符串表示从未购买）</summary>
     public string unlimitedEnergyEndTime = "";
-    private const string UnlimitedEnergyTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
     public int GoldLeaf; // 金箔数量
     public List<ThemeSaveItem> ThemeSaveItems = new List<ThemeSaveItem>();
@@ -518,6 +517,8 @@ public class UserData
         firstPayTime = user.firstPayTime;
         lastPayTime = user.lastPayTime;
         isShowDiscountGift = user.isShowDiscountGift;
+        unlimitedEnergyEndTime = user.unlimitedEnergyEndTime;
+        charInfoPopupLastTime = user.charInfoPopupLastTime;
 
         // 👇 🌟 核心修复：通过时间戳是否存在，来精准判断是不是老玩家首次更新
         if (string.IsNullOrEmpty(user.LastEnergyUpdateTime))
@@ -1592,7 +1593,7 @@ public class UserData
         }
 
         DateTime newEnd = baseTime.AddHours(hours);
-        unlimitedEnergyEndTime = newEnd.ToString(UnlimitedEnergyTimeFormat);
+        unlimitedEnergyEndTime = newEnd.ToString("yyyy-MM-dd HH:mm:ss");
         return newEnd;
     }
 
