@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using DG.Tweening;
 using UnityEngine;
@@ -37,13 +38,17 @@ public class HeaderSection : UIWindow
     // [Header("右侧按钮组 (词库)")]
     // public Button MyThemeBtn;
     // public Button PuzzlebookBtn;
-    
-    // Start is called before the first frame update
 
     private bool _isShowEnergyAdd = true;
     
     // 缓存金币文本的最原始缩放值
     private Vector3 _originalGoldTextScale = Vector3.zero;
+
+    // ======================= 无限体力缓存 =======================
+    /// <summary>本次刷新时无限体力是否激活</summary>
+    private bool _isUnlimitedEnergyActive;
+    /// <summary>本次刷新时无限体力剩余秒数（激活时 > 0）</summary>
+    private double _unlimitedEnergyRemainSeconds;
 
     protected override void InitializeUIComponents()
     {
@@ -172,10 +177,6 @@ public class HeaderSection : UIWindow
             BackBtn.gameObject.SetActive(true);
             LevelPuzzleBtn.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(StageHexController.Instance.CurStageData.PupaDatas!=null);
-            // RectTransform pupaRect = PupaTable.GetComponent<RectTransform>();
-            // pupaRect.anchorMin = Vector2.one;
-            // pupaRect.anchorMax = Vector2.one;
-            // pupaRect.anchoredPosition = new Vector2(40, -65);
             //
             if (StageHexController.Instance.CurStageData.PupaDatas != null&&!GameDataManager.Instance.ButterflyData.IsOpenButterfly)
             {
@@ -209,9 +210,73 @@ public class HeaderSection : UIWindow
         InitEnergyUI();
         // 启用时开始重复调用 (1秒延迟，每秒1次)
         StartCoroutine(CheckLevelPuzzleVisibility());
-        
-      
     }
+
+    // ======================= 无限体力辅助 =======================
+
+    /// <summary>
+    /// 是否处于无限体力状态（读取 UserData.unlimitedEnergyEndTime，过期视为失效）。
+    /// 需求：礼包中的"无限体力"商品，购买后体力图标显示无穷，限时期间退出关卡/复活无二次确认。
+    /// </summary>
+    private bool IsUnlimitedEnergyActive()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null)
+            return false;
+
+        var userData = GameDataManager.Instance.UserData;
+        if (string.IsNullOrEmpty(userData.unlimitedEnergyEndTime))
+            return false;
+
+        DateTime end;
+        if (!DateTime.TryParse(userData.unlimitedEnergyEndTime, out end))
+            return false;
+
+        return end > DateTime.Now;
+    }
+
+    /// <summary>无限体力剩余秒数（未激活返回 0）</summary>
+    private double GetUnlimitedEnergyRemainSeconds()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null)
+            return 0;
+
+        var userData = GameDataManager.Instance.UserData;
+        if (string.IsNullOrEmpty(userData.unlimitedEnergyEndTime))
+            return 0;
+
+        DateTime end;
+        if (!DateTime.TryParse(userData.unlimitedEnergyEndTime, out end))
+            return 0;
+
+        double remain = (end - DateTime.Now).TotalSeconds;
+        return remain > 0 ? remain : 0;
+    }
+
+    /// <summary>
+    /// 格式化无限体力剩余时间：
+    ///  - >= 1 小时：H:mm:ss
+    ///  - < 1 小时：mm:ss
+    /// </summary>
+    private string FormatUnlimitedRemainTime(double remainSeconds)
+    {
+        int totalSeconds = Mathf.Max(0, Mathf.FloorToInt((float)remainSeconds));
+        int hours = totalSeconds / 3600;
+        int mins = (totalSeconds % 3600) / 60;
+        int secs = totalSeconds % 60;
+
+        if (hours > 0)
+            return string.Format("{0}:{1:00}:{2:00}", hours, mins, secs);
+        return string.Format("{0:00}:{1:00}", mins, secs);
+    }
+
+    /// <summary>刷新无限体力缓存（每次体力计时循环调用一次，避免重复解析字符串）</summary>
+    private void RefreshUnlimitedEnergyCache()
+    {
+        _isUnlimitedEnergyActive = IsUnlimitedEnergyActive();
+        _unlimitedEnergyRemainSeconds = _isUnlimitedEnergyActive ? GetUnlimitedEnergyRemainSeconds() : 0;
+    }
+
+    // ======================= 原有逻辑 =======================
 
     private IEnumerator CheckLevelPuzzleVisibility()
     {
@@ -360,6 +425,9 @@ public class HeaderSection : UIWindow
             InitPupaUI();
         }
 
+        // 无限体力激活期间，体力按钮不可点
+        RefreshUnlimitedEnergyCache();
+
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)
             ||SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea)
             ||SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
@@ -371,18 +439,29 @@ public class HeaderSection : UIWindow
             energyBtn.gameObject.SetActive(!PupaTable.gameObject.activeInHierarchy && 
                                            !SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView));
         }
+
+        if (_isUnlimitedEnergyActive)
+        {
+            // 无限体力期间，加号隐藏、按钮不可点
+            energyAdd.SetActive(false);
+            energyBtn.interactable = false;
+        }
         
         BackBtn.gameObject.SetActive(!SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)&&
                                      !SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface));
         PupaTable.interactable = !isshowPupa;
        
     }
+
     /// <summary>
     /// 供退出/重连弹窗调用：将体力槽和蝶蛹进度条提到最顶层高亮显示，穿透黑色半透明蒙版
     /// </summary>
     public void HighlightEnergy(bool isHighlight)
     {
-        energyAdd.SetActive(!isHighlight);
+        // 无限体力期间，加号始终隐藏
+        RefreshUnlimitedEnergyCache();
+
+        energyAdd.SetActive(!isHighlight && !_isUnlimitedEnergyActive);
         // 1. 给体力按钮挂载 Canvas 以便提层
         Canvas energyCanvas = energyBtn.GetComponent<Canvas>();
         if (energyCanvas == null) energyCanvas = energyBtn.gameObject.AddComponent<Canvas>();
@@ -408,18 +487,23 @@ public class HeaderSection : UIWindow
             var userData = GameDataManager.Instance.UserData;
             int stage = Mathf.Max(userData.CurrentHexStage, userData.CurrentChessStage);
             bool isAdequate = (userData.Energy >= UserData.MAX_NATURAL_ENERGY) || (stage == 1);
-            energyBtn.interactable = !isAdequate;
+
+            // 无限体力期间，不恢复点击能力
+            energyBtn.interactable = !isAdequate && !_isUnlimitedEnergyActive;
             energyBtn.gameObject.SetActive(false);
         }
-        _isShowEnergyAdd = !isHighlight;
-        energyAdd.SetActive(!isHighlight);
+        _isShowEnergyAdd = !isHighlight && !_isUnlimitedEnergyActive;
+        energyAdd.SetActive(_isShowEnergyAdd);
     }
+
     /// <summary>
     /// 供体力购买界面调用：将金币槽和体力槽提到最顶层高亮显示
     /// </summary>
     private void HighlightGoldAndEnergy(bool isHighlight)
     {
         if(GameDataManager.Instance==null) return;
+
+        RefreshUnlimitedEnergyCache();
         
         // 1. 获取/添加 体力的 Canvas
         Canvas energyCanvas = energyBtn.GetComponent<Canvas>();
@@ -454,15 +538,18 @@ public class HeaderSection : UIWindow
             // 恢复默认层级
             energyCanvas.overrideSorting = false;
             energyCanvas.sortingOrder = 0;
-            energyBtn.interactable = !isAdequate;
+            // 无限体力期间，不恢复点击能力
+            energyBtn.interactable = !isAdequate && !_isUnlimitedEnergyActive;
             
             goldCanvas.overrideSorting = false;
             goldCanvas.sortingOrder = 0;
             ShopBtn.interactable = true;
         }
         
-        energyAdd.SetActive(!isAdequate);
+        // 无限体力期间隐藏加号
+        energyAdd.SetActive(!isAdequate && !_isUnlimitedEnergyActive);
     }
+
     private void InitPupaUI()
     {
         ButterflyGrow butterflyGrow =ButterfliesManager.Instance.GetCurrentGrow();
@@ -471,6 +558,7 @@ public class HeaderSection : UIWindow
         
         Pupatxt.text = $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow.Count}";
     }
+
     private Coroutine _energyCoroutine;
     private void InitEnergyUI()
     {
@@ -488,16 +576,37 @@ public class HeaderSection : UIWindow
             
             // 每次循环都可以顺手让底层核对一下体力（处理切后台等情况产生的时间差）
             userData.CalculateEnergyRegen();
+
+            // 刷新无限体力缓存（最高优先级）
+            RefreshUnlimitedEnergyCache();
+
             int currentEnergy = userData.Energy;
-            // 1. 刷新当前体力数值显示 (例如 "3" 或者 "充足")
             int stage = Mathf.Max(userData.CurrentHexStage, userData.CurrentChessStage);
+
+            // ======================= 最高优先级：无限体力 =======================
+            if (_isUnlimitedEnergyActive)
+            {
+                // 体力图标显示无穷
+                energyTxt.text = "∞";
+                // 右侧显示剩余时间倒计时（弹窗中显示限时的诉求在此体现）
+                energyTimer.text = FormatUnlimitedRemainTime(_unlimitedEnergyRemainSeconds);
+                // 加号隐藏、按钮不可点
+                energyAdd.SetActive(false);
+                energyBtn.interactable = false;
+
+                yield return wait;
+                continue;
+            }
+
+            // ======================= 常规体力逻辑 =======================
+            // 1. 刷新当前体力数值显示 (例如 "3" 或者 "充足")
             bool isAdequate = (currentEnergy >= UserData.MAX_NATURAL_ENERGY);
             // string energyStatus = userData.GetEnergyDisplayString();
             // energyAdd.SetActive((!isAdequate) && _isShowEnergyAdd); // 充足时不显示加号
             energyBtn.interactable = true;
             if (isAdequate && stage == 1)
             {
-                // 1. 第一关充足：红心内为空，右侧显示“充足”
+                // 1. 第一关充足：红心内为空，右侧显示"充足"
                 energyTxt.text = "";
                 energyTimer.text = "充足";
                 energyAdd.SetActive(false);
@@ -547,6 +656,7 @@ public class HeaderSection : UIWindow
             yield return wait;
         }
     }
+
     public void ShowPupaTableAnima(Transform startPoint, int pupa = 1, Transform parent  = null)
     {
         ButterflyGrow butterflyGrow =ButterfliesManager.Instance.GetCurrentGrow();
@@ -707,8 +817,4 @@ public class HeaderSection : UIWindow
         if(_energyCoroutine != null) StopCoroutine(_energyCoroutine);
         base.OnDisable();
     }
-
 }
-
-
-

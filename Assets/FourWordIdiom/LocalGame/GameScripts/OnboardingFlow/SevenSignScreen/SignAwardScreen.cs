@@ -135,7 +135,7 @@ public class SignAwardScreen : UIWindow
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
             case LimitRewordType.Tipstool:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
-            case LimitRewordType.Resettool:
+            case LimitRewordType.ReStartTool:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
             case LimitRewordType.HeadIcon:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(headIconstr,"UserHeadIcons");

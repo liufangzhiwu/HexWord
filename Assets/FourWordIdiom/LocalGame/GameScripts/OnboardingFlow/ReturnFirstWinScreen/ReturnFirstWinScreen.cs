@@ -90,7 +90,7 @@ public class ReturnFirstWinScreen : UIWindow
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
             case LimitRewordType.Tipstool:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
-            case LimitRewordType.Resettool:
+            case LimitRewordType.ReStartTool:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Reset");
             case LimitRewordType.Pupas:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Pupas");

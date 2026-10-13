@@ -1113,12 +1113,59 @@ public partial class ShopManager : MonoBehaviour
         RefreshLimitData();
     }
 
-    /// <summary>无限体力购买处理（TODO：接入体力系统）</summary>
+       
+    /// <summary>
+    /// 无限体力购买处理：
+    ///  - 从商品 ID / 配置里解析小时数；
+    ///  - 通过 UserData.AddUnlimitedEnergy(hours) 累加时长（多次购买叠加）；
+    ///  - 买后刷新 HeaderSection 的体力 UI（若当前显示）。
+    /// </summary>
     private void HandleUnlimitedEnergyPurchase(ShopDataItem shopDataItem)
     {
-        // TODO：设置 UserData 无限体力状态（体力图标无穷、限时显示、退出/复活无二次确认）
-        // GameDataManager.Instance.UserData.unlimitedEnergyEndTime = DateTime.Now.AddHours(hours).ToString();
-        LogShop($"HandleUnlimitedEnergyPurchase: {shopDataItem.produceNameId} (TODO 体力系统)");
+        int hours = ParseUnlimitedEnergyHours(shopDataItem);
+        if (hours <= 0)
+        {
+            LogShop($"HandleUnlimitedEnergyPurchase 跳过: {shopDataItem.produceNameId} 未解析到有效小时数");
+            return;
+        }
+
+        var userData = GameDataManager.Instance.UserData;
+
+        double beforeRemain = userData.GetUnlimitedEnergyRemainSeconds();
+        DateTime newEnd = userData.AddUnlimitedEnergy(hours);
+        double afterRemain = userData.GetUnlimitedEnergyRemainSeconds();
+
+        LogShop($"HandleUnlimitedEnergyPurchase: {shopDataItem.produceNameId}, +{hours}h, " +
+                $"原剩余={TimeSpan.FromSeconds(beforeRemain):hh\\:mm\\:ss}, " +
+                $"新剩余={TimeSpan.FromSeconds(afterRemain):hh\\:mm\\:ss}, " +
+                $"新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
+
+        // 通知 HeaderSection 刷新体力 UI（无限体力图标/倒计时）
+        // 走 EventDispatcher 或直接让协程下一帧自动刷新均可
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true);
+    }
+
+    /// <summary>
+    /// 从商品解析"无限体力（小时）"：
+    ///  优先读配置字段（推荐）；无字段时按 produceNameId 命名兜底解析。
+    /// </summary>
+    private int ParseUnlimitedEnergyHours(ShopDataItem item)
+    {
+        if (item == null) return 0;
+
+        // ★ 推荐：配置表迁移后从 ShopDataItem 直接读字段
+        // return item.unlimitedEnergyHours;
+
+        // 兜底：按 ID 约定命名解析，例如 Energy1 / Energy3 / Energy24
+        if (string.IsNullOrEmpty(item.produceNameId)) return 0;
+        string s = item.produceNameId;
+
+        int idx = s.Length - 1;
+        while (idx >= 0 && char.IsDigit(s[idx])) idx--;
+        if (idx == s.Length - 1) return 0; // 末尾没有数字
+
+        int hours;
+        return int.TryParse(s.Substring(idx + 1), out hours) ? hours : 0;
     }
 
     /// <summary>

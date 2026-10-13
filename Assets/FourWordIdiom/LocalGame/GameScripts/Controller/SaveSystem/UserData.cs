@@ -38,6 +38,9 @@ public class UserData
     public bool hasUsedFreeRevive = false;
     public int charInfoPopupCount; // 已弹出次数
     public string charInfoPopupLastTime; // 上次弹出时间
+    /// <summary>无限体力结束时间（"yyyy-MM-dd HH:mm:ss"；空字符串表示从未购买）</summary>
+    public string unlimitedEnergyEndTime = "";
+    private const string UnlimitedEnergyTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
     public int GoldLeaf; // 金箔数量
     public List<ThemeSaveItem> ThemeSaveItems = new List<ThemeSaveItem>();
@@ -1546,6 +1549,59 @@ public class UserData
             // 通知UI刷新 (需要在EventDispatcher里加上这行，如果你有的话)
             // EventDispatcher.instance?.TriggerEnergyUIChange(); 
         }
+    }
+    
+    
+    /// <summary>是否处于无限体力状态</summary>
+    public bool HasUnlimitedEnergy()
+    {
+        if (string.IsNullOrEmpty(unlimitedEnergyEndTime)) return false;
+        DateTime end;
+        if (!DateTime.TryParse(unlimitedEnergyEndTime, out end)) return false;
+        return end > DateTime.Now;
+    }
+
+    /// <summary>无限体力剩余秒数（未激活或已过期返回 0）</summary>
+    public double GetUnlimitedEnergyRemainSeconds()
+    {
+        if (string.IsNullOrEmpty(unlimitedEnergyEndTime)) return 0;
+        DateTime end;
+        if (!DateTime.TryParse(unlimitedEnergyEndTime, out end)) return 0;
+        double remain = (end - DateTime.Now).TotalSeconds;
+        return remain > 0 ? remain : 0;
+    }
+
+    /// <summary>
+    /// 累加无限体力时长（多次购买叠加）。
+    /// 规则：
+    ///   - 未过期：在已有 endTime 基础上叠加 hours；
+    ///   - 已过期 / 从未购买：从 DateTime.Now 起算叠加 hours。
+    /// 返回新的结束时间。
+    /// </summary>
+    public DateTime AddUnlimitedEnergy(int hours)
+    {
+        if (hours <= 0) return GetUnlimitedEnergyEndTime();
+
+        DateTime baseTime = DateTime.Now;
+        DateTime oldEnd;
+        if (!string.IsNullOrEmpty(unlimitedEnergyEndTime)
+            && DateTime.TryParse(unlimitedEnergyEndTime, out oldEnd)
+            && oldEnd > DateTime.Now)
+        {
+            baseTime = oldEnd; // 未过期 → 从原结束时间往后叠
+        }
+
+        DateTime newEnd = baseTime.AddHours(hours);
+        unlimitedEnergyEndTime = newEnd.ToString(UnlimitedEnergyTimeFormat);
+        return newEnd;
+    }
+
+    /// <summary>获取无限体力结束时间（无效返回 DateTime.MinValue）</summary>
+    public DateTime GetUnlimitedEnergyEndTime()
+    {
+        if (string.IsNullOrEmpty(unlimitedEnergyEndTime)) return DateTime.MinValue;
+        DateTime end;
+        return DateTime.TryParse(unlimitedEnergyEndTime, out end) ? end : DateTime.MinValue;
     }
 
     /// <summary>

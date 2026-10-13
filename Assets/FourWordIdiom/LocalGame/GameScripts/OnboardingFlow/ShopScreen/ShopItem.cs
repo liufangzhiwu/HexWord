@@ -10,9 +10,8 @@ using UnityEngine.EventSystems;
 //using UnityEngine.Purchasing;
 using UnityEngine.UI;
 
-public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
+public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
-    
     private ShopDataItem shopDataItem; // 假设这是一个封装商品数据的类
     [SerializeField] private GameObject discountbg;
     [SerializeField] private Image dibg;
@@ -28,16 +27,16 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     [SerializeField] private Transform giftsParent;
     [SerializeField] private GiftItem giftItemPrefab;
     [SerializeField] private GameObject tipBtnPrefab;
-    
+
     [SerializeField] private UIShiny adsShiny;
-    
-    private ShopLimitData _shopLimitData=null;
+
+    private ShopLimitData _shopLimitData = null;
     private Button tipBtn;
-    
+
     [Header("缩放设置")]
     public float pressedScale = 0.9f; // 按下时的缩放比例
     public float scaleSpeed = 10f;    // 缩放速度
-    
+
     [Header("广告状态动画设置")]
     public float breathSpeed = 3f;           // 按钮呼吸速度
     public float breathAmplitude = 0.03f;    // 按钮呼吸幅度
@@ -45,20 +44,20 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     public float shakeAmplitude = 8f;        // 抖动幅度（角度）广告Icon晃动角度
     public float shakeInterval = 2.0f;       // 每次抖动的间隔时间（比如每2秒抖动一次）
     public float shakeDuration = 0.5f;       // 每次抖动的持续时间（比如持续抖动0.5秒）
-    
+
     private float shakeTimer = 0f;           // 内部计时器
     private Vector3 originalIconPosition;    // 广告Icon原始坐标（防止位移）
-    private Vector3 originalIconAngles; // 广告Icon原始旋转（防止角度漂移）
-    
+    private Vector3 originalIconAngles;      // 广告Icon原始旋转（防止角度漂移）
+
     private Vector3 originalScale;    // 原始大小
     private bool isPressed = false;   // 是否按下
     private bool isDragging = false;  // 是否正在拖动
     private bool isAdStateActive = false;    // 是否处于看广告领取的动画状态
     private RectTransform rectTransform;
     private Vector2 pressPosition;     // 按下时的屏幕坐标
-    
+
     private bool isTransformCached = false; // 标记是否已缓存初始坐标
-    
+
     private void Awake()
     {
         InitTransformCache();
@@ -71,26 +70,26 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         // 每次打开界面时，检查是否需要播放广告动画
         CheckAdAnimationState();
     }
-    
+
     /// <summary>
     /// 缓存原始坐标和缩放，确保在对象池或频繁刷新下绝对不会偏移
     /// </summary>
     private void InitTransformCache(bool forceRefresh = false)
     {
         if (!forceRefresh && isTransformCached) return;
-        
+
         rectTransform = GetComponent<RectTransform>();
         originalScale = transform.localScale;
-        
+
         if (btntagicon != null)
         {
             originalIconPosition = btntagicon.transform.localPosition;
             originalIconAngles = btntagicon.transform.localEulerAngles;
         }
-        
+
         isTransformCached = true;
     }
-    
+
     /// <summary>
     /// 核心动画状态机：检查当前按钮是否处于广告状态，并控制组件启停
     /// </summary>
@@ -114,7 +113,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             // 免费模式或付费模式：关闭动画和特效，并强行复位坐标
             isAdStateActive = false;
             if (adsShiny != null) adsShiny.enabled = false;
-            
+
             if (isTransformCached)
             {
                 if (rectTransform != null) rectTransform.localScale = originalScale;
@@ -126,11 +125,11 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             }
         }
     }
-    
+
     void Update()
     {
         if (!isTransformCached) return;
-        
+
         // 1. 处理按钮整体的呼吸与缩放
         Vector3 targetScale = originalScale;
 
@@ -161,10 +160,9 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             shakeTimer += Time.unscaledDeltaTime;
             // 计算当前处于哪个周期（通过取余操作）
             float currentCycleTime = shakeTimer % (shakeInterval + shakeDuration);
-            // 如果在“抖动持续时间”内，执行正弦波晃动
+            // 如果在"抖动持续时间"内，执行正弦波晃动
             if (currentCycleTime < shakeDuration)
             {
-
                 // 计算Z轴的旋转晃动量
                 float shakeZ = Mathf.Sin(currentCycleTime * shakeSpeed) * shakeAmplitude;
 
@@ -177,7 +175,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             }
             else
             {
-                // 在“非抖动的间隔时间”内，强行复位角度，保持绝对静止
+                // 在"非抖动的间隔时间"内，强行复位角度，保持绝对静止
                 btntagicon.transform.localEulerAngles = originalIconAngles;
             }
             // 强行锁死原始坐标，确保在动画过程中任何层级刷新都不会导致位移
@@ -185,30 +183,29 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
     }
 
-
     public void OnPointerDown(PointerEventData eventData)
     {
         isPressed = true;
         pressPosition = eventData.position;
-        
+
         EventDispatcher.instance.TriggerChangeFreeTipsPanel();
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
         isPressed = false;
-        
+
         // 计算拖拽距离（使用Unity的事件系统阈值）
         float dragDistance = (eventData.position - pressPosition).magnitude;
         float dragThreshold = EventSystem.current.pixelDragThreshold;
-        
+
         // 当拖拽距离小于阈值时视为有效点击
         if (dragDistance <= dragThreshold)
         {
             OnItemClicked();
         }
     }
-    
+
     private void OnItemClicked()
     {
         Debug.Log("条目被点击，执行功能");
@@ -217,7 +214,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         {
             if (shopDataItem.produceNameId == "FreeGoods")
             {
-                if (UIUtilities.isEditMode||!GameDataManager.Instance.UserData.isDayFreeGet)
+                if (UIUtilities.isEditMode || !GameDataManager.Instance.UserData.isDayFreeGet)
                 {
                     UpdateAdsRewardUI(true);
                 }
@@ -230,24 +227,23 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
             if (shopDataItem.produceNameId == "GoldGoods")
             {
-                
                 if (!GameDataManager.Instance.UserData.isDayGoldBuy)
                 {
                     int needgold = (int)shopDataItem.price;
-                    
+
                     if (GameDataManager.Instance.UserData.Gold < needgold)
                     {
                         MessageSystem.Instance.ShowTip("TipGoldInsufficient");
                         return;
                     }
-                    
-                    List<string> giftdata=shopDataItem.productContent[0];
+
+                    List<string> giftdata = shopDataItem.productContent[0];
                     int count = int.Parse(giftdata[1]);
                     int type = int.Parse(giftdata[0]);
-                    
-                    GameDataManager.Instance.UserData.UpdateGold(-needgold, true,true,"看广告领取商店金币");
-                    GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count,"看广告领取商店金币");
-                    
+
+                    GameDataManager.Instance.UserData.UpdateGold(-needgold, true, true, "看广告领取商店金币");
+                    GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count, "看广告领取商店金币");
+
                     EventDispatcher.instance.TriggerChangeGoldUI(0, true);
                     GameDataManager.Instance.UserData.isDayGoldBuy = true;
                     shopPriceText.text = "已购买";
@@ -263,7 +259,6 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
         else
         {
-            
             if (shopDataItem.produceNameId == "SingleGoods")
             {
                 if (GameDataManager.Instance.UserData.isDayMoneyBuy)
@@ -272,29 +267,29 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                     return;
                 }
             }
-            
+
             // 在这里实现你的点击功能逻辑
             OnBuyButtonClicked(shopDataItem);
         }
     }
-    
+
     IEnumerator ShowAdsRewardUI()
     {
         yield return new WaitForSeconds(0.05f);
-        AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold,UpdateAdsRewardUI);
+        AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold, UpdateAdsRewardUI);
     }
-    
+
     private void UpdateAdsRewardUI(bool isShow)
     {
         MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
-            List<string> giftdata=shopDataItem.productContent[0];
+            List<string> giftdata = shopDataItem.productContent[0];
             int count = int.Parse(giftdata[1]);
-            
+
             CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
-            GameDataManager.Instance.UserData.UpdateGold(count, true,true,"看广告领取商店金币");
-            GameDataManager.Instance.UserData.isDayFreeGet=true;
+            GameDataManager.Instance.UserData.UpdateGold(count, true, true, "看广告领取商店金币");
+            GameDataManager.Instance.UserData.isDayFreeGet = true;
             btntagicon.gameObject.SetActive(true);
             AnalyticMgr.VideoAdSuccess("看广告领取商店金币");
             //MessageSystem.Instance.ShowTip("购买成功！");
@@ -306,7 +301,6 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             AnalyticMgr.VideoAdFail("看广告领取商店金币");
         }
     }
-    
 
     public void SetShopData(ShopDataItem data)
     {
@@ -316,8 +310,8 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             return;
         }
 
-        shopDataItem = data;   
-        
+        shopDataItem = data;
+
         InitTransformCache(); // 确保数据填充前已缓存，防止对象池报错
         SetShopIcon();
         HandleTimeLimitedItems(data);
@@ -330,7 +324,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     }
 
     public void UpdateUI()
-    {       
+    {
         HandleTimeLimitedItems(shopDataItem);
         if (tipBtn != null)
         {
@@ -343,7 +337,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     }
 
     #region Helper Methods
-    
+
     private void SetShopIcon()
     {
         if (shopIcon == null) return;
@@ -356,13 +350,13 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    private void HandleTimeLimitedItems(ShopDataItem data)  
+    private void HandleTimeLimitedItems(ShopDataItem data)
     {
         if (timebg == null) return;
-      
+
         _shopLimitData = GameDataManager.Instance.UserData.limitShopItems?
             .Find(item => item.nameid == data.produceNameId);
-        
+
         if (_shopLimitData != null &&
             !string.IsNullOrEmpty(_shopLimitData.endtime) &&
             _shopLimitData.isopen)
@@ -376,14 +370,12 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             timebg.gameObject.SetActive(false);
             giftsParent.GetComponent<RectTransform>().anchoredPosition = new Vector2(50f, 65);
         }
-       
-        
+
         var icon = LoadShopIcon(shopDataItem.showIcon);
         if (icon != null)
         {
             //giftsParent.GetComponent<Image>().sprite = icon;
         }
-       
     }
 
     private void HandleDiscountDisplay(ShopDataItem data)
@@ -409,17 +401,17 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         shopCountText.gameObject.SetActive(data.type != 1);
 
-        if (data.type == 0||data.type == 5|| data.purchaseType == -1&& data.productContent != null && data.productContent.Count > 0)
+        if (data.type == 0 || data.type == 5 || data.purchaseType == -1 && data.productContent != null && data.productContent.Count > 0)
         {
             shopCountText.text = $"x {data.productContent[0][1]}";
         }
         else if (data.type == 2)
         {
             shopCountText.text = MultilingualManager.Instance?.GetString(data.name) ?? data.name;
-            Sprite sprite = LoadShopIcon("giftdi"+data.id);
+            Sprite sprite = LoadShopIcon("giftdi" + data.id);
             if (sprite != null)
-                dibg.sprite =sprite;
-            
+                dibg.sprite = sprite;
+
             // Color color = new Color(40.0f/255,144.0f/255,1);
             //
             // switch (data.id)
@@ -484,7 +476,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 tipText.text = MultilingualManager.Instance?.GetString(data.pointDes) ?? data.pointDes;
             }
 
-            tipBtn.onClick.AddListener(()=>ClickShopItemtipBtn(tippanel));
+            tipBtn.onClick.AddListener(() => ClickShopItemtipBtn(tippanel));
         }
     }
 
@@ -524,21 +516,19 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         try
         {
-
-// #if UNITY_IOS
-//             decimal price = product.metadata.localizedPrice;
-//             string currencyCode = product.metadata.isoCurrencyCode;
-//
-//             Debug.Log($"商品价格: {price} ({currencyCode})");
-//
-//             CultureInfo culture = UIExtension.GetCultureForCurrency(currencyCode);
-// #else
+            // #if UNITY_IOS
+            //             decimal price = product.metadata.localizedPrice;
+            //             string currencyCode = product.metadata.isoCurrencyCode;
+            //
+            //             Debug.Log($"商品价格: {price} ({currencyCode})");
+            //
+            //             CultureInfo culture = UIExtension.GetCultureForCurrency(currencyCode);
+            // #else
             float price = data.price;
             // 获取合适的文化信息
             CultureInfo culture = UIUtilities.GetCultureForCurrency("");
-//#endif
-           
-            
+            //#endif
+
             if (shopDataItem.produceNameId == "SingleGoods")
             {
                 if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
@@ -566,7 +556,6 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             {
                 shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
             }
-           
 
             ShowPriceLoadingState(false);
         }
@@ -610,17 +599,17 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     {
         DateTime startTime = DateTime.Parse(_shopLimitData.endtime);
         TimeSpan timeSpan = startTime.Subtract(DateTime.Now);
-          
+
         if (timeSpan.TotalMinutes > 0)
         {
             timebg.GetComponentInChildren<Text>().text = UIUtilities.FormatTimeRemaining(timeSpan);
         }
-        
+
         // 输出倒计时
         return timeSpan.TotalMinutes.ToString();
         //return "00:00:00";
     }
-    
+
     private IEnumerator UpdateTime()
     {
         yield return new WaitForSeconds(0.2f);
@@ -634,7 +623,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 transform.gameObject.SetActive(false);
                 break; // 如果时间为空，退出循环
             }
-              
+
             yield return new WaitForSeconds(10); // 等待 60 秒
         }
     }
@@ -651,7 +640,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 {
                     giftsParent.GetComponent<HorizontalLayoutGroup>().spacing = 200;
                     // 赋值 shopItem 的数据
-                    giftItem.SetShopData(giftdata,shopDataItem.id,shopDataItem.des,shopDataItem.pointDes);
+                    giftItem.SetShopData(giftdata, shopDataItem.id, shopDataItem.des, shopDataItem.pointDes);
                 }
                 else
                 {
@@ -664,7 +653,6 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 // 赋值 shopItem 的数据
                 giftItem.SetShopData(giftdata, shopDataItem.id);
             }
-           
         }
     }
 
@@ -676,7 +664,7 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         {
             ProductItem productItem = new ProductItem
             {
-                order_id  = "",
+                order_id = "",
                 IsoCurrencyCode = "",
                 ItemName = data.produceNameId,
                 ProductId = data.produceNameId,
@@ -696,14 +684,14 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
     {
         //todo 关闭loading界面
         Debug.Log("购买成功: " + item.ProductId);
-        
+
         //var items = new List<AnalyticMgr.Item>();
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
-            Game.self.Shop.CurrentShopDataItem=shopDataItem.DeepCopy();
-            
+            Game.self.Shop.CurrentShopDataItem = shopDataItem.DeepCopy();
+
             SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
-            
+
             foreach (var dataitem in shopDataItem.productContent)
             {
                 int count = int.Parse(dataitem[1]);
@@ -712,20 +700,30 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count, false,false,"商店购买"+item.ItemName);
+                        GameDataManager.Instance.UserData.UpdateGold(count, false, false, "商店购买" + item.ItemName);
                         break;
                     case (int)LimitRewordType.Butterfly:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count,"商店购买"+item.ItemName);
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count, "商店购买" + item.ItemName);
                         break;
                     case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,"商店购买"+item.ItemName);
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count, "商店购买" + item.ItemName);
                         break;
                     case (int)LimitRewordType.AutoComplete://提示灯道具，单个字符提示
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,count,"商店购买"+item.ItemName);
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, "商店购买" + item.ItemName);
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:
                         BuyRemoveAdsEvent(type);
+                        break;
+                    case (int)LimitRewordType.ReStartTool:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, "商店购买" + item.ItemName);
+                        break;
+                    case (int)LimitRewordType.InfiniteEnergy:
+                        // ★ 无限体力：count = 小时数，累加到 UserData.unlimitedEnergyEndTime
+                        HandleInfiniteEnergyPurchase(count);
+                        break;
+                    default:
+                        Debug.LogWarning($"[ShopItem] 未处理的商品类型 type={type} count={count}");
                         break;
                 }
             }
@@ -738,17 +736,17 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
         GameDataManager.Instance.UserData.LastPayTimeTicks = DateTime.Now.Ticks;
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
-        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
-        
+        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy, 1);
+
         if (!UIUtilities.isEditMode)
         {
             AnalyticMgr.PurchaseFinished(item, firstPay);
 #if UNITY_HUAWEI
-         // 处理购买成功后的逻辑，例如增加游戏内货
+            // 处理购买成功后的逻辑，例如增加游戏内货
             item?.OnShipmentCompleted(true);
 #endif
         }
-        
+
         if (shopDataItem.produceNameId == "SingleGoods")
         {
             if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
@@ -766,20 +764,48 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             limitData.buyCount += 1;
             transform.gameObject.SetActive(false);
         }
-        
-        
+
         //MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
     }
-    
+
+    /// <summary>
+    /// 无限体力购买处理：
+    ///  - 通过 UserData.AddUnlimitedEnergy(hours) 累加时长（多次购买叠加）；
+    ///  - 若当前商品同时包含其它奖励，不影响本方法；
+    ///  - 通知顶部体力栏立即刷新（无限体力图标/倒计时）。
+    /// </summary>
+    private void HandleInfiniteEnergyPurchase(int hours)
+    {
+        if (hours <= 0)
+        {
+            Debug.LogWarning($"[ShopItem] HandleInfiniteEnergyPurchase 跳过: hours={hours}");
+            return;
+        }
+
+        var userData = GameDataManager.Instance.UserData;
+
+        double beforeRemain = userData.GetUnlimitedEnergyRemainSeconds();
+        DateTime newEnd = userData.AddUnlimitedEnergy(hours);
+        double afterRemain = userData.GetUnlimitedEnergyRemainSeconds();
+
+        Debug.Log($"[ShopItem] 无限体力购买: +{hours}h, " +
+                  $"原剩余={TimeSpan.FromSeconds(beforeRemain):hh\\:mm\\:ss}, " +
+                  $"新剩余={TimeSpan.FromSeconds(afterRemain):hh\\:mm\\:ss}, " +
+                  $"新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
+
+        // 刷新顶部体力栏 UI（无限体力图标 ∞ + 剩余倒计时）
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true);
+    }
+
     private void OnPurchaseFailed(string error)
     {
         //todo 关闭loading界面
         Debug.Log("购买失败: " + error);
-        AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(),error);
+        AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(), error);
         MessageSystem.Instance.HideLoadingAnimation();
     }
-    
+
     private void BuyRemoveAdsEvent(int type)
     {
         // ShopLimitData reshopLimitData= GameDataManager.Instance.UserData.limitShopItems.Find(item =>item.id == shopDataItem.id);
@@ -814,13 +840,13 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
 
         if (type == (int)LimitRewordType.RemoveAds)
         {
-            ShopManager.shopManager.UpdateAdsBtnUIEvent(null,true);
+            ShopManager.shopManager.UpdateAdsBtnUIEvent(null, true);
         }
     }
 
     private Sprite LoadShopIcon(string showIcon)
     {
-        Sprite sprite=null;
+        Sprite sprite = null;
         sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
 
         return sprite;
@@ -837,5 +863,4 @@ public class ShopItem : MonoBehaviour,IPointerDownHandler, IPointerUpHandler
             }
         }
     }
-
 }

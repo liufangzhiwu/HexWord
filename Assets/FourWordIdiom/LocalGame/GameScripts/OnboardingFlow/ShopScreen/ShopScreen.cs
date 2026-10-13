@@ -241,6 +241,7 @@ public class ShopScreen : UIWindow
     private void CrateShopItem(List<ShopDataItem> shopDataItems)
     {
         var targetDict = shopallItems;
+        ShopItem adsShopItem = null;
 
         for (int i = 0; i < shopDataItems.Count; i++)
         {
@@ -260,6 +261,11 @@ public class ShopScreen : UIWindow
 
             if (targetDict.TryGetValue(shopDataItem.id, out var shopItem))
             {
+                if (shopDataItem.type == 1)
+                {
+                    adsShopItem = shopItem;
+                }
+              
                 shopItem.transform.SetSiblingIndex(i);
                 shopItem.gameObject.SetActive(true);
                 shopItem.UpdateUI();
@@ -273,7 +279,13 @@ public class ShopScreen : UIWindow
 
                 shopItem = pool.GetObject<ShopItem>(itemparent);
                 shopItem.SetShopData(shopDataItem);
+                
+                if (shopDataItem.type == 1)
+                {
+                    adsShopItem = shopItem;
+                }
                 shopItem.transform.SetSiblingIndex(i);
+               
                 targetDict.TryAdd(shopDataItem.id, shopItem);
 
                 if (!shopallItems.ContainsKey(shopDataItem.id))
@@ -283,6 +295,7 @@ public class ShopScreen : UIWindow
             }
         }
 
+        if (adsShopItem != null) adsShopItem.transform.SetAsLastSibling();
         if (freeItemTable != null) freeItemTable.transform.SetAsLastSibling();
         if (goldItemTable != null) goldItemTable.transform.SetAsLastSibling();
         if (goldItemTable2 != null) goldItemTable2.transform.SetAsLastSibling();
@@ -370,9 +383,11 @@ public class ShopScreen : UIWindow
 
         _isExpanded = true;
 
-        // List<ShopDataItem> expandedItems = ShopManager.shopManager.GetDynamicStoreExpandedItems();
-        // if (expandedItems == null) expandedItems = new List<ShopDataItem>();
-        
+        // 1. 动态商店收起状态商品（内部处理一号位兜底：去广告/二号位前2权重）
+        List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetDynamicStoreCollapsedItems();
+        List<ShopDataItem> allDataItems = new List<ShopDataItem>();
+        allDataItems.AddRange(shopallDataItems);
+        allDataItems.AddRange(collapsedItems);
         
         // 1. 动态商店收起状态商品（内部处理一号位兜底：去广告/二号位前2权重）
         // List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetDynamicStoreCollapsedItems();
@@ -386,30 +401,16 @@ public class ShopScreen : UIWindow
         //     slotIndex = i;
         //     CreateDynamicItem(data, parent, slotIndex);
         // }
-
-        // // 去广告：若未购买且未在列表中，追加
-        // ShopDataItem removeAds = ShopManager.shopManager.GetProduct(ShopManager.ProductRemoveAds);
-        // if (removeAds != null
-        //     && !ShopManager.shopManager.IsRemoveAdsOwned()
-        //     && !expandedItems.Contains(removeAds))
-        // {
-        //     expandedItems.Add(removeAds);
-        // }
-        //
-        // // 按价格升序、去重
-        // expandedItems = expandedItems
-        //     .Where(x => x != null)
-        //     .Distinct()
-        //     .OrderBy(x => x.price)
-        //     .ToList();
-        //
-        // for (int i = 0; i < expandedItems.Count; i++)
-        // {
-        //     CreateDynamicItem(expandedItems[i], parent, i);
-        // }
+      
+        // 按价格升序、去重
+        allDataItems = allDataItems
+            .Distinct()
+            .OrderBy(x => x.price)
+            .ToList();
         
-        CrateShopItem(shopallDataItems);
+        CrateShopItem(allDataItems);
         
+        freeItemTable.gameObject.SetActive(true);
         moreChoiceBtn.gameObject.SetActive(false);
         shopScrollView.enabled =true;
     }

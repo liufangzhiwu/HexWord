@@ -53,6 +53,18 @@ public class GiftItem : MonoBehaviour
                 countText.fontSize = 60;
                 CreateTipsBtn(pointdes);
                 break;
+            case (int)LimitRewordType.ReStartTool:
+                spritename = "give_3";
+                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
+                countText.fontSize = 60;
+                CreateTipsBtn(pointdes);
+                break;
+            case (int)LimitRewordType.InfiniteEnergy:
+                spritename = "InfiniteEnergy";
+                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
+                countText.fontSize = 60;
+                CreateTipsBtn(pointdes);
+                break;
         }
         
         

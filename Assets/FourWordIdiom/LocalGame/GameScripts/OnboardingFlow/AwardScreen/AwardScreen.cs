@@ -95,6 +95,14 @@ public class AwardScreen : UIWindow
                 icon.sprite = GetSprite(type);
                 //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist.amount,message);
                 break;
+            case LimitRewordType.ReStartTool:
+                icon.sprite = GetSprite(type);
+                count.text = "\u00d7 "+rlist.amount; // 假设 productContent 是数量
+                break;
+            case LimitRewordType.InfiniteEnergy:
+                icon.sprite = GetSprite(type);
+                count.text = "\u00d7 "+rlist.amount; // 假设 productContent 是数量
+                break;
         }
     }
     
@@ -113,6 +121,11 @@ public class AwardScreen : UIWindow
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
             case LimitRewordType.Pupas:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Pupas");
+            case LimitRewordType.ReStartTool:
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_3");
+            case LimitRewordType.InfiniteEnergy:
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("InfiniteEnergy");
+            
         }
         return null;
     }
@@ -170,7 +183,6 @@ public class AwardScreen : UIWindow
                         //BuyRemoveAdsEvent(type);
                         break;
                 }
-
                
                 CustomFlyInManager.Instance.FlyAwardIn(icon.gameObject.transform.position,endposObj,icon.gameObject,
                     () =>
