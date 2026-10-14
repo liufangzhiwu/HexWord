@@ -69,6 +69,8 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         InitTransformCache(true);
         // 每次打开界面时，检查是否需要播放广告动画
         CheckAdAnimationState();
+        // 每次打开时刷新按钮可点击状态（永久去广告已购买时置灰）
+        RefreshButtonInteractable();
     }
 
     /// <summary>
@@ -185,6 +187,12 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        // ★ 永久去广告已购买：拦截按下反馈
+        if (IsRemoveAdsOwnedProduct(shopDataItem))
+        {
+            return;
+        }
+
         isPressed = true;
         pressPosition = eventData.position;
 
@@ -208,7 +216,14 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private void OnItemClicked()
     {
-        Debug.Log("条目被点击，执行功能");
+        Debug.Log("[Shop] 条目被点击，执行功能");
+
+        // ★ 永久去广告已购买：拦截点击（既不购买，也不触发其他流程）
+        if (IsRemoveAdsOwnedProduct(shopDataItem))
+        {
+            Debug.Log($"[Shop] {shopDataItem.produceNameId} 永久去广告已购买，拦截点击");
+            return;
+        }
 
         if (shopDataItem.purchaseType == -1)
         {
@@ -321,6 +336,9 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         SetProductPrice(data);
         //SetupPurchaseButton(data);
         HandleMultiProductContent(data);
+
+        // ★ 数据绑定完成后，刷新按钮可点击状态
+        RefreshButtonInteractable();
     }
 
     public void UpdateUI()
@@ -334,6 +352,9 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                 tippanel.SetActive(false);
             }
         }
+
+        // ★ 刷新按钮可点击状态（去广告购买状态可能已变化）
+        RefreshButtonInteractable();
     }
 
     #region Helper Methods
@@ -516,6 +537,15 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
         try
         {
+            // ★ 永久去广告已购买：不显示价格，显示"已购买"
+            if (IsRemoveAdsOwnedProduct(data))
+            {
+                shopPriceText.text = "已购买";
+                ShowPriceLoadingState(false);
+                Debug.Log($"[Shop] {data.produceNameId} 永久去广告已购买，显示'已购买'");
+                return;
+            }
+
             // #if UNITY_IOS
             //             decimal price = product.metadata.localizedPrice;
             //             string currencyCode = product.metadata.isoCurrencyCode;
@@ -570,6 +600,52 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         if (circle != null) circle.gameObject.SetActive(isLoading);
         if (shopPriceText != null) shopPriceText.gameObject.SetActive(!isLoading);
+    }
+
+    /// <summary>
+    /// 是否是"永久去广告"商品且已购买：
+    ///  - 商品 produceNameId 等于 ShopManager.ProductRemoveAds（"RemoveADS"）；
+    ///  - 玩家已拥有永久去广告（UserData.limitShopItems 里存在 adstype == RemoveAds 且未失效）。
+    /// 满足以上条件时，商品应显示"已购买"且不可点击。
+    /// </summary>
+    private bool IsRemoveAdsOwnedProduct(ShopDataItem data)
+    {
+        if (data == null) return false;
+        if (data.produceNameId != ShopManager.ProductRemoveAds) return false;
+        return ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+    }
+
+    /// <summary>
+    /// 刷新按钮的可点击状态：
+    ///  - 永久去广告已购买时，按钮置灰不可点；
+    ///  - 其他商品恢复可点击（如 SingleGoods 每日限购等由 OnItemClicked 内部处理）。
+    /// </summary>
+    private void RefreshButtonInteractable()
+    {
+        var button = GetComponent<Button>();
+        if (button == null) return;
+
+        if (shopDataItem == null)
+        {
+            button.interactable = true;
+            return;
+        }
+        
+        // ★ 永久去广告已购买：不显示价格，显示"已购买"
+        if (IsRemoveAdsOwnedProduct(shopDataItem))
+        {
+            shopPriceText.text = "已购买";
+            ShowPriceLoadingState(false);
+            Debug.Log($"[Shop] {shopDataItem.produceNameId} 永久去广告已购买，显示'已购买'");
+            return;
+        }
+        
+        if(shopDataItem.produceNameId == "RemoveADS")
+        {
+            shopPriceText.text = shopDataItem.price.ToString();
+        }
+
+        button.interactable = !IsRemoveAdsOwnedProduct(shopDataItem);
     }
 
     private void SetupPurchaseButton(ShopDataItem data)
@@ -658,6 +734,13 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private void OnBuyButtonClicked(ShopDataItem data)
     {
+        // 双保险：点击入口再做一次拦截
+        if (IsRemoveAdsOwnedProduct(data))
+        {
+            Debug.Log($"[Shop] {data.produceNameId} 永久去广告已购买，拦截购买");
+            return;
+        }
+
         MessageSystem.Instance.ShowLoadingAnimation();
 
         if (UIUtilities.isEditMode)
@@ -683,14 +766,14 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     private void OnPurchaseSuccess(ProductItem item)
     {
         //todo 关闭loading界面
-        Debug.Log("购买成功: " + item.ProductId);
+        Debug.Log("[Shop] 购买成功: " + item.ProductId);
 
         //var items = new List<AnalyticMgr.Item>();
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
             Game.self.Shop.CurrentShopDataItem = shopDataItem.DeepCopy();
 
-            SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
+            bool isRemoveAds = false;
 
             foreach (var dataitem in shopDataItem.productContent)
             {
@@ -713,21 +796,32 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.Remove7DayAds:
+                        isRemoveAds = true;
                         BuyRemoveAdsEvent(type);
                         break;
                     case (int)LimitRewordType.ReStartTool:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, "商店购买" + item.ItemName);
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, count, "商店购买" + item.ItemName);
                         break;
                     case (int)LimitRewordType.InfiniteEnergy:
                         // ★ 无限体力：count = 小时数，累加到 UserData.unlimitedEnergyEndTime
                         HandleInfiniteEnergyPurchase(count);
                         break;
                     default:
-                        Debug.LogWarning($"[ShopItem] 未处理的商品类型 type={type} count={count}");
+                        Debug.LogWarning($"[Shop] 未处理的商品类型 type={type} count={count}");
                         break;
                 }
             }
+
+            if (isRemoveAds)
+            {
+                SystemManager.Instance.ShowPanel(PanelType.RemoveAdsScreen);
+            }
+            else
+            {
+                SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
+            }
         }
+
         ShopManager.shopManager.paysuccess = true;
         bool firstPay = GameDataManager.Instance.UserData.TotalPayTimes == 0;
         if (firstPay)
@@ -767,6 +861,9 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
         //MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
+
+        // ★ 购买成功后刷新按钮状态（永久去广告购买后立即置灰）
+        RefreshButtonInteractable();
     }
 
     /// <summary>
@@ -779,7 +876,7 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         if (hours <= 0)
         {
-            Debug.LogWarning($"[ShopItem] HandleInfiniteEnergyPurchase 跳过: hours={hours}");
+            Debug.LogWarning($"[Shop] HandleInfiniteEnergyPurchase 跳过: hours={hours}");
             return;
         }
 
@@ -789,7 +886,7 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         DateTime newEnd = userData.AddUnlimitedEnergy(hours);
         double afterRemain = userData.GetUnlimitedEnergyRemainSeconds();
 
-        Debug.Log($"[ShopItem] 无限体力购买: +{hours}h, " +
+        Debug.Log($"[Shop] 无限体力购买: +{hours}h, " +
                   $"原剩余={TimeSpan.FromSeconds(beforeRemain):hh\\:mm\\:ss}, " +
                   $"新剩余={TimeSpan.FromSeconds(afterRemain):hh\\:mm\\:ss}, " +
                   $"新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
@@ -801,47 +898,50 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     private void OnPurchaseFailed(string error)
     {
         //todo 关闭loading界面
-        Debug.Log("购买失败: " + error);
+        Debug.Log("[Shop] 购买失败: " + error);
         AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(), error);
         MessageSystem.Instance.HideLoadingAnimation();
     }
 
     private void BuyRemoveAdsEvent(int type)
     {
-        // ShopLimitData reshopLimitData= GameDataManager.Instance.UserData.limitShopItems.Find(item =>item.id == shopDataItem.id);
-        // if (reshopLimitData != null)
-        // {
-        //     reshopLimitData.isoverdate = false;
-        //     reshopLimitData.isget = true;
-        //     reshopLimitData.gettime=DateTime.Now.ToString();
-        //     reshopLimitData.adstype = type;
-        // }
-        // else
-        // {
-        //     GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData()
-        //     {
-        //         id = shopDataItem.id,
-        //         endtime = null,
-        //         isopen = false,
-        //         gettime = DateTime.Now.ToString(),
-        //         adstype = type,
-        //         isget = true,
-        //         isoverdate = false,
-        //     });
-        // }
+        ShopLimitData resShopLimitData = GameDataManager.Instance.UserData.limitShopItems.Find(item => item.id == shopDataItem.id);
+        if (resShopLimitData == null)
+        {
+            resShopLimitData = new ShopLimitData()
+            {
+                id = shopDataItem.id,
+                endtime = null,
+                isopen = false,
+                gettime = DateTime.Now.ToString(),
+                adstype = type,
+                isget = true,
+                isoverdate = false,
+            };
+            GameDataManager.Instance.UserData.limitShopItems.Add(resShopLimitData);
+        }
+        else
+        {
+            resShopLimitData.isoverdate = false;
+            resShopLimitData.isget = true;
+            resShopLimitData.gettime = DateTime.Now.ToString();
+            resShopLimitData.adstype = type;
+        }
 
-        //AdsManager.Instance.HideBannerAd();
-        transform.gameObject.SetActive(false);
+        AdRuleManager.Instance.HideBannerAd();
+        transform.gameObject.GetComponent<Button>().interactable = false;
 
         if (type == (int)LimitRewordType.Remove7DayAds)
         {
-            //ShopManager.shopManager.UpdateAdsBtnUIEvent(reshopLimitData.gettime,true);
+            ShopManager.shopManager.UpdateAdsBtnUIEvent(resShopLimitData.gettime, true);
         }
 
         if (type == (int)LimitRewordType.RemoveAds)
         {
             ShopManager.shopManager.UpdateAdsBtnUIEvent(null, true);
         }
+
+        SystemManager.Instance.ShowPanel(PanelType.RemoveAdsScreen);
     }
 
     private Sprite LoadShopIcon(string showIcon)

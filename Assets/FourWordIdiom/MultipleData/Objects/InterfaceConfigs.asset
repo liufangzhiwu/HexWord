@@ -382,3 +382,9 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 2508230401924753788, guid: 1ca4c99448ea466419db6dc1b6e94cc1,
       type: 3}
+  - panelName: RemoveAdsScreen
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 2508230401924753788, guid: 919de14cea6525041af4aa42df54b78a,
+      type: 3}

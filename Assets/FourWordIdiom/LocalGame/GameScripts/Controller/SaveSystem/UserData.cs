@@ -386,6 +386,7 @@ public class UserData
         isDayMoneyBuy = false;
         isShowDiscountGift = false;
         isHideShopRedPoint = false;
+        unlimitedEnergyEndTime = "";
 
         ThemeSaveItems = new List<ThemeSaveItem>
         {
@@ -1263,9 +1264,9 @@ public class UserData
 
             switch (type)
             {
-                // case LimitRewordType.SingleWordTipsttool:
-                //     toolName = "单字词语提示道具";
-                //     break;
+                case LimitRewordType.ReStartTool:
+                    toolName = "复活道具";
+                    break;
                 case LimitRewordType.Tipstool:
                     toolName = "提示道具";
                     break;

@@ -24,7 +24,6 @@ public class ShopDataItem
     public string name;           // 展示名
     public string des;            // 描述
     public string pointDes;       // 说明
-    public string isHomeDisplay;  // 是否首页显示
     public int sort;              // 固定商店页排序（顺序由 sort 决定）
     public string homeSort;       // 首页排序
     public List<string> unlocked; // 解锁条件（关卡/类型）
@@ -74,7 +73,6 @@ public class ShopDataItem
         copy.name = this.name;
         copy.des = this.des;
         copy.pointDes = this.pointDes;
-        copy.isHomeDisplay = this.isHomeDisplay;
         copy.homeSort = this.homeSort;
         copy.limitedTime = this.limitedTime;
         copy.discount = this.discount;
@@ -119,9 +117,9 @@ public partial class ShopManager : MonoBehaviour
     /// 解析商店商品 CSV（新表 39 列 / 旧表 18 列自动识别，容错解析）。
     /// 列（0基）：
     ///   0:id  1:nameID  2:purchaseType  3:name  4:des  5:type  6:productContent  7:OriginalPrice
-    ///   8:SalePrice  9:price  10:showIcon  11:nameKey  12:(空)  13:pointDes  14:isHomeDisplay
-    ///   15:sort  16:homeSort  17:unlock  18:limitedTime  19:discount  20:discountZh  21:LabelZh
-    ///   22:Limited  23:GiftType  24:CoinValue  （右侧"无限体力"等按需扩展）
+    ///   8:price  9:TempPrice  10:showIcon  11:nameKey  12:(空)  13:pointDes  14:sort
+    ///   15:homeSort  16:unlock  17:limitedTime  18: discount 19:discountZh  20: LabelZh 21:Limited
+    ///   22:GiftType  23:CoinValue   （右侧"无限体力"等按需扩展）
     /// </summary>
     void ParseShopItems(string data)
     {
@@ -153,32 +151,31 @@ public partial class ShopManager : MonoBehaviour
             string nameID = GetField(fields, 1);
             int purchaseType = GetInt(GetField(fields, 2));
 
-            // 新表（39列）：0:id 1:nameID 2:purchaseType 3:name 4:des 5:type 6:productContent 7:OriginalPrice 8:SalePrice 9:price ...
+            // 新表（39列）：0:id 1:nameID 2:purchaseType 3:name 4:des 5:type 6:productContent 7:OriginalPrice 8:price 9:TempPrice ...
             string  name = GetField(fields, 3);
             int type = GetInt(GetField(fields, 5));
             
             List<List<string>> productContent = ParseProductContent(GetField(fields, 6));
-
-            float price = GetFloat(GetField(fields,9));
+            
+            float salePrice = GetFloat(GetField(fields, 8));
             string showIcon = GetField(fields,  10 );
             string des = GetField(fields,  4 );
             string pointdes = GetField(fields, 13);
-            string isHomeDisplay = GetField(fields, 14 );
-            int sort = GetSort(GetField(fields,  15 ));
-            string homeSort = GetField(fields,  16 );
-            List<string> unlocks = ParseUnlock(GetField(fields,  17 ));
-            string limittime = GetField(fields, 18 );
-            string discount = GetField(fields,  19 );
+            int sort = GetSort(GetField(fields,  14 ));
+            string homeSort = GetField(fields,  15 );
+            List<string> unlocks = ParseUnlock(GetField(fields,  16 ));
+            string limittime = GetField(fields, 17 );
+            string discount = GetField(fields,  18 );
 
             // 新表扩展字段（旧表无则给默认）
             float originalPrice = GetFloat(GetField(fields, 7)) ;
-            float salePrice = GetFloat(GetField(fields, 8));
+          
             string nameKey = GetField(fields, 11) ;
-            string discountZh = GetField(fields, 20);
-            string labelZh =  GetField(fields, 21);
-            int limited =  GetInt(GetField(fields, 22));
-            int giftType =  GetInt(GetField(fields, 23));
-            int coinValue =  GetInt(GetField(fields, 24));
+            string discountZh = GetField(fields, 19);
+            string labelZh =  GetField(fields, 20);
+            int limited =  GetInt(GetField(fields, 21));
+            int giftType =  GetInt(GetField(fields, 22));
+            int coinValue =  GetInt(GetField(fields, 23));
 
             ShopDataItem item = new ShopDataItem
             {
@@ -187,14 +184,13 @@ public partial class ShopManager : MonoBehaviour
                 purchaseType = purchaseType,
                 type = type,
                 productContent = productContent,
-                price = price,
+                price = salePrice,
                 originalPrice = originalPrice,
                 salePrice = salePrice,
                 showIcon = showIcon,
                 name = name,
                 des = des,
                 pointDes = pointdes,
-                isHomeDisplay = isHomeDisplay,
                 sort = sort,
                 homeSort = homeSort,
                 unlocked = unlocks,

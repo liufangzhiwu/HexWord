@@ -218,6 +218,14 @@ public class AdRuleManager : MonoBehaviour
         if (!CanShowBanner()) return;
         Game.self.Ads.ShowBanner();
     }
+    
+    /// <summary>
+    /// 关闭 Banner
+    /// </summary>
+    public void HideBannerAd()
+    {
+        Game.self.Ads.HideBanner();
+    }
 
     /// <summary>
     /// 展示激励视频
