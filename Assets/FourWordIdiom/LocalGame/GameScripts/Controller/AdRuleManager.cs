@@ -215,7 +215,11 @@ public class AdRuleManager : MonoBehaviour
     /// </summary>
     public void TryShowBanner()
     {
-        if (!CanShowBanner()) return;
+        if (!CanShowBanner())
+        {
+            Debug.Log("[AdRule] Banner 拦截掉了");
+            return;
+        }
         Game.self.Ads.ShowBanner();
     }
     
@@ -278,6 +282,18 @@ public class AdRuleManager : MonoBehaviour
     // ==========================================
 
     /// <summary>
+    /// 当前是否处于"去广告"生效期间：
+    ///  - 永久去广告（UserData.limitShopItems 中存在 adstype=RemoveAds 且未失效）；
+    ///  - 或限时去广告（7天/1天）未过期。
+    /// 由 ShopManager 统一判定，含空引用保护。
+    /// </summary>
+    private bool IsRemoveAdsActive()
+    {
+        if (ShopManager.shopManager == null) return false;
+        return ShopManager.shopManager.IsRemoveAdsOwned() || ShopManager.shopManager.IsRemoveAdsActive();
+    }
+
+    /// <summary>
     /// 拦截审核：当前是否允许播放插屏？
     /// </summary>
     public bool CanShowInterstitial()
@@ -286,6 +302,15 @@ public class AdRuleManager : MonoBehaviour
         DateTime now = DateTime.Now;
 
         Debug.Log($"[AdRule] 进入插屏拦截逻辑");
+
+        // 【★ 优先级最高】去广告生效期间：不播放插屏
+        if (IsRemoveAdsActive())
+        {
+            bool owned = ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+            double remain = ShopManager.shopManager != null ? ShopManager.shopManager.GetRemoveAdsRemainSeconds() : 0;
+            Debug.Log($"[AdRule] 被拦截(去广告)：玩家已拥有永久去广告={owned}, 限时去广告剩余={remain:F0}s");
+            return false;
+        }
 
         // 【D规则】每日首关插屏概率保护
         if (userData.dayPassStageCount == 0)
@@ -372,8 +397,20 @@ public class AdRuleManager : MonoBehaviour
     /// </summary>
     public bool CanShowBanner()
     {
-        if (GameDataManager.Instance.UserData.TotalPlayTimeSeconds < T2_MinPlayTime)
+        // 【★ 优先级最高】去广告生效期间：不展示 Banner
+        if (IsRemoveAdsActive())
+        {
+            bool owned = ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+            double remain = ShopManager.shopManager != null ? ShopManager.shopManager.GetRemoveAdsRemainSeconds() : 0;
+            Debug.Log($"[AdRule] Banner 被拦截(去广告)：玩家已拥有永久去广告={owned}, 限时去广告剩余={remain:F0}s");
             return false;
+        }
+
+        // if (GameDataManager.Instance.UserData.TotalPlayTimeSeconds < T2_MinPlayTime)
+        // {
+        //     Debug.Log($"[AdRule] Banner 被拦截(G2)：累计时长不足 {T2_MinPlayTime}s");
+        //     return false;
+        // }
 
         return true;
     }
