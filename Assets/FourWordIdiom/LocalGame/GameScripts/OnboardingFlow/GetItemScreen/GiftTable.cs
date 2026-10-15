@@ -53,7 +53,7 @@ public class GiftTable : MonoBehaviour
                 giftNameText.text ="火箭礼包";
                 break;
             case LimitRewordType.Tipstool:
-                giftNameText.text ="提示灯礼包";
+                giftNameText.text =shopItem.name;
                 break;
         }
 
