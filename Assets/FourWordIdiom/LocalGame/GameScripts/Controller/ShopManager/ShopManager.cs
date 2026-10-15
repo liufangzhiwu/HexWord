@@ -203,10 +203,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"Start 完成: shopMode={shopMode}, 推荐位配置数={_recommendConfigs.Count}, 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
     }
 
-    /// <summary>
-    /// 加载运行时配置：推荐位权重表（灯泡/火箭/复活/动态商店）、用户分层表、节日/周末表、道具折扣参数。
-    /// 配置全部放本地（需求：不做云端配置）。各模块优先从 Bundle 读取，失败时回退内置默认值（与配置表 20260915 一致）。
-    /// </summary>
     private void LoadRuntimeConfigs()
     {
         LoadBulbBoxConfig();        // ShopManager_BulbBox.cs
@@ -220,9 +216,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"LoadRuntimeConfigs 完成: 推荐位配置数={_recommendConfigs.Count}, 折扣开关={_discountConfig.enable}, 灯泡每日={_discountConfig.bulbDailyLimit}, 火箭每日={_discountConfig.rocketDailyLimit}, 间隔={_discountConfig.triggerInterval}s");
     }
 
-    /// <summary>
-    /// 复活礼盒（ClockBox）推荐位配置：优先读 Bundle，失败回退内置默认（与配置表 20260915 一致）
-    /// </summary>
     private void LoadClockBoxConfig()
     {
         TextAsset rec = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "shop_clockbox");
@@ -237,9 +230,6 @@ public partial class ShopManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 初始化：限购数据字典、限时礼包列表
-    /// </summary>
     public void Initialize()
     {
         shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
@@ -251,9 +241,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"Initialize: 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
     }
 
-    /// <summary>
-    /// 重新从 UserData 刷新限购数据（购买成功后调用）
-    /// </summary>
     public void RefreshLimitData()
     {
         shoplimitDatas = GameDataManager.Instance.UserData.limitShopItems
@@ -267,7 +254,6 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 日志辅助 =======================
 
-    /// <summary>[Shop] 标签日志（统一入口，便于 Console 过滤）</summary>
     private void LogShop(string message)
     {
         Debug.Log($"[Shop] {message}");
@@ -275,9 +261,6 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= ShopLimitData 读写辅助 =======================
 
-    /// <summary>
-    /// 获取商品对应的限购/跟踪数据；不存在则新建并加入 UserData.limitShopItems（自动持久化）。
-    /// </summary>
     private ShopLimitData GetOrCreateLimitData(ShopDataItem item)
     {
         if (item == null) return null;
@@ -305,9 +288,6 @@ public partial class ShopManager : MonoBehaviour
         return data;
     }
 
-    /// <summary>
-    /// 只读获取商品对应的限购/跟踪数据；不存在返回 null（不创建）。
-    /// </summary>
     private ShopLimitData GetLimitData(ShopDataItem item)
     {
         if (item == null) return null;
@@ -327,20 +307,17 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 去广告（非消耗型内购） =======================
 
-    /// <summary>是否为去广告类商品（永久或限时）</summary>
     public bool IsRemoveAdsProduct(string produceNameId)
     {
-        return produceNameId == ProductRemoveAds|| produceNameId == ProductRemoveAdsDaily;
+        return produceNameId == ProductRemoveAds || produceNameId == ProductRemoveAdsDaily;
     }
 
-    /// <summary>是否已拥有永久去广告（本地 + 云端恢复状态）</summary>
     public bool IsRemoveAdsOwned()
     {
         return GameDataManager.Instance.UserData.limitShopItems
             .Any(item => item.isget && !item.isoverdate && item.adstype == (int)LimitRewordType.RemoveAds);
     }
 
-    /// <summary>是否处于限时去广告期间（7天/1天）</summary>
     public bool IsRemoveAdsActive()
     {
         return GameDataManager.Instance.UserData.limitShopItems
@@ -348,7 +325,6 @@ public partial class ShopManager : MonoBehaviour
                 && (item.adstype == (int)LimitRewordType.RemoveDayAds));
     }
 
-    /// <summary>获取限时去广告剩余时间（秒），未生效返回 0</summary>
     public double GetRemoveAdsRemainSeconds()
     {
         double remain = 0;
@@ -367,7 +343,6 @@ public partial class ShopManager : MonoBehaviour
         return Math.Max(0, remain);
     }
 
-    /// <summary>是否处于去除广告礼包期间（修复：原实现逻辑被注释，恒返回 false）</summary>
     public bool IsRemoveAdsGift()
     {
         return IsRemoveAdsOwned() || IsRemoveAdsActive();
@@ -375,9 +350,6 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 内购推荐位推送规则（决策权重，公共逻辑） =======================
 
-    /// <summary>
-    /// 内购推荐位类型（各推荐位配置脚本各自维护候选集，公共决策逻辑在此）
-    /// </summary>
     public enum RecommendSlot
     {
         Bulb,       // 灯泡道具弹窗（一号主力/二号锚点/三号诱饵）
@@ -387,13 +359,6 @@ public partial class ShopManager : MonoBehaviour
         FixedStore  // 固定商店（一号位）
     }
 
-    /// <summary>
-    /// 解析推荐位权重配置（CSV 格式，列与配置表一致），供各推荐位配置脚本复用。
-    /// 兼容两种表头形态：
-    ///  - BulbBox / RocketBox / ClockBox：第1行中文说明，第2行字段名（nameID, [GiftType,] BaseWeight, MaxWeight, SpecialWeight, PeakWeight, ReturnWeight, Featured）
-    ///  - DynamicStore：第1行即字段名，第2行起为数据
-    /// 按字段名动态映射列，避免 Rocket/Clock（无 GiftType 列）错位。
-    /// </summary>
     private void ParseRecommendConfigs(string data)
     {
         var records = SplitCsvLines(data);
@@ -471,7 +436,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"ParseRecommendConfigs: 解析 {parsed} 条推荐位配置, 累计={_recommendConfigs.Count}");
     }
 
-    /// <summary>写入单条推荐位配置（各推荐位配置脚本的默认值入口）</summary>
     private void AddRecommend(string nameID, int giftType, int baseW, int maxW, int specialW, int peakW, int returnW, int featured)
     {
         _recommendConfigs[nameID] = new ShopRecommendConfig
@@ -487,7 +451,6 @@ public partial class ShopManager : MonoBehaviour
         };
     }
 
-    /// <summary>获取推荐位候选礼包（按配置表 featured 过滤；各推荐位归属判断由对应脚本提供）</summary>
     private List<ShopDataItem> GetSlotCandidates(RecommendSlot slot, int featured)
     {
         List<ShopDataItem> list = new List<ShopDataItem>();
@@ -516,13 +479,11 @@ public partial class ShopManager : MonoBehaviour
         return list;
     }
 
-    /// <summary>复活礼盒（ClockBox）候选归属判断</summary>
     private bool IsClockPack(string nameId)
     {
         return nameId.StartsWith("ClockBox");
     }
 
-    /// <summary>限购判断：配置限购次数且已买满（buyCount 从 ShopLimitData 读取）</summary>
     private bool IsLimitedOut(ShopDataItem item)
     {
         if (item == null || item.limited <= 0) return false;
@@ -531,7 +492,6 @@ public partial class ShopManager : MonoBehaviour
         return buyCount >= item.limited;
     }
 
-    /// <summary>推荐位当关锁定（购买后当关不刷新新礼包）</summary>
     public bool IsSlotLocked(RecommendSlot slot)
     {
         bool locked;
@@ -553,17 +513,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop("UnlockAllSlots: 全部推荐位解锁, 折扣消费标记复位");
     }
 
-    /// <summary>
-    /// 计算单个礼包的决策权重：
-    /// 决策权重 =（礼包权重 + 节日/周末权重 + 高峰权重 + 流失回归）× 冷却系数 × 推送状态指数
-    /// 礼包权重 = 基础权重 + 付费倾向积分（火箭、复活）
-    ///          基础权重 + 付费倾向积分 + 探价加分 - 转化失败分（灯泡、动态商店）
-    /// 每次弹窗或进入动态商店时临时计算。
-    /// 跟踪数据从 ShopLimitData 读取。
-    ///
-    /// 特别说明：限购已满的商品在此处直接返回 0，不参与决策；
-    /// 与 GetSlotCandidates 的限购过滤形成双重保护，避免外部直接调用本方法时限购商品胜出。
-    /// </summary>
     public float CalculateDecisionWeight(ShopDataItem item, ShopRecommendConfig cfg, RecommendSlot slot)
     {
         if (item == null || cfg == null)
@@ -596,13 +545,8 @@ public partial class ShopManager : MonoBehaviour
         float cap = cfg.maxWeight > 0 ? cfg.maxWeight : 100f;
         packWeight = Mathf.Min(packWeight, cap); // 礼包权重上限（配置表）
 
-        // 节日/周末权重：当天属于预设节日或周末时
         float special = IsHolidayOrWeekend() ? cfg.specialWeight : 0;
-
-        // 高峰权重：19-23 点
         float peak = IsPeakHour() ? cfg.peakWeight : 0;
-
-        // 流失回归：最近7天未登录
         float ret = IsChurnReturn() ? cfg.returnWeight : 0;
 
         float cooldown = GetCooldownCoefficient(item);
@@ -628,11 +572,6 @@ public partial class ShopManager : MonoBehaviour
         return lastLogin != default && (DateTime.Now - lastLogin).TotalDays >= ChurnReturnDays;
     }
 
-    /// <summary>
-    /// 冷却系数（数据来自 ShopLimitData）：
-    ///  - 礼包被购买后：12小时内=0.2；12-72小时=0.5；72小时后=1
-    ///  - 礼包限时结束后：48小时内=0；48-120小时=0.5；120小时后=1
-    /// </summary>
     private float GetCooldownCoefficient(ShopDataItem item)
     {
         ShopLimitData limit = GetLimitData(item);
@@ -657,14 +596,6 @@ public partial class ShopManager : MonoBehaviour
         return 1f;
     }
 
-    /// <summary>
-    /// 决出当前推荐位礼包（决策权重最高；相同权重随机）。
-    /// 特殊规则：
-    ///  - 新人礼礼包不会同时出现（灯泡＞复活＞火箭，同类型价格低＞高）；
-    ///  - "上次购买"标签优先级最高（UI 读取 labelZh 时处理）；
-    ///  - 动态商店一号位：若所有可展示礼包决策权重都为 0 → 不推荐礼包；
-    ///    此时若"去广告"未购买，一号位展示"去广告"；若已购买，二号位第1、2权重的礼包都展示。
-    /// </summary>
     public List<ShopDataItem> GetRecommendPacks(RecommendSlot slot)
     {
         LogShop($"========== GetRecommendPacks 开始: slot={slot}, shopMode={shopMode}, 时间={DateTime.Now:HH:mm:ss} ==========");
@@ -747,7 +678,6 @@ public partial class ShopManager : MonoBehaviour
         return distinctResult;
     }
 
-    /// <summary>决出单个推荐位胜出礼包（权重最高；相同随机；含新人礼互斥处理）</summary>
     private List<ShopDataItem> DecideWinner(List<ShopDataItem> candidates, RecommendSlot slot)
     {
         LogShop($"    --- DecideWinner 开始: slot={slot}, 初始候选数={candidates.Count} ---");
@@ -828,10 +758,6 @@ public partial class ShopManager : MonoBehaviour
         return _recommendConfigs.TryGetValue(nameId, out cfg) ? cfg : null;
     }
 
-    /// <summary>
-    /// 新人礼互斥判断（优先级：灯泡＞复活＞火箭；同类型价格低＞高）。
-    /// 当前弹窗类型可出新人礼的条件：优先级更高类型的推荐位此时未出新人礼。
-    /// </summary>
     private bool CanShowNewcomerGift(RecommendSlot slot)
     {
         // 简化实现：按优先级依次检查其他弹窗是否已展示新人礼。
@@ -840,7 +766,6 @@ public partial class ShopManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>是否新人礼标签（"新人礼"/"新手礼"），此类礼包不会同时出现</summary>
     private static bool IsNewcomerLabel(string label)
     {
         return label == "新人礼" || label == "新手礼";
@@ -859,7 +784,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop("ClearNewcomerShown");
     }
 
-    /// <summary>是否"上次购买"的礼包（展示"上次购买"内购标签，优先级最高）</summary>
     public bool IsLastPurchasedPack(ShopDataItem item)
     {
         return item != null && _lastPurchasedPack != null
@@ -867,7 +791,6 @@ public partial class ShopManager : MonoBehaviour
             && item.type == 2;
     }
 
-    /// <summary>记录支付调起（成功吊起系统支付弹窗但未完成购买）</summary>
     public void RecordPayInvoke(string produceNameId)
     {
         _payInvokeCount[produceNameId] = GetPayInvokeCount(produceNameId) + 1;
@@ -880,7 +803,6 @@ public partial class ShopManager : MonoBehaviour
         return _payInvokeCount.TryGetValue(produceNameId, out c) ? c : 0;
     }
 
-    /// <summary>记录转化失败（F += 5；第1档除外；间隔30秒）</summary>
     public void AddConversionFail(ShopDataItem item)
     {
         if (item == null) return;
@@ -904,7 +826,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"AddConversionFail: {item.produceNameId} 转化失败分={limit.conversionFailScore:F1}");
     }
 
-    /// <summary>重置转化失败分 F（购买成功 / 推荐位更换）</summary>
     public void ResetConversionFail(ShopDataItem item)
     {
         if (item == null) return;
@@ -915,13 +836,89 @@ public partial class ShopManager : MonoBehaviour
     // ======================= 购买流程 =======================
 
     /// <summary>
-    /// 购买成功（含恢复购买回调）。
-    /// 需求变更：
-    ///  - 修复 shopDataItem 为 null 时提前访问 produceNameId 的崩溃；
-    ///  - 新增去广告（终身/限时一天/限时7天）、无限体力等非消耗型商品处理；
-    ///  - 限时去广告购买后刷新剩余时间（在之前剩余时间基础上额外增加）；
-    ///  - 记录"上次购买"礼包、付费倾向积分、探价加分、冷却系数、支付完成埋点。
+    /// 统一处理礼包购买后的逻辑（GiftTable 和 ShopItem 共用）：
+    ///   1. 发放 productContent 里的资源（金币 / 道具 / 去广告 / 无限体力）；
+    ///   2. 去广告：永久 RemoveAds / 限时 RemoveDayAds，按已有剩余时间续期；
+    ///   3. 推荐位跟踪：付费倾向积分 / 探价加分 / 转化失败分归零 / buyCount++ / 冷却时间 / 上次购买；
+    ///   4. 全程 [Shop] 日志。
     /// </summary>
+    public void HandleGiftTablePurchaseRewards(ShopDataItem shopDataItem, ProductItem productItem)
+    {
+        if (shopDataItem == null)
+        {
+            LogShop("HandleGiftTablePurchaseRewards 跳过: shopDataItem 为空");
+            return;
+        }
+
+        LogShop($"HandleGiftTablePurchaseRewards 开始: {shopDataItem.produceNameId}, " +
+                $"type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
+
+        // ---------- 1. 发放奖励 ----------
+        if (shopDataItem.productContent != null)
+        {
+            foreach (var dataitem in shopDataItem.productContent)
+            {
+                if (dataitem == null || dataitem.Count < 2)
+                {
+                    LogShop($"  跳过无效 productContent 项 (Count<2)");
+                    continue;
+                }
+
+                int count = GetInt(dataitem[1]);
+                int type = GetInt(dataitem[0]);
+                LogShop($"  发放奖励: type={type}, count={count}");
+
+                switch (type)
+                {
+                    case (int)LimitRewordType.Coins:
+                        GameDataManager.Instance.UserData.UpdateGold(count, false, false, shopDataItem.name + "购买金币");
+                        break;
+
+                    case (int)LimitRewordType.Butterfly:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count, shopDataItem.name + "商店购买蝴蝶");
+                        break;
+
+                    case (int)LimitRewordType.Tipstool:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count, shopDataItem.name + "商店购买放大镜");
+                        break;
+
+                    case (int)LimitRewordType.AutoComplete:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, shopDataItem.name + "商店购买提示灯");
+                        break;
+
+                    case (int)LimitRewordType.RemoveAds:
+                    case (int)LimitRewordType.RemoveDayAds:
+                        // 去广告走下面统一的 HandleRemoveAdsPurchase
+                        LogShop($"  去广告商品，交由 HandleRemoveAdsPurchase 处理 (adstype={type})");
+                        break;
+
+                    default:
+                        LogShop($"  未处理的商品类型: type={type}, count={count}");
+                        break;
+                }
+            }
+        }
+
+        // ---------- 2. 去广告（永久 / 限时），走统一续期逻辑 ----------
+        if (IsRemoveAdsProduct(shopDataItem.produceNameId))
+        {
+            LogShop($"  非消耗型: 去广告 {shopDataItem.produceNameId}");
+            HandleRemoveAdsPurchase(shopDataItem);
+        }
+
+        // ---------- 3. 无限体力 ----------
+        if (IsUnlimitedEnergyProduct(shopDataItem.produceNameId))
+        {
+            LogShop($"  非消耗型: 无限体力 {shopDataItem.produceNameId}");
+            HandleUnlimitedEnergyPurchase(shopDataItem);
+        }
+
+        // ---------- 4. 推荐位跟踪（付费倾向 / 探价 / 转化失败 / 冷却 / 上次购买） ----------
+        OnPackPurchased(shopDataItem);
+
+        LogShop($"HandleGiftTablePurchaseRewards 结束: {shopDataItem.produceNameId}");
+    }
+
     public void OnPurchaseSuccess(ProductItem item)
     {
         //todo 关闭loading界面
@@ -1044,9 +1041,9 @@ public partial class ShopManager : MonoBehaviour
     /// </summary>
     private void HandleRemoveAdsPurchase(ShopDataItem shopDataItem)
     {
-        int adstype= (int)LimitRewordType.RemoveDayAds;
+        int adstype = (int)LimitRewordType.RemoveDayAds;
         bool permanent = shopDataItem.produceNameId == ProductRemoveAds;
-        int hours=0;
+        int hours = 0;
         if (permanent)
         {
             adstype = (int)LimitRewordType.RemoveAds;
@@ -1100,7 +1097,6 @@ public partial class ShopManager : MonoBehaviour
         RefreshLimitData();
     }
 
-       
     /// <summary>
     /// 无限体力购买处理：
     ///  - 从商品 ID / 配置里解析小时数；
@@ -1185,21 +1181,39 @@ public partial class ShopManager : MonoBehaviour
                 ShopDataItem it = allShopItems.FirstOrDefault(x => x.produceNameId == cfg.Key);
                 if (it == null) continue;
                 ShopLimitData ld = GetOrCreateLimitData(it);
-                if (cfg.Value.giftType == a) ld.payTendencyScore += 2f;
-                else if (cfg.Value.giftType == a + 1) ld.payTendencyScore += 1f;
-                else if (cfg.Value.giftType == a + 2) ld.payTendencyScore += 0.5f;
+                if (cfg.Value.giftType == a)
+                {
+                    float before = ld.payTendencyScore;
+                    ld.payTendencyScore += 2f;
+                    LogShop($"    [付费倾向] {it.produceNameId} (档={cfg.Value.giftType}) {before:F2} → {ld.payTendencyScore:F2} (+2)");
+                }
+                else if (cfg.Value.giftType == a + 1)
+                {
+                    float before = ld.payTendencyScore;
+                    ld.payTendencyScore += 1f;
+                    LogShop($"    [付费倾向] {it.produceNameId} (档={cfg.Value.giftType}) {before:F2} → {ld.payTendencyScore:F2} (+1)");
+                }
+                else if (cfg.Value.giftType == a + 2)
+                {
+                    float before = ld.payTendencyScore;
+                    ld.payTendencyScore += 0.5f;
+                    LogShop($"    [付费倾向] {it.produceNameId} (档={cfg.Value.giftType}) {before:F2} → {ld.payTendencyScore:F2} (+0.5)");
+                }
             }
-            LogShop($"  付费倾向积分更新: 基准档 a={a}, 已更新所有相关礼包");
+            LogShop($"  付费倾向积分更新: 基准档 a={a}");
         }
 
         // 探价加分：该礼包 +3；"第X档"每发生3次，下一档 +6（一次性）
+        float exploreBefore = limit.exploreScore;
         limit.exploreScore += 3f;
+        LogShop($"  [探价加分] {shopDataItem.produceNameId} {exploreBefore:F2} → {limit.exploreScore:F2} (+3)");
+
         if (a > 0)
         {
             // 记录档位购买次数
             int tierCount = GetTierBuyCount(a) + 1;
             SetTierBuyCount(a, tierCount);
-            LogShop($"  探价加分: {shopDataItem.produceNameId} +3, 该档位 a={a} 购买次数={tierCount}");
+            LogShop($"  档位 a={a} 累计购买次数={tierCount}");
             if (tierCount % 3 == 0)
             {
                 foreach (var cfg in _recommendConfigs)
@@ -1210,8 +1224,9 @@ public partial class ShopManager : MonoBehaviour
                         if (it != null)
                         {
                             ShopLimitData ld = GetOrCreateLimitData(it);
+                            float before = ld.exploreScore;
                             ld.exploreScore += 6f; // 一次性加6分
-                            LogShop($"    探价加分: 下一档 {it.produceNameId} +6");
+                            LogShop($"    [探价加分-下一档] {it.produceNameId} {before:F2} → {ld.exploreScore:F2} (+6)");
                         }
                     }
                 }
@@ -1219,10 +1234,13 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // 转化失败分归零（购买成功）
+        float failBefore = limit.conversionFailScore;
         limit.conversionFailScore = 0;
+        LogShop($"  [转化失败分] {shopDataItem.produceNameId} {failBefore:F2} → 0");
 
         // 购买次数（限购）
         limit.buyCount++;
+        LogShop($"  [限购] {shopDataItem.produceNameId} buyCount={limit.buyCount}, limited={shopDataItem.limited}");
 
         // 限时活动礼包：购买后清除活动状态（12小时内冷却 0.2）
         limit.isActivityPack = false;
@@ -1305,9 +1323,6 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 道具折扣机制 =======================
 
-    /// <summary>
-    /// 解析道具折扣参数：开关_折扣_灯泡每日次数_火箭每日次数_间隔秒（默认 1_5_3_2_300）
-    /// </summary>
     private void ParseDiscountConfig(string param)
     {
         string[] p = param.Split('_');
@@ -1320,9 +1335,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"ParseDiscountConfig: enable={_discountConfig.enable}, bulbDaily={_discountConfig.bulbDailyLimit}, rocketDaily={_discountConfig.rocketDailyLimit}, interval={_discountConfig.triggerInterval}");
     }
 
-    /// <summary>
-    /// 加载道具折扣参数（开关_折扣_灯泡次数_火箭次数_间隔秒，默认 1_5_3_2_300）
-    /// </summary>
     private void LoadDiscountConfig()
     {
         // TODO：与拼字玩法配置表统一读取（PropVideoTimes 同理）
@@ -1333,15 +1345,6 @@ public partial class ShopManager : MonoBehaviour
         ParseDiscountConfig(discountParam);
     }
 
-    /// <summary>
-    /// 灯泡道具折扣触发判定（需求）：
-    ///  - 第7关解锁；
-    ///  - 关卡答错后6秒，且此时剩余未完成的目标词≥1；
-    ///  - 当前持有灯泡道具数量=0；
-    ///  - 灯泡道具折扣今天触发未达限制次数上限；
-    ///  - 灯泡道具满足触发时间间隔；
-    ///  - 灯泡与火箭不会同时出现；同时满足则优先出灯泡。
-    /// </summary>
     public bool TryTriggerBulbDiscount(int levelId, int wrongAnswerSeconds, int remainTargetWords, int bulbCount)
     {
         if (!_discountConfig.enable) return false;
@@ -1360,12 +1363,6 @@ public partial class ShopManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// 火箭道具折扣触发判定（需求）：
-    ///  - 光标切到某个词之后3秒，该词的待填空格≥3；
-    ///  - 当前持有火箭道具数量=0；
-    ///  - 每日限制与时间间隔。
-    /// </summary>
     public bool TryTriggerRocketDiscount(int levelId, int cursorSeconds, int blankCount, int rocketCount)
     {
         if (!_discountConfig.enable) return false;
@@ -1389,7 +1386,6 @@ public partial class ShopManager : MonoBehaviour
         return false;
     }
 
-    /// <summary>折扣使用后调用：角标消失、价格恢复原价</summary>
     public void OnDiscountUsed(bool isBulb)
     {
         if (isBulb) _bulbDiscountConsumed = true;
@@ -1397,7 +1393,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"OnDiscountUsed: isBulb={isBulb}");
     }
 
-    /// <summary>每日重置折扣次数（跨天/新的一天）</summary>
     private void RefreshDailyCounters()
     {
         string today = DateTime.Now.ToString("yyyy-MM-dd");
@@ -1412,11 +1407,6 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 看激励视频赠礼 / 插屏赠礼 =======================
 
-    /// <summary>
-    /// 灯泡激励视频看完后的赠礼：
-    ///  - 首个灯泡道具激励视频（或插屏广告）→ 弹窗感谢，赠送 50 金币；
-    ///  - 每天看完前3个灯泡道具激励视频，弹小窗送金币：50/30/20（自动获得）。
-    /// </summary>
     public void OnBulbRewardVideoFinished()
     {
         string today = DateTime.Now.ToString("yyyy-MM-dd");
@@ -1446,9 +1436,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"OnBulbRewardVideoFinished: 第{_bulbVideoGiftCount}个视频, 赠 {gold} 金币");
     }
 
-    /// <summary>
-    /// 插屏关闭后的赠礼：玩家每天前5个插屏赠礼（填字玩法30关之后），每次10金币。
-    /// </summary>
     public void OnInterstitialClosed(int currentLevel)
     {
         if (currentLevel < 30)
@@ -1478,10 +1465,6 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 礼包主动弹出策略（替换原 ShowLimitAdsPanel） =======================
 
-    /// <summary>
-    /// 原限时礼包弹窗逻辑：按需求"首先关闭原礼包主动弹出；（删除原逻辑）"已废弃。
-    /// 保留空实现兼容旧调用方，新逻辑见 UserLayer 脚本中的 TryShowBreakIcePopup / TryShowRepurchasePopup。
-    /// </summary>
     public async void ShowLimitAdsPanel()
     {
         LogShop("[ShopManager] ShowLimitAdsPanel 原主动弹出逻辑已删除（需求 C 章节：删除原逻辑），请接入破冰/复购策略");
@@ -1496,7 +1479,6 @@ public partial class ShopManager : MonoBehaviour
         return key;
     }
 
-    /// <summary>更新广告按钮UI（原方法保留）</summary>
     public void UpdateAdsBtnUIEvent(string gettime, bool updateui)
     {
         UpdateAdsBtnUI?.Invoke(gettime, updateui);
@@ -1525,10 +1507,6 @@ public partial class ShopManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 去广告生效钩子：隐藏底部横幅/停止插屏与开屏的强制弹出（需求：代码上预做处理）。
-    /// 原代码中 AdsManager.Instance.HideBannerAd() 被注释，说明广告系统可能未接入，此处用虚方法供子类实现。
-    /// </summary>
     protected virtual void OnRemoveAdsApplied(int adstype)
     {
         // TODO：接入广告系统
@@ -1539,7 +1517,6 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 静态打开入口 =======================
 
-    /// <summary>打开固定商店（金币栏入口）</summary>
     public void OpenFixedStore()
     {
         shopMode = ShopMode.FixedStore;
@@ -1547,7 +1524,6 @@ public partial class ShopManager : MonoBehaviour
         SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
     }
 
-    /// <summary>打开动态商店（道具金币不足入口）</summary>
     public void OpenDynamicStore()
     {
         shopMode = ShopMode.DynamicStore;

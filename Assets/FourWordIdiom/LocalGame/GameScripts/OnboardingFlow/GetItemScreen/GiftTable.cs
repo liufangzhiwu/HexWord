@@ -26,18 +26,25 @@ public class GiftTable : MonoBehaviour
 
     private ShopDataItem shopDataItem;
 
+    /// <summary>[Shop] 标签日志</summary>
+    private void LogShop(string message)
+    {
+        string tag = shopDataItem != null ? $"{shopDataItem.produceNameId}(id={shopDataItem.id})" : "null";
+        Debug.Log($"[Shop][GiftTable] [{tag}] {message}");
+    }
+
     private void Start()
     {
         InitEvent();
     }
  
 
-    public void InitUI(LimitRewordType limitReType,ShopDataItem shopItem)
+    public void InitUI(LimitRewordType limitReType, ShopDataItem shopItem)
     {
-        limitRewordType=limitReType;
-        shopDataItem=shopItem;
+        limitRewordType = limitReType;
+        shopDataItem = shopItem;
         
-        discount.text=shopItem.discount;
+        discount.text = shopItem.discount;
         
         switch (limitRewordType)
         {
@@ -50,23 +57,26 @@ public class GiftTable : MonoBehaviour
                 //AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
                 break;
             case LimitRewordType.AutoComplete:
-                giftNameText.text ="火箭礼包";
+                giftNameText.text = shopItem.name;
                 break;
             case LimitRewordType.Tipstool:
-                giftNameText.text =shopItem.name;
+                giftNameText.text = shopItem.name;
                 break;
         }
 
         for (int i = 0; i < shopDataItem.productContent.Count; i++)
         {
-            List<string> giftdata=shopDataItem.productContent[i];
+            List<string> giftdata = shopDataItem.productContent[i];
             GiftItem giftItem = _giftItems[i];
             giftItem.SetShopData(giftdata, shopDataItem.id);
         }
         
-        eventDes=giftNameText.text;
+        eventDes = giftNameText.text;
         SetProductPrice();
-        //AnalyticMgr.VideoAdShow(eventDes);
+
+        LogShop($"InitUI 完成: limitRewordType={limitRewordType}, price={shopItem.price}, " +
+                $"giftType={shopItem.giftType}, discount={shopItem.discount}, " +
+                $"productContent.Count={(shopItem.productContent != null ? shopItem.productContent.Count : 0)}");
     }
     
     private void SetProductPrice()
@@ -78,7 +88,6 @@ public class GiftTable : MonoBehaviour
         try
         {
             float price = shopDataItem.price;
-            // 获取合适的文化信息
             CultureInfo culture = UIUtilities.GetCultureForCurrency("");
            
             shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
@@ -97,6 +106,7 @@ public class GiftTable : MonoBehaviour
     
     private void OnBuyButtonClicked()
     {
+        LogShop("点击购买");
         MessageSystem.Instance.ShowLoadingAnimation();
 
         if (UIUtilities.isEditMode)
@@ -121,44 +131,40 @@ public class GiftTable : MonoBehaviour
 
     private void OnPurchaseSuccess(ProductItem item)
     {
-        //todo 关闭loading界面
-        Debug.Log("购买成功: " + item.ProductId);
-        shopDataItem=ShopManager.shopManager.GetProduct(item.ProductId);
-        //var items = new List<AnalyticMgr.Item>();
+        LogShop($"========== 购买成功开始: ProductId={item?.ProductId}, ItemName={item?.ItemName}, LocalizedPrice={item?.LocalizedPrice} ==========");
+
+        shopDataItem = ShopManager.shopManager.GetProduct(item.ProductId);
+        if (shopDataItem == null)
+        {
+            LogShop($"购买成功但商店未找到该商品: {item.ProductId}");
+            return;
+        }
+
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
             SystemManager.Instance.HidePanel(PanelType.GetItemScreen);
-            
-            Game.self.Shop.CurrentShopDataItem=shopDataItem.DeepCopy();
-            
+
+            Game.self.Shop.CurrentShopDataItem = shopDataItem.DeepCopy();
+
             SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
-            
-            foreach (var dataitem in shopDataItem.productContent)
+
+            // =====================================================
+            // ★ 统一交给 ShopManager 处理：
+            //   1. 发放 productContent 里的资源（金币、道具等）
+            //   2. 去广告（永久 RemoveAds / 限时 RemoveDayAds）续期或新建
+            //   3. 推荐位跟踪（付费倾向积分 / 探价加分 / 转化失败分归零 / buyCount++ / 冷却 / 上次购买）
+            //   4. 打印 [Shop] 日志
+            // =====================================================
+            if (ShopManager.shopManager != null)
             {
-                int count = int.Parse(dataitem[1]);
-                int type = int.Parse(dataitem[0]);
-                //items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
-                switch (type)
-                {
-                    case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count, false, false,giftNameText+"购买金币");
-                        break;
-                    case (int)LimitRewordType.Butterfly:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly,count,giftNameText+"商店购买蝴蝶");
-                        break;
-                    case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool,count,giftNameText+"商店购买放大镜");
-                        break;
-                    case (int)LimitRewordType.AutoComplete://提示灯道具，单个字符提示
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,count,giftNameText+"商店购买提示灯");
-                        break;
-                    case (int)LimitRewordType.RemoveAds:
-                    case (int)LimitRewordType.RemoveDayAds:
-                        //BuyRemoveAdsEvent(type);
-                        break;
-                }
+                ShopManager.shopManager.HandleGiftTablePurchaseRewards(shopDataItem, item);
+            }
+            else
+            {
+                LogShop("ShopManager.shopManager 为空，无法处理购买后逻辑（回退：仅打印）");
             }
         }
+
         ShopManager.shopManager.paysuccess = true;
         bool firstPay = GameDataManager.Instance.UserData.TotalPayTimes == 0;
         if (firstPay)
@@ -167,8 +173,11 @@ public class GiftTable : MonoBehaviour
         GameDataManager.Instance.UserData.LastPayTimeTicks = DateTime.Now.Ticks;
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
-        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy,1);
-        
+        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy, 1);
+
+        LogShop($"支付统计: firstPay={firstPay}, TotalPayTimes={GameDataManager.Instance.UserData.TotalPayTimes}, " +
+                $"TotalRevenue={GameDataManager.Instance.UserData.TotalRevenue}");
+
         if (!UIUtilities.isEditMode)
         {
             AnalyticMgr.PurchaseFinished(item, firstPay);
@@ -181,15 +190,16 @@ public class GiftTable : MonoBehaviour
         
         //MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
+
+        LogShop($"========== 购买成功结束: {shopDataItem.produceNameId} ==========");
         
         //EventDispatcher.instance.TriggerChangeGoldUI(0, false);
     }
     
     private void OnPurchaseFailed(string error)
     {
-        //todo 关闭loading界面
-        Debug.Log("购买失败: " + error);
-        AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(),error);
+        LogShop($"购买失败: {error}");
+        AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(), error);
         MessageSystem.Instance.HideLoadingAnimation();
     }
 

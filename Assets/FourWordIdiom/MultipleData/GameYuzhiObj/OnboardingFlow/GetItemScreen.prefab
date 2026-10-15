@@ -998,8 +998,8 @@ MonoBehaviour:
   ClaimAdsBtn: {fileID: 3317558791981893794}
   giftTable: {fileID: 6307038429515960244}
   scrollRect: {fileID: 2436129901085465545}
-  snapSpeed: 15
-  snapThreshold: 0.9
+  snapDuration: 0.2
+  snapSmoothness: 0.6
   stopVelocityThreshold: 50
 --- !u!1 &3181888769966650559
 GameObject:
@@ -2160,14 +2160,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Padding:
     m_Left: 0
-    m_Right: 0
+    m_Right: 40
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
   m_StartCorner: 1
   m_StartAxis: 0
   m_CellSize: {x: 1104, y: 520}
-  m_Spacing: {x: 50, y: 0}
+  m_Spacing: {x: 80, y: 0}
   m_Constraint: 2
   m_ConstraintCount: 1
 --- !u!114 &7180948956096028583

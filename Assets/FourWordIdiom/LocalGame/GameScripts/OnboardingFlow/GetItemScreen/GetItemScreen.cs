@@ -40,7 +40,7 @@ public class GetItemScreen : UIWindow
     private int pageCount;
     private float pageWidth;
 
-    // —— 新增：吸附动画状态 ——
+    // —— 吸附动画状态 ——
     private float snapStartPos;   // 吸附起点（归一化）
     private float snapTimer;      // 吸附已进行时长
 
@@ -201,6 +201,12 @@ public class GetItemScreen : UIWindow
     /// 清空并重新生成礼包表。
     /// 数量规则：提示灯（Tipstool）3 个礼包；其他道具 1 个礼包。
     /// 每个礼包用 GiftTable Prefab 在 scrollRect.content 下实例化。
+    ///
+    /// ★ 生成顺序（与需求对齐）：
+    ///   - packs[last]（3 号位）→ 最先创建 → 显示在物理最左；
+    ///   - packs[mid]（2 号位）→ 中间创建 → 显示在物理中间；
+    ///   - packs[0]（1 号位）→ 最后创建 → 显示在物理最右；
+    ///   HorizontalLayoutGroup 从左到右排列 → 视觉顺序：3 号位 → 2 号位 → 1 号位。
     /// </summary>
     private void RefreshGiftTables()
     {
@@ -233,19 +239,21 @@ public class GetItemScreen : UIWindow
 
         scrollRect.gameObject.SetActive(true);
 
-        // 主礼包兼容字段（取第一个）
+        // 主礼包兼容字段（取推荐位第一个，即 1 号位）
         shopDataItem = packs[0];
 
-        for (int i = 0; i < actualCount; i++)
+        // ★ 从后往前遍历：packs[last]（3 号位）先创建 → 物理最左；packs[0]（1 号位）最后创建 → 物理最右
+        for (int i = actualCount - 1; i >= 0; i--)
         {
+            ShopDataItem item = packs[i];
             GiftTable gt = Instantiate(giftTable, scrollRect.content);
             gt.gameObject.SetActive(true);
-
-            ShopDataItem item = packs[i];
             gt.InitUI(limitRewordType, item);
             _giftTableInstances.Add(gt);
 
-            LogGetItem($"生成礼包 [{i}]: {item.produceNameId}(id={item.id}, price={item.price}, giftType={item.giftType})");
+            // 记录视觉位置（0=最左=3号位；last=最右=1号位），便于排查
+            int visualIndex = _giftTableInstances.Count - 1;
+            LogGetItem($"生成礼包 [视觉位置={visualIndex}]: {item.produceNameId}(id={item.id}, price={item.price}, giftType={item.giftType}) ← packs[{i}]");
         }
 
         // 根据实际数量刷新翻页布局
@@ -292,7 +300,7 @@ public class GetItemScreen : UIWindow
         LogGetItem($"翻页布局已刷新: pageCount={pageCount}, pageWidth={pageWidth:F1}");
     }
 
-    // ======================= 翻页逻辑（核心修复） =======================
+    // ======================= 翻页逻辑 =======================
 
     private void Update()
     {
