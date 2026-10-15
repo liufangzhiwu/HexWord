@@ -17,8 +17,26 @@ public class GetItemScreen : UIWindow
     [SerializeField] private Button ClaimGoldBtn;
     [SerializeField] private Button ClaimAdsBtn;
     [SerializeField] private GiftTable giftTable;
+    [SerializeField] private ScrollRect scrollRect;
  
     public static LimitRewordType limitRewordType;
+    
+    [Header("Settings")]
+    public float snapSpeed = 15f;
+    public float snapThreshold = 0.9f;
+    public float stopVelocityThreshold = 50f;
+    
+    private float[] pagePositions;
+    private float targetPosition;
+    private bool isSnapping;
+    private bool wasDragging;
+    private int pageCount;
+    private float pageWidth;
+    
+    private float dragStartPosition; // 记录拖动开始时的位置
+    private bool isDragStartRecorded = false; // 是否已记录拖动起始点
+    private int currentPageIndex; // 当前页面索引
+
 
     private string eventDes;
     public static string targetWord; // 🌟 新增：用于存储当前目标词组
@@ -30,17 +48,7 @@ public class GetItemScreen : UIWindow
         base.OnEnable();
         InitUI();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
-        //EventDispatcher.instance.TriggerUpdateLayerCoin(true,false);
-        
-        // if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
-        // {
-        //     isshowpupa=StageController.Instance.CurStageData.PupaDatas!=null;
-        // }
-        // else if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
-        // {
-        //     isshowpupa=ChessStageController.Instance.CurrStageData.PupaDatas!=null;
-        // }
-        
+      
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
         {
             SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
@@ -113,9 +121,103 @@ public class GetItemScreen : UIWindow
         {
             giftTable.gameObject.SetActive(false);
         }
-       
-        
     }
+    
+    private void Update()
+    {
+        HandleAutoSnapping();
+    }
+    
+    
+    // 新增方法：获取当前最近页面的索引
+    private int GetCurrentPageIndex()
+    {
+        int nearestPage = 0;
+        float minDistance = float.MaxValue;
+
+        for (int i = 0; i < pageCount; i++)
+        {
+            float distance = Mathf.Abs(scrollRect.horizontalNormalizedPosition - pagePositions[i]);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearestPage = i;
+            }
+        }
+        return nearestPage;
+    }
+
+    
+     private void HandleAutoSnapping()
+    {
+        // 自动对齐逻辑
+        if (isSnapping)
+        {
+            scrollRect.horizontalNormalizedPosition = Mathf.Lerp(
+                scrollRect.horizontalNormalizedPosition,
+                targetPosition,
+                snapSpeed * Time.deltaTime);
+
+            if (Mathf.Abs(scrollRect.horizontalNormalizedPosition - targetPosition) < snapThreshold)
+            {
+                scrollRect.horizontalNormalizedPosition = targetPosition;
+                isSnapping = false;
+                // 更新当前页面索引
+                currentPageIndex = GetCurrentPageIndex();
+            }
+        }
+
+        // 检测拖动状态变化
+        bool isDraggingNow = Mathf.Abs(scrollRect.velocity.x) > stopVelocityThreshold;
+
+        // 拖动开始时记录初始位置
+        if (!wasDragging && isDraggingNow)
+        {
+            dragStartPosition = scrollRect.horizontalNormalizedPosition;
+            isDragStartRecorded = true;
+            // 记录拖动开始时的页面索引
+            currentPageIndex = GetCurrentPageIndex();
+        }
+
+        // 拖动结束时判断方向（最终优化版）
+        if (wasDragging && !isDraggingNow && isDragStartRecorded)
+        {
+            float dragEndPosition = scrollRect.horizontalNormalizedPosition;
+    
+            // 计算实际像素位移（使用完整内容宽度）
+            float pixelDelta = (dragEndPosition - dragStartPosition) * pageWidth;
+            float absPixelDelta = Mathf.Abs(pixelDelta);
+            const float pixelThreshold = 10f;
+
+            // 仅当有效拖动距离超过阈值时执行方向判断
+            if (absPixelDelta > pixelThreshold)
+            {
+                // 直接基于像素位移方向判断（避免归一化精度问题）
+                if (pixelDelta > 0) 
+                {
+                    SnapToNextPage();
+                    Debug.Log($"右滑翻页 位移:{pixelDelta:F2}px");
+                }
+                else 
+                {
+                    SnapToPreviousPage();
+                    Debug.Log($"左滑翻页 位移:{pixelDelta:F2}px");
+                }
+            }
+            else
+            {
+                // 微移情况：恢复原始位置
+                SnapToNearestPage();
+                Debug.Log($"微调吸附 位移:{pixelDelta:F2}px");
+            }
+    
+            // 重置拖动标记
+            isDragStartRecorded = false;
+        }
+
+        wasDragging = isDraggingNow;
+    }
+    
 
     protected override void InitializeUIComponents()
     {
@@ -194,6 +296,37 @@ public class GetItemScreen : UIWindow
        
         Close();
     }
+    
+    
+    // 新增方法：对齐到上一页
+    private void SnapToPreviousPage()
+    {
+        int targetPage = Mathf.Max(0, currentPageIndex - 1);
+        ScrollToPage(targetPage);
+    }
+
+    // 新增方法：对齐到下一页
+    private void SnapToNextPage()
+    {
+        int targetPage = Mathf.Min(pageCount - 1, currentPageIndex + 1);
+        ScrollToPage(targetPage);
+    }
+
+
+    private void SnapToNearestPage()
+    {
+        ScrollToPage(GetCurrentPageIndex());
+    }
+
+    public void ScrollToPage(int pageIndex)
+    {
+        if (pageIndex < 0 || pageIndex >= pageCount) return;
+
+        targetPosition = pagePositions[pageIndex];
+        isSnapping = true;
+        currentPageIndex = pageIndex; // 更新当前页面索引
+    }
+    
 
     private void UpdateAdsRewardUI(bool isShow)
     {
