@@ -399,7 +399,7 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
-        ShopDataItem pack = allShopItems.FirstOrDefault(x => x.produceNameId == ProductRemoveAdsWeekly);
+        ShopDataItem pack = allShopItems.FirstOrDefault(x => x.produceNameId == ProductRemoveAdsDaily);
         if (pack == null)
         {
             LogShop("TryShowBreakIcePopup 跳过: 未找到 RemoveAdsWeekly 商品");

@@ -73,7 +73,7 @@ public class FreeItemTable : MonoBehaviour
             case (int)LimitRewordType.RemoveAds:
                 spritename = "shopads";
                 break;
-            case (int)LimitRewordType.Remove7DayAds:
+            case (int)LimitRewordType.RemoveDayAds:
                 spritename = "shopads";
                 break;
         }

@@ -103,6 +103,10 @@ public class AwardScreen : UIWindow
                 icon.sprite = GetSprite(type);
                 count.text = "\u00d7 "+rlist.amount; // 假设 productContent 是数量
                 break;
+            case LimitRewordType.RemoveDayAds:
+                icon.sprite = GetSprite(type);
+                count.text = "\u00d7 "+rlist.amount; // 假设 productContent 是数量
+                break;
         }
     }
     
@@ -125,6 +129,8 @@ public class AwardScreen : UIWindow
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_3");
             case LimitRewordType.InfiniteEnergy:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("InfiniteEnergy");
+            case LimitRewordType.RemoveDayAds:
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("shopads");
             
         }
         return null;
@@ -179,8 +185,7 @@ public class AwardScreen : UIWindow
                         endposObj=CustomFlyInManager.Instance.ShopAutoObj;
                         break;
                     case (int)LimitRewordType.RemoveAds:
-                    case (int)LimitRewordType.Remove7DayAds:
-                        //BuyRemoveAdsEvent(type);
+                    case (int)LimitRewordType.RemoveDayAds:
                         break;
                 }
                

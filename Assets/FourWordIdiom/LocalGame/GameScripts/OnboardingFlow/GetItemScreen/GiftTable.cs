@@ -153,7 +153,7 @@ public class GiftTable : MonoBehaviour
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,count,giftNameText+"商店购买提示灯");
                         break;
                     case (int)LimitRewordType.RemoveAds:
-                    case (int)LimitRewordType.Remove7DayAds:
+                    case (int)LimitRewordType.RemoveDayAds:
                         //BuyRemoveAdsEvent(type);
                         break;
                 }

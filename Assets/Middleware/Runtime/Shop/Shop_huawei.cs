@@ -368,7 +368,7 @@ namespace Middleware
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, "补单发货 " + productId);
                         break;
                     case (int)LimitRewordType.RemoveAds:
-                    case (int)LimitRewordType.Remove7DayAds:
+                    case (int)LimitRewordType.RemoveDayAds:
                         BuyRemoveAdsEvent(type);
                         break;
                 }

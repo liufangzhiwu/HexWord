@@ -21,7 +21,7 @@ public class LimitDataItem
 //对应限时奖励配置表中奖励配置批准中的奖励索引表示的类型
 public enum LimitRewordType
 {
-    Coins,Butterfly,Tipstool,AutoComplete,Min5Double,Min15Double,RemoveAds,Remove7DayAds,ReStartTool=8,InfiniteEnergy=9,Resettool,Pupas=11,
+    Coins,Butterfly,Tipstool,AutoComplete,Min5Double,Min15Double,RemoveAds,RemoveDayAds,ReStartTool=8,InfiniteEnergy=9,Resettool,Pupas=11,
     ZenScore=12,GoldLeaf,Energy,HeadIcon,MonthlyGold,MonthlySilver,MonthlyBronze,
 }
 

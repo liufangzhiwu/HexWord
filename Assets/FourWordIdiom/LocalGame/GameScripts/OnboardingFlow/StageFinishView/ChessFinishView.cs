@@ -24,6 +24,8 @@ public class ChessFinishView : UIWindow
     [SerializeField] private MatchFishTable _matchFishtable;
     [SerializeField] private TaskTable _tasktable;
     [SerializeField] private Button butterflyBtn;
+    [SerializeField] private Button removeAdsBtn; //去广告限时按钮
+    [SerializeField] private Text removeAds; //去广告限时文本
     [SerializeField] private GameObject hardStageTable;          // 困难模式
     [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
 
@@ -69,6 +71,12 @@ public class ChessFinishView : UIWindow
     private bool _hasPlayedRewardSequence = false;
     private bool isTriggerFirstWin;
     private bool isShowWinSign;
+
+    // ======================= 限时去广告 BUFF 相关 =======================
+    /// <summary>限时去广告倒计时协程</summary>
+    private Coroutine _removeAdsCoroutine = null;
+    /// <summary>限时去广告 BUFF 图标根节点（若未单独配置，则退化为 removeAdsBtn 本身）</summary>
+    private GameObject _removeAdsBuffRoot;
     
     protected override void InitializeUIComponents()
     {
@@ -82,6 +90,13 @@ public class ChessFinishView : UIWindow
             AchievementManager.Instance.DisableFinishAchieveTable();
         });
         butterflyBtn.AddClickAction(OnButterflyClick);
+
+        // 去广告 BUFF 按钮点击事件
+        if (removeAdsBtn != null)
+        {
+            removeAdsBtn.AddClickAction(OnRemoveAdsBtnClick);
+            _removeAdsBuffRoot = removeAdsBtn.gameObject;
+        }
         
         // 初始化莲花状态（放在屏幕中央或者特定初始位置）
         GameObject prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "lotus_icon");
@@ -152,6 +167,130 @@ public class ChessFinishView : UIWindow
         
         isShowWinSign = StreakManager.Instance.IsCanShowWinSign();
         CheckFishiTable();
+
+        // ======================= 刷新限时去广告 BUFF =======================
+        RefreshRemoveAdsBuff();
+    }
+
+    // ======================= 限时去广告 BUFF 逻辑 =======================
+
+    /// <summary>
+    /// 刷新限时去广告 BUFF 的显示与倒计时协程。
+    /// - 处于限时去广告期间：显示 removeAdsBtn，启动每秒刷新协程；
+    /// - 否则：隐藏 removeAdsBtn，停止协程。
+    /// </summary>
+    private void RefreshRemoveAdsBuff()
+    {
+        if (removeAdsBtn == null) return;
+
+        // 停旧协程（避免重复启动）
+        if (_removeAdsCoroutine != null)
+        {
+            StopCoroutine(_removeAdsCoroutine);
+            _removeAdsCoroutine = null;
+        }
+
+        bool isActive = IsLimitRemoveAdsActive();
+
+        if (isActive)
+        {
+            removeAdsBtn.gameObject.SetActive(true);
+            // 立即刷新一次文本，避免等待 1 秒
+            UpdateRemoveAdsBuffText();
+            _removeAdsCoroutine = StartCoroutine(RemoveAdsBuffTimerCoroutine());
+            Debug.Log($"[ChessFinishView] 限时去广告 BUFF 显示, 剩余={ShopManager.shopManager?.GetRemoveAdsRemainSeconds():F0}s");
+        }
+        else
+        {
+            removeAdsBtn.gameObject.SetActive(false);
+            Debug.Log("[ChessFinishView] 限时去广告 BUFF 隐藏（未生效或已过期）");
+        }
+    }
+
+    /// <summary>是否处于"限时去广告"生效期间（7天/1天）</summary>
+    private bool IsLimitRemoveAdsActive()
+    {
+        if (ShopManager.shopManager == null) return false;
+
+        // 已拥有永久去广告：BUFF 不需要展示（永久去广告已通过设置页/其他入口展示）
+        if (ShopManager.shopManager.IsRemoveAdsOwned()) return false;
+
+        // 限时去广告生效期间
+        if (!ShopManager.shopManager.IsRemoveAdsActive()) return false;
+
+        // 剩余时间 > 0
+        return ShopManager.shopManager.GetRemoveAdsRemainSeconds() > 0;
+    }
+
+    /// <summary>
+    /// 限时去广告倒计时协程：每秒刷新一次文本，倒计时结束隐藏 BUFF。
+    /// </summary>
+    private IEnumerator RemoveAdsBuffTimerCoroutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(1f);
+        while (true)
+        {
+            if (!IsLimitRemoveAdsActive())
+            {
+                // 时间到期或状态失效 → 隐藏 BUFF，退出协程
+                if (removeAdsBtn != null)
+                    removeAdsBtn.gameObject.SetActive(false);
+                Debug.Log("[ChessFinishView] 限时去广告已结束，BUFF 自动隐藏");
+                _removeAdsCoroutine = null;
+                yield break;
+            }
+
+            UpdateRemoveAdsBuffText();
+            yield return wait;
+        }
+    }
+
+    /// <summary>刷新 removeAds 文本：显示剩余时间（如 "1天 23:59:59" / "05:30"）</summary>
+    private void UpdateRemoveAdsBuffText()
+    {
+        if (removeAds == null) return;
+        if (ShopManager.shopManager == null)
+        {
+            removeAds.text = "";
+            return;
+        }
+
+        double remainSeconds = ShopManager.shopManager.GetRemoveAdsRemainSeconds();
+        removeAds.text = FormatRemoveAdsRemainTime(remainSeconds);
+    }
+
+    /// <summary>
+    /// 剩余时间格式化：
+    ///  - >= 1 天：X天 HH:mm:ss
+    ///  - >= 1 小时：HH:mm:ss
+    ///  - < 1 小时：mm:ss
+    /// </summary>
+    private string FormatRemoveAdsRemainTime(double remainSeconds)
+    {
+        int total = Mathf.Max(0, Mathf.FloorToInt((float)remainSeconds));
+        int days = total / 86400;
+        int hours = (total % 86400) / 3600;
+        int mins = (total % 3600) / 60;
+        int secs = total % 60;
+
+        if (days > 0)
+            return $"{days}天 {hours:00}:{mins:00}:{secs:00}";
+        if (hours > 0)
+            return $"{hours:00}:{mins:00}:{secs:00}";
+        return $"{mins:00}:{secs:00}";
+    }
+
+    /// <summary>
+    /// 点击限时去广告 BUFF：弹窗说明当前状态和剩余时间倒计时。
+    /// 需求："点击弹窗说明当前状态和剩余时间倒计时，点了解按钮或关闭按钮，关闭弹窗"
+    /// TODO：确认 PanelType 名称与弹窗脚本，当前调用示例为 PanelType.RemoveAdsScreen
+    /// </summary>
+    private void OnRemoveAdsBtnClick()
+    {
+        Debug.Log($"[ChessFinishView] 点击限时去广告 BUFF, 剩余={ShopManager.shopManager?.GetRemoveAdsRemainSeconds():F0}s");
+
+        // 展示弹窗（RemoveAdsScreen 已在 ShopItem.BuyRemoveAdsEvent 中被调用，此处复用同一面板）
+        SystemManager.Instance.ShowPanel(PanelType.RemoveAdsScreen);
     }
 
     public void CheckFishiTable()
@@ -1168,6 +1307,13 @@ public class ChessFinishView : UIWindow
         FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
         ChessStageController.Instance.LimitPuzzleCount = 0;
         //GameDataManager.Instance?.UserData.ClearPuzzleVocabulary();
+
+        // ======================= 停止限时去广告倒计时协程 =======================
+        if (_removeAdsCoroutine != null)
+        {
+            StopCoroutine(_removeAdsCoroutine);
+            _removeAdsCoroutine = null;
+        }
 
         // EventDispatcher.instance.TriggerUpdateLayerCoin(false,false,false);
         EventDispatcher.instance.TriggerChangeGoldUI(AppGameSettings.LevelCompleteBonus, false);

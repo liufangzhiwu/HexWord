@@ -47,9 +47,9 @@ public class GiftItem : MonoBehaviour
                 countText.fontSize = 60;
                 CreateTipsBtn(pointdes);
                 break;
-            case (int)LimitRewordType.Remove7DayAds:
+            case (int)LimitRewordType.RemoveDayAds:
                 spritename = "shopads";
-                countText.text = MultilingualManager.Instance.GetString(des);
+                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
                 countText.fontSize = 60;
                 CreateTipsBtn(pointdes);
                 break;

@@ -71,8 +71,6 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>去广告（终身）商品ID</summary>
     public const string ProductRemoveAds = "RemoveADS";
-    /// <summary>去广告（一周）商品ID，同时是破冰礼包 ID</summary>
-    public const string ProductRemoveAdsWeekly = "RemoveAdsWeekly";
     /// <summary>灯泡道具单一道具商品</summary>
     public const string ProductSingleGoods = "SingleGoods";
     /// <summary>复活道具单一道具商品</summary>
@@ -81,7 +79,7 @@ public partial class ShopManager : MonoBehaviour
     public const string ProductGold6 = "Gold6";
 
     /// <summary>去广告（限时一天）商品ID（新配置表待新增，预留）</summary>
-    public const string ProductRemoveAdsDaily = "RemoveAdsDaily";
+    public const string ProductRemoveAdsDaily = "RemoveAdsWeekly";
     /// <summary>破冰礼包冷却：7+N 天，N 每次 +3</summary>
     private const int BreakIceCooldownBaseDays = 7;
     private const int BreakIceCooldownStepDays = 3;
@@ -332,9 +330,7 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>是否为去广告类商品（永久或限时）</summary>
     public bool IsRemoveAdsProduct(string produceNameId)
     {
-        return produceNameId == ProductRemoveAds
-            || produceNameId == ProductRemoveAdsWeekly
-            || produceNameId == ProductRemoveAdsDaily;
+        return produceNameId == ProductRemoveAds|| produceNameId == ProductRemoveAdsDaily;
     }
 
     /// <summary>是否已拥有永久去广告（本地 + 云端恢复状态）</summary>
@@ -349,8 +345,7 @@ public partial class ShopManager : MonoBehaviour
     {
         return GameDataManager.Instance.UserData.limitShopItems
             .Any(item => item.isget && !item.isoverdate
-                && (item.adstype == (int)LimitRewordType.Remove7DayAds
-                 || item.adstype == RemoveAds1DayType));
+                && (item.adstype == (int)LimitRewordType.RemoveDayAds));
     }
 
     /// <summary>获取限时去广告剩余时间（秒），未生效返回 0</summary>
@@ -360,7 +355,7 @@ public partial class ShopManager : MonoBehaviour
         foreach (var item in GameDataManager.Instance.UserData.limitShopItems)
         {
             if (!item.isget || item.isoverdate) continue;
-            if (item.adstype != (int)LimitRewordType.RemoveAds && item.adstype != (int)LimitRewordType.Remove7DayAds && item.adstype != RemoveAds1DayType)
+            if (item.adstype != (int)LimitRewordType.RemoveAds && item.adstype != (int)LimitRewordType.RemoveDayAds)
                 continue;
 
             DateTime end = item.GetEndTime();
@@ -377,9 +372,6 @@ public partial class ShopManager : MonoBehaviour
     {
         return IsRemoveAdsOwned() || IsRemoveAdsActive();
     }
-
-    /// <summary>去广告（限时一天）类型值：TODO 与 GameDataManager.LimitRewordType 枚举对齐后删除该常量</summary>
-    public const int RemoveAds1DayType = 1001;
 
     // ======================= 内购推荐位推送规则（决策权重，公共逻辑） =======================
 
@@ -982,7 +974,7 @@ public partial class ShopManager : MonoBehaviour
                     GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, "商店购买" + item.ItemName);
                     break;
                 case (int)LimitRewordType.RemoveAds:
-                case (int)LimitRewordType.Remove7DayAds:
+                case (int)LimitRewordType.RemoveDayAds:
                     BuyRemoveAdsEvent(type);
                     break;
                 case ReviveToolType: // 复活道具（⏰），TODO 与 LimitRewordType 枚举对齐
@@ -1052,26 +1044,21 @@ public partial class ShopManager : MonoBehaviour
     /// </summary>
     private void HandleRemoveAdsPurchase(ShopDataItem shopDataItem)
     {
-        int adstype;
+        int adstype= (int)LimitRewordType.RemoveDayAds;
         bool permanent = shopDataItem.produceNameId == ProductRemoveAds;
-        int hours;
+        int hours=0;
         if (permanent)
         {
             adstype = (int)LimitRewordType.RemoveAds;
             hours = 0;
         }
-        else if (shopDataItem.produceNameId == ProductRemoveAdsWeekly)
+        else if (shopDataItem.produceNameId == ProductRemoveAdsDaily)
         {
-            adstype = (int)LimitRewordType.Remove7DayAds;
-            hours = 7 * 24;
-        }
-        else
-        {
-            adstype = RemoveAds1DayType;
-            hours = 24;
+            adstype = (int)LimitRewordType.RemoveDayAds;
+            hours = 1 * 24;
         }
 
-        LogShop($"HandleRemoveAdsPurchase: {shopDataItem.produceNameId}, permanent={permanent}, adstype={adstype}, hours={hours}");
+        LogShop($"HandleRemoveAdsPurchase: {shopDataItem.produceNameId}, permanent={permanent}, hours={hours}");
 
         ShopLimitData exist = GameDataManager.Instance.UserData.limitShopItems.Find(x => x.adstype == adstype);
         if (exist != null && !exist.isoverdate)
@@ -1532,7 +1519,7 @@ public partial class ShopManager : MonoBehaviour
         {
             ShopManager.shopManager.UpdateAdsBtnUIEvent(null, true);
         }
-        else if (type == (int)LimitRewordType.Remove7DayAds)
+        else if (type == (int)LimitRewordType.RemoveDayAds)
         {
             ShopManager.shopManager.UpdateAdsBtnUIEvent(DateTime.Now.ToString(), true);
         }

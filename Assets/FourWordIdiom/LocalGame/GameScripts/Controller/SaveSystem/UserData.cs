@@ -824,7 +824,7 @@ public class UserData
                 }
             }
 
-            if (shopdata.isget && shopdata.adstype == (int)LimitRewordType.Remove7DayAds)
+            if (shopdata.isget && shopdata.adstype == (int)LimitRewordType.RemoveDayAds)
             {
                 int hour = 24 * 7;
                 DateTime buyendTime = DateTime.Parse(shopdata.gettime).AddHours(hour);
