@@ -48,10 +48,8 @@ public class GiftTable : MonoBehaviour
         
         switch (limitRewordType)
         {
-            case LimitRewordType.Coins:
-                // if(max)
-                //     AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
-                //AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin1");
+            case LimitRewordType.ReStartTool:
+                giftNameText.text = shopItem.name;
                 break;
             case LimitRewordType.Butterfly:
                 //AwardIcon.sprite= AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
@@ -63,11 +61,18 @@ public class GiftTable : MonoBehaviour
                 giftNameText.text = shopItem.name;
                 break;
         }
+        
+        for (int i = 0; i < _giftItems.Count; i++)
+        {
+            GiftItem giftItem = _giftItems[i];
+            giftItem.gameObject.SetActive(false);
+        }
 
         for (int i = 0; i < shopDataItem.productContent.Count; i++)
         {
             List<string> giftdata = shopDataItem.productContent[i];
             GiftItem giftItem = _giftItems[i];
+            giftItem.gameObject.SetActive(true);
             giftItem.SetShopData(giftdata, shopDataItem.id);
         }
         
