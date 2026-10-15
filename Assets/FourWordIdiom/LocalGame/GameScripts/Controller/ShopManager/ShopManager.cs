@@ -552,9 +552,9 @@ public partial class ShopManager : MonoBehaviour
         float cooldown = GetCooldownCoefficient(item);
         float decision = (packWeight + special + peak + ret) * cooldown * pushIndex;
 
-        LogShop($"CalculateDecisionWeight {item.produceNameId} [slot={slot}]: " +
-                $"base={cfg.baseWeight}, pay={payTendency:F1}, explore={explore:F1}, fail={fail:F1} => pack={packWeight:F2}(cap={cap}), " +
-                $"special={special:F2}, peak={peak:F2}, ret={ret:F2}, cooldown={cooldown:F2}, pushIndex={pushIndex:F2} => decision={decision:F2}");
+        LogShop($"决策权重 {item.produceNameId} [slot={slot}]: " +
+                $"基础权重={cfg.baseWeight}, 付费倾向分={payTendency:F1}, 探价加分={explore:F1}, 失败分={fail:F1} => 礼包权重={packWeight:F2}(cap={cap}), " +
+                $"节日/周末权重={special:F2}, 高峰权重={peak:F2}, 流失回归={ret:F2}, 冷却系数={cooldown:F2}, 推送状态={pushIndex:F2} => 最终决策权重={decision:F2}");
 
         return decision;
     }
