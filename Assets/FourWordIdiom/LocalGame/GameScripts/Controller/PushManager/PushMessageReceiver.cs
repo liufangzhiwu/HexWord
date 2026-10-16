@@ -8,7 +8,7 @@ using Middleware;
 /// </summary>
 public class PushMessageReceiver : MonoBehaviour
 {
-    private static PushMessageReceiver _instance;
+    public static PushMessageReceiver _instance;
 
     void Awake()
     {
@@ -45,7 +45,7 @@ public class PushMessageReceiver : MonoBehaviour
         // 转发给 Push_harmony 处理
         Game.self.Pushs.HandleSettingsClosedFromJS(enabled == 1);
     }
-    
+
     // ============================================================
     // ★ 由 ArkTS 侧 TuanjieSendMessage 调用
     //   ArkTS 侧调用：
@@ -57,20 +57,56 @@ public class PushMessageReceiver : MonoBehaviour
     //   1. 方法必须是 public
     //   2. 参数必须是 string（SendMessage 只支持字符串）
     //   3. 方法名要和 ArkTS 侧传的第二个参数完全一致
+    //
+    //   ★ 语义：广告追踪权限是否同意的回调
+    //     enabled == 1 → 玩家同意广告追踪权限
+    //     enabled == 0 → 玩家拒绝广告追踪权限
+    //   这一步是用户分层的关键输入之一（IAA 层 vs IAP 层细分）。
     // ============================================================
     public void OnOAIDClosedSignal(string enabledStr)
     {
-        int enabled = 0;
-        int.TryParse(enabledStr, out enabled);
-        Debug.Log($"[PushMessageReceiver] OnOAIDClosedSignal 收到, enabledStr={enabledStr}, enabled={enabled}");
 
-        if (enabled == 1)
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null) return;
+        
+        bool hasAdTracking = false;
+        if (string.IsNullOrEmpty(userData.adTrackingEnabled))
         {
-            AnalyticMgr.PopAccept(popName: "广告追踪");
+            int enabled = 0;
+            int.TryParse(enabledStr, out enabled);
+            Debug.Log($"[PushMessageReceiver] OnOAIDClosedSignal 收到, enabledStr={enabledStr}, enabled={enabled}");
+
+            // ---------- 1. 埋点上报 ----------
+            if (enabled == 1)
+            {
+                AnalyticMgr.PopAccept(popName: "广告追踪");
+            }
+            else
+            {
+                AnalyticMgr.PopRefuse(popName: "广告追踪");
+            }
+            
+            // ---------- 2. 记录广告追踪状态到 UserData（供分层判断） ----------
+            hasAdTracking = enabled == 1;
+          
+            userData.adTrackingEnabled = enabled.ToString();
+            Debug.Log($"[PushMessageReceiver] 广告追踪权限状态已写入 UserData.adTrackingEnabled={hasAdTracking}");
+        }
+
+        // ---------- 3. 刷新用户分层并打印日志 ----------
+        if (ShopManager.shopManager != null)
+        {
+            string curLayer = ShopManager.shopManager.GetCurrentUserLayer();
+            ShopManager.shopManager.RefreshLayer();
+
+            bool isPaid = userData.TotalPayTimes > 0;
+            Debug.Log($"[Shop] 广告追踪回调触发分层刷新: " +
+                      $"hasAdTracking={hasAdTracking}, isPaid={isPaid}, " +
+                      $"分层 {curLayer}");
         }
         else
         {
-            AnalyticMgr.PopRefuse(popName: "广告追踪");
+            Debug.LogWarning("[PushMessageReceiver] ShopManager.shopManager 为空，跳过分层刷新");
         }
     }
 }

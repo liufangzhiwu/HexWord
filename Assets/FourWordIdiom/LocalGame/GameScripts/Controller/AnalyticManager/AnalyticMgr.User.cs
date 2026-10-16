@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Middleware;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public static class ItemConstants
 {
@@ -105,8 +106,20 @@ public partial class AnalyticMgr
         Game.self?.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
         SetCommonProperties();
         Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
-        
-        //Game.self?.Attributes?.ReportConversion(2);
+
+        if (!string.IsNullOrEmpty(GameDataManager.Instance.UserData.adTrackingEnabled))
+        {
+            PushMessageReceiver._instance.OnOAIDClosedSignal(GameDataManager.Instance.UserData.adTrackingEnabled);
+        }
+        else
+        {
+#if UNITY_EDITOR 
+            
+            string enRange=Random.Range(0, 2).ToString();
+            PushMessageReceiver._instance.OnOAIDClosedSignal(enRange);
+#endif
+        }
+        Game.self?.Attributes?.ReportConversion("2");
     }
 
     /// <summary>

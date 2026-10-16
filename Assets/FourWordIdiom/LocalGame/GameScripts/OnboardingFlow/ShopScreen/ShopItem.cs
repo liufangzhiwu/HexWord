@@ -845,7 +845,6 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         {
             limitData.isget = true;
             limitData.buyCount += 1;
-            transform.gameObject.SetActive(false);
         }
 
         //MessageSystem.Instance.ShowTip("购买成功！");

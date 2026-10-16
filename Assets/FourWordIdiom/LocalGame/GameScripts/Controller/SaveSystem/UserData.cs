@@ -95,6 +95,7 @@ public class UserData
     public float TotalPlayTimeSeconds; // 累计游戏时长 (G2)
     public long LastPayTimeTicks; // 上次付费时间 (Ticks) (G3)
     public long LastRewardAdTimeTicks; // 上次看激励视频的时间 (G1)
+    public string adTrackingEnabled;//广告权限是否开启
 
     public long LastInterstitialTimeTicks; // 上次看插屏的时间 (G5)
 
@@ -317,6 +318,7 @@ public class UserData
         UserHeadBorderId=0;
         UserName = "";
         UserId = null;
+        Rigister = false;
         Gold = AppGameSettings.StartingGold;
         MaxComboCount = 0;
         TotalConsumedGold = 0;
@@ -468,6 +470,7 @@ public class UserData
         DayRewardVideoGiftCount = 0;
         DayInterstitialGiftCount = 0;
         HasShownFirstAdGift = false;
+        adTrackingEnabled = "";
 
         #endregion
     }
@@ -687,6 +690,7 @@ public class UserData
         DayRewardVideoGiftCount=user.DayRewardVideoGiftCount;
         DayInterstitialGiftCount=user.DayInterstitialGiftCount;
         HasShownFirstAdGift=user.HasShownFirstAdGift;
+        adTrackingEnabled=user.adTrackingEnabled;
         
         // 检查并初始化缺失的生命周期事件
         InitializeLifecycleEvents();

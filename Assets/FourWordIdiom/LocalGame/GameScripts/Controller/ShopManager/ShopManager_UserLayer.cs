@@ -12,7 +12,7 @@ using UnityEngine;
 [Serializable]
 public class ShopLayerConfig
 {
-    public string userLayer = "IAA11";   // 当前用户分层
+    public string userLayer = "IAA00";   // 当前用户分层（默认 IAA00：未通过广告追踪 + 活跃天数 <= 3）
     public string adFailed = "1_1_60_4_-1_3";   // 广告失败策略 S_F_T_A_B_C
     public string brokenIce = "1_1";      // 破冰礼包策略（开关_P冷却参数）
     public string interAdsGroup = "0";    // 插屏分组（插屏>3 次数判断用）
@@ -41,6 +41,23 @@ public struct AdFailedParams
 /// 职责：用户分层配置加载与查询、广告获取失败策略（提示道具视频/金币视频/分享）、
 ///      破冰礼包策略、复购/升层策略。分层与分层跳转（L层升级）由外部分层模块驱动。
 ///
+/// 分层依据（需求《用户标记及分层策略规则》）：
+///   1. 广告追踪权限状态（PushMessageReceiver.OnOAIDClosedSignal 回调写入 UserData.adTrackingEnabled）；
+///   2. 活跃周期天数 N（UserData.activeDayCnt）；
+///   3. 是否已付费（UserData.TotalPayTimes > 0）—— IAP 层判定用（需求里 IAP 层命名待配置表补充）。
+///
+/// 分层规则（默认 IAA00）：
+///   ┌──────────────┬──────────────┬───────────────────┐
+///   │ 广告追踪权限 │ 活跃天数 N   │ 分层              │
+///   ├──────────────┼──────────────┼───────────────────┤
+///   │ 未通过       │ N <= 3       │ IAA00             │
+///   │ 通过         │ N <= 3       │ IAA10             │
+///   │ 未通过       │ 3 < N < 14   │ IAA01             │
+///   │ 通过         │ 3 < N < 14   │ IAA11             │
+///   │ 未通过       │ N >= 14      │ IAA02             │
+///   │ 通过         │ N >= 14      │ IAA12             │
+///   └──────────────┴──────────────┴───────────────────┘
+///
 /// 注意：破冰/复购弹窗记录（_lastBreakIcePopupTime / _breakIcePopupCount / _lastRepurchasePopupTime）
 /// 目前为运行时状态，非持久化。如需跨启动保留，请迁移到 GameDataManager.UserData 序列化字段。
 /// </summary>
@@ -65,6 +82,9 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>广告失败弹窗冷却截止时间（3600s 状态 C）</summary>
     private DateTime _adFailBlockedUntil;
 
+    /// <summary>分享点击时间（切回前台成功判定用）</summary>
+    private DateTime _shareClickedTime;
+
     /// <summary>道具视频类型（灯泡提示灯 / 复活）</summary>
     public enum ToolVideoType
     {
@@ -85,7 +105,7 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>
     /// 加载用户分层配置（用户分层付费设计20260906）：
     /// 第2行字段名：用户分层 | … | AdFailed | BrokenIce | InterAdsGroup | AdTrackingStimulate | 特惠礼包主动弹出
-    /// 优先读 Bundle，失败回退内置默认（IAA11 档）。
+    /// 优先读 Bundle，失败回退内置默认（IAA00 档）。
     /// </summary>
     private void LoadLayerConfig()
     {
@@ -93,11 +113,7 @@ public partial class ShopManager : MonoBehaviour
         if (layer != null)
         {
             ParseLayerConfigs(layer.text);
-            LogShop($"LoadLayerConfig: 从 Bundle 加载 shop_layer, layer={_layerConfig.userLayer}");
-            return;
         }
-        LoadDefaultLayerConfig();
-        LogShop($"LoadLayerConfig: 未找到 shop_layer, 使用默认 layer={_layerConfig.userLayer}");
     }
 
     private void ParseLayerConfigs(string data)
@@ -131,49 +147,97 @@ public partial class ShopManager : MonoBehaviour
             var f = records[i];
             if (f.Count < 6) continue;
             if (GetField(f, 0) != currentLayer) continue;
-
-            _layerConfig.userLayer = GetField(f, 0);
-            _layerConfig.adFailed = GetField(f, colMap.ContainsKey("AdFailed") ? colMap["AdFailed"] : 6);
-            if (string.IsNullOrEmpty(_layerConfig.adFailed))
-                _layerConfig.adFailed = "0_1_60_-1_-1_-1";
-            _layerConfig.brokenIce = GetField(f, colMap.ContainsKey("BrokenIce") ? colMap["BrokenIce"] : 7);
-            if (string.IsNullOrEmpty(_layerConfig.brokenIce))
-                _layerConfig.brokenIce = "1_1";
-            _layerConfig.interAdsGroup = GetField(f, colMap.ContainsKey("InterAdsGroup") ? colMap["InterAdsGroup"] : 8);
-            _layerConfig.adTrackingStimulate = GetField(f, colMap.ContainsKey("AdTrackingStimulate") ? colMap["AdTrackingStimulate"] : 9);
-            int specialPopupCol = colMap.ContainsKey("特惠礼包主动弹出") ? colMap["特惠礼包主动弹出"] : 10;
-            _layerConfig.allowSpecialPopup = GetField(f, specialPopupCol) == "开";
             return;
         }
     }
 
-    private void LoadDefaultLayerConfig()
+
+    private void SetLayerConfig(string layer)
     {
-        // 默认 IAA11（分层表 20260906 禅意之境 IAA11 行）：
-        _layerConfig.userLayer = "IAA11";
-        _layerConfig.adFailed = "1_1_120_4_2_2";   // S=1 F=1 T=120 A=4 B=2 C=2
-        _layerConfig.brokenIce = "1_1";
-        _layerConfig.interAdsGroup = "0";
-        _layerConfig.adTrackingStimulate = "1_500";
-        _layerConfig.allowSpecialPopup = true;
+        _layerConfig = new ShopLayerConfig();
+        _layerConfig.userLayer = layer;
+        _layerConfig.adFailed = GetField(f, colMap.ContainsKey("AdFailed") ? colMap["AdFailed"] : 6);
+        if (string.IsNullOrEmpty(_layerConfig.adFailed))
+            _layerConfig.adFailed = "0_1_60_-1_-1_-1";
+        _layerConfig.brokenIce = GetField(f, colMap.ContainsKey("BrokenIce") ? colMap["BrokenIce"] : 7);
+        if (string.IsNullOrEmpty(_layerConfig.brokenIce))
+            _layerConfig.brokenIce = "1_1";
+        _layerConfig.interAdsGroup = GetField(f, colMap.ContainsKey("InterAdsGroup") ? colMap["InterAdsGroup"] : 8);
+        _layerConfig.adTrackingStimulate = GetField(f, colMap.ContainsKey("AdTrackingStimulate") ? colMap["AdTrackingStimulate"] : 9);
+        int specialPopupCol = colMap.ContainsKey("特惠礼包主动弹出") ? colMap["特惠礼包主动弹出"] : 10;
+        _layerConfig.allowSpecialPopup = GetField(f, specialPopupCol) == "开";
     }
 
     /// <summary>
-    /// 获取当前用户分层（TODO：接入分层模块；当前返回配置的默认层）。
-    /// 分层跳转（升级/降级）由外部用户分层模块驱动后调用 RefreshLayer()。
+    /// 获取当前用户分层。
+    ///
+    /// 分层依据（需求《用户标记及分层策略规则》）：
+    ///   1. 广告追踪权限状态：UserData.adTrackingEnabled（PushMessageReceiver.OnOAIDClosedSignal 写入）；
+    ///   2. 活跃周期天数 N：UserData.activeDayCnt；
+    ///   3. 是否已付费（UserData.TotalPayTimes > 0）—— 仅用于识别 IAP 层（目前需求里 IAP 命名待配置表补充）。
+    ///
+    /// 分层规则（默认 IAA00）：
+    ///   ┌──────────────┬──────────────┬───────────┐
+    ///   │ 广告追踪权限 │ 活跃天数 N   │ 分层      │
+    ///   ├──────────────┼──────────────┼───────────┤
+    ///   │ 未通过       │ N <= 3       │ IAA00     │
+    ///   │ 通过         │ N <= 3       │ IAA10     │
+    ///   │ 未通过       │ 3 < N < 14   │ IAA01     │
+    ///   │ 通过         │ 3 < N < 14   │ IAA11     │
+    ///   │ 未通过       │ N >= 14      │ IAA02     │
+    ///   │ 通过         │ N >= 14      │ IAA12     │
+    ///   └──────────────┴──────────────┴───────────┘
     /// </summary>
     public string GetCurrentUserLayer()
     {
-        // TODO：从分层模块读取实际分层（IAA00/IAA01/IAA02/IAA10/IAA11/IAA12/IAP11~IAP14…）
-        // 当前按配置表默认层返回，接入后删除该注释
-        return _layerConfig.userLayer;
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null)
+        {
+            LogShop("GetCurrentUserLayer: UserData 为空，回退默认层 IAA00");
+            return "IAA00";
+        }
+
+        bool hasAdTracking = userData.adTrackingEnabled=="1";
+        int activeDayCnt = userData.activeDayCnt;
+        bool isPaid = userData.TotalPayTimes > 0;
+
+        // ---------- 1. 已付费玩家优先归入 IAP 层（TODO：待策划补充 IAP 层命名规则后调整） ----------
+        if (isPaid)
+        {
+            string iapLayer = "IAP11";
+            LogShop($"GetCurrentUserLayer 计算: isPaid=True, hasAdTracking={hasAdTracking}, activeDayCnt={activeDayCnt} => layer={iapLayer}");
+            return iapLayer;
+        }
+
+        // ---------- 2. 未付费玩家按"广告追踪权限 × 活跃天数"分 6 层 ----------
+        string layer;
+        if (hasAdTracking)
+        {
+            if (activeDayCnt <= 3) layer = "IAA10";
+            else if (activeDayCnt < 14) layer = "IAA11";
+            else layer = "IAA12";
+        }
+        else
+        {
+            if (activeDayCnt <= 3) layer = "IAA00";
+            else if (activeDayCnt < 14) layer = "IAA01";
+            else layer = "IAA02";
+        }
+
+        SetLayerConfig(layer);
+        LogShop($"GetCurrentUserLayer 计算: isPaid=False, hasAdTracking={hasAdTracking}, activeDayCnt={activeDayCnt} => layer={layer}");
+        return layer;
     }
 
-    /// <summary>分层变更后重新加载配置</summary>
+    /// <summary>分层变更后重新加载配置（会同步打印分层切换日志）</summary>
     public void RefreshLayer()
     {
-        LoadLayerConfig();
-        LogShop($"RefreshLayer: 分层={_layerConfig.userLayer}");
+        string curLayer = _layerConfig.userLayer;
+
+        LogShop($"[UserLayer] RefreshLayer: 分层 {curLayer}, " +
+                $"AdFailed={_layerConfig.adFailed}, BrokenIce={_layerConfig.brokenIce}, " +
+                $"InterAdsGroup={_layerConfig.interAdsGroup}, AdTrackingStimulate={_layerConfig.adTrackingStimulate}, " +
+                $"AllowSpecialPopup={_layerConfig.allowSpecialPopup}");
     }
 
     /// <summary>是否 IAA 层（纯广告变现层；破冰礼包只对 IAA 层生效）</summary>
@@ -308,8 +372,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"OnShareClicked: {_shareClickedTime:HH:mm:ss}");
     }
 
-    private DateTime _shareClickedTime;
-
     /// <summary>
     /// 分享成功判定：切回前台且距离点击超过 3 秒 → 分享成功
     /// 奖励：灯泡1 / 复活1 / 金币50，每日限 F 次（需求：分享奖励）。
@@ -443,15 +505,11 @@ public partial class ShopManager : MonoBehaviour
             LogShop("TryShowRepurchasePopup 跳过: 非 IAP 层");
             return false;
         }
-
-        int Gold = GameDataManager.Instance.UserData.Gold;
-        
-        if ( Gold>= 100)
+        if (GetPlayerGold() >= 100)
         {
-            LogShop($"TryShowRepurchasePopup 跳过: 金币={Gold} >= 100");
+            LogShop($"TryShowRepurchasePopup 跳过: 金币={GetPlayerGold()} >= 100");
             return false;
         }
-        
         if (_lastRepurchasePopupTime != DateTime.MinValue
             && DateTime.Now.Subtract(_lastRepurchasePopupTime).TotalDays < RepurchaseCooldownDays)
         {
@@ -520,4 +578,19 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"AddPackBonus: {target.produceNameId} 追加价值 {bonusValue}, 基准礼包={basePack?.produceNameId}");
     }
 
+    // ======================= 数据访问桩（TODO 接入 UserData 后替换） =======================
+
+    /// <summary>获取玩家金币数</summary>
+    protected virtual long GetPlayerGold()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return 0;
+        return GameDataManager.Instance.UserData.Gold;
+    }
+
+    /// <summary>获取玩家道具持有数</summary>
+    protected virtual int GetPlayerToolCount()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return 0;
+        return GameDataManager.Instance.UserData.toolInfo[102].count;
+    }
 }
