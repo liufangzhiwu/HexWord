@@ -671,7 +671,7 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     /// <summary>
     /// 初始化礼包内容展示。
     /// 需求："永久去广告"商品，玩家购买成功后，包含此物品的礼包不再显示"去广告"（无论是永久还是显示）物品。
-    /// 因此当已拥有永久去广告时，跳过所有含 RemoveAds / Remove7DayAds / RemoveAds1Day 的内容。
+    /// 因此当已拥有永久去广告时，跳过所有含 RemoveAds / RemoveDayAds 的内容。
     /// </summary>
     private void InitGiftItems()
     {
@@ -710,7 +710,7 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    /// <summary>是否为去广告相关的内容类型（永久 / 7天 / 1天）</summary>
+    /// <summary>是否为去广告相关的内容类型（永久 / 限时）</summary>
     private bool IsRemoveAdsRelatedType(int type)
     {
         return type == (int)LimitRewordType.RemoveAds
@@ -736,7 +736,7 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                 IsoCurrencyCode = "",
                 ItemName = data.produceNameId,
                 ProductId = data.produceNameId,
-                LocalizedPrice = 0,
+                LocalizedPrice = data.price*100,
             };
             OnPurchaseSuccess(productItem);
         }
@@ -784,7 +784,7 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                         break;
                     case (int)LimitRewordType.RemoveDayAds:
                         hasPermanentRemoveAds = false;
-                        HandleRemoveAdsPurchaseInternal((int)LimitRewordType.RemoveDayAds, count*24);
+                        HandleRemoveAdsPurchaseInternal((int)LimitRewordType.RemoveDayAds, count * 24);
                         break;
                     case (int)LimitRewordType.ReStartTool:
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, count, "商店购买" + item.ItemName);
@@ -798,7 +798,7 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                         break;
                 }
             }
-            
+
             // 决定弹哪个面板：包含任一去广告 → RemoveAdsScreen；否则 → AwardScreen
             bool anyRemoveAds = hasPermanentRemoveAds;
             if (anyRemoveAds)
@@ -820,6 +820,13 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy, 1);
+
+        // ★ 更新单次付费最大金额（用于 IAP 层细分：IAP11/12/13/14）
+        if (item.LocalizedPrice > GameDataManager.Instance.UserData.MaxSinglePayAmount)
+        {
+            GameDataManager.Instance.UserData.MaxSinglePayAmount = item.LocalizedPrice;
+            LogShopItem($"更新单次付费最大金额: MaxSinglePayAmount={GameDataManager.Instance.UserData.MaxSinglePayAmount}");
+        }
 
         if (!UIUtilities.isEditMode)
         {
@@ -847,6 +854,28 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
             limitData.buyCount += 1;
         }
 
+        // ============================================================
+        // ★ 关键：购买成功后同步刷新用户分层
+        //   付费状态（TotalPayTimes / MaxSinglePayAmount）刚更新，
+        //   立刻让 ShopManager 重新计算层级并刷新 _layerConfig。
+        //   IAA 层 → IAP 层（或 IAP11 → IAP12 → IAP13 → IAP14）会在这一步完成。
+        // ============================================================
+        if (ShopManager.shopManager != null)
+        {
+            string beforeLayer = ShopManager.shopManager.GetCurrentUserLayer();
+            ShopManager.shopManager.RefreshLayer();
+            string afterLayer = ShopManager.shopManager.GetCurrentUserLayer();
+
+            LogShopItem($"[UserLayer] 购买成功触发分层刷新: " +
+                        $"TotalPayTimes={GameDataManager.Instance.UserData.TotalPayTimes}, " +
+                        $"MaxSinglePayAmount={GameDataManager.Instance.UserData.MaxSinglePayAmount}, " +
+                        $"分层 {beforeLayer} → {afterLayer}");
+        }
+        else
+        {
+            LogShopItem("ShopManager.shopManager 为空，跳过分层刷新");
+        }
+
         //MessageSystem.Instance.ShowTip("购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
 
@@ -859,11 +888,8 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     /// <summary>
     /// 处理去广告购买（永久 + 限时）：
     ///   - 永久去广告（RemoveAds）：写入/更新永久记录（endtime 为空），isoverdate 重置为 false；
-    ///   - 限时7天（Remove7DayAds）：在现有未过期时间基础上 +7*24 小时（需求：限时续期叠加）；
-    ///   - 限时1天（RemoveAds1Day）：在现有未过期时间基础上 +24 小时；
+    ///   - 限时去广告（RemoveDayAds）：在现有未过期时间基础上叠加 hours 小时；
     ///   - 已过期或从未购买：从当前时间起算。
-    /// 需求："限时去广告商品，玩家购买后，在限时期间，玩家再次购买包含'限时去广告'礼包的，
-    ///       刷新去广告的限时；在之前剩余时间的基础上，额外增加限时时间"。
     /// </summary>
     private void HandleRemoveAdsPurchaseInternal(int adstype, int hours)
     {

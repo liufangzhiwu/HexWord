@@ -96,6 +96,12 @@ public class UserData
     public long LastPayTimeTicks; // 上次付费时间 (Ticks) (G3)
     public long LastRewardAdTimeTicks; // 上次看激励视频的时间 (G1)
     public string adTrackingEnabled;//广告权限是否开启
+    
+    /// <summary>
+    /// 单次付费最大金额 A（用于 IAP 层细分）。
+    /// TODO：字段名按项目实际替换（可能叫 maxPayAmount / maxSinglePay / highestPayAmount 等）。
+    /// </summary>
+    public float MaxSinglePayAmount = 0f;
 
     public long LastInterstitialTimeTicks; // 上次看插屏的时间 (G5)
 
@@ -471,6 +477,7 @@ public class UserData
         DayInterstitialGiftCount = 0;
         HasShownFirstAdGift = false;
         adTrackingEnabled = "";
+        MaxSinglePayAmount = 0f;
 
         #endregion
     }
@@ -691,6 +698,7 @@ public class UserData
         DayInterstitialGiftCount=user.DayInterstitialGiftCount;
         HasShownFirstAdGift=user.HasShownFirstAdGift;
         adTrackingEnabled=user.adTrackingEnabled;
+        MaxSinglePayAmount=user.MaxSinglePayAmount;
         
         // 检查并初始化缺失的生命周期事件
         InitializeLifecycleEvents();

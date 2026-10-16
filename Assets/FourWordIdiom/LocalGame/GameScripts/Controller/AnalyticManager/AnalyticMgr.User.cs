@@ -107,18 +107,21 @@ public partial class AnalyticMgr
         SetCommonProperties();
         Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
 
-        if (!string.IsNullOrEmpty(GameDataManager.Instance.UserData.adTrackingEnabled))
+        UnityTimer.Delay(1, () =>
         {
-            PushMessageReceiver._instance.OnOAIDClosedSignal(GameDataManager.Instance.UserData.adTrackingEnabled);
-        }
-        else
-        {
+            if (!string.IsNullOrEmpty(GameDataManager.Instance.UserData.adTrackingEnabled))
+            {
+                PushMessageReceiver._instance.OnOAIDClosedSignal(GameDataManager.Instance.UserData.adTrackingEnabled);
+            }
+            else
+            {
 #if UNITY_EDITOR 
             
-            string enRange=Random.Range(0, 2).ToString();
-            PushMessageReceiver._instance.OnOAIDClosedSignal(enRange);
+                string enRange=Random.Range(0, 2).ToString();
+                PushMessageReceiver._instance.OnOAIDClosedSignal(enRange);
 #endif
-        }
+            }
+        });
         Game.self?.Attributes?.ReportConversion("2");
     }
 
