@@ -328,6 +328,7 @@ public partial class ShopManager : MonoBehaviour
         if (isPaid)
         {
             float maxSinglePayAmount = userData.MaxSinglePayAmount; // TODO：字段名按项目实际替换
+            float totalPayAmount = userData.TotalRevenue; // TODO：字段名按项目实际替换
             int payTimes = userData.TotalPayTimes;
 
             if (maxSinglePayAmount >= 25)
@@ -344,7 +345,7 @@ public partial class ShopManager : MonoBehaviour
                 layer = (payTimes > 1) ? "IAP12" : "IAP11";
             }
 
-            LogShop($"GetCurrentUserLayer 计算: isPaid=True, MaxSinglePayAmount={maxSinglePayAmount:F2}, TotalPayTimes={payTimes} => layer={layer}");
+            LogShop($"GetCurrentUserLayer 计算: isPaid=True, MaxSinglePayAmount={maxSinglePayAmount:F2},TotalPayAmount={totalPayAmount}, TotalPayTimes={payTimes} => layer={layer}");
         }
         else
         {
@@ -388,6 +389,18 @@ public partial class ShopManager : MonoBehaviour
                 $"AdFailed={_layerConfig.adFailed}, BrokenIce={_layerConfig.brokenIce}, " +
                 $"InterAdsGroup={_layerConfig.interAdsGroup}, AdTrackingStimulate={_layerConfig.adTrackingStimulate}, " +
                 $"AllowSpecialPopup={_layerConfig.allowSpecialPopup}");
+    }
+    
+    /// <summary>
+    /// 获取当前分层对应的"插屏控制参数"分组 Key。
+    /// 该值对应 adv_general_config 表的 UserLayer 列：
+    ///   1=标准 / 2=低 / 3=高 / 0=不弹插屏和Banner
+    /// </summary>
+    public string GetInterAdsGroup()
+    {
+        if (_layerConfig == null) return "1";
+        string v = _layerConfig.interAdsGroup;
+        return string.IsNullOrEmpty(v) ? "1" : v.Trim();
     }
 
     /// <summary>是否 IAA 层（纯广告变现层；破冰礼包只对 IAA 层生效）</summary>
