@@ -107,7 +107,7 @@ public partial class AnalyticMgr
         SetCommonProperties();
         Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
 
-        UnityTimer.Delay(1, () =>
+        UnityTimer.Delay(3, () =>
         {
             if (!string.IsNullOrEmpty(GameDataManager.Instance.UserData.adTrackingEnabled))
             {

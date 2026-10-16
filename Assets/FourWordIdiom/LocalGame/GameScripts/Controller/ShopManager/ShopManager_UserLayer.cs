@@ -154,11 +154,11 @@ public partial class ShopManager : MonoBehaviour
             return;
         }
 
-        // 定位字段名行：前 4 行内第 0 列 == "用户分层"
+        // 定位字段名行：前 4 行内第 0 列 == "分层标记"
         int nameRow = -1;
         for (int i = 0; i < Math.Min(_layerRecords.Count, 4); i++)
         {
-            if (_layerRecords[i].Count > 0 && _layerRecords[i][0] == "用户分层")
+            if (_layerRecords[i].Count > 0 && _layerRecords[i][0] == "分层标记")
             {
                 nameRow = i;
                 break;
@@ -166,7 +166,7 @@ public partial class ShopManager : MonoBehaviour
         }
         if (nameRow < 0)
         {
-            LogShop("CacheLayerCsv: 未找到字段名行（第0列=用户分层）");
+            LogShop("CacheLayerCsv: 未找到字段名行（第0列=分层标记）");
             return;
         }
 
@@ -194,10 +194,6 @@ public partial class ShopManager : MonoBehaviour
     private void ApplyLayerConfig(string layer)
     {
         if (string.IsNullOrEmpty(layer)) return;
-
-        // 分层未变且已应用过 → 静默跳过
-        if (_layerConfigApplied && _layerConfig != null && _layerConfig.userLayer == layer)
-            return;
 
         string previousLayer = _layerConfig != null ? _layerConfig.userLayer : "";
 
@@ -248,51 +244,9 @@ public partial class ShopManager : MonoBehaviour
                 return;
             }
         }
-
-        // ---------- 未命中：走默认值兜底 ----------
-        LoadDefaultLayerConfig(layer, previousLayer);
     }
 
-    /// <summary>
-    /// 内置默认分层配置（配置表缺失或未命中某分层时使用）。
-    /// </summary>
-    private void LoadDefaultLayerConfig(string layer, string previousLayer)
-    {
-        _layerConfig = new ShopLayerConfig();
-        _layerConfig.userLayer = layer;
-
-        bool isIap = !string.IsNullOrEmpty(layer) && layer.StartsWith("IAP");
-        if (isIap)
-        {
-            // IAP 层兜底：默认关闭广告失败引导、关闭破冰弹窗
-            _layerConfig.adFailed = "0_0_0_-1_-1_-1";
-            _layerConfig.brokenIce = "0_0";
-            _layerConfig.interAdsGroup = "0";
-            _layerConfig.adTrackingStimulate = "0_0";
-            _layerConfig.allowSpecialPopup = false;
-        }
-        else
-        {
-            // IAA 层兜底（IAA00 起始）：
-            _layerConfig.adFailed = "1_1_120_4_2_2";   // S=1 F=1 T=120 A=4 B=2 C=2
-            _layerConfig.brokenIce = "1_1";
-            _layerConfig.interAdsGroup = "0";
-            _layerConfig.adTrackingStimulate = "1_500";
-            _layerConfig.allowSpecialPopup = true;
-        }
-
-        _layerConfigApplied = true;
-
-        if (previousLayer != layer)
-        {
-            LogShop($"[UserLayer] 分层切换(默认值兜底): {previousLayer} → {layer}");
-        }
-        else
-        {
-            LogShop($"[UserLayer] 应用默认分层配置: {layer} (配置表中未找到该分层行)");
-        }
-    }
-
+  
     // ======================= 获取当前用户分层（含配置刷新） =======================
 
     /// <summary>
@@ -331,18 +285,18 @@ public partial class ShopManager : MonoBehaviour
             float totalPayAmount = userData.TotalRevenue; // TODO：字段名按项目实际替换
             int payTimes = userData.TotalPayTimes;
 
-            if (maxSinglePayAmount >= 25)
+            if (maxSinglePayAmount >= 2500)
             {
                 layer = "IAP14";
             }
-            else if (maxSinglePayAmount > 9)
+            else if (maxSinglePayAmount > 900)
             {
                 layer = "IAP13";
             }
             else
             {
                 // A ≤ 9
-                layer = (payTimes > 1) ? "IAP12" : "IAP11";
+                layer = (payTimes > 100) ? "IAP12" : "IAP11";
             }
 
             LogShop($"GetCurrentUserLayer 计算: isPaid=True, MaxSinglePayAmount={maxSinglePayAmount:F2},TotalPayAmount={totalPayAmount}, TotalPayTimes={payTimes} => layer={layer}");

@@ -141,34 +141,34 @@ public class AdRuleManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); 
+        }
+        else
         {
             Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-        _lastAppResumeTime = DateTime.Now;
+        }   
     }
 
-    private IEnumerator Start()
+    private void Start()
     {
-        yield return new WaitForSeconds(0.5f);
         string csvData = null;
         bool isCsvDone = false;
 
-#if Unity_Release
-        StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("adv_general_config",
-            onSuccess: (response) => { csvData = response.CsvString; isCsvDone = true; },
-            onError: (error) => { isCsvDone = true; Debug.Log("服务器拉取 广告 配置失败，准备兜底 " + error); }
-        ));
-        float timeout = 2f;
-        while (!isCsvDone && timeout > 0)
-        {
-            timeout -= Time.deltaTime;
-            yield return null;
-        }
-#endif
+// #if Unity_Release
+//         StartCoroutine(APIGateway.Instance.GameConfigApi.GetGameConfig("adv_general_config",
+//             onSuccess: (response) => { csvData = response.CsvString; isCsvDone = true; },
+//             onError: (error) => { isCsvDone = true; Debug.Log("服务器拉取 广告 配置失败，准备兜底 " + error); }
+//         ));
+//         float timeout = 2f;
+//         while (!isCsvDone && timeout > 0)
+//         {
+//             timeout -= Time.deltaTime;
+//             yield return null;
+//         }
+// #endif
 
         if (string.IsNullOrEmpty(csvData))
         {
@@ -423,10 +423,6 @@ public class AdRuleManager : MonoBehaviour
         });
     }
 
-    IEnumerator WaitShowRewardVideoGift()
-    {
-        yield return new WaitForSecondsRealtime(0.5f);
-    }
 
     // ==========================================
     // 拦截审核
@@ -453,7 +449,7 @@ public class AdRuleManager : MonoBehaviour
         if (ShopManager.shopManager != null)
             layerKey = ShopManager.shopManager.GetInterAdsGroup();
 
-        Debug.Log($"[AdRule] 进入插屏拦截逻辑 | InterAdsGroup={layerKey}, InterAdsSwitch={InterAdsSwitch}, " +
+        Debug.Log($"[AdRule] 进入插屏拦截逻辑 | InterAdsGroupId={layerKey}, InterAdsSwitch={InterAdsSwitch}, " +
                   $"T1={T1_RewardCD}, T2={T2_MinPlayTime}, T3={T3_PayProtect}, T4={T4_ResumeProtect}, T5={T5_BaseInterstitialCD}, " +
                   $"L1={L1_ExtraCD}, L2={L2_ExtraCD}, L3={L3_ExtraCD}, D={D1_FirstLevelAdProb:F0}%");
 
