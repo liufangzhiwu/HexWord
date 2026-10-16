@@ -839,6 +839,7 @@ GameObject:
   - component: {fileID: 752339133}
   - component: {fileID: 752339134}
   - component: {fileID: 752339135}
+  - component: {fileID: 752339136}
   m_Layer: 0
   m_Name: Game
   m_TagString: Untagged
@@ -916,6 +917,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   paysuccess: 0
+  shopMode: 0
 --- !u!114 &752339130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1019,6 +1021,18 @@ MonoBehaviour:
     TimeLimit: 0
   _processBar: {fileID: 0}
   showButterflyRedPoint: 0
+--- !u!114 &752339136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 752339123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f6d85394fc670741bfd956d972146b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1014313169 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5998747031269384368, guid: cb22c978b28879b42b9f46d14d733c69,
