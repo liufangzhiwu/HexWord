@@ -10,6 +10,7 @@ using UnityEngine.UI;
 public class GetItemScreen : UIWindow
 {
     [SerializeField] private Button closeBtn; // 关闭按钮
+    [SerializeField] private List<Button> pointBtns; // 页面按钮（0/1/2 对应 1号/2号/3号 礼包页）
     [SerializeField] private Text title; // 音效文本显示
     [SerializeField] private Text tips; // 语言选择文本显示
     [SerializeField] private Image AwardIcon; // 语言选择文本显示
@@ -104,9 +105,81 @@ public class GetItemScreen : UIWindow
 
     protected override void InitializeUIComponents()
     {
-        closeBtn.AddClickAction(Close); // 绑定关闭按钮事件
+        closeBtn.AddClickAction(Close);
         ClaimAdsBtn.AddClickAction(ClickClaimBtn);
         ClaimGoldBtn.AddClickAction(ClickClaimGoldBtn);
+
+        // ★ 绑定页面按钮点击
+        if (pointBtns != null)
+        {
+            for (int i = 0; i < pointBtns.Count; i++)
+            {
+                if (pointBtns[i] == null) continue;
+                int index = i; // 避免闭包问题
+                pointBtns[i].AddClickAction(() => OnPagePointClicked(index));
+            }
+        }
+    }
+
+    // ======================= 页面按钮 =======================
+
+    /// <summary>
+    /// 点击页面按钮：滚动到对应的礼包页。
+    /// </summary>
+    private void OnPagePointClicked(int index)
+    {
+        if (index < 0 || index >= pageCount)
+        {
+            LogGetItem($"OnPagePointClicked 忽略: index={index}, pageCount={pageCount}");
+            return;
+        }
+
+        LogGetItem($"点击页面按钮 index={index}, 当前页={currentPageIndex}");
+
+        if (index == currentPageIndex && !isSnapping)
+        {
+            // 已在目标页，无需再滚
+            return;
+        }
+
+        ScrollToPage(index);
+        UpdatePagePointState();
+    }
+
+    /// <summary>
+    /// 刷新页面按钮的显示与选中状态：
+    ///  - 超出礼包数量的按钮 → 整体隐藏；
+    ///  - 当前页按钮 → 第 0 个子对象显示（选中态）；
+    ///  - 其他按钮 → 第 0 个子对象隐藏（未选中态）。
+    /// </summary>
+    private void UpdatePagePointState()
+    {
+        if (pointBtns == null) return;
+
+        for (int i = 0; i < pointBtns.Count; i++)
+        {
+            Button btn = pointBtns[i];
+            if (btn == null) continue;
+
+            // 超出礼包数量的按钮整体隐藏
+            bool shouldShow = i < pageCount;
+            if (btn.gameObject.activeSelf != shouldShow)
+                btn.gameObject.SetActive(shouldShow);
+
+            if (!shouldShow) continue;
+
+            // 选中/未选中：切换第 0 个子对象的显示
+            bool isSelected = (i == currentPageIndex);
+            if (btn.transform.childCount > 0)
+            {
+                Transform selectedChild = btn.transform.GetChild(0);
+                if (selectedChild.gameObject.activeSelf != isSelected)
+                    selectedChild.gameObject.SetActive(isSelected);
+            }
+
+            // 按钮保持可点击
+            btn.interactable = true;
+        }
     }
 
     // ======================= 初始化 UI =======================
@@ -122,9 +195,6 @@ public class GetItemScreen : UIWindow
         switch (limitRewordType)
         {
             case LimitRewordType.Coins:
-                // if(max)
-                //     AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin2");
-                // AwardIcon.sprite = AssetBundleLoader.SharedInstance.GetSpriteFromAtlas("Coin1");
                 break;
 
             case LimitRewordType.Butterfly:
@@ -156,11 +226,6 @@ public class GetItemScreen : UIWindow
 
     // ======================= 礼包表生成 =======================
 
-    /// <summary>
-    /// 根据当前 limitRewordType 返回需要展示的礼包数量：
-    ///  - 提示灯道具（Tipstool）：固定 3 个；
-    ///  - 其他道具：固定 1 个。
-    /// </summary>
     private int GetGiftTableCountForType(LimitRewordType type)
     {
         switch (type)
@@ -172,12 +237,6 @@ public class GetItemScreen : UIWindow
         }
     }
 
-    /// <summary>
-    /// 根据当前 limitRewordType 从 ShopManager 获取推荐位礼包列表。
-    ///  - 提示灯（Tipstool）→ RecommendSlot.Bulb（灯泡弹窗一号/二号/三号位）；
-    ///  - 火箭（AutoComplete）→ RecommendSlot.Rocket（火箭弹窗）。
-    /// 如后续其他道具需要走别的推荐位（Clock / DynamicStore），在此处扩展即可。
-    /// </summary>
     private List<ShopDataItem> GetRecommendPacksForCurrentTool()
     {
         if (ShopManager.shopManager == null)
@@ -197,17 +256,6 @@ public class GetItemScreen : UIWindow
         }
     }
 
-    /// <summary>
-    /// 清空并重新生成礼包表。
-    /// 数量规则：提示灯（Tipstool）3 个礼包；其他道具 1 个礼包。
-    /// 每个礼包用 GiftTable Prefab 在 scrollRect.content 下实例化。
-    ///
-    /// ★ 生成顺序（与需求对齐）：
-    ///   - packs[last]（3 号位）→ 最先创建 → 显示在物理最左；
-    ///   - packs[mid]（2 号位）→ 中间创建 → 显示在物理中间；
-    ///   - packs[0]（1 号位）→ 最后创建 → 显示在物理最右；
-    ///   HorizontalLayoutGroup 从左到右排列 → 视觉顺序：3 号位 → 2 号位 → 1 号位。
-    /// </summary>
     private void RefreshGiftTables()
     {
         ClearGiftTables();
@@ -216,6 +264,7 @@ public class GetItemScreen : UIWindow
         {
             LogGetItem("GiftTable Prefab 未配置，无法生成礼包表");
             if (scrollRect != null) scrollRect.gameObject.SetActive(false);
+            UpdatePagePointState();
             return;
         }
 
@@ -234,6 +283,7 @@ public class GetItemScreen : UIWindow
         if (actualCount <= 0)
         {
             scrollRect.gameObject.SetActive(false);
+            UpdatePagePointState();
             return;
         }
 
@@ -251,19 +301,17 @@ public class GetItemScreen : UIWindow
             gt.InitUI(limitRewordType, item);
             _giftTableInstances.Add(gt);
 
-            // 记录视觉位置（0=最左=3号位；last=最右=1号位），便于排查
             int visualIndex = _giftTableInstances.Count - 1;
             LogGetItem($"生成礼包 [视觉位置={visualIndex}]: {item.produceNameId}(id={item.id}, price={item.price}, giftType={item.giftType}) ← packs[{i}]");
         }
 
-        // 根据实际数量刷新翻页布局
         UpdatePageLayout(actualCount);
-
-        // 回到第一页
         ScrollToPage(0, true);
+
+        // ★ 生成完成后刷新页面按钮
+        UpdatePagePointState();
     }
 
-    /// <summary>清理所有已生成的 GiftTable</summary>
     private void ClearGiftTables()
     {
         for (int i = _giftTableInstances.Count - 1; i >= 0; i--)
@@ -274,14 +322,9 @@ public class GetItemScreen : UIWindow
         _giftTableInstances.Clear();
     }
 
-    /// <summary>
-    /// 根据礼包数量重新计算翻页位置。
-    /// 归一化位置：pageCount=1 → [0]；pageCount=N → [0, 1/(N-1), ..., 1]
-    /// </summary>
     private void UpdatePageLayout(int count)
     {
         pageCount = Mathf.Max(0, count);
-
         pageWidth = 1104;
 
         if (pageCount <= 0)
@@ -307,7 +350,6 @@ public class GetItemScreen : UIWindow
         HandleAutoSnapping();
     }
 
-    /// <summary>获取当前最近页面的索引</summary>
     private int GetCurrentPageIndex()
     {
         if (pagePositions == null || pagePositions.Length == 0) return 0;
@@ -335,19 +377,16 @@ public class GetItemScreen : UIWindow
             return;
         }
 
-        // ============ 1. 检测拖动状态变化 ============
         bool isDraggingNow = Mathf.Abs(scrollRect.velocity.x) > stopVelocityThreshold;
 
-        // 拖动开始 → 打断正在进行的吸附
         if (!wasDragging && isDraggingNow)
         {
-            isSnapping = false; // ★ 关键：打断吸附，避免与用户拖动打架
+            isSnapping = false;
             dragStartPosition = scrollRect.horizontalNormalizedPosition;
             isDragStartRecorded = true;
             currentPageIndex = GetCurrentPageIndex();
         }
 
-        // 拖动结束 → 判断方向，决定吸附目标页
         if (wasDragging && !isDraggingNow && isDragStartRecorded)
         {
             float dragEndPosition = scrollRect.horizontalNormalizedPosition;
@@ -375,11 +414,11 @@ public class GetItemScreen : UIWindow
             }
 
             isDragStartRecorded = false;
+            UpdatePagePointState();
         }
 
         wasDragging = isDraggingNow;
 
-        // ============ 2. 吸附动画：基于时间的插值（匀速/可控时长） ============
         if (isSnapping)
         {
             snapTimer += Time.deltaTime;
@@ -388,10 +427,6 @@ public class GetItemScreen : UIWindow
                 ? 1f
                 : Mathf.Clamp01(snapTimer / snapDuration);
 
-            // ★ 匀速 & 平滑：
-            //   snapSmoothness = 0 → 纯匀速（easedT = t）
-            //   snapSmoothness = 1 → 强烈缓入缓出（SmoothStep 满值）
-            //   中间值按比例混插，兼顾"匀速感"与"自然度"
             float smoothT = Mathf.SmoothStep(0f, 1f, t);
             float easedT = Mathf.Lerp(t, smoothT, snapSmoothness);
 
@@ -399,10 +434,12 @@ public class GetItemScreen : UIWindow
 
             if (t >= 1f)
             {
-                // 到达目标位置，结束吸附
                 scrollRect.horizontalNormalizedPosition = targetPosition;
                 isSnapping = false;
                 currentPageIndex = GetCurrentPageIndex();
+
+                // ★ 吸附完成后刷新页面按钮状态
+                UpdatePagePointState();
             }
         }
     }
@@ -424,11 +461,6 @@ public class GetItemScreen : UIWindow
         ScrollToPage(GetCurrentPageIndex());
     }
 
-    /// <summary>
-    /// 触发翻页吸附。
-    /// </summary>
-    /// <param name="pageIndex">目标页</param>
-    /// <param name="instant">是否立即跳转（打开面板初始化第一页时用 true）</param>
     public void ScrollToPage(int pageIndex, bool instant = false)
     {
         if (pagePositions == null || pageIndex < 0 || pageIndex >= pageCount) return;
@@ -438,15 +470,14 @@ public class GetItemScreen : UIWindow
 
         if (instant || snapDuration <= 0f)
         {
-            // 立即到位（打开面板时使用，避免第一页有滑入动画）
             scrollRect.horizontalNormalizedPosition = targetPosition;
             isSnapping = false;
             snapTimer = 0f;
             snapStartPos = targetPosition;
+            UpdatePagePointState();
             return;
         }
 
-        // 记录吸附起点，重置计时器
         snapStartPos = scrollRect.horizontalNormalizedPosition;
         snapTimer = 0f;
         isSnapping = true;
@@ -480,8 +511,6 @@ public class GetItemScreen : UIWindow
 
         if (toolInfo.cost > GameDataManager.Instance.UserData.Gold)
         {
-            //MessageSystem.Instance.ShowTip("TipGoldInsufficient");
-            // 直接跳转到商店
             SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
             Close();
             return;
@@ -545,8 +574,6 @@ public class GetItemScreen : UIWindow
                     ?.UseTips();
             }
             AnalyticMgr.VideoAdSuccess(eventDes);
-
-            //EventDispatcher.instance.TriggerChangeGoldUI(0, false);
             Close();
         }
         else
@@ -567,7 +594,7 @@ public class GetItemScreen : UIWindow
     public void Close()
     {
         AudioManager.Instance.TriggerVibration(10, 200);
-        base.Close(); // 隐藏面板
+        base.Close();
     }
 
     public override void OnHideAnimationEnd()
