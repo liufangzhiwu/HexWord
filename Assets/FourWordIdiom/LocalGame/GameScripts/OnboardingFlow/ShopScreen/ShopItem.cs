@@ -678,24 +678,22 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         bool ownsPermanentRemoveAds =
             ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
 
+        // ✅ 新代码
         foreach (List<string> giftdata in shopDataItem.productContent)
         {
             int giftType = int.Parse(giftdata[0]);
 
-            // 已购买永久去广告：礼包中不再展示任何去广告物品
             if (ownsPermanentRemoveAds && IsRemoveAdsRelatedType(giftType))
             {
                 LogShopItem($"已拥有永久去广告，跳过礼包中的去广告物品 (type={giftType})");
                 continue;
             }
 
-            // 从对象池获取 ShopItem 对象
             GiftItem giftItem = Instantiate(giftItemPrefab, giftsParent).GetComponent<GiftItem>();
             if (giftType == (int)LimitRewordType.RemoveAds || giftType == (int)LimitRewordType.RemoveDayAds)
             {
                 if (shopDataItem.type == 2)
                 {
-                    //giftsParent.GetComponent<HorizontalLayoutGroup>().spacing = 200;
                     giftItem.SetShopData(giftdata, shopDataItem.id, shopDataItem.des, shopDataItem.pointDes);
                 }
                 else
@@ -707,6 +705,13 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
             {
                 giftItem.SetShopData(giftdata, shopDataItem.id);
             }
+
+            // ★ 设置加赠标识
+            bool isBonus = ShopManager.shopManager != null
+                           && ShopManager.shopManager.IsBonusGift(shopDataItem.produceNameId, giftType);
+            giftItem.SetBonus(isBonus);
+
+            LogShopItem($"InitGiftItems: 礼包 {shopDataItem.produceNameId} 内容 type={giftType}, isBonus={isBonus}");
         }
     }
 

@@ -68,12 +68,27 @@ public class GiftTable : MonoBehaviour
             giftItem.gameObject.SetActive(false);
         }
 
+        // ✅ 新代码
         for (int i = 0; i < shopDataItem.productContent.Count; i++)
         {
+            if (i >= _giftItems.Count)
+            {
+                LogShop($"GiftTable.InitUI: _giftItems 数量不足 (i={i}, 需要={shopDataItem.productContent.Count})，跳过");
+                break;
+            }
+
             List<string> giftdata = shopDataItem.productContent[i];
             GiftItem giftItem = _giftItems[i];
             giftItem.gameObject.SetActive(true);
             giftItem.SetShopData(giftdata, shopDataItem.id);
+
+            // ★ 设置加赠标识
+            int giftType = int.Parse(giftdata[0]);
+            bool isBonus = ShopManager.shopManager != null
+                           && ShopManager.shopManager.IsBonusGift(shopDataItem.produceNameId, giftType);
+            giftItem.SetBonus(isBonus);
+
+            LogShop($"GiftTable.InitUI: 礼包 {shopDataItem.produceNameId} 内容[{i}] type={giftType}, isBonus={isBonus}");
         }
         
         eventDes = giftNameText.text;

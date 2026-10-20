@@ -10,6 +10,10 @@ public class GiftItem : MonoBehaviour
     [SerializeField] private Image shopIcon;
     [SerializeField] private Text countText;
     [SerializeField] private Button tipBtnPrefab;
+    [Header("加赠标识")]
+    // <summary>加赠标识节点（Prefab 里加一个 Text "加赠" / 图标，挂到这里）</summary>
+    [SerializeField] private GameObject bonusTag;
+    
     private Button tipbtn;
     private int shopid;
 
@@ -79,6 +83,13 @@ public class GiftItem : MonoBehaviour
         // {
         //     buyButton.AddClick(()=>OnBuyButtonClicked(data));
         // }
+    }
+
+    /// <summary>设置是否为加赠物品（true=显示加赠标识；false=隐藏）</summary>
+    public void SetBonus(bool isBonus)
+    {
+        if (bonusTag != null)
+            bonusTag.SetActive(isBonus);
     }
 
     private void CreateTipsBtn(string tips)

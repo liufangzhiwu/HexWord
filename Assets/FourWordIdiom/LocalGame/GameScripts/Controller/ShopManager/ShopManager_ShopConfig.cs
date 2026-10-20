@@ -250,6 +250,61 @@ public partial class ShopManager : MonoBehaviour
     {
         return shopItems.FirstOrDefault(item => item.GetProduceName() == buyname);
     }
+    
+    // ======================= 礼包加赠配置 =======================
+
+    /// <summary>
+    /// 加赠配置：商品 ID（produceNameId）→ 该礼包中"加赠"的道具类型。
+    /// 在 GiftTable / ShopItem 展示 productContent 时，若某道具类型 == 此配置的类型，则该 GiftItem 标记"加赠"。
+    /// </summary>
+    private static readonly Dictionary<string, LimitRewordType> _bonusGiftMap = new Dictionary<string, LimitRewordType>
+    {
+        // ========== 蝴蝶加赠 ==========
+        { "RocketBox011", LimitRewordType.Butterfly },   // 兼容原配置
+        { "RocketBox01",  LimitRewordType.Butterfly },   // 兼容别名
+        { "RocketBox02",  LimitRewordType.Butterfly },
+        { "ItemBox02",    LimitRewordType.Butterfly },
+        { "ClockBox01",   LimitRewordType.Butterfly },
+        { "ClockBox02",   LimitRewordType.Butterfly },
+        { "ClockBox03",   LimitRewordType.Butterfly },
+        { "ClockBox04",   LimitRewordType.Butterfly },
+        { "BulbBox03",    LimitRewordType.Butterfly },
+        { "ItemBox01",    LimitRewordType.Butterfly },
+        { "BulbBox04",    LimitRewordType.Butterfly },
+
+        // ========== 提示灯加赠（Tipstool = 提示灯） ==========
+        { "RocketBox010", LimitRewordType.Tipstool },
+        { "RocketBox10",  LimitRewordType.Tipstool },    // 兼容别名
+
+        // ========== 火箭加赠（AutoComplete = 火箭） ==========
+        { "BulbBox01",    LimitRewordType.AutoComplete },
+        { "BulbBox02",    LimitRewordType.AutoComplete },
+        { "BulbBox05",    LimitRewordType.AutoComplete },
+        { "BulbBox06",    LimitRewordType.AutoComplete },
+    };
+
+    /// <summary>
+    /// 获取某商品的加赠道具类型；无加赠返回 -1。
+    /// </summary>
+    public int GetBonusGiftType(string produceNameId)
+    {
+        if (string.IsNullOrEmpty(produceNameId)) return -1;
+        LimitRewordType type;
+        if (_bonusGiftMap.TryGetValue(produceNameId, out type))
+            return (int)type;
+        return -1;
+    }
+
+    /// <summary>
+    /// 判断某商品中的某个 contentItem 是否为"加赠"物品。
+    /// </summary>
+    /// <param name="produceNameId">礼包 ID（如 BulbBox01）</param>
+    /// <param name="contentType">productContent 中某一项的道具类型（如 Butterfly）</param>
+    public bool IsBonusGift(string produceNameId, int contentType)
+    {
+        int bonus = GetBonusGiftType(produceNameId);
+        return bonus > 0 && bonus == contentType;
+    }
 
     // ======================= 商店列表 =======================
 
