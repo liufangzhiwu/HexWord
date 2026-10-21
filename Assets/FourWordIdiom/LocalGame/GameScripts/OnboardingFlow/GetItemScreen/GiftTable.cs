@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Mime;
 using DG.Tweening;
 #if UNITY_HUAWEI
@@ -29,6 +30,8 @@ public class GiftTable : MonoBehaviour
     private string eventDes;
 
     private ShopDataItem shopDataItem;
+
+    private Color color;
 
     /// <summary>[Shop] 标签日志</summary>
     private void LogShop(string message)
@@ -69,12 +72,18 @@ public class GiftTable : MonoBehaviour
             }
         }
 
+        List<Outline> Outlines = giftNameText.GetComponents<Outline>().ToList();
+        List<Outline> Outlinelimits = limintCountText.GetComponents<Outline>().ToList();
+        color = new Color(0f, 0.1529412f, 0.4745098f, 1f);
+        
+        
         // ---------- 礼包名 ----------
         switch (limitRewordType)
         {
             case LimitRewordType.ReStartTool:
                 giftNameText.text = shopItem.name;
                 limintCountText.transform.parent.GetComponent<Image>().sprite= LoadShopIcon("faillimitbg");
+                color= new Color(0f, 0.1529412f, 0.4745098f, 1f);
                 break;
             case LimitRewordType.Butterfly:
                 break;
@@ -85,9 +94,20 @@ public class GiftTable : MonoBehaviour
             case LimitRewordType.Tipstool:
                 giftNameText.text = shopItem.name;
                 limintCountText.transform.parent.GetComponent<Image>().sprite= LoadShopIcon("tiplimitbg");
+                color= new Color(0.4941177f, 0f, 0.03529412f, 1f);
                 break;
         }
 
+        for (int i = 1; i < Outlines.Count; i++)
+        {
+            Outlines[i].effectColor = color;
+        }
+        
+        for (int i = 0; i < Outlinelimits.Count; i++)
+        {
+            Outlinelimits[i].effectColor = color;
+        }
+            
         // ---------- 礼包内容（跳过加赠项，加赠走 _AddgiftItem 单独显示） ----------
         RefreshGiftContent();
 
@@ -146,7 +166,7 @@ public class GiftTable : MonoBehaviour
 
             GiftItem giftItem = _giftItems[giftIndex];
             giftItem.gameObject.SetActive(true);
-            giftItem.SetShopData(giftdata, shopDataItem.id);
+            giftItem.SetShopData(giftdata, shopDataItem.id,color);
             giftIndex++;
 
             LogShop($"RefreshGiftContent: 礼包 {shopDataItem.produceNameId} 内容[{giftIndex - 1}] type={giftType}");
@@ -168,7 +188,7 @@ public class GiftTable : MonoBehaviour
         }
 
         _AddgiftItem.gameObject.SetActive(true);
-        _AddgiftItem.SetShopData(bonusData, shopDataItem.id);
+        _AddgiftItem.SetShopData(bonusData, shopDataItem.id,color);
         _AddgiftItem.SetBonus(true);
 
         LogShop($"加赠物品已显示: type={bonusData[0]}, count={bonusData[1]}");

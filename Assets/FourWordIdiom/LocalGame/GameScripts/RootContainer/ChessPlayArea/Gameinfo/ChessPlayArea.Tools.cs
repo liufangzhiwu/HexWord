@@ -129,18 +129,18 @@ public partial class ChessPlayArea
         ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[104];
         if(toolInfo == null) return;
         
-        if(toolInfo.count <= 0&&GameDataManager.Instance.UserData.Gold >= toolInfo.cost)
+        if(toolInfo.count <= 0)
         {
+            if (GameDataManager.Instance.UserData.Gold < toolInfo.cost)
+            {
+                ShopManager.shopManager.OpenDynamicStore();
+                return;
+            }
             GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             return;
         }
         
-        if (GameDataManager.Instance.UserData.Gold < toolInfo.cost)
-        {
-            ShopManager.shopManager.OpenDynamicStore();
-            return;
-        }
         
         if (CurrStageInfo.StageNumber == 5)
         {

@@ -58,6 +58,8 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private bool isTransformCached = false; // 标记是否已缓存初始坐标
 
+    private Color _color=Color.white;
+
     /// <summary>[Shop] 标签日志（与本类的 shopDataItem 信息一起输出）</summary>
     private void LogShopItem(string message)
     {
@@ -694,16 +696,16 @@ public class ShopItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
             {
                 if (shopDataItem.type == 2)
                 {
-                    giftItem.SetShopData(giftdata, shopDataItem.id, shopDataItem.des, shopDataItem.pointDes);
+                    giftItem.SetShopData(giftdata, shopDataItem.id,_color, shopDataItem.des, shopDataItem.pointDes);
                 }
                 else
                 {
-                    giftItem.SetShopData(giftdata, shopDataItem.id);
+                    giftItem.SetShopData(giftdata, shopDataItem.id,_color);
                 }
             }
             else
             {
-                giftItem.SetShopData(giftdata, shopDataItem.id);
+                giftItem.SetShopData(giftdata, shopDataItem.id,_color);
             }
 
             // ★ 设置加赠标识

@@ -200,12 +200,12 @@ public class AdsDiscountScreen : UIWindow
             if (GiftItems.Count > i)
             {
                 GiftItem giftItem =GiftItems[i];
-                giftItem.SetShopData(itemdata, currentShopItem.id, currentShopItem.pointDes);
+                giftItem.SetShopData(itemdata, currentShopItem.id,Color.white, currentShopItem.pointDes);
             }
             else
             {
                 GiftItem giftItem = objectPool.GetObject<GiftItem>(parent);
-                giftItem.SetShopData(itemdata, currentShopItem.id, currentShopItem.pointDes);
+                giftItem.SetShopData(itemdata, currentShopItem.id,Color.white, currentShopItem.pointDes);
                 GiftItems.Add(giftItem);
             }
         }

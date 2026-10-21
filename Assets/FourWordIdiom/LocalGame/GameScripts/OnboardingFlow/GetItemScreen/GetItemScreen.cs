@@ -23,6 +23,7 @@ public class GetItemScreen : UIWindow
     [SerializeField] private GiftTable giftTable;
 
     [SerializeField] private ScrollRect scrollRect;
+    [SerializeField] private Transform pointTransform;
 
     public static LimitRewordType limitRewordType;
 
@@ -189,18 +190,20 @@ public class GetItemScreen : UIWindow
         ClaimAdsBtn.GetComponentInChildren<Text>().text = "免费";
         adsloading.gameObject.SetActive(false);
         adsIcon.gameObject.SetActive(true);
+        pointTransform.gameObject.SetActive(false);
+        scrollRect.horizontal = false;
 
         shopDataItem = null;
+        
+        RectTransform rectTransform = AwardIcon.GetComponent<RectTransform>();
 
         switch (limitRewordType)
         {
             case LimitRewordType.Coins:
                 break;
-
             case LimitRewordType.Butterfly:
                 AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
                 break;
-
             case LimitRewordType.Tipstool: // 提示灯道具
                 title.text = MultilingualManager.Instance.GetString("ItemName01", "pingzi");
                 tips.text = MultilingualManager.Instance.GetString("ItemDes01", "pingzi");
@@ -208,14 +211,17 @@ public class GetItemScreen : UIWindow
                 ClaimGoldBtn.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
                 AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
                 eventDes = title.text + "弹窗广告";
+                pointTransform.gameObject.SetActive(true);
+                rectTransform.sizeDelta = new Vector2(310, 310);
+                scrollRect.horizontal = true;
                 break;
-
             case LimitRewordType.AutoComplete: // 火箭道具
                 UpdateCliamBtn(false);
                 title.text = MultilingualManager.Instance.GetString("ItemName02", "pingzi");
                 tips.text = MultilingualManager.Instance.GetString("ItemDes02", "pingzi");
                 ClaimGoldBtn.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
                 AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
+                rectTransform.sizeDelta = new Vector2(460, 460);
                 eventDes = title.text + "弹窗广告";
                 break;
         }
