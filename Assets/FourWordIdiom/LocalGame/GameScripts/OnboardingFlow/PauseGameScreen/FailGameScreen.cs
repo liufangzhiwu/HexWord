@@ -16,13 +16,19 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [Header("主失败界面按钮")]
     [SerializeField] private Button addTimeBtn;
     [SerializeField] private Button exitBtn;
-    [SerializeField] private Text reviveBtnText;
-    [SerializeField] private GameObject adIcon;
+    [SerializeField] private Button goldAddTimeBtn;
+    [SerializeField] private Text reviveAdsText;
+    [SerializeField] private GameObject adsIcon;
     [SerializeField] private Text timeText;    // 上局时间
 
     [Header("内购礼包推荐位（复活礼包只有 1 个购买位）")]
     /// <summary>复活礼包位：场景里直接挂一个 GiftTable 实例，打开时按当前决策结果刷新数据</summary>
     [SerializeField] private GiftTable giftTable;
+    
+    [SerializeField] private Text addSecondText; // 复活增加秒数
+    [SerializeField] private GameObject freeGetButterToolTable; // 免费赠送一个蝴蝶道具
+    [SerializeField] private GameObject adsCanUseTable; // 广告可以用次数
+    
 
     [Header("二次确认界面按钮")]
     [SerializeField] private Text conTitleText;
@@ -46,6 +52,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     private void Start()
     {
         addTimeBtn.AddClickAction(OnReviveClicked);
+        goldAddTimeBtn.AddClickAction(OnGoldReviveClicked);
         exitBtn.AddClickAction(() => SwitchPanel(false));
         returnGame.AddClickAction(() => SwitchPanel(true));
         realExitBtn.AddClickAction(OnRealExitClicked);
@@ -173,15 +180,36 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         if (isFree)
         {
-            reviveBtnText.text = "免费复活";
-            adIcon.SetActive(false);
+            reviveAdsText.text = "免费复活";
+            adsIcon.SetActive(false);
         }
         else
         {
-            reviveBtnText.text = "复活";
-            adIcon.SetActive(true);
+            reviveAdsText.text = "复活";
+            adsIcon.SetActive(true);
         }
     }
+    
+    /// <summary>
+    /// 🌟 点击复活按钮：判断是免费还是看视频
+    /// </summary>
+    private void OnGoldReviveClicked()
+    {
+        bool isGold = GameDataManager.Instance.UserData.Gold>=60;
+
+        if (isGold)
+        {
+            Debug.Log("使用金币复活！");
+            GameDataManager.Instance.UserData.UpdateGold(-60, true, true, "复活广告消耗金币");
+            // 执行复活
+            ExecuteRevive();
+        }
+        else
+        {
+            MessageSystem.Instance.ShowTip("TipGoldInsufficient");
+        }
+    }
+    
 
     /// <summary>
     /// 🌟 点击复活按钮：判断是免费还是看视频

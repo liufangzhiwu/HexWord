@@ -19,6 +19,27 @@ public static class UIUtilities
     
     private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0);
 
+    // ======================= 中文数字 =======================
+
+    /// <summary>中文数字表（1~10 显示用，索引 0 位保留"零"）</summary>
+    private static readonly string[] ChineseNumbers =
+    {
+        "零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"
+    };
+
+    /// <summary>
+    /// 数字转中文（1~10 用中文：一二三四五六七八九十；其余用阿拉伯数字兜底）。
+    /// 用法：UIUtilities.GetChineseNumber(3) → "三"
+    /// </summary>
+    public static string GetChineseNumber(int n)
+    {
+        if (n >= 1 && n <= 10)
+            return ChineseNumbers[n];
+        return n.ToString();
+    }
+
+    // ======================= 按钮扩展 =======================
+
     public static void AddClickAction(this Button targetButton, UnityAction onClickAction, string soundName = "Button", bool includeAnimation = true)
     {
         targetButton.onClick.AddListener(() =>
@@ -93,38 +114,27 @@ public static class UIUtilities
     
     public static string GetDateDayStyle(TimeSpan timeSpan)
     {
-        // 获取剩余的小时、分钟和秒
         int days = (int)timeSpan.TotalDays;
         int hour = timeSpan.Hours;
 
-        // 向上取值
         if (timeSpan.Minutes > 0 && hour == 0)
         {
             hour += 1;
         }           
 
-        // 格式化小时和分钟，确保小于10时前面补零
         string formattedday = days<=0?"": days+DaySymbol;
         string formattedhour = hour < 10 ? "0" + hour+HourSymbol : hour+HourSymbol;
 
-        // 输出倒计时
         return formattedday + formattedhour;
     }
     
-    /// <summary>
-    /// 是否为iPad设备
-    /// </summary>
-    /// <returns></returns>
+    /// <summary>是否为iPad设备</summary>
     public static bool IsiPad()
     {
-        // 通过分辨率判断（iPad通常分辨率宽高比接近4:3）
         return (Screen.width / (float)Screen.height) > 0.62f;
     }
     
-    /// <summary>
-    /// 获取屏幕缩放比例
-    /// </summary>
-    /// <returns></returns>
+    /// <summary>获取屏幕缩放比例</summary>
     public static float GetScreenRatio()
     {
         float baseRatio = REFERENCE_WIDTH / REFERENCE_HEIGHT;
@@ -137,21 +147,17 @@ public static class UIUtilities
       
     public static string GetDateMintueStyle(TimeSpan timeSpan)
     {
-        // 获取剩余的小时、分钟和秒
         int minutes = (int)timeSpan.TotalMinutes;
         int seconds = timeSpan.Seconds;
 
-        // 向上取值
         if (seconds > 0 && minutes == 0)
         {
             minutes += 1;
         }
         
-        // 格式化小时和分钟，确保小于10时前面补零
         string min = minutes <= 0?"": minutes+"分";
         string sec = seconds < 10 ? "0" + seconds+"秒" : seconds+"秒";
 
-        // 输出倒计时
         return min + sec;
     }
 
@@ -219,43 +225,26 @@ public static class UIUtilities
             value.ToString("C2", culture);
     }
 
-    /// <summary>
-    /// 截取UI元素并保存为图片
-    /// </summary>
-    /// <param name="targetRect">目标UI元素的RectTransform</param>
-    /// <param name="filePath">保存路径</param>
-    /// <param name="targetSize">目标尺寸（可选）</param>
-    /// <param name="format">图片格式</param>
-    /// <returns>生成的Sprite</returns>
+    /// <summary>截取UI元素并保存为图片</summary>
     public static Sprite CaptureUIElement(RectTransform targetRect, string filePath, 
         Vector2Int targetSize = default, TextureFormat textureFormat = TextureFormat.RGBA32)
     {
-        // 1. 获取目标矩形在屏幕上的位置
         Rect screenRect = GetScreenRectFromRectTransform(targetRect);
-        
-        // 2. 创建临时纹理并截图
         Texture2D screenshot = CaptureScreenArea(screenRect, textureFormat);
         
-        // 3. 可选：缩放纹理
         if (targetSize != default && targetSize.x > 0 && targetSize.y > 0)
         {
             Texture2D scaledTexture = ScaleTexture(screenshot, targetSize);
-            UnityEngine.Object.Destroy(screenshot); // 销毁原纹理
+            UnityEngine.Object.Destroy(screenshot);
             screenshot = scaledTexture;
         }
         
-        // 4. 保存到文件
         SaveTextureToFile(screenshot, filePath);
-        
-        // 5. 创建Sprite
         Sprite resultSprite = CreateSpriteFromTexture(screenshot);
         
         return resultSprite;
     }
     
-    /// <summary>
-    /// 获取RectTransform在屏幕上的矩形区域
-    /// </summary>
     private static Rect GetScreenRectFromRectTransform(RectTransform rectTransform)
     {
         Canvas canvas = rectTransform.GetComponentInParent<Canvas>();
@@ -289,9 +278,6 @@ public static class UIUtilities
         return new Rect(min.x, min.y, max.x - min.x, max.y - min.y);
     }
     
-    /// <summary>
-    /// 截取屏幕区域
-    /// </summary>
     private static Texture2D CaptureScreenArea(Rect screenRect, TextureFormat format)
     {
         int x = Mathf.FloorToInt(screenRect.x);
@@ -299,7 +285,6 @@ public static class UIUtilities
         int width = Mathf.FloorToInt(screenRect.width);
         int height = Mathf.FloorToInt(screenRect.height);
         
-        // 确保坐标在屏幕范围内
         x = Mathf.Clamp(x, 0, Screen.width);
         y = Mathf.Clamp(y, 0, Screen.height);
         width = Mathf.Clamp(width, 1, Screen.width - x);
@@ -312,9 +297,6 @@ public static class UIUtilities
         return texture;
     }
     
-    /// <summary>
-    /// 缩放纹理
-    /// </summary>
     private static Texture2D ScaleTexture(Texture2D source, Vector2Int targetSize)
     {
         RenderTexture rt = RenderTexture.GetTemporary(targetSize.x, targetSize.y);
@@ -331,14 +313,10 @@ public static class UIUtilities
         return result;
     }
     
-    /// <summary>
-    /// 保存纹理到文件
-    /// </summary>
     private static void SaveTextureToFile(Texture2D texture, string filePath)
     {
         try
         {
-            // 确定文件格式和编码
             string extension = Path.GetExtension(filePath).ToLower();
             byte[] bytes;
             
@@ -352,19 +330,16 @@ public static class UIUtilities
             }
             else
             {
-                // 默认使用PNG
                 filePath = Path.ChangeExtension(filePath, ".png");
                 bytes = texture.EncodeToPNG();
             }
             
-            // 创建目录
             string directory = Path.GetDirectoryName(filePath);
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
             
-            // 写入文件
             File.WriteAllBytes(filePath, bytes);
             
             Debug.Log($"截图已保存到: {filePath}");
@@ -375,40 +350,30 @@ public static class UIUtilities
         }
     }
     
-    /// <summary>
-    /// 从纹理创建Sprite
-    /// </summary>
     private static Sprite CreateSpriteFromTexture(Texture2D texture)
     {
         return Sprite.Create(
             texture,
             new Rect(0, 0, texture.width, texture.height),
-            new Vector2(0.5f, 0.5f), // 中心点
-            100f, // 每单位像素数
-            0, // 额外边框
-            SpriteMeshType.Tight // 网格类型
+            new Vector2(0.5f, 0.5f),
+            100f,
+            0,
+            SpriteMeshType.Tight
         );
     }
     
-    /// <summary>
-    /// 异步截图（协程版本）
-    /// </summary>
     public static System.Collections.IEnumerator CaptureUIElementAsync(
         RectTransform targetRect, 
         string filePath, 
         System.Action<Sprite> callback = null,
         Vector2Int targetSize = default)
     {
-        // 等待一帧确保所有UI渲染完成
         yield return new WaitForEndOfFrame();
         
         Sprite result = CaptureUIElement(targetRect, filePath, targetSize);
         callback?.Invoke(result);
     }
     
-    /// <summary>
-    /// 截取整个屏幕
-    /// </summary>
     public static void CaptureFullScreen(string filePath)
     {
         Texture2D screenshot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
@@ -421,49 +386,36 @@ public static class UIUtilities
     
     public static bool isEditMode => Application.isEditor;
     
-    
-    /// <summary>
-    /// 处理中英文标点符号“避头”排版问题，防止标点单独掉到下一行
-    /// </summary>
+    /// <summary>处理中英文标点符号"避头"排版问题</summary>
     public static string ApplyKinsokuShori(Text textComponent, string text)
     {
         if (string.IsNullOrEmpty(text) || textComponent == null) return text;
 
-        // 1. 先把干净的纯文字丢给 Text 组件，让它底层进行一次假渲染计算
         textComponent.text = text;
-        Canvas.ForceUpdateCanvases(); // 强制 UGUI 刷新并生成渲染矩阵
+        Canvas.ForceUpdateCanvases();
 
-        // 2. 获取底层的排版生成数据
         var lines = textComponent.cachedTextGenerator.lines;
         
-        // 如果只有一行，说明根本没有发生换行，直接原样返回
         if (lines.Count <= 1) return text;
 
-        // 避头标点符号库（绝对不能出现在行首的符号）
         string punctuations = "！？。，、；：”’）】》!?,.";
         
         System.Text.StringBuilder sb = new System.Text.StringBuilder(text);
-        int offset = 0; // 记录因为插入 \n 导致字符串长度增加的偏移量
+        int offset = 0;
 
-        // 3. 从第二行开始遍历，检查 UGUI 切断每一行的第一个字符是什么
         for (int i = 1; i < lines.Count; i++)
         {
-            // 拿到这一行第一个字符在原始字符串中的索引位置
             int startCharIdx = lines[i].startCharIdx + offset;
             
-            // 检查：如果这一行的开头刚好命中了一个标点符号！
             if (startCharIdx > 0 && startCharIdx < sb.Length && punctuations.Contains(sb[startCharIdx].ToString()))
             {
-                // 核心：强行在标点符号的【前一个汉字】前面，插入一个真实的物理换行符 \n
-                // 这样就能把“前一个字”和“标点”一起拽到下一行
                 sb.Insert(startCharIdx - 1, '\n');
-                offset++; // 字符串长度增加了1，后续的断行点索引需要偏移
+                offset++;
             }
         }
 
         return sb.ToString();
     }
-    
     
     public static long GetCurrentDayIndex()
     {
@@ -481,7 +433,6 @@ public static class UIUtilities
         return Epoch.AddDays(dayIndex);
     }
 
-    // 将年月转换为月份 Key（例如 2026年6月 → 202606）
     public static long GetMonthKey(int year, int month)
     {
         return year * 100L + month;
@@ -496,17 +447,13 @@ public static class UIUtilities
     
     public static string ExtractNumber(string input)
     {
-        // 1. 使用正则匹配出字符串中连续的数字部分 (如 "01", "10")
         string numberStr = Regex.Match(input, @"\d+").Value;
 
-        // 2. 将提取出的字符串转为 int，自动消除前导 0
         if (int.TryParse(numberStr, out int result))
         {
-            // 3. 把干净的数字再转回字符串返回（如果你的业务需要 int，直接返回 result 即可）
             return result.ToString(); 
         }
 
         return null;
     }
-  
 }

@@ -31,19 +31,19 @@ public class GiftItem : MonoBehaviour
         {
             case (int)LimitRewordType.Coins:
                 spritename = "gold2";
-                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
+                countText.text = "\u00d7"+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.Butterfly:
                 spritename = "Butterfly";
-                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
+                countText.text = "\u00d7"+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.Tipstool:
                 spritename = "tipicon";
-                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
+                countText.text = "\u00d7"+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.AutoComplete:
                 spritename = "rocket";
-                countText.text ="\u00d7 "+data[1]; // 假设 productContent 是数量
+                countText.text ="\u00d7"+data[1]; // 假设 productContent 是数量
                 break;
             case (int)LimitRewordType.RemoveAds:
                 spritename = "shopads";
@@ -53,19 +53,19 @@ public class GiftItem : MonoBehaviour
                 break;
             case (int)LimitRewordType.RemoveDayAds:
                 spritename = "shopads";
-                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
+                countText.text = "\u00d7"+data[1]; // 假设 productContent 是数量
                 countText.fontSize = 60;
                 CreateTipsBtn(pointdes);
                 break;
             case (int)LimitRewordType.ReStartTool:
-                spritename = "give_3";
-                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
+                spritename = "clock";
+                countText.text = "\u00d7"+data[1]; // 假设 productContent 是数量
                 countText.fontSize = 60;
                 CreateTipsBtn(pointdes);
                 break;
             case (int)LimitRewordType.InfiniteEnergy:
                 spritename = "InfiniteEnergy";
-                countText.text = "\u00d7 "+data[1]; // 假设 productContent 是数量
+                countText.text = "\u00d7"+data[1]; // 假设 productContent 是数量
                 countText.fontSize = 60;
                 CreateTipsBtn(pointdes);
                 break;

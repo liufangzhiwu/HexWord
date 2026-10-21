@@ -35,6 +35,13 @@ public class ShopDataItem
     public int limited;           // 限购次数（0=不限购）
     public int giftType;          // 礼包档位类型（付费倾向积分/探价加分使用）
     public int coinValue;         // 金币价值（性价比排序用）
+    
+    /// <summary>
+    /// 加赠物品内容（单独显示在 GiftTable._AddgiftItem 上）。
+    /// 格式：List<string> { type, count }，例如 { "1", "1000" } 表示额外赠送 1000 金币。
+    /// 由复购/加量不加价逻辑写入（例如 ShopManager.AddPackBonus）。
+    /// </summary>
+    public List<string> bonusContent;
 
     /// <summary>
     /// 获取商品购买id
@@ -118,7 +125,7 @@ public partial class ShopManager : MonoBehaviour
     /// 列（0基）：
     ///   0:id  1:nameID  2:purchaseType  3:name  4:des  5:type  6:productContent  7:OriginalPrice
     ///   8:price  9:TempPrice  10:showIcon  11:nameKey  12:(空)  13:pointDes  14:sort
-    ///   15:homeSort  16:unlock  17:limitedTime  18: discount 19:discountZh  20: LabelZh 21:Limited
+    ///   15:homeSort  16:unlock  17:limitedTime  19: discount  20: LabelZh 21:Limited
     ///   22:GiftType  23:CoinValue   （右侧"无限体力"等按需扩展）
     /// </summary>
     void ParseShopItems(string data)
@@ -165,7 +172,8 @@ public partial class ShopManager : MonoBehaviour
             string homeSort = GetField(fields,  15 );
             List<string> unlocks = ParseUnlock(GetField(fields,  16 ));
             string limittime = GetField(fields, 17 );
-            string discount = GetField(fields,  18 );
+            // 只去掉半角空格
+            string discount = GetField(fields, 19).Replace(" ", "").Trim();
 
             // 新表扩展字段（旧表无则给默认）
             float originalPrice = GetFloat(GetField(fields, 7)) ;
