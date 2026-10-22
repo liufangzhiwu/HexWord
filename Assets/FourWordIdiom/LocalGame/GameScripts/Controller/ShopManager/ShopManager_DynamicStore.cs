@@ -17,11 +17,16 @@ public class ShopEntryBadgeInfo
 /// 商店管理器 - 动态商店配置部分类。
 /// 职责：动态商店推荐位列表（收起/展开、一号位兜底规则）、商店入口角标、活动礼包命名。
 /// 购买跟踪数据（isActivityPack / limitEndTime / buyCount / lastBuyTime 等）统一从 ShopLimitData 读取。
+///
+/// ★ 促销角标消费标记统一存储在 GameDataManager.Instance.UserData.shopEntryBadgeConsumedUntil：
+///   - 随 UserData 一起序列化到服务器，卸载重装可恢复；
+///   - 语义：记录"本次节日/周末的结束时间"作为消费截止时间；
+///   - 当前时间 < 截止时间 → 本次节日/周末内不再显示；
+///   - 当前时间 >= 截止时间 → 自动清空，进入下一个节日/周末可重新显示。
 /// </summary>
 public partial class ShopManager : MonoBehaviour
 {
-    /// <summary>本次进入商店是否已消费入口角标（进店消失）</summary>
-    private bool _shopEntryBadgeConsumed;
+    // ======================= 促销角标（进店消失 + 持久化 + 节日/周末结束自动重置） =======================
 
     /// <summary>动态商店/固定商店1号推荐位（DynamicStore 动态商店配置）候选归属判断</summary>
     private bool IsDynamicStorePack(string nameId)
@@ -54,12 +59,9 @@ public partial class ShopManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 固定商店 - 1号推荐位。
-    /// </summary>
+    /// <summary>固定商店 - 1号推荐位。</summary>
     public List<ShopDataItem> GetFixedStoreExpandedItems()
     {
-        // 展开后加入二号位剩余候选礼包（价格升序）
         List<ShopDataItem> result = GetRecommendPacks(RecommendSlot.FixedStore);
         return result
             .OrderBy(item => item.price)
@@ -79,13 +81,10 @@ public partial class ShopManager : MonoBehaviour
             .ToList();
     }
 
-    /// <summary>
-    /// 动态商店 - 展开状态列表：展开后展示全部礼包，按价格升序排列。
-    /// </summary>
+    /// <summary>动态商店 - 展开状态列表：展开后展示全部礼包，按价格升序排列。</summary>
     public List<ShopDataItem> GetDynamicStoreExpandedItems()
     {
         List<ShopDataItem> result = GetRecommendPacks(RecommendSlot.DynamicStore);
-        // 展开后加入二号位剩余候选礼包（价格升序）
         List<ShopDataItem> all = GetSlotCandidates(RecommendSlot.DynamicStore, 2);
         foreach (var item in all)
         {
@@ -97,28 +96,119 @@ public partial class ShopManager : MonoBehaviour
             .ToList();
     }
 
+    // ======================= 消费标记读写（统一走 UserData） =======================
+
     /// <summary>
-    /// 商店入口角标（需求）：
+    /// 检查并处理"本次节日/周末已结束"的自动清空。
+    /// 每次读取角标前调用一次；若当前时间 >= UserData.shopEntryBadgeConsumedUntil，则清空该字段。
+    /// 数据来自 GameDataManager.Instance.UserData（随 UserData 同步到服务器）。
+    /// </summary>
+    private void EnsureBadgeConsumedResetIfHolidayEnded()
+    {
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null) return;
+
+        string until = userData.shopEntryBadgeConsumedUntil;
+        if (string.IsNullOrEmpty(until)) return;
+
+        DateTime endTime;
+        if (!DateTime.TryParse(until, out endTime))
+        {
+            LogShop($"EnsureBadgeConsumedResetIfHolidayEnded: 结束时间格式错误('{until}')，清空标记");
+            ClearBadgeConsumedUntil();
+            return;
+        }
+
+        if (DateTime.Now >= endTime)
+        {
+            LogShop($"EnsureBadgeConsumedResetIfHolidayEnded: 当前时间已过结束时间({endTime})，清空消费标记（进入新节日/周末可重新显示）");
+            ClearBadgeConsumedUntil();
+        }
+    }
+
+    /// <summary>清空持久化的消费标记（写回 UserData 并保存）</summary>
+    private void ClearBadgeConsumedUntil()
+    {
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null) return;
+
+        if (string.IsNullOrEmpty(userData.shopEntryBadgeConsumedUntil)) return;
+
+        userData.shopEntryBadgeConsumedUntil = "";
+        GameDataManager.Instance.CommitGameData();
+    }
+
+    /// <summary>当前是否处于"本次节日/周末已消费"状态（消费截止时间 > 当前时间）</summary>
+    private bool IsBadgeConsumed()
+    {
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null) return false;
+
+        string until = userData.shopEntryBadgeConsumedUntil;
+        if (string.IsNullOrEmpty(until)) return false;
+
+        DateTime endTime;
+        if (!DateTime.TryParse(until, out endTime)) return false;
+
+        return DateTime.Now < endTime;
+    }
+
+    // ======================= 促销角标入口 =======================
+
+    /// <summary>
+    /// 商店入口按钮角标（需求）：
     ///  - 原"大减价"角标隐藏；
     ///  - 动态商店有活动礼包可出时展示"节日X折/周末X折"；
-    ///  - 角标在玩家进入商店后消失（_shopEntryBadgeConsumed）。
+    ///  - 角标在玩家进入商店后消失（进店消失），本次节日/周末内不再显示；
+    ///  - 持久化：重启游戏/卸载重装仍保持消失；只有进入下一个节日/周末才重新显示。
     /// </summary>
     public ShopEntryBadgeInfo GetShopEntryBadge()
     {
-        if (_shopEntryBadgeConsumed)
+        EnsureBadgeConsumedResetIfHolidayEnded();
+
+        if (IsBadgeConsumed())
         {
-            LogShop("GetShopEntryBadge: 已消费, 不展示");
+            var userData = GameDataManager.Instance?.UserData;
+            LogShop($"GetShopEntryBadge: 本次节日/周末已消费(截止={userData?.shopEntryBadgeConsumedUntil}), 不展示");
             return new ShopEntryBadgeInfo { showBadge = false };
         }
 
+        return BuildActivityBadgeInfo("GetShopEntryBadge");
+    }
+
+    /// <summary>
+    /// HeaderSection 顶部金币栏旁的促销角标（需求）：
+    ///  - 出现节日/周末礼包时 sale 显示；
+    ///  - 文案为"节日X折"或"周末X折"；
+    ///  - 进店后消失（与商店入口角标共用消费标记），本次节日/周末内不再显示；
+    ///  - 持久化：重启游戏/卸载重装仍保持消失；只有进入下一个节日/周末才重新显示。
+    /// </summary>
+    public ShopEntryBadgeInfo GetHeaderActivityBadge()
+    {
+        EnsureBadgeConsumedResetIfHolidayEnded();
+
+        if (IsBadgeConsumed())
+        {
+            var userData = GameDataManager.Instance?.UserData;
+            LogShop($"GetHeaderActivityBadge: 本次节日/周末已消费(截止={userData?.shopEntryBadgeConsumedUntil}), 不展示");
+            return new ShopEntryBadgeInfo { showBadge = false };
+        }
+
+        return BuildActivityBadgeInfo("GetHeaderActivityBadge");
+    }
+
+    /// <summary>
+    /// 构造活动礼包角标信息（选最优礼包 + 写入限时 + 生成文案）。
+    /// 商店入口角标与 HeaderSection 角标共用此方法。
+    /// </summary>
+    private ShopEntryBadgeInfo BuildActivityBadgeInfo(string caller)
+    {
         if (!IsHolidayOrWeekend())
         {
-            LogShop("GetShopEntryBadge: 非节日/周末, 不展示");
+            LogShop($"{caller}: 非节日/周末, 不展示");
             return new ShopEntryBadgeInfo { showBadge = false };
         }
 
-        // 动态商店候选活动礼包（节日/周末权重≠0 且当天是节日/周末）
-        // 按决策权重降序挑选最优的活动礼包
         ShopDataItem activityPack = null;
         float bestWeight = -1f;
 
@@ -141,7 +231,7 @@ public partial class ShopManager : MonoBehaviour
 
         if (activityPack == null)
         {
-            LogShop("GetShopEntryBadge: 无可用活动礼包, 不展示");
+            LogShop($"{caller}: 无可用活动礼包, 不展示");
             return new ShopEntryBadgeInfo { showBadge = false };
         }
 
@@ -153,8 +243,8 @@ public partial class ShopManager : MonoBehaviour
             limit.SetLimitEndTime(GetCurrentHolidayEndTime());
         }
 
-        string text = GetDiscountZheText(activityPack);
-        LogShop($"GetShopEntryBadge: 展示, pack={activityPack.produceNameId}, weight={bestWeight:F2}, text={text}");
+        string text = GetActivityBadgeText(activityPack);
+        LogShop($"{caller}: 展示, pack={activityPack.produceNameId}, weight={bestWeight:F2}, text={text}");
 
         return new ShopEntryBadgeInfo
         {
@@ -164,67 +254,81 @@ public partial class ShopManager : MonoBehaviour
         };
     }
 
-    /// <summary>玩家进入商店时调用：入口角标消失</summary>
-    public void OnShopEntered()
-    {
-        _shopEntryBadgeConsumed = true;
-        LogShop("OnShopEntered: 入口角标已消费");
-    }
-
     /// <summary>
-    /// 折扣文案："节日X折/周末X折"（活动礼包在节日/周末时展示）。
-    /// 示例：周末2折 → "周末2折"；国庆节 → "国庆节X折"。
+    /// 促销角标文案："节日X折"或"周末X折"。
+    /// 折扣数字 X 优先取礼包 discount，为空时用价格反推（原价/售价）。
+    /// 无有效折扣时退回类型文案（周末特惠/节日特惠）。
     /// </summary>
-    public string GetDiscountZheText(ShopDataItem item)
+    private string GetActivityBadgeText(ShopDataItem item)
     {
         if (item == null) return "";
 
-        // 折扣列：discount 存折扣（如 "2" 表示2折）
         string zhe = item.discount;
         if (string.IsNullOrEmpty(zhe) || zhe == "0")
         {
-            // 用价格反推折扣：原价/售价（新表）
             if (item.originalPrice > 0 && item.price > 0 && item.originalPrice >= item.price)
             {
                 float ratio = (float)item.price / item.originalPrice;
                 int zheNum = Mathf.CeilToInt(ratio * 10);
                 zhe = zheNum.ToString();
             }
-            else
-            {
-                return "特惠";
-            }
         }
 
-        string holidayLabel = GetTodayHolidayLabel();
-        if (holidayLabel == "周末")
-            return "周末" + zhe + "折";
-        if (!string.IsNullOrEmpty(holidayLabel))
-            return holidayLabel + zhe + "折";
-        return zhe + "折";
+        if (string.IsNullOrEmpty(zhe) || zhe == "0")
+        {
+            return GetTodayHolidayLabel() == "周末" ? "周末特惠" : "节日特惠";
+        }
+
+        if (GetTodayHolidayLabel() == "周末")
+            return "周末" + zhe;
+
+        return "节日" + zhe;
     }
 
+    // ======================= 进店消费（持久化到 UserData） =======================
+
     /// <summary>
-    /// 活动礼包名称规则（需求：{0}特惠礼包 key=SpecialOffer）：
-    /// 平时展示"特惠礼包"；节日替换为"XX节特惠礼包"；周末为"周末特惠礼包"。
-    /// 活动礼包状态从 ShopLimitData 读取。
+    /// 玩家进入商店时调用：促销角标消失（商店入口按钮角标 + HeaderSection 角标同时生效）。
+    ///
+    /// ★ 持久化规则：
+    ///   - 记录"本次节日/周末的结束时间"到 UserData.shopEntryBadgeConsumedUntil；
+    ///   - 当前时间 < 截止时间 → 本次节日/周末内不再显示（重启游戏/卸载重装仍保持）；
+    ///   - 当前时间 >= 截止时间 → 自动清空标记（进入下一个节日/周末可重新显示）。
     /// </summary>
-    public string GetActivityPackName(ShopDataItem item)
+    public void OnShopEntered()
     {
-        if (item == null || !IsActivityPack(item))
-            return Localize("SpecialOffer");
+        // 先检查是否已过旧的节日/周末结束时间（清空旧标记）
+        EnsureBadgeConsumedResetIfHolidayEnded();
 
-        string label = GetTodayHolidayLabel();
-        if (label == "周末")
-            return "周末特惠礼包";
-        if (!string.IsNullOrEmpty(label))
-            return label + "特惠礼包";
-        return "特惠礼包";
+        // 非节日/周末进店 → 不记录消费标记（避免影响下一个节日/周末的显示）
+        if (!IsHolidayOrWeekend())
+        {
+            LogShop("OnShopEntered: 非节日/周末, 不记录消费标记");
+            return;
+        }
+
+        // 记录本次节日/周末的结束时间
+        DateTime holidayEnd = GetCurrentHolidayEndTime();
+        if (holidayEnd == DateTime.MinValue)
+        {
+            LogShop("OnShopEntered: 本次节日/周末结束时间无效, 跳过记录");
+            return;
+        }
+
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null)
+        {
+            LogShop("OnShopEntered: UserData 为空, 跳过记录");
+            return;
+        }
+
+        userData.shopEntryBadgeConsumedUntil = holidayEnd.ToString("yyyy-MM-dd HH:mm:ss");
+        GameDataManager.Instance.CommitGameData();
+
+        LogShop($"OnShopEntered: 促销角标已消费, 本次节日/周末结束={userData.shopEntryBadgeConsumedUntil}（重启游戏/卸载重装仍保持消失，直到节日/周末结束）");
     }
 
-    /// <summary>
-    /// 读取指定商品是否为活动礼包（统一从 ShopLimitData 读取）。
-    /// </summary>
+    /// <summary>读取指定商品是否为活动礼包（统一从 ShopLimitData 读取）。</summary>
     private bool IsActivityPack(ShopDataItem item)
     {
         if (item == null) return false;

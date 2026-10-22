@@ -52,7 +52,9 @@ public class GiftItem : MonoBehaviour
         {
             case (int)LimitRewordType.Coins:
                 spritename = "gold2";
-                countText.text = "\u00d7"+data[1]; // 假设 productContent 是数量
+                countText.text = data[1]; // 假设 productContent 是数量
+                rt.sizeDelta = new Vector2(280f, 350f);
+                rt.anchoredPosition = new Vector2(0f, -10f);
                 break;
             case (int)LimitRewordType.Butterfly:
                 spritename = "Butterfly";
@@ -75,13 +77,17 @@ public class GiftItem : MonoBehaviour
                 break;
             case (int)LimitRewordType.RemoveAds:
                 spritename = "shopads";
-                countText.text = MultilingualManager.Instance.GetString(des);
+                rt.sizeDelta = new Vector2(250f, 250f);
+                rt.anchoredPosition = new Vector2(0f, -10f);
+                countText.text = "永久";
                 countText.fontSize = 60;
                 CreateTipsBtn(pointdes);
                 break;
             case (int)LimitRewordType.RemoveDayAds:
                 spritename = "shopads";
                 countText.text = "\u00d7"+data[1]; // 假设 productContent 是数量
+                rt.sizeDelta = new Vector2(230f, 350f);
+                rt.anchoredPosition = new Vector2(0f, -25f);
                 countText.fontSize = 60;
                 CreateTipsBtn(pointdes);
                 break;

@@ -16,6 +16,7 @@ public class CustomFlyInManager : MonoBehaviour
     [HideInInspector] public GameObject ShopTipObj;
     [HideInInspector] public GameObject ShopAutoObj;
     [HideInInspector] public GameObject ShopButterflyObj;
+    [HideInInspector] public GameObject ShopRestartObj;
     [HideInInspector] public GameObject GoldPrefab;
     [HideInInspector] public GameObject finishlevelBtnObj;
     private float BizerValue = 3.0f;

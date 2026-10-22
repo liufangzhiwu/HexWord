@@ -27,6 +27,7 @@ public static class AppGameSettings
         public static int StartingButterflies { get; } = 0; 
         
         public static int AutoCompleteCost { get; } = 150;   
+        public static int ReStartCost { get; } = 60;   
         
         public static int EnergyCost { get; } = 150;
     }

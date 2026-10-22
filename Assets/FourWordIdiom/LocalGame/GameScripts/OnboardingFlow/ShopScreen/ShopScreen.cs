@@ -15,30 +15,40 @@ using Button = UnityEngine.UI.Button;
 /// - 动态商店：灯泡/火箭/复活金币不足进入，ShopMode = DynamicStore，默认收起，
 ///            展示一号/二号推荐位 + 金币档，点“更多选择”按价格从低到高展开全部内购。
 ///
-/// 动态商店与固定商店共用：ShopItem 预制体、对象池、GiftItem、购买流程、
-/// 去广告状态、无限体力、购买记录/恢复购买/客服、埋点。
+/// 商品统一使用 ShopItemBase 及派生类：
+/// - ShopItem：单物品（含广告逻辑）
+/// - ShopGiftItem：礼包（无广告）
+///
+/// 顶部资源栏展示：金币 / 提示灯 / 火箭 / 蝴蝶 / 复活道具（105）
 /// </summary>
 public class ShopScreen : UIWindow
 {
-
-
     // ======================= 固定商店序列化字段 =======================
 
     [Header("固定商店 - 基础")]
     [SerializeField] private Button closeBtn;           // 关闭按钮
-    [SerializeField] private Button adsbtn;             // （旧）广告按钮
+    [SerializeField] private Button restartbtn;         // 复活道具按钮（展示数量，点击可查看说明/跳转）
+
+    [Header("顶部资源栏图标")]
     [SerializeField] private Image CoinIcon;
     [SerializeField] private Image TipIcon;
     [SerializeField] private Image AutoIcon;
     [SerializeField] private Image ButteryIcon;
+    [SerializeField] private Image RestartIcon;         // ★ 复活道具图标
+
+    [Header("顶部资源栏文本")]
     [SerializeField] private Text HeaderText;
     [SerializeField] private Text GoldText;
     [SerializeField] private Text TipText;
     [SerializeField] private Text AutoText;
     [SerializeField] private Text ButteryText;
-    [SerializeField] private ShopItem ShopGiftItemPrefab;
-    [SerializeField] private ShopItem ShopItemPrefab;
-    [SerializeField] private ShopItem ShopAdsItemPrefab;
+    [SerializeField] private Text RestartText;          // ★ 复活道具数量
+
+    [Header("商品 Prefab")]
+    [SerializeField] private ShopItemBase ShopGiftItemPrefab;   // 礼包 Prefab（挂 ShopGiftItem）
+    [SerializeField] private ShopItemBase ShopItemPrefab;       // 单物品 Prefab（挂 ShopItem）
+    [SerializeField] private ShopItemBase ShopAdsItemPrefab;    // 广告类 Prefab（挂 ShopItem）
+
     [SerializeField] private Transform parent;
     [SerializeField] private ScrollRect shopScrollView;
     [SerializeField] private FreeItemTable freeItemTable;
@@ -62,50 +72,32 @@ public class ShopScreen : UIWindow
 
     // ======================= 商品缓存 =======================
 
-    // 固定商店商品（保持原有字段名，兼容外部引用）
-    Dictionary<int, ShopItem> shopallItems = new Dictionary<int, ShopItem>();
+    // 固定商店 + 动态商店共用商品缓存（统一用 ShopItemBase）
+    Dictionary<int, ShopItemBase> shopallItems = new Dictionary<int, ShopItemBase>();
     List<ShopDataItem> shopallDataItems = new List<ShopDataItem>();
 
     // 动态商店商品
-    private readonly Dictionary<int, ShopItem> _dynamicItems = new Dictionary<int, ShopItem>();
-    private readonly List<ShopItem> _dynamicActiveItems = new List<ShopItem>();
+    private readonly Dictionary<int, ShopItemBase> _dynamicItems = new Dictionary<int, ShopItemBase>();
+    private readonly List<ShopItemBase> _dynamicActiveItems = new List<ShopItemBase>();
     private bool _isExpanded = false;
 
     // ======================= 生命周期 =======================
 
     protected void Start()
     {
-        // 加载预制体（若 Inspector 未赋值，则从 Bundle 加载）
-        if (ShopItemPrefab == null)
-        {
-            ShopItemPrefab = AdvancedBundleLoader.SharedInstance
-                .LoadGameObject("commonitem", "ShopItem").GetComponent<ShopItem>();
-        }
-
-        if (ShopGiftItemPrefab == null)
-        {
-            ShopGiftItemPrefab = AdvancedBundleLoader.SharedInstance
-                .LoadGameObject("commonitem", "ShopGiftItem").GetComponent<ShopItem>();
-        }
-
-        if (ShopAdsItemPrefab == null)
-        {
-            ShopAdsItemPrefab = AdvancedBundleLoader.SharedInstance
-                .LoadGameObject("commonitem", "ShopAdsItem").GetComponent<ShopItem>();
-        }
-
         InitPool();
-      
+
         // 固定商店：Start 阶段直接创建商品列表
         shopallDataItems = ShopManager.shopManager.GetShopItems();
         if (ShopManager.shopManager.shopMode == ShopMode.FixedStore)
             CrateShopItem(shopallDataItems);
-       
 
+        // ★ 顶部资源飞入目标（金币 / 提示灯 / 火箭 / 蝴蝶 / 复活道具）
         CustomFlyInManager.Instance.ShopAutoObj = AutoIcon.gameObject;
         CustomFlyInManager.Instance.ShopGoldObj = CoinIcon.gameObject;
         CustomFlyInManager.Instance.ShopTipObj = TipIcon.gameObject;
         CustomFlyInManager.Instance.ShopButterflyObj = ButteryIcon.gameObject;
+        CustomFlyInManager.Instance.ShopRestartObj = RestartIcon != null ? RestartIcon.gameObject : null;
     }
 
     protected override void OnEnable()
@@ -118,8 +110,6 @@ public class ShopScreen : UIWindow
 
         HeaderText.text = MultilingualManager.Instance.GetString("Shop");
         ShopManager.shopManager.paysuccess = false;
-
-        if (adsbtn != null) adsbtn.gameObject.SetActive(false);
 
         BuyRemoveAdsEvent();
         CustomFlyInManager.Instance.GoldObj = CoinIcon.gameObject;
@@ -134,7 +124,7 @@ public class ShopScreen : UIWindow
         {
             OnPanelClosed();
             ShowCollapsedState();
-            
+
             freeItemTable.gameObject.SetActive(false);
         }
         else
@@ -142,13 +132,19 @@ public class ShopScreen : UIWindow
             ShowFixedStore();
             freeItemTable.gameObject.SetActive(true);
         }
-        
+
         moreChoiceBtn.gameObject.SetActive(ShopManager.shopManager.shopMode == ShopMode.DynamicStore);
-        shopScrollView.enabled =ShopManager.shopManager.shopMode != ShopMode.DynamicStore;
-        
+        shopScrollView.enabled = ShopManager.shopManager.shopMode != ShopMode.DynamicStore;
+
+        // ★ 复活道具按钮始终显示（展示数量 + 点击可查看说明）
+        if (restartbtn != null)
+        {
+            restartbtn.gameObject.SetActive(true);
+        }
+
         // 进入商店消费入口角标（需求：进店消失）
         ShopManager.shopManager.OnShopEntered();
-        
+
         // 重置滚动位置到顶部
         shopScrollView.normalizedPosition = new Vector2(0, 1);
     }
@@ -168,30 +164,52 @@ public class ShopScreen : UIWindow
 
     private void InitPool()
     {
-        // 初始化对象池
-        if (objectPool == null)
+        
+        // 加载预制体（若 Inspector 未赋值，则从 Bundle 加载）
+        if (ShopItemPrefab == null)
         {
-            objectPool = new ObjectPool(ShopItemPrefab.gameObject,
-                ObjectPool.CreatePoolContainer(transform, "ShopItemPool"),6);
+            ShopItemPrefab = AdvancedBundleLoader.SharedInstance
+                .LoadGameObject("commonitem", "ShopItem").GetComponent<ShopItemBase>();
+        }
+
+        if (ShopGiftItemPrefab == null)
+        {
+            ShopGiftItemPrefab = AdvancedBundleLoader.SharedInstance
+                .LoadGameObject("commonitem", "ShopGiftItem").GetComponent<ShopItemBase>();
+        }
+
+        if (ShopAdsItemPrefab == null)
+        {
+            ShopAdsItemPrefab = AdvancedBundleLoader.SharedInstance
+                .LoadGameObject("commonitem", "ShopAdsItem").GetComponent<ShopItemBase>();
         }
         
-        if (giftobjectPool == null)
+        // 初始化对象池
+        if (objectPool == null && ShopItemPrefab != null)
         {
-            giftobjectPool  = new ObjectPool(ShopGiftItemPrefab.gameObject,
+            objectPool = new ObjectPool(ShopItemPrefab.gameObject,
+                ObjectPool.CreatePoolContainer(transform, "ShopItemPool"), 6);
+        }
+
+        if (giftobjectPool == null && ShopGiftItemPrefab != null)
+        {
+            giftobjectPool = new ObjectPool(ShopGiftItemPrefab.gameObject,
                 ObjectPool.CreatePoolContainer(transform, "ShopGiftItemPool"));
         }
 
-        if (adsObjectPool == null)
+        if (adsObjectPool == null && ShopAdsItemPrefab != null)
         {
             adsObjectPool = new ObjectPool(ShopAdsItemPrefab.gameObject,
                 ObjectPool.CreatePoolContainer(transform, "ShopAdsItemPool"));
         }
-
     }
 
     protected override void InitializeUIComponents()
     {
         if (closeBtn != null) closeBtn.AddVibraClickAction(OnCloseBtn);
+
+        // ★ 复活道具按钮（替代原广告按钮）
+        if (restartbtn != null) restartbtn.AddVibraClickAction(OnRestartBtn);
 
         // 动态商店按钮
         if (moreChoiceBtn != null) moreChoiceBtn.AddVibraClickAction(ExpandMoreChoices);
@@ -216,6 +234,17 @@ public class ShopScreen : UIWindow
         AutoText.text = GameDataManager.Instance.UserData.toolInfo[104].count.ToString();
         ButteryText.text = GameDataManager.Instance.UserData.toolInfo[103].count.ToString();
         TipText.text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
+
+        // ★ 复活道具数量（105），兼容旧存档缺少 105 的情况
+        if (RestartText != null)
+        {
+            int restartCount = 0;
+            if (GameDataManager.Instance.UserData.toolInfo.TryGetValue(105, out var restartInfo) && restartInfo != null)
+            {
+                restartCount = restartInfo.count;
+            }
+            RestartText.text = restartCount.ToString();
+        }
     }
 
     private IEnumerator AnimateCoinAddition(int amount)
@@ -241,7 +270,7 @@ public class ShopScreen : UIWindow
     private void CrateShopItem(List<ShopDataItem> shopDataItems)
     {
         var targetDict = shopallItems;
-        ShopItem adsShopItem = null;
+        ShopItemBase adsShopItem = null;
 
         for (int i = 0; i < shopDataItems.Count; i++)
         {
@@ -265,7 +294,7 @@ public class ShopScreen : UIWindow
                 {
                     adsShopItem = shopItem;
                 }
-              
+
                 shopItem.transform.SetSiblingIndex(i);
                 shopItem.gameObject.SetActive(true);
                 shopItem.UpdateUI();
@@ -277,15 +306,15 @@ public class ShopScreen : UIWindow
                     itemparent = goldItemTable2.transform;
                 }
 
-                shopItem = pool.GetObject<ShopItem>(itemparent);
+                shopItem = pool.GetObject<ShopItemBase>(itemparent);
                 shopItem.SetShopData(shopDataItem);
-                
+
                 if (shopDataItem.type == 1)
                 {
                     adsShopItem = shopItem;
                 }
                 shopItem.transform.SetSiblingIndex(i);
-               
+
                 targetDict.TryAdd(shopDataItem.id, shopItem);
 
                 if (!shopallItems.ContainsKey(shopDataItem.id))
@@ -300,14 +329,12 @@ public class ShopScreen : UIWindow
         if (goldItemTable != null) goldItemTable.transform.SetAsLastSibling();
         if (goldItemTable2 != null) goldItemTable2.transform.SetAsLastSibling();
     }
-    
-    /// <summary>
-    /// 收起状态：一号推荐位 + 二号推荐位 + 金币档 + “更多选择”
-    /// </summary>
+
+    /// <summary>固定商店：展开全部商品 + 一号位推荐</summary>
     private void ShowFixedStore()
     {
         if (ShopManager.shopManager.shopMode != ShopMode.FixedStore) return;
-       
+
         // 1. 固定商店收起状态商品（内部处理一号位兜底）
         List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetFixedStoreExpandedItems();
 
@@ -318,16 +345,13 @@ public class ShopScreen : UIWindow
             if (data == null) continue;
             CreateDynamicItem(data, parent, 0);
         }
-        
+
         CrateShopItem(shopallDataItems);
-     
     }
 
     // ======================= 动态商店：收起 / 展开 =======================
 
-    /// <summary>
-    /// 收起状态：一号推荐位 + 二号推荐位 + 金币档 + “更多选择”
-    /// </summary>
+    /// <summary>收起状态：一号推荐位 + 二号推荐位 + 金币档 + “更多选择”</summary>
     private void ShowCollapsedState()
     {
         if (ShopManager.shopManager.shopMode != ShopMode.DynamicStore) return;
@@ -360,66 +384,51 @@ public class ShopScreen : UIWindow
             if (gold == null) continue;
             if (!_dynamicItems.ContainsKey(gold.id))
             {
-                Transform transform= goldItemTable.transform;
-                
+                Transform transform = goldItemTable.transform;
+
                 if (gold.id >= 5 && gold.type == 0)
                 {
-                    if(slotIndex>=1) break;
-                    
+                    if (slotIndex >= 1) break;
+
                     transform = goldItemTable2.transform;
                 }
-                
+
                 CreateDynamicItem(gold, transform, -1);
             }
         }
     }
 
-    /// <summary>
-    /// 展开“更多选择”：所有礼包 + 去广告 + 免费金币 + 金币商品 + 单一道具 + 六个金币，按价格从低到高
-    /// </summary>
+    /// <summary>展开“更多选择”：所有礼包 + 去广告 + 免费金币 + 金币商品 + 单一道具 + 六个金币，按价格从低到高</summary>
     private void ExpandMoreChoices()
     {
         if (ShopManager.shopManager.shopMode != ShopMode.DynamicStore) return;
 
         _isExpanded = true;
 
-        // 1. 动态商店收起状态商品（内部处理一号位兜底：去广告/二号位前2权重）
+        // 1. 动态商店收起状态商品 + 全部商店商品
         List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetDynamicStoreCollapsedItems();
         List<ShopDataItem> allDataItems = new List<ShopDataItem>();
         allDataItems.AddRange(shopallDataItems);
         allDataItems.AddRange(collapsedItems);
-        
-        // 1. 动态商店收起状态商品（内部处理一号位兜底：去广告/二号位前2权重）
-        // List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetDynamicStoreCollapsedItems();
-        //
-        // // 2. 按顺序填充一号位、二号位
-        // int slotIndex = 0;
-        // for (int i = 0; i < collapsedItems.Count; i++)
-        // {
-        //     ShopDataItem data = collapsedItems[i];
-        //     if (data == null) continue;
-        //     slotIndex = i;
-        //     CreateDynamicItem(data, parent, slotIndex);
-        // }
-      
+
         // 按价格升序、去重
         allDataItems = allDataItems
             .Distinct()
             .OrderBy(x => x.price)
             .ToList();
-        
+
         CrateShopItem(allDataItems);
-        
+
         freeItemTable.gameObject.SetActive(true);
         moreChoiceBtn.gameObject.SetActive(false);
-        shopScrollView.enabled =true;
+        shopScrollView.enabled = true;
     }
 
     private void CreateDynamicItem(ShopDataItem data, Transform parent, int siblingIndex)
     {
         if (data == null || parent == null) return;
         var targetDict = shopallItems;
-        
+
         if (targetDict.TryGetValue(data.id, out var shopItem))
         {
             if (shopItem != null)
@@ -429,19 +438,17 @@ public class ShopScreen : UIWindow
                 return;
             }
         }
-        
+
         ObjectPool pool = objectPool;
         if (data.type == 2) pool = giftobjectPool;
         else if (data.type == 1) pool = adsObjectPool;
-       
 
-        ShopItem item = pool.GetObject<ShopItem>(parent);
+        ShopItemBase item = pool.GetObject<ShopItemBase>(parent);
         item.SetShopData(data);
 
         if (siblingIndex >= 0) item.transform.SetSiblingIndex(siblingIndex);
         item.gameObject.SetActive(true);
-        
-          
+
         targetDict.TryAdd(data.id, item);
 
         if (!_dynamicItems.ContainsKey(data.id))
@@ -459,6 +466,30 @@ public class ShopScreen : UIWindow
         }
         _dynamicActiveItems.Clear();
         _dynamicItems.Clear();
+    }
+
+    // ======================= 复活道具按钮 =======================
+
+    /// <summary>
+    /// 复活道具按钮点击：
+    ///  - 展示复活道具数量（右上角按钮已显示数量）；
+    ///  - 可打开道具说明/购买界面，目前复用道具弹窗说明。
+    /// </summary>
+    private void OnRestartBtn()
+    {
+        int restartCount = 0;
+        if (GameDataManager.Instance.UserData.toolInfo.TryGetValue(105, out var restartInfo) && restartInfo != null)
+        {
+            restartCount = restartInfo.count;
+        }
+
+        Debug.Log($"[Shop] 复活道具按钮点击, 当前数量={restartCount}");
+
+        // TODO: 根据产品需求跳转到复活道具说明/购买/GetItemScreen 等
+        // 例如：
+        // GetItemScreen.limitRewordType = LimitRewordType.ReStartTool;
+        // SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
+        MessageSystem.Instance.ShowTip($"复活道具：{restartCount}");
     }
 
     // ======================= 动态商店：底部按钮 =======================
@@ -487,7 +518,6 @@ public class ShopScreen : UIWindow
     {
         EventDispatcher.instance.TriggerChangeGoldUI(0, false);
 
-        // 固定商店：原有逻辑
         base.Close();
 
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
@@ -500,12 +530,6 @@ public class ShopScreen : UIWindow
         }
 
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
-    }
-
-    private void OnAdsBtn()
-    {
-        // 原逻辑保留，如未来需要接入恢复购买可在此扩展
-        // ShopManager.shopManager.iapManager.UserInitiatedRestore(true);
     }
 
     // ======================= 去广告UI回调 =======================
@@ -536,7 +560,8 @@ public class ShopScreen : UIWindow
     {
         foreach (var item in shopallItems)
         {
-            item.Value.gameObject.SetActive(false);
+            if (item.Value != null)
+                item.Value.gameObject.SetActive(false);
         }
 
         ClearDynamicItems();

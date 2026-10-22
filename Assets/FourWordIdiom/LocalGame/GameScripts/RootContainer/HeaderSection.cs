@@ -35,9 +35,6 @@ public class HeaderSection : UIWindow
     
     [Header("未知的")]
     public GameObject GoldLeafredpoint;
-    // [Header("右侧按钮组 (词库)")]
-    // public Button MyThemeBtn;
-    // public Button PuzzlebookBtn;
 
     private bool _isShowEnergyAdd = true;
     
@@ -45,9 +42,7 @@ public class HeaderSection : UIWindow
     private Vector3 _originalGoldTextScale = Vector3.zero;
 
     // ======================= 无限体力缓存 =======================
-    /// <summary>本次刷新时无限体力是否激活</summary>
     private bool _isUnlimitedEnergyActive;
-    /// <summary>本次刷新时无限体力剩余秒数（激活时 > 0）</summary>
     private double _unlimitedEnergyRemainSeconds;
 
     protected override void InitializeUIComponents()
@@ -57,11 +52,9 @@ public class HeaderSection : UIWindow
 #if Unity_ShowLog || UNITY_EDITOR
         GmBtn.AddClickAction(OnGmClick, "", false);
 #endif
-        // PuzzlebookBtn.AddVibraClickAction(OnClickPuzzleVocabulary);
         LevelPuzzleBtn.AddClickAction(OnClickStagePuzzleScreen);
         PupaTable.AddClickAction(()=>SystemManager.Instance.ShowPanel(PanelType.ButterflyHome));
         energyBtn.AddClickAction(()=> SystemManager.Instance.ShowPanel(PanelType.EnergyScreen));
-        // MyThemeBtn.AddVibraClickAction(OnClickMyThemeBtn);
     }
 
     protected void Start()
@@ -72,7 +65,6 @@ public class HeaderSection : UIWindow
         }
         
         InitUI();
-        // ThemeManager.Instance.themeButton = MyThemeBtn.gameObject;
         ThemeManager.Instance.CheckAndUpdateSkinRedPoint();
     }
 
@@ -99,47 +91,75 @@ public class HeaderSection : UIWindow
             Goldtxt.text = GameDataManager.Instance.UserData.Gold.ToString();
         }
         
+        // 红点（进店消费入口角标）
         redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
-        sale.SetActive(GameDataManager.Instance.UserData.isShowDiscountGift);
-        
-        if (GameDataManager.Instance.UserData.isShowDiscountGift)
+
+        // ★ 节日/周末礼包角标：有活动礼包时 sale 显示并展示礼包标签
+        RefreshActivityBadge();
+    }
+
+    /// <summary>
+    /// 刷新商店顶部的节日/周末促销角标：
+    ///  - 有活动礼包（节日/周末礼包）：sale 显示，discountText 显示礼包标签；
+    ///  - 无活动礼包：sale 隐藏。
+    /// </summary>
+    /// <summary>
+    /// 刷新商店顶部的节日/周末促销角标：
+    ///  - 有活动礼包（节日/周末礼包）且未进店消费：sale 显示，discountText 显示"节日X折"或"周末X折"；
+    ///  - 无活动礼包 or 已进店消费（跨天自动重置）：sale 隐藏。
+    /// </summary>
+    private void RefreshActivityBadge()
+    {
+        ShopEntryBadgeInfo info = null;
+        if (ShopManager.shopManager != null)
         {
-            discountText.text = "节日5折";
+            // ★ 改为调用 GetHeaderActivityBadge()，返回文案为"节日X折"/"周末X折"，且进店消失
+            info = ShopManager.shopManager.GetHeaderActivityBadge();
         }
-        
-        // MyThemeBtn.gameObject.SetActive(SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)&&ThemeManager.Instance.CanShowThemeBtn());
+
+        bool show = info != null && info.showBadge;
+
+        if (sale != null)
+        {
+            if (sale.activeSelf != show)
+                sale.SetActive(show);
+        }
+
+        if (show && discountText != null)
+        {
+            discountText.text = info.text;
+            Debug.Log($"[Shop][HeaderSection] 活动礼包角标: {info.text} (pack={info.pack?.produceNameId})");
+        }
+        else
+        {
+            Debug.Log("[Shop][HeaderSection] 无活动礼包或已进店消费，隐藏促销角标");
+        }
     }
     
     private IEnumerator AnimateCoinAddition(int amount)
     {
         int startValue = GameDataManager.Instance.UserData.Gold-amount;
         int targetValue = GameDataManager.Instance.UserData.Gold;
-        float duration = 0.35f; // 动画持续时间
+        float duration = 0.35f;
         float elapsed = 0f;
-        // 记录原本的缩放大小（防止多次调用导致大小错乱）
-        // Vector3 originalScale = Goldtxt.transform.localScale;
-        // 设置最大放大倍数（比如 0.5f 代表最大会放大到 1.5 倍）
         float maxScaleAmount = 0.5f;
         
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration); // 归一化
-            // 1. 处理数字滚动
+            float t = Mathf.Clamp01(elapsed / duration);
             int currentValue = Mathf.RoundToInt(Mathf.Lerp(startValue, targetValue, t));
             Goldtxt.text = currentValue.ToString();
-            // 2. 🔥 处理心跳式缩放放大缩小
             float scaleCurve = Mathf.Sin(t * Mathf.PI); 
             Goldtxt.transform.localScale = _originalGoldTextScale * (1f + scaleCurve * maxScaleAmount);
             yield return null;
         }
-        Goldtxt.text = targetValue.ToString(); // 确保最终值正确显示
+        Goldtxt.text = targetValue.ToString();
         Goldtxt.transform.localScale = _originalGoldTextScale;
     }
 
     protected override void OnEnable()
     {
-        // if (MyThemeBtn != null) MyThemeBtn.interactable = true;
         if (GoldLeafredpoint != null)
         {
             GoldLeafredpoint.SetActive(ThemeManager.Instance.IsSkinRedPointActive);
@@ -149,12 +169,10 @@ public class HeaderSection : UIWindow
         EventDispatcher.instance.OnUpdateLayerCoin += UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
         EventDispatcher.instance.OnChangeTopRaycast += ChangeTopRaycast;
-        // EventDispatcher.instance.OnChessScoreChanged += UpdatePupaProgress; 
         EventDispatcher.instance.OnHighlightHeaderUI += HighlightEnergy;
         EventDispatcher.instance.OnHighlightGoldAndEnergy += HighlightGoldAndEnergy;
         
         bool ishomeshow = SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface);
-        // PuzzlebookBtn.gameObject.SetActive(ishomeshow&& GameDataManager.Instance.UserData.isShowVocabulary);
         GmBtn.gameObject.SetActive(ishomeshow);
         BackBtn.gameObject.SetActive(!ishomeshow);
         energyBtn.gameObject.SetActive(ishomeshow);
@@ -177,7 +195,6 @@ public class HeaderSection : UIWindow
             BackBtn.gameObject.SetActive(true);
             LevelPuzzleBtn.gameObject.SetActive(false);
             PupaTable.gameObject.SetActive(StageHexController.Instance.CurStageData.PupaDatas!=null);
-            //
             if (StageHexController.Instance.CurStageData.PupaDatas != null&&!GameDataManager.Instance.ButterflyData.IsOpenButterfly)
             {
                 GameDataManager.Instance.ButterflyData.IsOpenButterfly = true;
@@ -208,16 +225,11 @@ public class HeaderSection : UIWindow
 
         InitPupaUI();
         InitEnergyUI();
-        // 启用时开始重复调用 (1秒延迟，每秒1次)
         StartCoroutine(CheckLevelPuzzleVisibility());
     }
 
     // ======================= 无限体力辅助 =======================
 
-    /// <summary>
-    /// 是否处于无限体力状态（读取 UserData.unlimitedEnergyEndTime，过期视为失效）。
-    /// 需求：礼包中的"无限体力"商品，购买后体力图标显示无穷，限时期间退出关卡/复活无二次确认。
-    /// </summary>
     private bool IsUnlimitedEnergyActive()
     {
         if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null)
@@ -234,7 +246,6 @@ public class HeaderSection : UIWindow
         return end > DateTime.Now;
     }
 
-    /// <summary>无限体力剩余秒数（未激活返回 0）</summary>
     private double GetUnlimitedEnergyRemainSeconds()
     {
         if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null)
@@ -252,11 +263,6 @@ public class HeaderSection : UIWindow
         return remain > 0 ? remain : 0;
     }
 
-    /// <summary>
-    /// 格式化无限体力剩余时间：
-    ///  - >= 1 小时：H:mm:ss
-    ///  - < 1 小时：mm:ss
-    /// </summary>
     private string FormatUnlimitedRemainTime(double remainSeconds)
     {
         int totalSeconds = Mathf.Max(0, Mathf.FloorToInt((float)remainSeconds));
@@ -269,7 +275,6 @@ public class HeaderSection : UIWindow
         return string.Format("{0:00}:{1:00}", mins, secs);
     }
 
-    /// <summary>刷新无限体力缓存（每次体力计时循环调用一次，避免重复解析字符串）</summary>
     private void RefreshUnlimitedEnergyCache()
     {
         _isUnlimitedEnergyActive = IsUnlimitedEnergyActive();
@@ -297,7 +302,6 @@ public class HeaderSection : UIWindow
                 else if (GameDataManager.Instance.UserData.levelMode == 2&&ChessStageController.Instance.CurrStageData!=null)
                     hasLevelWords = ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0;
                 
-                // Debug.Log("当前模式： " + GameDataManager.Instance.UserData.levelMode +" "+ hasLevelWords);
                 LevelPuzzleBtn.gameObject.SetActive(hasLevelWords);
                 LevelPuzzleBtn.GetComponent<CanvasGroup>().DOFade(1f,0.2f);
             }
@@ -305,9 +309,6 @@ public class HeaderSection : UIWindow
         }
     }
 
-    /// <summary>
-    /// 更改金币显示层级
-    /// </summary>
     private void UpdateCoinLayer(bool istop, bool isshopbtnEnable = true, bool isshowPupa = false,bool shoGap=false)
     {
         GameObject coinObj = ShopBtn.gameObject;
@@ -398,8 +399,6 @@ public class HeaderSection : UIWindow
             pupaCanvas.sortingOrder = 0;
         }
 
-        // 🌟 核心时序修复：只有当资产栏确定显示时，加号(addObj)才根据功能启用
-        // 如果资产栏已经因为在游戏局内(SetActive(false))被关闭，则保留加号的默认激活，防下次打开走光丢失
         if (coinObj.gameObject.activeSelf)
         {
             if (!isFinish)
@@ -415,7 +414,6 @@ public class HeaderSection : UIWindow
         }
         else
         {
-            // 资产栏隐藏期间，加号原地保持基础激活状态，绝不篡改隐去
             addObj.gameObject.SetActive(true);
             ShopBtn.enabled = isshopbtnEnable;
         }
@@ -425,7 +423,6 @@ public class HeaderSection : UIWindow
             InitPupaUI();
         }
 
-        // 无限体力激活期间，体力按钮不可点
         RefreshUnlimitedEnergyCache();
 
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)
@@ -442,7 +439,6 @@ public class HeaderSection : UIWindow
 
         if (_isUnlimitedEnergyActive)
         {
-            // 无限体力期间，加号隐藏、按钮不可点
             energyAdd.SetActive(false);
             energyBtn.interactable = false;
         }
@@ -450,35 +446,26 @@ public class HeaderSection : UIWindow
         BackBtn.gameObject.SetActive(!SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)&&
                                      !SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface));
         PupaTable.interactable = !isshowPupa;
-       
     }
 
-    /// <summary>
-    /// 供退出/重连弹窗调用：将体力槽和蝶蛹进度条提到最顶层高亮显示，穿透黑色半透明蒙版
-    /// </summary>
     public void HighlightEnergy(bool isHighlight)
     {
-        // 无限体力期间，加号始终隐藏
         RefreshUnlimitedEnergyCache();
 
         energyAdd.SetActive(!isHighlight && !_isUnlimitedEnergyActive);
-        // 1. 给体力按钮挂载 Canvas 以便提层
         Canvas energyCanvas = energyBtn.GetComponent<Canvas>();
         if (energyCanvas == null) energyCanvas = energyBtn.gameObject.AddComponent<Canvas>();
         if (energyBtn.GetComponent<GraphicRaycaster>() == null) energyBtn.gameObject.AddComponent<GraphicRaycaster>();
-        // 3. 开始控制层级
         if (isHighlight)
         {
             energyBtn.gameObject.SetActive(true);
-            // 提层到弹窗同一级 (PopPanel)
             energyCanvas.overrideSorting = true;
             energyCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
-            energyCanvas.sortingOrder = 101; // 保证在弹窗蒙版之上
+            energyCanvas.sortingOrder = 101;
             energyBtn.interactable = false;
         }
         else
         {
-            // 恢复默认层级
             energyCanvas.overrideSorting = false;
             energyCanvas.sortingOrder = 0;
             
@@ -488,7 +475,6 @@ public class HeaderSection : UIWindow
             int stage = Mathf.Max(userData.CurrentHexStage, userData.CurrentChessStage);
             bool isAdequate = (userData.Energy >= UserData.MAX_NATURAL_ENERGY) || (stage == 1);
 
-            // 无限体力期间，不恢复点击能力
             energyBtn.interactable = !isAdequate && !_isUnlimitedEnergyActive;
             energyBtn.gameObject.SetActive(false);
         }
@@ -496,21 +482,16 @@ public class HeaderSection : UIWindow
         energyAdd.SetActive(_isShowEnergyAdd);
     }
 
-    /// <summary>
-    /// 供体力购买界面调用：将金币槽和体力槽提到最顶层高亮显示
-    /// </summary>
     private void HighlightGoldAndEnergy(bool isHighlight)
     {
         if(GameDataManager.Instance==null) return;
 
         RefreshUnlimitedEnergyCache();
         
-        // 1. 获取/添加 体力的 Canvas
         Canvas energyCanvas = energyBtn.GetComponent<Canvas>();
         if (energyCanvas == null) energyCanvas = energyBtn.gameObject.AddComponent<Canvas>();
         if (energyBtn.GetComponent<GraphicRaycaster>() == null) energyBtn.gameObject.AddComponent<GraphicRaycaster>();
 
-        // 2. 获取/添加 金币(ShopBtn) 的 Canvas
         Canvas goldCanvas = ShopBtn.GetComponent<Canvas>();
         if (goldCanvas == null) goldCanvas = ShopBtn.gameObject.AddComponent<Canvas>();
         if (ShopBtn.GetComponent<GraphicRaycaster>() == null) ShopBtn.gameObject.AddComponent<GraphicRaycaster>();
@@ -521,7 +502,6 @@ public class HeaderSection : UIWindow
         
         if (isHighlight)
         {
-            // 双双提层到弹窗同一级
             energyCanvas.overrideSorting = true;
             energyCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
             energyCanvas.sortingOrder = 101;
@@ -531,14 +511,11 @@ public class HeaderSection : UIWindow
             goldCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
             goldCanvas.sortingOrder = 101;
             ShopBtn.interactable = false;
-            
         }
         else
         {
-            // 恢复默认层级
             energyCanvas.overrideSorting = false;
             energyCanvas.sortingOrder = 0;
-            // 无限体力期间，不恢复点击能力
             energyBtn.interactable = !isAdequate && !_isUnlimitedEnergyActive;
             
             goldCanvas.overrideSorting = false;
@@ -546,7 +523,6 @@ public class HeaderSection : UIWindow
             ShopBtn.interactable = true;
         }
         
-        // 无限体力期间隐藏加号
         energyAdd.SetActive(!isAdequate && !_isUnlimitedEnergyActive);
     }
 
@@ -562,7 +538,6 @@ public class HeaderSection : UIWindow
     private Coroutine _energyCoroutine;
     private void InitEnergyUI()
     {
-        // 确保不会重复开启协程
         if (_energyCoroutine != null) StopCoroutine(_energyCoroutine);
         _energyCoroutine = StartCoroutine(EnergyTimerCoroutine());
     }
@@ -574,23 +549,17 @@ public class HeaderSection : UIWindow
         {
             var userData = GameDataManager.Instance.UserData;
             
-            // 每次循环都可以顺手让底层核对一下体力（处理切后台等情况产生的时间差）
             userData.CalculateEnergyRegen();
 
-            // 刷新无限体力缓存（最高优先级）
             RefreshUnlimitedEnergyCache();
 
             int currentEnergy = userData.Energy;
             int stage = Mathf.Max(userData.CurrentHexStage, userData.CurrentChessStage);
 
-            // ======================= 最高优先级：无限体力 =======================
             if (_isUnlimitedEnergyActive)
             {
-                // 体力图标显示无穷
                 energyTxt.text = "∞";
-                // 右侧显示剩余时间倒计时（弹窗中显示限时的诉求在此体现）
                 energyTimer.text = FormatUnlimitedRemainTime(_unlimitedEnergyRemainSeconds);
-                // 加号隐藏、按钮不可点
                 energyAdd.SetActive(false);
                 energyBtn.interactable = false;
 
@@ -598,15 +567,10 @@ public class HeaderSection : UIWindow
                 continue;
             }
 
-            // ======================= 常规体力逻辑 =======================
-            // 1. 刷新当前体力数值显示 (例如 "3" 或者 "充足")
             bool isAdequate = (currentEnergy >= UserData.MAX_NATURAL_ENERGY);
-            // string energyStatus = userData.GetEnergyDisplayString();
-            // energyAdd.SetActive((!isAdequate) && _isShowEnergyAdd); // 充足时不显示加号
             energyBtn.interactable = true;
             if (isAdequate && stage == 1)
             {
-                // 1. 第一关充足：红心内为空，右侧显示"充足"
                 energyTxt.text = "";
                 energyTimer.text = "充足";
                 energyAdd.SetActive(false);
@@ -614,45 +578,34 @@ public class HeaderSection : UIWindow
             }
             else if (currentEnergy >= UserData.MAX_NATURAL_ENERGY)
             {
-                // 2. 体力已满：红心内为空，右侧显示最大数值
                 energyTxt.text = "";
                 energyTimer.text = currentEnergy.ToString();
                 energyAdd.SetActive(true);
             }
             else
             {
-                // 3. 体力未满恢复中：红心显示当前值，右侧显示倒计时
                 energyTxt.text = currentEnergy.ToString();
                 
                 int remainSeconds = userData.GetNextEnergyRegenSeconds();
-                // 当倒计时归零时，触发体力增加！
                 if (remainSeconds <= 0)
                 {
                     userData.CalculateEnergyRegen();
                     currentEnergy = userData.Energy;
-                    energyTxt.text = currentEnergy.ToString(); // 刷新红心内的数字
+                    energyTxt.text = currentEnergy.ToString();
                     remainSeconds = userData.GetNextEnergyRegenSeconds();
                 }
                 
-                // 格式化倒计时
                 int mins = remainSeconds / 60;
                 int secs = remainSeconds % 60;
                 energyTimer.text = string.Format("{0:00}:{1:00}", mins, secs);
                 energyAdd.SetActive(_isShowEnergyAdd);
             }
            
-            // Canvas eCanvas = energyBtn.GetComponent<Canvas>();
-            // bool isHighlightLocked = eCanvas != null && eCanvas.overrideSorting;
             if (stage != 1)
             {
                 energyBtn.interactable = _isShowEnergyAdd;
                 energyAdd.SetActive(_isShowEnergyAdd);
             }
-            // if (!isHighlightLocked)
-            // {
-            //     energyBtn.interactable = !isAdequate; // 充足时无法点击
-            // }
-            // 等待1秒再执行下一次
             yield return wait;
         }
     }
@@ -692,19 +645,14 @@ public class HeaderSection : UIWindow
         
         SystemManager.Instance.ShowPanel(PanelType.LevelWordScreen);
         ChessGuideSystem.Instance.CloseGuide();
-        
     }
 
     private void OnGmClick()
     {
-        //string localIP = GetLocalIPAddress();
-        //bool isloaclIp = IsInLocalNetwork(localIP);
-        //bool isloaclIp = IsLocalDevice();
         if (true) 
         {
             SystemManager.Instance.ShowPanel(PanelType.DebugMenu);
         }
-        //Debug.Log("TP-LINK 5G 当前IP地址: " + localIP + "设备是否在局域网内: " + isloaclIp);
     }
 
     private void OnShopClick()
@@ -728,7 +676,6 @@ public class HeaderSection : UIWindow
 
         if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
         {
-            
             SystemManager.Instance.HidePanel(PanelType.StageFinishView);
         }
         if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
@@ -776,13 +723,11 @@ public class HeaderSection : UIWindow
         {
             SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
         });
-        //SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
     }
     
     public void ChangeBackBtnState(bool isshow)
     {
         BackBtn.gameObject.SetActive(isshow);
-        //LevelPuzzleBtn.gameObject.SetActive(!isshow);
     }
 
     private void ChangeTopRaycast(bool isblock)
@@ -800,11 +745,9 @@ public class HeaderSection : UIWindow
     {
         HighlightEnergy(false);
         HighlightGoldAndEnergy(false);
-        //EventManager.ChangeBackBtnHandler -= ChangeBackBtnState;
         EventDispatcher.instance.OnUpdateLayerCoin -= UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         EventDispatcher.instance.OnChangeTopRaycast -= ChangeTopRaycast;
-        // EventDispatcher.instance.OnChessScoreChanged -= UpdatePupaProgress; // 🌟 千万别忘了注销！
         EventDispatcher.instance.OnHighlightHeaderUI -= HighlightEnergy;
         EventDispatcher.instance.OnHighlightGoldAndEnergy -= HighlightGoldAndEnergy;
         
@@ -812,7 +755,6 @@ public class HeaderSection : UIWindow
             ThemeManager.Instance.OnSkinRedPointChanged -= OnRedPointChanged;
         
         LevelPuzzleBtn.gameObject.SetActive(false);
-        // 禁用时取消调用
         CancelInvoke(nameof(CheckLevelPuzzleVisibility));
         if(_energyCoroutine != null) StopCoroutine(_energyCoroutine);
         base.OnDisable();
