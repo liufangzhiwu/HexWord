@@ -17,6 +17,9 @@ public class ShopItem : ShopItemBase
 {
     // ======================= 广告专属字段 =======================
 
+    // [SerializeField] private Button adsButton;
+    // [SerializeField] private Button goldButton;
+    // [SerializeField] private Button buyButton;
     [SerializeField] private UIShiny adsShiny;
 
     [Header("广告状态动画设置")]

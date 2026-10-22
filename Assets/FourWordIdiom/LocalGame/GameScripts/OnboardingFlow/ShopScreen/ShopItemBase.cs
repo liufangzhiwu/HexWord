@@ -16,28 +16,34 @@ using UnityEngine.UI;
 /// 派生类：
 ///  - ShopItem：单一购买商品（含广告领取逻辑）
 ///  - ShopGiftItem：礼包商品（无广告）
+///
+/// ★ 购买发放跳过机制：
+///   子类可 override <see cref="IsContentSkippedOnPurchase(int)"/> 指定某些内容项在购买时跳过发放。
+///   例如 ShopGiftItem 在"已拥有永久去广告"时，会跳过 RemoveAds / RemoveDayAds 的发放，
+///   与展示侧（InitGiftItems 跳过）保持一致。
 /// </summary>
 public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
-    // ======================= Inspector 字段 =======================
+    // ======================= Inspector 字段（protected 便于派生类访问） =======================
 
-    [SerializeField] protected GameObject discountbg;
-    [SerializeField] protected Image dibg;                       // 礼包底图（单物品可为空）
-    [SerializeField] protected GameObject timebg;
-    //[SerializeField] protected GameObject circle;
-    [SerializeField] protected Image shopIcon;
-    public Image btnAdsicon;                                     // 广告图标（礼包可为空）
-    [SerializeField] protected Text nameText;
-    [SerializeField] protected Text desText;
-    [SerializeField] protected Text shopCountText;
-    public Text shopPriceText;
-    [SerializeField] protected GameObject tipBtnPrefab;
+    [SerializeField] protected GameObject discountbg;       // 折扣角标
+    [SerializeField] protected Image dibg;                  // 礼包底图（单物品可为空）
+    [SerializeField] protected GameObject timebg;           // 限时角标
+    [SerializeField] protected GameObject circle;           // 价格加载圈
+    [SerializeField] protected Image shopIcon;              // 商品图标
+    public Image btnAdsicon;                                // 广告图标（礼包可为空）
+    [SerializeField] protected Text nameText;               // 商品名
+    [SerializeField] protected Text desText;                // 商品描述（type==1 道具展示用）
+    [SerializeField] protected Text shopCountText;          // 数量文本（单物品 x count / 礼包金币数）
+    public Text shopPriceText;                              // 价格文本
+    [SerializeField] protected GameObject tipBtnPrefab;     // 道具说明按钮 Prefab（type==1 用）
 
     // ======================= 状态字段 =======================
 
-    protected ShopDataItem shopDataItem;
-    protected ShopLimitData _shopLimitData = null;
-    protected Button tipBtn;
+    protected ShopDataItem shopDataItem;                    // 当前绑定的商品数据
+    protected ShopLimitData _shopLimitData = null;          // 当前商品的限时记录
+    protected Button tipBtn;                                // 道具说明按钮实例
+    protected Color _color = Color.white;                   // 描边/内容颜色（子类可覆盖）
 
     // ======================= 缩放参数 =======================
 
@@ -45,7 +51,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     public float pressedScale = 0.9f;
     public float scaleSpeed = 10f;
 
-    // ======================= Transform 缓存（protected，供派生类使用） =======================
+    // ======================= Transform 缓存（protected 供派生类使用） =======================
 
     protected RectTransform rectTransform;
     protected Vector3 originalScale;
@@ -60,6 +66,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     // ======================= 日志 =======================
 
+    /// <summary>[Shop] 标签日志</summary>
     protected void LogShopItem(string message)
     {
         string tag = shopDataItem != null ? $"{shopDataItem.produceNameId}(id={shopDataItem.id})" : "null";
@@ -149,7 +156,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             return;
         }
 
-        // ★ 特殊购买方式（FreeGoods / GoldGoods 等），交给派生类处理
+        // 特殊购买方式（purchaseType == -1），交给派生类处理
         if (shopDataItem.purchaseType == -1)
         {
             HandleSpecialPurchase();
@@ -180,6 +187,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     // ======================= 数据绑定 =======================
 
+    /// <summary>绑定商品数据并刷新所有 UI</summary>
     public virtual void SetShopData(ShopDataItem data)
     {
         if (data == null)
@@ -201,6 +209,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         RefreshButtonInteractable();
     }
 
+    /// <summary>刷新 UI（对象池复用时调用）</summary>
     public virtual void UpdateUI()
     {
         HandleTimeLimitedItems(shopDataItem);
@@ -279,7 +288,11 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     // ======================= 显示：内容（派生类 override） =======================
 
-    /// <summary>显示商品内容（派生类 override）</summary>
+    /// <summary>
+    /// 显示商品内容（派生类 override）。
+    ///  - ShopItem：显示 "x count"；
+    ///  - ShopGiftItem：显示礼包名 + 礼包底图 + 金币数量。
+    /// </summary>
     protected virtual void HandleProductContentDisplay(ShopDataItem data) { }
 
     // ======================= 显示：道具特殊展示（type == 1） =======================
@@ -371,8 +384,10 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
             float price = data.price;
             CultureInfo culture = UIUtilities.GetCultureForCurrency("");
-
-            if (shopDataItem.produceNameId == "SingleGoods")
+            if (shopDataItem.produceNameId == "FreeGoods")
+            {
+                 shopPriceText.text = "免费";
+            } else if (shopDataItem.produceNameId == "SingleGoods")
             {
                 if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
                     shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
@@ -402,7 +417,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     protected void ShowPriceLoadingState(bool isLoading)
     {
-        //if (circle != null) circle.gameObject.SetActive(isLoading);
+        if (circle != null) circle.gameObject.SetActive(isLoading);
         if (shopPriceText != null) shopPriceText.gameObject.SetActive(!isLoading);
     }
 
@@ -457,7 +472,26 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     // ======================= 礼包内容（派生类 override） =======================
 
+    /// <summary>
+    /// 礼包内容展示（基类空实现，ShopGiftItem override）。
+    /// 用于创建多个 GiftItem 子项。
+    /// </summary>
     protected virtual void HandleMultiProductContent(ShopDataItem data) { }
+
+    // ======================= ★ 购买发放跳过（派生类 override） =======================
+
+    /// <summary>
+    /// 判断商品内容中的某一项在购买发放时是否需要跳过。
+    /// 默认不跳过（false），派生类可 override 用于特殊场景：
+    ///  - 例如 ShopGiftItem 在"已拥有永久去广告"时，跳过 RemoveAds / RemoveDayAds 的发放，
+    ///    与展示侧（InitGiftItems 跳过）保持一致；
+    ///  - 跳过仅影响发放，不影响展示和购买流程本身。
+    /// </summary>
+    /// <param name="giftType">productContent 中的道具类型（如 RemoveAds / RemoveDayAds / Coins / Butterfly / ...）</param>
+    protected virtual bool IsContentSkippedOnPurchase(int giftType)
+    {
+        return false;
+    }
 
     // ======================= 限时倒计时 =======================
 
@@ -537,6 +571,14 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             {
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
+
+                // ★ 派生类可指定跳过某些项的发放（如已拥有永久去广告时跳过 RemoveAds/RemoveDayAds）
+                if (IsContentSkippedOnPurchase(type))
+                {
+                    LogShopItem($"购买发放跳过 content type={type}（IsContentSkippedOnPurchase=true）");
+                    continue;
+                }
+
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:

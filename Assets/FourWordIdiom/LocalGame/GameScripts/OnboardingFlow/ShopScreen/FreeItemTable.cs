@@ -65,7 +65,7 @@ public class FreeItemTable : MonoBehaviour
                 spritename = "Butterfly";
                 break;
             case (int)LimitRewordType.Tipstool:
-                spritename = "tipicon";
+                spritename = "shop_reset";
                 break;
             case (int)LimitRewordType.AutoComplete:
                 spritename = "rocket";

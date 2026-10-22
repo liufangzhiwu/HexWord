@@ -16,6 +16,7 @@ using UnityEngine.UI;
 ///  - HandleSpecialTypeItems：空实现，阻止基类把 type=1 按"单物品道具"展示；
 ///  - HandleProductContentDisplay：礼包名 + 礼包底图 + （type=2）金币数量；
 ///  - HandleMultiProductContent / InitGiftItems：创建多个 GiftItem（type=2 跳过金币；type=1 金币也走 GiftItem）；
+///  - IsContentSkippedOnPurchase：已拥有永久去广告 → 购买时跳过 RemoveAds / RemoveDayAds 的发放；
 ///  - SetProductPrice：原价文本（oldPriceText）+ 价格位置（有折扣下移）；
 ///  - SetShopData：按礼包 produceNameId 应用描边色 + 刷新限购次数 + 礼包标签显隐；
 ///  - OnTimeLimitedStateChanged：限时状态变化钩子（当前保留空实现）。
@@ -47,23 +48,19 @@ public class ShopGiftItem : ShopItemBase
 
     // ======================= 描边颜色配置 =======================
 
-    /// <summary>
-    /// 各礼包 produceNameId 对应的描边颜色。
-    /// 色值按 hsla(h, s%, l%, a) 给定，代码中用 HslToColor 转换。
-    /// </summary>
     private static readonly Dictionary<string, Color> _bonusOutlineColors = new Dictionary<string, Color>
     {
-        { "NewcomerBox",     HslToColor(31f,  1.00f, 0.35f) },   // hsla(31, 100%, 35%, 1)
-        { "SpecialPackageA", HslToColor(225f, 1.00f, 0.35f) },   // hsla(225, 100%, 35%, 1)
-        { "BoxTime",         HslToColor(31f,  1.00f, 0.35f) },   // hsla(31, 100%, 35%, 1)
-        { "SpecialPackageB", HslToColor(272f, 0.95f, 0.34f) },   // hsla(272, 95%, 34%, 1)
-        { "Box0",            HslToColor(294f, 0.97f, 0.23f) },   // hsla(294, 97%, 23%, 1)
-        { "Box1",            HslToColor(270f, 0.99f, 0.27f) },   // hsla(270, 99%, 27%, 1)
-        { "Box2",            HslToColor(16f,  1.00f, 0.32f) },   // hsla(16, 100%, 32%, 1)
-        { "Box3",            HslToColor(225f, 0.95f, 0.30f) },   // hsla(225, 95%, 30%, 1)
-        { "Box4",            HslToColor(9f,   1.00f, 0.35f) },   // hsla(9, 100%, 35%, 1)
-        { "RemoveADS",       HslToColor(189f, 1.00f, 0.11f) },   // hsla(189, 100%, 11%, 1)
-        { "RemoveAdsWeekly", HslToColor(189f, 1.00f, 0.11f) },   // hsla(189, 100%, 11%, 1)
+        { "NewcomerBox",     HslToColor(31f,  1.00f, 0.35f) },
+        { "SpecialPackageA", HslToColor(225f, 1.00f, 0.35f) },
+        { "BoxTime",         HslToColor(31f,  1.00f, 0.35f) },
+        { "SpecialPackageB", HslToColor(272f, 0.95f, 0.34f) },
+        { "Box0",            HslToColor(294f, 0.97f, 0.23f) },
+        { "Box1",            HslToColor(270f, 0.99f, 0.27f) },
+        { "Box2",            HslToColor(16f,  1.00f, 0.32f) },
+        { "Box3",            HslToColor(225f, 0.95f, 0.30f) },
+        { "Box4",            HslToColor(9f,   1.00f, 0.35f) },
+        { "RemoveADS",       HslToColor(189f, 1.00f, 0.11f) },
+        { "RemoveAdsWeekly", HslToColor(189f, 1.00f, 0.11f) },
     };
 
     /// <summary>HSL(A) → Unity Color。</summary>
@@ -90,20 +87,17 @@ public class ShopGiftItem : ShopItemBase
         return new Color(r + m, g + m, b + m, a);
     }
 
-    /// <summary>尝试获取礼包描边色（无配置返回 false）。</summary>
     private static bool TryGetBonusOutlineColor(string produceNameId, out Color color)
     {
         if (!string.IsNullOrEmpty(produceNameId) && _bonusOutlineColors.TryGetValue(produceNameId, out color))
-        {
             return true;
-        }
         color = Color.white;
         return false;
     }
 
     /// <summary>
     /// 给 nameText / limitCountText / shopCountText 的 Outline 设置描边色。
-    ///  - nameText：从第 2 个 Outline 开始设置（保留第 1 个作为高光/上层描边，与道具弹窗礼包一致）；
+    ///  - nameText：从第 2 个 Outline 开始设置（保留第 1 个作为高光/上层描边）；
     ///  - limitCountText / shopCountText：全部 Outline 设置。
     /// </summary>
     private void ApplyOutlineColor(Color color)
@@ -112,27 +106,21 @@ public class ShopGiftItem : ShopItemBase
         {
             var outlines = nameText.GetComponents<Outline>();
             for (int i = 1; i < outlines.Length; i++)
-            {
                 outlines[i].effectColor = color;
-            }
         }
 
         if (limitCountText != null)
         {
             var outlines = limitCountText.GetComponents<Outline>();
             for (int i = 0; i < outlines.Length; i++)
-            {
                 outlines[i].effectColor = color;
-            }
         }
 
         if (shopCountText != null)
         {
             var outlines = shopCountText.GetComponents<Outline>();
             for (int i = 0; i < outlines.Length; i++)
-            {
                 outlines[i].effectColor = color;
-            }
         }
     }
 
@@ -151,9 +139,7 @@ public class ShopGiftItem : ShopItemBase
 
         var icon = LoadShopIcon(shopDataItem.showIcon + "_Icon");
         if (icon != null)
-        {
             shopIcon.sprite = icon;
-        }
     }
 
     // ======================= 阻止基类把 type=1 按"单物品道具"展示 =======================
@@ -166,18 +152,37 @@ public class ShopGiftItem : ShopItemBase
         // 空实现
     }
 
+    // ======================= ★ 购买发放跳过：已拥有永久去广告 → 跳过 RemoveAds / RemoveDayAds =======================
+
+    /// <summary>
+    /// 已拥有永久去广告时，礼包中的 RemoveAds / RemoveDayAds 项在购买发放时跳过。
+    /// 与展示侧（InitGiftItems 跳过）保持一致：不展示也不发放。
+    /// </summary>
+    protected override bool IsContentSkippedOnPurchase(int giftType)
+    {
+        if (!IsRemoveAdsRelatedType(giftType)) return false;
+
+        bool ownsPermanentRemoveAds =
+            ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+
+        if (ownsPermanentRemoveAds)
+        {
+            LogShopItem($"已拥有永久去广告，购买时跳过 content type={giftType} 的发放");
+        }
+
+        return ownsPermanentRemoveAds;
+    }
+
     // ======================= 显示：礼包名 + 底图 + （type=2）金币数量 =======================
 
     protected override void HandleProductContentDisplay(ShopDataItem data)
     {
-        // 礼包名
         if (nameText != null)
         {
             nameText.gameObject.SetActive(true);
             nameText.text = MultilingualManager.Instance?.GetString(data.name) ?? data.name;
         }
 
-        // 礼包底图
         if (dibg != null)
         {
             Sprite sprite = LoadShopIcon(data.showIcon);
@@ -187,7 +192,7 @@ public class ShopGiftItem : ShopItemBase
 
         // shopCountText 金币数量显示规则：
         //  - type=1 广告礼包：金币由 GiftItem 展示 → shopCountText 隐藏；
-        //  - type=2 普通礼包：金币由 shopCountText 展示（有金币则显示 N，无金币则隐藏）。
+        //  - type=2 普通礼包：金币由 shopCountText 展示。
         if (shopCountText != null)
         {
             if (data.type == 1)
@@ -210,7 +215,6 @@ public class ShopGiftItem : ShopItemBase
         }
     }
 
-    /// <summary>从 productContent 中读取金币数量（type == Coins）</summary>
     private int GetCoinsFromProductContent(ShopDataItem data)
     {
         if (data == null || data.productContent == null) return 0;
@@ -232,11 +236,8 @@ public class ShopGiftItem : ShopItemBase
     protected override void HandleMultiProductContent(ShopDataItem data)
     {
         if (data == null) return;
-
-        // type=1 广告礼包即使只有 1 个内容项（如只含移除广告），也需要走礼包逻辑
         if (data.productContent == null || data.productContent.Count == 0) return;
 
-        // 优先用 Inspector 配置的 giftItemPrefab；没有则从 Bundle 加载
         if (giftItemPrefab == null && AdvancedBundleLoader.SharedInstance != null)
         {
             var prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "GiftItem");
@@ -295,13 +296,9 @@ public class ShopGiftItem : ShopItemBase
             if (giftType == (int)LimitRewordType.RemoveAds || giftType == (int)LimitRewordType.RemoveDayAds)
             {
                 if (shopDataItem.type == 1 || shopDataItem.type == 2)
-                {
                     giftItem.SetShopData(giftdata, shopDataItem.id, _color, shopDataItem.des, shopDataItem.pointDes);
-                }
                 else
-                {
                     giftItem.SetShopData(giftdata, shopDataItem.id, _color);
-                }
             }
             else
             {
@@ -330,12 +327,10 @@ public class ShopGiftItem : ShopItemBase
 
         if (shopPriceText == null) return;
 
-        // 是否有折扣：originalPrice 存在且 > price
         bool hasDiscount = data != null
                            && data.originalPrice > 0
                            && data.originalPrice > data.price;
 
-        // ---------- 原价文本 ----------
         if (oldPriceText != null)
         {
             if (hasDiscount)
@@ -350,7 +345,6 @@ public class ShopGiftItem : ShopItemBase
             }
         }
 
-        // ---------- 价格文本 y 坐标 ----------
         var rt = shopPriceText.rectTransform;
         Vector2 pos = rt.anchoredPosition;
         pos.y = hasDiscount ? -20f : 0f;
@@ -394,16 +388,10 @@ public class ShopGiftItem : ShopItemBase
 
     // ======================= 礼包标签 =======================
 
-    /// <summary>
-    /// 刷新礼包标签（tagText）：
-    ///  - labelZh 非空 → 显示 tagText（父对象或自身），文本设为 labelZh；
-    ///  - labelZh 为空 → 隐藏 tagText 的父对象（无父对象则隐藏自身）。
-    /// </summary>
     private void RefreshTag()
     {
         if (tagText == null) return;
 
-        // 用于显隐的容器：优先父节点，没有就用自身
         GameObject root = tagText.transform.parent != null
             ? tagText.transform.parent.gameObject
             : tagText.gameObject;
@@ -423,28 +411,20 @@ public class ShopGiftItem : ShopItemBase
 
     public override void SetShopData(ShopDataItem data)
     {
-        // ---------- 1. 先计算描边色 ----------
         Color outlineColor = Color.white;
         bool hasConfig = data != null && TryGetBonusOutlineColor(data.produceNameId, out outlineColor);
 
-        // 若配置命中 → _color 与描边色一致（GiftItem 内容继承同色描边）；
-        // 否则 → _color 保持白色（GiftItem 默认），不改 Prefab 上原有的 Outline 颜色
         _color = hasConfig ? outlineColor : Color.white;
 
-        // ---------- 2. 基类 SetShopData（内部 InitGiftItems 使用 _color） ----------
         base.SetShopData(data);
 
-        // ---------- 3. 应用 nameText / limitCountText / shopCountText 的 Outline 描边色 ----------
         if (hasConfig)
         {
             ApplyOutlineColor(outlineColor);
             LogShopItem($"描边颜色已应用: {data.produceNameId} → RGB({outlineColor.r:F3},{outlineColor.g:F3},{outlineColor.b:F3},{outlineColor.a:F2})");
         }
 
-        // ---------- 4. 刷新限购次数 ----------
         RefreshLimitCount();
-
-        // ---------- 5. 刷新礼包标签 ----------
         RefreshTag();
     }
 }

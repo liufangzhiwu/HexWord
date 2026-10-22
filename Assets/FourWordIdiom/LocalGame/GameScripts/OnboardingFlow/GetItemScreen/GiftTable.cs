@@ -40,6 +40,62 @@ public class GiftTable : MonoBehaviour
         Debug.Log($"[Shop][GiftTable] [{tag}] {message}");
     }
 
+    // ======================= 描边颜色配置（与 ShopGiftItem 保持一致） =======================
+
+    /// <summary>
+    /// 各礼包 produceNameId 对应的描边颜色（优先于 limitRewordType 的基础色）。
+    /// 色值按 hsla(h, s%, l%, a) 给定，代码中用 HslToColor 转换。
+    /// </summary>
+    private static readonly Dictionary<string, Color> _bonusOutlineColors = new Dictionary<string, Color>
+    {
+        { "NewcomerBox",     HslToColor(31f,  1.00f, 0.35f) },   // hsla(31, 100%, 35%, 1)
+        { "SpecialPackageA", HslToColor(225f, 1.00f, 0.35f) },   // hsla(225, 100%, 35%, 1)
+        { "BoxTime",         HslToColor(31f,  1.00f, 0.35f) },   // hsla(31, 100%, 35%, 1)
+        { "SpecialPackageB", HslToColor(272f, 0.95f, 0.34f) },   // hsla(272, 95%, 34%, 1)
+        { "Box0",            HslToColor(294f, 0.97f, 0.23f) },   // hsla(294, 97%, 23%, 1)
+        { "Box1",            HslToColor(270f, 0.99f, 0.27f) },   // hsla(270, 99%, 27%, 1)
+        { "Box2",            HslToColor(16f,  1.00f, 0.32f) },   // hsla(16, 100%, 32%, 1)
+        { "Box3",            HslToColor(225f, 0.95f, 0.30f) },   // hsla(225, 95%, 30%, 1)
+        { "Box4",            HslToColor(9f,   1.00f, 0.35f) },   // hsla(9, 100%, 35%, 1)
+        { "RemoveADS",       HslToColor(189f, 1.00f, 0.11f) },   // hsla(189, 100%, 11%, 1)
+        { "RemoveAdsWeekly", HslToColor(189f, 1.00f, 0.11f) },   // hsla(189, 100%, 11%, 1)
+    };
+
+    /// <summary>HSL(A) → Unity Color。</summary>
+    private static Color HslToColor(float h, float s, float l, float a = 1f)
+    {
+        h %= 360f;
+        if (h < 0f) h += 360f;
+        s = Mathf.Clamp01(s);
+        l = Mathf.Clamp01(l);
+
+        float c = (1f - Mathf.Abs(2f * l - 1f)) * s;
+        float hPrime = h / 60f;
+        float x = c * (1f - Mathf.Abs(hPrime % 2f - 1f));
+        float m = l - c / 2f;
+
+        float r, g, b;
+        if (hPrime < 1f) { r = c; g = x; b = 0f; }
+        else if (hPrime < 2f) { r = x; g = c; b = 0f; }
+        else if (hPrime < 3f) { r = 0f; g = c; b = x; }
+        else if (hPrime < 4f) { r = 0f; g = x; b = c; }
+        else if (hPrime < 5f) { r = x; g = 0f; b = c; }
+        else { r = c; g = 0f; b = x; }
+
+        return new Color(r + m, g + m, b + m, a);
+    }
+
+    /// <summary>尝试按 produceNameId 获取描边色（无配置返回 false，由调用方保持已有颜色）。</summary>
+    private static bool TryGetBonusOutlineColor(string produceNameId, out Color color)
+    {
+        if (!string.IsNullOrEmpty(produceNameId) && _bonusOutlineColors.TryGetValue(produceNameId, out color))
+            return true;
+        color = Color.white;
+        return false;
+    }
+
+    // ======================= 特殊礼包配置 =======================
+
     /// <summary>
     /// 特殊礼包 A：productContent 最后一项应显示在加赠位（隐藏加赠标签）。
     /// 目前配置：GoldBag1 / GoldBag2
@@ -58,6 +114,15 @@ public class GiftTable : MonoBehaviour
         return produceNameId == "LuckyBag1" || produceNameId == "LuckyBag2";
     }
 
+    /// <summary>是否为去广告相关的内容类型（永久 / 限时）</summary>
+    private static bool IsRemoveAdsRelatedType(int type)
+    {
+        return type == (int)LimitRewordType.RemoveAds
+               || type == (int)LimitRewordType.RemoveDayAds;
+    }
+
+    // ======================= 生命周期 =======================
+
     private void Start()
     {
         InitEvent();
@@ -72,7 +137,7 @@ public class GiftTable : MonoBehaviour
         }
 
         transform.GetComponent<Image>().sprite = LoadShopIcon(shopItem.showIcon);
-        
+
         limitRewordType = limitReType;
         shopDataItem = shopItem;
 
@@ -90,11 +155,12 @@ public class GiftTable : MonoBehaviour
             }
         }
 
+        // ---------- 描边颜色（优先级：produceNameId 配置 > limitRewordType 基础 > LuckyBag 强制） ----------
         List<Outline> Outlines = giftNameText.GetComponents<Outline>().ToList();
         List<Outline> Outlinelimits = limintCountText.GetComponents<Outline>().ToList();
         color = new Color(0f, 0.1529412f, 0.4745098f, 1f);
-        
-        // ---------- 礼包名 ----------
+
+        // 1. 基础色：按 limitRewordType
         switch (limitRewordType)
         {
             case LimitRewordType.ReStartTool:
@@ -114,23 +180,32 @@ public class GiftTable : MonoBehaviour
                 color = new Color(0.4941177f, 0f, 0.03529412f, 1f);
                 break;
         }
-        
+
+        // 2. LuckyBag1/2 强制色
         if (shopItem.produceNameId == "LuckyBag1" || shopItem.produceNameId == "LuckyBag2")
         {
             color = new Color(0f, 0.1529412f, 0.4745098f, 1f);
         }
 
+        // 3. ★ 按 produceNameId 配置覆盖（优先级最高，与 ShopGiftItem 一致）
+        if (TryGetBonusOutlineColor(shopItem.produceNameId, out Color outlineColor))
+        {
+            color = outlineColor;
+            LogShop($"描边颜色命中 produceNameId 配置: {shopItem.produceNameId} → RGB({outlineColor.r:F3},{outlineColor.g:F3},{outlineColor.b:F3},{outlineColor.a:F2})");
+        }
+
+        // 4. 应用到 Outline
         for (int i = 1; i < Outlines.Count; i++)
         {
             Outlines[i].effectColor = color;
         }
-        
+
         for (int i = 0; i < Outlinelimits.Count; i++)
         {
             Outlinelimits[i].effectColor = color;
         }
-            
-        // ---------- 礼包内容（跳过加赠项 / 跳过 GoldBag 最后一项 / 跳过 LuckyBag 金币项） ----------
+
+        // ---------- 礼包内容（跳过加赠项 / 跳过 GoldBag 最后一项 / 跳过 LuckyBag 金币项 / 跳过已拥有去广告） ----------
         RefreshGiftContent();
 
         // ---------- 加赠物品（独立样式） ----------
@@ -149,18 +224,20 @@ public class GiftTable : MonoBehaviour
                 $"giftType={shopItem.giftType}, discount={shopItem.discount}, " +
                 $"productContent.Count={(shopItem.productContent != null ? shopItem.productContent.Count : 0)}, " +
                 $"lastItemAsBonus={IsLastItemAsBonusPosition(shopItem.produceNameId)}, " +
-                $"goldToBonus={IsGoldToBonusPosition(shopItem.produceNameId)}");
+                $"goldToBonus={IsGoldToBonusPosition(shopItem.produceNameId)}, " +
+                $"ownsPermanentRemoveAds={IsRemoveAdsOwned()}");
     }
 
-    // ======================= 礼包内容（排除加赠项 / GoldBag 最后一项 / LuckyBag 金币项） =======================
+    // ======================= 礼包内容（排除加赠项 / GoldBag 最后一项 / LuckyBag 金币项 / 已拥有去广告） =======================
 
     /// <summary>
     /// 刷新礼包内容（_giftItems）。
     /// - 普通礼包：productContent 中 IsBonusGift == true 的项跳过（交给 _AddgiftItem 单独显示）；
     /// - GoldBag1 / GoldBag2：productContent 最后一项跳过（交给 _AddgiftItem，隐藏标签）；
     /// - LuckyBag1 / LuckyBag2：productContent 中金币项跳过（交给 _AddgiftItem，隐藏标签）；
+    /// - ★ 已购买永久去广告：跳过 RemoveAds / RemoveDayAds 项（不展示）；
     /// - 其余项按顺序填入 _giftItems。
-    /// ★ 发放时仍按完整 productContent 全量发放（发放逻辑不受展示影响）。
+    /// ★ 发放时由 ShopManager.HandleGiftTablePurchaseRewards 处理（发放侧也需做同样的跳过）。
     /// </summary>
     private void RefreshGiftContent()
     {
@@ -173,6 +250,7 @@ public class GiftTable : MonoBehaviour
 
         bool lastItemAsBonus = IsLastItemAsBonusPosition(shopDataItem.produceNameId);
         bool goldToBonus = IsGoldToBonusPosition(shopDataItem.produceNameId);
+        bool ownsPermanentRemoveAds = IsRemoveAdsOwned();
 
         int normalItemCount = shopDataItem.productContent.Count;
         if (lastItemAsBonus && normalItemCount > 0)
@@ -192,6 +270,13 @@ public class GiftTable : MonoBehaviour
             }
 
             int giftType = int.Parse(giftdata[0]);
+
+            // ★ 已购买永久去广告：跳过礼包中的去广告物品（不展示）
+            if (ownsPermanentRemoveAds && IsRemoveAdsRelatedType(giftType))
+            {
+                LogShop($"RefreshGiftContent: 内容[{i}] type={giftType} 已拥有永久去广告，跳过展示");
+                continue;
+            }
 
             // ★ LuckyBag1 / LuckyBag2：金币项跳过（交给 _AddgiftItem，隐藏加赠标签）
             if (goldToBonus && giftType == (int)LimitRewordType.Coins)
@@ -233,7 +318,7 @@ public class GiftTable : MonoBehaviour
     ///   1. LuckyBag1 / LuckyBag2：金币项显示在加赠位，隐藏加赠标签（SetBonus(false)）；
     ///   2. GoldBag1 / GoldBag2：productContent 最后一项显示在加赠位，隐藏加赠标签（SetBonus(false)）；
     ///   3. 其他礼包：IsBonusGift == true 的项显示在加赠位，并显示加赠标签（SetBonus(true)）；
-    ///   4. 都没有 → 隐藏 _AddgiftItem。
+    ///   4. 都没有 / 加赠项为去广告且已拥有 → 隐藏 _AddgiftItem。
     /// </summary>
     private void RefreshBonusItem()
     {
@@ -252,7 +337,7 @@ public class GiftTable : MonoBehaviour
 
             _AddgiftItem.gameObject.SetActive(true);
             _AddgiftItem.SetShopData(goldItem, shopDataItem.id, color);
-            _AddgiftItem.SetBonus(false); // ★ 隐藏加赠标签
+            _AddgiftItem.SetBonus(false); // 隐藏加赠标签
 
             LogShop($"{shopDataItem.produceNameId}: 金币项显示在加赠位（隐藏加赠标签）: type={goldItem[0]}, count={goldItem[1]}");
             return;
@@ -271,7 +356,7 @@ public class GiftTable : MonoBehaviour
 
             _AddgiftItem.gameObject.SetActive(true);
             _AddgiftItem.SetShopData(lastItem, shopDataItem.id, color);
-            _AddgiftItem.SetBonus(false); // ★ 隐藏加赠标签
+            _AddgiftItem.SetBonus(false); // 隐藏加赠标签
 
             LogShop($"{shopDataItem.produceNameId}: 最后一项显示在加赠位（隐藏加赠标签）: type={lastItem[0]}, count={lastItem[1]}");
             return;
@@ -286,6 +371,16 @@ public class GiftTable : MonoBehaviour
             return;
         }
 
+        // ★ 加赠项若为去广告且已拥有永久去广告 → 不展示加赠位
+        if (int.TryParse(bonusData[0], out int bonusType)
+            && IsRemoveAdsOwned()
+            && IsRemoveAdsRelatedType(bonusType))
+        {
+            _AddgiftItem.gameObject.SetActive(false);
+            LogShop($"加赠项为去广告(type={bonusType})且已拥有永久去广告，隐藏 _AddgiftItem");
+            return;
+        }
+
         _AddgiftItem.gameObject.SetActive(true);
         _AddgiftItem.SetShopData(bonusData, shopDataItem.id, color);
         _AddgiftItem.SetBonus(true);
@@ -293,9 +388,7 @@ public class GiftTable : MonoBehaviour
         LogShop($"加赠物品已显示: type={bonusData[0]}, count={bonusData[1]}");
     }
 
-    /// <summary>
-    /// 取 productContent 的最后一项。
-    /// </summary>
+    /// <summary>取 productContent 的最后一项。</summary>
     private List<string> GetLastProductContent()
     {
         if (shopDataItem == null || shopDataItem.productContent == null) return null;
@@ -303,10 +396,7 @@ public class GiftTable : MonoBehaviour
         return shopDataItem.productContent[shopDataItem.productContent.Count - 1];
     }
 
-    /// <summary>
-    /// 从 productContent 里找出金币项（type == Coins 的第一项）。
-    /// 未找到返回 null。
-    /// </summary>
+    /// <summary>从 productContent 里找出金币项（type == Coins 的第一项）。未找到返回 null。</summary>
     private List<string> FindGoldItemInProductContent()
     {
         if (shopDataItem == null || shopDataItem.productContent == null) return null;
@@ -343,13 +433,19 @@ public class GiftTable : MonoBehaviour
         }
         return null;
     }
-    
+
     private Sprite LoadShopIcon(string showIcon)
     {
         Sprite sprite = null;
         sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
 
         return sprite;
+    }
+
+    /// <summary>是否已拥有永久去广告</summary>
+    private bool IsRemoveAdsOwned()
+    {
+        return ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
     }
 
     // ======================= 限购次数 =======================
@@ -524,6 +620,8 @@ public class GiftTable : MonoBehaviour
 
             if (ShopManager.shopManager != null)
             {
+                // ★ 发放侧跳过（已拥有永久去广告时跳过 RemoveAds / RemoveDayAds 的发放）
+                //   需在 ShopManager.HandleGiftTablePurchaseRewards 内部实现，见文末说明。
                 ShopManager.shopManager.HandleGiftTablePurchaseRewards(shopDataItem, item);
             }
             else
