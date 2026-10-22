@@ -203,6 +203,7 @@ SpriteAtlas:
     - ea397c1b470896945adedafe6b7206e5: -8800752488332475439
     - 447e802bf8defae4e85402c0d63a248e: 21300000
     - 1855474b79444eb40aa2b96b15dbeb56: 21300000
+    - e9439e4b5bd7716489b478822eb1a4d6: 21300000
     - 88231b7bf86400f4dac0997264b8a29e: 21300000
     - 62cdc89bc3347ae43a177892fac92c8e: 21300000
     - b5e4d2ab0a407a34ebfc256750f910fb: 21300000
@@ -391,6 +392,7 @@ SpriteAtlas:
   - {fileID: -8800752488332475439, guid: ea397c1b470896945adedafe6b7206e5, type: 3}
   - {fileID: 21300000, guid: 447e802bf8defae4e85402c0d63a248e, type: 3}
   - {fileID: 21300000, guid: 1855474b79444eb40aa2b96b15dbeb56, type: 3}
+  - {fileID: 21300000, guid: e9439e4b5bd7716489b478822eb1a4d6, type: 3}
   - {fileID: 21300000, guid: 88231b7bf86400f4dac0997264b8a29e, type: 3}
   - {fileID: 21300000, guid: 62cdc89bc3347ae43a177892fac92c8e, type: 3}
   - {fileID: 21300000, guid: b5e4d2ab0a407a34ebfc256750f910fb, type: 3}
@@ -578,6 +580,7 @@ SpriteAtlas:
   - worddouble_0
   - "\u91D1\u5E01 (1)"
   - "\u8FDB\u5EA6\u5E95"
+  - 20261024-114912
   - "\u7EC4 5104"
   - UI_Icon_tips
   - wifi

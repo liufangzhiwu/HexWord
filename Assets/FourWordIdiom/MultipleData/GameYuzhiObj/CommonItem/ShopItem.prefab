@@ -1173,21 +1173,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   discountbg: {fileID: 8142812964461268960}
-  dibg: {fileID: 0}
+  dibg: {fileID: 9184549634217233553}
   timebg: {fileID: 0}
-  circle: {fileID: 2091413758138296795}
   shopIcon: {fileID: 5441310110228215792}
-  btntagicon: {fileID: 0}
+  btnAdsicon: {fileID: 7153515933517893299}
   nameText: {fileID: 5184956613348870837}
   desText: {fileID: 8792795795179897049}
   shopCountText: {fileID: 4918798243018221555}
   shopPriceText: {fileID: 3806106396541592541}
-  giftsParent: {fileID: 0}
-  giftItemPrefab: {fileID: 0}
   tipBtnPrefab: {fileID: 0}
-  adsShiny: {fileID: 0}
   pressedScale: 0.9
   scaleSpeed: 10
+  adsShiny: {fileID: 0}
   breathSpeed: 3
   breathAmplitude: 0.03
   shakeSpeed: 15
