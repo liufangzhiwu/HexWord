@@ -19,8 +19,10 @@ public class GetItemScreen : UIWindow
     [SerializeField] private Button ClaimGoldBtn;
     [SerializeField] private Button ClaimAdsBtn;
 
-    /// <summary>礼包 Prefab（在 Inspector 里挂一个 GiftTable 的 Prefab，运行时会被复制到 scrollRect.content 下）</summary>
+    /// <summary>礼包 Prefab（普通礼包用；运行时会被复制到 scrollRect.content 下）</summary>
     [SerializeField] private GiftTable giftTable;
+    /// <summary>左侧礼包 Prefab（LuckyBag1 / LuckyBag2 用；样式与普通礼包不同）</summary>
+    [SerializeField] private GiftTable gftLeftTable;
 
     [SerializeField] private ScrollRect scrollRect;
     [SerializeField] private Transform pointTransform;
@@ -262,13 +264,37 @@ public class GetItemScreen : UIWindow
         }
     }
 
+    /// <summary>
+    /// 特殊礼包：LuckyBag1 / LuckyBag2 使用 gftLeftTable 进行实例化。
+    /// </summary>
+    private static bool IsLeftTablePack(string produceNameId)
+    {
+        return produceNameId == "LuckyBag1" || produceNameId == "LuckyBag2";
+    }
+
+    /// <summary>
+    /// 根据礼包 ID 选择实例化用的 Prefab：
+    ///  - LuckyBag1 / LuckyBag2 → gftLeftTable；
+    ///  - 其他 → giftTable；
+    ///  - gftLeftTable 为空时回退到 giftTable。
+    /// </summary>
+    private GiftTable GetPrefabForPack(ShopDataItem item)
+    {
+        if (item != null && IsLeftTablePack(item.produceNameId))
+        {
+            if (gftLeftTable != null) return gftLeftTable;
+            LogGetItem($"礼包 {item.produceNameId} 应使用 gftLeftTable，但未配置，回退 giftTable");
+        }
+        return giftTable;
+    }
+
     private void RefreshGiftTables()
     {
         ClearGiftTables();
 
-        if (giftTable == null)
+        if (giftTable == null && gftLeftTable == null)
         {
-            LogGetItem("GiftTable Prefab 未配置，无法生成礼包表");
+            LogGetItem("GiftTable / gftLeftTable 均未配置，无法生成礼包表");
             if (scrollRect != null) scrollRect.gameObject.SetActive(false);
             UpdatePagePointState();
             return;
@@ -302,13 +328,23 @@ public class GetItemScreen : UIWindow
         for (int i = actualCount - 1; i >= 0; i--)
         {
             ShopDataItem item = packs[i];
-            GiftTable gt = Instantiate(giftTable, scrollRect.content);
+
+            // ★ 按礼包 ID 选择 Prefab（LuckyBag1/LuckyBag2 → gftLeftTable，其余 → giftTable）
+            GiftTable prefab = GetPrefabForPack(item);
+            if (prefab == null)
+            {
+                LogGetItem($"礼包 {item.produceNameId} 无可用 Prefab，跳过");
+                continue;
+            }
+
+            GiftTable gt = Instantiate(prefab, scrollRect.content);
             gt.gameObject.SetActive(true);
             gt.InitUI(limitRewordType, item);
             _giftTableInstances.Add(gt);
 
             int visualIndex = _giftTableInstances.Count - 1;
-            LogGetItem($"生成礼包 [视觉位置={visualIndex}]: {item.produceNameId}(id={item.id}, price={item.price}, giftType={item.giftType}) ← packs[{i}]");
+            string prefabName = prefab == gftLeftTable ? "gftLeftTable" : "giftTable";
+            LogGetItem($"生成礼包 [视觉位置={visualIndex}, Prefab={prefabName}]: {item.produceNameId}(id={item.id}, price={item.price}, giftType={item.giftType}) ← packs[{i}]");
         }
 
         UpdatePageLayout(actualCount);

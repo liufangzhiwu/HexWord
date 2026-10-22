@@ -100,6 +100,7 @@ public class PauseGameScreen : UIWindow
         ChessStageController.Instance.CurrStageData.IsPausedOrFailed = true;
         GameDataManager.Instance.CommitGameData();
     }
+    
     private void ToggleMusic(bool isOn)
     {
         GameDataManager.Instance.UserData.IsMusicOn = isOn; // 保存音乐开关状态

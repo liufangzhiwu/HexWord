@@ -21,7 +21,7 @@ public class GiftTable : MonoBehaviour
     [SerializeField] private Text giftNameText;
     [SerializeField] private Text discount; // 折扣
     [SerializeField] private List<GiftItem> _giftItems;
-    [SerializeField] private GiftItem _AddgiftItem; // 加赠物品（独立样式，数据源：productContent 里 IsBonusGift==true 的项）
+    [SerializeField] private GiftItem _AddgiftItem; // 加赠物品（独立样式）
     [SerializeField] private Text limintCountText; // 限购次数
     [SerializeField] private Text tagText; // 促销标签
 
@@ -38,6 +38,24 @@ public class GiftTable : MonoBehaviour
     {
         string tag = shopDataItem != null ? $"{shopDataItem.produceNameId}(id={shopDataItem.id})" : "null";
         Debug.Log($"[Shop][GiftTable] [{tag}] {message}");
+    }
+
+    /// <summary>
+    /// 特殊礼包 A：productContent 最后一项应显示在加赠位（隐藏加赠标签）。
+    /// 目前配置：GoldBag1 / GoldBag2
+    /// </summary>
+    private static bool IsLastItemAsBonusPosition(string produceNameId)
+    {
+        return produceNameId == "GoldBag1" || produceNameId == "GoldBag2";
+    }
+
+    /// <summary>
+    /// 特殊礼包 B：productContent 中的金币项应显示在加赠位（隐藏加赠标签）。
+    /// 目前配置：LuckyBag1 / LuckyBag2
+    /// </summary>
+    private static bool IsGoldToBonusPosition(string produceNameId)
+    {
+        return produceNameId == "LuckyBag1" || produceNameId == "LuckyBag2";
     }
 
     private void Start()
@@ -76,26 +94,30 @@ public class GiftTable : MonoBehaviour
         List<Outline> Outlinelimits = limintCountText.GetComponents<Outline>().ToList();
         color = new Color(0f, 0.1529412f, 0.4745098f, 1f);
         
-        
         // ---------- 礼包名 ----------
         switch (limitRewordType)
         {
             case LimitRewordType.ReStartTool:
                 giftNameText.text = shopItem.name;
-                limintCountText.transform.parent.GetComponent<Image>().sprite= LoadShopIcon("faillimitbg");
-                color= new Color(0f, 0.1529412f, 0.4745098f, 1f);
+                limintCountText.transform.parent.GetComponent<Image>().sprite = LoadShopIcon("faillimitbg");
+                color = new Color(0f, 0.1529412f, 0.4745098f, 1f);
                 break;
             case LimitRewordType.Butterfly:
                 break;
             case LimitRewordType.AutoComplete:
                 giftNameText.text = shopItem.name;
-                limintCountText.transform.parent.GetComponent<Image>().sprite= LoadShopIcon("autolimitbg");
+                limintCountText.transform.parent.GetComponent<Image>().sprite = LoadShopIcon("autolimitbg");
                 break;
             case LimitRewordType.Tipstool:
                 giftNameText.text = shopItem.name;
-                limintCountText.transform.parent.GetComponent<Image>().sprite= LoadShopIcon("tiplimitbg");
-                color= new Color(0.4941177f, 0f, 0.03529412f, 1f);
+                limintCountText.transform.parent.GetComponent<Image>().sprite = LoadShopIcon("tiplimitbg");
+                color = new Color(0.4941177f, 0f, 0.03529412f, 1f);
                 break;
+        }
+        
+        if (shopItem.produceNameId == "LuckyBag1" || shopItem.produceNameId == "LuckyBag2")
+        {
+            color = new Color(0f, 0.1529412f, 0.4745098f, 1f);
         }
 
         for (int i = 1; i < Outlines.Count; i++)
@@ -108,10 +130,10 @@ public class GiftTable : MonoBehaviour
             Outlinelimits[i].effectColor = color;
         }
             
-        // ---------- 礼包内容（跳过加赠项，加赠走 _AddgiftItem 单独显示） ----------
+        // ---------- 礼包内容（跳过加赠项 / 跳过 GoldBag 最后一项 / 跳过 LuckyBag 金币项） ----------
         RefreshGiftContent();
 
-        // ---------- 加赠物品（独立样式，从 productContent 中识别） ----------
+        // ---------- 加赠物品（独立样式） ----------
         RefreshBonusItem();
 
         // ---------- 限购次数 ----------
@@ -125,11 +147,21 @@ public class GiftTable : MonoBehaviour
 
         LogShop($"InitUI 完成: limitRewordType={limitRewordType}, price={shopItem.price}, " +
                 $"giftType={shopItem.giftType}, discount={shopItem.discount}, " +
-                $"productContent.Count={(shopItem.productContent != null ? shopItem.productContent.Count : 0)}");
+                $"productContent.Count={(shopItem.productContent != null ? shopItem.productContent.Count : 0)}, " +
+                $"lastItemAsBonus={IsLastItemAsBonusPosition(shopItem.produceNameId)}, " +
+                $"goldToBonus={IsGoldToBonusPosition(shopItem.produceNameId)}");
     }
 
-    // ======================= 礼包内容（排除加赠项） =======================
+    // ======================= 礼包内容（排除加赠项 / GoldBag 最后一项 / LuckyBag 金币项） =======================
 
+    /// <summary>
+    /// 刷新礼包内容（_giftItems）。
+    /// - 普通礼包：productContent 中 IsBonusGift == true 的项跳过（交给 _AddgiftItem 单独显示）；
+    /// - GoldBag1 / GoldBag2：productContent 最后一项跳过（交给 _AddgiftItem，隐藏标签）；
+    /// - LuckyBag1 / LuckyBag2：productContent 中金币项跳过（交给 _AddgiftItem，隐藏标签）；
+    /// - 其余项按顺序填入 _giftItems。
+    /// ★ 发放时仍按完整 productContent 全量发放（发放逻辑不受展示影响）。
+    /// </summary>
     private void RefreshGiftContent()
     {
         for (int i = 0; i < _giftItems.Count; i++)
@@ -139,8 +171,18 @@ public class GiftTable : MonoBehaviour
 
         if (shopDataItem.productContent == null) return;
 
+        bool lastItemAsBonus = IsLastItemAsBonusPosition(shopDataItem.produceNameId);
+        bool goldToBonus = IsGoldToBonusPosition(shopDataItem.produceNameId);
+
+        int normalItemCount = shopDataItem.productContent.Count;
+        if (lastItemAsBonus && normalItemCount > 0)
+        {
+            // 最后一项留给 _AddgiftItem，_giftItems 只显示前面的
+            normalItemCount -= 1;
+        }
+
         int giftIndex = 0;
-        for (int i = 0; i < shopDataItem.productContent.Count; i++)
+        for (int i = 0; i < normalItemCount; i++)
         {
             List<string> giftdata = shopDataItem.productContent[i];
             if (giftdata == null || giftdata.Count < 2)
@@ -151,7 +193,17 @@ public class GiftTable : MonoBehaviour
 
             int giftType = int.Parse(giftdata[0]);
 
-            if (ShopManager.shopManager != null
+            // ★ LuckyBag1 / LuckyBag2：金币项跳过（交给 _AddgiftItem，隐藏加赠标签）
+            if (goldToBonus && giftType == (int)LimitRewordType.Coins)
+            {
+                LogShop($"RefreshGiftContent: 内容[{i}] type={giftType} 是 LuckyBag 金币项，跳过（交给 _AddgiftItem）");
+                continue;
+            }
+
+            // 普通礼包：IsBonusGift 识别出的加赠项跳过
+            if (!lastItemAsBonus
+                && !goldToBonus
+                && ShopManager.shopManager != null
                 && ShopManager.shopManager.IsBonusGift(shopDataItem.produceNameId, giftType))
             {
                 LogShop($"RefreshGiftContent: 内容[{i}] type={giftType} 是加赠物品，跳过（交给 _AddgiftItem）");
@@ -166,7 +218,7 @@ public class GiftTable : MonoBehaviour
 
             GiftItem giftItem = _giftItems[giftIndex];
             giftItem.gameObject.SetActive(true);
-            giftItem.SetShopData(giftdata, shopDataItem.id,color);
+            giftItem.SetShopData(giftdata, shopDataItem.id, color);
             giftIndex++;
 
             LogShop($"RefreshGiftContent: 礼包 {shopDataItem.produceNameId} 内容[{giftIndex - 1}] type={giftType}");
@@ -175,10 +227,57 @@ public class GiftTable : MonoBehaviour
 
     // ======================= 加赠物品（独立样式） =======================
 
+    /// <summary>
+    /// 刷新加赠物品（_AddgiftItem）。
+    /// 优先级：
+    ///   1. LuckyBag1 / LuckyBag2：金币项显示在加赠位，隐藏加赠标签（SetBonus(false)）；
+    ///   2. GoldBag1 / GoldBag2：productContent 最后一项显示在加赠位，隐藏加赠标签（SetBonus(false)）；
+    ///   3. 其他礼包：IsBonusGift == true 的项显示在加赠位，并显示加赠标签（SetBonus(true)）；
+    ///   4. 都没有 → 隐藏 _AddgiftItem。
+    /// </summary>
     private void RefreshBonusItem()
     {
         if (_AddgiftItem == null) return;
 
+        // ---------- 情况 A：LuckyBag1 / LuckyBag2 → 金币项显示在加赠位，隐藏加赠标签 ----------
+        if (IsGoldToBonusPosition(shopDataItem.produceNameId))
+        {
+            List<string> goldItem = FindGoldItemInProductContent();
+            if (goldItem == null || goldItem.Count < 2)
+            {
+                _AddgiftItem.gameObject.SetActive(false);
+                LogShop($"{shopDataItem.produceNameId}: 无金币项，隐藏 _AddgiftItem");
+                return;
+            }
+
+            _AddgiftItem.gameObject.SetActive(true);
+            _AddgiftItem.SetShopData(goldItem, shopDataItem.id, color);
+            _AddgiftItem.SetBonus(false); // ★ 隐藏加赠标签
+
+            LogShop($"{shopDataItem.produceNameId}: 金币项显示在加赠位（隐藏加赠标签）: type={goldItem[0]}, count={goldItem[1]}");
+            return;
+        }
+
+        // ---------- 情况 B：GoldBag1 / GoldBag2 → 最后一项显示在加赠位，隐藏加赠标签 ----------
+        if (IsLastItemAsBonusPosition(shopDataItem.produceNameId))
+        {
+            List<string> lastItem = GetLastProductContent();
+            if (lastItem == null || lastItem.Count < 2)
+            {
+                _AddgiftItem.gameObject.SetActive(false);
+                LogShop($"{shopDataItem.produceNameId}: 无最后一项，隐藏 _AddgiftItem");
+                return;
+            }
+
+            _AddgiftItem.gameObject.SetActive(true);
+            _AddgiftItem.SetShopData(lastItem, shopDataItem.id, color);
+            _AddgiftItem.SetBonus(false); // ★ 隐藏加赠标签
+
+            LogShop($"{shopDataItem.produceNameId}: 最后一项显示在加赠位（隐藏加赠标签）: type={lastItem[0]}, count={lastItem[1]}");
+            return;
+        }
+
+        // ---------- 情况 C：普通礼包 → IsBonusGift 识别出的加赠项 ----------
         List<string> bonusData = FindBonusItemInProductContent();
         if (bonusData == null || bonusData.Count < 2)
         {
@@ -188,10 +287,42 @@ public class GiftTable : MonoBehaviour
         }
 
         _AddgiftItem.gameObject.SetActive(true);
-        _AddgiftItem.SetShopData(bonusData, shopDataItem.id,color);
+        _AddgiftItem.SetShopData(bonusData, shopDataItem.id, color);
         _AddgiftItem.SetBonus(true);
 
         LogShop($"加赠物品已显示: type={bonusData[0]}, count={bonusData[1]}");
+    }
+
+    /// <summary>
+    /// 取 productContent 的最后一项。
+    /// </summary>
+    private List<string> GetLastProductContent()
+    {
+        if (shopDataItem == null || shopDataItem.productContent == null) return null;
+        if (shopDataItem.productContent.Count == 0) return null;
+        return shopDataItem.productContent[shopDataItem.productContent.Count - 1];
+    }
+
+    /// <summary>
+    /// 从 productContent 里找出金币项（type == Coins 的第一项）。
+    /// 未找到返回 null。
+    /// </summary>
+    private List<string> FindGoldItemInProductContent()
+    {
+        if (shopDataItem == null || shopDataItem.productContent == null) return null;
+
+        for (int i = 0; i < shopDataItem.productContent.Count; i++)
+        {
+            List<string> giftdata = shopDataItem.productContent[i];
+            if (giftdata == null || giftdata.Count < 2) continue;
+
+            int giftType;
+            if (!int.TryParse(giftdata[0], out giftType)) continue;
+
+            if (giftType == (int)LimitRewordType.Coins)
+                return giftdata;
+        }
+        return null;
     }
 
     private List<string> FindBonusItemInProductContent()
@@ -223,13 +354,6 @@ public class GiftTable : MonoBehaviour
 
     // ======================= 限购次数 =======================
 
-    /// <summary>
-    /// 刷新限购次数。
-    ///  - limited == 0（不限购）→ 隐藏；
-    ///  - limited > 0 → 显示 "仅限 X 次"，X 用中文数字（一~十），超过 10 用阿拉伯数字兜底；
-    ///  - 已买满 → "已售空"。
-    /// ★ 中文数字转换统一走 UIUtilities.GetChineseNumber。
-    /// </summary>
     private void RefreshLimitCount()
     {
         if (limintCountText == null) return;
