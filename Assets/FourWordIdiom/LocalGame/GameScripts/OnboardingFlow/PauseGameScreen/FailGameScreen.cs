@@ -14,7 +14,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private GameObject continuePanel;
 
     [Header("主失败界面按钮")]
-    [SerializeField] private Button addTimeBtn;
+    [SerializeField] private Button adsAddTimeBtn;
     [SerializeField] private Button exitBtn;
     [SerializeField] private Button goldAddTimeBtn;
     [SerializeField] private Text reviveAdsText;
@@ -34,7 +34,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private Text conTitleText;
     [SerializeField] private Text conTipText;
     [SerializeField] private Button realExitBtn;
-    [SerializeField] private Button returnGame;
+    [SerializeField] private Button adsAddTimeBtn2;
+    [SerializeField] private Button goldAddTimeBtn2;
     [SerializeField] private GameObject confirmPupaIcon;
 
     private CanvasGroup _canvasGroup;
@@ -51,16 +52,17 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
     private void Start()
     {
-        addTimeBtn.AddClickAction(OnReviveClicked);
+        adsAddTimeBtn.AddClickAction(OnReviveClicked);
         goldAddTimeBtn.AddClickAction(OnGoldReviveClicked);
+        goldAddTimeBtn2.AddClickAction(OnGoldReviveClicked);
         exitBtn.AddClickAction(() => SwitchPanel(false));
-        returnGame.AddClickAction(() => SwitchPanel(true));
+        adsAddTimeBtn2.AddClickAction(OnReviveClicked);
         realExitBtn.AddClickAction(OnRealExitClicked);
 
         conTitleText.text = MultilingualManager.Instance.GetString("AreYouSure");
         conTipText.text = MultilingualManager.Instance.GetString("YouWillLose");
         realExitBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ConfirmExit");
-        returnGame.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("LetMeThink");
+        //returnGame.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("LetMeThink");
 
         _canvasGroup = GetComponent<CanvasGroup>();
         if (_canvasGroup == null) _canvasGroup = gameObject.AddComponent<CanvasGroup>();
