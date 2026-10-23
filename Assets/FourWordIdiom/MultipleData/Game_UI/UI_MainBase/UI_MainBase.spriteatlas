@@ -66,6 +66,7 @@ SpriteAtlas:
     - 42dbe100886ef7c4e884bdddaa1301a3: 21300000
     - bbc9b0100d6c89f4f844a2818384b3e7: 21300000
     - 8b984420bc953054ea4fd534d81a3b24: 21300000
+    - a10ff820c4ea50747ad0d856c0362794: 21300000
     - 52d36920da29fb148a191fea89347300: 21300000
     - dc055c20d69ad014b89a8dfa52f741d4: 21300000
     - 21eebe30e7cd6a24e93354ff20d8e875: 21300000
@@ -96,6 +97,7 @@ SpriteAtlas:
     - 4f8592f168bb91243988c48d8e195506: 21300000
     - ed3e91023b3196e438cdc489257dac82: 21300000
     - 5ef604029d7f60049814db9021c25173: 21300000
+    - 74fa09223cc5bd845a2b23273d67ec7f: 21300000
     - 864ee352bdb47f441b5366d6f9147909: 21300000
     - b14bfd727946a994a9751562583caa6f: 21300000
     - b7206392e6b96194ead8c9865667e5cd: 21300000
@@ -255,6 +257,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 42dbe100886ef7c4e884bdddaa1301a3, type: 3}
   - {fileID: 21300000, guid: bbc9b0100d6c89f4f844a2818384b3e7, type: 3}
   - {fileID: 21300000, guid: 8b984420bc953054ea4fd534d81a3b24, type: 3}
+  - {fileID: 21300000, guid: a10ff820c4ea50747ad0d856c0362794, type: 3}
   - {fileID: 21300000, guid: 52d36920da29fb148a191fea89347300, type: 3}
   - {fileID: 21300000, guid: dc055c20d69ad014b89a8dfa52f741d4, type: 3}
   - {fileID: 21300000, guid: 21eebe30e7cd6a24e93354ff20d8e875, type: 3}
@@ -285,6 +288,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 4f8592f168bb91243988c48d8e195506, type: 3}
   - {fileID: 21300000, guid: ed3e91023b3196e438cdc489257dac82, type: 3}
   - {fileID: 21300000, guid: 5ef604029d7f60049814db9021c25173, type: 3}
+  - {fileID: 21300000, guid: 74fa09223cc5bd845a2b23273d67ec7f, type: 3}
   - {fileID: 21300000, guid: 864ee352bdb47f441b5366d6f9147909, type: 3}
   - {fileID: 21300000, guid: b14bfd727946a994a9751562583caa6f, type: 3}
   - {fileID: 21300000, guid: b7206392e6b96194ead8c9865667e5cd, type: 3}
@@ -443,6 +447,7 @@ SpriteAtlas:
   - UI_Icon_gou
   - nameline
   - "\u9501"
+  - "\u77E9\u5F62 18"
   - "\u51E4\u6BDB\u9E9F\u89D2\u5E95"
   - "\u65E5\u671F\u5E95"
   - add
@@ -473,6 +478,7 @@ SpriteAtlas:
   - clock
   - btnicon
   - UI_Icon_lojd
+  - "\u7EC4 5102 (1)"
   - zandi
   - kunnan
   - UI_Icon_goldbg2
