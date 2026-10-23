@@ -31,7 +31,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     [SerializeField] protected GameObject timebg;           // 限时角标
     [SerializeField] protected GameObject circle;           // 价格加载圈
     [SerializeField] protected Image shopIcon;              // 商品图标
-    public Image btnAdsicon;                                // 广告图标（礼包可为空）
+    public Image btnTagicon;                                // 广告图标/金币图标（礼包可为空）
     [SerializeField] protected Text nameText;               // 商品名
     [SerializeField] protected Text desText;                // 商品描述（type==1 道具展示用）
     [SerializeField] protected Text shopCountText;          // 数量文本（单物品 x count / 礼包金币数）
@@ -392,14 +392,21 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
                     shopPriceText.text = UIUtilities.FormatCurrency(price, culture);
                 else
+                {
                     shopPriceText.text = "已购买";
+                    discountbg.gameObject.SetActive(false);
+                }
             }
             else if (shopDataItem.produceNameId == "GoldGoods")
             {
                 if (!GameDataManager.Instance.UserData.isDayGoldBuy)
                     shopPriceText.text = data.price.ToString();
                 else
+                {
                     shopPriceText.text = "已购买";
+                    btnTagicon.gameObject.SetActive(false);
+                }
+                    
             }
             else
             {
@@ -461,10 +468,10 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         rectTransform = GetComponent<RectTransform>();
         originalScale = transform.localScale;
 
-        if (btnAdsicon != null)
+        if (btnTagicon != null)
         {
-            originalIconPosition = btnAdsicon.transform.localPosition;
-            originalIconAngles = btnAdsicon.transform.localEulerAngles;
+            originalIconPosition = btnTagicon.transform.localPosition;
+            originalIconAngles = btnTagicon.transform.localEulerAngles;
         }
 
         isTransformCached = true;

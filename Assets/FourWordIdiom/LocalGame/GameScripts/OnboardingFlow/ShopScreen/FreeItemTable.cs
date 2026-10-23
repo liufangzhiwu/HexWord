@@ -85,8 +85,8 @@ public class FreeItemTable : MonoBehaviour
     {
         TickTime();
         
-        freeitem.btnAdsicon.gameObject.SetActive(GameDataManager.Instance.UserData.isDayFreeGet);
-        golditem.btnAdsicon.gameObject.SetActive(!GameDataManager.Instance.UserData.isDayGoldBuy);
+        freeitem.btnTagicon.gameObject.SetActive(GameDataManager.Instance.UserData.isDayFreeGet);
+        golditem.btnTagicon.gameObject.SetActive(!GameDataManager.Instance.UserData.isDayGoldBuy);
 
         // if (GameDataManager.Instance.UserData.isDayFreeGet)
         // {

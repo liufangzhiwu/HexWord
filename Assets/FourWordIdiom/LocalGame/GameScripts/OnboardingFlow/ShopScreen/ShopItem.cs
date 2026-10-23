@@ -46,7 +46,7 @@ public class ShopItem : ShopItemBase
         base.Update();
 
         // 广告 Icon 轻微晃动
-        if (isAdStateActive && btnAdsicon != null)
+        if (isAdStateActive && btnTagicon != null)
         {
             shakeTimer += Time.unscaledDeltaTime;
             float currentCycleTime = shakeTimer % (shakeInterval + shakeDuration);
@@ -54,7 +54,7 @@ public class ShopItem : ShopItemBase
             if (currentCycleTime < shakeDuration)
             {
                 float shakeZ = Mathf.Sin(currentCycleTime * shakeSpeed) * shakeAmplitude;
-                btnAdsicon.transform.localEulerAngles = new Vector3(
+                btnTagicon.transform.localEulerAngles = new Vector3(
                     originalIconAngles.x,
                     originalIconAngles.y,
                     originalIconAngles.z + shakeZ
@@ -62,7 +62,7 @@ public class ShopItem : ShopItemBase
             }
             else
             {
-                btnAdsicon.transform.localEulerAngles = originalIconAngles;
+                btnTagicon.transform.localEulerAngles = originalIconAngles;
             }
         }
     }
@@ -152,7 +152,7 @@ public class ShopItem : ShopItemBase
             EventDispatcher.instance.TriggerChangeGoldUI(0, true);
             GameDataManager.Instance.UserData.isDayGoldBuy = true;
             shopPriceText.text = "已购买";
-            if (btnAdsicon != null) btnAdsicon.gameObject.SetActive(false);
+            if (btnTagicon != null) btnTagicon.gameObject.SetActive(false);
             MessageSystem.Instance.ShowTip("购买成功！");
         }
         else
@@ -181,7 +181,7 @@ public class ShopItem : ShopItemBase
             CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
             GameDataManager.Instance.UserData.UpdateGold(count, true, true, "看广告领取商店金币");
             GameDataManager.Instance.UserData.isDayFreeGet = true;
-            if (btnAdsicon != null) btnAdsicon.gameObject.SetActive(true);
+            if (btnTagicon != null) btnTagicon.gameObject.SetActive(true);
             AnalyticMgr.VideoAdSuccess("看广告领取商店金币");
             GameDataManager.Instance.UserData.totalSeeAds++;
         }
@@ -206,7 +206,7 @@ public class ShopItem : ShopItemBase
             }
             isAdStateActive = true;
             if (adsShiny != null) adsShiny.enabled = true;
-            if (btnAdsicon != null) btnAdsicon.gameObject.SetActive(true);
+            if (btnTagicon != null) btnTagicon.gameObject.SetActive(true);
         }
         else
         {
@@ -216,10 +216,10 @@ public class ShopItem : ShopItemBase
             if (isTransformCached)
             {
                 if (rectTransform != null) rectTransform.localScale = originalScale;
-                if (btnAdsicon != null)
+                if (btnTagicon != null)
                 {
-                    btnAdsicon.transform.localPosition = originalIconPosition;
-                    btnAdsicon.transform.localEulerAngles = originalIconAngles;
+                    btnTagicon.transform.localPosition = originalIconPosition;
+                    btnTagicon.transform.localEulerAngles = originalIconAngles;
                 }
             }
         }
