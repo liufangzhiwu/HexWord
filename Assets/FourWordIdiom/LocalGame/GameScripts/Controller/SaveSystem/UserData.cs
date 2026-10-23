@@ -219,6 +219,13 @@ public class UserData
     /// </summary>
     public List<ShopLimitData> limitShopItems = new List<ShopLimitData>();
 
+    /// <summary>
+    /// 购买记录（最近一次在最前，最多 MAX_PURCHASE_RECORDS 条）。
+    /// 用于"购买记录"弹窗展示：礼包名称、价格、礼包内容、购买时间。
+    /// 由 UserData.AddPurchaseRecord 写入，由 PurchaseRecordScreen 读取展示。
+    /// </summary>
+    public List<PurchaseRecord> purchaseRecords = new List<PurchaseRecord>();
+
     public bool isHideShopRedPoint; // 商店每日免费商品是否获得
     public bool isDayFreeGet; // 商店每日免费商品是否获得
     public bool isDayGoldBuy; // 商店每日金币购买商品是否买过
@@ -244,6 +251,13 @@ public class UserData
     public int DayRewardVideoGiftCount;   // 当日灯泡激励视频赠礼已发次数
     public int DayInterstitialGiftCount;  // 当日插屏赠礼已发次数
     public bool HasShownFirstAdGift;      // 是否已发过"首个广告"50金币一次性奖励
+
+    #endregion
+
+    #region 购买记录上限
+
+    /// <summary>购买记录最多保留条数（超出自动截断最旧的）</summary>
+    [JsonIgnore] public const int MAX_PURCHASE_RECORDS = 100;
 
     #endregion
 
@@ -403,6 +417,8 @@ public class UserData
         passLevelUseTime = new Dictionary<int, int>();
         //限时商店数据
         limitShopItems = new List<ShopLimitData>();
+        // ★ 购买记录
+        purchaseRecords = new List<PurchaseRecord>();
         isDayFreeGet = false;
         isDayGoldBuy = false;
         isDayMoneyBuy = false;
@@ -588,6 +604,8 @@ public class UserData
         showRateusTime = user.showRateusTime;
         //限时商店数据
         limitShopItems = user.limitShopItems ?? new List<ShopLimitData>();
+        // ★ 购买记录（旧存档没有该字段时为 null，兜底成空列表）
+        purchaseRecords = user.purchaseRecords ?? new List<PurchaseRecord>();
         isDayFreeGet = user.isDayFreeGet;
         isDayGoldBuy = user.isDayGoldBuy;
         isDayMoneyBuy = user.isDayMoneyBuy;
@@ -779,6 +797,55 @@ public class UserData
     }
 
     /// <summary>
+    /// 添加一条购买记录（最近的在前，超出上限自动截断）。
+    /// 由 GiftTable.OnPurchaseSuccess 在购买成功后调用。
+    /// </summary>
+    /// <param name="record">购买记录快照</param>
+    public void AddPurchaseRecord(PurchaseRecord record)
+    {
+        if (record == null)
+        {
+            Debug.LogWarning("[UserData] AddPurchaseRecord: record 为空，跳过");
+            return;
+        }
+
+        if (purchaseRecords == null)
+            purchaseRecords = new List<PurchaseRecord>();
+
+        // 最近的在前
+        purchaseRecords.Insert(0, record);
+
+        // 超出上限截断最旧的
+        if (purchaseRecords.Count > MAX_PURCHASE_RECORDS)
+        {
+            int removeCount = purchaseRecords.Count - MAX_PURCHASE_RECORDS;
+            purchaseRecords.RemoveRange(MAX_PURCHASE_RECORDS, removeCount);
+            Debug.Log($"[UserData] 购买记录超出上限 {MAX_PURCHASE_RECORDS}，已移除 {removeCount} 条最旧记录");
+        }
+
+        Debug.Log($"[UserData] 新增购买记录: {record.produceNameId} / {record.nameText} / price={record.price} / time={record.buyTime}, 当前共 {purchaseRecords.Count} 条");
+
+        // 立即落盘，避免进程被杀导致记录丢失
+        SaveData();
+    }
+
+    /// <summary>
+    /// 清空所有购买记录（调试或用户主动清理时使用）。
+    /// </summary>
+    public void ClearPurchaseRecords()
+    {
+        if (purchaseRecords == null)
+        {
+            purchaseRecords = new List<PurchaseRecord>();
+            return;
+        }
+
+        purchaseRecords.Clear();
+        Debug.Log("[UserData] 购买记录已清空");
+        SaveData();
+    }
+
+    /// <summary>
     /// 检查并重置每日限时数据
     /// </summary>
     public void CheckResetDailyTime()
@@ -846,6 +913,7 @@ public class UserData
         // ★ 注意：shopEntryBadgeConsumedUntil 不在每日重置里清空。
         //   它的清空时机是"本次节日/周末结束"，由 ShopManager.EnsureBadgeConsumedResetIfHolidayEnded() 判断。
         //   这样可以保证：周末进店消费后，跨天到周日仍保持隐藏，直到周一才自动清空。
+        // ★ 注意：purchaseRecords 不在每日重置里清空，它是"历史购买记录"，长期保留。
     }
 
     private void UpdatePanelUI()

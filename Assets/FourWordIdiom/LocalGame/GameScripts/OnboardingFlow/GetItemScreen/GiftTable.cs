@@ -25,6 +25,9 @@ public class GiftTable : MonoBehaviour
     [SerializeField] private Text limintCountText; // 限购次数
     [SerializeField] private Text tagText; // 促销标签
 
+    [Header("购买记录")]
+    [SerializeField] private Button purchaseRecordBtn; // 可选：打开购买记录弹窗的按钮
+
     public static LimitRewordType limitRewordType;
 
     private string eventDes;
@@ -628,6 +631,9 @@ public class GiftTable : MonoBehaviour
             {
                 LogShop("ShopManager.shopManager 为空，无法处理购买后逻辑（回退：仅打印）");
             }
+
+            // ★ 写入购买记录（礼包名称、价格、礼包内容快照、购买时间）
+            RecordPurchase(item);
         }
 
         ShopManager.shopManager.paysuccess = true;
@@ -655,6 +661,75 @@ public class GiftTable : MonoBehaviour
         MessageSystem.Instance.HideLoadingAnimation();
 
         LogShop($"========== 购买成功结束: {shopDataItem.produceNameId} ==========");
+    }
+
+    // ======================= 购买记录写入 =======================
+
+    /// <summary>
+    /// 写入一条购买记录到 UserData.purchaseRecords。
+    /// - 名称：优先 MultilingualManager 翻译 nameKey，回退 produceNameId；
+    /// - 价格：优先 ProductItem.LocalizedPrice（>0 时），否则回退 ShopDataItem.price；
+    /// - 礼包内容：深拷贝 ShopDataItem.productContent，避免后续引用变化影响历史记录；
+    /// - 购买时间：yyyy-MM-dd HH:mm:ss。
+    /// </summary>
+    private void RecordPurchase(ProductItem item)
+    {
+        try
+        {
+            if (shopDataItem == null)
+            {
+                LogShop("RecordPurchase: shopDataItem 为空，跳过记录");
+                return;
+            }
+
+            float price = shopDataItem.price;
+            if (item != null && item.LocalizedPrice > 0)
+                price = item.LocalizedPrice;
+
+            string nameText = MultilingualManager.Instance?.GetString(shopDataItem.name)
+                              ?? shopDataItem.name
+                              ?? shopDataItem.produceNameId
+                              ?? "";
+
+            var record = new PurchaseRecord
+            {
+                orderId = string.IsNullOrEmpty(item?.order_id)
+                    ? System.Guid.NewGuid().ToString("N")
+                    : item.order_id,
+                produceNameId = shopDataItem.produceNameId ?? "",
+                nameKey = shopDataItem.name ?? "",
+                nameText = nameText,
+                price = price,
+                originalPrice = shopDataItem.originalPrice,
+                currency = item?.IsoCurrencyCode ?? "",
+                showIcon = shopDataItem.showIcon ?? "",
+                limitRewordType = shopDataItem.type,
+                buyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                productContent = DeepCopyContent(shopDataItem.productContent)
+            };
+
+            GameDataManager.Instance?.UserData?.AddPurchaseRecord(record);
+
+            LogShop($"购买记录已写入: name={record.nameText}, price={record.price}, time={record.buyTime}, contentCount={record.productContent.Count}");
+        }
+        catch (Exception ex)
+        {
+            LogShop($"RecordPurchase 异常: {ex.Message}");
+        }
+    }
+
+    /// <summary>深拷贝 productContent（避免后续 ShopDataItem 变化影响历史记录）。</summary>
+    private static List<List<string>> DeepCopyContent(List<List<string>> src)
+    {
+        var dst = new List<List<string>>();
+        if (src == null) return dst;
+
+        foreach (var row in src)
+        {
+            if (row == null) { dst.Add(new List<string>()); continue; }
+            dst.Add(new List<string>(row));
+        }
+        return dst;
     }
 
     private void OnPurchaseFailed(string error)

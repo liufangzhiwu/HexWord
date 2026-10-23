@@ -21,6 +21,11 @@ using UnityEngine.UI;
 ///   子类可 override <see cref="IsContentSkippedOnPurchase(int)"/> 指定某些内容项在购买时跳过发放。
 ///   例如 ShopGiftItem 在"已拥有永久去广告"时，会跳过 RemoveAds / RemoveDayAds 的发放，
 ///   与展示侧（InitGiftItems 跳过）保持一致。
+///
+/// ★ 购买记录：
+///   OnPurchaseSuccess 成功分支内会调用 RecordPurchase(item) 写入 UserData.purchaseRecords，
+///   由 PurchaseRecordScreen（或 BuyListScreen）读取展示：礼包名称、价格、礼包内容、购买时间。
+///   与 GiftTable.RecordPurchase 使用同一份数据结构与快照规则。
 /// </summary>
 public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
@@ -620,6 +625,10 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 }
             }
 
+            // ★ 写入购买记录（礼包名称、价格、礼包内容快照、购买时间）
+            //   与 GiftTable.RecordPurchase 使用同一份 PurchaseRecord 数据结构与快照规则。
+            RecordPurchase(item);
+
             if (hasPermanentRemoveAds)
                 SystemManager.Instance.ShowPanel(PanelType.RemoveAdsScreen);
             else
@@ -688,6 +697,85 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         LogShopItem($"购买失败: {error}");
         AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(), error);
         MessageSystem.Instance.HideLoadingAnimation();
+    }
+
+    // ======================= ★ 购买记录写入 =======================
+
+    /// <summary>
+    /// 写入一条购买记录到 UserData.purchaseRecords。
+    /// - 名称：优先 MultilingualManager 翻译 nameKey，回退 produceNameId；
+    /// - 价格：优先 ProductItem.LocalizedPrice（>0 时），否则回退 ShopDataItem.price；
+    /// - 礼包内容：深拷贝 ShopDataItem.productContent，避免后续引用变化影响历史记录；
+    /// - 购买时间：yyyy-MM-dd HH:mm:ss。
+    /// 
+    /// 与 GiftTable.RecordPurchase 逻辑保持一致，避免两处口径不同。
+    /// </summary>
+    private void RecordPurchase(ProductItem item)
+    {
+        try
+        {
+            if (shopDataItem == null)
+            {
+                LogShopItem("RecordPurchase: shopDataItem 为空，跳过记录");
+                return;
+            }
+
+            // 价格：优先取实际支付价格（LocalizedPrice），否则回退商品配置价
+            float price = shopDataItem.price;
+            if (item != null && item.LocalizedPrice > 0)
+                price = item.LocalizedPrice;
+
+            // 名称：优先多语言翻译 nameKey，回退 produceNameId
+            string nameText = MultilingualManager.Instance?.GetString(shopDataItem.name)
+                              ?? shopDataItem.name
+                              ?? shopDataItem.produceNameId
+                              ?? "";
+
+            var record = new PurchaseRecord
+            {
+                // 订单号：优先第三方回调 order_id，否则生成唯一 GUID（便于排查/去重）
+                orderId = string.IsNullOrEmpty(item?.order_id)
+                    ? Guid.NewGuid().ToString("N")
+                    : item.order_id,
+
+                produceNameId = shopDataItem.produceNameId ?? "",
+                nameKey = shopDataItem.name ?? "",
+                nameText = nameText,
+
+                price = price,
+                originalPrice = shopDataItem.originalPrice,
+                currency = item?.IsoCurrencyCode ?? "",
+
+                showIcon = shopDataItem.showIcon ?? "",
+                limitRewordType = shopDataItem.type,
+
+                buyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+
+                productContent = DeepCopyContent(shopDataItem.productContent)
+            };
+
+            GameDataManager.Instance?.UserData?.AddPurchaseRecord(record);
+
+            LogShopItem($"购买记录已写入: name={record.nameText}, price={record.price}, time={record.buyTime}, contentCount={record.productContent.Count}");
+        }
+        catch (Exception ex)
+        {
+            LogShopItem($"RecordPurchase 异常: {ex.Message}");
+        }
+    }
+
+    /// <summary>深拷贝 productContent（避免后续 ShopDataItem 变化影响历史记录）。</summary>
+    private static List<List<string>> DeepCopyContent(List<List<string>> src)
+    {
+        var dst = new List<List<string>>();
+        if (src == null) return dst;
+
+        foreach (var row in src)
+        {
+            if (row == null) { dst.Add(new List<string>()); continue; }
+            dst.Add(new List<string>(row));
+        }
+        return dst;
     }
 
     // ======================= 去广告处理 =======================
