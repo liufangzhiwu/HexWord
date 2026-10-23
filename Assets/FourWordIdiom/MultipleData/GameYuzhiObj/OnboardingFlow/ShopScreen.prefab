@@ -1141,7 +1141,7 @@ MonoBehaviour:
   TipText: {fileID: 8717977933990516273}
   AutoText: {fileID: 7186696767705496962}
   ButteryText: {fileID: 5383263012537814287}
-  RestartText: {fileID: 0}
+  RestartText: {fileID: 1435769195511384994}
   ShopGiftItemPrefab: {fileID: 2538063831955769991, guid: 6d275e6bd961310479add15ec863b04f,
     type: 3}
   ShopItemPrefab: {fileID: 2538063831955769991, guid: 1795952655cfdc242b6ae2b873d4dfdc,
@@ -1596,7 +1596,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 197}
+  m_AnchoredPosition: {x: 0, y: 220}
   m_SizeDelta: {x: 15.689941, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1391427797366850448
@@ -2194,7 +2194,7 @@ GameObject:
   - component: {fileID: 1435769195511384994}
   - component: {fileID: 5748753365271982476}
   m_Layer: 5
-  m_Name: Text
+  m_Name: RestartText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

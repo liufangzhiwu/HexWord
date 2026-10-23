@@ -175,6 +175,7 @@ SpriteAtlas:
     - 80f21655ce7d5d241b92c66de1e58fcc: 21300000
     - 4b117f5528ad2bd46972d5673988f43c: 21300000
     - 5838187534cda7e478021390c258384b: 21300000
+    - 345a7c85e8f7f78498fb2fea852cfd39: 21300000
     - 96a93b957d23cef4896278837b1bcb81: 21300000
     - fd6f2f957f7c19c45bfb0d04df1f0d0c: 21300000
     - e64595a5c7d221e45b21a4547ce05f7e: 21300000
@@ -290,6 +291,7 @@ SpriteAtlas:
     - e5b6ee6c0cbb9854b8edc714484f5707: 21300000
     - ea9d677caae8516418ae95b2b2898773: 21300000
     - 180afc9cf92c3384a80037b887648185: 21300000
+    - 1d3aa2bc88f11174b82327f7f177b1b0: 21300000
     - 82e0f6bcf7c27cd41ba1e74f49b41380: 21300000
     - 377a67bcb5b44534b8f77e959a6b536c: 21300000
     - dd97dbfcea75ca847b7c8cb635269cda: 21300000
@@ -447,6 +449,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 80f21655ce7d5d241b92c66de1e58fcc, type: 3}
   - {fileID: 21300000, guid: 4b117f5528ad2bd46972d5673988f43c, type: 3}
   - {fileID: 21300000, guid: 5838187534cda7e478021390c258384b, type: 3}
+  - {fileID: 21300000, guid: 345a7c85e8f7f78498fb2fea852cfd39, type: 3}
   - {fileID: 21300000, guid: 96a93b957d23cef4896278837b1bcb81, type: 3}
   - {fileID: 21300000, guid: fd6f2f957f7c19c45bfb0d04df1f0d0c, type: 3}
   - {fileID: 21300000, guid: e64595a5c7d221e45b21a4547ce05f7e, type: 3}
@@ -562,6 +565,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: e5b6ee6c0cbb9854b8edc714484f5707, type: 3}
   - {fileID: 21300000, guid: ea9d677caae8516418ae95b2b2898773, type: 3}
   - {fileID: 21300000, guid: 180afc9cf92c3384a80037b887648185, type: 3}
+  - {fileID: 21300000, guid: 1d3aa2bc88f11174b82327f7f177b1b0, type: 3}
   - {fileID: 21300000, guid: 82e0f6bcf7c27cd41ba1e74f49b41380, type: 3}
   - {fileID: 21300000, guid: 377a67bcb5b44534b8f77e959a6b536c, type: 3}
   - {fileID: 21300000, guid: dd97dbfcea75ca847b7c8cb635269cda, type: 3}
@@ -718,6 +722,7 @@ SpriteAtlas:
   - help_1
   - gou
   - zenlevelname_di
+  - "\u77E9\u5F62 46"
   - tiao
   - itembg
   - img_v3_0214t_ebfb30ce-f841-4637-9347-f109a077be8g
@@ -833,6 +838,7 @@ SpriteAtlas:
   - process_fill
   - daybg
   - dailytitle
+  - "\u7EC4 5969"
   - rewardbg
   - dailytaskdi
   - copy
