@@ -117,9 +117,13 @@ public class GiftItem : MonoBehaviour
                 hengIconSize = new Vector2(108f, 100f);
                 hengIconAnchoredPosition = new Vector2(-14f, -14f);
                 SetIconSize(Vector2.zero);
-                SetIconAnchoredPosition(new Vector2(0f, -5f));
+                SetIconAnchoredPosition(new Vector2(0f, 50f));
                 SetCountFontSize(60);
                 CreateTipsBtn(pointdes);
+
+                
+                SetCountAnchoredPosition(new Vector2(0f, -89f));
+               
                 break;
         }
 

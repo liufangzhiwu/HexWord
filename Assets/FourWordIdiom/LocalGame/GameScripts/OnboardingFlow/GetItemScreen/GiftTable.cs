@@ -493,7 +493,7 @@ public class GiftTable : MonoBehaviour
 
         if (ShopManager.shopManager != null && ShopManager.shopManager.IsLastPurchasedPack(shopDataItem))
         {
-            tag = MultilingualManager.Instance?.GetString("LastPurchased") ?? "上次购买";
+            tag = "上次购买";
         }
         else if (!string.IsNullOrEmpty(shopDataItem.labelZh))
         {

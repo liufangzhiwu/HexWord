@@ -633,7 +633,7 @@ namespace Middleware
                                 "商店购买" + item.ItemName);
                             break;
                         case (int)LimitRewordType.RemoveAds:
-                        case (int)LimitRewordType.Remove7DayAds:
+                        case (int)LimitRewordType.RemoveDayAds:
                             //BuyRemoveAdsEvent(type);
                             break;
                     }

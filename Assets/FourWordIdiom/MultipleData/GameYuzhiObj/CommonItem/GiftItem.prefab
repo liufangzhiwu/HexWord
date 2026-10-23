@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 3965844206310786549}
   - component: {fileID: 3619140107249853477}
   - component: {fileID: 8312251618034819210}
-  - component: {fileID: 3328559301349899450}
   - component: {fileID: 3404907298001513506}
   - component: {fileID: 7192133109787331482}
   m_Layer: 5
@@ -112,21 +111,6 @@ MonoBehaviour:
   m_EffectColor: {r: 1, g: 1, b: 1, a: 1}
   m_EffectDistance: {x: 1, y: -1}
   m_UseGraphicAlpha: 1
---- !u!114 &3328559301349899450
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 671671690771252158}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_EffectColor: {r: 0, g: 0.14901961, b: 0.47450984, a: 1}
-  m_EffectDistance: {x: 1, y: -1}
-  m_UseGraphicAlpha: 1
 --- !u!114 &3404907298001513506
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -140,7 +124,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_EffectColor: {r: 0, g: 0.14901961, b: 0.47450984, a: 1}
-  m_EffectDistance: {x: -1, y: 1}
+  m_EffectDistance: {x: 1.5, y: -1.5}
   m_UseGraphicAlpha: 1
 --- !u!114 &7192133109787331482
 MonoBehaviour:
@@ -372,6 +356,7 @@ MonoBehaviour:
   countText: {fileID: 3965844206310786549}
   tipBtnPrefab: {fileID: 0}
   bonusTag: {fileID: 8698311797500139589}
+  isGiftHengItem: 0
 --- !u!1 &8698311797500139589
 GameObject:
   m_ObjectHideFlags: 0

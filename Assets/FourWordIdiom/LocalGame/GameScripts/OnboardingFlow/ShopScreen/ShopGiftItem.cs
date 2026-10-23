@@ -18,6 +18,10 @@ using UnityEngine.UI;
 ///  - HandleMultiProductContent / InitGiftItems：创建多个 GiftItem
 ///      ★ 实际需要创建的数量 > 4 时用 giftHengItemPrefab（横向布局，父节点 giftsHengParent），否则用 giftItemPrefab（父节点 giftsParent）；
 ///      ★ 广告 / 体力类资源（RemoveAds / RemoveDayAds / InfiniteEnergy）优先挂到 itemEnergyList（若配置）；
+///      ★ itemEnergyList 内的 Prefab 独立判断：
+///         - 全部是体力资源（InfiniteEnergy）→ giftItemPrefab（普通 GiftItem）；
+///         - 含广告资源或其他资源 → giftHengItemPrefab（横向 GiftHengItem）；
+///         - 目标 Prefab 不可用时回退到本次传入的 prefab；
 ///      ★ InitGiftItems 开头清理 giftsParent / giftsHengParent / itemEnergyList 下的旧 GiftItem 子物体（对象池复用必须清理）；
 ///      ★ type=2 跳过金币；type=1 金币也走 GiftItem；
 ///  - IsContentSkippedOnPurchase：已拥有永久去广告 → 购买时跳过 RemoveAds / RemoveDayAds 的发放；
@@ -44,8 +48,8 @@ public class ShopGiftItem : ShopItemBase
     [SerializeField] protected Transform itemEnergyList;          // 广告 and 体力资源的父节点（RemoveAds / RemoveDayAds / InfiniteEnergy 等）
     [SerializeField] protected Transform giftsParent;            // 礼包内容父节点（普通 GiftItem，实际数量 <= 4）
     [SerializeField] protected Transform giftsHengParent;        // 礼包内容父节点（横向 GiftHengItem，实际数量 > 4）
-    [SerializeField] protected GiftItem giftItemPrefab;          // 礼包内容项 Prefab（实际数量 <= 4 时用）
-    [SerializeField] protected GiftItem giftHengItemPrefab;      // 礼包内容项 Prefab（实际数量 > 4 时用，横向布局）
+    [SerializeField] protected GiftItem giftItemPrefab;          // 礼包内容项 Prefab（实际数量 <= 4 时用；itemEnergyList 内只有体力时也用它）
+    [SerializeField] protected GiftItem giftHengItemPrefab;      // 礼包内容项 Prefab（实际数量 > 4 时用，横向布局；itemEnergyList 内含广告/其他资源时也用它）
     [SerializeField] protected Text oldPriceText;                // 原价文本（有折扣时显示 originalPrice）
     [SerializeField] protected Text limitCountText;              // 限购次数文本
     [SerializeField] protected Text tagText;                     // 礼包标签
@@ -402,6 +406,90 @@ public class ShopGiftItem : ShopItemBase
         return GetParentForPrefab(prefab);
     }
 
+    // ======================= ★ itemEnergyList 内 Prefab 规则（仅本段新增，其他规则不动） =======================
+
+    /// <summary>
+    /// ★ itemEnergyList 内 Prefab 规则（只影响挂到 itemEnergyList 的项）：
+    ///  - itemEnergyList 内【实际展示的项全部是体力资源（InfiniteEnergy）】→ 返回 false，使用 giftItemPrefab；
+    ///  - itemEnergyList 内【含广告资源或其他资源】→ 返回 true，使用 giftHengItemPrefab。
+    /// 跳过规则与 InitGiftItems 保持一致（type=2 跳过金币、已拥有永久去广告跳过 RemoveAds/RemoveDayAds），
+    /// 以保证判断依据与实际展示的项一致。
+    /// </summary>
+    private bool ShouldUseHengForItemEnergyList(ShopDataItem data)
+    {
+        if (itemEnergyList == null || data?.productContent == null) return false;
+
+        bool ownsPermanentRemoveAds =
+            ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+
+        bool hasAny = false;
+        bool allEnergy = true;
+
+        foreach (var giftdata in data.productContent)
+        {
+            if (giftdata == null || giftdata.Count < 2) continue;
+
+            int giftType;
+            if (!int.TryParse(giftdata[0], out giftType)) continue;
+
+            // 只看会挂到 itemEnergyList 的项
+            if (!IsAdOrEnergyType(giftType)) continue;
+
+            // 与 InitGiftItems 相同的跳过规则（保证与实际展示一致）
+            if (giftType == (int)LimitRewordType.Coins && data.type != 1) continue;
+            if (ownsPermanentRemoveAds && IsRemoveAdsRelatedType(giftType)) continue;
+
+            hasAny = true;
+            if (giftType != (int)LimitRewordType.InfiniteEnergy)
+                allEnergy = false;
+        }
+
+        // 全部是体力资源 → GiftItem；含广告/其他资源 → GiftHengItem
+        return hasAny && !allEnergy;
+    }
+
+    /// <summary>
+    /// 确保 giftItemPrefab 可用（itemEnergyList 内使用）；为空时尝试从 Bundle 加载。
+    /// </summary>
+    private GiftItem EnsureGiftItemPrefab()
+    {
+        if (giftItemPrefab != null) return giftItemPrefab;
+
+        if (AdvancedBundleLoader.SharedInstance != null)
+        {
+            var go = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "GiftItem");
+            if (go != null)
+            {
+                giftItemPrefab = go.GetComponent<GiftItem>();
+                if (giftItemPrefab != null)
+                    LogShopItem("EnsureGiftItemPrefab: 从 Bundle 加载 GiftItem 成功（itemEnergyList 专用）");
+            }
+        }
+
+        return giftItemPrefab;
+    }
+
+    /// <summary>
+    /// 确保 giftHengItemPrefab 可用（itemEnergyList 内使用）；为空时尝试从 Bundle 加载。
+    /// </summary>
+    private GiftItem EnsureGiftHengItemPrefab()
+    {
+        if (giftHengItemPrefab != null) return giftHengItemPrefab;
+
+        if (AdvancedBundleLoader.SharedInstance != null)
+        {
+            var go = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "GiftHengItem");
+            if (go != null)
+            {
+                giftHengItemPrefab = go.GetComponent<GiftItem>();
+                if (giftHengItemPrefab != null)
+                    LogShopItem("EnsureGiftHengItemPrefab: 从 Bundle 加载 GiftHengItem 成功（itemEnergyList 专用）");
+            }
+        }
+
+        return giftHengItemPrefab;
+    }
+
     // ======================= 清理 & 创建礼包内容 =======================
 
     /// <summary>
@@ -466,6 +554,36 @@ public class ShopGiftItem : ShopItemBase
         bool isHengPrefab = giftHengItemPrefab != null && prefab == giftHengItemPrefab;
         LogShopItem($"InitGiftItems: prefab={prefab.name}, isHengPrefab={isHengPrefab}");
 
+        // ★ itemEnergyList 内 Prefab 规则（仅影响挂到 itemEnergyList 的项，不影响其他项）：
+        //    - itemEnergyList 内实际展示的项【全部是体力资源（InfiniteEnergy）】→ 使用 giftItemPrefab；
+        //    - itemEnergyList 内实际展示的项【含广告资源或其他资源】→ 使用 giftHengItemPrefab；
+        //    - 目标 Prefab 不可用时回退到本次传入的 prefab。
+        bool energyUseHeng = ShouldUseHengForItemEnergyList(shopDataItem);
+        GiftItem energyPrefab;
+        if (energyUseHeng)
+        {
+            energyPrefab = EnsureGiftHengItemPrefab();
+            if (energyPrefab == null)
+            {
+                LogShopItem("InitGiftItems: itemEnergyList 内应使用 GiftHengItem，但 giftHengItemPrefab 不可用，回退传入 prefab");
+                energyPrefab = prefab;
+            }
+        }
+        else
+        {
+            energyPrefab = EnsureGiftItemPrefab();
+            if (energyPrefab == null)
+            {
+                LogShopItem("InitGiftItems: itemEnergyList 内应使用 GiftItem，但 giftItemPrefab 不可用，回退传入 prefab");
+                energyPrefab = prefab;
+            }
+        }
+
+        if (itemEnergyList != null)
+        {
+            LogShopItem($"InitGiftItems: itemEnergyList 内 Prefab 规则 → energyUseHeng={energyUseHeng}, energyPrefab={energyPrefab.name}");
+        }
+
         foreach (List<string> giftdata in shopDataItem.productContent)
         {
             if (giftdata == null || giftdata.Count < 2)
@@ -502,10 +620,14 @@ public class ShopGiftItem : ShopItemBase
                 continue;
             }
 
-            GiftItem giftItem = Instantiate(prefab, parent).GetComponent<GiftItem>();
+            // ★ 仅对挂到 itemEnergyList 的项改用 energyPrefab；其他项仍使用传入的 prefab。
+            bool isEnergyItem = itemEnergyList != null && IsAdOrEnergyType(giftType);
+            GiftItem itemPrefab = isEnergyItem ? energyPrefab : prefab;
+
+            GiftItem giftItem = Instantiate(itemPrefab, parent).GetComponent<GiftItem>();
             if (giftItem == null)
             {
-                LogShopItem($"InitGiftItems: prefab 上未挂 GiftItem 组件，跳过 (prefab={prefab.name})");
+                LogShopItem($"InitGiftItems: prefab 上未挂 GiftItem 组件，跳过 (prefab={itemPrefab.name})");
                 continue;
             }
 
@@ -527,7 +649,7 @@ public class ShopGiftItem : ShopItemBase
 
             _spawnedGiftItems.Add(giftItem);
 
-            LogShopItem($"InitGiftItems: 礼包 {shopDataItem.produceNameId} (type={shopDataItem.type}) 内容 type={giftType}, isBonus={isBonus}, prefab={prefab.name}, parent={parent.name}");
+            LogShopItem($"InitGiftItems: 礼包 {shopDataItem.produceNameId} (type={shopDataItem.type}) 内容 type={giftType}, isBonus={isBonus}, prefab={itemPrefab.name}, parent={parent.name}");
         }
     }
 
