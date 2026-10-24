@@ -12,13 +12,11 @@ public class ShopEntryBadgeInfo
 
 /// <summary>
 /// 商店管理器 - 动态商店配置部分类。
+/// 动态商店（收起/展开）不走审核配置，始终走原权重推荐逻辑；
+/// 固定商店展开仍保留审核判断。
 /// </summary>
 public partial class ShopManager : MonoBehaviour
 {
-    
-    /// <summary>审核开时不展示的礼包（固定商店/动态商店）</summary>
-    private const string ProductBoxTimeExcludedInAudit = "BoxTime";
-    
     private bool IsDynamicStorePack(string nameId)
     {
         bool isPack = nameId.StartsWith("Newcomer")
@@ -45,7 +43,7 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>
     /// 固定商店 - 1号推荐位。
-    /// 审核开：直接复用审核固定商店列表（新手礼包 → 特惠A → 特惠B → 其余）；
+    /// 审核开：复用审核固定商店列表；
     /// 审核关：原推送逻辑。
     /// </summary>
     public List<ShopDataItem> GetFixedStoreExpandedItems()
@@ -69,22 +67,10 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>
     /// 动态商店 - 收起状态列表。
-    /// 审核开：直接复用审核固定商店列表（新手礼包 → 特惠A → 特惠B → 其余）；
-    /// 审核关：原推送逻辑。
+    /// ★ 不走审核配置，始终走原权重推荐逻辑。
     /// </summary>
     public List<ShopDataItem> GetDynamicStoreCollapsedItems()
     {
-        if (AuditConfig.IsAuditOpen)
-        {
-            List<ShopDataItem> auditItems = GetAuditFixedStoreItems();
-            if (auditItems.Count > 0)
-            {
-                LogShop($"[Audit] GetDynamicStoreCollapsedItems 审核开，全部展示 {auditItems.Count} 个");
-                return auditItems;
-            }
-            LogShop("[Audit] GetDynamicStoreCollapsedItems 审核开但无礼包，回退常规");
-        }
-
         List<ShopDataItem> result = GetRecommendPacks(RecommendSlot.DynamicStore);
         return result
             .OrderBy(item => item.price)
@@ -93,22 +79,10 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>
     /// 动态商店 - 展开状态列表。
-    /// 审核开：直接复用审核固定商店列表（新手礼包 → 特惠A → 特惠B → 其余）；
-    /// 审核关：原推送逻辑。
+    /// ★ 不走审核配置，始终走原权重推荐逻辑。
     /// </summary>
     public List<ShopDataItem> GetDynamicStoreExpandedItems()
     {
-        if (AuditConfig.IsAuditOpen)
-        {
-            List<ShopDataItem> auditItems = GetAuditFixedStoreItems();
-            if (auditItems.Count > 0)
-            {
-                LogShop($"[Audit] GetDynamicStoreExpandedItems 审核开，全部展示 {auditItems.Count} 个");
-                return auditItems;
-            }
-            LogShop("[Audit] GetDynamicStoreExpandedItems 审核开但无礼包，回退常规");
-        }
-
         List<ShopDataItem> result = GetRecommendPacks(RecommendSlot.DynamicStore);
         List<ShopDataItem> all = GetSlotCandidates(RecommendSlot.DynamicStore, 2);
         foreach (var item in all)

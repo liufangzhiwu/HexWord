@@ -127,10 +127,12 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>审核开时不展示的商品（固定商店）</summary>
     private const string ProductGold3ExcludedInAudit = "Gold3";
+    /// <summary>审核开时不展示的礼包（固定商店/动态商店）</summary>
+    private const string ProductBoxTimeExcludedInAudit = "BoxTime";
 
     /// <summary>审核开时补入固定商店的特惠礼包</summary>
-    private const string ProductSpecialPackageA = "SpecialPackageA";
-    private const string ProductSpecialPackageB = "SpecialPackageB";
+    public string ProductSpecialPackageA = "SpecialPackageA";
+    public string ProductSpecialPackageB = "SpecialPackageB";
 
     private const int BreakIceCooldownBaseDays = 7;
     private const int BreakIceCooldownStepDays = 3;

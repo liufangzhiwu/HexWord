@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using Button = UnityEngine.UI.Button;
@@ -408,7 +409,19 @@ public class ShopScreen : UIWindow
         // 1. 动态商店收起状态商品 + 全部商店商品
         List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetDynamicStoreCollapsedItems();
         List<ShopDataItem> allDataItems = new List<ShopDataItem>();
-        allDataItems.AddRange(shopallDataItems);
+        List<ShopDataItem> allTempDataItems = new List<ShopDataItem>();
+        
+        if (AuditConfig.IsAuditOpen)
+        {
+            allTempDataItems.AddRange(shopallDataItems.FindAll(item => 
+                item.produceNameId != ShopManager.shopManager.ProductSpecialPackageA&&item.produceNameId != ShopManager.shopManager.ProductSpecialPackageB));
+        }
+        else
+        {
+            allTempDataItems.AddRange(shopallDataItems);
+        }
+        
+        allDataItems.AddRange(allTempDataItems);
         allDataItems.AddRange(collapsedItems);
 
         // 按价格升序、去重
