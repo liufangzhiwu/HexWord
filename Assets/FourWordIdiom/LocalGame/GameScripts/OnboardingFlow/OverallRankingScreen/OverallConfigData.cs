@@ -56,3 +56,20 @@ public class MonthlyRewardConfig
     public int Rank; // 排名 (1, 2, 3)
     public List<MonthlyRewardItem> Rewards = new List<MonthlyRewardItem>();
 }
+
+
+[Serializable]
+public class AuditStatusConfig
+{
+    /// <summary> 审核总开关 (1=开启审核/特殊状态, 0=正常) </summary>
+    public bool TotalSwitch { get; set; } = true;
+
+    /// <summary> 首页禅意榜入口是否显示 (1=显示/开启, 0=隐藏/关闭) </summary>
+    public bool ZenSwitch { get; set; } = false;
+
+    /// <summary> 莲心榜入口出现关卡/分数 </summary>
+    public int LotusHeartAppearCondition { get; set; } = 0;
+
+    /// <summary> 莲心榜解锁条件 </summary>
+    public int LotusHeartUnlockCondition { get; set; } = 0;
+}

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+
 public class OverallRankingManager : MonoBehaviour
 {
     public static OverallRankingManager Instance { get; private set; }
@@ -14,7 +15,9 @@ public class OverallRankingManager : MonoBehaviour
     public List<RealmLevelData> RealmLevelList { get; private set; } = new List<RealmLevelData>();
     public RankControlConfig RankConfig { get; private set; } = new RankControlConfig();
     public List<MonthlyRewardConfig> MonthlyRewards { get; private set; } = new List<MonthlyRewardConfig>();
-
+    public AuditStatusConfig AuditConfig { get; private set; } = new AuditStatusConfig();
+    public event Action OnAuditConfigLoaded;
+    public bool IsAuditConfigReady { get; private set; } = false;
     // ==========================================
     // 🌟 榜单动态数据缓存
     // ==========================================
@@ -37,12 +40,15 @@ public class OverallRankingManager : MonoBehaviour
     private float _lastMonthlyFetchTime = -9999f;
     private bool _hasFetchedHallOfFame = false; // 名人堂单次 App 生命周期只请求一次
     
+    string AuditConfigKey = "Zen_AuditStatus_AZ";
+
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
             //DontDestroyOnLoad(gameObject);
+            StartCoroutine(LoadAuditStatusConfigRoutine());
             LoadConfigs(); // 启动时自动解析 CSV 配置
         }
         else
@@ -52,11 +58,137 @@ public class OverallRankingManager : MonoBehaviour
     }
 
     #region 配置解析
+    /// <summary>
+    /// 统一判断禅意榜入口是否开启（受审核开关 + 基础解锁控制）
+    /// </summary>
+    public bool IsZenEntranceOpen()
+    {
+        // 1. 审核总开关开启 且 禅意榜开关为0 时，强制关闭
+        if (AuditConfig != null && AuditConfig.TotalSwitch && !AuditConfig.ZenSwitch)
+        {
+            return false;
+        }
+
+        // 2. 玩家禅意总分需大于0
+        int myScore = GameDataManager.Instance?.UserData?.overallZenScore ?? 0;
+        return myScore > 0;
+    }
+    
+    private IEnumerator LoadAuditStatusConfigRoutine()
+    {
+        bool isDone = false;
+        GameConfigResponse serverResponse = null;
+        
+#if UNITY_OPENHARMONY
+        AuditConfigKey="Zen_AuditStatus_HM"
+#else
+        AuditConfigKey = "Zen_AuditStatus_AZ";
+#endif
+        
+        // A. 优先向服务器拉取
+        yield return APIGateway.Instance.GameConfigApi.GetGameConfig(AuditConfigKey,
+            onSuccess: (response) =>
+            {
+                serverResponse = response;
+                isDone = true;
+            },
+            onError: (err) =>
+            {
+                Debug.LogWarning($"[AuditStatus] 在线拉取失败，准备使用本地兜底: {err}");
+                TextAsset localAuditAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", AuditConfigKey);
+                if (localAuditAsset != null && !string.IsNullOrEmpty(localAuditAsset.text))
+                {
+                    ParseAuditStatusConfig(localAuditAsset.text, "本地预载(防闪烁)");
+                }
+                else
+                {
+                    // 如果本地连文件都没有，默认直接开启拦截，防闪烁
+                    AuditConfig.TotalSwitch = true;
+                    AuditConfig.ZenSwitch = false;
+                }
+                isDone = true;
+            }
+        );
+
+        // 守护等待
+        float timeout = 5f;
+        while (!isDone && timeout > 0)
+        {
+            timeout -= Time.deltaTime;
+            yield return null;
+        }
+        // B. 优先判断服务端数据是否有效且版本号匹配
+        if (serverResponse != null && !string.IsNullOrEmpty(serverResponse.CsvString))
+        {
+            string localVersion = Application.version.Trim();
+            string configVersion = serverResponse.Version != null ? serverResponse.Version.Trim() : "";
+            if (string.Equals(localVersion, configVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                ParseAuditStatusConfig(serverResponse.CsvString, $"服务端下发 (匹配版本: {localVersion})");
+            }
+            else
+            {
+                Debug.Log($"[AuditStatus] 版本号不一致 (本地:{localVersion} vs 服务器配置:{configVersion})，忽略该配置，使用默认状态。");
+            }
+        }
+        // E. 广播通知UI刷新状态
+        IsAuditConfigReady = true;
+        OnAuditConfigLoaded?.Invoke();
+    }
+    private void ParseAuditStatusConfig(string csvText, string source)
+    {
+        try
+        {
+            List<string> lines = Middleware.ToolUtil.SplitCsvLines(csvText);
+            if (lines.Count <= 2) return; // 0=中文说明, 1=字段名, 2=正式数据
+
+            string[] fields = lines[2].Split(',');
+            if (fields.Length < 2) return;
+
+            // 第 0 列: Switch
+            AuditConfig.TotalSwitch = fields[0].Trim() == "1";
+
+            // 第 1 列: ZenSwitch (控制首页禅意榜入口)
+            AuditConfig.ZenSwitch = fields[1].Trim() == "1";
+
+            // 第 2 列: LotusHeartSwitch (如 "1000_1005")
+            if (fields.Length > 2 && !string.IsNullOrEmpty(fields[2]))
+            {
+                string[] lotus = fields[2].Trim().Split('_');
+                int appear = 0, unlock = 0;
+    
+                if (lotus.Length >= 1) int.TryParse(lotus[0], out appear);
+                if (lotus.Length >= 2) int.TryParse(lotus[1], out unlock);
+    
+                AuditConfig.LotusHeartAppearCondition = appear;
+                AuditConfig.LotusHeartUnlockCondition = unlock;
+            }
+            Debug.Log($"[AuditStatus] 审核配置解析完成！当前使用来源: 【{source}】 | " +
+                      $"TotalSwitch={AuditConfig.TotalSwitch}, ZenSwitch={AuditConfig.ZenSwitch}, " +
+                      $"LotusAppear={AuditConfig.LotusHeartAppearCondition}, LotusUnlock={AuditConfig.LotusHeartUnlockCondition}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AuditStatus] 解析审核配置异常 (来源: {source}): {ex.Message}");
+        }
+    }
+    
     // ==========================================
     // 🌟 配置解析模块
     // ==========================================
     private void LoadConfigs()
     {
+        TextAsset localAuditAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", AuditConfigKey);
+        if (localAuditAsset != null && !string.IsNullOrEmpty(localAuditAsset.text))
+        {
+            ParseAuditStatusConfig(localAuditAsset.text, "本地预载(防闪烁)");
+        }
+        else
+        {
+            // 如果本地连文件都没有，默认直接开启拦截，防闪烁
+            AuditConfig.TotalSwitch = true;
+            AuditConfig.ZenSwitch = false;
+        }
         // 1. 加载境界等级表 (参考 image_259f03.png)
         TextAsset realmLevelAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "OverallZenLevel");
         if (realmLevelAsset != null)
@@ -285,6 +417,15 @@ public class OverallRankingManager : MonoBehaviour
     /// </summary>
     public IEnumerator CheckMonthlySettlementRoutine(Action<bool> onComplete = null)
     {
+        int myScore = GameDataManager.Instance?.UserData?.overallZenScore ?? 0;
+
+        // 如果禅意榜未开启（审核关闭）或月榜未解锁，直接跳过，不请求也不弹月榜领奖页！
+        if (!IsZenEntranceOpen() || !IsMonthlyRankUnlocked(myScore))
+        {
+            onComplete?.Invoke(false);
+            yield break;
+        }
+        
         MonthlySettlementResponse resp = null; // 局部变量，用完即毁
         bool done = false;
         yield return APIGateway.Instance.LeaderboardApi.CheckMonthlySettlement((res) =>

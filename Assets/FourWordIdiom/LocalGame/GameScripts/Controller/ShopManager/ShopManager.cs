@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -11,8 +12,7 @@ using UnityEngine.Purchasing;
 #endif
 
 /// <summary>
-/// 内购推荐位权重配置（来源：商店表内 BulbBox / RocketBox / ClockBox / DynamicStore 配置子表）
-/// 字段顺序与配置表一致：nameID, GiftType, BaseWeight, MaxWeight, SpecialWeight, PeakWeight, ReturnWeight, Featured
+/// 内购推荐位权重配置
 /// </summary>
 [Serializable]
 public class ShopRecommendConfig
@@ -48,13 +48,71 @@ public enum ShopMode
     DynamicStore
 }
 
+// ======================= 审核配置（内嵌，不新增脚本） =======================
+
+/// <summary>道具内购位类型：灯泡 / 火箭 / 复活（时钟）</summary>
+public enum PropShopType
+{
+    Lamp = 0,
+    Rocket = 1,
+    Revive = 2
+}
+
+/// <summary>
+/// 审核配置静态数据。
+/// 默认全部关闭：AuditStatusSwitch=0 时所有内购特殊处理不生效，走原推送逻辑。
+/// 审核开时：礼包不走推送权限，全部展示；白名单为空即自动全部展示。
+/// </summary>
+public static class AuditConfig
+{
+    public static bool AuditStatusSwitch;
+    public static bool IsAuditOpen => AuditStatusSwitch;
+
+    public static bool ZenSwitch;
+    public static int LotusHeartAppearCondition;
+    public static int LotusHeartUnlockCondition;
+
+    public static bool Gold6ReplaceVideoPos;
+    public static bool RemoveAdsWeeklyUnlockHome;
+
+    public static readonly List<string> AuditFixedShopItemIds = new List<string>();
+    public static readonly Dictionary<PropShopType, List<string>> AuditPropShopItemIds
+        = new Dictionary<PropShopType, List<string>>
+        {
+            { PropShopType.Lamp,   new List<string>() },
+            { PropShopType.Rocket, new List<string>() },
+            { PropShopType.Revive, new List<string>() }
+        };
+
+    public static bool HasAuditFixedShopWhitelist => AuditFixedShopItemIds.Count > 0;
+
+    public static bool HasAuditPropShopWhitelist(PropShopType type)
+        => GetPropShopItems(type).Count > 0;
+
+    public static List<string> GetPropShopItems(PropShopType type)
+    {
+        if (AuditPropShopItemIds.TryGetValue(type, out var list) && list != null)
+            return list;
+        return new List<string>();
+    }
+
+    public static void ResetToDefault()
+    {
+        AuditStatusSwitch = false;
+        ZenSwitch = false;
+        LotusHeartAppearCondition = 0;
+        LotusHeartUnlockCondition = 0;
+        Gold6ReplaceVideoPos = false;
+        RemoveAdsWeeklyUnlockHome = false;
+
+        AuditFixedShopItemIds.Clear();
+        foreach (var kv in AuditPropShopItemIds)
+            if (kv.Value != null) kv.Value.Clear();
+    }
+}
+
 /// <summary>
 /// 商店管理器主脚本（核心）。
-///
-/// 购买后推荐位锁定规则（需求："当任意推送位，被购买后，当前关的该推荐位不会刷新新的礼包"）：
-///  - 锁定粒度 (slot, featured)：灯泡一号位/二号位/三号位、动态商店一号位/二号位均可独立锁定；
-///  - 锁定时记录"该位置最后展示的礼包"，GetRecommendPacks 遇到锁定 featured 时**回显**该礼包（不消失）；
-///  - 每次进入新关卡时应调用 UnlockAllSlots() 清空所有锁定和回显记录。
 /// </summary>
 public partial class ShopManager : MonoBehaviour
 {
@@ -65,6 +123,14 @@ public partial class ShopManager : MonoBehaviour
     public const string ProductSingleClock = "SingleClockS";
     public const string ProductGold6 = "Gold6";
     public const string ProductRemoveAdsDaily = "RemoveAdsWeek";
+    public const string ProductRemoveAdsWeekly = "RemoveAdsWeekly";
+
+    /// <summary>审核开时不展示的商品（固定商店）</summary>
+    private const string ProductGold3ExcludedInAudit = "Gold3";
+
+    /// <summary>审核开时补入固定商店的特惠礼包</summary>
+    private const string ProductSpecialPackageA = "SpecialPackageA";
+    private const string ProductSpecialPackageB = "SpecialPackageB";
 
     private const int BreakIceCooldownBaseDays = 7;
     private const int BreakIceCooldownStepDays = 3;
@@ -76,6 +142,14 @@ public partial class ShopManager : MonoBehaviour
     private const int PeakHourEnd = 23;
     private const int ChurnReturnDays = 7;
     private const int ShopGoldVideoReward = 100;
+
+    // ======================= 审核配置加载状态 =======================
+
+    public bool IsAuditConfigReady { get; private set; }
+    public event Action OnAuditConfigLoaded;
+
+    private string AuditConfigKey = "Zen_AuditStatus_AZ";
+    private const float AuditRequestTimeout = 5f;
 
     // ======================= 商品/状态 =======================
 
@@ -96,13 +170,7 @@ public partial class ShopManager : MonoBehaviour
 
     private Dictionary<string, ShopRecommendConfig> _recommendConfigs = new Dictionary<string, ShopRecommendConfig>();
 
-    /// <summary>各推荐位当前关卡是否已锁定（Key = "slot_featured"，如 "Bulb_1"）</summary>
     private Dictionary<string, bool> _slotLockedThisLevel = new Dictionary<string, bool>();
-
-    /// <summary>
-    /// 各推荐位当前关卡"锁定前最后展示的礼包"（Key = "slot_featured"）。
-    /// 用于在锁定时回显该礼包（不消失、不刷新），下一关 UnlockAllSlots 时清空。
-    /// </summary>
     private Dictionary<string, ShopDataItem> _slotLastShownPack = new Dictionary<string, ShopDataItem>();
 
     private Dictionary<string, int> _payInvokeCount = new Dictionary<string, int>();
@@ -172,6 +240,9 @@ public partial class ShopManager : MonoBehaviour
         LoadHolidayWeekendTable();
         LoadDiscountConfig();
 
+        // ★ 启动审核配置拉取
+        StartAuditStatusLoad();
+
         LogShop($"LoadRuntimeConfigs 完成: 推荐位配置数={_recommendConfigs.Count}, 折扣开关={_discountConfig.enable}, 灯泡每日={_discountConfig.bulbDailyLimit}, 火箭每日={_discountConfig.rocketDailyLimit}, 间隔={_discountConfig.triggerInterval}s");
     }
 
@@ -211,14 +282,417 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"RefreshLimitData: 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
     }
 
-    // ======================= 日志辅助 =======================
+    // ======================= 日志 =======================
 
     private void LogShop(string message)
     {
         Debug.Log($"[Shop] {message}");
     }
 
-    // ======================= ShopLimitData 读写辅助 =======================
+    // ======================= 审核配置加载与解析 =======================
+
+    public void StartAuditStatusLoad()
+    {
+        StartCoroutine(LoadAuditStatusConfigRoutine());
+    }
+
+    private IEnumerator LoadAuditStatusConfigRoutine()
+    {
+        AuditConfig.ResetToDefault();
+        IsAuditConfigReady = false;
+
+        bool isDone = false;
+        GameConfigResponse serverResponse = null;
+
+        yield return new WaitForSeconds(2f);
+
+#if UNITY_OPENHARMONY
+        AuditConfigKey = "Zen_AuditStatus_HM";
+#else
+        AuditConfigKey = "Zen_AuditStatus_AZ";
+#endif
+
+        yield return APIGateway.Instance.GameConfigApi.GetGameConfig(
+            AuditConfigKey,
+            onSuccess: (response) => { serverResponse = response; isDone = true; },
+            onError: (err) =>
+            {
+                Debug.LogWarning($"[Zen_AuditStatus_AZ] 在线拉取失败，准备使用本地兜底: {err}");
+                TextAsset localAuditAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", AuditConfigKey);
+                if (localAuditAsset != null && !string.IsNullOrEmpty(localAuditAsset.text))
+                {
+                    ParseAuditStatusConfig(localAuditAsset.text, "本地预载(防闪烁)");
+                }
+                else
+                {
+                    AuditConfig.AuditStatusSwitch = true;
+                    AuditConfig.ZenSwitch = false;
+                }
+                isDone = true;
+            }
+        );
+
+        float timeout = AuditRequestTimeout;
+        while (!isDone && timeout > 0f)
+        {
+            timeout -= Time.deltaTime;
+            yield return null;
+        }
+
+        if (serverResponse != null && !string.IsNullOrEmpty(serverResponse.CsvString))
+        {
+            string localVersion = Application.version.Trim();
+            string configVersion = serverResponse.Version != null
+                ? serverResponse.Version.Trim() : string.Empty;
+
+            if (string.Equals(localVersion, configVersion, StringComparison.OrdinalIgnoreCase))
+                ParseAuditStatusConfig(serverResponse.CsvString,
+                    $"服务端下发 (匹配版本: {localVersion})");
+            else
+            {
+                AuditConfig.ResetToDefault();
+                Debug.Log($"[Zen_AuditStatus_AZ] 版本号不一致 (本地:{localVersion} vs 服务器配置:{configVersion})，忽略配置，审核关。");
+            }
+        }
+        else
+        {
+            AuditConfig.ResetToDefault();
+            Debug.LogWarning("[Zen_AuditStatus_AZ] 无有效服务端配置，使用默认审核关。");
+        }
+
+        IsAuditConfigReady = true;
+        OnAuditConfigLoaded?.Invoke();
+
+        LogShop($"[Zen_AuditStatus_AZ] 审核配置就绪: IsAuditOpen={AuditConfig.IsAuditOpen}, " +
+                $"FixedWhitelist={AuditConfig.AuditFixedShopItemIds.Count}, " +
+                $"LampWhitelist={AuditConfig.GetPropShopItems(PropShopType.Lamp).Count}, " +
+                $"RocketWhitelist={AuditConfig.GetPropShopItems(PropShopType.Rocket).Count}, " +
+                $"ReviveWhitelist={AuditConfig.GetPropShopItems(PropShopType.Revive).Count}");
+    }
+
+    private void ParseAuditStatusConfig(string csvText, string source)
+    {
+        try
+        {
+            AuditConfig.ResetToDefault();
+
+            List<List<string>> records = SplitCsvLines(csvText);
+            if (records == null || records.Count <= 2)
+            {
+                Debug.LogWarning($"[Zen_AuditStatus_AZ] CSV 行数不足，使用默认审核关 (来源: {source})");
+                return;
+            }
+
+            List<string> fields = records[2];
+            if (fields == null || fields.Count < 1)
+            {
+                Debug.LogWarning($"[Zen_AuditStatus_AZ] CSV 字段不足，使用默认审核关 (来源: {source})");
+                return;
+            }
+
+            AuditConfig.AuditStatusSwitch = GetAuditBool(fields, 0);
+            AuditConfig.ZenSwitch = GetAuditBool(fields, 1);
+
+            string lotusRaw = GetAuditField(fields, 2);
+            if (!string.IsNullOrEmpty(lotusRaw))
+            {
+                string[] lotus = lotusRaw.Split('_');
+                int appear = 0, unlock = 0;
+                if (lotus.Length >= 1) int.TryParse(lotus[0], out appear);
+                if (lotus.Length >= 2) int.TryParse(lotus[1], out unlock);
+                AuditConfig.LotusHeartAppearCondition = appear;
+                AuditConfig.LotusHeartUnlockCondition = unlock;
+            }
+
+            AuditConfig.Gold6ReplaceVideoPos = GetAuditBool(fields, 3);
+            AuditConfig.RemoveAdsWeeklyUnlockHome = GetAuditBool(fields, 4);
+
+            AuditConfig.AuditFixedShopItemIds.Clear();
+            AuditConfig.AuditFixedShopItemIds.AddRange(
+                ParseAuditIdList(GetAuditField(fields, 5)));
+
+            FillAuditPropShopItems(fields, 6, PropShopType.Lamp);
+            FillAuditPropShopItems(fields, 7, PropShopType.Rocket);
+            FillAuditPropShopItems(fields, 8, PropShopType.Revive);
+
+            LogShop($"[Zen_AuditStatus_AZ] 解析完成，来源【{source}】 | " +
+                    $"AuditStatusSwitch={AuditConfig.IsAuditOpen}, " +
+                    $"Gold6ReplaceVideoPos={AuditConfig.Gold6ReplaceVideoPos}, " +
+                    $"RemoveAdsWeeklyUnlockHome={AuditConfig.RemoveAdsWeeklyUnlockHome}");
+        }
+        catch (Exception ex)
+        {
+            AuditConfig.ResetToDefault();
+            Debug.LogError($"[Zen_AuditStatus_AZ] 解析异常，回默认审核关 (来源: {source}): {ex.Message}");
+        }
+    }
+
+    private static void FillAuditPropShopItems(List<string> fields, int index, PropShopType type)
+    {
+        List<string> target = AuditConfig.GetPropShopItems(type);
+        target.Clear();
+        target.AddRange(ParseAuditIdList(GetAuditField(fields, index)));
+    }
+
+    private static string GetAuditField(List<string> fields, int index)
+    {
+        if (fields == null || index < 0 || index >= fields.Count) return string.Empty;
+        return fields[index] != null ? fields[index].Trim().Trim('"') : string.Empty;
+    }
+
+    private static bool GetAuditBool(List<string> fields, int index)
+        => GetAuditField(fields, index) == "1";
+
+    private static List<string> ParseAuditIdList(string raw)
+    {
+        var result = new List<string>();
+        if (string.IsNullOrEmpty(raw)) return result;
+
+        string[] parts = raw.Split(new[] { '|', ';' }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (string p in parts)
+        {
+            string id = p.Trim();
+            if (!string.IsNullOrEmpty(id)) result.Add(id);
+        }
+        return result;
+    }
+
+    // ======================= 审核业务 =======================
+
+    private List<ShopDataItem> GetItemsByIds(List<string> ids)
+    {
+        var result = new List<ShopDataItem>();
+        foreach (string id in ids)
+        {
+            if (string.IsNullOrEmpty(id)) continue;
+            ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == id);
+            if (item != null) result.Add(item);
+            else LogShop($"[Audit] 商品ID无效或未配置: {id}");
+        }
+        return result;
+    }
+
+    // 审核开时按分类函数收集 allShopItems 中所有匹配礼包（去重、只保留可售商品）
+    private List<ShopDataItem> CollectAuditPacks(Predicate<string> matchId)
+    {
+        var result = new List<ShopDataItem>();
+        var seen = new HashSet<string>();
+
+        foreach (var item in allShopItems)
+        {
+            if (item == null || string.IsNullOrEmpty(item.produceNameId)) continue;
+            if (seen.Contains(item.produceNameId)) continue;
+            if (!matchId(item.produceNameId)) continue;
+            if (item.purchaseType < 0) continue; // 仅数据，不售卖
+
+            seen.Add(item.produceNameId);
+            result.Add(item);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 审核固定商店商品列表。
+    /// 审核关返回空列表；审核开：
+    ///  - 白名单非空 → 按白名单顺序；
+    ///  - 白名单为空 → 所有动态商店礼包（NewcomerBox / SpecialPackageA/B / BoxTime / Box0~9），
+    ///    排除 Gold3，补入特惠礼包A/B，排序：新手礼包 → 特惠A → 特惠B → 其余按 sort。
+    /// Gold6 若配置替代金币视频点，则不在固定商店网格重复展示。
+    /// </summary>
+    public List<ShopDataItem> GetAuditFixedStoreItems()
+    {
+        if (!AuditConfig.IsAuditOpen) return new List<ShopDataItem>();
+
+        List<ShopDataItem> result;
+
+        if (AuditConfig.HasAuditFixedShopWhitelist)
+        {
+            result = GetItemsByIds(AuditConfig.AuditFixedShopItemIds);
+        }
+        else
+        {
+            result = BuildAuditFixedStoreBaseList();
+
+            LogShop($"[Audit] 商店审核固定礼包 {result.Count} 个: " +
+                    $"[{string.Join(",", result.Select(x => x.produceNameId))}]");
+        }
+
+        if (ShouldReplaceCoinVideoSlotWithGold6())
+            result = result.Where(x => x.produceNameId != ProductGold6).ToList();
+
+        return result;
+    }
+
+    /// <summary>
+    /// 审核开时固定商店基础列表：
+    ///  - 基础：所有动态商店礼包（NewcomerBox / SpecialPackageA/B / BoxTime / Box0~9），
+    ///    只匹配礼包前缀，天然排除金币/道具等普通商品；
+    ///  - 排除 Gold3、BoxTime（审核开不展示）；
+    ///  - 补入特惠礼包A（SpecialPackageA）、特惠礼包B（SpecialPackageB）兜底；
+    ///  - 排序：新手礼包 → 特惠A → 特惠B → 其余按 sort。
+    /// </summary>
+    private List<ShopDataItem> BuildAuditFixedStoreBaseList()
+    {
+        // 动态商店礼包全集（NewcomerBox 一定在内，金币商品一定不在内）
+        var baseList = CollectAuditPacks(IsDynamicStorePack);
+
+        // 审核开不展示 Gold3、BoxTime（玲珑礼包）
+        baseList = baseList
+            .Where(x => x.produceNameId != ProductGold3ExcludedInAudit)
+            .Where(x => x.produceNameId != ProductBoxTimeExcludedInAudit)
+            .ToList();
+
+        // 补入特惠礼包A / 特惠礼包B（若前缀未匹配上，用此兜底）
+        EnsureAuditExtraPack(baseList, ProductSpecialPackageA);
+        EnsureAuditExtraPack(baseList, ProductSpecialPackageB);
+
+        return SortAuditFixedStoreItems(baseList);
+    }
+
+    private void EnsureAuditExtraPack(List<ShopDataItem> list, string nameId)
+    {
+        if (list == null || string.IsNullOrEmpty(nameId)) return;
+        if (list.Any(x => x.produceNameId == nameId)) return;
+
+        ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == nameId);
+        if (item != null)
+        {
+            list.Add(item);
+            LogShop($"[Audit] 补入审核固定商店礼包: {nameId}");
+        }
+        else
+        {
+            LogShop($"[Audit] 特惠礼包未在商店表找到，跳过: {nameId}");
+        }
+    }
+
+    /// <summary>
+    /// 审核固定商店排序：
+    ///  - NewcomerBox（新手礼包）最前；
+    ///  - 紧随其后 SpecialPackageA（特惠礼包A）、SpecialPackageB（特惠礼包B）；
+    ///  - 其余按原 sort 升序（sort=0 排末尾），再按 id。
+    /// </summary>
+    private List<ShopDataItem> SortAuditFixedStoreItems(List<ShopDataItem> items)
+    {
+        if (items == null) return new List<ShopDataItem>();
+
+        return items
+            .OrderBy(GetAuditFixedStoreGroup)
+            .ThenBy(x =>
+            {
+                if (GetAuditFixedStoreGroup(x) < 3) return 0;
+                return x.sort == 0 ? int.MaxValue : x.sort;
+            })
+            .ThenBy(x => x.id)
+            .ToList();
+    }
+
+    private int GetAuditFixedStoreGroup(ShopDataItem item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.produceNameId)) return 3;
+
+        string id = item.produceNameId;
+        if (id == "NewcomerBox") return 0;          // 新手礼包
+        if (id == ProductSpecialPackageA) return 1;  // 特惠礼包A
+        if (id == ProductSpecialPackageB) return 2;  // 特惠礼包B
+        return 3;                                    // 其余
+    }
+    
+    /// <summary>
+    /// 审核开时返回某 slot 全部礼包（不走推送权限）。
+    /// 白名单非空时按白名单；否则从 allShopItems 全量按分类匹配：
+    ///   Bulb → 所有提示灯礼包；Rocket → 所有火箭礼包；Clock → 所有复活礼包；
+    ///   DynamicStore/FixedStore → 所有动态商店礼包（排除 Gold3、BoxTime）。
+    /// </summary>
+    public List<ShopDataItem> GetAuditPacksForSlot(RecommendSlot slot)
+    {
+        if (!AuditConfig.IsAuditOpen) return new List<ShopDataItem>();
+
+        PropShopType? propType = MapRecommendSlotToPropShopType(slot);
+        if (propType.HasValue && AuditConfig.HasAuditPropShopWhitelist(propType.Value))
+        {
+            return GetItemsByIds(AuditConfig.GetPropShopItems(propType.Value))
+                .OrderBy(x => x.price)
+                .ToList();
+        }
+
+        Predicate<string> matcher = null;
+        switch (slot)
+        {
+            case RecommendSlot.Bulb:         matcher = IsBulbPack; break;
+            case RecommendSlot.Rocket:       matcher = IsRocketPack; break;
+            case RecommendSlot.Clock:        matcher = IsClockPack; break;
+            case RecommendSlot.DynamicStore:
+            case RecommendSlot.FixedStore:   matcher = IsDynamicStorePack; break;
+        }
+        if (matcher == null) return new List<ShopDataItem>();
+
+        var result = CollectAuditPacks(matcher);
+
+        // 动态商店 / 固定商店审核开排除 Gold3、BoxTime
+        if (slot == RecommendSlot.DynamicStore || slot == RecommendSlot.FixedStore)
+        {
+            result = result
+                .Where(x => x.produceNameId != ProductGold3ExcludedInAudit)
+                .Where(x => x.produceNameId != ProductBoxTimeExcludedInAudit)
+                .ToList();
+        }
+
+        result = result.OrderBy(x => x.price).ToList();
+
+        LogShop($"[Audit] slot={slot} 审核全量礼包 {result.Count} 个: [{string.Join(",", result.Select(x => x.produceNameId))}]");
+        return result;
+    }
+
+    private PropShopType? MapRecommendSlotToPropShopType(RecommendSlot slot)
+    {
+        switch (slot)
+        {
+            case RecommendSlot.Bulb:   return PropShopType.Lamp;
+            case RecommendSlot.Rocket: return PropShopType.Rocket;
+            case RecommendSlot.Clock:  return PropShopType.Revive;
+            default: return null;
+        }
+    }
+
+    public bool ShouldReplaceCoinVideoSlotWithGold6()
+        => AuditConfig.IsAuditOpen && AuditConfig.Gold6ReplaceVideoPos;
+
+    public ShopDataItem GetAuditGold6Item()
+    {
+        if (!ShouldReplaceCoinVideoSlotWithGold6()) return null;
+        ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == ProductGold6);
+        if (item == null)
+            LogShop($"[Audit] Gold6 商品未在商店表中找到: {ProductGold6}");
+        return item;
+    }
+
+    public bool IsRemoveAdsWeeklyHomeEntryUnlocked()
+    {
+        if (AuditConfig.IsAuditOpen && AuditConfig.RemoveAdsWeeklyUnlockHome)
+            return true;
+        return IsRemoveAdsWeeklyOwned();
+    }
+
+    private bool IsRemoveAdsWeeklyOwned()
+    {
+        ShopDataItem item = allShopItems.FirstOrDefault(
+            x => x.produceNameId == ProductRemoveAdsDaily
+              || x.produceNameId == ProductRemoveAdsWeekly);
+        if (item == null) return false;
+
+        ShopLimitData limit = GetLimitData(item);
+        return limit != null && limit.isget && !limit.isoverdate;
+    }
+
+    private bool IsActivityBadgeSuppressedByAudit()
+    {
+        if (!AuditConfig.IsAuditOpen) return false;
+        LogShop("[Audit] 审核开，促销角标禁用");
+        return true;
+    }
+
+    // ======================= ShopLimitData 读写 =======================
 
     private ShopLimitData GetOrCreateLimitData(ShopDataItem item)
     {
@@ -268,7 +742,9 @@ public partial class ShopManager : MonoBehaviour
 
     public bool IsRemoveAdsProduct(string produceNameId)
     {
-        return produceNameId == ProductRemoveAds || produceNameId == ProductRemoveAdsDaily;
+        return produceNameId == ProductRemoveAds
+            || produceNameId == ProductRemoveAdsDaily
+            || produceNameId == ProductRemoveAdsWeekly;
     }
 
     public bool IsRemoveAdsOwned()
@@ -307,7 +783,7 @@ public partial class ShopManager : MonoBehaviour
         return IsRemoveAdsOwned() || IsRemoveAdsActive();
     }
 
-    // ======================= 内购推荐位推送规则 =======================
+    // ======================= 推荐位推送规则 =======================
 
     public enum RecommendSlot
     {
@@ -449,27 +925,19 @@ public partial class ShopManager : MonoBehaviour
         return buyCount >= item.limited;
     }
 
-    // ======================= 推荐位锁定（当前关） =======================
+    // ======================= 推荐位锁定 =======================
 
     private string SlotKey(RecommendSlot slot, int featured)
     {
         return $"{slot}_{featured}";
     }
 
-    /// <summary>该推荐位（slot + featured）当前关是否已锁定（被购买过）。</summary>
     public bool IsSlotLocked(RecommendSlot slot, int featured)
     {
         bool locked;
         return _slotLockedThisLevel.TryGetValue(SlotKey(slot, featured), out locked) && locked;
     }
 
-    /// <summary>
-    /// 锁定指定的推荐位（slot + featured），当前关内不再刷新新礼包。
-    /// ★ 同时记录"该位置最后展示的礼包"，GetRecommendPacks 遇到锁定时回显该礼包（不消失）。
-    /// </summary>
-    /// <param name="slot">推荐位类型</param>
-    /// <param name="featured">推荐位格子（1/2/3）</param>
-    /// <param name="shownPack">锁定时该位置展示的礼包（被购买的那个）</param>
     public void LockSlot(RecommendSlot slot, int featured, ShopDataItem shownPack)
     {
         string key = SlotKey(slot, featured);
@@ -481,7 +949,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"LockSlot: {slot}, featured={featured}, shownPack={(shownPack != null ? shownPack.produceNameId : "null")}");
     }
 
-    /// <summary>取该推荐位锁定时记录的"最后展示的礼包"（无记录返回 null）。</summary>
     public ShopDataItem GetLastShownPack(RecommendSlot slot, int featured)
     {
         ShopDataItem pack;
@@ -490,10 +957,6 @@ public partial class ShopManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// 解锁所有推荐位（应在每次进入新关卡时调用）。
-    /// 同时复位折扣消费标记、道具视频每关次数，并清空"上次展示礼包"记录。
-    /// </summary>
     public void UnlockAllSlots()
     {
         _slotLockedThisLevel.Clear();
@@ -504,7 +967,6 @@ public partial class ShopManager : MonoBehaviour
         LogShop("UnlockAllSlots: 全部推荐位解锁, 折扣消费标记复位, 回显记录已清空");
     }
 
-    /// <summary>反查商品属于哪个推荐位 slot；不属于任何推荐位则返回 null。</summary>
     private RecommendSlot? GetSlotOfPack(ShopDataItem item)
     {
         if (item == null) return null;
@@ -603,17 +1065,21 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 推荐位决策入口 =======================
 
-    /// <summary>
-    /// 决出当前推荐位礼包。
-    /// 关键逻辑：
-    ///  - 若某 (slot, featured) 在当前关已被购买过（IsSlotLocked 返回 true），
-    ///    **回显锁定时记录的最后展示礼包**（不消失、不刷新），而不是跳过；
-    ///  - 动态商店/固定商店一号位：若所有可展示礼包决策权重都为 0 → 不推荐礼包；
-    ///    此时若"去广告"未购买，一号位展示"去广告"；若已购买，二号位第1、2权重的礼包都展示；
-    ///  - 新人礼礼包不会同时出现（灯泡＞复活＞火箭，同类型价格低＞高）。
-    /// </summary>
     public List<ShopDataItem> GetRecommendPacks(RecommendSlot slot)
     {
+        // // ★ 审核开：完全绕过推送权限，返回该类目全部礼包
+        // if (AuditConfig.IsAuditOpen)
+        // {
+        //     List<ShopDataItem> auditItems = GetAuditPacksForSlot(slot);
+        //     if (auditItems.Count > 0)
+        //     {
+        //         LogShop($"[Audit] GetRecommendPacks 审核开，绕过推送: slot={slot} → 全部礼包 {auditItems.Count} 个");
+        //         return auditItems;
+        //     }
+        //     LogShop($"[Audit] GetRecommendPacks 审核开但 slot={slot} 无礼包，返回空");
+        //     return auditItems;
+        // }
+
         LogShop($"========== GetRecommendPacks 开始: slot={slot}, shopMode={shopMode}, 时间={DateTime.Now:HH:mm:ss} ==========");
 
         int maxFeatured = 1;
@@ -631,8 +1097,6 @@ public partial class ShopManager : MonoBehaviour
 
         for (int featured = 1; featured <= maxFeatured; featured++)
         {
-            // ★ 核心：该推荐位本关已锁定（被购买过）
-            //    处理策略：回显"锁定时记录的最后展示礼包"，不消失、不刷新。
             if (IsSlotLocked(slot, featured))
             {
                 ShopDataItem lastShown = GetLastShownPack(slot, featured);
@@ -653,7 +1117,6 @@ public partial class ShopManager : MonoBehaviour
 
             if (candidates.Count == 0) continue;
 
-            // 动态商店/固定商店一号位特殊规则
             if ((slot == RecommendSlot.DynamicStore || slot == RecommendSlot.FixedStore) && featured == 1)
             {
                 var winners = DecideWinner(candidates, slot);
@@ -682,8 +1145,6 @@ public partial class ShopManager : MonoBehaviour
             }
         }
 
-        // 动态商店一号位无礼包可出且"去广告"已购买 → 二号位第1、2权重的礼包都展示
-        // 注意：若二号位本关已被锁定，则不再放开
         if (slot == RecommendSlot.DynamicStore && slot1Empty && IsRemoveAdsOwned()
             && !IsSlotLocked(slot, 2))
         {
@@ -853,9 +1314,6 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 购买流程 =======================
 
-    /// <summary>
-    /// 统一处理礼包购买后的逻辑（GiftTable 和 ShopItem 共用）。
-    /// </summary>
     public void HandleGiftTablePurchaseRewards(ShopDataItem shopDataItem, ProductItem productItem)
     {
         if (shopDataItem == null)
@@ -1038,10 +1496,11 @@ public partial class ShopManager : MonoBehaviour
             adstype = (int)LimitRewordType.RemoveAds;
             hours = 0;
         }
-        else if (shopDataItem.produceNameId == ProductRemoveAdsDaily)
+        else if (shopDataItem.produceNameId == ProductRemoveAdsDaily
+              || shopDataItem.produceNameId == ProductRemoveAdsWeekly)
         {
             adstype = (int)LimitRewordType.RemoveDayAds;
-            hours = 1 * 24;
+            hours = shopDataItem.produceNameId == ProductRemoveAdsWeekly ? 7 * 24 : 1 * 24;
         }
 
         LogShop($"HandleRemoveAdsPurchase: {shopDataItem.produceNameId}, permanent={permanent}, hours={hours}");
@@ -1121,9 +1580,6 @@ public partial class ShopManager : MonoBehaviour
         return int.TryParse(s.Substring(idx + 1), out hours) ? hours : 0;
     }
 
-    /// <summary>
-    /// 礼包购买后的推荐位状态更新（付费倾向、探价加分、冷却、上次购买、锁定推荐位）。
-    /// </summary>
     private void OnPackPurchased(ShopDataItem shopDataItem)
     {
         LogShop($"OnPackPurchased 开始: {shopDataItem.produceNameId}, type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
@@ -1187,11 +1643,6 @@ public partial class ShopManager : MonoBehaviour
         limit.isActivityPack = false;
         limit.SetLimitEndTime(DateTime.MinValue);
 
-        // ============================================================
-        // ★ 锁定推荐位：只锁"被购买礼包所在的具体推荐位（slot + featured）"
-        //   同时把被购买的礼包作为"锁定时最后展示的礼包"记录下来，
-        //   GetRecommendPacks 遇到锁定的 featured 时会回显它，不会消失。
-        // ============================================================
         RecommendSlot? slot = GetSlotOfPack(shopDataItem);
         ShopRecommendConfig packCfg = GetCfg(shopDataItem.produceNameId);
         int featured = packCfg != null ? packCfg.featured : 0;
@@ -1279,6 +1730,7 @@ public partial class ShopManager : MonoBehaviour
     public bool TryTriggerBulbDiscount(int levelId, int wrongAnswerSeconds, int remainTargetWords, int bulbCount)
     {
         if (!_discountConfig.enable) return false;
+        if (AuditConfig.IsAuditOpen) return false;
         RefreshDailyCounters();
         if (levelId < _discountConfig.unlockLevel) return false;
         if (_bulbDiscountConsumed) return false;
@@ -1297,6 +1749,7 @@ public partial class ShopManager : MonoBehaviour
     public bool TryTriggerRocketDiscount(int levelId, int cursorSeconds, int blankCount, int rocketCount)
     {
         if (!_discountConfig.enable) return false;
+        if (AuditConfig.IsAuditOpen) return false;
         RefreshDailyCounters();
         if (levelId < _discountConfig.unlockLevel) return false;
         if (_rocketDiscountConsumed) return false;
@@ -1339,6 +1792,12 @@ public partial class ShopManager : MonoBehaviour
 
     public void OnBulbRewardVideoFinished()
     {
+        if (AuditConfig.IsAuditOpen)
+        {
+            LogShop("[Audit] OnBulbRewardVideoFinished 跳过: 审核开，内购特殊处理不生效");
+            return;
+        }
+
         string today = DateTime.Now.ToString("yyyy-MM-dd");
         if (_bulbVideoGiftDate != today)
         {
@@ -1366,6 +1825,12 @@ public partial class ShopManager : MonoBehaviour
 
     public void OnInterstitialClosed(int currentLevel)
     {
+        if (AuditConfig.IsAuditOpen)
+        {
+            LogShop("[Audit] OnInterstitialClosed 跳过: 审核开，内购特殊处理不生效");
+            return;
+        }
+
         if (currentLevel < 30)
         {
             LogShop($"OnInterstitialClosed: 关卡={currentLevel} < 30, 不赠送");
@@ -1394,7 +1859,7 @@ public partial class ShopManager : MonoBehaviour
 
     public async void ShowLimitAdsPanel()
     {
-        LogShop("[ShopManager] ShowLimitAdsPanel 原主动弹出逻辑已删除（需求 C 章节：删除原逻辑），请接入破冰/复购策略");
+        LogShop("[ShopManager] ShowLimitAdsPanel 原主动弹出逻辑已删除，请接入破冰/复购策略");
         await Task.Delay(1);
     }
 

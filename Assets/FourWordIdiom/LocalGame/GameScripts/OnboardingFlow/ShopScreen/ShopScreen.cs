@@ -90,7 +90,7 @@ public class ShopScreen : UIWindow
         // 固定商店：Start 阶段直接创建商品列表
         shopallDataItems = ShopManager.shopManager.GetShopItems();
         if (ShopManager.shopManager.shopMode == ShopMode.FixedStore)
-            CrateShopItem(shopallDataItems);
+            ShowFixedStore();
 
         // ★ 顶部资源飞入目标（金币 / 提示灯 / 火箭 / 蝴蝶 / 复活道具）
         CustomFlyInManager.Instance.ShopAutoObj = AutoIcon.gameObject;
