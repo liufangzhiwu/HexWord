@@ -64,7 +64,7 @@ public partial class ShopManager : MonoBehaviour
     public const string ProductSingleGoods = "SingleGoods";
     public const string ProductSingleClock = "SingleClockS";
     public const string ProductGold6 = "Gold6";
-    public const string ProductRemoveAdsDaily = "RemoveAdsWeekly";
+    public const string ProductRemoveAdsDaily = "RemoveAdsWeek";
 
     private const int BreakIceCooldownBaseDays = 7;
     private const int BreakIceCooldownStepDays = 3;

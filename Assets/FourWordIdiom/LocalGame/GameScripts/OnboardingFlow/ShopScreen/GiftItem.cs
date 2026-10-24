@@ -28,6 +28,120 @@ public class GiftItem : MonoBehaviour
     private Button tipbtn;
     private int shopid;
 
+    
+     public void SetBuyListData(List<string> data, int itemid, Color color, string des = "", string pointdes = "")
+    {
+        string spritename = "";
+        shopid = itemid;
+
+        if (des != "")
+        {
+            SetCountFontSize(70);
+        }
+
+        List<Outline> Outlines = countText.GetComponents<Outline>().ToList();
+
+        SetCountAnchoredPosition(new Vector2(0f, -71f));
+
+        // ---------- 礼包名 ----------
+        switch (GetItemScreen.limitRewordType)
+        {
+            case LimitRewordType.ReStartTool:
+                break;
+            case LimitRewordType.Butterfly:
+                break;
+            case LimitRewordType.AutoComplete:
+                break;
+            case LimitRewordType.Tipstool:
+                break;
+        }
+
+        switch (int.Parse(data[0]))
+        {
+            case (int)LimitRewordType.Coins:
+                spritename = "gold";
+                countText.text = "\u00d7" + data[1];
+                hengIconSize = new Vector2(100f, 100f);
+                SetIconSize(new Vector2(180f, 250f));
+                SetIconAnchoredPosition(new Vector2(0f, -10f));
+                break;
+            case (int)LimitRewordType.Butterfly:
+                spritename = "Butterfly";
+                countText.text = "\u00d7" + data[1];
+                hengIconSize = new Vector2(110f, 100f);
+                SetIconSize(new Vector2(220f, 350f));
+                SetIconAnchoredPosition(new Vector2(0f, -25f));
+                break;
+            case (int)LimitRewordType.Tipstool:
+                spritename = "shop_reset";
+                countText.text = "\u00d7" + data[1];
+                SetIconSize(new Vector2(230f, 350f));
+                SetIconAnchoredPosition(new Vector2(0f, -25f));
+                SetCountAnchoredPosition(new Vector2(8f, -73f));
+                break;
+            case (int)LimitRewordType.AutoComplete:
+                spritename = "rocket";
+                countText.text = "\u00d7" + data[1];
+                SetIconSize(new Vector2(245f, 350f));
+                SetIconAnchoredPosition(new Vector2(0f, -20f));
+                break;
+            case (int)LimitRewordType.RemoveAds:
+                spritename = "shopads";
+                hengIconSize = new Vector2(110f, 100f);
+                SetIconSize(new Vector2(250f, 250f));
+                SetIconAnchoredPosition(new Vector2(0f, -10f));
+                countText.text = "永久";
+                SetCountFontSize(60);
+                CreateTipsBtn(pointdes);
+                break;
+            case (int)LimitRewordType.RemoveDayAds:
+                spritename = "shopads";
+                countText.text = data[1]+"天";
+                SetIconSize(new Vector2(230f, 350f));
+                SetIconSize(Vector2.zero);
+                hengIconAnchoredPosition = new Vector2(-14f, -14f);
+                SetIconAnchoredPosition(new Vector2(0f, -25f));
+                SetCountFontSize(60);
+                CreateTipsBtn(pointdes);
+                break;
+            case (int)LimitRewordType.ReStartTool:
+                spritename = "clock";
+                countText.text = "\u00d7" + data[1];
+                SetCountFontSize(60);
+                hengIconSize = new Vector2(110f, 100f);
+                SetIconSize(Vector2.zero);
+                SetIconAnchoredPosition(new Vector2(0f, -5f));
+                CreateTipsBtn(pointdes);
+                break;
+            case (int)LimitRewordType.InfiniteEnergy:
+                spritename = "InfiniteEnergy";
+                countText.text = data[1]+"时";
+                hengIconSize = new Vector2(98f, 100f);
+                hengIconAnchoredPosition = new Vector2(8f, -14f);
+                SetIconSize(Vector2.zero);
+                SetIconAnchoredPosition(new Vector2(0f, 50f));
+                SetCountFontSize(60);
+                CreateTipsBtn(pointdes);
+
+                
+                SetCountAnchoredPosition(new Vector2(0f, -89f));
+               
+                break;
+        }
+
+        Sprite sprite = LoadShopIcon(spritename);
+        if (sprite != null)
+        {
+            shopIcon.sprite = sprite;
+            //shopIcon.SetNativeSize();
+        }
+
+        for (int i = 1; i < Outlines.Count; i++)
+        {
+            Outlines[i].effectColor = color;
+        }
+    }
+    
     public void SetShopData(List<string> data, int itemid, Color color, string des = "", string pointdes = "")
     {
         string spritename = "";

@@ -722,8 +722,6 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
             // 价格：优先取实际支付价格（LocalizedPrice），否则回退商品配置价
             float price = shopDataItem.price;
-            if (item != null && item.LocalizedPrice > 0)
-                price = item.LocalizedPrice;
 
             // 名称：优先多语言翻译 nameKey，回退 produceNameId
             string nameText = MultilingualManager.Instance?.GetString(shopDataItem.name)

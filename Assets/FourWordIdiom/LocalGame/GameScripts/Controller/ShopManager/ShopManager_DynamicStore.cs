@@ -280,7 +280,7 @@ public partial class ShopManager : MonoBehaviour
         }
 
         if (GetTodayHolidayLabel() == "周末")
-            return "周末" + zhe;
+            return "周末" + zhe+"折";
 
         return "节日" + zhe;
     }

@@ -14,14 +14,12 @@ public class PurchaseRecordItem : MonoBehaviour
     [SerializeField] private Text priceText;        // 实际价格
     //[SerializeField] private Text oldPriceText;     // 原价（划线价，无折扣时隐藏）
     [SerializeField] private Text timeText;         // 购买时间
-    [SerializeField] private Image iconImage;       // 可选：礼包底图
+    //[SerializeField] private Image iconImage;       // 可选：礼包底图
 
     [Header("礼包内容（GiftItem 方式）")]
     [SerializeField] private Transform contentParent;   // 内容父节点（Grid/VerticalLayout）
     [SerializeField] private GiftItem giftItemPrefab;   // 单个礼包内容项 Prefab
-
-    [Header("礼包内容（纯文本方式，可选）")]
-    [SerializeField] private Text contentText;      // 回退文本（如 "金币 ×1000  蝴蝶 ×2"）
+   
 
     private readonly List<GiftItem> _spawned = new List<GiftItem>();
 
@@ -64,13 +62,6 @@ public class PurchaseRecordItem : MonoBehaviour
         if (timeText != null)
             timeText.text = record.buyTime ?? "";
 
-        // ---------- 底图（可选） ----------
-        if (iconImage != null && !string.IsNullOrEmpty(record.showIcon))
-        {
-            var sprite = AdvancedBundleLoader.SharedInstance?.GetSpriteFromAtlas(record.showIcon+"_Icon");
-            if (sprite != null) iconImage.sprite = sprite;
-        }
-
         // ---------- 礼包内容 ----------
         RefreshContent(record);
     }
@@ -84,30 +75,6 @@ public class PurchaseRecordItem : MonoBehaviour
         }
         _spawned.Clear();
 
-        if (record.productContent == null || record.productContent.Count == 0)
-        {
-            if (contentText != null) contentText.text = "（无内容数据）";
-            return;
-        }
-
-        bool useGiftItems = contentParent != null && giftItemPrefab != null;
-
-        // ---------- 回退：纯文本 ----------
-        if (!useGiftItems)
-        {
-            if (contentText != null)
-            {
-                var sb = new System.Text.StringBuilder();
-                foreach (var row in record.productContent)
-                {
-                    if (row == null || row.Count < 2) continue;
-                    sb.Append(GetTypeName(row[0])).Append(" ×").Append(row[1]).Append("  ");
-                }
-                contentText.text = sb.ToString().TrimEnd();
-            }
-            return;
-        }
-
         // ---------- GiftItem 方式 ----------
         Color outlineColor = Color.gray; // 记录页不强制按 produceNameId 上色，统一白色描边
         foreach (var row in record.productContent)
@@ -116,7 +83,7 @@ public class PurchaseRecordItem : MonoBehaviour
 
             var item = Instantiate(giftItemPrefab, contentParent);
             // itemid 传 0：记录页不创建 tips，避免 shopItemsTipsPanel 冲突
-            item.SetShopData(row, 0, outlineColor);
+            item.SetBuyListData(row, 0, outlineColor);
             item.SetBonus(false);
             item.gameObject.SetActive(true);
             _spawned.Add(item);

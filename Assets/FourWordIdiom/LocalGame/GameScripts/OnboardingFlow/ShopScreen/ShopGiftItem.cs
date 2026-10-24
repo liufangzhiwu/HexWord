@@ -77,7 +77,7 @@ public class ShopGiftItem : ShopItemBase
         { "Box3",            HslToColor(225f, 0.95f, 0.30f) },
         { "Box4",            HslToColor(9f,   1.00f, 0.35f) },
         { "RemoveADS",       HslToColor(189f, 1.00f, 0.11f) },
-        { "RemoveAdsWeekly", HslToColor(189f, 1.00f, 0.11f) },
+        { "RemoveAdsWeek", HslToColor(189f, 1.00f, 0.11f) },
     };
 
     /// <summary>HSL(A) → Unity Color。</summary>

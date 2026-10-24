@@ -61,7 +61,7 @@ public class GiftTable : MonoBehaviour
         { "Box3",            HslToColor(225f, 0.95f, 0.30f) },   // hsla(225, 95%, 30%, 1)
         { "Box4",            HslToColor(9f,   1.00f, 0.35f) },   // hsla(9, 100%, 35%, 1)
         { "RemoveADS",       HslToColor(189f, 1.00f, 0.11f) },   // hsla(189, 100%, 11%, 1)
-        { "RemoveAdsWeekly", HslToColor(189f, 1.00f, 0.11f) },   // hsla(189, 100%, 11%, 1)
+        { "RemoveAdsWeek", HslToColor(189f, 1.00f, 0.11f) },   // hsla(189, 100%, 11%, 1)
     };
 
     /// <summary>HSL(A) → Unity Color。</summary>

@@ -306,7 +306,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 290, y: -84}
-  m_SizeDelta: {x: 0, y: 160}
+  m_SizeDelta: {x: 160, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9016554232546400857
 CanvasRenderer:
@@ -1366,7 +1366,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 291.5, y: -84}
-  m_SizeDelta: {x: 0, y: 160}
+  m_SizeDelta: {x: 90, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6957942754452756699
 CanvasRenderer:
@@ -2194,6 +2194,7 @@ MonoBehaviour:
   _AddgiftItem: {fileID: 7991887146020917914}
   limintCountText: {fileID: 6343925529543276384}
   tagText: {fileID: 7627489395687891816}
+  purchaseRecordBtn: {fileID: 0}
 --- !u!1 &3425316774467552412
 GameObject:
   m_ObjectHideFlags: 0
@@ -5901,7 +5902,7 @@ MonoBehaviour:
   _closeDuration: 0.3
   failPanel: {fileID: 4343912682796784156}
   continuePanel: {fileID: 3055095529995640071}
-  adsAddTimeBtn: {fileID: 0}
+  adsAddTimeBtn: {fileID: 8916178922305958534}
   exitBtn: {fileID: 3270482974672637650}
   goldAddTimeBtn: {fileID: 6437576530806391826}
   reviveAdsText: {fileID: 3714986241627558122}
