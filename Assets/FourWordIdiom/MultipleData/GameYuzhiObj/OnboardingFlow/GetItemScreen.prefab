@@ -273,6 +273,7 @@ MonoBehaviour:
   _AddgiftItem: {fileID: 8374087540051798533}
   limintCountText: {fileID: 8718542826887472433}
   tagText: {fileID: 6041419422796782697}
+  purchaseRecordBtn: {fileID: 0}
 --- !u!1 &286171128859312531
 GameObject:
   m_ObjectHideFlags: 0
@@ -1395,9 +1396,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 4642495873508850331}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -323.4, y: -155}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 260, y: -155}
   m_SizeDelta: {x: 440.3807, y: 122.835}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9118394315617173672
@@ -1435,7 +1436,7 @@ MonoBehaviour:
     m_BestFit: 1
     m_MinSize: 7
     m_MaxSize: 70
-    m_Alignment: 4
+    m_Alignment: 3
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -1856,6 +1857,7 @@ MonoBehaviour:
   _AddgiftItem: {fileID: 9058991786240953373}
   limintCountText: {fileID: 4114284901236823996}
   tagText: {fileID: 3195555769141601888}
+  purchaseRecordBtn: {fileID: 0}
 --- !u!1 &2874124370180430372
 GameObject:
   m_ObjectHideFlags: 0
@@ -5505,9 +5507,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 5371211989063481673}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -323.4, y: -155}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 260, y: -155}
   m_SizeDelta: {x: 440.3807, y: 122.835}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6034717752746630156
@@ -5545,7 +5547,7 @@ MonoBehaviour:
     m_BestFit: 1
     m_MinSize: 7
     m_MaxSize: 70
-    m_Alignment: 4
+    m_Alignment: 3
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0

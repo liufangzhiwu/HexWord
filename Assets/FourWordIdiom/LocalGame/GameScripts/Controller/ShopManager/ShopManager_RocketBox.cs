@@ -29,5 +29,16 @@ public partial class ShopManager : MonoBehaviour
             ParseRecommendConfigs(rec.text);
         }
     }
+    
+    
+    /// <summary>
+    /// 获取总共提示灯道具数量
+    /// </summary>
+    /// <returns></returns>
+    public int GetRocketBoxCount()
+    {
+        return 4;
+    }
+    
 }
 //（注：内容由AI生成）

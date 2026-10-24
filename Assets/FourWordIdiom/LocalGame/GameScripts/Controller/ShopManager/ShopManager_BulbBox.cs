@@ -12,7 +12,8 @@ public partial class ShopManager : MonoBehaviour
             || nameId == "ItemBox01"
             || nameId == "GoldBag1"
             || nameId == "GoldBag2"
-            || nameId == "LuckyBag1";
+            || nameId == "LuckyBag1"
+            || nameId == "LuckyBag2";
     }
 
     private void LoadBulbBoxConfig()
@@ -27,6 +28,15 @@ public partial class ShopManager : MonoBehaviour
         {
             LogShop($"LoadBulbBoxConfig: 未找到 shop_bulbbox, 使用默认值");
         }
+    }
+
+    /// <summary>
+    /// 获取总共提示灯道具数量
+    /// </summary>
+    /// <returns></returns>
+    public int GetBulbBoxCount()
+    {
+        return 11;
     }
 
     /// <summary>

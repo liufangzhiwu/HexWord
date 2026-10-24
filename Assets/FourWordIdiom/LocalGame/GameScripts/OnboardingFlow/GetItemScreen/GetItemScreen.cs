@@ -225,6 +225,10 @@ public class GetItemScreen : UIWindow
                 AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
                 rectTransform.sizeDelta = new Vector2(460, 460);
                 eventDes = title.text + "弹窗广告";
+                if (AuditConfig.IsAuditOpen)
+                {
+                    scrollRect.horizontal = true;
+                }
                 break;
         }
 
@@ -239,8 +243,16 @@ public class GetItemScreen : UIWindow
         switch (type)
         {
             case LimitRewordType.Tipstool: // 提示灯
+                if (AuditConfig.IsAuditOpen)
+                {
+                    return ShopManager.shopManager.GetBulbBoxCount();
+                }
                 return 3;
             default:
+                if (AuditConfig.IsAuditOpen)
+                {
+                    return ShopManager.shopManager.GetBulbBoxCount();
+                }
                 return 1;
         }
     }

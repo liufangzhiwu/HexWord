@@ -613,9 +613,7 @@ public partial class ShopManager : MonoBehaviour
         PropShopType? propType = MapRecommendSlotToPropShopType(slot);
         if (propType.HasValue && AuditConfig.HasAuditPropShopWhitelist(propType.Value))
         {
-            return GetItemsByIds(AuditConfig.GetPropShopItems(propType.Value))
-                .OrderBy(x => x.price)
-                .ToList();
+            return GetItemsByIds(AuditConfig.GetPropShopItems(propType.Value)).ToList();
         }
 
         Predicate<string> matcher = null;
@@ -1069,30 +1067,24 @@ public partial class ShopManager : MonoBehaviour
 
     public List<ShopDataItem> GetRecommendPacks(RecommendSlot slot)
     {
-        // // ★ 审核开：完全绕过推送权限，返回该类目全部礼包
-        // if (AuditConfig.IsAuditOpen)
-        // {
-        //     List<ShopDataItem> auditItems = GetAuditPacksForSlot(slot);
-        //     if (auditItems.Count > 0)
-        //     {
-        //         LogShop($"[Audit] GetRecommendPacks 审核开，绕过推送: slot={slot} → 全部礼包 {auditItems.Count} 个");
-        //         return auditItems;
-        //     }
-        //     LogShop($"[Audit] GetRecommendPacks 审核开但 slot={slot} 无礼包，返回空");
-        //     return auditItems;
-        // }
+        
+        int maxFeatured = 1;
+        
+        // ★ 审核开：完全绕过推送权限，返回该类目全部礼包
+        if (AuditConfig.IsAuditOpen)
+        {
+            
+            switch (slot)
+            {
+                case RecommendSlot.Bulb: return GetAuditPacksForSlot(slot);
+                case RecommendSlot.DynamicStore: maxFeatured = 2; break;
+                case RecommendSlot.Rocket:
+                case RecommendSlot.Clock:return GetAuditPacksForSlot(slot);
+                case RecommendSlot.FixedStore: maxFeatured = 1;break;
+            }
+        }
 
         LogShop($"========== GetRecommendPacks 开始: slot={slot}, shopMode={shopMode}, 时间={DateTime.Now:HH:mm:ss} ==========");
-
-        int maxFeatured = 1;
-        switch (slot)
-        {
-            case RecommendSlot.Bulb: maxFeatured = 3; break;
-            case RecommendSlot.DynamicStore: maxFeatured = 2; break;
-            case RecommendSlot.Rocket:
-            case RecommendSlot.Clock:
-            case RecommendSlot.FixedStore: maxFeatured = 1; break;
-        }
 
         List<ShopDataItem> result = new List<ShopDataItem>();
         bool slot1Empty = false;
