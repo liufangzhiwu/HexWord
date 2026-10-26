@@ -84,9 +84,9 @@ public partial class ChessStageController
     {
         IsCurrentStageSkipped = false;
 
-        // ★ 广告失败策略：每关开始清零灯泡/复活视频使用次数（A/B 阈值按关统计）
+        // ★ 每关开始：解锁推荐位 + 清零灯泡/复活视频使用次数（限购礼包下一关重新按权重推荐）
         if (ShopManager.shopManager != null)
-            ShopManager.shopManager.ResetLevelVideoUsed();
+            ShopManager.shopManager.UnlockAllSlots();
 
         // 初始化关卡配置
         IsFirstEnterStage = GameDataManager.Instance.IsNewLevelEntry(StageIndex, true);

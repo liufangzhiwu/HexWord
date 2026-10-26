@@ -632,6 +632,13 @@ public class GiftTable : MonoBehaviour
                 LogShop("ShopManager.shopManager 为空，无法处理购买后逻辑（回退：仅打印）");
             }
 
+            // ★ 限购一次礼包购买后立即隐藏（下一关卡由推荐权重重新选出新礼包）
+            if (ShopManager.shopManager != null && ShopManager.shopManager.IsLimitedOut(shopDataItem))
+            {
+                LogShop($"限购已满，立即隐藏礼包: {shopDataItem.produceNameId}");
+                gameObject.SetActive(false);
+            }
+
             // ★ 写入购买记录（礼包名称、价格、礼包内容快照、购买时间）
             RecordPurchase(item);
         }

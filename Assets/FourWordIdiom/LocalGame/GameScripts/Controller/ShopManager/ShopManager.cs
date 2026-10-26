@@ -933,7 +933,7 @@ public partial class ShopManager : MonoBehaviour
         return nameId.StartsWith("ClockBox");
     }
 
-    private bool IsLimitedOut(ShopDataItem item)
+    public bool IsLimitedOut(ShopDataItem item)
     {
         if (item == null || item.limited <= 0) return false;
         ShopLimitData data = GetLimitData(item);
@@ -1110,14 +1110,14 @@ public partial class ShopManager : MonoBehaviour
             if (IsSlotLocked(slot, featured))
             {
                 ShopDataItem lastShown = GetLastShownPack(slot, featured);
-                if (lastShown != null)
+                if (lastShown != null && !IsLimitedOut(lastShown))
                 {
                     result.Add(lastShown);
                     LogShop($"  featured={featured} 已锁定（本关该推荐位购买过），回显礼包: {lastShown.produceNameId}");
                 }
                 else
                 {
-                    LogShop($"  featured={featured} 已锁定，但无回显记录，跳过");
+                    LogShop($"  featured={featured} 已锁定，但回显礼包为空或已限购，跳过");
                 }
                 continue;
             }
