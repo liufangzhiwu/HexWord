@@ -179,6 +179,7 @@ public class AwardScreen : UIWindow
             case LimitRewordType.InfiniteEnergy:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("InfiniteEnergy");
             case LimitRewordType.RemoveDayAds:
+            case LimitRewordType.RemoveAds:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("shopads");
         }
         return null;

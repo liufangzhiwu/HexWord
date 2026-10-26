@@ -786,6 +786,10 @@ public class ShopGiftItem : ShopItemBase
         base.OnPurchaseSuccess(item);
 
         RefreshGiftContentAfterPurchase();
+
+        // ★ 去广告礼包购买完成后，刷新商店内所有包含去广告的礼包（其他礼包里的「去掉广告」项应一并隐藏）
+        if (ContainsRemoveAdsContent())
+            RefreshAllRemoveAdsGiftPacksInShop();
     }
 
     /// <summary>
@@ -794,7 +798,7 @@ public class ShopGiftItem : ShopItemBase
     ///  - 按跳过规则重新生成 GiftItem 内容（已拥有永久去广告时 RemoveAds / RemoveDayAds 会被跳过）；
     ///  - 刷新限购次数与礼包标签。
     /// </summary>
-    private void RefreshGiftContentAfterPurchase()
+    public void RefreshGiftContentAfterPurchase()
     {
         if (shopDataItem == null)
         {
@@ -817,5 +821,45 @@ public class ShopGiftItem : ShopItemBase
         // 3. 限购次数 / 礼包标签
         RefreshLimitCount();
         RefreshTag();
+    }
+
+    // ======================= ★ 全量刷新：去广告礼包购买后 =======================
+
+    /// <summary>
+    /// 判断当前礼包是否包含去广告内容（RemoveAds / RemoveDayAds）。
+    /// </summary>
+    public bool ContainsRemoveAdsContent()
+    {
+        if (shopDataItem == null || shopDataItem.productContent == null) return false;
+
+        foreach (var content in shopDataItem.productContent)
+        {
+            if (content == null || content.Count < 2) continue;
+            int type;
+            if (int.TryParse(content[0], out type) && IsRemoveAdsRelatedType(type))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 刷新商店内所有包含去广告内容的礼包。
+    /// 去广告礼包购买完成后，其他礼包里的「去掉广告」项也应一并隐藏（此时 IsRemoveAdsOwned() 已为 true）。
+    /// </summary>
+    private void RefreshAllRemoveAdsGiftPacksInShop()
+    {
+        if (SystemManager.Instance == null) return;
+
+        // 商店未显示时无需刷新（下次打开商店会按新状态重建礼包内容）
+        if (!SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen)) return;
+
+        ShopScreen shopScreen = SystemManager.Instance.GetPanel(PanelType.ShopScreen) as ShopScreen;
+        if (shopScreen == null)
+        {
+            LogShopItem("RefreshAllRemoveAdsGiftPacksInShop: 未找到 ShopScreen 面板，跳过全量刷新");
+            return;
+        }
+
+        shopScreen.RefreshAllRemoveAdsGiftPacks();
     }
 }

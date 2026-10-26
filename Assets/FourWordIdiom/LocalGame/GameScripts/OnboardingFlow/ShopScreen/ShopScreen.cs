@@ -481,6 +481,25 @@ public class ShopScreen : UIWindow
         _dynamicItems.Clear();
     }
 
+    // ======================= ★ 去广告礼包购买后全量刷新 =======================
+
+    /// <summary>
+    /// 刷新所有包含去广告内容的礼包。
+    /// 去广告礼包购买完成后调用：其他礼包里的「去掉广告」项应一并隐藏。
+    /// </summary>
+    public void RefreshAllRemoveAdsGiftPacks()
+    {
+        foreach (var kv in shopallItems)
+        {
+            var gift = kv.Value as ShopGiftItem;
+            if (gift == null) continue;
+            if (gift.ContainsRemoveAdsContent())
+            {
+                gift.RefreshGiftContentAfterPurchase();
+            }
+        }
+    }
+
     // ======================= 复活道具按钮 =======================
 
     /// <summary>
