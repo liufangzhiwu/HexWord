@@ -36,6 +36,7 @@ public class UserData
     public int Energy; // 当前体力值
     public string LastEnergyUpdateTime; // 上次体力恢复的结算时间
     public bool hasUsedFreeRevive = false;
+    public bool hasUsedGoldRevive = false; // 是否已使用过金币复活（首次金币复活赠蝴蝶）
     public int charInfoPopupCount; // 已弹出次数
     public string charInfoPopupLastTime; // 上次弹出时间
     /// <summary>无限体力结束时间（"yyyy-MM-dd HH:mm:ss"；空字符串表示从未购买）</summary>
@@ -375,6 +376,7 @@ public class UserData
         Energy = 5;
         LastEnergyUpdateTime = DateTime.Now.ToString();
         hasUsedFreeRevive = false;
+        hasUsedGoldRevive = false;
         // 评价界面显示次数
         showRateusCount = 0;
         // 评价界面显示时间
@@ -585,6 +587,7 @@ public class UserData
         }
 
         hasUsedFreeRevive = user.hasUsedFreeRevive;
+        hasUsedGoldRevive = user.hasUsedGoldRevive;
         GoldLeaf=user.GoldLeaf;
         
         ThemeSaveItems=user.ThemeSaveItems.Count<=0?new List<ThemeSaveItem>{

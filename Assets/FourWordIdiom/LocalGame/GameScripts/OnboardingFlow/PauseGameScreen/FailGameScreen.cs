@@ -36,6 +36,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private Text addSecondText; // 复活增加秒数
     [SerializeField] private GameObject freeGetButterToolTable; // 免费赠送一个蝴蝶道具
     [SerializeField] private GameObject adsCanUseTable; // 广告可以用次数
+    [SerializeField] private Text adsUseCountText;      // 广告剩余可用次数/总可用次数
 
     [Header("二次确认界面按钮")]
     [SerializeField] private Text conTitleText;
@@ -43,7 +44,11 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private Button realExitBtn;
     [SerializeField] private Button adsAddTimeBtn2;
     [SerializeField] private Button goldAddTimeBtn2;
+    [SerializeField] private GameObject freeGetButterToolTable2; // 免费赠送一个蝴蝶道具
     [SerializeField] private GameObject confirmPupaIcon;
+    
+    [SerializeField] private GameObject adsCanUseTable2; // 广告可以用次数
+    [SerializeField] private Text adsUseCountText2;      // 广告剩余可用次数/总可用次数
 
     [Header("翻页设置（审核多礼包模式）")]
     public float snapDuration = 0.2f;
@@ -115,6 +120,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         SwitchPanel(true); // 每次打开弹窗，强制显示主失败页
         RefreshReviveUI(); // 刷新复活按钮的UI表现 (是否免费)
+        RefreshFreeButterToolUI(); // 刷新「免费赠送蝴蝶道具」提示显隐
         RefreshPupaIconVisibility();
         AnalyticMgr.LevelFailed();
 
@@ -543,6 +549,70 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             reviveAdsText.text = "复活";
             adsIcon.SetActive(true);
         }
+
+        // ★ 刷新复活视频「剩余可用次数/总可用次数」显示
+        RefreshAdsUseCountUI();
+    }
+
+    /// <summary>
+    /// 刷新复活视频「广告剩余可用次数 / 总可用次数」显示（主失败页 + 二次确认页）。
+    /// </summary>
+    private void RefreshAdsUseCountUI()
+    {
+        RefreshAdsUseCountPanel(adsCanUseTable, adsUseCountText);
+        RefreshAdsUseCountPanel(adsCanUseTable2, adsUseCountText2);
+    }
+
+    private void RefreshAdsUseCountPanel(GameObject canUseTable, Text useCountText)
+    {
+        if (canUseTable == null) return;
+
+        bool show = false;
+
+        if (ShopManager.shopManager != null)
+        {
+            AdFailedParams p = ShopManager.shopManager.GetAdFailedParams();
+            if (p.enabled && p.reviveVideoPerLevel >= 0)
+            {
+                int remain = ShopManager.shopManager.GetToolVideoRemainCount(LimitRewordType.ReStartTool);
+                if (useCountText != null)
+                    useCountText.text = $"{remain}/{p.reviveVideoPerLevel}";
+                show = true;
+            }
+        }
+
+        canUseTable.SetActive(show);
+    }
+
+    // ======================= 免费赠送蝴蝶道具（首次金币复活） =======================
+
+    /// <summary>
+    /// 是否显示「免费赠送蝴蝶道具」提示：玩家尚未使用过金币复活 && 玩家没有蝴蝶道具。
+    /// </summary>
+    private bool ShouldShowFreeButterTool()
+    {
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null) return false;
+        if (userData.hasUsedGoldRevive) return false;
+
+        // 玩家没有蝴蝶道具（toolId = 103）
+        if (userData.toolInfo != null
+            && userData.toolInfo.TryGetValue(103, out var butterflyInfo)
+            && butterflyInfo != null
+            && butterflyInfo.count > 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>刷新「免费赠送蝴蝶道具」提示的显隐（主失败页 + 二次确认页）。</summary>
+    private void RefreshFreeButterToolUI()
+    {
+        bool show = ShouldShowFreeButterTool();
+        if (freeGetButterToolTable != null) freeGetButterToolTable.SetActive(show);
+        if (freeGetButterToolTable2 != null) freeGetButterToolTable2.SetActive(show);
     }
 
     private void OnGoldReviveClicked()
@@ -553,6 +623,15 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         {
             Debug.Log("使用金币复活！");
             GameDataManager.Instance.UserData.UpdateGold(-60, true, true, "复活广告消耗金币");
+
+            // ★ 首次金币复活 + 玩家没有蝴蝶道具 → 赠送一个蝴蝶道具
+            if (ShouldShowFreeButterTool())
+            {
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, 1, "金币复活赠送蝴蝶");
+                GameDataManager.Instance.UserData.hasUsedGoldRevive = true;
+                MessageSystem.Instance.ShowTip("赠送蝴蝶道具 x1");
+            }
+
             ExecuteRevive();
         }
         else
@@ -573,6 +652,13 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         }
         else
         {
+            // ★ 广告获取失败策略 B：复活道具视频达到阈值后弹"假的广告失败"引导付费
+            if (ShopManager.shopManager != null
+                && ShopManager.shopManager.TryHandleToolClickAsFakeFail(LimitRewordType.ReStartTool))
+            {
+                return;
+            }
+
             Debug.Log("免费次数已用完，准备播放激励视频广告...");
             AnalyticMgr.VideoAdClick("复活广告");
             AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold, success =>
@@ -580,6 +666,11 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
                 if (success)
                 {
                     AnalyticMgr.VideoAdSuccess("复活广告");
+
+                    // ★ 广告获取失败策略：复活视频成功观看，累计当前关卡次数（B 阈值判断）
+                    if (ShopManager.shopManager != null)
+                        ShopManager.shopManager.OnToolVideoWatched(LimitRewordType.ReStartTool);
+
                     ExecuteRevive();
                     GameDataManager.Instance.UserData.totalSeeAds++;
                 }

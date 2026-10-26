@@ -83,6 +83,11 @@ public partial class ChessStageController
     public void SetStageData(int StageIndex)
     {
         IsCurrentStageSkipped = false;
+
+        // ★ 广告失败策略：每关开始清零灯泡/复活视频使用次数（A/B 阈值按关统计）
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.ResetLevelVideoUsed();
+
         // 初始化关卡配置
         IsFirstEnterStage = GameDataManager.Instance.IsNewLevelEntry(StageIndex, true);
 

@@ -13,6 +13,8 @@ public class GetItemScreen : UIWindow
     [SerializeField] private List<Button> pointBtns; // 页面按钮模板（只用 [0] 实例化）
     [SerializeField] private Text title; // 音效文本显示
     [SerializeField] private Text tips; // 语言选择文本显示
+    [SerializeField] private Transform AdsCanUseTable; 
+    [SerializeField] private Text AdsUseCountText; 
     [SerializeField] private Image AwardIcon; // 语言选择文本显示
     [SerializeField] private Image adsloading;
     [SerializeField] private Image adsIcon;
@@ -282,6 +284,37 @@ public class GetItemScreen : UIWindow
 
         // 刷新礼包表（提示灯/火箭按配置数量生成）
         RefreshGiftTables();
+
+        // 刷新「广告剩余可用次数」显示（仅提示灯道具）
+        RefreshAdsUseCountUI();
+    }
+
+    // ======================= 广告剩余可用次数显示 =======================
+
+    /// <summary>
+    /// 刷新「广告剩余可用次数 / 总可用次数」显示（仅提示灯/灯泡道具）。
+    /// - AdsCanUseTable：策略干预（S=1 且 A>=0）时显示，否则隐藏；
+    /// - AdsUseCountText：显示 "剩余/总"（如 2/4）。
+    /// </summary>
+    private void RefreshAdsUseCountUI()
+    {
+        if (AdsCanUseTable == null) return;
+
+        bool show = false;
+
+        if (limitRewordType == LimitRewordType.Tipstool && ShopManager.shopManager != null)
+        {
+            AdFailedParams p = ShopManager.shopManager.GetAdFailedParams();
+            if (p.enabled && p.bulbVideoPerLevel >= 0)
+            {
+                int remain = ShopManager.shopManager.GetToolVideoRemainCount(LimitRewordType.Tipstool);
+                if (AdsUseCountText != null)
+                    AdsUseCountText.text = $"{remain}/{p.bulbVideoPerLevel}";
+                show = true;
+            }
+        }
+
+        AdsCanUseTable.gameObject.SetActive(show);
     }
 
     // ======================= 礼包表生成 =======================
@@ -599,6 +632,15 @@ public class GetItemScreen : UIWindow
     IEnumerator ShowAdsRewardUI()
     {
         yield return new WaitForSeconds(0.05f);
+
+        // ★ 广告获取失败策略 A：灯泡道具视频达到阈值后弹"假的广告失败"引导付费
+        if (limitRewordType == LimitRewordType.Tipstool
+            && ShopManager.shopManager != null
+            && ShopManager.shopManager.TryHandleToolClickAsFakeFail(LimitRewordType.Tipstool))
+        {
+            yield break;
+        }
+
         AdRuleManager.Instance.TryShowTipToolRewardVideo(Define.AdKey.RewardAdIdStoreGold, UpdateAdsRewardUI);
     }
 
@@ -678,6 +720,11 @@ public class GetItemScreen : UIWindow
                 SystemManager.Instance.GetPanel(PanelType.ChessPlayArea)?.GetComponent<ChessPlayArea>()
                     ?.UseTips();
             }
+
+            // ★ 广告获取失败策略：灯泡视频成功观看，累计当前关卡次数（A 阈值判断）
+            if (limitRewordType == LimitRewordType.Tipstool && ShopManager.shopManager != null)
+                ShopManager.shopManager.OnToolVideoWatched(LimitRewordType.Tipstool);
+
             AnalyticMgr.VideoAdSuccess(eventDes);
             Close();
         }

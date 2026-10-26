@@ -6629,12 +6629,16 @@ MonoBehaviour:
   addSecondText: {fileID: 5997640717442690233}
   freeGetButterToolTable: {fileID: 95309112746593060}
   adsCanUseTable: {fileID: 3234551556900933721}
+  adsUseCountText: {fileID: 5060419115184439222}
   conTitleText: {fileID: 4843624941959932388}
   conTipText: {fileID: 7872282330354069886}
   realExitBtn: {fileID: 1090128628074915310}
   adsAddTimeBtn2: {fileID: 7320938568454010555}
   goldAddTimeBtn2: {fileID: 2235629445552420186}
+  freeGetButterToolTable2: {fileID: 7177956869985374234}
   confirmPupaIcon: {fileID: 7275704411710715131}
+  adsCanUseTable2: {fileID: 7728991675234594447}
+  adsUseCountText2: {fileID: 1248695542806313461}
   snapDuration: 0.2
   snapSmoothness: 0.6
   stopVelocityThreshold: 50

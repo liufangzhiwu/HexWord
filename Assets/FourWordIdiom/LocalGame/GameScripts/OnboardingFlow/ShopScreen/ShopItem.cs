@@ -22,6 +22,10 @@ public class ShopItem : ShopItemBase
     // [SerializeField] private Button buyButton;
     [SerializeField] private UIShiny adsShiny;
 
+    [Header("广告可用次数显示")]
+    [SerializeField] private Transform AdsCanUseTable;   // 广告可以用次数
+    [SerializeField] private Text AdsUseCountText;       // 广告剩余可用次数/总可用次数
+
     [Header("广告状态动画设置")]
     public float breathSpeed = 3f;
     public float breathAmplitude = 0.03f;
@@ -115,6 +119,41 @@ public class ShopItem : ShopItemBase
         base.HandleSpecialPurchase();
     }
 
+    // ======================= 广告可用次数显示 =======================
+
+    /// <summary>
+    /// 绑定数据后刷新「广告剩余可用次数 / 总可用次数」显示（仅 FreeGoods 金币视频商品）。
+    /// AdsCanUseTable：策略干预（S=1 且 C>=0）时显示；AdsUseCountText：显示 "剩余/总"。
+    /// </summary>
+    public override void SetShopData(ShopDataItem data)
+    {
+        base.SetShopData(data);
+        RefreshAdsUseCountUI();
+    }
+
+    private void RefreshAdsUseCountUI()
+    {
+        if (AdsCanUseTable == null) return;
+
+        bool show = false;
+
+        if (ShopManager.shopManager != null
+            && shopDataItem != null
+            && shopDataItem.produceNameId == "FreeGoods")
+        {
+            AdFailedParams p = ShopManager.shopManager.GetAdFailedParams();
+            if (p.enabled && p.shopGoldVideoLimit >= 0)
+            {
+                int remain = ShopManager.shopManager.GetShopGoldVideoRemainCount();
+                if (AdsUseCountText != null)
+                    AdsUseCountText.text = $"{remain}/{p.shopGoldVideoLimit}";
+                show = true;
+            }
+        }
+
+        AdsCanUseTable.gameObject.SetActive(show);
+    }
+
     /// <summary>FreeGoods：看广告领取金币</summary>
     private void HandleFreeGoodsClick()
     {
@@ -167,6 +206,14 @@ public class ShopItem : ShopItemBase
     private IEnumerator ShowAdsRewardUI()
     {
         yield return new WaitForSeconds(0.05f);
+
+        // ★ 广告获取失败策略 C：商店金币视频达到阈值后弹"假的广告失败"引导付费
+        if (ShopManager.shopManager != null
+            && ShopManager.shopManager.TryHandleShopGoldClickAsFakeFail())
+        {
+            yield break;
+        }
+
         AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold, UpdateAdsRewardUI);
     }
 
@@ -182,6 +229,14 @@ public class ShopItem : ShopItemBase
             GameDataManager.Instance.UserData.UpdateGold(count, true, true, "看广告领取商店金币");
             GameDataManager.Instance.UserData.isDayFreeGet = true;
             if (btnTagicon != null) btnTagicon.gameObject.SetActive(true);
+
+            // ★ 广告获取失败策略：商店金币视频成功观看，累计当日次数（C 阈值判断）
+            if (ShopManager.shopManager != null)
+                ShopManager.shopManager.RecordShopGoldVideoWatched();
+
+            // ★ 刷新「剩余可用次数」显示
+            RefreshAdsUseCountUI();
+
             AnalyticMgr.VideoAdSuccess("看广告领取商店金币");
             GameDataManager.Instance.UserData.totalSeeAds++;
         }

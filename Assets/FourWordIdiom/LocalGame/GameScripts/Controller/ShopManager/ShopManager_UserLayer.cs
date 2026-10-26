@@ -511,6 +511,40 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"OnToolVideoWatched: toolType={toolType}, 本次已看={GetToolVideoUsedCount(toolType)}");
     }
 
+    // ======================= 剩余可看次数（供 UI 显示） =======================
+
+    /// <summary>
+    /// 获取指定道具视频在"当前关卡"的剩余可正常观看次数（A/B）。
+    /// 返回 -1 表示不干预（无限制）；S=0 关闭策略时同样返回 -1。
+    /// </summary>
+    public int GetToolVideoRemainCount(LimitRewordType toolType)
+    {
+        AdFailedParams p = GetAdFailedParams();
+        if (!p.enabled) return -1;
+
+        int limit = GetToolVideoLevelLimit(toolType);
+        if (limit < 0) return -1;
+
+        return Mathf.Max(0, limit - GetToolVideoUsedCount(toolType));
+    }
+
+    /// <summary>
+    /// 商店金币视频当日剩余可正常观看次数（C）。
+    /// 返回 -1 表示不干预（无限制）。
+    /// </summary>
+    public int GetShopGoldVideoRemainCount()
+    {
+        AdFailedParams p = GetAdFailedParams();
+        if (!p.enabled) return -1;
+
+        int limit = p.shopGoldVideoLimit;
+        if (limit < 0) return -1;
+
+        string today = DateTime.Now.ToString("yyyy-MM-dd");
+        int used = _shopGoldUsedDate == today ? _shopGoldUsedToday : 0;
+        return Mathf.Max(0, limit - used);
+    }
+
     // ======================= 商店金币视频（S 开关 / C 次数阈值） =======================
 
     /// <summary>
@@ -601,6 +635,23 @@ public partial class ShopManager : MonoBehaviour
         GameDataManager.Instance.UserData.UpdateGold(ShopGoldVideoReward, false, false, "商店金币视频");
         MessageSystem.Instance.ShowTip("+100 金币");
         LogShop($"OnShopGoldClaimed: 今日已领={_shopGoldUsedToday}, 阈值={GetAdFailedParams().shopGoldVideoLimit}");
+    }
+
+    /// <summary>
+    /// 商店金币视频正常观看成功后仅累计次数（不发放金币）。
+    /// 用于 FreeGoods 商品等"由商品自身发放奖励"的视频路径，避免重复发奖。
+    /// </summary>
+    public void RecordShopGoldVideoWatched()
+    {
+        string today = DateTime.Now.ToString("yyyy-MM-dd");
+        if (_shopGoldUsedDate != today)
+        {
+            _shopGoldUsedDate = today;
+            _shopGoldUsedToday = 0;
+        }
+
+        _shopGoldUsedToday++;
+        LogShop($"RecordShopGoldVideoWatched: 今日已看={_shopGoldUsedToday}, 阈值={GetAdFailedParams().shopGoldVideoLimit}");
     }
 
     // ======================= 分享奖励（F：每天分享次数上限） =======================
