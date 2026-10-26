@@ -1099,6 +1099,17 @@ public partial class ShopManager : MonoBehaviour
                 case RecommendSlot.FixedStore: maxFeatured = 1;break;
             }
         }
+        else
+        {
+            switch (slot)
+            {
+                case RecommendSlot.Bulb: maxFeatured=3;break;
+                case RecommendSlot.DynamicStore: maxFeatured = 2; break;
+                case RecommendSlot.Rocket:
+                case RecommendSlot.Clock:
+                case RecommendSlot.FixedStore: maxFeatured = 1;break;
+            }
+        }
 
         LogShop($"========== GetRecommendPacks 开始: slot={slot}, shopMode={shopMode}, 时间={DateTime.Now:HH:mm:ss} ==========");
 
