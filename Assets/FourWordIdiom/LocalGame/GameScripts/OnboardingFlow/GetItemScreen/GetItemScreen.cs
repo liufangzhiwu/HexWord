@@ -10,7 +10,7 @@ using UnityEngine.UI;
 public class GetItemScreen : UIWindow
 {
     [SerializeField] private Button closeBtn; // 关闭按钮
-    [SerializeField] private List<Button> pointBtns; // 页面按钮（0/1/2 对应 1号/2号/3号 礼包页）
+    [SerializeField] private List<Button> pointBtns; // 页面按钮模板（只用 [0] 实例化）
     [SerializeField] private Text title; // 音效文本显示
     [SerializeField] private Text tips; // 语言选择文本显示
     [SerializeField] private Image AwardIcon; // 语言选择文本显示
@@ -61,6 +61,9 @@ public class GetItemScreen : UIWindow
     /// <summary>本次实例化的 GiftTable 列表（每次打开重新生成）</summary>
     private readonly List<GiftTable> _giftTableInstances = new List<GiftTable>();
 
+    /// <summary>运行时动态生成的页面按钮（每次刷新礼包时重建）</summary>
+    private readonly List<Button> _runtimePointBtns = new List<Button>();
+
     /// <summary>[Shop] 标签日志</summary>
     private void LogGetItem(string message)
     {
@@ -100,6 +103,9 @@ public class GetItemScreen : UIWindow
         // 清理本次生成的礼包表
         ClearGiftTables();
 
+        // 清理运行时页面按钮
+        ClearRuntimePagePoints();
+
         // 复位吸附状态，防止下次打开时残留
         isSnapping = false;
         wasDragging = false;
@@ -112,14 +118,13 @@ public class GetItemScreen : UIWindow
         ClaimAdsBtn.AddClickAction(ClickClaimBtn);
         ClaimGoldBtn.AddClickAction(ClickClaimGoldBtn);
 
-        // ★ 绑定页面按钮点击
+        // ★ pointBtns 只作为模板，场景里原有按钮全部隐藏，运行时动态生成
         if (pointBtns != null)
         {
             for (int i = 0; i < pointBtns.Count; i++)
             {
-                if (pointBtns[i] == null) continue;
-                int index = i; // 避免闭包问题
-                pointBtns[i].AddClickAction(() => OnPagePointClicked(index));
+                if (pointBtns[i] != null)
+                    pointBtns[i].gameObject.SetActive(false);
             }
         }
     }
@@ -150,6 +155,56 @@ public class GetItemScreen : UIWindow
     }
 
     /// <summary>
+    /// 根据礼包数量重建页面按钮：
+    ///  - 用 pointBtns[0] 作为模板，实例化 count 个到 pointTransform 下；
+    ///  - 每个按钮绑定 OnPagePointClicked(index)；
+    ///  - count > 1 时显示 pointTransform，否则隐藏。
+    /// </summary>
+    private void RebuildPagePoints(int count)
+    {
+        ClearRuntimePagePoints();
+
+        if (pointBtns == null || pointBtns.Count == 0 || pointBtns[0] == null)
+        {
+            LogGetItem("RebuildPagePoints 跳过: pointBtns 模板未配置");
+            return;
+        }
+        if (pointTransform == null)
+        {
+            LogGetItem("RebuildPagePoints 跳过: pointTransform 未配置");
+            return;
+        }
+
+        Button template = pointBtns[0];
+
+        for (int i = 0; i < count; i++)
+        {
+            Button btn = Instantiate(template, pointTransform);
+            btn.gameObject.SetActive(true);
+            int index = i;
+            btn.AddClickAction(() => OnPagePointClicked(index));
+            _runtimePointBtns.Add(btn);
+        }
+
+        bool showPoint = count > 1;
+        if (pointTransform.gameObject.activeSelf != showPoint)
+            pointTransform.gameObject.SetActive(showPoint);
+
+        LogGetItem($"页面按钮重建: count={count}, pointTransform={(showPoint ? "显示" : "隐藏")}");
+    }
+
+    /// <summary>清理运行时动态生成的页面按钮。</summary>
+    private void ClearRuntimePagePoints()
+    {
+        for (int i = _runtimePointBtns.Count - 1; i >= 0; i--)
+        {
+            if (_runtimePointBtns[i] != null)
+                Destroy(_runtimePointBtns[i].gameObject);
+        }
+        _runtimePointBtns.Clear();
+    }
+
+    /// <summary>
     /// 刷新页面按钮的显示与选中状态：
     ///  - 超出礼包数量的按钮 → 整体隐藏；
     ///  - 当前页按钮 → 第 0 个子对象显示（选中态）；
@@ -157,21 +212,17 @@ public class GetItemScreen : UIWindow
     /// </summary>
     private void UpdatePagePointState()
     {
-        if (pointBtns == null) return;
-
-        for (int i = 0; i < pointBtns.Count; i++)
+        for (int i = 0; i < _runtimePointBtns.Count; i++)
         {
-            Button btn = pointBtns[i];
+            Button btn = _runtimePointBtns[i];
             if (btn == null) continue;
 
-            // 超出礼包数量的按钮整体隐藏
             bool shouldShow = i < pageCount;
             if (btn.gameObject.activeSelf != shouldShow)
                 btn.gameObject.SetActive(shouldShow);
 
             if (!shouldShow) continue;
 
-            // 选中/未选中：切换第 0 个子对象的显示
             bool isSelected = (i == currentPageIndex);
             if (btn.transform.childCount > 0)
             {
@@ -180,7 +231,6 @@ public class GetItemScreen : UIWindow
                     selectedChild.gameObject.SetActive(isSelected);
             }
 
-            // 按钮保持可点击
             btn.interactable = true;
         }
     }
@@ -192,11 +242,10 @@ public class GetItemScreen : UIWindow
         ClaimAdsBtn.GetComponentInChildren<Text>().text = "免费";
         adsloading.gameObject.SetActive(false);
         adsIcon.gameObject.SetActive(true);
-        pointTransform.gameObject.SetActive(false);
         scrollRect.horizontal = false;
 
         shopDataItem = null;
-        
+
         RectTransform rectTransform = AwardIcon.GetComponent<RectTransform>();
 
         switch (limitRewordType)
@@ -213,7 +262,6 @@ public class GetItemScreen : UIWindow
                 ClaimGoldBtn.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
                 AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
                 eventDes = title.text + "弹窗广告";
-                pointTransform.gameObject.SetActive(true);
                 rectTransform.sizeDelta = new Vector2(310, 310);
                 scrollRect.horizontal = true;
                 break;
@@ -232,7 +280,7 @@ public class GetItemScreen : UIWindow
                 break;
         }
 
-        // 刷新礼包表（提示灯 3 个，其他 1 个）
+        // 刷新礼包表（提示灯/火箭按配置数量生成）
         RefreshGiftTables();
     }
 
@@ -308,6 +356,7 @@ public class GetItemScreen : UIWindow
         {
             LogGetItem("GiftTable / gftLeftTable 均未配置，无法生成礼包表");
             if (scrollRect != null) scrollRect.gameObject.SetActive(false);
+            RebuildPagePoints(0);
             UpdatePagePointState();
             return;
         }
@@ -327,6 +376,7 @@ public class GetItemScreen : UIWindow
         if (actualCount <= 0)
         {
             scrollRect.gameObject.SetActive(false);
+            RebuildPagePoints(0);
             UpdatePagePointState();
             return;
         }
@@ -362,7 +412,8 @@ public class GetItemScreen : UIWindow
         UpdatePageLayout(actualCount);
         ScrollToPage(0, true);
 
-        // ★ 生成完成后刷新页面按钮
+        // ★ 按实际礼包数量重建页面按钮，再刷新选中态
+        RebuildPagePoints(actualCount);
         UpdatePagePointState();
     }
 

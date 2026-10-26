@@ -21,14 +21,21 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private GameObject adsIcon;
     [SerializeField] private Text timeText;    // 上局时间
 
-    [Header("内购礼包推荐位（复活礼包只有 1 个购买位）")]
-    /// <summary>复活礼包位：场景里直接挂一个 GiftTable 实例，打开时按当前决策结果刷新数据</summary>
+    [Header("内购礼包推荐位（复活礼包）")]
+    [SerializeField] private ScrollRect scrollRect;
+    [SerializeField] private Transform pointTransform;
+    /// <summary>页面按钮模板（只用 [0] 实例化）</summary>
+    [SerializeField] private List<Button> pointBtns;
+    /// <summary>
+    /// 复活礼包位：场景里挂一个 GiftTable 实例。
+    /// 审核关或候选≤1：直接使用该实例显示单礼包；
+    /// 审核开且候选>1：作为 content 下第一个礼包容器，其余动态实例化。
+    /// </summary>
     [SerializeField] private GiftTable giftTable;
-    
+
     [SerializeField] private Text addSecondText; // 复活增加秒数
     [SerializeField] private GameObject freeGetButterToolTable; // 免费赠送一个蝴蝶道具
     [SerializeField] private GameObject adsCanUseTable; // 广告可以用次数
-    
 
     [Header("二次确认界面按钮")]
     [SerializeField] private Text conTitleText;
@@ -38,9 +45,32 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private Button goldAddTimeBtn2;
     [SerializeField] private GameObject confirmPupaIcon;
 
+    [Header("翻页设置（审核多礼包模式）")]
+    public float snapDuration = 0.2f;
+    [Range(0f, 1f)] public float snapSmoothness = 0.6f;
+    public float stopVelocityThreshold = 50f;
+
     private CanvasGroup _canvasGroup;
     private Coroutine _longPressCoroutine;
     private bool _isHiddenByLongPress = false;
+
+    // ======================= 审核多礼包状态 =======================
+
+    private bool _auditMultiMode = false;
+    private readonly List<GiftTable> _giftTableInstances = new List<GiftTable>();
+    private readonly List<Button> _runtimePointBtns = new List<Button>();
+
+    private float[] _pagePositions;
+    private float _targetPosition;
+    private bool _isSnapping;
+    private bool _wasDragging;
+    private int _pageCount;
+    private float _pageWidth = 1104f;
+    private float _snapStartPos;
+    private float _snapTimer;
+    private float _dragStartPosition;
+    private bool _isDragStartRecorded = false;
+    private int _currentPageIndex;
 
     /// <summary>[Shop] 标签日志</summary>
     private void LogFailGame(string message)
@@ -62,10 +92,19 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         conTitleText.text = MultilingualManager.Instance.GetString("AreYouSure");
         conTipText.text = MultilingualManager.Instance.GetString("YouWillLose");
         realExitBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ConfirmExit");
-        //returnGame.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("LetMeThink");
 
         _canvasGroup = GetComponent<CanvasGroup>();
         if (_canvasGroup == null) _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+        // ★ pointBtns 只作为模板，场景里原有按钮全部隐藏，运行时动态生成
+        if (pointBtns != null)
+        {
+            for (int i = 0; i < pointBtns.Count; i++)
+            {
+                if (pointBtns[i] != null)
+                    pointBtns[i].gameObject.SetActive(false);
+            }
+        }
     }
 
     protected override void OnEnable()
@@ -84,7 +123,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false, true);
 
-        // ★ 刷新复活界面内购推荐位（只有 1 个购买位）
+        // ★ 刷新复活界面内购推荐位
         RefreshGiftTables();
     }
 
@@ -92,20 +131,42 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     {
         // 🌟 我关闭了，通知头部恢复原状！
         EventDispatcher.instance.TriggerHighlightHeaderUI(false);
+
+        // ★ 清理本次生成的礼包实例和页面按钮
+        ClearGiftTables();
+        ClearRuntimePagePoints();
+
+        // 复位状态
+        _auditMultiMode = false;
+        _isSnapping = false;
+        _wasDragging = false;
+        _isDragStartRecorded = false;
+
         base.OnDisable();
     }
 
-    // ======================= 复活界面内购推荐位（只有 1 个位） =======================
+    private void Update()
+    {
+        if (_auditMultiMode)
+        {
+            HandleAutoSnapping();
+        }
+    }
+
+    // ======================= 复活界面内购推荐位 =======================
 
     /// <summary>
     /// 刷新复活界面的内购推荐位。
-    /// 复活购买位只有一个：RecommendSlot.Clock（maxFeatured = 1），永远最多 1 个礼包。
-    /// 直接操作场景里挂的 giftTable 实例：
-    ///   - 有候选礼包 → 显示并 InitUI；
-    ///   - 无候选礼包 → 隐藏。
+    ///  - 审核关或候选 ≤ 1：原逻辑，单礼包使用场景里的 giftTable；
+    ///  - 审核开且候选 > 1：横滑多礼包模式，场景 giftTable 作为第一个礼包容器，
+    ///    其余动态 Instantiate 到 scrollRect.content；同时重建页面按钮。
     /// </summary>
     private void RefreshGiftTables()
     {
+        ClearGiftTables();
+        ClearRuntimePagePoints();
+        _auditMultiMode = false;
+
         if (giftTable == null)
         {
             LogFailGame("GiftTable 未配置，跳过礼包推荐位");
@@ -116,41 +177,336 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         {
             LogFailGame("ShopManager 未初始化，隐藏礼包推荐位");
             giftTable.gameObject.SetActive(false);
+            if (scrollRect != null) scrollRect.gameObject.SetActive(false);
+            if (pointTransform != null) pointTransform.gameObject.SetActive(false);
             return;
         }
 
-        // 复活推荐位：RecommendSlot.Clock，maxFeatured=1，永远只有 1 个购买位
-        List<ShopDataItem> packs = ShopManager.shopManager.GetRecommendPacks(ShopManager.RecommendSlot.Clock);
+        // 审核开 → 全部复活礼包；审核关 → 原权重推荐结果
+        List<ShopDataItem> packs = AuditConfig.IsAuditOpen
+            ? ShopManager.shopManager.GetAuditPacksForSlot(ShopManager.RecommendSlot.Clock)
+            : ShopManager.shopManager.GetRecommendPacks(ShopManager.RecommendSlot.Clock);
 
-        const int wantCount = 1; // ★ 复活购买位只有一个
-        int candidateCount = packs != null ? packs.Count : 0;
+        int count = packs != null ? packs.Count : 0;
+        LogFailGame($"复活礼包候选数={count}, 审核开={AuditConfig.IsAuditOpen}");
 
-        LogFailGame($"准备刷新复活礼包推荐位: 购买位数={wantCount}, 推荐位候选={candidateCount}");
-
-        if (candidateCount <= 0)
+        if (count <= 0)
         {
-            // 无礼包可出（全部冷却 / 全部限购 / 权重都是 0）→ 隐藏礼包位
             giftTable.gameObject.SetActive(false);
+            if (scrollRect != null) scrollRect.gameObject.SetActive(false);
+            if (pointTransform != null) pointTransform.gameObject.SetActive(false);
             LogFailGame("无候选礼包，隐藏复活礼包位");
             return;
         }
 
-        // 只取第一个（一号位）作为复活购买位
-        ShopDataItem item = packs[0];
-        giftTable.gameObject.SetActive(true);
-        giftTable.InitUI(LimitRewordType.ReStartTool, item); // 复活道具类型（如项目枚举名不同，改成对应的即可）
+        // ★ 审核关 或 候选 ≤ 1：原单礼包逻辑
+        if (!AuditConfig.IsAuditOpen || count <= 1)
+        {
+            giftTable.gameObject.SetActive(true);
+            giftTable.InitUI(LimitRewordType.ReStartTool, packs[0]);
+            if (pointTransform != null) pointTransform.gameObject.SetActive(false);
+            LogFailGame($"单礼包模式: {packs[0].produceNameId}(id={packs[0].id}, price={packs[0].price})");
+            return;
+        }
 
-        LogFailGame($"刷新复活礼包: {item.produceNameId}(id={item.id}, price={item.price}, giftType={item.giftType})");
+        // ★ 审核开 + 候选 > 1：横滑多礼包
+        if (scrollRect == null || scrollRect.content == null)
+        {
+            LogFailGame("ScrollRect / content 未配置，退回单礼包");
+            giftTable.gameObject.SetActive(true);
+            giftTable.transform.SetParent(scrollRect.content);
+            giftTable.InitUI(LimitRewordType.ReStartTool, packs[0]);
+            return;
+        }
+
+        if (giftTable.transform.parent != scrollRect.content)
+        {
+            LogFailGame("提示：giftTable 不在 scrollRect.content 下，横滑布局可能异常");
+        }
+
+        _auditMultiMode = true;
+        scrollRect.gameObject.SetActive(true);
+        scrollRect.horizontal = true;
+
+        // 用场景 giftTable 作视觉最左（packs[count-1]）
+        giftTable.gameObject.SetActive(true);
+        giftTable.InitUI(LimitRewordType.ReStartTool, packs[count - 1]);
+        _giftTableInstances.Add(giftTable);
+
+        // 实例化其余（packs[count-2] ... packs[0]，依次向右）
+        for (int i = count - 2; i >= 0; i--)
+        {
+            GiftTable gt = Instantiate(giftTable, scrollRect.content);
+            gt.gameObject.SetActive(true);
+            gt.InitUI(LimitRewordType.ReStartTool, packs[i]);
+            _giftTableInstances.Add(gt);
+
+            LogFailGame($"生成礼包 [视觉位置={_giftTableInstances.Count - 1}]: {packs[i].produceNameId}(id={packs[i].id}, price={packs[i].price})");
+        }
+
+        UpdatePageLayout(count);
+        ScrollToPage(0, true);
+
+        // 页面按钮
+        RebuildPagePoints(count);
+        UpdatePagePointState();
+
+        LogFailGame($"多礼包模式: 共 {count} 个，页面按钮已重建");
+    }
+
+    private void ClearGiftTables()
+    {
+        for (int i = _giftTableInstances.Count - 1; i >= 0; i--)
+        {
+            GiftTable gt = _giftTableInstances[i];
+            if (gt == null) continue;
+
+            if (gt == giftTable)
+            {
+                // 场景实例，只隐藏不销毁
+                giftTable.gameObject.SetActive(false);
+            }
+            else
+            {
+                Destroy(gt.gameObject);
+            }
+        }
+        _giftTableInstances.Clear();
+    }
+
+    // ======================= 页面按钮 =======================
+
+    private void OnPagePointClicked(int index)
+    {
+        if (index < 0 || index >= _pageCount)
+        {
+            LogFailGame($"OnPagePointClicked 忽略: index={index}, pageCount={_pageCount}");
+            return;
+        }
+
+        if (index == _currentPageIndex && !_isSnapping)
+            return;
+
+        ScrollToPage(index);
+        UpdatePagePointState();
+    }
+
+    private void RebuildPagePoints(int count)
+    {
+        ClearRuntimePagePoints();
+
+        if (pointBtns == null || pointBtns.Count == 0 || pointBtns[0] == null)
+        {
+            LogFailGame("RebuildPagePoints 跳过: pointBtns 模板未配置");
+            return;
+        }
+        if (pointTransform == null)
+        {
+            LogFailGame("RebuildPagePoints 跳过: pointTransform 未配置");
+            return;
+        }
+
+        Button template = pointBtns[0];
+
+        for (int i = 0; i < count; i++)
+        {
+            Button btn = Instantiate(template, pointTransform);
+            btn.gameObject.SetActive(true);
+            int index = i;
+            btn.AddClickAction(() => OnPagePointClicked(index));
+            _runtimePointBtns.Add(btn);
+        }
+
+        bool showPoint = count > 1;
+        if (pointTransform.gameObject.activeSelf != showPoint)
+            pointTransform.gameObject.SetActive(showPoint);
+
+        LogFailGame($"页面按钮重建: count={count}, pointTransform={(showPoint ? "显示" : "隐藏")}");
+    }
+
+    private void ClearRuntimePagePoints()
+    {
+        for (int i = _runtimePointBtns.Count - 1; i >= 0; i--)
+        {
+            if (_runtimePointBtns[i] != null)
+                Destroy(_runtimePointBtns[i].gameObject);
+        }
+        _runtimePointBtns.Clear();
+    }
+
+    private void UpdatePagePointState()
+    {
+        for (int i = 0; i < _runtimePointBtns.Count; i++)
+        {
+            Button btn = _runtimePointBtns[i];
+            if (btn == null) continue;
+
+            bool shouldShow = i < _pageCount;
+            if (btn.gameObject.activeSelf != shouldShow)
+                btn.gameObject.SetActive(shouldShow);
+
+            if (!shouldShow) continue;
+
+            bool isSelected = (i == _currentPageIndex);
+            if (btn.transform.childCount > 0)
+            {
+                Transform selectedChild = btn.transform.GetChild(0);
+                if (selectedChild.gameObject.activeSelf != isSelected)
+                    selectedChild.gameObject.SetActive(isSelected);
+            }
+
+            btn.interactable = true;
+        }
+    }
+
+    // ======================= 翻页逻辑 =======================
+
+    private void UpdatePageLayout(int count)
+    {
+        _pageCount = Mathf.Max(0, count);
+
+        if (_pageCount <= 0)
+        {
+            _pagePositions = new float[0];
+            return;
+        }
+
+        _pagePositions = new float[_pageCount];
+        for (int i = 0; i < _pageCount; i++)
+        {
+            _pagePositions[i] = (_pageCount == 1) ? 0f : (float)i / (_pageCount - 1);
+        }
+
+        _currentPageIndex = Mathf.Clamp(_currentPageIndex, 0, _pageCount - 1);
+        LogFailGame($"翻页布局已刷新: pageCount={_pageCount}, pageWidth={_pageWidth:F1}");
+    }
+
+    private int GetCurrentPageIndex()
+    {
+        if (_pagePositions == null || _pagePositions.Length == 0) return 0;
+
+        int nearestPage = 0;
+        float minDistance = float.MaxValue;
+
+        for (int i = 0; i < _pageCount; i++)
+        {
+            float distance = Mathf.Abs(scrollRect.horizontalNormalizedPosition - _pagePositions[i]);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearestPage = i;
+            }
+        }
+        return nearestPage;
+    }
+
+    private void HandleAutoSnapping()
+    {
+        if (_pagePositions == null || _pagePositions.Length == 0)
+        {
+            _wasDragging = false;
+            return;
+        }
+
+        bool isDraggingNow = Mathf.Abs(scrollRect.velocity.x) > stopVelocityThreshold;
+
+        if (!_wasDragging && isDraggingNow)
+        {
+            _isSnapping = false;
+            _dragStartPosition = scrollRect.horizontalNormalizedPosition;
+            _isDragStartRecorded = true;
+            _currentPageIndex = GetCurrentPageIndex();
+        }
+
+        if (_wasDragging && !isDraggingNow && _isDragStartRecorded)
+        {
+            float dragEndPosition = scrollRect.horizontalNormalizedPosition;
+            float pixelDelta = (dragEndPosition - _dragStartPosition) * _pageWidth;
+            float absPixelDelta = Mathf.Abs(pixelDelta);
+            const float pixelThreshold = 10f;
+
+            if (absPixelDelta > pixelThreshold)
+            {
+                if (pixelDelta > 0) SnapToNextPage();
+                else SnapToPreviousPage();
+            }
+            else
+            {
+                SnapToNearestPage();
+            }
+
+            _isDragStartRecorded = false;
+            UpdatePagePointState();
+        }
+
+        _wasDragging = isDraggingNow;
+
+        if (_isSnapping)
+        {
+            _snapTimer += Time.deltaTime;
+
+            float t = snapDuration <= 0f
+                ? 1f
+                : Mathf.Clamp01(_snapTimer / snapDuration);
+
+            float smoothT = Mathf.SmoothStep(0f, 1f, t);
+            float easedT = Mathf.Lerp(t, smoothT, snapSmoothness);
+
+            scrollRect.horizontalNormalizedPosition = Mathf.Lerp(_snapStartPos, _targetPosition, easedT);
+
+            if (t >= 1f)
+            {
+                scrollRect.horizontalNormalizedPosition = _targetPosition;
+                _isSnapping = false;
+                _currentPageIndex = GetCurrentPageIndex();
+                UpdatePagePointState();
+            }
+        }
+    }
+
+    private void SnapToPreviousPage()
+    {
+        int targetPage = Mathf.Max(0, _currentPageIndex - 1);
+        ScrollToPage(targetPage);
+    }
+
+    private void SnapToNextPage()
+    {
+        int targetPage = Mathf.Min(_pageCount - 1, _currentPageIndex + 1);
+        ScrollToPage(targetPage);
+    }
+
+    private void SnapToNearestPage()
+    {
+        ScrollToPage(GetCurrentPageIndex());
+    }
+
+    private void ScrollToPage(int pageIndex, bool instant = false)
+    {
+        if (_pagePositions == null || pageIndex < 0 || pageIndex >= _pageCount) return;
+
+        _targetPosition = _pagePositions[pageIndex];
+        _currentPageIndex = pageIndex;
+
+        if (instant || snapDuration <= 0f)
+        {
+            scrollRect.horizontalNormalizedPosition = _targetPosition;
+            _isSnapping = false;
+            _snapTimer = 0f;
+            _snapStartPos = _targetPosition;
+            UpdatePagePointState();
+            return;
+        }
+
+        _snapStartPos = scrollRect.horizontalNormalizedPosition;
+        _snapTimer = 0f;
+        _isSnapping = true;
     }
 
     // ======================= 面板切换 =======================
 
-    /// <summary>
-    /// 面板切换助手
-    /// </summary>
     private void SwitchPanel(bool showFailPanel)
     {
-        //是否处于无限体力中
         if (GameDataManager.Instance.UserData.HasUnlimitedEnergy() && !showFailPanel)
         {
             OnRealExitClicked();
@@ -173,9 +529,6 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         EventDispatcher.instance.TriggerHighlightHeaderUI(!showFailPanel);
     }
 
-    /// <summary>
-    /// 刷新复活按钮表现（免费还是看广告）
-    /// </summary>
     private void RefreshReviveUI()
     {
         bool isFree = !GameDataManager.Instance.UserData.hasUsedFreeRevive;
@@ -191,19 +544,15 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             adsIcon.SetActive(true);
         }
     }
-    
-    /// <summary>
-    /// 🌟 点击复活按钮：判断是免费还是看视频
-    /// </summary>
+
     private void OnGoldReviveClicked()
     {
-        bool isGold = GameDataManager.Instance.UserData.Gold>=60;
+        bool isGold = GameDataManager.Instance.UserData.Gold >= 60;
 
         if (isGold)
         {
             Debug.Log("使用金币复活！");
             GameDataManager.Instance.UserData.UpdateGold(-60, true, true, "复活广告消耗金币");
-            // 执行复活
             ExecuteRevive();
         }
         else
@@ -211,11 +560,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             MessageSystem.Instance.ShowTip("TipGoldInsufficient");
         }
     }
-    
 
-    /// <summary>
-    /// 🌟 点击复活按钮：判断是免费还是看视频
-    /// </summary>
     private void OnReviveClicked()
     {
         bool isFree = !GameDataManager.Instance.UserData.hasUsedFreeRevive;
@@ -223,17 +568,13 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (isFree)
         {
             Debug.Log("使用首次免费复活！");
-            // 标记已使用并保存存档
             GameDataManager.Instance.UserData.hasUsedFreeRevive = true;
-
-            // 执行复活
             ExecuteRevive();
         }
         else
         {
             Debug.Log("免费次数已用完，准备播放激励视频广告...");
             AnalyticMgr.VideoAdClick("复活广告");
-            // 播放激励视频
             AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold, success =>
             {
                 if (success)
@@ -251,9 +592,6 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    /// <summary>
-    /// 执行真正的复活并返回游戏
-    /// </summary>
     private void ExecuteRevive()
     {
         SystemManager.Instance.HidePanel(PanelType.FailGameScreen);
@@ -262,9 +600,6 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         ChessPlayArea.Instance.ReviveGame(60f);
     }
 
-    /// <summary>
-    /// 🌟 点击真正的退出按钮：扣分、扣体力、删存档
-    /// </summary>
     private void OnRealExitClicked()
     {
         if (ChessPlayArea.Instance != null)
@@ -273,7 +608,6 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             {
                 ChessPlayArea.Instance.chessboardGrid.IsBlockInput = true;
             }
-            // 锁死下方的待填字盘
             ChessBowlGrid.IsTutorialBlocking = true;
         }
         EventDispatcher.instance.TriggerHighlightHeaderUI(false);
@@ -290,9 +624,6 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         ChessGuideSystem.Instance.CloseGuide();
     }
 
-    /// <summary>
-    /// 根据当前关卡能力，刷新蝶蛹图标的显示
-    /// </summary>
     private void RefreshPupaIconVisibility()
     {
         if (confirmPupaIcon == null) return;
@@ -309,7 +640,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     }
 
     // ==========================================
-    // 🌟 4. 长按隐藏逻辑核心实现
+    // 🌟 长按隐藏逻辑
     // ==========================================
     public new void OnPointerDown(PointerEventData eventData)
     {

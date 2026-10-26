@@ -950,6 +950,7 @@ MonoBehaviour:
   ShopTipObj: {fileID: 0}
   ShopAutoObj: {fileID: 0}
   ShopButterflyObj: {fileID: 0}
+  ShopRestartObj: {fileID: 0}
   GoldPrefab: {fileID: 0}
   finishlevelBtnObj: {fileID: 0}
 --- !u!114 &963194233

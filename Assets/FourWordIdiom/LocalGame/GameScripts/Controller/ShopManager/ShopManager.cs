@@ -617,13 +617,19 @@ public partial class ShopManager : MonoBehaviour
         }
 
         Predicate<string> matcher = null;
+        bool isSort = false;
         switch (slot)
         {
             case RecommendSlot.Bulb:         matcher = IsBulbPack; break;
             case RecommendSlot.Rocket:       matcher = IsRocketPack; break;
             case RecommendSlot.Clock:        matcher = IsClockPack; break;
             case RecommendSlot.DynamicStore:
-            case RecommendSlot.FixedStore:   matcher = IsDynamicStorePack; break;
+            case RecommendSlot.FixedStore:
+            {
+                isSort = true; 
+                matcher = IsDynamicStorePack; 
+                break;
+            }
         }
         if (matcher == null) return new List<ShopDataItem>();
 
@@ -638,7 +644,8 @@ public partial class ShopManager : MonoBehaviour
                 .ToList();
         }
 
-        result = result.OrderBy(x => x.price).ToList();
+        if(isSort)  
+            result = result.OrderBy(x => x.price).ToList();
 
         LogShop($"[Audit] slot={slot} 审核全量礼包 {result.Count} 个: [{string.Join(",", result.Select(x => x.produceNameId))}]");
         return result;
