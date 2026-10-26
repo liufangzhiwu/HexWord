@@ -77,7 +77,7 @@ public class PanelType  // Renamed class
      public const string OtherPeopleScreen="OtherPeopleScreen";
      public const string OtherPersonButterScreen="OtherPersonButterScreen";
      public const string AdsAwardScreen="AdsAwardScreen";
-     public const string CancelPurchase="CancelPurchase";
+     public const string BuyFailScreen="BuyFailScreen";
      public const string AdFailed="AdFailed";
      public const string SpecialOfferPopup="SpecialOfferPopup";
      public const string BuyListScreen="BuyListScreen";

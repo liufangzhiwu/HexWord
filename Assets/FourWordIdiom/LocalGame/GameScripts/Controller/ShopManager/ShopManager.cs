@@ -1687,7 +1687,7 @@ public partial class ShopManager : MonoBehaviour
             LogShop($"  未找到商品: {productId}");
         }
 
-        SystemManager.Instance.ShowPanel(PanelType.CancelPurchase);
+        SystemManager.Instance.ShowPanel(PanelType.BuyFailScreen);
     }
 
     public void OnPurchaseFailed(string productId, string error)

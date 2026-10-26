@@ -27,7 +27,8 @@ using UnityEngine.UI;
 ///  - IsContentSkippedOnPurchase：已拥有永久去广告 → 购买时跳过 RemoveAds / RemoveDayAds 的发放；
 ///  - SetProductPrice：原价文本（oldPriceText）+ 价格位置（有折扣下移）；
 ///  - SetShopData：按礼包 produceNameId 应用描边色 + 刷新限购次数 + 礼包标签显隐；
-///  - OnTimeLimitedStateChanged：限时状态变化钩子（当前保留空实现）。
+///  - OnTimeLimitedStateChanged：限时状态变化钩子（当前保留空实现）；
+///  - ★ OnPurchaseSuccess：购买成功后刷新礼包内容（已拥有永久去广告时 RemoveAds / RemoveDayAds 会被跳过）。
 ///
 /// 描边颜色规则（与道具弹窗内购礼包一致）：
 ///   NewcomerBox      hsla(31, 100%, 35%, 1)
@@ -77,7 +78,7 @@ public class ShopGiftItem : ShopItemBase
         { "Box3",            HslToColor(225f, 0.95f, 0.30f) },
         { "Box4",            HslToColor(9f,   1.00f, 0.35f) },
         { "RemoveADS",       HslToColor(189f, 1.00f, 0.11f) },
-        { "RemoveAdsWeek", HslToColor(189f, 1.00f, 0.11f) },
+        { "RemoveAdsWeek",   HslToColor(189f, 1.00f, 0.11f) },
     };
 
     /// <summary>HSL(A) → Unity Color。</summary>
@@ -260,7 +261,9 @@ public class ShopGiftItem : ShopItemBase
 
         if (actualCount <= 0)
         {
-            LogShopItem($"HandleMultiProductContent: 实际需要创建的 GiftItem 数量为 0，跳过（productContent.Count={data.productContent.Count}）");
+            // ★ 修复：全部项都被跳过时，也必须清理旧子物体，避免购买后残留旧的 RemoveAds 展示
+            LogShopItem($"HandleMultiProductContent: 实际需要创建的 GiftItem 数量为 0，清理旧项（productContent.Count={data.productContent.Count}）");
+            ClearGiftItems();
             return;
         }
 
@@ -406,7 +409,7 @@ public class ShopGiftItem : ShopItemBase
         return GetParentForPrefab(prefab);
     }
 
-    // ======================= ★ itemEnergyList 内 Prefab 规则（仅本段新增，其他规则不动） =======================
+    // ======================= ★ itemEnergyList 内 Prefab 规则 =======================
 
     /// <summary>
     /// ★ itemEnergyList 内 Prefab 规则（只影响挂到 itemEnergyList 的项）：
@@ -764,6 +767,54 @@ public class ShopGiftItem : ShopItemBase
             LogShopItem($"描边颜色已应用: {data.produceNameId} → RGB({outlineColor.r:F3},{outlineColor.g:F3},{outlineColor.b:F3},{outlineColor.a:F2})");
         }
 
+        RefreshLimitCount();
+        RefreshTag();
+    }
+
+    // ======================= ★ 购买成功后刷新礼包 =======================
+
+    /// <summary>
+    /// ★ 购买成功后的礼包刷新：
+    /// base.OnPurchaseSuccess 完成发放/统计后，按"创建礼包的逻辑"重新生成礼包内容。
+    ///  - 若本次购买让用户获得永久去广告（或此前已拥有）→ IsRemoveAdsOwned() 为 true，
+    ///    礼包中的 RemoveAds / RemoveDayAds 会在 CountActualGiftItems / InitGiftItems 中被跳过；
+    ///  - 金币数（type=2 由 shopCountText 展示）与限购次数会一并刷新。
+    /// HandleMultiProductContent → InitGiftItems 会先 ClearGiftItems 再重新创建，调用是幂等的。
+    /// </summary>
+    protected override void OnPurchaseSuccess(ProductItem item)
+    {
+        base.OnPurchaseSuccess(item);
+
+        RefreshGiftContentAfterPurchase();
+    }
+
+    /// <summary>
+    /// 购买成功后按"创建礼包的逻辑"刷新礼包展示：
+    ///  - 刷新金币数（type=2 由 shopCountText 展示）；
+    ///  - 按跳过规则重新生成 GiftItem 内容（已拥有永久去广告时 RemoveAds / RemoveDayAds 会被跳过）；
+    ///  - 刷新限购次数与礼包标签。
+    /// </summary>
+    private void RefreshGiftContentAfterPurchase()
+    {
+        if (shopDataItem == null)
+        {
+            LogShopItem("RefreshGiftContentAfterPurchase: shopDataItem 为空，跳过礼包刷新");
+            return;
+        }
+
+        bool ownsPermanentRemoveAds =
+            ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+
+        LogShopItem($"购买成功刷新礼包: 已拥有永久去广告={ownsPermanentRemoveAds}, " +
+                    $"productContent.Count={(shopDataItem.productContent != null ? shopDataItem.productContent.Count : 0)}");
+
+        // 1. 金币显示（type=2 由 shopCountText 展示，type=1 由 GiftItem 展示，这里会同步刷新）
+        HandleProductContentDisplay(shopDataItem);
+
+        // 2. 礼包内容：按跳过规则重新生成 GiftItem（已拥有永久去广告 → RemoveAds/RemoveDayAds 会被跳过）
+        HandleMultiProductContent(shopDataItem);
+
+        // 3. 限购次数 / 礼包标签
         RefreshLimitCount();
         RefreshTag();
     }

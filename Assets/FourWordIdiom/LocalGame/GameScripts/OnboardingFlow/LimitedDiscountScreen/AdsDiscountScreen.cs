@@ -310,6 +310,10 @@ public class AdsDiscountScreen : UIWindow
         Debug.Log("购买失败: " + error);
         AnalyticMgr.PurchaseFailed(currentShopItem.GetProduceName(),error);
         MessageSystem.Instance.HideLoadingAnimation();
+
+        // 拉起系统支付后未完成购买（取消/失败），返回游戏时弹出「取消购买」弹窗
+        if (currentShopItem != null && ShopManager.shopManager != null)
+            ShopManager.shopManager.OnPurchaseCanceled(currentShopItem.produceNameId, true);
     }
 
    

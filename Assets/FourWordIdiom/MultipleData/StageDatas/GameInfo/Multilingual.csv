@@ -51,6 +51,9 @@ Synonym,近义词
 Collect,收藏
 ShopTips01,购买成功
 ShopTips02,购买失败！
+CancelPurchase,取消购买
+CancelPurchaseDes,购买已被取消
+Close,关闭
 Get,获得
 Shop,商店
 limitedRewardsTitle,灯明心悟

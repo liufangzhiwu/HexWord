@@ -630,9 +630,10 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             RecordPurchase(item);
 
             if (hasPermanentRemoveAds)
-                SystemManager.Instance.ShowPanel(PanelType.RemoveAdsScreen);
-            else
-                SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
+            {
+                
+            }
+            SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
         }
 
         ShopManager.shopManager.paysuccess = true;
@@ -697,6 +698,10 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         LogShopItem($"购买失败: {error}");
         AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(), error);
         MessageSystem.Instance.HideLoadingAnimation();
+
+        // 拉起系统支付后未完成购买（取消/失败），返回游戏时弹出「取消购买」弹窗
+        if (shopDataItem != null && ShopManager.shopManager != null)
+            ShopManager.shopManager.OnPurchaseCanceled(shopDataItem.produceNameId, true);
     }
 
     // ======================= ★ 购买记录写入 =======================

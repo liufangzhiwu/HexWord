@@ -14,9 +14,10 @@ public class AwardScreen : UIWindow
     [SerializeField] private List<GameObject> rewardList; // 语言选择文本显示
 
     [SerializeField] private Button ClaimBtn;
+    [SerializeField] private Transform AdsTable;
 
     public List<RewardItem> rewardItems;
-    
+
     protected override void OnEnable()
     {
         base.OnEnable();
@@ -30,23 +31,70 @@ public class AwardScreen : UIWindow
         //title.text = MultilingualManager.Instance.GetString("FirstWin");
         //tips.text = MultilingualManager.Instance.GetString("FirstWinRewards");
 
+        // ★ 刷新 AdsTable 显隐：内购商品 ≤ 2 且存在去广告/去广告几天 → 显示
+        RefreshAdsTableVisibility();
 
         InitAwardUI();
     }
-    
-    
-     private void InitAwardUI()
-    {
 
+    /// <summary>
+    /// 控制 AdsTable 显隐：
+    ///  - CurrentShopDataItem 为空 → 隐藏；
+    ///  - productContent 数量 > 2 → 隐藏；
+    ///  - productContent 中存在 RemoveAds / RemoveDayAds → 显示；
+    ///  - 其余情况 → 隐藏。
+    /// </summary>
+    private void RefreshAdsTableVisibility()
+    {
+        if (AdsTable == null) return;
+
+        bool show = false;
+
+        var shopItem = Game.self != null ? Game.self.Shop.CurrentShopDataItem : null;
+        if (shopItem != null && shopItem.productContent != null)
+        {
+            int count = shopItem.productContent.Count;
+            bool hasRemoveAds = false;
+
+            for (int i = 0; i < count; i++)
+            {
+                var dataitem = shopItem.productContent[i];
+                if (dataitem == null || dataitem.Count < 2) continue;
+
+                int type;
+                if (!int.TryParse(dataitem[0], out type)) continue;
+
+                if (type == (int)LimitRewordType.RemoveAds
+                    || type == (int)LimitRewordType.RemoveDayAds)
+                {
+                    hasRemoveAds = true;
+                    break;
+                }
+            }
+
+            show = (count <= 2) && hasRemoveAds;
+            Debug.Log($"[AwardScreen] AdsTable 显隐: count={count}, hasRemoveAds={hasRemoveAds}, show={show}");
+        }
+        else
+        {
+            Debug.Log("[AwardScreen] AdsTable 显隐: CurrentShopDataItem 为空，隐藏");
+        }
+
+        if (AdsTable.gameObject.activeSelf != show)
+            AdsTable.gameObject.SetActive(show);
+    }
+
+    private void InitAwardUI()
+    {
         foreach (GameObject rGameObject in rewardList)
         {
             rGameObject.gameObject.SetActive(false);
         }
-        
+
         //var items = new List<AnalyticMgr.Item>();
-        if (Game.self.Shop.CurrentShopDataItem!=null)
+        if (Game.self.Shop.CurrentShopDataItem != null)
         {
-            for (int i = 0; i <  Game.self.Shop.CurrentShopDataItem.productContent.Count; i++)
+            for (int i = 0; i < Game.self.Shop.CurrentShopDataItem.productContent.Count; i++)
             {
                 var dataitem = Game.self.Shop.CurrentShopDataItem.productContent[i];
 
@@ -56,61 +104,62 @@ public class AwardScreen : UIWindow
                     amount = int.Parse(dataitem[1])
                 };
                 int reward = i;
-                ShowItemUI(rewardItem,reward);
+                ShowItemUI(rewardItem, reward);
             }
         }
-       
     }
-    
-    
-    private void ShowItemUI(RewardItem rlist,int rewardid)
+
+    private void ShowItemUI(RewardItem rlist, int rewardid)
     {
         LimitRewordType type = (LimitRewordType)rlist.type;
-        Image icon=rewardList[rewardid].GetComponentInChildren<Image>();
-        Text count=rewardList[rewardid].GetComponentInChildren<Text>();
+        Image icon = rewardList[rewardid].GetComponentInChildren<Image>();
+        Text count = rewardList[rewardid].GetComponentInChildren<Text>();
         rewardList[rewardid].SetActive(true);
-       
+
         icon.preserveAspect = true;
         //string message = "回归首胜奖励";
-       
+
         switch (type)
         {
             case LimitRewordType.Coins:
-                count.text="\u00d7"+rlist.amount;
+                count.text = "\u00d7" + rlist.amount;
                 icon.sprite = GetSprite(type);
                 //GameDataManager.Instance.UserData.UpdateGold(rlist.amount,true,true,message);
                 break;
             case LimitRewordType.Butterfly:
-               count.text="\u00d7"+rlist.amount;
-               icon.sprite = GetSprite(type);
+                count.text = "\u00d7" + rlist.amount;
+                icon.sprite = GetSprite(type);
                 //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, rlist.amount,message);
                 break;
             case LimitRewordType.AutoComplete:
-                count.text="\u00d7"+rlist.amount;
+                count.text = "\u00d7" + rlist.amount;
                 icon.sprite = GetSprite(type);
                 //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist.amount,message);
                 break;
             case LimitRewordType.Tipstool:
-                count.text="\u00d7"+rlist.amount;
+                count.text = "\u00d7" + rlist.amount;
                 icon.sprite = GetSprite(type);
                 //GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, rlist.amount,message);
                 break;
             case LimitRewordType.ReStartTool:
                 icon.sprite = GetSprite(type);
-                count.text = "\u00d7 "+rlist.amount; // 假设 productContent 是数量
+                count.text = "\u00d7" + rlist.amount; // 假设 productContent 是数量
                 break;
             case LimitRewordType.InfiniteEnergy:
                 icon.sprite = GetSprite(type);
-                count.text = "\u00d7 "+rlist.amount; // 假设 productContent 是数量
+                count.text = rlist.amount + "时"; // 假设 productContent 是数量
                 break;
             case LimitRewordType.RemoveDayAds:
                 icon.sprite = GetSprite(type);
-                count.text = "\u00d7 "+rlist.amount; // 假设 productContent 是数量
+                count.text = rlist.amount + "天"; // 假设 productContent 是数量
+                break;
+            case LimitRewordType.RemoveAds:
+                icon.sprite = GetSprite(type);
+                count.text = "永久"; // 假设 productContent 是数量
                 break;
         }
     }
-    
-    
+
     private Sprite GetSprite(LimitRewordType type)
     {
         switch (type)
@@ -131,7 +180,6 @@ public class AwardScreen : UIWindow
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("InfiniteEnergy");
             case LimitRewordType.RemoveDayAds:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("shopads");
-            
         }
         return null;
     }
@@ -144,7 +192,6 @@ public class AwardScreen : UIWindow
 
     private void ClickClaimBtn()
     {
-
         if (SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen))
         {
             StartCoroutine(ShowRewardAnim());
@@ -158,60 +205,62 @@ public class AwardScreen : UIWindow
 
     IEnumerator ShowRewardAnim()
     {
-        
+        bool isneedFly = true;
         //var items = new List<AnalyticMgr.Item>();
-        if (Game.self.Shop.CurrentShopDataItem!=null)
+        if (Game.self.Shop.CurrentShopDataItem != null)
         {
             int rewardid = 0;
             foreach (var dataitem in Game.self.Shop.CurrentShopDataItem.productContent)
             {
-                Image icon=rewardList[rewardid].GetComponentInChildren<Image>();
-                GameObject endposObj=CustomFlyInManager.Instance.ShopGoldObj;
+                Image icon = rewardList[rewardid].GetComponentInChildren<Image>();
+                GameObject endposObj = CustomFlyInManager.Instance.ShopGoldObj;
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
                 //items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        endposObj=CustomFlyInManager.Instance.ShopGoldObj;
+                        endposObj = CustomFlyInManager.Instance.ShopGoldObj;
                         break;
                     case (int)LimitRewordType.Butterfly:
-                        endposObj=CustomFlyInManager.Instance.ShopButterflyObj;
+                        endposObj = CustomFlyInManager.Instance.ShopButterflyObj;
                         break;
-                    case (int)LimitRewordType.Tipstool://放大镜道具，整个词语提示
-                        endposObj=CustomFlyInManager.Instance.ShopTipObj;
+                    case (int)LimitRewordType.Tipstool: //放大镜道具，整个词语提示
+                        endposObj = CustomFlyInManager.Instance.ShopTipObj;
                         break;
-                    case (int)LimitRewordType.AutoComplete://提示灯道具，单个字符提示
-                        endposObj=CustomFlyInManager.Instance.ShopAutoObj;
+                    case (int)LimitRewordType.AutoComplete: //提示灯道具，单个字符提示
+                        endposObj = CustomFlyInManager.Instance.ShopAutoObj;
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.RemoveDayAds:
+                        isneedFly = false;
                         break;
                 }
-               
-                CustomFlyInManager.Instance.FlyAwardIn(icon.gameObject.transform.position,endposObj,icon.gameObject,
-                    () =>
-                    {
-                        AudioManager.Instance.PlaySoundEffect("BtnUnlock");
-                        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-                    });
-                
+
+                if (isneedFly)
+                {
+                    CustomFlyInManager.Instance.FlyAwardIn(icon.gameObject.transform.position, endposObj, icon.gameObject,
+                        () =>
+                        {
+                            AudioManager.Instance.PlaySoundEffect("BtnUnlock");
+                            EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+                        });
+                }
+
                 rewardid++;
-                
+
                 yield return new WaitForSeconds(0.1f);
             }
         }
-        
-        Close();
 
+        Close();
     }
 
-    
     private void Close()
     {
         base.Close(); // 隐藏面板
     }
-    
+
     public override void OnHideAnimationEnd()
     {
         base.OnHideAnimationEnd();
@@ -219,6 +268,10 @@ public class AwardScreen : UIWindow
 
     protected override void OnDisable()
     {
+        // ★ 复位 AdsTable 显隐，避免残留
+        if (AdsTable != null && AdsTable.gameObject.activeSelf)
+            AdsTable.gameObject.SetActive(false);
+
         base.OnDisable();
     }
 }
