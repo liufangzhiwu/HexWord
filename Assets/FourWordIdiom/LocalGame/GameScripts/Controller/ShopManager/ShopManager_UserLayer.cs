@@ -117,6 +117,9 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>分享点击时间（切回前台成功判定用）</summary>
     private DateTime _shareClickedTime;
 
+    /// <summary>最近一次广告失败弹窗对应的道具类型（灯泡/复活/商店金币），供弹窗读取以决定单道具商品按钮</summary>
+    private LimitRewordType _lastAdFailedToolType = LimitRewordType.Tipstool;
+
     /// <summary>道具视频类型（灯泡提示灯 / 复活）</summary>
     public enum ToolVideoType
     {
@@ -485,6 +488,7 @@ public partial class ShopManager : MonoBehaviour
         if (p.tipFailCooldown > 0)
             _adFailBlockedUntil = DateTime.Now.AddSeconds(p.tipFailCooldown);
 
+        _lastAdFailedToolType = toolType;
         LogShop($"ShowAdFailedPanel: toolType={toolType}, 冷却={p.tipFailCooldown}s, 截止={_adFailBlockedUntil:HH:mm:ss}");
         SystemManager.Instance.ShowPanel(PanelType.AdFailed);
     }
@@ -498,8 +502,29 @@ public partial class ShopManager : MonoBehaviour
         if (p.tipFailCooldown > 0)
             _adFailBlockedUntil = DateTime.Now.AddSeconds(p.tipFailCooldown);
 
+        _lastAdFailedToolType = LimitRewordType.Coins; // 通用入口 = 商店金币视频路径
         LogShop($"ShowAdFailedPanel (通用): 冷却={p.tipFailCooldown}s, 截止={_adFailBlockedUntil:HH:mm:ss}");
         SystemManager.Instance.ShowPanel(PanelType.AdFailed);
+    }
+
+    /// <summary>最近一次广告失败弹窗对应的道具类型（灯泡 Tipstool / 复活 ReStartTool / 商店金币 Coins）。</summary>
+    public LimitRewordType LastAdFailedToolType
+    {
+        get { return _lastAdFailedToolType; }
+    }
+
+    /// <summary>
+    /// 今日分享换奖励是否还可用（未达 F 次上限）。
+    /// 供广告失败弹窗决定是否显示「分享」按钮；F<=0 或策略关闭时不可用。
+    /// </summary>
+    public bool IsShareRewardAvailable()
+    {
+        AdFailedParams p = GetAdFailedParams();
+        if (!p.enabled || p.shareDailyLimit <= 0) return false;
+
+        string today = DateTime.Now.ToString("yyyy-MM-dd");
+        if (_shareSuccessDate != today) return true;
+        return _shareSuccessToday < p.shareDailyLimit;
     }
 
     /// <summary>
@@ -688,8 +713,8 @@ public partial class ShopManager : MonoBehaviour
         }
 
         _shareSuccessToday++;
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1, "分享奖励");
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "分享奖励");
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "分享奖励");     // 灯泡 +1
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, 1, "分享奖励");  // 复活 +1（需求 C-STRAT-06：灯泡1/复活1/金币50）
         GameDataManager.Instance.UserData.UpdateGold(50, false, false, "分享奖励");
         MessageSystem.Instance.ShowTip("分享成功 +1灯泡 +1复活 +50金币");
         LogShop($"OnShareReturned: 分享成功, 今日次数={_shareSuccessToday}");

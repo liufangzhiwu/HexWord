@@ -23,8 +23,8 @@ public class WordButton : MonoBehaviour
 
     public void InitButton()
    {
-       wordBtn.AddClickAction(ClickWord); 
-    }
+       wordBtn.AddClickAction(ClickWord);
+   }
 
     private void InitUI()
     {
@@ -41,11 +41,12 @@ public class WordButton : MonoBehaviour
         rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, isJan ? 330 : 660);
     }
 
-   public void SetText(string str,int index,bool isVocabulary=true)
+   /// <param name="maxWordLength">本次列表中最多字数的成语；词条高度由列表排版决定，这里只用于字号</param>
+   public void SetText(string str,int index,bool isVocabulary=true,int maxWordLength=0)
     {
         wordData.CurPuzzle = str;
         wordText.text = wordData.CurPuzzle;
-        
+
         wordData.IsVocabularyPuzzle= isVocabulary;
         wordData.PageIndex= index;
         if (wordData.IsVocabularyPuzzle)
@@ -68,8 +69,11 @@ public class WordButton : MonoBehaviour
             wordText.fontSize = wordData.CurPuzzle.Length>7 ? 58 : 70;
             //wordBtn.GetComponent<Image>().color = Color.green;
         }
+
+        // 底图（rstImage）在预制体里是拉伸填满卡片的，卡片高度由 LevelWordScreen 按字数排版决定，
+        // 底图、文字与读音会自动随卡片一起变长（字号不变），这里不再单独改子节点尺寸。
     }
-   
+
     private void ClickWord()
     {
         bool isEnter = false;
@@ -97,4 +101,3 @@ public class WordButton : MonoBehaviour
         }
     }
 }
-

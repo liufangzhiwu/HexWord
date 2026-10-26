@@ -10,6 +10,8 @@ using UnityEngine.UI;
 
 public class LevelWordDetail : UIWindow
 {
+    private const float IpadDetailScale = 1.15f; // iPad 下界面整体放大的倍数
+
     [SerializeField] private Button closeBtn; // 关闭按钮
     [SerializeField] private Button wordBookBtn; // 关闭按钮
     [SerializeField] private Button leftBtn; // 关闭按钮
@@ -24,9 +26,40 @@ public class LevelWordDetail : UIWindow
     public float width; //当前页面ID
     public int curPage; //当前页面ID
     private List<string> words = new List<string>(); // 词语集合
-  
+
+    private RectTransform uiBase;                 // 界面主体（标题、按钮、翻页列表都在其下）
+    private Vector3 uiBaseBaseScale = Vector3.one; // 界面主体原始缩放
+
+    protected override void Awake()
+    {
+        base.Awake();
+        CacheLayout();
+    }
+
+    /// <summary>
+    /// 缓存界面主体的原始缩放，iPad 适配时按倍数计算，重复打开不会累乘
+    /// </summary>
+    private void CacheLayout()
+    {
+        uiBase = transform.Find("UIBase") as RectTransform;
+        if (uiBase != null) uiBaseBaseScale = uiBase.localScale;
+    }
+
+    /// <summary>
+    /// iPad 下界面整体（标题、关闭/生词本/左右翻页按钮、翻页列表）放大 1.15 倍；其他设备保持原样
+    /// </summary>
+    private void ApplyIpadScale()
+    {
+        if (uiBase == null) return;
+
+        float scale = UIUtilities.IsiPad() ? IpadDetailScale : 1f;
+        uiBase.localScale = uiBaseBaseScale * scale;
+    }
+
     protected override void OnEnable()
     {
+        ApplyIpadScale();
+
         bool isVocabularyPuzzle = false;
         if(GameDataManager.Instance.UserData.levelMode == 1)
             isVocabularyPuzzle = StageHexController.Instance.PuzzleData.IsVocabularyPuzzle;
@@ -90,7 +123,8 @@ public class LevelWordDetail : UIWindow
     {
         List<string> wordsss = GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords;
         Debug.Log("是否有值" + JsonConvert.SerializeObject(wordsss));
-        foreach (var word in GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords)
+        // 与关内熟语列表同序（按字数升序），保证点击卡片翻页定位正确
+        foreach (var word in WordVocabularyManager.SortByWordLength(GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords))
         {
             if (!words.Contains(word))
             {

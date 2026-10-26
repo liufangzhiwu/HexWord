@@ -119,7 +119,16 @@ public class WordVocabularyManager
         entries.TryGetValue(word, out var entry);
         return entry;
     }
-    
+
+    /// <summary>
+    /// 按字数从少到多排列（字数相同保持原有顺序），关内列表与详情翻页共用，保证 PageIndex 一致
+    /// </summary>
+    public static List<string> SortByWordLength(IEnumerable<string> words)
+    {
+        if (words == null) return new List<string>();
+        return words.OrderBy(word => string.IsNullOrEmpty(word) ? 0 : word.Length).ToList();
+    }
+
     // 🌟 3. 新增：供外部调用的单字拼音查询接口
     public string GetCharPinyin(string character)
     {

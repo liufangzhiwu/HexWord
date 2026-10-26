@@ -461,6 +461,15 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 审核业务 =======================
 
+    /// <summary>
+    /// 按 produceNameId 获取商店商品（供广告失败弹窗等外部模块读取单道具商品的价格/折扣/文案）。
+    /// </summary>
+    public ShopDataItem GetShopItemByProduceName(string produceNameId)
+    {
+        if (string.IsNullOrEmpty(produceNameId)) return null;
+        return allShopItems.FirstOrDefault(x => x.produceNameId == produceNameId);
+    }
+
     private List<ShopDataItem> GetItemsByIds(List<string> ids)
     {
         var result = new List<ShopDataItem>();

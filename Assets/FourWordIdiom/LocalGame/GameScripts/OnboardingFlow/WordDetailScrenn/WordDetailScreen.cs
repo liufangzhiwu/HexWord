@@ -67,7 +67,8 @@ public class WordDetailScreen : UIWindow
 
     private void ShowVocabularyWords()
     {
-        foreach (var word in GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords)
+        // 与关内熟语列表同序（按字数升序），保证点击卡片翻页定位正确
+        foreach (var word in WordVocabularyManager.SortByWordLength(GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords))
         {
             if (!words.Contains(word))
             {

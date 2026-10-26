@@ -750,14 +750,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _openDuration: 0.3
   _closeDuration: 0.3
-  closeBtn: {fileID: 0}
-  title: {fileID: 0}
-  descText: {fileID: 0}
-  countText: {fileID: 0}
-  toolIcon: {fileID: 0}
-  toolIcon2: {fileID: 0}
+  closeBtn: {fileID: 6043342328112555402}
+  title: {fileID: 899973376308756124}
+  descText: {fileID: 3806016687058638640}
+  toolIcon: {fileID: 3700914827125585558}
+  toolIcon2: {fileID: 3350330000035892887}
+  ShareBtn: {fileID: 7244914413087738706}
+  shareBtnText: {fileID: 7145000676743541336}
+  countText: {fileID: 7342099799530077301}
+  BuyBtn: {fileID: 6573773253993753954}
+  priceText: {fileID: 2398430406478202949}
+  discountText: {fileID: 8215737251781772496}
   discountTable: {fileID: 5357727556915131916}
-  ClaimBtn: {fileID: 0}
 --- !u!1 &3181888769966650559
 GameObject:
   m_ObjectHideFlags: 0
