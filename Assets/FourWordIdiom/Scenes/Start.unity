@@ -36897,7 +36897,7 @@ PrefabInstance:
     - target: {fileID: 40593819569410530, guid: cb22c978b28879b42b9f46d14d733c69,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 246.26088
+      value: 374
       objectReference: {fileID: 0}
     - target: {fileID: 1763250562576917828, guid: cb22c978b28879b42b9f46d14d733c69,
         type: 3}
@@ -37022,12 +37022,20 @@ PrefabInstance:
     - target: {fileID: 5066839883382606432, guid: cb22c978b28879b42b9f46d14d733c69,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 764.4348
+      value: 769
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2797300701874820917, guid: cb22c978b28879b42b9f46d14d733c69,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1378852129}
+    - targetCorrespondingSourceObject: {fileID: 2797300701874820917, guid: cb22c978b28879b42b9f46d14d733c69,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1378852128}
   m_SourcePrefab: {fileID: 100100000, guid: cb22c978b28879b42b9f46d14d733c69, type: 3}
 --- !u!224 &393178539 stripped
 RectTransform:
@@ -67305,7 +67313,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 570db12f7a7f582409c2d436ddc5b11d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  APIUrl: https://hex.prod.mindwordplay.cn/api/
 --- !u!114 &752339131
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -127494,6 +127501,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1695060659}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1378852124 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2797300701874820917, guid: cb22c978b28879b42b9f46d14d733c69,
+    type: 3}
+  m_PrefabInstance: {fileID: 393178538}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1378852128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1378852124}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!223 &1378852129
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1378852124}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 10
+  m_TargetDisplay: 0
 --- !u!1 &1384438501
 GameObject:
   m_ObjectHideFlags: 0
@@ -196502,6 +196555,8 @@ GameObject:
   - component: {fileID: 4037488400302352378}
   - component: {fileID: 876296524207695389}
   - component: {fileID: 7272165435020577492}
+  - component: {fileID: 7272165435020577494}
+  - component: {fileID: 7272165435020577493}
   m_Layer: 5
   m_Name: AgeTip
   m_TagString: Untagged
@@ -196553,6 +196608,46 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7272165435020577493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7272165435020577491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!223 &7272165435020577494
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7272165435020577491}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 2
+  m_TargetDisplay: 0
 --- !u!114 &8204513128843706127
 MonoBehaviour:
   m_ObjectHideFlags: 0
