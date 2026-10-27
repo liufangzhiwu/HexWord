@@ -1,51 +1,65 @@
+// ====================================================================
+// AttributionBridge.tslib
+// 描述: 鸿蒙「应用归因服务」ArkTS 侧桥接
+//      C# 侧通过 new OpenHarmonyJSObject("AttributionBridge") 调用
+// 说明: 鸿蒙没有客户端渠道查询接口（channel/taskid/callback），
+//      客户端只做「登记转化事件」，归因结果由华为回传服务端。
+// ====================================================================
 import { attributionManager } from '@kit.StoreKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 
-declare function require(module: string): any;
-// 引用 C# 的静态方法（包名需与实际命名空间一致）
-const CSharpBridge = require('middleware').Middleware.HuaWeiHarAttribution;
+const TAG = '[AttributionBridge]';
+// 业务场景默认值（取值范围 [0,99]，C# 侧会传入真实值，此处仅兜底）
+const DEFAULT_BUSINESS_SCENE: number = 5;
 
 export class AttributionBridge {
-    // 原有上报转化方法
-    reportConversion(eventCode: number): void {
-        const triggerInfo: attributionManager.AdTriggerInfo = {
-            businessScene: 5,
-            triggerData: eventCode,
-            //timestamp: Date.now(),
-        };
-        attributionManager.registerTrigger(triggerInfo)
-            .then(() => {
-                console.info(`Attribution event ${eventCode} reported successfully`);
-            })
-            .catch((err: BusinessError) => {
-                console.error(`Failed to report event ${eventCode}: ${err.message}`);
-            });
-    }
 
-    // 新增：请求归因信息，传入应用包名
-    requestAttributionInfo(packageName: string): void {
-        attributionManager.getAttributionInfo(packageName)
-            .then((info) => {
-                const json = JSON.stringify(info);
-                console.info('AttributionInfo received: ' + json);
-                // 回调给 C# 的静态方法
-                if (CSharpBridge && CSharpBridge.OnAttributionReceived) {
-                    CSharpBridge.OnAttributionReceived(json);
-                }
-            })
-            .catch((err: BusinessError) => {
-                console.error(`getAttributionInfo failed: ${err.message}`);
-                // 失败时也可以回调，传空字符串
-                if (CSharpBridge && CSharpBridge.OnAttributionReceived) {
-                    CSharpBridge.OnAttributionReceived('');
-                }
-            });
+    // 登记转化事件
+    // eventCode:    转化事件 ID（与云端管理台登记的 ID 一致）
+    // businessScene: 业务场景标识，取值 [0,99]，可空（缺省用 DEFAULT_BUSINESS_SCENE）
+    reportConversion(eventCode: number, businessScene?: number): void {
+        // C# 侧统一按字符串传参，这里做整数化校验
+        const code: number = Number(eventCode);
+        let scene: number = businessScene === undefined ? DEFAULT_BUSINESS_SCENE : Number(businessScene);
+
+        if (!Number.isFinite(code) || code <= 0 || !Number.isInteger(code)) {
+            console.error(`${TAG} invalid triggerData: ${eventCode}`);
+            return;
+        }
+        // triggerData 是「转化事件编码」：标准转化事件 1~200，自定义转化事件 501~600。
+        // 注意：不要传云端管理台显示的「事件ID」（如 133299182），否则服务端返回 401 参数错误。
+        if (!((code >= 1 && code <= 200) || (code >= 501 && code <= 600))) {
+            console.error(`${TAG} triggerData 越界: ${code}。转化事件编码范围：标准 1~200 / 自定义 501~600。`);
+            return;
+        }
+        if (!Number.isFinite(scene) || scene < 0 || scene > 99 || !Number.isInteger(scene)) {
+            console.error(`${TAG} invalid businessScene: ${businessScene}`);
+            scene = DEFAULT_BUSINESS_SCENE;
+        }
+
+        const triggerInfo: attributionManager.AdTriggerInfo = {
+            businessScene: scene,
+            triggerData: code
+        };
+
+        try {
+            attributionManager.registerTrigger(triggerInfo)
+                .then(() => {
+                    console.info(`${TAG} registerTrigger success, triggerData=${code}`);
+                })
+                .catch((err: BusinessError) => {
+                    console.error(`${TAG} registerTrigger failed, code=${err.code}, msg=${err.message}, triggerData=${code}`);
+                });
+        } catch (error) {
+            const err = error as BusinessError;
+            console.error(`${TAG} registerTrigger exception, code=${err.code}, msg=${err.message}`);
+        }
     }
 }
 
-// 注册函数保持不变
-export function RegisterAttributionBridge() {
-    let register = {}
-    register["AttributionBridge"] = new AttributionBridge();
-    return register;
+// 注册函数：C# 侧 OpenHarmonyJSObject 的 key 必须与下面一致
+export function RegisterAttributionBridge(): Record<string, Object> {
+    return {
+        'AttributionBridge': new AttributionBridge()
+    };
 }
