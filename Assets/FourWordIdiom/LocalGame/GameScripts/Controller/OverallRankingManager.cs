@@ -80,7 +80,7 @@ public class OverallRankingManager : MonoBehaviour
         GameConfigResponse serverResponse = null;
         
 #if UNITY_OPENHARMONY
-        AuditConfigKey="Zen_AuditStatus_HM"
+        AuditConfigKey = "Zen_AuditStatus_HM";
 #else
         AuditConfigKey = "Zen_AuditStatus_AZ";
 #endif

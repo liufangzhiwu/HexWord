@@ -241,7 +241,7 @@ public partial class AnalyticMgr
         
         if (lifeDays == 2)
         {
-#if UNITY_HUAWEI
+#if UNITY_HUAWEI || UNITY_OPENHARMONY
             long nowTimeMilliseconds = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             Game.self.Attributes?.ReportRetention(nowTimeMilliseconds);
 #endif

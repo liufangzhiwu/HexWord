@@ -311,16 +311,12 @@ public class AdsFailScreen : UIWindow
         MessageSystem.Instance.ShowTip(GetLocalized("ShareFailTip", "分享失败，再试试吧"));
         _sharePending = false;
 #else
+#if UNITY_EDITOR
         // 编辑器：无法真实分享，3.5 秒后自动按成功判定，方便验证发奖链路
         Debug.Log("[AdsFail] 编辑器环境模拟分享成功（3.5秒后）");
-        StartCoroutine(EditorFakeShareSuccess());
-#endif
-    }
-
-#if UNITY_EDITOR
-    private IEnumerator EditorFakeShareSuccess()
-    {
-        yield return new WaitForSecondsRealtime(ShareSuccessMinSeconds + 0.5f);
+#else
+        // 其他平台（Windows/鸿蒙/WebGL 等）无原生分享实现：直接按成功判定，避免卡分享流程
+        Debug.Log("[AdsFail] 当前平台无原生分享实现，直接按分享成功判定");
         if (_sharePending)
         {
             _sharePending = false;
@@ -328,8 +324,9 @@ public class AdsFailScreen : UIWindow
                 ShopManager.shopManager.OnShareReturned(true);
             RefreshShareUI();
         }
-    }
 #endif
+#endif
+    }
 
     private void ResetShareState()
     {

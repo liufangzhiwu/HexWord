@@ -140,15 +140,16 @@ namespace Middleware
     
         private void CreateAttribute()
         {
-#if UNITY_ANDROID&&!UNITY_HUAWEI
-            Attributes = new AndoridAttribution();
-#elif UNITY_HUAWEI
+#if UNITY_HUAWEI
+            // 华为安卓：客户端查智能分包(channel/taskid/callback) + AGC 服务端事件回传
             Attributes = new HuaWeiAttribution();
-#elif UNITY_IOS
-            Attributes = new AndoridAttribution();
 #elif UNITY_OPENHARMONY
-            //Attributes = new HuaweiHarAttribution();
-            Attributes = new AndoridAttribution();
+            // 鸿蒙：客户端无渠道查询接口，走「应用归因服务」登记转化事件，
+            // 归因结果由华为回传服务端
+            Attributes = new HarmonyAttribution();
+#else
+            // iOS / 非华为安卓 / 编辑器：暂无归因实现
+            Attributes = new EmptyAttribution();
 #endif
             Attributes.Init(0.1f);
         }

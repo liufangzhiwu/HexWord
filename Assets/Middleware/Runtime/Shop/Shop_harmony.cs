@@ -415,7 +415,11 @@ namespace Middleware
             // ② 立即发奖（幂等）
             GrantRewardIfNeeded(pending);
 
-            // ③ 通知平台消耗
+            // ③ 付费归因回传（应用归因服务：只登记转化事件，金额不上送）
+            long actionTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            Game.self?.Attributes?.ReportPurchase(actionTime, payload.price, payload.currency);
+
+            // ④ 通知平台消耗
             ConsumePendingOrder(pending);
         }
 
