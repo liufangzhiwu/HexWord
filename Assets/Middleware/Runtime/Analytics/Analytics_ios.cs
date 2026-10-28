@@ -57,6 +57,24 @@ namespace Middleware
         }
 
         /// <summary>
+        /// 只写一次的用户属性（规范 user_setOnce，如 first_version / first_login_time）
+        /// </summary>
+        public void SetUserPropertyOnce(Dictionary<string, object> properties, Define.DataTarget targets)
+        {
+            if (targets.HasFlag(Define.DataTarget.Think))
+                TDAnalytics.UserSetOnce(properties);
+        }
+
+        /// <summary>
+        /// 登出：清账号ID + 清公共事件属性（规范接入必知要求）
+        /// </summary>
+        public void Logout()
+        {
+            TDAnalytics.Logout();
+            TDAnalytics.ClearSuperProperties();
+        }
+
+        /// <summary>
         /// 所有事件都要带的公共属性
         /// </summary>
         public void SetCommonProperties(Dictionary<string, object> properties)
@@ -84,7 +102,9 @@ namespace Middleware
 #endif
             TDAnalytics.Init(config);
             OnSdkInit?.Invoke(this,null);
-            TDAnalytics.EnableAutoTrack( TDAutoTrackEventType.AppInstall);
+            // 【故意关闭】ta_app_install 不再交给 SDK 原生判定，改为 AnalyticMgr.ReportInstallOnce() 自建上报。
+            // 原生判定只认 firstInstallTime == lastUpdateTime 的"纯净首装"，且首次启动即落盘、错过永久丢失。
+            // TDAnalytics.EnableAutoTrack( TDAutoTrackEventType.AppInstall);
             //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppInstall| TDAutoTrackEventType.AppEnd);
             
             

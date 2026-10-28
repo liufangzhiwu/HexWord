@@ -386,9 +386,9 @@ MonoBehaviour:
     panelLayer: PopPanel
     bundleName: OnboardingFlow
     spriteAtlasName: OnboardingFlow
-    prefab: {fileID: 2508230401924753788, guid: 919de14cea6525041af4aa42df54b78a,
+    prefab: {fileID: 5589178271573057803, guid: 6e65a0904724224449a3bb17e6df0be6,
       type: 3}
-  - panelName: CancelPurchase
+  - panelName: BuyFailScreen
     panelLayer: PopPanel
     bundleName: OnboardingFlow
     spriteAtlasName: OnboardingFlow

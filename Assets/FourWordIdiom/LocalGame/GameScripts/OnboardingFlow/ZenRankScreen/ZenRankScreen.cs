@@ -133,6 +133,7 @@ public class ZenRankScreen : UIWindow
         base.OnEnable();
         
         ResetUIBeforeLoading();
+        AnalyticMgr.ActivityBeginOnce("连心榜活动");
         StartCoroutine(CheckSettlementAndLoadRank());
         // GetComponentInChildren<HorizontalScrollSnap>(true).OnEventTriggered += OnScrollRollingListen;
         

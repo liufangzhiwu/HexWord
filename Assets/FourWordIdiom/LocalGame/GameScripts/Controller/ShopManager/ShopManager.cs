@@ -122,8 +122,13 @@ public partial class ShopManager : MonoBehaviour
     public const string ProductSingleGoods = "SingleGoods";
     public const string ProductSingleClock = "SingleClockS";
     public const string ProductGold6 = "Gold6";
+    /// <summary>
+    /// 1 天去广告。注意：配置表 shop.csv 目前只有 RemoveADS（终身）与 RemoveAdsWeek（一周），
+    /// 尚无 1 天商品；此处沿用历史命名，值与周卡相同，渠道补建 1 天商品后需改为对应 ID。
+    /// </summary>
     public const string ProductRemoveAdsDaily = "RemoveAdsWeek";
-    public const string ProductRemoveAdsWeekly = "RemoveAdsWeekly";
+    /// <summary>7 天（一周）去广告，配置表实际 ID 为 RemoveAdsWeek。</summary>
+    public const string ProductRemoveAdsWeekly = "RemoveAdsWeek";
 
     /// <summary>审核开时不展示的商品（固定商店）</summary>
     private const string ProductGold3ExcludedInAudit = "Gold3";
@@ -160,6 +165,42 @@ public partial class ShopManager : MonoBehaviour
 
     public ShopDataItem curshopAdsItem;
     public static ShopManager shopManager;
+
+    // ======================= 礼包弹窗数据源（破冰 / 复购 复用 AdsDiscountScreen） =======================
+
+    /// <summary>礼包弹窗模式：无 / 破冰 / 复购。</summary>
+    public enum GiftPopupMode
+    {
+        None = 0,
+        BreakIce = 1,      // 破冰礼包（去广告周卡，引导首次付费）
+        Repurchase = 2     // 复购/升层礼包（加量不加价）
+    }
+
+    /// <summary>待展示的礼包弹窗商品（AdsDiscountScreen.OnEnable 读取）。</summary>
+    public ShopDataItem pendingGiftPopupItem;
+
+    /// <summary>待展示的礼包弹窗模式。</summary>
+    public GiftPopupMode pendingGiftPopupMode = GiftPopupMode.None;
+
+    /// <summary>礼包弹窗限时截止时间（无限时为 DateTime.MinValue）。</summary>
+    public System.DateTime pendingGiftPopupEndTime = System.DateTime.MinValue;
+
+    /// <summary>设置待展示的礼包弹窗数据。</summary>
+    public void SetPendingGiftPopup(ShopDataItem item, GiftPopupMode mode, System.DateTime endTime)
+    {
+        pendingGiftPopupItem = item;
+        pendingGiftPopupMode = mode;
+        pendingGiftPopupEndTime = endTime;
+        LogShop($"SetPendingGiftPopup: mode={mode}, item={(item != null ? item.produceNameId : "null")}, endTime={(endTime == System.DateTime.MinValue ? "无限时" : endTime.ToString("yyyy-MM-dd HH:mm:ss"))}");
+    }
+
+    /// <summary>清空礼包弹窗数据（弹窗关闭时调用）。</summary>
+    public void ClearPendingGiftPopup()
+    {
+        pendingGiftPopupItem = null;
+        pendingGiftPopupMode = GiftPopupMode.None;
+        pendingGiftPopupEndTime = System.DateTime.MinValue;
+    }
 
     private Dictionary<int, ShopLimitData> shoplimitDatas = new Dictionary<int, ShopLimitData>();
     private List<ShopDataItem> _limitAdsGifts = new List<ShopDataItem>();
@@ -973,6 +1014,41 @@ public partial class ShopManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>记录该推荐位本次展示的礼包；若是新人礼则登记本关已出（用于互斥）。</summary>
+    public void RecordSlotShownPack(RecommendSlot slot, int featured, ShopDataItem pack)
+    {
+        if (pack == null) return;
+
+        _slotLastShownPack[SlotKey(slot, featured)] = pack;
+
+        if (IsNewcomerLabel(pack.labelZh))
+            MarkNewcomerShown(slot, pack.produceNameId);
+    }
+
+    /// <summary>
+    /// 决策结果变化时，把上一次展示礼包的转化失败分 F 归零（需求 C-RECO-04）。
+    /// 换包说明上一次的 F 已不适用于新决策，避免旧分持续压制/抬高候选。
+    /// </summary>
+    public void ResetFailScoreOnDecisionChange(RecommendSlot slot, int featured, ShopDataItem newPack)
+    {
+        if (newPack == null) return;
+
+        ShopDataItem last = GetLastShownPack(slot, featured);
+        if (last != null && last.produceNameId != newPack.produceNameId)
+        {
+            ShopLimitData limit = GetLimitData(last);
+            if (limit != null && limit.conversionFailScore != 0f)
+            {
+                float before = limit.conversionFailScore;
+                limit.conversionFailScore = 0f;
+                limit.SetLastFailScoreTime(DateTime.Now);
+                LogShop($"  [决策变化归零] {slot}_{featured}: {last.produceNameId} F {before:F1} → 0，新决策={newPack.produceNameId}");
+            }
+        }
+
+        RecordSlotShownPack(slot, featured, newPack);
+    }
+
     public void UnlockAllSlots()
     {
         _slotLockedThisLevel.Clear();
@@ -1164,6 +1240,10 @@ public partial class ShopManager : MonoBehaviour
                 if (winner != null && winner.Count > 0)
                     result.AddRange(winner);
             }
+
+            // ★ 记录本次展示 + 决策变化时把上一次礼包的 F 归零（C-RECO-04）
+            if (result.Count > 0)
+                ResetFailScoreOnDecisionChange(slot, featured, result[result.Count - 1]);
         }
 
         if (slot == RecommendSlot.DynamicStore && slot1Empty && IsRemoveAdsOwned()
@@ -1234,7 +1314,12 @@ public partial class ShopManager : MonoBehaviour
         float max = scored.Max(x => x.Value);
         var top = scored.Where(x => Mathf.Approximately(x.Value, max)).ToList();
 
-        ShopDataItem winner = top[UnityEngine.Random.Range(0, top.Count)].Key;
+        // 权重并列：先按「低价优先」（需求 C-RECO-09），同价再随机
+        float minPrice = top.Min(x => x.Key.price);
+        var cheapest = top.Where(x => Mathf.Approximately(x.Key.price, minPrice)).ToList();
+        ShopDataItem winner = cheapest[UnityEngine.Random.Range(0, cheapest.Count)].Key;
+        if (top.Count > 1)
+            LogShop($"    权重并列 {top.Count} 个(max={max:F2})，低价优先取 {winner.produceNameId}(price={winner.price})");
 
         ShopRecommendConfig cfg = GetCfg(winner.produceNameId);
         bool isActivity = cfg != null && cfg.specialWeight != 0 && IsHolidayOrWeekend();
@@ -1261,9 +1346,45 @@ public partial class ShopManager : MonoBehaviour
         return _recommendConfigs.TryGetValue(nameId, out cfg) ? cfg : null;
     }
 
+    /// <summary>
+    /// 当前推荐位本关是否允许出「新人礼」（需求 C-RECO-09）。
+    /// 规则：
+    ///   1. 本关任何弹窗已出过新人礼 → 不再并发第二个；
+    ///   2. 优先级 灯泡 ＞ 复活 ＞ 火箭：更高优先级的弹窗本关已出新人礼时，低优先级弹窗不允许出。
+    /// </summary>
     private bool CanShowNewcomerGift(RecommendSlot slot)
     {
+        if (_shownNewcomer.Count == 0) return true;
+
+        // 本槽本关已出过新人礼，不重复出
+        if (_shownNewcomer.ContainsKey(slot))
+        {
+            LogShop($"CanShowNewcomerGift=false: 本关 {slot} 已出过新人礼({_shownNewcomer[slot]})");
+            return false;
+        }
+
+        int priority = GetSlotNewcomerPriority(slot);
+        foreach (var kv in _shownNewcomer)
+        {
+            if (GetSlotNewcomerPriority(kv.Key) > priority)
+            {
+                LogShop($"CanShowNewcomerGift=false: 更高优先级 {kv.Key} 本关已出新人礼({kv.Value})，{slot} 不允许出");
+                return false;
+            }
+        }
         return true;
+    }
+
+    /// <summary>新人礼互斥优先级：灯泡 3 ＞ 复活 2 ＞ 火箭 1 ＞ 其他 0。</summary>
+    private static int GetSlotNewcomerPriority(RecommendSlot slot)
+    {
+        switch (slot)
+        {
+            case RecommendSlot.Bulb: return 3;
+            case RecommendSlot.Clock: return 2;   // 复活
+            case RecommendSlot.Rocket: return 1;
+            default: return 0;
+        }
     }
 
     private static bool IsNewcomerLabel(string label)
@@ -1722,10 +1843,31 @@ public partial class ShopManager : MonoBehaviour
         MessageSystem.Instance.ShowTip("没有可恢复的内购");
     }
 
+    /// <summary>
+    /// 购买记录（本地 UserData.purchaseRecords，GiftTable 购买成功时写入，最新在前）。
+    /// 返回可直接展示的字符串：购买时间 | 礼包名称 | 价格币种。
+    /// </summary>
     public List<string> GetPurchaseRecords()
     {
-        LogShop("GetPurchaseRecords (TODO 本地记录未实现)");
-        return new List<string>();
+        var result = new List<string>();
+        var records = GetPurchaseRecordList();
+        foreach (var r in records)
+        {
+            string name = string.IsNullOrEmpty(r.nameText) ? r.nameKey : r.nameText;
+            if (string.IsNullOrEmpty(name)) name = r.produceNameId;
+            result.Add($"{r.buyTime} | {name} | {r.price:0.##}{r.currency}");
+        }
+        LogShop($"GetPurchaseRecords: 共 {result.Count} 条本地记录");
+        return result;
+    }
+
+    /// <summary>原始购买记录列表（供购买记录弹窗/日志使用），无数据时返回空列表。</summary>
+    public List<PurchaseRecord> GetPurchaseRecordList()
+    {
+        var records = GameDataManager.Instance?.UserData?.purchaseRecords;
+        if (records == null || records.Count == 0)
+            return new List<PurchaseRecord>();
+        return records;
     }
 
     // ======================= 道具折扣机制 =======================

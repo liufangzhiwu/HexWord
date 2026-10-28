@@ -531,8 +531,13 @@ public partial class ChessStageController
 
         SystemManager.Instance.ShowPanel(PanelType.ChessFinishView);
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
-        
-        
+
+        // ★ 结算页礼包弹窗调度：破冰 → 复购（需求 C-STRAT-08/09/12）
+        yield return new WaitForSeconds(1.2f);
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.TryShowSettlementGiftPopup(
+                AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCountThisSession : 0);
+
         // ---- 修复：统一封存最后一段在线时长 ----
         GameDataManager.Instance.UserData.UpdateOnlineStageTime();
     }

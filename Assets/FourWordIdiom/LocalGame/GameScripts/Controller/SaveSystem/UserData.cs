@@ -1259,6 +1259,11 @@ public class UserData
     public void UpdateSignid()
     {
         signid++;
+        // 新一轮签到活动（从第 1 档重新开始）视为活动开启
+        if (signid == 1)
+        {
+            AnalyticMgr.ActivityBegin("签到活动");
+        }
         if (string.IsNullOrEmpty(signOpenTime)) signOpenTime = DateTime.Now.ToString();
         TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(signOpenTime));
         AnalyticMgr.ActivityProgress("签到活动", signid, (int)ts.TotalSeconds);
@@ -1539,6 +1544,9 @@ public class UserData
             {
                 isShowVocabulary = true;
             }
+
+            // 只在“新增收藏”时上报，避免详情页重复赋值 Toggle 触发重复事件
+            AnalyticMgr.CollectionWord(Puzzle);
         }
     }
 

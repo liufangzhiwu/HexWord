@@ -653,7 +653,7 @@ public class PrimaryInterface : UIWindow
     }
     private void ClickHexaBtnClick()
     {
-        AnalyticMgr.PopShow("成语消：禅意之境引流");
+        AnalyticMgr.PopShow("禅意之境引流");
         Application.OpenURL("https://appgallery.huawei.com/app/detail?id=chengyu.idiom.hexa.zen.huawei");
     }
     

@@ -750,6 +750,20 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
+        // 已有互斥弹窗在展示时不叠加（注意：结算页本身是 UpPopPanel，不能直接用 IsPanelTypeShowing）
+        if (IsExclusivePopupShowing())
+        {
+            LogShop("TryShowBreakIcePopup 跳过: 已有互斥弹窗在展示");
+            return false;
+        }
+
+        // 本地与云端均无去广告（永久去广告 / 限时去广告生效中都不弹）
+        if (IsRemoveAdsOwned() || IsRemoveAdsActive())
+        {
+            LogShop($"TryShowBreakIcePopup 跳过: 已拥有去广告(永久={IsRemoveAdsOwned()}, 限时生效={IsRemoveAdsActive()})");
+            return false;
+        }
+
         int cooldownDays = BreakIceCooldownBaseDays + _breakIcePopupCount * BreakIceCooldownStepDays;
         if (_lastBreakIcePopupTime != DateTime.MinValue
             && DateTime.Now.Subtract(_lastBreakIcePopupTime).TotalDays < cooldownDays)
@@ -758,18 +772,35 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
-        ShopDataItem pack = allShopItems.FirstOrDefault(x => x.produceNameId == ProductRemoveAdsDaily);
+        // 破冰主力商品：一周去广告（配置表 RemoveAdsWeek）
+        ShopDataItem pack = allShopItems.FirstOrDefault(x => x.produceNameId == ProductRemoveAdsWeekly);
+
         if (pack == null)
         {
-            LogShop("TryShowBreakIcePopup 跳过: 未找到 RemoveAdsWeek 商品");
+            // 渠道未建周卡时，回退到定价最低的礼包，保证破冰链路可用（不去用终身去广告，价格过高不适合破冰）
+            pack = allShopItems
+                .Where(x => x.price > 0 && !IsRemoveAdsProduct(x.produceNameId))
+                .OrderBy(x => x.price)
+                .FirstOrDefault();
+            if (pack != null)
+                LogShop($"TryShowBreakIcePopup: 未配置 {ProductRemoveAdsWeekly}，回退最低价礼包 {pack.produceNameId}");
+        }
+
+        if (pack == null)
+        {
+            LogShop($"TryShowBreakIcePopup 跳过: 未找到 {ProductRemoveAdsWeekly} 且无可用回退礼包");
             return false;
         }
 
         _breakIcePopupCount++;
         _lastBreakIcePopupTime = DateTime.Now;
 
-        SystemManager.Instance.ShowPanel(PanelType.SpecialOfferPopup);
-        LogShop($"TryShowBreakIcePopup: 展示破冰礼包, 累计次数={_breakIcePopupCount}, 下次冷却={BreakIceCooldownBaseDays + _breakIcePopupCount * BreakIceCooldownStepDays}天");
+        // 限时 = 本次连续周末或节假日区间
+        DateTime endTime = IsHolidayOrWeekend() ? GetCurrentHolidayEndTime() : DateTime.MinValue;
+        SetPendingGiftPopup(pack, GiftPopupMode.BreakIce, endTime);
+        SystemManager.Instance.ShowPanel(PanelType.AdsDiscountScreen);
+
+        LogShop($"TryShowBreakIcePopup: 展示破冰礼包 {pack.produceNameId}, 累计次数={_breakIcePopupCount}, 下次冷却={BreakIceCooldownBaseDays + _breakIcePopupCount * BreakIceCooldownStepDays}天, 限时截止={(endTime == DateTime.MinValue ? "无" : endTime.ToString("yyyy-MM-dd HH:mm"))}");
         return true;
     }
 
@@ -789,9 +820,16 @@ public partial class ShopManager : MonoBehaviour
             LogShop("TryShowRepurchasePopup 跳过: 非 IAP 层");
             return false;
         }
-        if (GetPlayerGold() >= 100)
+        if (GetPlayerGold() >= 200)
         {
-            LogShop($"TryShowRepurchasePopup 跳过: 金币={GetPlayerGold()} >= 100");
+            LogShop($"TryShowRepurchasePopup 跳过: 金币={GetPlayerGold()} >= 200");
+            return false;
+        }
+
+        // 已有互斥弹窗在展示时不叠加
+        if (IsExclusivePopupShowing())
+        {
+            LogShop("TryShowRepurchasePopup 跳过: 已有互斥弹窗在展示");
             return false;
         }
         if (_lastRepurchasePopupTime != DateTime.MinValue
@@ -827,27 +865,92 @@ public partial class ShopManager : MonoBehaviour
                 chosen = candidates[0];
         }
 
-        AddPackBonus(chosen, a, Mathf.RoundToInt(chosen.price * 0.1f));
+        // 加量不加价：额外金币 = 取整(礼包金币价值 V × 10%)（需求 C-STRAT-10）
+        int bonusGold = Mathf.RoundToInt(chosen.coinValue * 0.1f);
+        AddPackBonus(chosen, a, bonusGold);
 
         _lastRepurchasePopupTime = DateTime.Now;
 
-        SystemManager.Instance.ShowPanel(PanelType.SpecialOfferPopup);
-        LogShop($"TryShowRepurchasePopup: 展示复购礼包, a={a.produceNameId}, chosen={chosen.produceNameId}, price={chosen.price}");
+        SetPendingGiftPopup(chosen, GiftPopupMode.Repurchase, DateTime.MinValue);
+        SystemManager.Instance.ShowPanel(PanelType.AdsDiscountScreen);
+        LogShop($"TryShowRepurchasePopup: 展示复购礼包, a={a.produceNameId}, chosen={chosen.produceNameId}, price={chosen.price}, 加赠金币={bonusGold}(coinValue={chosen.coinValue})");
         return true;
     }
 
-    private void AddPackBonus(ShopDataItem target, ShopDataItem basePack, int bonusValue)
+    /// <summary>
+    /// 给目标礼包追加额外金币（加量不加价，需求 C-STRAT-10）。
+    /// </summary>
+    /// <param name="bonusGold">额外金币数量（= 取整(金币价值 V × 10%)）</param>
+    private void AddPackBonus(ShopDataItem target, ShopDataItem basePack, int bonusGold)
     {
+        if (bonusGold <= 0)
+        {
+            LogShop($"AddPackBonus 跳过: 加赠金币={bonusGold} <= 0 (target={target?.produceNameId})");
+            return;
+        }
+
         if (target.productContent == null)
             target.productContent = new List<List<string>>();
 
         target.productContent.Add(new List<string>
         {
             ((int)LimitRewordType.Coins).ToString(),
-            (bonusValue * 100).ToString()
+            bonusGold.ToString()
         });
 
-        LogShop($"AddPackBonus: {target.produceNameId} 追加价值 {bonusValue}, 基准礼包={basePack?.produceNameId}");
+        LogShop($"AddPackBonus: {target.produceNameId} 加赠金币 {bonusGold}, 基准礼包={basePack?.produceNameId}");
+    }
+
+    // ======================= 弹窗互斥 =======================
+
+    /// <summary>
+    /// 是否有「互斥弹窗」正在展示（用于主动弹窗的并发控制）。
+    /// 不能用 SystemManager.IsPanelTypeShowing：结算页 ChessFinishView / StageFinishView
+    /// 本身是 UpPopPanel，会把主动弹窗永远挡住。
+    /// </summary>
+    private bool IsExclusivePopupShowing()
+    {
+        if (SystemManager.Instance == null) return false;
+
+        string[] exclusive =
+        {
+            PanelType.SpecialOfferPopup,   // 特惠礼包（旧）
+            PanelType.AdsDiscountScreen,   // 礼包弹窗（破冰/复购）
+            PanelType.AdFailed,            // 广告获取失败
+            PanelType.BuyFailScreen,       // 取消购买
+            PanelType.AwardScreen,         // 内购成功
+            PanelType.AdsAwardScreen,      // 广告奖励
+            PanelType.BuyListScreen,       // 购买记录
+            PanelType.SevenSignScreen,     // 七日签到
+            PanelType.DailyTasksScreen     // 每日任务
+        };
+
+        foreach (var p in exclusive)
+        {
+            if (SystemManager.Instance.PanelIsShowing(p))
+            {
+                LogShop($"IsExclusivePopupShowing=true: {p} 正在展示");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ======================= 结算页弹窗调度（破冰 → 复购） =======================
+
+    /// <summary>
+    /// 结算页统一入口：按 破冰 → 复购 顺序尝试弹出礼包弹窗（需求 C-STRAT-12）。
+    /// 两者互斥，任一弹出即返回 true；调用方无需关心内部策略。
+    /// </summary>
+    /// <param name="interAdsCountThisSession">本次启动已播放插屏次数（破冰要求 > 3）</param>
+    public bool TryShowSettlementGiftPopup(int interAdsCountThisSession)
+    {
+        if (ShopManager.shopManager == null) return false;
+
+        if (TryShowBreakIcePopup(interAdsCountThisSession))
+            return true;
+
+        return TryShowRepurchasePopup(_lastPurchasedPack);
     }
 
     // ======================= 数据访问桩 =======================

@@ -105,6 +105,21 @@ public partial class AnalyticMgr
         }; 
         Game.self.Analytics.LogEvent("activity_begin", properties, Define.DataTarget.Think);
     }
+
+    private static readonly HashSet<string> _begunActivities = new HashSet<string>();
+
+    /// <summary>
+    /// 活动首进上报（进程内去重）。
+    /// 蝴蝶园/莲心榜没有“活动重置”标记可用，先按进程兜底，跨进程会重复上报；
+    /// 等业务补上活动周期标记后改为按周期判断。
+    /// </summary>
+    public static void ActivityBeginOnce(string activityId)
+    {
+        if (string.IsNullOrEmpty(activityId)) return;
+        if (_begunActivities.Contains(activityId)) return;
+        _begunActivities.Add(activityId);
+        ActivityBegin(activityId);
+    }
     
     /// <summary>
     /// 活动进度
@@ -134,6 +149,77 @@ public partial class AnalyticMgr
         Game.self.Analytics.LogEvent("activity_complete", properties, Define.DataTarget.Think);
     }
     
+    /// <summary>
+    /// 商店活动礼包：弹出
+    /// </summary>
+    public static void ShopActivityShow(string activityName)
+    {
+        _currentShopActivity = activityName;
+        LogShopActivity("show_shopActivity", activityName);
+    }
+
+    private static string _currentShopActivity;
+
+    /// <summary>
+    /// 商店活动礼包：关闭活动礼包页（无参重载，用于页面关闭时兜底，未弹出过则不上报）
+    /// </summary>
+    public static void ShopActivityClose()
+    {
+        if (string.IsNullOrEmpty(_currentShopActivity)) return;
+        LogShopActivity("close_shopActivity", _currentShopActivity);
+        _currentShopActivity = null;
+    }
+
+    /// <summary>
+    /// 商店活动礼包：关闭活动礼包页
+    /// </summary>
+    public static void ShopActivityClose(string activityName)
+    {
+        _currentShopActivity = null;
+        LogShopActivity("close_shopActivity", activityName);
+    }
+
+    /// <summary>
+    /// 商店活动礼包：点击
+    /// </summary>
+    public static void ShopActivityTap(string activityName)
+    {
+        LogShopActivity("tap_shopActivity", activityName);
+    }
+
+    /// <summary>
+    /// 商店活动礼包：购买
+    /// </summary>
+    public static void ShopActivityBuy(string activityName)
+    {
+        LogShopActivity("buy_shopActivity", activityName);
+    }
+
+    private static void LogShopActivity(string eventName, string activityName)
+    {
+        if (Game.self == null || Game.self.Analytics == null) return;
+
+        var properties = new Dictionary<string, object>
+        {
+            {"shopActivity_name", activityName ?? string.Empty},
+        };
+        Game.self.Analytics.LogEvent(eventName, properties, Define.DataTarget.Think);
+    }
+
+    /// <summary>
+    /// 收藏成语（规范 #事件数据 collection_word）
+    /// </summary>
+    public static void CollectionWord(string word)
+    {
+        if (Game.self == null || Game.self.Analytics == null) return;
+
+        var properties = new Dictionary<string, object>
+        {
+            {"WordContent", word ?? string.Empty},
+        };
+        Game.self.Analytics.LogEvent("collection_word", properties, Define.DataTarget.Think);
+    }
+
     ///  排行榜类型
     /// </summary>
     /// <param name="zenName">界面名称</param>

@@ -123,6 +123,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         RefreshFreeButterToolUI(); // 刷新「免费赠送蝴蝶道具」提示显隐
         RefreshPupaIconVisibility();
         AnalyticMgr.LevelFailed();
+        AnalyticMgr.VideoAdShow("复活广告");
 
         ChessStageController.Instance.CurrStageData.IsPausedOrFailed = true;
         GameDataManager.Instance.CommitGameData();

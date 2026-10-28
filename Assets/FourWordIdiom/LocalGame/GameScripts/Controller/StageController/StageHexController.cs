@@ -339,8 +339,12 @@ public class StageHexController
 
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
         SystemManager.Instance.ShowPanel(PanelType.StageFinishView);
-        
-      
+
+        // ★ 结算页礼包弹窗调度：破冰 → 复购（需求 C-STRAT-08/09/12）
+        yield return new WaitForSeconds(1.2f);
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.TryShowSettlementGiftPopup(
+                AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCountThisSession : 0);
     }
     
     /// <summary>

@@ -58,6 +58,8 @@ public partial class AnalyticMgr
             {"pay_reason",itemName},
             {"is_first_pay", firstPay},
             {"pay_method",paymethod},
+            // 规范 #事件数据 order_finish.pay_tianzi_levelID：填字关卡进度（数值）
+            {"pay_tianzi_levelID", GameDataManager.Instance != null ? GameDataManager.Instance.UserData.CurrentChessStage : 0},
         }; 
         
         Game.self.Analytics.LogEvent("order_finish", properties, Define.DataTarget.Think);

@@ -150,6 +150,7 @@ public class ZenRankManager : MonoBehaviour
             CachedOldRank = MyCurrentRankData.rank;
             CachedOldScore = MyCurrentRankData.score;
             AnalyticMgr.SetCommonProperties();
+            AnalyticMgr.RefreshRankUserProperties();
         }
 
         bool isCompleted = false;

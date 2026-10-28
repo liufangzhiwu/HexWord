@@ -48,6 +48,9 @@ public class AdRuleManager : MonoBehaviour
     /// <summary>所有分层配置：UserLayer → 配置行</summary>
     private Dictionary<string, AdGeneralConfigRow> _adConfigRows = new Dictionary<string, AdGeneralConfigRow>();
 
+    /// <summary>本次启动已成功播放的插屏次数（破冰礼包条件之一：> 3，需求 C-STRAT-08）</summary>
+    public int InterAdsCountThisSession { get; private set; }
+
     /// <summary>默认分层 Key（adv 表中"标准"行对应的 UserLayer 值）</summary>
     private const string DefaultUserLayerKey = "1";
 
@@ -367,6 +370,10 @@ public class AdRuleManager : MonoBehaviour
             if (success)
             {
                 ReportAdShown(Define.AdType.Interstitial);
+
+                // ★ 本次启动插屏播放次数（破冰礼包要求 > 3，C-STRAT-08）
+                InterAdsCountThisSession++;
+                Debug.Log($"[AdRule] 插屏播放成功，本次累计={InterAdsCountThisSession}");
             }
 
             onComplete?.Invoke(success);

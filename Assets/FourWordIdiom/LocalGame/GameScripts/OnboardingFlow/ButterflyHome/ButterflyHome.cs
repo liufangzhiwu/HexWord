@@ -82,6 +82,7 @@ public class ButterflyHome : UIWindow
         base.OnEnable();
         backhome.enabled = true;
         AudioManager.Instance.PlaySoundEffect("ShowUI");
+        AnalyticMgr.ActivityBeginOnce("蝶园活动");
 
         EventDispatcher.instance.OnButterflyGardenChange += ChangeGardenNotify;
         // 先展示ui

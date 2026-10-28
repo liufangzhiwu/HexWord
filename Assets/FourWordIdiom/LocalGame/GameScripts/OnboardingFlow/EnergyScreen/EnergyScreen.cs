@@ -37,6 +37,7 @@ public class EnergyScreen : UIWindow
     {
         base.OnEnable();
         // EventDispatcher.instance.TriggerHighlightGoldAndEnergy(true);
+        AnalyticMgr.VideoAdShow("体力广告");
         if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
         _timerCoroutine = StartCoroutine(CheckShowNextEnergyTime());
     }

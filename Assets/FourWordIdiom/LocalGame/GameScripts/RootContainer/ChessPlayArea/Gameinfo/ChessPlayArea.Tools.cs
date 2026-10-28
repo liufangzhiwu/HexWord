@@ -19,46 +19,62 @@ public partial class ChessPlayArea
     /// <param name="isfirst"></param>
     public void InitToolUI(int value =0, bool isfirst = false)
     {
-        // Transform CompCost = CompleteBtn.transform.GetChild(0);
-        Transform CompCount = CompleteBtn.transform.GetChild(1);
-        Transform compText = CompCount.GetChild(0);
-        Transform compAdd = CompCount.GetChild(1);
-        if (GameDataManager.Instance.UserData.toolInfo[104].count > 0)
+        // 火箭（自动完成 toolInfo[104]）→ CompleteBtn
+        UpdateToolCountUI(CompleteBtn, 104);
+        // 提示（toolInfo[102]）→ HitsBtn
+        UpdateToolCountUI(HitsBtn, 102);
+    }
+
+    /// <summary>
+    /// 刷新单个道具按钮的数量角标（子对象 CountBg）。
+    /// - 数量充足（&gt; 0）：显示 CountBg，显示数量文本，隐藏「+」号
+    /// - 数量不足（&lt;= 0）：显示 CountBg，隐藏数量文本，显示「+」号（提示可补充）
+    /// 注意：旧逻辑在数量不足时把整个 CountBg 隐藏了，导致玩家看不到补充入口，此处改为常显。
+    /// </summary>
+    /// <param name="btn">道具按钮</param>
+    /// <param name="toolId">道具 ID：104=火箭/自动完成，102=提示</param>
+    private void UpdateToolCountUI(Button btn, int toolId)
+    {
+        if (btn == null) return;
+
+        // 优先按名字找，兼容层级变动；找不到再回退到第 2 个子节点（CountBg 的位置）
+        Transform countBg = btn.transform.Find("CountBg");
+        if (countBg == null && btn.transform.childCount > 1)
+            countBg = btn.transform.GetChild(1);
+        if (countBg == null) return;
+
+        int count = 0;
+        if (GameDataManager.Instance != null && GameDataManager.Instance.UserData != null)
         {
-            CompCount.gameObject.SetActive(true);
-            compText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[104].count.ToString();
-            compText.gameObject.SetActive(true);
-            compAdd.gameObject.SetActive(false);
-            // CompCost.gameObject.SetActive(false);
-        }
-        else
-        {
-            CompCount.gameObject.SetActive(false);
-            // CompCost.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
-            // CompCost.gameObject.SetActive(true);
-            // compAdd.gameObject.SetActive(true);
-            // compText.gameObject.SetActive(false);
+            ToolInfo toolInfo = null;
+            if (GameDataManager.Instance.UserData.toolInfo != null
+                && GameDataManager.Instance.UserData.toolInfo.TryGetValue(toolId, out toolInfo)
+                && toolInfo != null)
+            {
+                count = toolInfo.count;
+            }
         }
 
-        // Transform HintCost = HitsBtn.transform.GetChild(0);
-        Transform HintCount = HitsBtn.transform.GetChild(1);
-        Transform hintText = HintCount.GetChild(0);
-        Transform hintAdd = HintCount.GetChild(1);
-        if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
+        // 需求：道具数量不足时也要显示 CountBg
+        countBg.gameObject.SetActive(true);
+
+        Transform countText = countBg.childCount > 0 ? countBg.GetChild(0) : null;  // TipsText：数量
+        Transform addIcon = countBg.childCount > 1 ? countBg.GetChild(1) : null;    // AddIcon：「+」号
+
+        if (count > 0)
         {
-            HintCount.gameObject.SetActive(true);
-            hintText.GetComponent<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
-            hintText.gameObject.SetActive(true);
-            hintAdd.gameObject.SetActive(false);
-            // HintCost.gameObject.SetActive(false);
+            if (countText != null)
+            {
+                Text t = countText.GetComponent<Text>();
+                if (t != null) t.text = count.ToString();
+                countText.gameObject.SetActive(true);
+            }
+            if (addIcon != null) addIcon.gameObject.SetActive(false);
         }
         else
         {
-            HintCount.gameObject.SetActive(false);
-            // HintCost.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
-            // HintCost.gameObject.SetActive(true);
-            // hintText.gameObject.SetActive(false);
-            // hintAdd.gameObject.SetActive(true);
+            if (countText != null) countText.gameObject.SetActive(false);
+            if (addIcon != null) addIcon.gameObject.SetActive(true);
         }
     }
     

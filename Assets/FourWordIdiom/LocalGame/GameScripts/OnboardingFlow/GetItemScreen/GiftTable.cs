@@ -34,6 +34,9 @@ public class GiftTable : MonoBehaviour
 
     private ShopDataItem shopDataItem;
 
+    /// <summary>本礼包位是否已上报过 show_shopActivity（避免同一页重复上报）</summary>
+    private bool _activityPackReported;
+
     private Color color;
 
     /// <summary>[Shop] 标签日志</summary>
@@ -507,6 +510,13 @@ public class GiftTable : MonoBehaviour
             tag = GetActivityPackTag();
         }
 
+        // 商店活动礼包：本页首次渲染到活动礼包时上报一次弹出
+        if (!_activityPackReported && IsActivityPackProduct(shopDataItem))
+        {
+            _activityPackReported = true;
+            AnalyticMgr.ShopActivityShow(shopDataItem.produceNameId);
+        }
+
         if (string.IsNullOrEmpty(tag))
         {
             tagText.transform.parent.gameObject.SetActive(false);
@@ -598,6 +608,11 @@ public class GiftTable : MonoBehaviour
         else
         {
             AnalyticMgr.PurchaseStart(shopDataItem.produceNameId);
+            // 商店活动礼包：点击
+            if (IsActivityPackProduct(shopDataItem))
+            {
+                AnalyticMgr.ShopActivityTap(shopDataItem.produceNameId);
+            }
             Game.self.Shop.Purchase(shopDataItem.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
         }
     }
@@ -659,6 +674,12 @@ public class GiftTable : MonoBehaviour
         if (!UIUtilities.isEditMode)
         {
             AnalyticMgr.PurchaseFinished(item, firstPay);
+
+            // 商店活动礼包：购买成功
+            if (IsActivityPackProduct(shopDataItem))
+            {
+                AnalyticMgr.ShopActivityBuy(shopDataItem.produceNameId);
+            }
 
 #if UNITY_HUAWEI
             item?.OnShipmentCompleted(true);

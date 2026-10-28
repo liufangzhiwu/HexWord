@@ -80,6 +80,10 @@ public class GetItemScreen : UIWindow
         InitUI();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
 
+        // ★ 每次打开道具弹窗重置购买标记，用于关闭时判定「曝光未付费」（C-RECO-04 F+3）
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.paysuccess = false;
+
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
         {
             SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
@@ -92,6 +96,8 @@ public class GetItemScreen : UIWindow
     {
         base.OnDisable();
         targetWord = ""; // 🌟 每次关闭弹窗清空目标词
+        // 商店活动礼包：关闭（未弹出过则内部直接返回）
+        AnalyticMgr.ShopActivityClose();
         ClaimGoldBtn.interactable = true;
         closeBtn.interactable = true;
         EventDispatcher.instance.TriggerChangeGoldUI(0, true);
@@ -280,6 +286,12 @@ public class GetItemScreen : UIWindow
                     scrollRect.horizontal = true;
                 }
                 break;
+        }
+
+        // 广告位展示：仅提示灯/火箭这类有激励视频的点位才上报
+        if (!string.IsNullOrEmpty(eventDes))
+        {
+            AnalyticMgr.VideoAdShow(eventDes);
         }
 
         // 刷新礼包表（提示灯/火箭按配置数量生成）
@@ -746,6 +758,11 @@ public class GetItemScreen : UIWindow
     public void Close()
     {
         AudioManager.Instance.TriggerVibration(10, 200);
+
+        // ★ 曝光未付费：灯泡一号位（金币<80 且灯泡/火箭持有均为 0）时 F+3（C-RECO-04）
+        if (ShopManager.shopManager != null && !ShopManager.shopManager.paysuccess)
+            ShopManager.shopManager.AddBulbExposureFail();
+
         base.Close();
     }
 

@@ -78,6 +78,7 @@ public class PauseGameScreen : UIWindow
         base.OnEnable();
         pausePanel.SetActive(true);
         continuePanel.SetActive(false);
+        AnalyticMgr.VideoAdShow("跳关广告");
         
         float rawTime = ChessStageController.Instance.CurrStageData.RemainingTime;
         float safeTime = Mathf.Max(0, rawTime);

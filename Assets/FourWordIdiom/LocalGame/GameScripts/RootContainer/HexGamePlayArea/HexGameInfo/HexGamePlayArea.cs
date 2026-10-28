@@ -456,9 +456,11 @@ public class HexGamePlayArea : UIWindow
         TimeSpan timeSpan = DateTime.Now.Subtract(StartTime);
         // 获取数值
         float secondsValue = (float)Math.Round(timeSpan.TotalSeconds, 1);
+        // 规范 lv_content.level_e 要求每个词都带用户难度e值，六边形玩法同样有动态难度
+        float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
         
         AnalyticMgr.LevelProgress(puzzleId, puzzle, secondsValue,
-            wordErrorCount,StageHexController.Instance.PuzzleComboCount,usetoolCount);
+            wordErrorCount,StageHexController.Instance.PuzzleComboCount,usetoolCount, energy);
         
         StartTime = DateTime.Now;
     }

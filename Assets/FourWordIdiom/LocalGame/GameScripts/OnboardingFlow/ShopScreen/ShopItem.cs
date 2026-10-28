@@ -43,6 +43,11 @@ public class ShopItem : ShopItemBase
     {
         base.OnEnable();
         CheckAdAnimationState();
+        // 商店金币广告位展示（只在广告位激活时上报，避免每个商品都报一条）
+        if (isAdStateActive)
+        {
+            AnalyticMgr.VideoAdShow("看广告领取商店金币");
+        }
     }
 
     protected override void Update()
@@ -223,16 +228,17 @@ public class ShopItem : ShopItemBase
         if (isShow)
         {
             List<string> giftdata = shopDataItem.productContent[0];
-            int count = int.Parse(giftdata[1]);
 
             CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
-            GameDataManager.Instance.UserData.UpdateGold(count, true, true, "看广告领取商店金币");
+
+            // ★ 商店金币视频发放统一走 OnShopGoldClaimed（单次 100 金币 + 当日次数累计 + C 阈值兜底，C-STRAT-03）
+            if (ShopManager.shopManager != null)
+                ShopManager.shopManager.OnShopGoldClaimed();
+            else
+                GameDataManager.Instance.UserData.UpdateGold(int.Parse(giftdata[1]), true, true, "看广告领取商店金币");
+
             GameDataManager.Instance.UserData.isDayFreeGet = true;
             if (btnTagicon != null) btnTagicon.gameObject.SetActive(true);
-
-            // ★ 广告获取失败策略：商店金币视频成功观看，累计当日次数（C 阈值判断）
-            if (ShopManager.shopManager != null)
-                ShopManager.shopManager.RecordShopGoldVideoWatched();
 
             // ★ 刷新「剩余可用次数」显示
             RefreshAdsUseCountUI();

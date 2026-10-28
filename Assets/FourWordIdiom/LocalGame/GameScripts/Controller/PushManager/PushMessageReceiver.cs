@@ -44,6 +44,18 @@ public class PushMessageReceiver : MonoBehaviour
 
         // 转发给 Push_harmony 处理
         Game.self.Pushs.HandleSettingsClosedFromJS(enabled == 1);
+
+        // 消息推送权限弹窗埋点（规范 #事件数据 Pop_up / Pop_accept / Pop_refuse）
+        // 原生弹窗的“弹出”时机未暴露给 Unity，这里用回调时刻兜底，保证 accept/refuse 有对应的 up
+        AnalyticMgr.PopShow("消息推送");
+        if (enabled == 1)
+        {
+            AnalyticMgr.PopAccept("消息推送");
+        }
+        else
+        {
+            AnalyticMgr.PopRefuse("消息推送");
+        }
     }
 
     // ============================================================
@@ -77,6 +89,8 @@ public class PushMessageReceiver : MonoBehaviour
             Debug.Log($"[PushMessageReceiver] OnOAIDClosedSignal 收到, enabledStr={enabledStr}, enabled={enabled}");
 
             // ---------- 1. 埋点上报 ----------
+            // 原生权限弹窗的“弹出”时机未暴露给 Unity，这里用回调时刻兜底，保证漏斗不断头
+            AnalyticMgr.PopShow("广告追踪");
             if (enabled == 1)
             {
                 AnalyticMgr.PopAccept(popName: "广告追踪");

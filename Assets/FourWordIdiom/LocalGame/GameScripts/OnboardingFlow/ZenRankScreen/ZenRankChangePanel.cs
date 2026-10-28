@@ -211,6 +211,7 @@ private void ResetUIForReplay()
             }
         
             AnalyticMgr.SetCommonProperties();
+            AnalyticMgr.RefreshRankUserProperties();
             AnalyticMgr.ActivityProgress("连心榜活动", newScore, duration);
         
             // 埋点完毕后，更新最后一次得分的时间戳，为下次做准备
