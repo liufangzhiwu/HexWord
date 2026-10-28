@@ -14,6 +14,14 @@ namespace Middleware
 {
     public partial class AppBuilder
     {
+        /// <summary>
+        /// 鸿蒙包版本号（versionName）。全局唯一来源——改版本只改这一处。
+        ///
+        /// 菜单打包与命令行导出（HarmonyExportBuilder）都从这里取值，
+        /// 避免出现「菜单是 A、命令行是 B」导致真机安装版本不一致的问题。
+        /// </summary>
+        public const string HarmonyVersion = "1.3.4";
+
         #if UNITY_2022_3_55 || UNITY_2022_3_61
         [MenuItem("Tools/切换平台/Harmony", false, 101)]
         private static void SwitchToHarmony()
@@ -30,7 +38,7 @@ namespace Middleware
         {
             BuildHarmony(new BuildParam()
             {
-                BuildVersion = "1.5.0",
+                BuildVersion = HarmonyVersion,
                 IsBuildRelease = false,
                 IsBuildShowLog = true,
                 Channel = Channel.None
@@ -42,7 +50,7 @@ namespace Middleware
         {
             BuildHarmony(new BuildParam()
             {
-                BuildVersion = "1.5.0",
+                BuildVersion = HarmonyVersion,
                 IsBuildRelease = true,
                 IsBuildShowLog = false,
                 Channel = Channel.None
@@ -360,16 +368,37 @@ namespace Middleware
             return true;
         }
 
+        /// <summary>每天预留的 versionCode 号段数量（当天可构建次数上限 + 1）。</summary>
+        private const int HarmonyVersionSlotsPerDay = 2000;
+
         /// <summary>
-        /// 鸿蒙 versionCode：yyMMdd × 10000 + 当天分钟数，并与上一次取较大者保证单调递增。
-        /// 旧公式一天只有 96 档，会导致真机安装报 install version downgrade。
+        /// 鸿蒙 versionCode 编码：yyMMdd × 2000 + 当天序号。
+        ///
+        /// 为什么不用 yyMMdd × 10000：10000 倍会超出 int32 上限
+        /// （yyMMdd 最大 991231，991231 × 10000 = 9,912,310,000 &gt; int32 的 2,147,483,647），
+        /// 溢出成负数后「与上一次取较大者」分支恒不成立，日期段实际失效，
+        /// versionCode 退化成「上次 + 1」，也无法保证跨天递增。
+        ///
+        /// × 2000 时末日最大值 = 991231 × 2000 + 1999 = 1,982,463,999，仍在 int32 内。
+        /// 每天 2000 个号段足够（一天内构建 2000 次远超实际需要），
+        /// 且跨天严格递增（日期前缀每天 +2000 > 单日最大序号 1999）。
         /// </summary>
         private static int GenHarmonyBuildNumber()
         {
             var now = DateTime.Now;
-            var code = int.Parse($"{now.Year - 2000}{now.Month:00}{now.Day:00}") * 10000 +
-                       (now.Hour * 60 + now.Minute);
+            var dayPrefix = int.Parse($"{now.Year - 2000}{now.Month:00}{now.Day:00}") *
+                            HarmonyVersionSlotsPerDay;
+
             var prev = PlayerSettings.OpenHarmony.bundleVersionCode;
+
+            // 从存量 versionCode 反推当天已用到的序号
+            var seq = 1;
+            if (prev >= dayPrefix && prev < dayPrefix + HarmonyVersionSlotsPerDay)
+                seq = (prev - dayPrefix) + 1;
+            if (seq > HarmonyVersionSlotsPerDay - 1) seq = HarmonyVersionSlotsPerDay - 1;
+
+            var code = dayPrefix + seq;
+            // 兜底：存量来自旧编码或被手工改大时，绝不产出比它小的值（否则真机装不上）
             if (prev >= code) code = prev + 1;
             return code;
         }

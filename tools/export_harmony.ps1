@@ -33,7 +33,7 @@
 [CmdletBinding()]
 param(
     [string] $UnityProject = "D:\GitFork\HexWord",
-    [string] $ExportDir    = "D:\GitFork\HexWord\output\harmony_fix_1.3.3",
+    [string] $ExportDir    = "D:\GitFork\HexWord\output\harmony_fix_1.3.4",
     [string] $KeystoreDir  = "",
     [string] $UnityExe     = "D:\Unity_tuanjie\2022.3.55t4\Editor\Unity.exe",
     [string] $DevEcoHome   = "C:\Program Files\Huawei\DevEco Studio",

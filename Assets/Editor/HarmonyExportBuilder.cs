@@ -19,7 +19,7 @@ public class HarmonyExportBuilder
 {
     private const string LogPath = @"C:\Users\Administrator\WorkBuddy\2026-10-26-16-34-55\harmony_export.log";
     private const string DoneMarker = @"C:\Users\Administrator\WorkBuddy\2026-10-26-16-34-55\harmony_export.done";
-    private const string DefaultOutDir = @"D:\GitFork\HexWord\output\harmony_fix_1.3.3";
+    private const string DefaultOutDir = @"D:\GitFork\HexWord\output\harmony_fix_1.3.4";
     private static bool _started;
 
     /// <summary>导出目录，可由环境变量 HARMONY_OUT_DIR 覆盖。</summary>
@@ -84,7 +84,7 @@ public class HarmonyExportBuilder
             var outDir = OutDir;
             var param = new Middleware.AppBuilder.BuildParam
             {
-                BuildVersion = "1.5.0",
+                BuildVersion = Middleware.AppBuilder.HarmonyVersion,
                 IsBuildRelease = false,
                 IsBuildShowLog = true,
                 Channel = Middleware.AppBuilder.Channel.None
