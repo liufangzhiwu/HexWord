@@ -33,6 +33,7 @@ namespace Middleware
         #endif
 
         #if UNITY_2022_3_55 || UNITY_2022_3_61
+        #region 鸿蒙打包菜单
         [MenuItem("Tools/自动化打包/Harmony/Debug", false, 110)]
         private static void BuildHarmonyDebug()
         {
@@ -70,7 +71,69 @@ namespace Middleware
             var result = VerifyHarmonyPatchFromTemplate();
             EditorUtility.DisplayDialog("鸿蒙回归自检（补丁）", result, "确定");
         }
+        #endregion
         #endif
+
+        #region 流水线自检入口
+
+        /// <summary>
+        /// 零参自检：跑一遍**菜单路径**的完整流水线（exportDirOverride = null，
+        /// 输出到 harmony_toolchain.json 指定的 output/{outputDirName}/{projectDirName}）。
+        ///
+        /// 与命令行路径（HarmonyExportBuilder，输出到 output/harmony_fix_x.y.z）用的是同一套
+        /// RunHarmonyPipeline，只是输出目录不同。两条路径都必须能独立出包，
+        /// 所以留一个可被语义桥接 / CI 调用的入口做回归。
+        /// </summary>
+        public static string SelfTestMenuPathBuild()
+        {
+            var param = new BuildParam
+            {
+                BuildVersion = HarmonyVersion,
+                IsBuildRelease = false,
+                IsBuildShowLog = true,
+                Channel = Channel.None
+            };
+            var hap = RunHarmonyPipeline(param, null, out var error);
+            return string.IsNullOrEmpty(hap)
+                ? "FAILED: " + error
+                : "OK: " + hap;
+        }
+
+        /// <summary>
+        /// 零参自检：把导出目录指向一个**全新**的固定路径（output/_layouttest），
+        /// 跑完整流水线后回报该目录的模块结构与 entry 源文件数。
+        /// 用于验证「从零开始的干净导出」也能出包（排除目录残留导致的结构错乱）。
+        /// </summary>
+        public static string SelfTestFreshDirBuild()
+        {
+            var param = new BuildParam
+            {
+                BuildVersion = HarmonyVersion,
+                IsBuildRelease = false,
+                IsBuildShowLog = true,
+                Channel = Channel.None
+            };
+            var dir = Path.GetFullPath($"{Application.dataPath}/../output/_layouttest");
+            var hap = RunHarmonyPipeline(param, dir, out var error);
+            if (!string.IsNullOrEmpty(hap)) return "OK: " + hap;
+
+            var entryEts = Path.Combine(dir, "entry", "src", "main", "ets");
+            var count = Directory.Exists(entryEts)
+                ? Directory.GetFiles(entryEts, "*", SearchOption.AllDirectories).Length
+                : -1;
+            var dual = Directory.Exists(Path.Combine(dir, "tuanjieLib"));
+            return "FAILED: " + error +
+                   $"\n[布局诊断] entry/src/main/ets 文件数={count}, tuanjieLib存在={dual}";
+        }
+
+        [MenuItem("Tools/自动化打包/Harmony/自检·全新目录出包", false, 116)]
+        private static void MenuSelfTestFreshDirBuild()
+        {
+            var result = SelfTestFreshDirBuild();
+            EditorUtility.DisplayDialog("鸿蒙自检（全新目录出包）", result, "确定");
+        }
+
+        #endregion
 
         #region 鸿蒙打包流水线
 
@@ -229,9 +292,22 @@ namespace Middleware
         /// <summary>hvigor 失败时给出可定位的中文原因。</summary>
         private static string BuildHarmonyErrorHint(string hvOut, int exitCode)
         {
+            // ArkTS 编译期「找不到模块」：绝大多数是导出目录结构错乱（源码被挪进 tuanjieLib），
+            // 而不是依赖没装。要区分：报错里带具体模块路径 → 结构问题；
+            // 报的是 @thinkingdata/analytics / OHKitSdk 这类依赖名 → 才可能是 ohpm 没装全。
             if (hvOut.Contains("Cannot find module"))
-                return "鸿蒙依赖缺失（Cannot find module）。\n" +
-                       "Unity 重新导出会改写 oh-package.json5，需要重新执行 ohpm install。\n\n" + Tail(hvOut, 10);
+            {
+                if (hvOut.Contains("'@thinkingdata/analytics'") || hvOut.Contains("'OHKitSdk'"))
+                    return "鸿蒙依赖未安装（Cannot find module '@thinkingdata/analytics' / 'OHKitSdk'）。\n" +
+                           "Unity 重新导出会改写 oh-package.json5，需要重新执行 ohpm install。\n\n" + Tail(hvOut, 10);
+
+                return "ArkTS 找不到源码模块（Cannot find module）。\n" +
+                       "最常见原因：导出目录里残留了上一轮的 tuanjieLib 模块，\n" +
+                       "导致 Unity 把业务源码导出成双模块结构（源码进了 tuanjieLib/，entry/ 变薄壳），\n" +
+                       "于是 entry 里的 import '../common/xxx' 解析不到。\n" +
+                       "解决：删除整个导出目录后重新导出（流水线已自动清空，若仍出现请检查是否有进程占用目录）。\n\n" +
+                       Tail(hvOut, 10);
+            }
 
             if (hvOut.Contains("certificate has expired") || hvOut.Contains("11013002"))
                 return "签名材料已过期。\n" +
@@ -256,9 +332,17 @@ namespace Middleware
         /// <summary>
         /// 清理上一次导出的**构建产物**（entry/build、entry/outputs）。
         ///
-        /// 注意：不要整目录递归删除。Unity 导出的 entry/libs/arm64-v8a 里是链接文件，
-        /// Mono 的 Directory.Delete(path, true) 会抛 "参数错误 : 'arm64-v8a'"，
-        /// 源码目录由 Unity 自己覆盖，不需要我们清。
+        /// 必须清掉整个导出目录，不能只清 entry/build：
+        /// Unity 导出器会检测目标目录里是否已存在 tuanjieLib 模块。
+        ///   · 全新空目录 → 单模块结构，源码全部落在 entry/src/main/ets/（正确）
+        ///   · 目录已存在 → 双模块结构，源码被挪进 tuanjieLib/，entry 变成薄壳，
+        ///     随后 entry/oh-package.json5 里找不到 ../common/GlobalThisUtil，
+        ///     ArkTS 编译报 "Cannot find module" 而失败。
+        ///
+        /// 删除方式：逐文件删除而不是 Directory.Delete(path, true)。
+        /// Unity 导出的 .so 是硬链接（与 tuanjieLib/libs 共享 inode），
+        /// Mono 的递归删目录会抛 "参数错误 : 'arm64-v8a'"；
+        /// File.Delete 对硬链接是安全的（只减少链接计数，不动原文件）。
         /// </summary>
         private static void CleanHarmonyExportDir(string dir)
         {
@@ -271,19 +355,37 @@ namespace Middleware
             }
             if (!Directory.Exists(full)) return;
 
-            foreach (var rel in new[] { Path.Combine("entry", "build"), Path.Combine("entry", "outputs") })
+            try
             {
-                var target = Path.Combine(full, rel);
-                if (!Directory.Exists(target)) continue;
+                DeleteDirContents(full);
+                Debug.Log("[Harmony] 已清空导出目录内容: " + full);
+            }
+            catch (Exception e)
+            {
+                // 清不掉不阻断导出，但必须告警：残留会让 Unity 走错模块结构分支
+                Debug.LogWarning("[Harmony] 清理导出目录失败（可能残留 tuanjieLib 导致模块结构错误）: " + e.Message);
+            }
+        }
+
+        /// <summary>逐文件删除目录内容，再删除空目录（规避硬链接导致的递归删失败）。</summary>
+        private static void DeleteDirContents(string dir)
+        {
+            foreach (var file in Directory.GetFiles(dir))
+            {
+                try { File.Delete(file); }
+                catch (Exception e) { Debug.LogWarning($"[Harmony] 删除文件失败 {file}: {e.Message}"); }
+            }
+
+            foreach (var sub in Directory.GetDirectories(dir))
+            {
                 try
                 {
-                    Directory.Delete(target, true);
-                    Debug.Log("[Harmony] 已清理旧产物: " + rel);
+                    DeleteDirContents(sub);
+                    Directory.Delete(sub, false);
                 }
                 catch (Exception e)
                 {
-                    // 清不掉不影响打包，Unity/hvigor 会覆盖
-                    Debug.LogWarning($"[Harmony] 清理 {rel} 失败（继续）: {e.Message}");
+                    Debug.LogWarning($"[Harmony] 删除目录失败 {sub}: {e.Message}");
                 }
             }
         }
@@ -790,6 +892,19 @@ namespace Middleware
                 }
                 log.Add($"LAYOUT  {layout.Value.Name}");
 
+                // 0) 补齐 entry 侧公共文件（仅双模块布局需要）
+                //
+                // Unity 导出双模块结构时，业务公共源码落在 tuanjieLib/src/main/ets/，
+                // 而 entry/ 只拿到 ability/ 与 pages/ 两个模板文件。
+                // 但 entry/ability/TuanjiePlayerAbility.ets 里有
+                //     import { SetToGlobalThis } from '../common/GlobalThisUtil';
+                // 这个相对路径是相对 entry/ 解析的，而该文件并不在 entry/common/ 下，
+                // 于是 ArkTS 编译报 "Cannot find module '../common/GlobalThisUtil'"。
+                //
+                // 团队原始可出包工程（harmony/ 与 output/harmoney_1.3.3）正是把 common/ 与
+                // log/ 手工同步到了 entry/。这里在每次导出后自动完成同样的同步。
+                if (!SyncEntryCommonFiles(root, layout.Value, log, out error)) return false;
+
                 // 1) 新增 EngineLifecycleGuard.ets
                 var guardDst = Path.Combine(root, layout.Value.Guard);
                 if (File.Exists(guardDst))
@@ -887,12 +1002,96 @@ namespace Middleware
                 Require(entryFull.Contains("[TuanjiePlayerAbility] onBackground at "),
                     "entry.ets 缺少 onBackground 时间戳");
 
+                // 双模块布局下，entry 的相对 import 必须能在 entry/ 下解析到，
+                // 否则 ArkTS 编译期报 "Cannot find module '../common/xxx'"。
+                var entryEtsDir = Path.Combine(root, "entry", "src", "main", "ets");
+                var entryImportsCommon = entryFull.Contains("from '../common/");
+                Require(!entryImportsCommon ||
+                        File.Exists(Path.Combine(entryEtsDir, "common", "GlobalThisUtil.ts")),
+                    "entry/common/GlobalThisUtil.ts 缺失（entry 的相对 import 无法解析）");
+
                 if (missing.Count > 0)
                 {
                     error = "补丁未完整落地：\n- " + string.Join("\n- ", missing);
                     return false;
                 }
-                log.Add("完整性校验: 8/8 项通过");
+                log.Add("完整性校验: 9/9 项通过");
+                return true;
+            }
+
+            /// <summary>
+            /// 把双模块布局下位于 tuanjieLib 的公共源码同步到 entry。
+            ///
+            /// 背景：Unity 导出双模块结构时，业务公共源码在 tuanjieLib/src/main/ets/，
+            /// 而 entry/ability/TuanjiePlayerAbility.ets 里的
+            ///     import { SetToGlobalThis } from '../common/GlobalThisUtil';
+            /// 是相对 entry/ 解析的，该文件却不在 entry/common/ 下，
+            /// ArkTS 编译即报 "Cannot find module '../common/GlobalThisUtil'"。
+            ///
+            /// 处理：从 tuanjieLib 复制 common/ 与 log/ 到 entry（幂等，已存在则跳过）。
+            /// 单模块布局（源码本来就在 entry/）无需处理。
+            /// </summary>
+            private static bool SyncEntryCommonFiles(string root, Layout layout,
+                List<string> log, out string error)
+            {
+                error = null;
+                var entryEts = Path.Combine(root, "entry", "src", "main", "ets");
+                var libEts = Path.Combine(root, "tuanjieLib", "src", "main", "ets");
+
+                // 单模块布局：源码本来就在 entry/ 下
+                if (!Directory.Exists(libEts))
+                {
+                    log.Add("SKIP   补齐 entry 公共文件（单模块布局，源码已在 entry/）");
+                    return true;
+                }
+
+                // entry 侧实际引用到的公共文件（相对 entry/src/main/ets）
+                var needed = new[]
+                {
+                    Path.Combine("common", "Constants.ets"),
+                    Path.Combine("common", "GlobalThisUtil.ts"),
+                    Path.Combine("common", "PlayerPrefs.ets"),
+                    Path.Combine("common", "TuanjieLog.ets"),
+                    Path.Combine("log", "Logger.ts")
+                };
+
+                var copied = 0;
+                var skipped = 0;
+                foreach (var rel in needed)
+                {
+                    var src = Path.Combine(libEts, rel);
+                    var dst = Path.Combine(entryEts, rel);
+
+                    if (File.Exists(dst))
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    if (!File.Exists(src))
+                    {
+                        // tuanjieLib 里没有 —— 只能从团队工程模板取
+                        var fallback = Path.Combine(Application.dataPath, "..", "harmony",
+                            "entry", "src", "main", "ets", rel);
+                        if (File.Exists(fallback))
+                        {
+                            src = Path.GetFullPath(fallback);
+                        }
+                        else
+                        {
+                            log.Add("MISS   " + rel + "（tuanjieLib 与 harmony/ 模板中都没有，跳过）");
+                            continue;
+                        }
+                    }
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(dst));
+                    File.Copy(src, dst, true);
+                    copied++;
+                    log.Add("SYNC   entry/" + rel + "  <-  " +
+                            (src.StartsWith(libEts) ? "tuanjieLib" : "harmony/模板"));
+                }
+
+                log.Add($"补齐 entry 公共文件: 新增 {copied} 个，已存在 {skipped} 个");
                 return true;
             }
 
