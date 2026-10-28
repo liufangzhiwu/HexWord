@@ -1,18 +1,19 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!1 &2282460468219934363
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8654975508711435762}
   - component: {fileID: 8703990484575015574}
   - component: {fileID: 4614685493679101280}
   - component: {fileID: 4826805179005472407}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: tips
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -35,8 +36,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -317}
-  m_SizeDelta: {x: 998, y: 207.7181}
+  m_AnchoredPosition: {x: 0, y: 166.4}
+  m_SizeDelta: {x: 952.23, y: 207.7181}
   m_Pivot: {x: 0.5, y: 0.9999999}
 --- !u!222 &8703990484575015574
 CanvasRenderer:
@@ -101,12 +102,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3160251097714094356}
   - component: {fileID: 8939480220330764025}
   - component: {fileID: 5864859935264612832}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -180,13 +182,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5645013931935145226}
   - component: {fileID: 7973537714901786037}
   - component: {fileID: 3442054433103227575}
   - component: {fileID: 3939316718390891917}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Content
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -209,8 +212,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 20.2}
-  m_SizeDelta: {x: 998, y: 275.4149}
+  m_AnchoredPosition: {x: -6.9485, y: 559}
+  m_SizeDelta: {x: 894.103, y: 389.0524}
   m_Pivot: {x: 0.5, y: 0.9999999}
 --- !u!222 &7973537714901786037
 CanvasRenderer:
@@ -253,7 +256,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1.2
-  m_Text: "\u6B22\u8FCE\u4F53\u9A8C\u6211\u4EEC\u7684\u6E38\u620F\uFF01\u70B9\u51FB\u53EF\u67E5\u770B\u6211\u4EEC\u7684\_<href=https://mindwordplay.cn/yhxyb>\u670D\u52A1\u6761\u6B3E</href>\_\u548C\_<href=https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1828334564204899008>\u9690\u79C1\u653F\u7B56</href>\_\uFF0C\u5982\u60A8\u540C\u610F\uFF0C\u53EF\u70B9\u51FB\u300C\u540C\u610F\u300D\u8FDB\u5165\u6E38\u620F\u3002"
+  m_Text: 
 --- !u!114 &3939316718390891917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -275,12 +278,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1438732899086547712}
   - component: {fileID: 6243547727820050090}
   - component: {fileID: 8356821864900924023}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -338,8 +342,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 26dced05afc31284b97c619239e72a08, type: 3}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: 7ad7664478b7014448be9fb797215431, type: 3}
+  m_Type: 1
   m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
@@ -354,12 +358,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6850278931010785509}
   - component: {fileID: 4043138557661679476}
   - component: {fileID: 1475370088404652437}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: bg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -429,12 +434,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 9193176592648085334}
   - component: {fileID: 7204736838401182047}
   - component: {fileID: 3188675342067765170}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: AdTrackingGuidance
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -479,26 +485,26 @@ MonoBehaviour:
   m_GameObject: {fileID: 4292581140450614463}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6501219539ca1494abd2d8dfbd1a9890, type: 3}
+  m_Script: {fileID: 11500000, guid: 20afea30403d4e64a3c6cdd966fcdece, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _titleText: {fileID: 2158456778783552514}
   _descriptionText: {fileID: 3442054433103227575}
   _confirmButton: {fileID: 836747390053497556}
-  _rejectButton: {fileID: 0}
 --- !u!1 &6392750372235714929
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5597469308773933109}
   - component: {fileID: 1884835974530413256}
   - component: {fileID: 2158456778783552514}
   - component: {fileID: 333910594900375927}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -587,13 +593,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8483844340747484867}
   - component: {fileID: 4198268197013351498}
   - component: {fileID: 1890211201368544432}
   - component: {fileID: 836747390053497556}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Confirm
   m_TagString: Untagged
   m_Icon: {fileID: 0}

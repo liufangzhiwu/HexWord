@@ -133,6 +133,9 @@ public sealed class GameCoreManager : MonoBehaviour
        
         // ② 满足「关卡进度 ≥ 1 + 已过 Loading」后
         Game.self.Pushs?.RequestEnableNotification();
+
+        // ③ 广告追踪激励：首启时在加载阶段同意了授权，奖励在进入主界面后补弹"领取金币"弹窗
+        AdTrackingManager.EnsureInstance().TryShowPendingReward();
     }
 
     public void UpdateMyPersonInfo()

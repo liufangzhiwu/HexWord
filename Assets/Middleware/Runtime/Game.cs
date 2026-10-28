@@ -74,20 +74,17 @@ namespace Middleware
         }
 
 
+        /// <summary>
+        /// 鸿蒙：加载 Banner 并顺带拉起 APP_TRACKING_CONSENT（广告追踪）授权框。
+        /// 注意：授权框的"弹出时机"由 AdTrackingManager 控制（引导页点"继续"之后才调用），
+        ///       不要再在进入加载页时直接调用，否则会抢在引导页之前弹系统权限框。
+        ///       埋点（Pop_up / Pop_accept / Pop_refuse）也在 AdTrackingManager 里统一上报。
+        /// </summary>
         public void LoadAds_OAID()
         {
             
 #if UNITY_OPENHARMONY
   
-            int showAdsRequest=PlayerPrefs.GetInt("ShowAdsRequest",0);
-            if (showAdsRequest == 0)
-            {
-                AnalyticMgr.PopShow(popName: "广告追踪");
-                
-                PlayerPrefs.SetInt("ShowAdsRequest",1);
-                PlayerPrefs.Save();
-            }
-            
             AdRequestParams adRequestParams=new AdRequestParams();
             AdOptions adOptions=new AdOptions(); 
             AdDisplayOptions adDisplayOptions=new AdDisplayOptions();

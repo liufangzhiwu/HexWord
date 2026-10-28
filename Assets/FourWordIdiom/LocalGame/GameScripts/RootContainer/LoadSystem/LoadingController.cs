@@ -75,6 +75,11 @@ public class LoadingController : MonoBehaviour
     {
         StartCoroutine(InitBg());
         UnityMainThreadDispatcher.Instance();
+
+        // ★ 首次加载（隐私已同意）时，在加载页之上弹广告追踪引导页；
+        //   加载流程会在 allowSceneActivation 前等它结束（见 LoadingSequence）
+        AdTrackingManager.EnsureInstance().BeginStartupFlow(transform);
+
         StartLoading();
     }
     
@@ -138,9 +143,10 @@ public class LoadingController : MonoBehaviour
         MultilingualManager.Instance.LoadLocalization();
         LoadWordVocabulary();
         Game.self.InitGame();
-        
-        Game.self.LoadAds_OAID();
-        
+
+        // 说明：鸿蒙的 OAID/广告追踪授权与 LoadBanner 耦合，已统一挪到 AdTrackingManager 的引导流程里触发
+        // （避免进入加载页就先弹系统权限框，抢在"广告追踪引导页"之前）
+
         yield return new WaitForSeconds(0.5f);
        
         // ================= 等待登录（基于 LoginState 枚举）=================
@@ -430,6 +436,13 @@ public class LoadingController : MonoBehaviour
         float elapsed = Time.time - loadStartTime;
         if (elapsed < minLoadingTime)
             yield return new WaitForSeconds(minLoadingTime - elapsed);
+
+        // ★ 广告追踪引导页没关之前不切场景：避免玩家"没看到加载页"就直接进游戏
+        //   （引导页覆盖在加载页上方，此时加载其实已经在后台跑完了）
+        yield return AdTrackingManager.EnsureInstance().WaitStartupFlowFinished();
+
+        // 引导页关闭后，让玩家看到加载页进度走完这一帧再进游戏（版号信息/防沉迷提示都在这一屏）
+        yield return new WaitForSecondsRealtime(0.35f);
 
         sceneLoadOperation.allowSceneActivation = true;
     }

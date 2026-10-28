@@ -367,6 +367,31 @@ public partial class ShopManager : MonoBehaviour
         return string.IsNullOrEmpty(v) ? "1" : v.Trim();
     }
 
+    /// <summary>
+    /// 解析当前分层的"广告追踪激励策略" AdTrackingStimulate（S_G）：
+    ///   S = 0 关闭 / 1 开启（关闭时设置里不出"广告关联"开关，也不发奖励）
+    ///   G = 激励金币数量
+    /// 数据来源：shop_layer.csv 的 AdTrackingStimulate 列（如 IAA01 = 1_200）。
+    /// </summary>
+    public bool TryGetAdTrackingStimulate(out bool enabled, out int gold)
+    {
+        enabled = false;
+        gold = 0;
+
+        // 保证 _layerConfig 是当前分层的最新值（授权状态/活跃天数可能刚变化）
+        GetCurrentUserLayer();
+
+        string raw = _layerConfig != null ? _layerConfig.adTrackingStimulate : null;
+        if (string.IsNullOrEmpty(raw)) return false;
+
+        string[] parts = raw.Split('_');
+        if (parts.Length < 2) return false;
+
+        enabled = GetInt(parts[0]) == 1;
+        gold = Mathf.Max(0, GetInt(parts[1]));
+        return true;
+    }
+
     /// <summary>是否 IAA 层（纯广告变现层；破冰礼包只对 IAA 层生效）</summary>
     private bool IsIaaLayer()
     {
@@ -490,7 +515,7 @@ public partial class ShopManager : MonoBehaviour
 
         _lastAdFailedToolType = toolType;
         LogShop($"ShowAdFailedPanel: toolType={toolType}, 冷却={p.tipFailCooldown}s, 截止={_adFailBlockedUntil:HH:mm:ss}");
-        SystemManager.Instance.ShowPanel(PanelType.AdFailed);
+        SystemManager.Instance.ShowPanel(PanelType.AdsFailScreen);
     }
 
     /// <summary>
@@ -504,7 +529,7 @@ public partial class ShopManager : MonoBehaviour
 
         _lastAdFailedToolType = LimitRewordType.Coins; // 通用入口 = 商店金币视频路径
         LogShop($"ShowAdFailedPanel (通用): 冷却={p.tipFailCooldown}s, 截止={_adFailBlockedUntil:HH:mm:ss}");
-        SystemManager.Instance.ShowPanel(PanelType.AdFailed);
+        SystemManager.Instance.ShowPanel(PanelType.AdsFailScreen);
     }
 
     /// <summary>最近一次广告失败弹窗对应的道具类型（灯泡 Tipstool / 复活 ReStartTool / 商店金币 Coins）。</summary>
@@ -916,7 +941,7 @@ public partial class ShopManager : MonoBehaviour
         {
             PanelType.SpecialOfferPopup,   // 特惠礼包（旧）
             PanelType.AdsDiscountScreen,   // 礼包弹窗（破冰/复购）
-            PanelType.AdFailed,            // 广告获取失败
+            PanelType.AdsFailScreen,            // 广告获取失败
             PanelType.BuyFailScreen,       // 取消购买
             PanelType.AwardScreen,         // 内购成功
             PanelType.AdsAwardScreen,      // 广告奖励

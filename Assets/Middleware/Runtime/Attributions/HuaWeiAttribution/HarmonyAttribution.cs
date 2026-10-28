@@ -37,7 +37,11 @@ namespace Middleware
 
         public void Init(float delay)
         {
+            
+#if !UNITY_EDITOR
+            
             UnityTimer.Delay(delay, () => { EnsureBridge(); });
+#endif
         }
 
         /// <summary>

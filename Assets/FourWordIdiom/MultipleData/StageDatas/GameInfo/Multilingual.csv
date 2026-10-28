@@ -509,3 +509,10 @@ loadText53,做你内心认为正确的事——反正你都会被批评。,,,
 loadText54,生活中的许多失败者，是那些在放弃时没有意识到自己离成功有多近的人。,,,
 loadText55,幸福不在于拥有财物，也不在于黄金，幸福存在于心灵之中。,,,
 loadText56,人们会忘记你说过的话，也会忘记你做过的事，但他们永远不会忘记你让他们感受到的情感。,,
+AllowAssociation,请允许关联
+AssociationText,通过允许关联应用活动，帮助支持我们免费提供此应用，并减少您不喜欢的广告。\n您可以随时在系统设置中更改此设置。
+RelatedApplication,关联应用
+GoAndStart,去开启
+AdTracking,广告关联
+AdTrackingRewardBadge,+{0}金币
+AdTrackingRewardTip,开启广告关联，送您{0}金币，感谢支持！

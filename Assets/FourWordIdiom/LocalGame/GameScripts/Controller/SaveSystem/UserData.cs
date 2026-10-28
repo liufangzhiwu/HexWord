@@ -97,6 +97,12 @@ public class UserData
     public long LastPayTimeTicks; // 上次付费时间 (Ticks) (G3)
     public long LastRewardAdTimeTicks; // 上次看激励视频的时间 (G1)
     public string adTrackingEnabled;//广告权限是否开启
+
+    /// <summary>广告追踪（关联应用）引导页是否已经展示过——只弹一次</summary>
+    public bool adTrackingGuideShown;
+
+    /// <summary>广告追踪激励金币是否已领取——只能领一次，领过不再出现</summary>
+    public bool adTrackingRewardClaimed;
     
     /// <summary>
     /// 单次付费最大金额 A（用于 IAP 层细分）。
@@ -515,6 +521,8 @@ public class UserData
         DayInterstitialGiftCount = 0;
         HasShownFirstAdGift = false;
         adTrackingEnabled = "";
+        adTrackingGuideShown = false;
+        adTrackingRewardClaimed = false;
         MaxSinglePayAmount = 0f;
 
         // ★ 促销角标消费截止时间（新号默认空字符串 = 未消费）
@@ -759,6 +767,8 @@ public class UserData
         DayInterstitialGiftCount=user.DayInterstitialGiftCount;
         HasShownFirstAdGift=user.HasShownFirstAdGift;
         adTrackingEnabled=user.adTrackingEnabled;
+        adTrackingGuideShown = user.adTrackingGuideShown;
+        adTrackingRewardClaimed = user.adTrackingRewardClaimed;
         MaxSinglePayAmount=user.MaxSinglePayAmount;
 
         // ★ 促销角标消费截止时间（旧存档没有这个字段时为 null，统一兜底成空字符串）

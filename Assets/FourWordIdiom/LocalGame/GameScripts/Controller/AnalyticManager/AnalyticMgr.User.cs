@@ -86,6 +86,7 @@ public static class ResReason
     public const string GoldWord = "金币词获得";
     public const string GoldLeafGet = "金箔获得";
     public const string SkinDraw = "抽取皮肤";
+    public const string AdTrackingReward = "广告追踪激励"; // 开启广告追踪（关联应用）的一次性金币奖励
 
     /// <summary>规范外原因前缀：&lt;Other&gt;原文，回填规范后即可去掉。</summary>
     public const string OtherPrefix = "其他_";
@@ -109,6 +110,8 @@ public static class ResReason
         if (reason.Contains("金箔")) return GoldLeafGet;
         if (reason.Contains("皮肤")) return SkinDraw;
         if (reason.Contains("结算")) return LevelSettle;
+        // 必须排在通用"广告"之前，否则会被收敛成"金币广告弹窗获得"
+        if (reason.Contains("广告追踪")) return AdTrackingReward;
         if (reason.Contains("广告")) return GoldAdPop;
 
         Debug.LogWarning($"[Analytics] change_reason 未登记，按规范外上报：{reason}");

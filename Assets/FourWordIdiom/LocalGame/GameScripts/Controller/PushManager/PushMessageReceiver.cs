@@ -43,19 +43,10 @@ public class PushMessageReceiver : MonoBehaviour
         Debug.Log($"[PushMessageReceiver] OnSettingsClosedSignal 收到, enabledStr={enabledStr}, enabled={enabled}");
 
         // 转发给 Push_harmony 处理
+        // 注意：Pop_up / Pop_accept / Pop_refuse("消息推送") 已经在 Push_harmony 内部上报
+        //      （RequestEnableNotification 上报 pop_up，HandleSettingsClosedFromJS 上报 accept/refuse），
+        //      这里再报一次会出现"一次授权两个 pop_up"的重复数据，故移除。
         Game.self.Pushs.HandleSettingsClosedFromJS(enabled == 1);
-
-        // 消息推送权限弹窗埋点（规范 #事件数据 Pop_up / Pop_accept / Pop_refuse）
-        // 原生弹窗的“弹出”时机未暴露给 Unity，这里用回调时刻兜底，保证 accept/refuse 有对应的 up
-        AnalyticMgr.PopShow("消息推送");
-        if (enabled == 1)
-        {
-            AnalyticMgr.PopAccept("消息推送");
-        }
-        else
-        {
-            AnalyticMgr.PopRefuse("消息推送");
-        }
     }
 
     // ============================================================
@@ -77,50 +68,30 @@ public class PushMessageReceiver : MonoBehaviour
     // ============================================================
     public void OnOAIDClosedSignal(string enabledStr)
     {
+        int enabled = 0;
+        int.TryParse(enabledStr, out enabled);
+        bool granted = enabled == 1;
+        Debug.Log($"[PushMessageReceiver] OnOAIDClosedSignal 收到, enabledStr={enabledStr}, granted={granted}");
 
-        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
-        if (userData == null) return;
-        
-        bool hasAdTracking = false;
-        if (string.IsNullOrEmpty(userData.adTrackingEnabled))
+        // 广告追踪的授权状态写入 / 分层刷新 / 埋点 / 激励发放，统一由 AdTrackingManager 编排，
+        // 避免和"引导页 → 系统弹窗"的流程各写一份导致状态/埋点重复。
+        AdTrackingManager manager = AdTrackingManager.Instance;
+        if (manager != null)
         {
-            int enabled = 0;
-            int.TryParse(enabledStr, out enabled);
-            Debug.Log($"[PushMessageReceiver] OnOAIDClosedSignal 收到, enabledStr={enabledStr}, enabled={enabled}");
-
-            // ---------- 1. 埋点上报 ----------
-            // 原生权限弹窗的“弹出”时机未暴露给 Unity，这里用回调时刻兜底，保证漏斗不断头
-            AnalyticMgr.PopShow("广告追踪");
-            if (enabled == 1)
-            {
-                AnalyticMgr.PopAccept(popName: "广告追踪");
-            }
-            else
-            {
-                AnalyticMgr.PopRefuse(popName: "广告追踪");
-            }
-            
-            // ---------- 2. 记录广告追踪状态到 UserData（供分层判断） ----------
-            hasAdTracking = enabled == 1;
-          
-            userData.adTrackingEnabled = enabled.ToString();
-            Debug.Log($"[PushMessageReceiver] 广告追踪权限状态已写入 UserData.adTrackingEnabled={hasAdTracking}");
+            manager.OnPermissionResult(granted);
+            return;
         }
 
-        // ---------- 3. 刷新用户分层并打印日志 ----------
+        // 兜底：管理器尚未创建（例如登录补写授权状态的极早期调用）
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null) return;
+
+        userData.adTrackingEnabled = granted ? "1" : "0";
         if (ShopManager.shopManager != null)
         {
             string curLayer = ShopManager.shopManager.GetCurrentUserLayer();
             ShopManager.shopManager.RefreshLayer();
-
-            bool isPaid = userData.TotalPayTimes > 0;
-            Debug.Log($"[Shop] 广告追踪回调触发分层刷新: " +
-                      $"hasAdTracking={hasAdTracking}, isPaid={isPaid}, " +
-                      $"分层 {curLayer}");
-        }
-        else
-        {
-            Debug.LogWarning("[PushMessageReceiver] ShopManager.shopManager 为空，跳过分层刷新");
+            Debug.Log($"[PushMessageReceiver] 广告追踪状态写入（兜底路径）：granted={granted}，分层={curLayer}");
         }
     }
 }

@@ -30,6 +30,12 @@ public class OptionsView : UIWindow
     [SerializeField] private Text soundText; // 音效文本显示
     [SerializeField] private Text vibrateText; // 震动文本显示
 
+    // 广告关联（广告追踪授权）开关：运行时按"消息推送"行克隆出来的，见 SetupAdTrackingRow()
+    private GameObject _adTrackingRow;
+    private GameObject _adTrackingHandle;
+    private Text _adTrackingLabel;
+    private AdTrackingManager _adTracking;
+
     Sprite Opensprite;
     Sprite Closesprite;
 
@@ -40,6 +46,8 @@ public class OptionsView : UIWindow
         Opensprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_OpenToggle");
         Closesprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
         UpdateToggleStates(false); // 启用时更新状态，不带动画
+        SetupAdTrackingRow();      // 广告关联开关（玩家拒绝过授权时才显示）
+        RefreshAdTrackingRow();
 #if UNITY_OPENHARMONY
         opinionBtn.gameObject.SetActive(true);
         restoreBuyBtn.gameObject.SetActive(false);
@@ -61,7 +69,8 @@ public class OptionsView : UIWindow
         VersionText.text = "Ver " + Application.version;
 
         UpdateAutoPushToggle();
-
+        RefreshAdTrackingRow();
+        SubscribeAdTrackingEvent();
     }
 
 
@@ -148,6 +157,131 @@ public class OptionsView : UIWindow
     private void ToggleAutoPush()
     {
         Game.self.Pushs.ReSetRequestEnableNotification();
+    }
+
+    // ============================================================
+    // 广告关联（广告追踪授权）开关
+    // 需求：玩家拒绝过广告追踪权限时，玩法设置里出现该开关（是否出现由分层配置 S 控制），
+    //      点开关 → 广告追踪引导页（按钮"去开启"）→ 系统广告追踪设置页。
+    // 实现：直接克隆"消息推送"这一行，复用图标/文字/手柄样式，避免再维护一套预制体。
+    // ============================================================
+
+    private void SetupAdTrackingRow()
+    {
+        if (_adTrackingRow != null || autopushBtn == null) return;
+
+        Transform sourceRow = autopushBtn.transform.parent;
+        if (sourceRow == null || sourceRow.parent == null) return;
+
+        GameObject row = Instantiate(sourceRow.gameObject, sourceRow.parent);
+        row.name = "AdTrackingTable";
+        row.transform.SetAsLastSibling();
+        _adTrackingRow = row;
+
+        _adTrackingLabel = FindTextByName(row.transform, "autopushText");
+        if (_adTrackingLabel == null) _adTrackingLabel = row.GetComponentInChildren<Text>(true);
+
+        // 开关手柄：按"原行 → auHandle"的相对路径，在新行里找同一个节点
+        if (auHandle != null)
+        {
+            string handlePath = GetRelativePath(sourceRow, auHandle.transform);
+            if (!string.IsNullOrEmpty(handlePath))
+            {
+                Transform handle = row.transform.Find(handlePath);
+                if (handle != null) _adTrackingHandle = handle.gameObject;
+            }
+        }
+
+        Button button = row.GetComponentInChildren<Button>(true);
+        if (button != null)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(OnClickAdTracking);
+        }
+
+        _adTrackingRow.SetActive(false);
+    }
+
+    private void RefreshAdTrackingRow()
+    {
+        if (_adTrackingRow == null) return;
+
+        if (Opensprite == null || Closesprite == null)
+        {
+            Opensprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_OpenToggle");
+            Closesprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
+        }
+
+        _adTracking = AdTrackingManager.Instance;
+        bool show = _adTracking != null && _adTracking.ShouldShowSettingsEntry();
+        _adTrackingRow.SetActive(show);
+        if (!show) return;
+
+        bool isOn = _adTracking.IsAuthorized;
+
+        if (_adTrackingLabel != null)
+        {
+            string label = MultilingualManager.Instance.GetString("AdTracking");
+            int gold = _adTracking.SettingsEntryRewardGold;
+
+            // 奖励金币的 UI 表现：直接挂在开关文字下方（跟引导页按钮上的 +G 是同一份激励）
+            _adTrackingLabel.text = gold > 0
+                ? $"{label}\n<color=#F2991F>+{gold}</color>"
+                : label;
+        }
+
+        if (_adTrackingHandle != null) SetToggleVisuals(_adTrackingHandle, isOn);
+    }
+
+    private void OnClickAdTracking()
+    {
+        if (_adTracking == null) _adTracking = AdTrackingManager.Instance;
+        if (_adTracking == null) return;
+
+        // 引导页挂在当前 Canvas 最上层（覆盖设置界面）
+        Transform canvas = GetComponentInParent<Canvas>() != null
+            ? GetComponentInParent<Canvas>().transform
+            : transform;
+
+        _adTracking.OpenSettingsGuide(canvas);
+    }
+
+    private void SubscribeAdTrackingEvent()
+    {
+        if (_adTracking == null) _adTracking = AdTrackingManager.Instance;
+        if (_adTracking == null) return;
+
+        _adTracking.OnAuthorizationChanged -= HandleAdAuthorizationChanged;
+        _adTracking.OnAuthorizationChanged += HandleAdAuthorizationChanged;
+    }
+
+    private void HandleAdAuthorizationChanged(bool granted)
+    {
+        RefreshAdTrackingRow();
+    }
+
+    private static Text FindTextByName(Transform root, string name)
+    {
+        Text[] texts = root.GetComponentsInChildren<Text>(true);
+        for (int i = 0; i < texts.Length; i++)
+        {
+            if (texts[i].gameObject.name == name) return texts[i];
+        }
+        return null;
+    }
+
+    private static string GetRelativePath(Transform root, Transform target)
+    {
+        if (root == null || target == null || target == root) return null;
+
+        System.Collections.Generic.List<string> parts = new System.Collections.Generic.List<string>();
+        Transform cur = target;
+        while (cur != null && cur != root)
+        {
+            parts.Insert(0, cur.name);
+            cur = cur.parent;
+        }
+        return cur == root ? string.Join("/", parts) : null;
     }
 
     private void ToggleSounds(bool isOn)
@@ -276,6 +410,7 @@ public class OptionsView : UIWindow
     protected override void OnDisable()
     {
         base.OnDisable();
-        EventDispatcher.instance.OnChangeGoldUI += UpdateAutoPushToggle; // 订阅语言更新事件           
+        EventDispatcher.instance.OnChangeGoldUI -= UpdateAutoPushToggle; // 取消订阅（原来误写成 += 会重复累加）
+        if (_adTracking != null) _adTracking.OnAuthorizationChanged -= HandleAdAuthorizationChanged;
     }
 }
