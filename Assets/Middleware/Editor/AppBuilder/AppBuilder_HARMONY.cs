@@ -265,6 +265,14 @@ namespace Middleware
                 return null;
             }
 
+            // ---------- ④.1 覆盖 OHKitSdk 源码 ----------
+            // 必须放在 ohpm install **之后**：ohpm 会按 har 重新解包 oh_modules，
+            // 把团队对 sdk 目录的改动（改过 4 个 + 新增 SendOAID/TuanjieNative）冲掉。
+            Debug.Log("[Harmony] ④.1 覆盖 OHKitSdk sdk 源码");
+            if (!HarmonyArkTsPatcher.ApplyOHKitSdkSourcesAfterInstall(harProject, out var sdkLog, out error))
+                return null;
+            foreach (var line in sdkLog) Debug.Log("    " + line);
+
             // ---------- ⑤ hvigor assembleHap ----------
             var hvigor = Path.Combine(cfg.devEcoHome, "tools", "hvigor", "bin", "hvigorw.bat");
             var buildMode = buildParam.IsBuildRelease ? "release" : "debug";
@@ -905,6 +913,13 @@ namespace Middleware
                 // log/ 手工同步到了 entry/。这里在每次导出后自动完成同样的同步。
                 if (!SyncEntryCommonFiles(root, layout.Value, log, out error)) return false;
 
+                // 0.2) 覆盖 entry 的 Index.ets 为团队定制版
+                //      （OAID 页面：SDKManager 通知回调、退出确认弹窗、权限状态）
+                if (!ApplyEntryIndexPage(root, log, out error)) return false;
+
+                // 0.3) 注入权限声明与权限说明字符串
+                if (!ApplyPermissionsAndStrings(root, log, out error)) return false;
+
                 // 1) 新增 EngineLifecycleGuard.ets
                 var guardDst = Path.Combine(root, layout.Value.Guard);
                 if (File.Exists(guardDst))
@@ -936,6 +951,9 @@ namespace Middleware
                 {
                     log.Add("SKIP   (单模块布局，无需 exported.ets)");
                 }
+
+                // 3.1) exported.ets 追加 SDKManager 导出（entry/pages/Index.ets 要用）
+                if (!AppendSdkManagerExport(root, log, out error)) return false;
 
                 // 4) entry 侧时间戳日志
                 var entryPath = Path.Combine(root, layout.Value.Entry);
@@ -1010,12 +1028,49 @@ namespace Middleware
                         File.Exists(Path.Combine(entryEtsDir, "common", "GlobalThisUtil.ts")),
                     "entry/common/GlobalThisUtil.ts 缺失（entry 的相对 import 无法解析）");
 
+                // 定制版 Index.ets：SDKManager 回调 + 退出确认弹窗
+                var indexText = File.Exists(Path.Combine(entryEtsDir, "pages", "Index.ets"))
+                    ? File.ReadAllText(Path.Combine(entryEtsDir, "pages", "Index.ets"))
+                    : "";
+                Require(indexText.Contains("SDKManager, TuanjiePlayerView"),
+                    "entry/pages/Index.ets 不是定制版（缺 SDKManager import）");
+                Require(indexText.Contains("SDKManager.OnNotificationSettingsClosed()"),
+                    "entry/pages/Index.ets 缺 onFocus 回调");
+                Require(indexText.Contains("你确定要退出游戏吗"), "entry/pages/Index.ets 缺退出确认弹窗");
+
+                // exported.ets 必须导出 SDKManager，否则 Index.ets 从 'tuanjieLib' 导入不到
+                var exportedPath = Path.Combine(root, "tuanjieLib", "exported.ets");
+                Require(!File.Exists(exportedPath) ||
+                        File.ReadAllText(exportedPath).Contains("export { SDKManager }"),
+                    "tuanjieLib/exported.ets 未导出 SDKManager");
+
+                // OHKitSdk sdk 目录的校验放在 ohpm install 之后单独做
+                // （见 VerifyOHKitSdkSources），此处 oh_modules 可能还没解包。
+
+                // 权限与说明字符串
+                var moduleText = File.Exists(Path.Combine(root, "entry", "src", "main", "module.json5"))
+                    ? File.ReadAllText(Path.Combine(root, "entry", "src", "main", "module.json5"))
+                    : "";
+                Require(moduleText.Contains("ohos.permission.APP_TRACKING_CONSENT"),
+                    "module.json5 缺 APP_TRACKING_CONSENT 权限");
+                Require(moduleText.Contains("ohos.permission.PUBLISH_AGENT_REMINDER"),
+                    "module.json5 缺 PUBLISH_AGENT_REMINDER 权限");
+                Require(moduleText.Contains("ohos.permission.VIBRATE"), "module.json5 缺 VIBRATE 权限");
+
+                var stringText = File.Exists(Path.Combine(root, "entry", "src", "main", "resources",
+                    "base", "element", "string.json"))
+                    ? File.ReadAllText(Path.Combine(root, "entry", "src", "main", "resources",
+                        "base", "element", "string.json"))
+                    : "";
+                Require(stringText.Contains("app_tracking_reason"), "string.json 缺 app_tracking_reason");
+                Require(stringText.Contains("reason_publish_reminder"), "string.json 缺 reason_publish_reminder");
+
                 if (missing.Count > 0)
                 {
                     error = "补丁未完整落地：\n- " + string.Join("\n- ", missing);
                     return false;
                 }
-                log.Add("完整性校验: 9/9 项通过");
+                log.Add("完整性校验: 18/18 项通过（OHKitSdk 源码另在 ohpm 之后校验）");
                 return true;
             }
 
@@ -1095,6 +1150,268 @@ namespace Middleware
                 return true;
             }
 
+            /// <summary>补丁源根目录（Assets 下，随代码版本管理）。</summary>
+            private static string PatchSourceRoot => Path.Combine(Application.dataPath,
+                "Middleware", "Editor", "AppBuilder", "HarmonyPatch");
+
+            /// <summary>
+            /// 用团队定制版覆盖 entry/src/main/ets/pages/Index.ets。
+            ///
+            /// Unity 模板自带的 Index.ets 只有一个 TuanjiePlayerView，没有：
+            ///   · SDKManager 的 onFocus/onBlur 回调（通知设置关闭后要回调 SDK）
+            ///   · 返回键退出确认弹窗（原来只 return !AppStorage.get(...)，直接退出）
+            ///   · OAID / 权限状态等页面级状态
+            /// 这些是团队在 harmony/ 工程里手改的，每次导出都会被覆盖回模板，
+            /// 所以这里每次导出后重新覆盖一次。
+            /// </summary>
+            private static bool ApplyEntryIndexPage(string root, List<string> log, out string error)
+            {
+                error = null;
+                var src = Path.Combine(PatchSourceRoot, "EntryPages", "Index.ets");
+                if (!File.Exists(src))
+                {
+                    error = "找不到 Index.ets 补丁源: " + src;
+                    return false;
+                }
+
+                var dst = Path.Combine(root, "entry", "src", "main", "ets", "pages", "Index.ets");
+                Directory.CreateDirectory(Path.GetDirectoryName(dst));
+
+                var before = File.Exists(dst) ? File.ReadAllText(dst) : null;
+                var content = File.ReadAllText(src);
+                if (before == content)
+                {
+                    log.Add("ALREADY entry/pages/Index.ets（已是定制版）");
+                    return true;
+                }
+
+                File.WriteAllText(dst, content, new UTF8Encoding(false));
+                log.Add((before == null ? "ADDED  " : "PATCHED ") + "entry/pages/Index.ets（OAID/SDKManager/退出确认）");
+                return true;
+            }
+
+            /// <summary>
+            /// 覆盖 OHKitSdk 的 sdk 目录源码。
+            ///
+            /// OHKitSdk 是 ohpm 从 har 解包到 oh_modules/.ohpm/OHKitSdk@&lt;hash&gt;=/ 的依赖。
+            /// har 原版只有 4 个文件（AdPlayer / AdStatusHandler / SDKHandler / SDKManager），
+            /// 团队在工程里改了这 4 个并新增了 SendOAID.ets、TuanjieNative.ets
+            /// （OAID 上报与 native 桥接），这些改动不在 har 里，每次 ohpm install 都会丢失。
+            ///
+            /// 注意：.ohpm 下的目录名带哈希后缀、且随 har 内容变化，所以不能写死路径，
+            /// 这里按前缀 OHKitSdk@ 动态查找。
+            /// </summary>
+            /// <summary>
+            /// 供流水线在 ohpm install 之后调用：覆盖 OHKitSdk 源码并输出日志。
+            /// 必须晚于 ohpm install —— 否则会被 har 重新解包覆盖。
+            /// </summary>
+            public static bool ApplyOHKitSdkSourcesAfterInstall(string root, out List<string> log, out string error)
+            {
+                var localLog = new List<string>();
+                var ok = ApplyOHKitSdkSources(root, localLog, out error);
+                log = localLog;
+                if (ok) ok = VerifyOHKitSdkSources(root, localLog, out error);
+                log = localLog;
+                return ok;
+            }
+
+            /// <summary>校验 OHKitSdk sdk 目录里的补丁文件确实落地（ohpm install 之后调用）。</summary>
+            private static bool VerifyOHKitSdkSources(string root, List<string> log, out string error)
+            {
+                error = null;
+                var ohpmDir = Path.Combine(root, "oh_modules", ".ohpm");
+                if (!Directory.Exists(ohpmDir)) return true;
+
+                var sdkDirs = Directory.GetDirectories(ohpmDir, "OHKitSdk@*")
+                    .Select(d => Path.Combine(d, "oh_modules", "OHKitSdk", "src", "main", "ets", "components", "sdk"))
+                    .Where(Directory.Exists)
+                    .ToArray();
+                if (sdkDirs.Length == 0) return true;
+
+                // 团队版 SDKManager 含 OnNotificationSettingsClosed（har 原版没有）
+                foreach (var d in sdkDirs)
+                {
+                    var mgr = Path.Combine(d, "SDKManager.ets");
+                    if (File.Exists(mgr) && !File.ReadAllText(mgr).Contains("OnNotificationSettingsClosed"))
+                    {
+                        error = "OHKitSdk/sdk/SDKManager.ets 仍是 har 原版（缺 OnNotificationSettingsClosed）。\n" +
+                                "说明补丁被 ohpm install 覆盖了 —— 检查流水线里覆盖动作是否在 ohpm 之后。";
+                        return false;
+                    }
+                    if (!File.Exists(Path.Combine(d, "SendOAID.ets")))
+                    {
+                        error = "OHKitSdk/sdk/SendOAID.ets 缺失（补丁未落地）";
+                        return false;
+                    }
+                }
+
+                log.Add("OHKitSdk sdk 目录校验: 通过");
+                return true;
+            }
+
+            private static bool ApplyOHKitSdkSources(string root, List<string> log, out string error)
+            {
+                error = null;
+                var srcDir = Path.Combine(PatchSourceRoot, "OHKitSdk", "sdk");
+                if (!Directory.Exists(srcDir))
+                {
+                    error = "找不到 OHKitSdk sdk 补丁源: " + srcDir;
+                    return false;
+                }
+
+                // 定位解包目录：oh_modules/.ohpm/OHKitSdk@<hash>=/oh_modules/OHKitSdk/src/main/ets/components/sdk
+                var ohpmDir = Path.Combine(root, "oh_modules", ".ohpm");
+                if (!Directory.Exists(ohpmDir))
+                {
+                    log.Add("SKIP   OHKitSdk 补丁（oh_modules/.ohpm 不存在，可能 ohpm install 未执行）");
+                    return true;
+                }
+
+                var candidates = Directory.GetDirectories(ohpmDir, "OHKitSdk@*");
+                if (candidates.Length == 0)
+                {
+                    log.Add("SKIP   OHKitSdk 补丁（.ohpm 下没有 OHKitSdk@* 目录）");
+                    return true;
+                }
+
+                var copied = 0;
+                var same = 0;
+                foreach (var cand in candidates)
+                {
+                    var dstDir = Path.Combine(cand, "oh_modules", "OHKitSdk", "src", "main", "ets", "components", "sdk");
+                    if (!Directory.Exists(dstDir)) continue;
+
+                    foreach (var file in Directory.GetFiles(srcDir, "*.ets"))
+                    {
+                        var name = Path.GetFileName(file);
+                        var dst = Path.Combine(dstDir, name);
+                        var content = File.ReadAllText(file);
+
+                        if (File.Exists(dst) && File.ReadAllText(dst) == content)
+                        {
+                            same++;
+                            continue;
+                        }
+
+                        File.WriteAllText(dst, content, new UTF8Encoding(false));
+                        copied++;
+                        log.Add("SYNC   OHKitSdk/sdk/" + name);
+                    }
+                }
+
+                log.Add($"OHKitSdk sdk 目录: 写入 {copied} 个，已是最新 {same} 个");
+                return true;
+            }
+
+            /// <summary>
+            /// 注入权限声明（module.json5）与权限说明字符串（string.json）。
+            ///
+            /// Unity 导出只给 INTERNET 与 GET_NETWORK_INFO 两个权限，团队还需要：
+            ///   · PUBLISH_AGENT_REMINDER  —— 每日字谜提醒（Agent 提醒）
+            ///   · APP_TRACKING_CONSENT    —— 个性化广告（OAID 相关）
+            ///   · VIBRATE                 —— 震动反馈
+            /// 每个需要 reason 的权限都要在 string.json 里有对应说明，否则上架审核不过。
+            /// </summary>
+            private static bool ApplyPermissionsAndStrings(string root, List<string> log, out string error)
+            {
+                error = null;
+
+                // ---------- 1. 权限说明字符串 ----------
+                var stringPath = Path.Combine(root, "entry", "src", "main", "resources", "base", "element", "string.json");
+                if (File.Exists(stringPath))
+                {
+                    var text = File.ReadAllText(stringPath);
+                    var added = 0;
+
+                    var reasons = new[]
+                    {
+                        ("reason_publish_reminder", "用于按时为您推送每日字谜提醒和活动消息"),
+                        ("app_tracking_reason", "用于提供个性化广告内容，优化您的使用体验")
+                    };
+
+                    foreach (var (name, value) in reasons)
+                    {
+                        if (text.Contains($"\"{name}\"")) continue;
+
+                        // 在 string 数组末尾追加一项
+                        var idx = text.LastIndexOf(']');
+                        if (idx < 0) { error = "string.json 结构异常（找不到数组结尾）"; return false; }
+
+                        var entry = $"    {{\n      \"name\": \"{name}\",\n      \"value\": \"{value}\"\n    }}";
+                        var before = text.Substring(0, idx).TrimEnd();
+                        var needComma = before.EndsWith("}") || before.EndsWith("\"");
+                        text = before + (needComma ? ",\n" : "\n") + entry + "\n  " + text.Substring(idx);
+                        added++;
+                    }
+
+                    if (added > 0)
+                    {
+                        File.WriteAllText(stringPath, text, new UTF8Encoding(false));
+                        log.Add($"SYNC   resources/base/element/string.json（新增 {added} 条权限说明）");
+                    }
+                    else
+                    {
+                        log.Add("ALREADY resources/base/element/string.json（权限说明已存在）");
+                    }
+                }
+                else
+                {
+                    log.Add("SKIP   权限说明字符串（string.json 不存在）");
+                }
+
+                // ---------- 2. 权限声明 ----------
+                var modulePath = Path.Combine(root, "entry", "src", "main", "module.json5");
+                if (!File.Exists(modulePath))
+                {
+                    error = "找不到 module.json5: " + modulePath;
+                    return false;
+                }
+
+                var moduleText = File.ReadAllText(modulePath);
+                var permAdded = 0;
+
+                // 需要补齐的权限：name -> reason 资源名（null 表示不需要 reason）
+                var perms = new (string name, string reason)[]
+                {
+                    ("ohos.permission.PUBLISH_AGENT_REMINDER", "reason_publish_reminder"),
+                    ("ohos.permission.APP_TRACKING_CONSENT", "app_tracking_reason"),
+                    ("ohos.permission.VIBRATE", null)
+                };
+
+                foreach (var (name, reason) in perms)
+                {
+                    if (moduleText.Contains($"\"{name}\"")) continue;
+
+                    var item = reason == null
+                        ? $"      {{\n        \"name\": \"{name}\"\n      }}"
+                        : $"      {{\n        \"name\": \"{name}\",\n" +
+                          $"        \"usedScene\": {{\n" +
+                          $"          \"abilities\": [\n            \"TuanjiePlayerAbility\"\n          ],\n" +
+                          $"          \"when\": \"always\"\n        }},\n" +
+                          $"        \"reason\": \"$string:{reason}\"\n      }}";
+
+                    var idx = moduleText.LastIndexOf(']');
+                    if (idx < 0) { error = "module.json5 结构异常（找不到数组结尾）"; return false; }
+
+                    var before = moduleText.Substring(0, idx).TrimEnd();
+                    var needComma = before.EndsWith("}");
+                    moduleText = before + (needComma ? ",\n" : "\n") + item + "\n    " + moduleText.Substring(idx);
+                    permAdded++;
+                }
+
+                if (permAdded > 0)
+                {
+                    File.WriteAllText(modulePath, moduleText, new UTF8Encoding(false));
+                    log.Add($"SYNC   entry/src/main/module.json5（新增 {permAdded} 个权限）");
+                }
+                else
+                {
+                    log.Add("ALREADY entry/src/main/module.json5（权限已齐备）");
+                }
+
+                return true;
+            }
+
             private static ReplacePair[] BasePairs()
             {
                 return new[]
@@ -1162,6 +1479,40 @@ namespace Middleware
                         "export { TuanjieLog } from './src/main/ets/common/TuanjieLog'",
                         "export { EngineLifecycleGuard } from './src/main/ets/common/EngineLifecycleGuard'")
                 };
+            }
+
+            /// <summary>
+            /// 在 tuanjieLib/exported.ets 末尾追加 SDKManager 导出。
+            ///
+            /// entry/pages/Index.ets 里写的是
+            ///     import { SDKManager, TuanjiePlayerView } from 'tuanjieLib';
+            /// 而 tuanjieLib 的对外出口就是 exported.ets，模板里没有 SDKManager，
+            /// 不追加就会报 "Cannot find module 'tuanjieLib'" 或找不到 SDKManager。
+            /// </summary>
+            private static bool AppendSdkManagerExport(string root, List<string> log, out string error)
+            {
+                error = null;
+                var path = Path.Combine(root, "tuanjieLib", "exported.ets");
+                if (!File.Exists(path))
+                {
+                    log.Add("SKIP   exported.ets 追加 SDKManager（文件不存在，单模块布局）");
+                    return true;
+                }
+
+                const string marker = "export { SDKManager }";
+                var text = File.ReadAllText(path);
+                if (text.Contains(marker))
+                {
+                    log.Add("ALREADY tuanjieLib/exported.ets（SDKManager 已导出）");
+                    return true;
+                }
+
+                var line = "export { SDKManager } from './oh_modules/OHKitSdk/src/main/ets/components/sdk/SDKManager'";
+                var nl = text.Contains("\r\n") ? "\r\n" : "\n";
+                text = text.TrimEnd() + nl + nl + line + nl;
+                File.WriteAllText(path, text, new UTF8Encoding(false));
+                log.Add("PATCHED tuanjieLib/exported.ets（追加 SDKManager 导出）");
+                return true;
             }
 
             private static ReplacePair[] EntryPairs()
