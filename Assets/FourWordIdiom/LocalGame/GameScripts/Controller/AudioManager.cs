@@ -44,6 +44,62 @@ public class AudioManager : MonoBehaviour
         audioSourcePool = new ObjectPool(audioSPrefab.gameObject, ObjectPool.CreatePoolContainer(transform, "audio_pool"));
     }
 
+    #region 后台音频保护（修复 MiniAudio 线程 SIGSEGV / CPP_CRASH）
+    // ── 崩溃背景 ──────────────────────────────────────────────
+    // ProjectSettings 中 runInBackground = 1，应用切后台后 Unity 主循环与音频系统仍在继续运行；
+    // 而鸿蒙/Android 系统会在应用进入后台时回收（或挂起）音频设备，
+    // 此时 miniaudio 的音频线程（thread_name: MiniAudio）仍被系统调度，
+    // 其回调访问了已失效的设备对象 / 函数指针，跳转到地址 0 执行，
+    // 产生 SIGSEGV(SEGV_MAPERR) @ 0x0000000000000000（模块 libtuanjie.so）。
+    // ── 对策 ──────────────────────────────────────────────────
+    // 切后台立即用 AudioListener.pause 挂起整个音频 DSP（不是只静音），
+    // 让音频线程在设备失效期间不再被驱动；回到前台再恢复。
+    private bool _audioSuspended;
+
+    /// <summary>
+    /// 鸿蒙/Android 上 Pause 与 Focus 的触发时机不一致（部分机型只触发其中一个），
+    /// 两个入口都接入：任一口径认为"在后台"就挂起。
+    /// </summary>
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        SetAudioSuspended(pauseStatus, "OnApplicationPause");
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        SetAudioSuspended(!hasFocus, "OnApplicationFocus");
+    }
+
+    private void SetAudioSuspended(bool suspend, string source)
+    {
+        if (_audioSuspended == suspend) return;   // 幂等，避免 Pause/Focus 重复触发打架
+        _audioSuspended = suspend;
+
+        AudioListener.pause = suspend;
+
+        if (suspend)
+        {
+            // 后台时停掉所有音效：既避免回前台瞬间一起涌出，也降低音频线程负载
+            StopAllSoundEffects();
+        }
+
+        Debug.Log($"[AudioManager] 音频{(suspend ? "已挂起" : "已恢复")}（来源: {source}）");
+    }
+
+    /// <summary>停止当前所有正在播放的音效（不影响背景音乐轨道）。</summary>
+    private void StopAllSoundEffects()
+    {
+        for (int i = 0; i < activeSoundSources.Count; i++)
+        {
+            AudioSource src = activeSoundSources[i];
+            if (src != null && src.isPlaying)
+            {
+                src.Stop();
+            }
+        }
+    }
+    #endregion
+
     // 预加载音效
     public IEnumerator PreloadCommonSounds(string[] soundNames)
     {

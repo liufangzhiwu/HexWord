@@ -35,3 +35,7 @@ Hexrelease_121_2026-06-24-165332.apk
 Hex__releaae_123_2026-07-30-2134.apk
 Hex__releaae_123_2026-07-30-2147-gm.apk
 Hex__releaae_123_2026-07-30-2200.apk
+
+# 鸿蒙签名密文（不入库，需每位开发/打包者本地自建）
+Assets/Middleware/Editor/AppBuilder/harmony_toolchain.local.json
+Assets/Middleware/Editor/AppBuilder/harmony_toolchain.local.json.meta
