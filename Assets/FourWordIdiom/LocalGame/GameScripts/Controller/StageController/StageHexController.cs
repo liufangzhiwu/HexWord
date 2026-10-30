@@ -147,9 +147,12 @@ public class StageHexController
     /// <param name="StageIndex">关卡编号</param>
     public void SetStageData(int StageIndex)
     {
-        // ★ 每关开始：解锁推荐位 + 清零灯泡/复活视频使用次数（限购礼包下一关重新按权重推荐）
+        // ★ 每关开始：解锁推荐位 + 按关卡刷新提示/复活视频次数（换关才清零，同关重进保留）
         if (ShopManager.shopManager != null)
+        {
             ShopManager.shopManager.UnlockAllSlots();
+            ShopManager.shopManager.SyncToolVideoLevel(StageIndex, false);
+        }
 
         // 初始化关卡配置
         //IsFirstEnterStage = GetIsFirstEnterStage();

@@ -259,6 +259,13 @@ public class UserData
     public int DayInterstitialGiftCount;  // 当日插屏赠礼已发次数
     public bool HasShownFirstAdGift;      // 是否已发过"首个广告"50金币一次性奖励
 
+    // ==== 广告获取失败策略限次（S_F_T_A_B_C）持久化 ====
+    /// <summary>
+    /// 商店金币视频（按日）、分享（按日）、提示/复活视频（按关）的已用次数。
+    /// 随 UserData 一起落盘，保证关闭游戏后计数可继承。
+    /// </summary>
+    public AdLimitSaveData adLimit = new AdLimitSaveData();
+
     #endregion
 
     #region 购买记录上限
@@ -520,6 +527,7 @@ public class UserData
         DayRewardVideoGiftCount = 0;
         DayInterstitialGiftCount = 0;
         HasShownFirstAdGift = false;
+        adLimit = new AdLimitSaveData();
         adTrackingEnabled = "";
         adTrackingGuideShown = false;
         adTrackingRewardClaimed = false;
@@ -766,6 +774,8 @@ public class UserData
         DayRewardVideoGiftCount=user.DayRewardVideoGiftCount;
         DayInterstitialGiftCount=user.DayInterstitialGiftCount;
         HasShownFirstAdGift=user.HasShownFirstAdGift;
+        // ★ 广告限次（S_F_T_A_B_C）：旧存档没有该字段时兜底为新对象
+        adLimit = user.adLimit != null ? user.adLimit.Clone() : new AdLimitSaveData();
         adTrackingEnabled=user.adTrackingEnabled;
         adTrackingGuideShown = user.adTrackingGuideShown;
         adTrackingRewardClaimed = user.adTrackingRewardClaimed;
@@ -922,6 +932,14 @@ public class UserData
         isHideShopRedPoint = false;
         DayRewardVideoGiftCount = 0;
         DayInterstitialGiftCount = 0;
+
+        // ★ 广告限次：按自然日刷新的两项（商店金币视频 C / 分享 F）清零；
+        //   提示/复活（A/B）按关卡刷新，不在这里清。
+        if (adLimit == null) adLimit = new AdLimitSaveData();
+        adLimit.shopGoldDate = "";
+        adLimit.shopGoldUsed = 0;
+        adLimit.shareDate = "";
+        adLimit.shareUsed = 0;
 
         // ★ 注意：shopEntryBadgeConsumedUntil 不在每日重置里清空。
         //   它的清空时机是"本次节日/周末结束"，由 ShopManager.EnsureBadgeConsumedResetIfHolidayEnded() 判断。

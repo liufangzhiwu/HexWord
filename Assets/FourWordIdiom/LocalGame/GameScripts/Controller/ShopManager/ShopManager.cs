@@ -1055,7 +1055,8 @@ public partial class ShopManager : MonoBehaviour
         _slotLastShownPack.Clear();
         _bulbDiscountConsumed = false;
         _rocketDiscountConsumed = false;
-        _levelVideoUsed.Clear();
+        // 提示/复活视频次数改由 SyncToolVideoLevel 按"关卡变化"刷新（并持久化），
+        // 这里不再无条件清空，避免同一关重进/重启游戏时误清零。
         LogShop("UnlockAllSlots: 全部推荐位解锁, 折扣消费标记复位, 回显记录已清空");
     }
 

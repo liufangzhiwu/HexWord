@@ -188,7 +188,7 @@ namespace Middleware
             EditorUserBuildSettings.development = false;
             PlayerSettings.stripEngineCode = true;
             PlayerSettings.bundleVersion = buildParam.BuildVersion;
-            PlayerSettings.OpenHarmony.bundleVersionCode = GenHarmonyBuildNumber();
+            PlayerSettings.OpenHarmony.bundleVersionCode = GenBuildNumber();
             PlayerSettings.OpenHarmony.targetArchitectures = OpenHarmonyArchitecture.ARM64;
             PlayerSettings.companyName = "HexaSpaceGames";
             PlayerSettings.productName = "成语消：禅意之境";
@@ -227,7 +227,7 @@ namespace Middleware
                 ? Path.GetFullPath(exportDirOverride)
                 : Path.Combine(outputDir, cfg.projectDirName);
             Directory.CreateDirectory(harProject);
-            CleanHarmonyExportDir(harProject);
+            if (!CleanHarmonyExportDir(harProject, out error)) return null;
 
             Debug.Log("[Harmony] ① 导出 OpenHarmony 工程: " + harProject);
             var report = BuildPipeline.BuildPlayer(GetBuildScenes(), harProject, BuildTarget.OpenHarmony,
@@ -300,21 +300,28 @@ namespace Middleware
         /// <summary>hvigor 失败时给出可定位的中文原因。</summary>
         private static string BuildHarmonyErrorHint(string hvOut, int exitCode)
         {
-            // ArkTS 编译期「找不到模块」：绝大多数是导出目录结构错乱（源码被挪进 tuanjieLib），
-            // 而不是依赖没装。要区分：报错里带具体模块路径 → 结构问题；
-            // 报的是 @thinkingdata/analytics / OHKitSdk 这类依赖名 → 才可能是 ohpm 没装全。
+            // ArkTS 编译期「找不到模块」：要区分两类——
+            //   · @thinkingdata/analytics / OHKitSdk 等依赖名 → ohpm 没装全
+            //   · tuanjieLib / ../common/xxx / ../log/xxx 等源码模块 → 导出布局与补丁 import 不匹配
             if (hvOut.Contains("Cannot find module"))
             {
+                var missLines = ExtractMissingModuleLines(hvOut);
+                var missing = string.Join("\n", missLines.Select(l => "  " + l));
+
                 if (hvOut.Contains("'@thinkingdata/analytics'") || hvOut.Contains("'OHKitSdk'"))
                     return "鸿蒙依赖未安装（Cannot find module '@thinkingdata/analytics' / 'OHKitSdk'）。\n" +
-                           "Unity 重新导出会改写 oh-package.json5，需要重新执行 ohpm install。\n\n" + Tail(hvOut, 10);
+                           "Unity 重新导出会改写 oh-package.json5，需要重新执行 ohpm install。\n\n" +
+                           "缺失明细：\n" + missing + "\n\n" + Tail(hvOut, 10);
 
                 return "ArkTS 找不到源码模块（Cannot find module）。\n" +
-                       "最常见原因：导出目录里残留了上一轮的 tuanjieLib 模块，\n" +
-                       "导致 Unity 把业务源码导出成双模块结构（源码进了 tuanjieLib/，entry/ 变薄壳），\n" +
-                       "于是 entry 里的 import '../common/xxx' 解析不到。\n" +
-                       "解决：删除整个导出目录后重新导出（流水线已自动清空，若仍出现请检查是否有进程占用目录）。\n\n" +
-                       Tail(hvOut, 10);
+                       "缺失明细：\n" + missing + "\n\n" +
+                       "常见原因（按可能性排序）：\n" +
+                       "1) 定制补丁文件（如 entry/pages/Index.ets）的 import 与当前导出布局不匹配：\n" +
+                       "   空目录导出 = 单模块（源码全在 entry/），有残留导出 = 双模块（源码在 tuanjieLib/）。\n" +
+                       "   补丁器会按布局自动改写 import；若仍看到此错误，说明出现了补丁未覆盖的新 import。\n" +
+                       "2) 导出目录残留上一轮构建产物导致结构错乱：流水线导出前会自动清空并校验，\n" +
+                       "   清理失败会直接中止导出；若跳过了清理，请删除整个导出目录后重新导出。\n\n" +
+                       "报错原文（节选）：\n" + missing + "\n" + Tail(hvOut, 6);
             }
 
             if (hvOut.Contains("certificate has expired") || hvOut.Contains("11013002"))
@@ -329,6 +336,22 @@ namespace Middleware
             return $"hvigor 构建失败（exit={exitCode}）\n" + Tail(hvOut, 15);
         }
 
+        /// <summary>
+        /// 从 hvigor 输出里提取 "Cannot find module" 报错行（去重）。
+        /// 形如：Error Message: Cannot find module 'X' ... At File: path:line:col
+        /// 此前只展示 Tail(10)（构建页脚），真正的缺失模块名被截掉，导致无从下手。
+        /// </summary>
+        private static List<string> ExtractMissingModuleLines(string hvOut)
+        {
+            if (string.IsNullOrEmpty(hvOut)) return new List<string>();
+            return hvOut.Replace("\r\n", "\n").Split('\n')
+                .Select(l => l.Trim())
+                .Where(l => l.Contains("Cannot find module"))
+                .Distinct()
+                .Take(10)
+                .ToList();
+        }
+
         private static string Tail(string text, int lines)
         {
             if (string.IsNullOrEmpty(text)) return "";
@@ -338,64 +361,104 @@ namespace Middleware
         }
 
         /// <summary>
-        /// 清理上一次导出的**构建产物**（entry/build、entry/outputs）。
+        /// 清空导出目录内容，保证 Unity 导出器看到的是一个干净目录。
         ///
-        /// 必须清掉整个导出目录，不能只清 entry/build：
+        /// 为什么必须清整个导出目录（不能只清 entry/build）：
         /// Unity 导出器会检测目标目录里是否已存在 tuanjieLib 模块。
-        ///   · 全新空目录 → 单模块结构，源码全部落在 entry/src/main/ets/（正确）
-        ///   · 目录已存在 → 双模块结构，源码被挪进 tuanjieLib/，entry 变成薄壳，
-        ///     随后 entry/oh-package.json5 里找不到 ../common/GlobalThisUtil，
-        ///     ArkTS 编译报 "Cannot find module" 而失败。
+        ///   · 空目录     → 单模块结构，源码全部落在 entry/src/main/ets/
+        ///   · 有残留     → 双模块结构，源码被挪进 tuanjieLib/，entry 变成薄壳
+        /// 两种布局现在都能出包（补丁按布局自适应），但残留还会带来
+        /// 旧构建产物 / 旧 oh_modules 污染，所以仍要清空以保证可复现。
+        ///
+        /// 清理失败绝不能继续导出：残留会悄悄改变导出布局，
+        /// 表现为 ArkTS 编译期 "Cannot find module" 且极难定位。
+        /// 这里做三重兜底：重试 → 整目录改名挪走 → 中止并报可操作错误。
         ///
         /// 删除方式：逐文件删除而不是 Directory.Delete(path, true)。
         /// Unity 导出的 .so 是硬链接（与 tuanjieLib/libs 共享 inode），
         /// Mono 的递归删目录会抛 "参数错误 : 'arm64-v8a'"；
         /// File.Delete 对硬链接是安全的（只减少链接计数，不动原文件）。
         /// </summary>
-        private static void CleanHarmonyExportDir(string dir)
+        private static bool CleanHarmonyExportDir(string dir, out string error)
         {
+            error = null;
             var root = Path.GetFullPath($"{Application.dataPath}/../output");
             var full = Path.GetFullPath(dir);
             if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
             {
                 Debug.LogWarning("[Harmony] 导出目录不在 output 下，跳过清理: " + full);
-                return;
+                return true;
             }
-            if (!Directory.Exists(full)) return;
+            if (!Directory.Exists(full)) return true;
 
+            // 第一/二道：清空内容（文件被 DevEco / 杀毒软件短暂占用时，重试通常能成功）
+            List<string> failures = null;
+            for (var attempt = 1; attempt <= 3; attempt++)
+            {
+                failures = DeleteDirContents(full);
+                if (failures.Count == 0)
+                {
+                    Debug.Log($"[Harmony] 已清空导出目录内容: {full}（第 {attempt} 次尝试）");
+                    return true;
+                }
+                System.Threading.Thread.Sleep(300);
+            }
+
+            // 第三道：把整个残留目录改名挪走，再建一个全新的空目录。
+            // Windows 下即使目录内文件被占用，目录改名通常也能成功。
+            var aside = full.TrimEnd('\\', '/') + "_dirty_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
             try
             {
-                DeleteDirContents(full);
-                Debug.Log("[Harmony] 已清空导出目录内容: " + full);
+                Directory.Move(full, aside);
+                Directory.CreateDirectory(full);
+                Debug.LogWarning(
+                    "[Harmony] 导出目录有文件被占用，已把残留内容挪到:\n  " + aside + "\n" +
+                    "请关闭占用进程（DevEco Studio / hvigor 守护进程 / 文件管理器）后手动删除该目录。");
+                try { Directory.Delete(aside, true); } catch { /* 挪走即可，删不掉不影响本次导出 */ }
+                return true;
             }
             catch (Exception e)
             {
-                // 清不掉不阻断导出，但必须告警：残留会让 Unity 走错模块结构分支
-                Debug.LogWarning("[Harmony] 清理导出目录失败（可能残留 tuanjieLib 导致模块结构错误）: " + e.Message);
+                error = "导出目录清理失败，拒绝在脏目录上导出（残留会改变模块结构导致 Cannot find module）。\n" +
+                        "被占用的文件（共 " + failures.Count + " 个，节选）：\n- " +
+                        string.Join("\n- ", failures.Take(8)) + "\n" +
+                        "改名兜底也失败：" + e.Message + "\n" +
+                        "请关闭占用该目录的进程（DevEco Studio / hvigor / 杀毒软件）后重试。";
+                return false;
             }
         }
 
-        /// <summary>逐文件删除目录内容，再删除空目录（规避硬链接导致的递归删失败）。</summary>
-        private static void DeleteDirContents(string dir)
+        /// <summary>
+        /// 逐文件删除目录内容，再删除空目录（规避硬链接导致的递归删失败）。
+        /// 返回删除失败的路径清单（空表示目录已清干净）。
+        /// </summary>
+        private static List<string> DeleteDirContents(string dir)
         {
+            var failures = new List<string>();
+
             foreach (var file in Directory.GetFiles(dir))
             {
-                try { File.Delete(file); }
-                catch (Exception e) { Debug.LogWarning($"[Harmony] 删除文件失败 {file}: {e.Message}"); }
+                try
+                {
+                    // 只读/系统属性会让 File.Delete 抛 UnauthorizedAccessException
+                    File.SetAttributes(file, FileAttributes.Normal);
+                    File.Delete(file);
+                }
+                catch (Exception e) { failures.Add(file + " — " + e.Message); }
             }
 
             foreach (var sub in Directory.GetDirectories(dir))
             {
-                try
-                {
-                    DeleteDirContents(sub);
-                    Directory.Delete(sub, false);
-                }
+                failures.AddRange(DeleteDirContents(sub));
+                try { Directory.Delete(sub, false); }
                 catch (Exception e)
                 {
-                    Debug.LogWarning($"[Harmony] 删除目录失败 {sub}: {e.Message}");
+                    // 子项还有没删掉的文件时会走到这里；残留文件已在 failures 里
+                    if (Directory.Exists(sub) && Directory.GetFileSystemEntries(sub).Length > 0)
+                        failures.Add(sub + " — " + e.Message);
                 }
             }
+            return failures;
         }
 
         /// <summary>找本次构建新生成的 .hap（按修改时间过滤，避免拿到上次的旧包）。</summary>
@@ -478,41 +541,6 @@ namespace Middleware
             return true;
         }
 
-        /// <summary>每天预留的 versionCode 号段数量（当天可构建次数上限 + 1）。</summary>
-        private const int HarmonyVersionSlotsPerDay = 2000;
-
-        /// <summary>
-        /// 鸿蒙 versionCode 编码：yyMMdd × 2000 + 当天序号。
-        ///
-        /// 为什么不用 yyMMdd × 10000：10000 倍会超出 int32 上限
-        /// （yyMMdd 最大 991231，991231 × 10000 = 9,912,310,000 &gt; int32 的 2,147,483,647），
-        /// 溢出成负数后「与上一次取较大者」分支恒不成立，日期段实际失效，
-        /// versionCode 退化成「上次 + 1」，也无法保证跨天递增。
-        ///
-        /// × 2000 时末日最大值 = 991231 × 2000 + 1999 = 1,982,463,999，仍在 int32 内。
-        /// 每天 2000 个号段足够（一天内构建 2000 次远超实际需要），
-        /// 且跨天严格递增（日期前缀每天 +2000 > 单日最大序号 1999）。
-        /// </summary>
-        private static int GenHarmonyBuildNumber()
-        {
-            var now = DateTime.Now;
-            var dayPrefix = int.Parse($"{now.Year - 2000}{now.Month:00}{now.Day:00}") *
-                            HarmonyVersionSlotsPerDay;
-
-            var prev = PlayerSettings.OpenHarmony.bundleVersionCode;
-
-            // 从存量 versionCode 反推当天已用到的序号
-            var seq = 1;
-            if (prev >= dayPrefix && prev < dayPrefix + HarmonyVersionSlotsPerDay)
-                seq = (prev - dayPrefix) + 1;
-            if (seq > HarmonyVersionSlotsPerDay - 1) seq = HarmonyVersionSlotsPerDay - 1;
-
-            var code = dayPrefix + seq;
-            // 兜底：存量来自旧编码或被手工改大时，绝不产出比它小的值（否则真机装不上）
-            if (prev >= code) code = prev + 1;
-            return code;
-        }
-
         #endregion
 
         /// <summary>
@@ -566,20 +594,61 @@ namespace Middleware
             var unityEditorDir = Path.GetDirectoryName(EditorApplication.applicationPath);
             var templateDir = Path.Combine(unityEditorDir ?? "", "Data", "PlaybackEngines",
                 "OpenHarmonyPlayer", "OpenHarmonyAppTemplate");
-            var templateEts = Path.Combine(templateDir, "entry", "src", "main", "ets", "ability");
-            if (!Directory.Exists(templateEts))
+            var templateEts = Path.Combine(templateDir, "entry", "src", "main", "ets");
+            if (!Directory.Exists(Path.Combine(templateEts, "ability")))
                 return "回归自检失败：找不到 Unity ArkTS 模板目录 " + templateEts;
-
-            var workDir = Path.GetFullPath($"{Application.dataPath}/../output/_patchtest");
-            if (Directory.Exists(workDir)) Directory.Delete(workDir, true);
-            var workEts = Path.Combine(workDir, "entry", "src", "main", "ets", "ability");
-            Directory.CreateDirectory(workEts);
 
             foreach (var f in new[] { "TuanjiePlayerAbilityBase.ets", "TuanjiePlayerAbility.ets" })
             {
-                var src = Path.Combine(templateEts, f);
-                if (!File.Exists(src)) return "回归自检失败：模板缺少 " + f;
-                File.Copy(src, Path.Combine(workEts, f), true);
+                if (!File.Exists(Path.Combine(templateEts, "ability", f)))
+                    return "回归自检失败：模板缺少 ability/" + f;
+            }
+
+            var workDir = Path.GetFullPath($"{Application.dataPath}/../output/_patchtest");
+            if (Directory.Exists(workDir)) Directory.Delete(workDir, true);
+            var workEts = Path.Combine(workDir, "entry", "src", "main", "ets");
+
+            // 夹具必须与真实单模块导出同构：整个 entry/src/main 模板树
+            // （ets/ 全量 + module.json5 + resources/）。
+            // 早期只拷 ability 两个文件，entry/common、pages/components、log 全缺，
+            // 补丁的 import 解析校验与完整性校验会误报，
+            // 也测不出「定制 Index.ets 的 import 与布局不匹配」这类问题。
+            // 只拷 ets/ 也不够：权限注入 ApplyPermissionsAndStrings 要写 module.json5
+            // 与 resources/base/element/string.json，缺了直接报 "找不到 module.json5"
+            // （string.json 反而只是 SKIP），回归自检会挂在权限这步。
+            void CopyDir(string srcDir, string dstDir)
+            {
+                Directory.CreateDirectory(dstDir);
+                foreach (var file in Directory.GetFiles(srcDir))
+                    File.Copy(file, Path.Combine(dstDir, Path.GetFileName(file)), true);
+                foreach (var sub in Directory.GetDirectories(srcDir))
+                    CopyDir(sub, Path.Combine(dstDir, Path.GetFileName(sub)));
+            }
+            CopyDir(Path.Combine(templateDir, "entry", "src", "main"),
+                Path.Combine(workDir, "entry", "src", "main"));
+
+            // gen/ 是 Unity 导出时按工程生成的，模板树里没有；但 workers/ 对它有 import：
+            //   HostProxy   → ../gen/TuanjieJSScriptRegister（具名 registerJSScriptToCSharp）
+            //                 ../gen/BuiltinWorkerMsgRegistration（副作用 import）
+            //   WorkerProxy → ../gen/BuiltinHostMsgRegistration（副作用 import）
+            // 真实导出里 gen/ 由 Unity 生成，夹具补最小 stub 让 import 可解析即可
+            // （补丁与 import 校验不执行运行时逻辑）。
+            var workGen = Path.Combine(workEts, "gen");
+            Directory.CreateDirectory(workGen);
+            var genStubs = new Dictionary<string, string>
+            {
+                ["TuanjieJSScriptRegister.ets"] =
+                    "// fixture stub —— 真实文件由 Unity 导出生成\n" +
+                    "export function registerJSScriptToCSharp() {\n}\n",
+                ["BuiltinHostMsgRegistration.ets"] =
+                    "// fixture stub —— 真实文件由 Unity 导出生成\n",
+                ["BuiltinWorkerMsgRegistration.ets"] =
+                    "// fixture stub —— 真实文件由 Unity 导出生成\n"
+            };
+            foreach (var kv in genStubs)
+            {
+                var p = Path.Combine(workGen, kv.Key);
+                if (!File.Exists(p)) File.WriteAllText(p, kv.Value);
             }
 
             var lines = new List<string>();
@@ -599,8 +668,8 @@ namespace Middleware
             lines.Add("重复执行：全部 ALREADY（幂等 OK）");
 
             // 校验所有 marker 落地
-            var baseText = File.ReadAllText(Path.Combine(workEts, "TuanjiePlayerAbilityBase.ets"));
-            var entryText = File.ReadAllText(Path.Combine(workEts, "TuanjiePlayerAbility.ets"));
+            var baseText = File.ReadAllText(Path.Combine(workEts, "ability", "TuanjiePlayerAbilityBase.ets"));
+            var entryText = File.ReadAllText(Path.Combine(workEts, "ability", "TuanjiePlayerAbility.ets"));
             var guardPath = Path.Combine(workDir, "entry", "src", "main", "ets", "common",
                 "EngineLifecycleGuard.ets");
             var checks = new List<Tuple<string, bool>>
@@ -1029,10 +1098,12 @@ namespace Middleware
                     "entry/common/GlobalThisUtil.ts 缺失（entry 的相对 import 无法解析）");
 
                 // 定制版 Index.ets：SDKManager 回调 + 退出确认弹窗
+                // （import 形态随布局不同：双模块 from 'tuanjieLib'，单模块 from 'OHKitSdk'）
                 var indexText = File.Exists(Path.Combine(entryEtsDir, "pages", "Index.ets"))
                     ? File.ReadAllText(Path.Combine(entryEtsDir, "pages", "Index.ets"))
                     : "";
-                Require(indexText.Contains("SDKManager, TuanjiePlayerView"),
+                Require(indexText.Contains("SDKManager, TuanjiePlayerView") ||
+                        indexText.Contains("from 'OHKitSdk'"),
                     "entry/pages/Index.ets 不是定制版（缺 SDKManager import）");
                 Require(indexText.Contains("SDKManager.OnNotificationSettingsClosed()"),
                     "entry/pages/Index.ets 缺 onFocus 回调");
@@ -1070,21 +1141,108 @@ namespace Middleware
                     error = "补丁未完整落地：\n- " + string.Join("\n- ", missing);
                     return false;
                 }
+
+                // 兜底：entry 源码里所有相对 import（以及 'tuanjieLib' 裸模块引用）
+                // 必须在当前布局下可解析。历史上多次出现「补丁文件 import 与布局不匹配 →
+                // hvigor 报 Cannot find module 但日志被 Tail 截断看不到模块名」，
+                // 这里在补丁阶段就拦下，并给出精确的 文件:import 清单。
+                if (!VerifyEntryImportsResolve(root, log, out error)) return false;
+
                 log.Add("完整性校验: 18/18 项通过（OHKitSdk 源码另在 ohpm 之后校验）");
                 return true;
             }
 
             /// <summary>
-            /// 把双模块布局下位于 tuanjieLib 的公共源码同步到 entry。
+            /// 校验 entry/src/main/ets 下所有 .ets/.ts 的 import 在当前布局可解析：
+            ///   · 相对路径（./、../）→ 必须能落到实际文件（支持 .ts/.ets/Index.ets 省略后缀）
+            ///   · 'tuanjieLib'      → 必须存在 tuanjieLib 模块（双模块布局）
+            ///   · 其他裸模块（@kit.*、@ohos.*、OHKitSdk、@thinkingdata/* 等）
+            ///     → ohpm/SDK 依赖，由 ohpm install 保证，这里不拦
+            /// 发现解析不了的 import 直接失败，列出 文件:import 明细。
+            /// </summary>
+            private static bool VerifyEntryImportsResolve(string root, List<string> log, out string error)
+            {
+                error = null;
+                var entryEts = Path.Combine(root, "entry", "src", "main", "ets");
+                if (!Directory.Exists(entryEts)) return true;
+
+                var hasTuanjieLib = Directory.Exists(Path.Combine(root, "tuanjieLib"));
+                var unresolved = new List<string>();
+                var importRegex = new Regex(
+                    @"(?:from|import)\s+['""]([^'""]+)['""]",
+                    RegexOptions.Compiled);
+
+                foreach (var file in Directory.GetFiles(entryEts, "*", SearchOption.AllDirectories))
+                {
+                    var ext = Path.GetExtension(file).ToLowerInvariant();
+                    if (ext != ".ets" && ext != ".ts") continue;
+
+                    var text = File.ReadAllText(file);
+                    foreach (Match m in importRegex.Matches(text))
+                    {
+                        var spec = m.Groups[1].Value;
+                        string where = file.Substring(entryEts.Length).TrimStart('\\', '/');
+
+                        if (spec.StartsWith("./") || spec.StartsWith("../"))
+                        {
+                            if (!RelativeImportResolves(file, spec))
+                                unresolved.Add($"{where}: import '{spec}'（相对路径在 entry 内解析不到）");
+                        }
+                        else if (spec == "tuanjieLib")
+                        {
+                            if (!hasTuanjieLib)
+                                unresolved.Add($"{where}: import 'tuanjieLib'（当前是单模块布局，没有 tuanjieLib 模块；" +
+                                               "应改写为 'OHKitSdk' / './components/...' 或改用双模块导出）");
+                        }
+                        // 其余裸模块（@kit.* / @ohos.* / ohpm 依赖）不在源码层校验
+                    }
+                }
+
+                if (unresolved.Count > 0)
+                {
+                    error = "entry 源码存在无法解析的 import（多半是补丁文件与导出布局不匹配）：\n- " +
+                            string.Join("\n- ", unresolved) +
+                            "\n请检查 HarmonyPatch 下补丁源的 import，或改用与布局匹配的导出目录。";
+                    return false;
+                }
+
+                log.Add("import 解析校验: entry 全部相对 import 可解析" +
+                        (hasTuanjieLib ? "（双模块布局）" : "（单模块布局）"));
+                return true;
+            }
+
+            /// <summary>相对 import 能否落到实际文件（支持省略 .ts/.ets 后缀与目录 Index.ets）。</summary>
+            private static bool RelativeImportResolves(string fromFile, string spec)
+            {
+                var baseDir = Path.GetDirectoryName(fromFile) ?? "";
+                var target = Path.GetFullPath(Path.Combine(baseDir, spec));
+                var candidates = new List<string> { target };
+                if (!Path.HasExtension(target))
+                {
+                    candidates.Add(target + ".ts");
+                    candidates.Add(target + ".ets");
+                    candidates.Add(Path.Combine(target, "Index.ets"));
+                    candidates.Add(Path.Combine(target, "index.ets"));
+                }
+                return candidates.Any(File.Exists);
+            }
+
+            /// <summary>
+            /// 补齐 entry 侧的公共源码（两种布局都要跑）。
             ///
-            /// 背景：Unity 导出双模块结构时，业务公共源码在 tuanjieLib/src/main/ets/，
-            /// 而 entry/ability/TuanjiePlayerAbility.ets 里的
+            /// 背景：entry/ability/TuanjiePlayerAbility.ets 与定制 Index.ets 里有
             ///     import { SetToGlobalThis } from '../common/GlobalThisUtil';
-            /// 是相对 entry/ 解析的，该文件却不在 entry/common/ 下，
-            /// ArkTS 编译即报 "Cannot find module '../common/GlobalThisUtil'"。
+            ///     import Logger from '../log/Logger';
+            /// 这类相对 entry/ 解析的 import，目标文件必须实际存在于 entry/ 下：
+            ///   · 双模块布局：业务公共源码在 tuanjieLib/src/main/ets/，entry 拿不到 → 从 tuanjieLib 同步
+            ///   · 单模块布局：common/ 等由 Unity 直接导出到 entry，但 log/Logger.ts 是
+            ///     团队自定义文件（Unity 导出里没有）→ 也要补
+            /// 早期版本在单模块布局直接跳过，导致 log/Logger.ts 缺失、
+            /// ArkTS 编译报 "Cannot find module '../log/Logger'"。
             ///
-            /// 处理：从 tuanjieLib 复制 common/ 与 log/ 到 entry（幂等，已存在则跳过）。
-            /// 单模块布局（源码本来就在 entry/）无需处理。
+            /// 处理：缺什么补什么（tuanjieLib → harmony/ 模板 → HarmonyPatch 补丁源，逐个兜底），幂等。
+            /// common/PlayerPrefs.ets 例外：只在单模块布局同步（双模块下它的
+            /// '../workers/MessageProcessor' 在 entry 内无法解析，见下方注释）。
             /// </summary>
             private static bool SyncEntryCommonFiles(string root, Layout layout,
                 List<string> log, out string error)
@@ -1092,23 +1250,41 @@ namespace Middleware
                 error = null;
                 var entryEts = Path.Combine(root, "entry", "src", "main", "ets");
                 var libEts = Path.Combine(root, "tuanjieLib", "src", "main", "ets");
-
-                // 单模块布局：源码本来就在 entry/ 下
-                if (!Directory.Exists(libEts))
-                {
-                    log.Add("SKIP   补齐 entry 公共文件（单模块布局，源码已在 entry/）");
-                    return true;
-                }
+                // Exported 非空 = 双模块布局（B-dual-module），空 = 单模块（A-single-module）
+                var dualModule = !string.IsNullOrEmpty(layout.Exported);
 
                 // entry 侧实际引用到的公共文件（相对 entry/src/main/ets）
-                var needed = new[]
+                var needed = new List<string>
                 {
                     Path.Combine("common", "Constants.ets"),
                     Path.Combine("common", "GlobalThisUtil.ts"),
-                    Path.Combine("common", "PlayerPrefs.ets"),
                     Path.Combine("common", "TuanjieLog.ets"),
                     Path.Combine("log", "Logger.ts")
                 };
+
+                // common/PlayerPrefs.ets 只在单模块布局下同步：
+                //   · 文件末尾有 REGISTER_BUILTIN_MODULE(MSG_RECEIVER.HOST_UI, PlayerPrefs)
+                //     自注册，且依赖 '../workers/MessageProcessor' —— workers/、gen/ 这套
+                //     只在「单模块的 entry/」或「双模块的 tuanjieLib/」里成体系存在。
+                //   · 双模块下 entry 没有 workers/，同步进 entry/common/ 只会得到一个相对
+                //     import 解析不到的死文件（entry 侧没有任何文件 import 它，注册走
+                //     tuanjieLib/gen/BuiltinHostMsgRegistration.ets），必被 import 解析校验拦下：
+                //       common/PlayerPrefs.ets: import '../workers/MessageProcessor'
+                //   · 单模块下 Unity 把整棵源码树（含 workers/、gen/）导出到 entry，
+                //     PlayerPrefs.ets 是 gen/BuiltinHostMsgRegistration.ets 的 import 目标，
+                //     必须存在，且 '../workers/MessageProcessor' 在 entry 内可解析。
+                if (!dualModule)
+                    needed.Add(Path.Combine("common", "PlayerPrefs.ets"));
+
+                // 自愈：双模块下 entry/common/PlayerPrefs.ets 若已存在（旧版补丁同步留下的
+                // 死文件，import 无法解析），删掉。单模块下绝不能动（那是活文件）。
+                var stalePlayerPrefs = Path.Combine(entryEts, "common", "PlayerPrefs.ets");
+                if (dualModule && File.Exists(stalePlayerPrefs))
+                {
+                    File.Delete(stalePlayerPrefs);
+                    log.Add("REMOVED entry/common/PlayerPrefs.ets" +
+                            "（双模块死文件，../workers/MessageProcessor 在 entry 内无法解析）");
+                }
 
                 var copied = 0;
                 var skipped = 0;
@@ -1125,16 +1301,23 @@ namespace Middleware
 
                     if (!File.Exists(src))
                     {
-                        // tuanjieLib 里没有 —— 只能从团队工程模板取
-                        var fallback = Path.Combine(Application.dataPath, "..", "harmony",
-                            "entry", "src", "main", "ets", rel);
-                        if (File.Exists(fallback))
+                        // tuanjieLib 里没有 —— 依次从团队工程模板、版本化补丁源取。
+                        // harmony/ 不在 git 里（见 .gitignore），所以补丁源兜底是必须的，
+                        // 否则换台机器就会丢 log/Logger.ts 再次触发 "Cannot find module '../log/Logger'"。
+                        var fallbacks = new[]
                         {
-                            src = Path.GetFullPath(fallback);
+                            Path.Combine(Application.dataPath, "..", "harmony",
+                                "entry", "src", "main", "ets", rel),
+                            Path.Combine(PatchSourceRoot, rel)
+                        };
+                        var found = fallbacks.FirstOrDefault(File.Exists);
+                        if (found != null)
+                        {
+                            src = Path.GetFullPath(found);
                         }
                         else
                         {
-                            log.Add("MISS   " + rel + "（tuanjieLib 与 harmony/ 模板中都没有，跳过）");
+                            log.Add("MISS   " + rel + "（tuanjieLib / harmony/ 模板 / HarmonyPatch 补丁源中都没有，跳过）");
                             continue;
                         }
                     }
@@ -1142,8 +1325,10 @@ namespace Middleware
                     Directory.CreateDirectory(Path.GetDirectoryName(dst));
                     File.Copy(src, dst, true);
                     copied++;
-                    log.Add("SYNC   entry/" + rel + "  <-  " +
-                            (src.StartsWith(libEts) ? "tuanjieLib" : "harmony/模板"));
+                    var srcName = src.StartsWith(libEts) ? "tuanjieLib"
+                        : src.StartsWith(Path.GetFullPath(PatchSourceRoot)) ? "HarmonyPatch 补丁源"
+                        : "harmony/模板";
+                    log.Add("SYNC   entry/" + rel + "  <-  " + srcName);
                 }
 
                 log.Add($"补齐 entry 公共文件: 新增 {copied} 个，已存在 {skipped} 个");
@@ -1155,7 +1340,7 @@ namespace Middleware
                 "Middleware", "Editor", "AppBuilder", "HarmonyPatch");
 
             /// <summary>
-            /// 用团队定制版覆盖 entry/src/main/ets/pages/Index.ets。
+            /// 用团队定制版覆盖 entry/src/main/ets/pages/Index.ets（OAID 页面），并按导出布局改写 import。
             ///
             /// Unity 模板自带的 Index.ets 只有一个 TuanjiePlayerView，没有：
             ///   · SDKManager 的 onFocus/onBlur 回调（通知设置关闭后要回调 SDK）
@@ -1163,6 +1348,15 @@ namespace Middleware
             ///   · OAID / 权限状态等页面级状态
             /// 这些是团队在 harmony/ 工程里手改的，每次导出都会被覆盖回模板，
             /// 所以这里每次导出后重新覆盖一次。
+            ///
+            /// 定制版源码写的是双模块世界的 import：
+            ///     import { SDKManager, TuanjiePlayerView } from 'tuanjieLib';
+            /// 它依赖 tuanjieLib 模块的 exported.ets 转发。但空目录导出是单模块布局
+            /// （没有 tuanjieLib 模块），照抄会报 "Cannot find module 'tuanjieLib'"。
+            /// 单模块布局下改写为直接引用：
+            ///     SDKManager        ← 'OHKitSdk'（entry 自身的 ohpm 依赖，har 的 Index.ets 有导出）
+            ///     TuanjiePlayerView ← './components/TuanjiePlayerView'（同在 entry/pages/ 下）
+            /// 双模块布局保持原样（'tuanjieLib' 通过 entry/oh_modules/tuanjieLib 解析）。
             /// </summary>
             private static bool ApplyEntryIndexPage(string root, List<string> log, out string error)
             {
@@ -1177,8 +1371,22 @@ namespace Middleware
                 var dst = Path.Combine(root, "entry", "src", "main", "ets", "pages", "Index.ets");
                 Directory.CreateDirectory(Path.GetDirectoryName(dst));
 
-                var before = File.Exists(dst) ? File.ReadAllText(dst) : null;
+                var dualModule = Directory.Exists(Path.Combine(root, "tuanjieLib"));
                 var content = File.ReadAllText(src);
+                if (!dualModule)
+                {
+                    const string dualImport = "import { SDKManager, TuanjiePlayerView } from 'tuanjieLib';";
+                    const string singleImport =
+                        "import { SDKManager } from 'OHKitSdk';\n" +
+                        "import { TuanjiePlayerView } from './components/TuanjiePlayerView';";
+                    if (content.Contains(dualImport))
+                    {
+                        content = content.Replace(dualImport, singleImport);
+                        log.Add("REWRITE Index.ets import（单模块布局：tuanjieLib → OHKitSdk + ./components/TuanjiePlayerView）");
+                    }
+                }
+
+                var before = File.Exists(dst) ? File.ReadAllText(dst) : null;
                 if (before == content)
                 {
                     log.Add("ALREADY entry/pages/Index.ets（已是定制版）");

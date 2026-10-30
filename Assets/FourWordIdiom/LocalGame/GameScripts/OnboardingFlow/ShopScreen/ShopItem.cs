@@ -162,6 +162,17 @@ public class ShopItem : ShopItemBase
     /// <summary>FreeGoods：看广告领取金币</summary>
     private void HandleFreeGoodsClick()
     {
+        // ★ 广告获取失败策略 C：在点击入口先做次数闸门。
+        //   达到当日上限（或处于 T 冷却）时直接弹 AdsFailScreen；
+        //   若把判断只放在播放广告的协程里，下面两条提前返回的支路会绕过限次：
+        //     1) 编辑器直发（UIUtilities.isEditMode）；
+        //     2) 当日首次免费直发（!isDayFreeGet）。
+        if (ShopManager.shopManager != null
+            && ShopManager.shopManager.TryHandleShopGoldClickAsFakeFail())
+        {
+            return;
+        }
+
         if (UIUtilities.isEditMode || !GameDataManager.Instance.UserData.isDayFreeGet)
         {
             UpdateAdsRewardUI(true);

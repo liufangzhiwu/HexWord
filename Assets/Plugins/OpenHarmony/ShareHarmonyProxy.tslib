@@ -1,0 +1,77 @@
+// ====================================================================
+// ShareHarmonyProxy.tslib
+// 描述: 运行在 TuanjieMain **worker** 线程的转发层（纯 TS，不 import 任何 ArkTS/.ets 文件）。
+//
+//   C# → 本模块（worker） → workerPort → RUN_ON_UI_THREAD_USER_EVENT
+//        → UI 线程动态加载 ShareHelper.ts 执行 ShareKit
+//        → UI 侧用 Tuanjie.TuanjieSendMessage 直接回到 C#
+//
+// 说明:
+//   ArkTS 禁止 .ts import .ets，所以这里不能使用 workers/MessageProcessor 的
+//   REGISTER_HANDLER；回传改由 UI 侧直接 TuanjieSendMessage 到 C#。
+// ====================================================================
+const TAG = '[ShareHarmonyProxy]';
+// UI 线程模块路径（相对 workers/MessageProcessor.ets 内的动态 import 解析）
+const UI_MODULE_PATH = '../ShareHelper';
+
+// worker → UI：请求 UI 线程执行 ShareHelper.<funcName>
+function postToUi(funcName: string, args: ESObject[]): void {
+  const g: Record<string, ESObject> = globalThis as unknown as Record<string, ESObject>;
+  const port: ESObject = g['workerPort'];
+  if (!port) {
+    console.error(`${TAG} workerPort 不可用，无法转发到 UI 线程`);
+    return;
+  }
+
+  try {
+    port.postMessage({
+      type: 'RUN_ON_UI_THREAD_USER_EVENT',
+      funcName: `ShareHelper.${funcName}`,
+      modulePath: UI_MODULE_PATH,
+      args: args,
+      timeoutMs: -1,                       // 同步调用，ShareHelper 立即返回空数组作为 ack
+      callbackFuncName: 'OnShareUiSignal', // 仅用于避免 UI 侧走 nativeInvokeJSResult；ack 会被静默丢弃
+      userData: 0
+    });
+  } catch (e) {
+    console.error(`${TAG} 转发到 UI 线程失败: ${e}`);
+  }
+}
+
+export class ShareHarmonyProxy {
+
+  // ============================================================
+  // 主动复位：转发到 UI 线程释放 ShareController
+  // ============================================================
+  Reset(): void {
+    postToUi('reset', []);
+  }
+
+  // ============================================================
+  // 拉起系统分享面板（转发到 UI 线程）
+  // 结果不再走 callback：UI 侧通过 TuanjieSendMessage 直接回调 C#
+  // ============================================================
+  ShareText(shareText: string, title: string, callback: (signal: string) => void): void {
+    if (!shareText || shareText.length === 0) {
+      console.error(`${TAG} ShareText: shareText 为空，忽略`);
+      return;
+    }
+    postToUi('shareText', [title, shareText]);
+  }
+
+  // ============================================================
+  // 降级：复制分享文案到剪贴板（同样转发到 UI 线程执行）
+  // ============================================================
+  async CopyText(shareText: string, callback: (signal: string) => void): Promise<void> {
+    if (!shareText || shareText.length === 0) {
+      console.error(`${TAG} CopyText: shareText 为空，忽略`);
+      return;
+    }
+    postToUi('copyText', [shareText]);
+  }
+}
+
+// 注册函数：名称必须为 "Register" + 插件名（ShareHarmonyProxy）
+export function RegisterShareHarmonyProxy(): Record<string, Object> {
+  return { 'ShareHarmonyProxy': new ShareHarmonyProxy() };
+}

@@ -1,0 +1,192 @@
+// ====================================================================
+// ShareHelper.tslib
+// 描述: 运行在 **UI 线程** 的鸿蒙分享实现（真正的 ShareKit 调用点）。
+//
+// 背景:
+//   团结引擎的 C# / tslib 跑在 TuanjieMain worker 线程，直接在该线程用
+//   worker 里的 context 调 systemShare，面板关闭时系统擦除 UIExtension 会失败，
+//   导致 ModalShareController 进程单例泄漏，第二次 show 恒报
+//   「single instance existed」。
+//   因此分享必须回到 UI 线程、用 Ability 的真实 UIAbilityContext 调用。
+//
+// 调用链:
+//   ShareHarmonyProxy.tslib (worker)
+//     → workerPort.postMessage({type:'RUN_ON_UI_THREAD_USER_EVENT',
+//                               funcName:'ShareHelper.shareText',
+//                               modulePath:'../ShareHelper'})
+//       → Tuanjie UI 线程 MessageProcessor.processCustomMessage 动态 import 本模块
+//         → ShareHelper.shareText(...)（UI 线程 + globalThis.AbilityContext）
+//           → 结果通过 TuanjieSendMessage 回到 C#
+//
+// 注意:
+//   本文件也会被 TuanjieJSScriptRegister 在 worker 侧 import（为了满足 Register 约定），
+//   因此只能依赖 @kit.* 与 libtuanjie.so，不能 import 任何 ArkTS(.ets) 文件。
+// ====================================================================
+import { systemShare } from '@kit.ShareKit';
+import { common } from '@kit.AbilityKit';
+import { BusinessError, pasteboard } from '@kit.BasicServicesKit';
+// 引擎原生桥接（.so，非 ArkTS 文件）：用 TuanjieSendMessage 直接把信号回调给 C#
+import tuanjie from 'libtuanjie.so';
+
+const TAG = '[ShareHelper]';
+// 纯文本 UTD，等价于 utd.UniformDataType.PLAIN_TEXT
+const UTD_PLAIN_TEXT: string = 'general.plain-text';
+// dismiss 派发栈结束后再 off()，避免原生回调引用被提前释放
+const RELEASE_DELAY_MS: number = 100;
+
+let activeController: systemShare.ShareController | null = null;
+let dismissHandler: (() => void) | null = null;
+let showing: boolean = false;
+
+// UI 线程上由 TuanjiePlayerAbilityBase 写入：globalThis.AbilityContext = this.context
+function resolveAbilityContext(): common.UIAbilityContext | undefined {
+  const g: Record<string, Object> = globalThis as unknown as Record<string, Object>;
+  const ctx = g['AbilityContext'];
+  return ctx ? ctx as common.UIAbilityContext : undefined;
+}
+
+// 把信号回传给 C#：
+// Tuanjie.TuanjieSendMessage(GameObjectName, MethodName, stringParam) 等价于
+// GameObject.SendMessage，参数只支持 string。C# 侧由 HarmonyShareSignalReceiver 接收。
+function notify(signal: string): void {
+  try {
+    tuanjie.TuanjieSendMessage('HarmonyShareReceiver', 'OnShareSignal', signal);
+  } catch (e) {
+    console.error(`${TAG} 回传 ${signal} 失败: ${e}`);
+  }
+}
+
+export class ShareHelper {
+
+  // ============================================================
+  // 拉起系统分享面板（UI 线程）
+  // 返回值固定为空数组：供 worker 侧同步调用 ack 使用（ack 不携带信号）
+  // ============================================================
+  static shareText(title: string, content: string): string[] {
+    const context = resolveAbilityContext();
+    if (!context) {
+      console.error(`${TAG} 未取到 UIAbilityContext，无法拉起分享面板`);
+      notify('showFail');
+      return [];
+    }
+
+    if (showing) {
+      console.warn(`${TAG} 分享面板已打开，忽略本次请求`);
+      return [];
+    }
+
+    showing = true;
+    try {
+      const data: systemShare.SharedData = new systemShare.SharedData({
+        utd: UTD_PLAIN_TEXT,
+        content: content,
+        title: (title && title.length > 0) ? title : content
+      });
+
+      const controller: systemShare.ShareController = new systemShare.ShareController(data);
+      activeController = controller;
+
+      let closed: boolean = false;
+      const onDismiss = (): void => {
+        if (closed) return;
+        closed = true;
+        showing = false;
+        activeController = null;
+        dismissHandler = null;
+        console.info(`${TAG} 分享面板已关闭`);
+
+        // 不在原生 dismiss 派发栈里 off()，延后到下一个宏任务
+        setTimeout(() => {
+          try {
+            controller.off('dismiss', onDismiss);
+          } catch (e) {
+            console.warn(`${TAG} off('dismiss') 异常（忽略）: ${e}`);
+          }
+        }, RELEASE_DELAY_MS);
+
+        notify('dismiss');
+      };
+      dismissHandler = onDismiss;
+      controller.on('dismiss', onDismiss);
+
+      // 先回一个「通道已通」信号，worker 侧据此关闭兜底计时器
+      notify('uiStarted');
+
+      controller.show(context, {
+        selectionMode: systemShare.SelectionMode.SINGLE,
+        previewMode: systemShare.SharePreviewMode.DEFAULT
+      }).then(() => {
+        console.info(`${TAG} ShareController.show 完成`);
+      }).catch((err: BusinessError) => {
+        if (closed) return;
+        closed = true;
+        showing = false;
+        activeController = null;
+        dismissHandler = null;
+        console.error(`${TAG} ShareController.show 失败: code=${err.code}, msg=${err.message}`);
+        notify('showFail');
+      });
+    } catch (e) {
+      showing = false;
+      activeController = null;
+      dismissHandler = null;
+      console.error(`${TAG} shareText 异常: ${e}`);
+      notify('showFail');
+    }
+
+    return [];
+  }
+
+  // ============================================================
+  // 降级：复制分享文案到剪贴板（UI 线程）
+  // ============================================================
+  static copyText(content: string): string[] {
+    if (!content || content.length === 0) {
+      notify('copyFail');
+      return [];
+    }
+
+    try {
+      const data: pasteboard.PasteData =
+        pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, content);
+      pasteboard.getSystemPasteboard().setData(data).then(() => {
+        console.info(`${TAG} 分享文案已复制到剪贴板`);
+        notify('copied');
+      }).catch((e: BusinessError) => {
+        console.error(`${TAG} 复制分享文案失败: code=${e.code}, msg=${e.message}`);
+        notify('copyFail');
+      });
+    } catch (e) {
+      console.error(`${TAG} copyText 异常: ${e}`);
+      notify('copyFail');
+    }
+
+    return [];
+  }
+
+  // ============================================================
+  // 主动复位：分享判定收口时由 worker 转发调用
+  // ============================================================
+  static reset(): string[] {
+    showing = false;
+    const controller = activeController;
+    const handler = dismissHandler;
+    activeController = null;
+    dismissHandler = null;
+
+    if (controller !== null && handler !== null) {
+      try {
+        controller.off('dismiss', handler);
+      } catch (e) {
+        console.warn(`${TAG} reset off('dismiss') 异常（忽略）: ${e}`);
+      }
+    }
+    return [];
+  }
+}
+
+// 注册函数：名称必须为 "Register" + 文件名（ShareHelper）
+// 本模块主要供 UI 线程动态加载，worker 侧只需满足注册约定，返回空对象即可
+export function RegisterShareHelper(): Record<string, Object> {
+  return {};
+}
