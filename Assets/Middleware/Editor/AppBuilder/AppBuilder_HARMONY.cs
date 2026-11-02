@@ -10,6 +10,8 @@ using UnityEditor.Build.Reporting;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
+#if UNITY_2022_3_55 || UNITY_2022_3_61
+
 namespace Middleware
 {
     public partial class AppBuilder
@@ -165,6 +167,8 @@ namespace Middleware
             Application.OpenURL(@"file://" + outputDir);
         }
 
+        
+        
         /// <summary>
         /// 实际执行流水线。exportDirOverride 非空时用它作为导出工程目录（命令行/CI 场景）。
         /// 成功返回 .hap 绝对路径，失败返回 null 并通过 error 输出原因。
@@ -989,6 +993,10 @@ namespace Middleware
                 // 0.3) 注入权限声明与权限说明字符串
                 if (!ApplyPermissionsAndStrings(root, log, out error)) return false;
 
+                // 0.4) OHKitAdsManager.ets 注入横幅开关/广告追踪授权桥接方法
+                //      （Unity 侧 Ads_harmony.ShowBanner/HideBanner、Game.RequestTrackingConsent 调用）
+                if (!PatchOHKitAdsManager(root, log, out error)) return false;
+
                 // 1) 新增 EngineLifecycleGuard.ets
                 var guardDst = Path.Combine(root, layout.Value.Guard);
                 if (File.Exists(guardDst))
@@ -1114,6 +1122,17 @@ namespace Middleware
                 Require(!File.Exists(exportedPath) ||
                         File.ReadAllText(exportedPath).Contains("export { SDKManager }"),
                     "tuanjieLib/exported.ets 未导出 SDKManager");
+
+                // OHKitAdsManager.ets 必须有横幅关闭/广告追踪授权桥接方法
+                // （Unity 侧 Ads_harmony.HideBanner、Game.RequestTrackingConsent 调用；
+                //   横幅展示已改为 LoadBanner 桥接内部 ShowAdsWindow，不再需要 ShowBannerOnUI）
+                var adsMgrPath = Path.Combine(root, "tuanjieLib", "src", "main", "ets", "OHKitAdsManager.ets");
+                if (!File.Exists(adsMgrPath))
+                    adsMgrPath = Path.Combine(root, "entry", "src", "main", "ets", "OHKitAdsManager.ets");
+                var adsMgrText = File.Exists(adsMgrPath) ? File.ReadAllText(adsMgrPath) : "";
+                Require(adsMgrText.Contains("HideBannerOnUI") &&
+                        adsMgrText.Contains("RequestTrackingConsentOnUI"),
+                    "OHKitAdsManager.ets 缺横幅关闭/授权桥接方法（HideBannerOnUI/RequestTrackingConsentOnUI）");
 
                 // OHKitSdk sdk 目录的校验放在 ohpm install 之后单独做
                 // （见 VerifyOHKitSdkSources），此处 oh_modules 可能还没解包。
@@ -1373,17 +1392,31 @@ namespace Middleware
 
                 var dualModule = Directory.Exists(Path.Combine(root, "tuanjieLib"));
                 var content = File.ReadAllText(src);
+                const string dualImport = "import { SDKManager, TuanjiePlayerView } from 'tuanjieLib';";
+                const string singleImport =
+                    "import { SDKManager } from 'OHKitSdk';\n" +
+                    "import { TuanjiePlayerView } from './components/TuanjiePlayerView';";
+                const string dualBannerImport = "import { BannerAd } from 'tuanjieLib';";
+                const string singleBannerImport = "import { BannerAd } from 'OHKitSdk';";
+
                 if (!dualModule)
                 {
-                    const string dualImport = "import { SDKManager, TuanjiePlayerView } from 'tuanjieLib';";
-                    const string singleImport =
-                        "import { SDKManager } from 'OHKitSdk';\n" +
-                        "import { TuanjiePlayerView } from './components/TuanjiePlayerView';";
                     if (content.Contains(dualImport))
                     {
                         content = content.Replace(dualImport, singleImport);
                         log.Add("REWRITE Index.ets import（单模块布局：tuanjieLib → OHKitSdk + ./components/TuanjiePlayerView）");
                     }
+
+                    if (content.Contains(dualBannerImport))
+                    {
+                        content = content.Replace(dualBannerImport, singleBannerImport);
+                        log.Add("REWRITE Index.ets BannerAd import（单模块布局：tuanjieLib → OHKitSdk）");
+                    }
+                }
+                else if (content.Contains(singleBannerImport))
+                {
+                    content = content.Replace(singleBannerImport, dualBannerImport);
+                    log.Add("REWRITE Index.ets BannerAd import（双模块布局：OHKitSdk → tuanjieLib）");
                 }
 
                 var before = File.Exists(dst) ? File.ReadAllText(dst) : null;
@@ -1445,6 +1478,18 @@ namespace Middleware
                         error = "OHKitSdk/sdk/SDKManager.ets 仍是 har 原版（缺 OnNotificationSettingsClosed）。\n" +
                                 "说明补丁被 ohpm install 覆盖了 —— 检查流水线里覆盖动作是否在 ohpm 之后。";
                         return false;
+                    }
+                    if (File.Exists(mgr))
+                    {
+                        var mgrText = File.ReadAllText(mgr);
+                        if (!mgrText.Contains("RequestTrackingConsent") ||
+                            !mgrText.Contains("LoadBanner") ||
+                            !mgrText.Contains("HideBanner"))
+                        {
+                            error = "OHKitSdk/sdk/SDKManager.ets 缺横幅/广告追踪授权接口" +
+                                    "（RequestTrackingConsent/LoadBanner/HideBanner），补丁未完整落地。";
+                            return false;
+                        }
                     }
                     if (!File.Exists(Path.Combine(d, "SendOAID.ets")))
                     {
@@ -1508,6 +1553,126 @@ namespace Middleware
                 }
 
                 log.Add($"OHKitSdk sdk 目录: 写入 {copied} 个，已是最新 {same} 个");
+
+                // 单模块布局下 entry/pages/Index.ets 直接 import { SDKManager } from 'OHKitSdk'，
+                // 横幅组件 BannerAd 也得从 har 的入口导出，否则 Index.ets 里 BannerAd() 编译不过。
+                if (!AppendHarBannerExport(root, log))
+                    return true; // 导出失败不阻断（双模块布局没有这个入口文件时要跳过）
+
+                return true;
+            }
+
+            /// <summary>
+            /// 往解包后的 OHKitSdk har 入口 Index.ets 追加 BannerAd 导出（幂等）。
+            /// 路径：oh_modules/.ohpm/OHKitSdk@&lt;hash&gt;=/oh_modules/OHKitSdk/Index.ets
+            /// 注意：ohpm install 会重写该文件，所以要在 install 之后调用（本函数就在那个时机执行）。
+            /// </summary>
+            private static bool AppendHarBannerExport(string root, List<string> log)
+            {
+                var ohpmDir = Path.Combine(root, "oh_modules", ".ohpm");
+                if (!Directory.Exists(ohpmDir)) return false;
+
+                const string line =
+                    "export { BannerAd } from './src/main/ets/components/sdk/AdPlayer'";
+
+                foreach (var cand in Directory.GetDirectories(ohpmDir, "OHKitSdk@*"))
+                {
+                    var index = Path.Combine(cand, "oh_modules", "OHKitSdk", "Index.ets");
+                    if (!File.Exists(index)) continue;
+
+                    var text = File.ReadAllText(index);
+                    if (text.Contains("export { BannerAd }")) continue;
+
+                    var nl = text.Contains("\r\n") ? "\r\n" : "\n";
+                    File.WriteAllText(index, text.TrimEnd() + nl + line + nl, new UTF8Encoding(false));
+                    log.Add("PATCHED OHKitSdk/Index.ets（追加 BannerAd 导出）");
+                }
+
+                return true;
+            }
+
+            /// <summary>
+            /// 往导出的 OHKitAdsManager.ets 注入横幅开关与广告追踪授权的桥接方法。
+            ///
+            /// Unity 侧调用链：
+            ///   Ads_harmony.ShowBanner  → OHSDKKitManager.LoadBanner → OHKitAdsManager.LoadBannerOnUI
+            ///   Ads_harmony.HideBanner  → CallAdsBridge("HideBannerOnUI")
+            ///   Game.RequestTrackingConsent → adsObj.Call("RequestTrackingConsentOnUI")
+            ///
+            /// OHKitAdsManager.etslib 模板来自引擎包，每次导出都会覆盖 harmony/ 下的文件，
+            /// 所以这里在每次导出后幂等注入这三个方法（有标记则跳过）。
+            /// 注入文本需与 Assets/Middleware/Editor/AppBuilder/HarmonyPatch/OHKitSdk 的
+            /// SDKManager.LoadBanner / HideBanner / RequestTrackingConsent 对应。
+            /// </summary>
+            private static bool PatchOHKitAdsManager(string root, List<string> log, out string error)
+            {
+                error = null;
+                string[] candidates =
+                {
+                    Path.Combine(root, "tuanjieLib", "src", "main", "ets", "OHKitAdsManager.ets"),
+                    Path.Combine(root, "entry", "src", "main", "ets", "OHKitAdsManager.ets"),
+                };
+
+                var target = candidates.FirstOrDefault(File.Exists);
+                if (target == null)
+                {
+                    log.Add("SKIP   OHKitAdsManager.ets 不存在（未识别的布局）");
+                    return true;
+                }
+
+                var text = File.ReadAllText(target);
+                if (text.Contains("RequestTrackingConsentOnUI") &&
+                    text.Contains("HideBannerOnUI"))
+                {
+                    log.Add("ALREADY OHKitAdsManager.ets 桥接方法已注入");
+                    return true;
+                }
+
+                const string methods = @"  // ★ 桥接补丁：广告追踪授权请求（APP_TRACKING_CONSENT）
+  //   Unity 侧 AdTrackingManager 引导页点""继续""后调用；
+  //   允许/拒绝结果由 SendOAID 经 TuanjieSendMessage('PushMessageReceiver',
+  //   'OnOAIDClosedSignal', '1'/'0') 回传。
+  RequestTrackingConsentOnUI(callback: (...args: Array<ESObject>) => ESObject) {
+    hilog.info(0x0000, ""SDKKit"", 'RequestTrackingConsentOnUI Start!');
+    let msg: ESObject = {
+      modulePath: ""OHKitSdk"",
+      funcName: ""SDKManager.RequestTrackingConsent"",
+      args: [],
+      callback: callback,
+      timeoutMs: 100000,
+    }
+    POST_MESSAGE_TO_HOST(msg);
+  }
+
+  // ★ 桥接补丁：关闭横幅（关闭广告弹窗容器）
+  HideBannerOnUI(callback: (...args: Array<ESObject>) => ESObject) {
+    hilog.info(0x0000, ""SDKKit"", 'HideBannerOnUI Start!');
+    let msg: ESObject = {
+      modulePath: ""OHKitSdk"",
+      funcName: ""SDKManager.HideBanner"",
+      args: [],
+      callback: callback,
+      timeoutMs: 100000,
+    }
+    POST_MESSAGE_TO_HOST(msg);
+  }
+
+";
+
+                // 锚点：类的静态实例声明（模板稳定存在）；兜底用 getInstance
+                int idx = text.IndexOf("  static instance: OHKitAdsManager;", StringComparison.Ordinal);
+                if (idx < 0)
+                    idx = text.IndexOf("  public static getInstance()", StringComparison.Ordinal);
+                if (idx < 0)
+                {
+                    error = "OHKitAdsManager.ets 注入失败：找不到锚点（static instance / getInstance）。" +
+                            "模板结构可能已变化，请检查引擎导出的 OHKitAdsManager.etslib。";
+                    return false;
+                }
+
+                text = text.Substring(0, idx) + methods + text.Substring(idx);
+                File.WriteAllText(target, text, new UTF8Encoding(false));
+                log.Add("SYNC   OHKitAdsManager.ets <- 注入 RequestTrackingConsentOnUI / HideBannerOnUI");
                 return true;
             }
 
@@ -1707,19 +1872,34 @@ namespace Middleware
                     return true;
                 }
 
-                const string marker = "export { SDKManager }";
                 var text = File.ReadAllText(path);
-                if (text.Contains(marker))
+                var nl = text.Contains("\r\n") ? "\r\n" : "\n";
+                var changed = false;
+
+                if (!text.Contains("export { SDKManager }"))
                 {
-                    log.Add("ALREADY tuanjieLib/exported.ets（SDKManager 已导出）");
+                    text = text.TrimEnd() + nl + nl +
+                           "export { SDKManager } from './oh_modules/OHKitSdk/src/main/ets/components/sdk/SDKManager'" + nl;
+                    changed = true;
+                    log.Add("PATCHED tuanjieLib/exported.ets（追加 SDKManager 导出）");
+                }
+
+                // 横幅组件（Index.ets 根 Stack 里挂 BannerAd 用）
+                if (!text.Contains("export { BannerAd }"))
+                {
+                    text = text.TrimEnd() + nl +
+                           "export { BannerAd } from './oh_modules/OHKitSdk/src/main/ets/components/sdk/AdPlayer'" + nl;
+                    changed = true;
+                    log.Add("PATCHED tuanjieLib/exported.ets（追加 BannerAd 导出）");
+                }
+
+                if (!changed)
+                {
+                    log.Add("ALREADY tuanjieLib/exported.ets（SDKManager / BannerAd 已导出）");
                     return true;
                 }
 
-                var line = "export { SDKManager } from './oh_modules/OHKitSdk/src/main/ets/components/sdk/SDKManager'";
-                var nl = text.Contains("\r\n") ? "\r\n" : "\n";
-                text = text.TrimEnd() + nl + nl + line + nl;
                 File.WriteAllText(path, text, new UTF8Encoding(false));
-                log.Add("PATCHED tuanjieLib/exported.ets（追加 SDKManager 导出）");
                 return true;
             }
 
@@ -1817,3 +1997,5 @@ namespace Middleware
         }
     }
 }
+
+#endif

@@ -251,7 +251,7 @@ public partial class AnalyticMgr
         {
             if (!string.IsNullOrEmpty(GameDataManager.Instance.UserData.adTrackingEnabled))
             {
-                PushMessageReceiver._instance.OnOAIDClosedSignal(GameDataManager.Instance.UserData.adTrackingEnabled);
+                //PushMessageReceiver._instance.OnOAIDClosedSignal(GameDataManager.Instance.UserData.adTrackingEnabled);
             }
             else
             {

@@ -142,13 +142,13 @@ public class LoadingController : MonoBehaviour
         // 本地化
         MultilingualManager.Instance.LoadLocalization();
         LoadWordVocabulary();
-        Game.self.InitGame();
-
         // 说明：鸿蒙的 OAID/广告追踪授权与 LoadBanner 耦合，已统一挪到 AdTrackingManager 的引导流程里触发
         // （避免进入加载页就先弹系统权限框，抢在"广告追踪引导页"之前）
 
         yield return new WaitForSeconds(0.5f);
        
+        Game.self.InitGame();
+        
         // ================= 等待登录（基于 LoginState 枚举）=================
         loginTimeout = 10f;        // ← 超时时间保持不变
         loginStart = Time.time;

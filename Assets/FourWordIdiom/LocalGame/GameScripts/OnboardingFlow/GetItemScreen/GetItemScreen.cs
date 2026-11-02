@@ -28,6 +28,8 @@ public class GetItemScreen : UIWindow
 
     [SerializeField] private ScrollRect scrollRect;
     [SerializeField] private Transform pointTransform;
+    [SerializeField] private Transform tipEffectTransform;
+    [SerializeField] private Transform rocketEffectTransform;
 
     public static LimitRewordType limitRewordType;
 
@@ -255,6 +257,8 @@ public class GetItemScreen : UIWindow
         shopDataItem = null;
 
         RectTransform rectTransform = AwardIcon.GetComponent<RectTransform>();
+        tipEffectTransform.gameObject.SetActive(false);
+        rocketEffectTransform.gameObject.SetActive(false);
 
         switch (limitRewordType)
         {
@@ -272,6 +276,7 @@ public class GetItemScreen : UIWindow
                 eventDes = title.text + "弹窗广告";
                 rectTransform.sizeDelta = new Vector2(310, 310);
                 scrollRect.horizontal = true;
+                tipEffectTransform.gameObject.SetActive(true);
                 break;
             case LimitRewordType.AutoComplete: // 火箭道具
                 UpdateCliamBtn(false);
@@ -281,6 +286,7 @@ public class GetItemScreen : UIWindow
                 AwardIcon.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
                 rectTransform.sizeDelta = new Vector2(460, 460);
                 eventDes = title.text + "弹窗广告";
+                rocketEffectTransform.gameObject.SetActive(true);
                 if (AuditConfig.IsAuditOpen)
                 {
                     scrollRect.horizontal = true;

@@ -20,6 +20,10 @@ public class CustomFlyInManager : MonoBehaviour
     [HideInInspector] public GameObject GoldPrefab;
     [HideInInspector] public GameObject finishlevelBtnObj;
     private float BizerValue = 3.0f;
+
+    [Header("奖励飞入曲线（贝塞尔）")]
+    [Tooltip("弯曲程度：0=直线，越大越弯。按飞行距离等比计算，不会因屏幕尺寸失真")]
+    [SerializeField] private float BezierBendRatio = 0.10f;
     
     private void Awake()
     {
@@ -164,52 +168,164 @@ public class CustomFlyInManager : MonoBehaviour
         {
              Destroy(effecttemp.gameObject);
              call?.Invoke();
-        },1.1f));
+        },0.55f));
     }
     
     private IEnumerator FlyAwardVectorToEnd(Vector3 start, GameObject endGameObject, GameObject gold, Vector3 left, Action call, float duration = 0.8f)
     {
         Vector3 endPos = endGameObject.transform.position;
-        Vector3 starttemp = new Vector3(start.x,start.y+0.1f,endPos.z);
 
         // ---- 1. 准备透明度控制组件（适用于 UI） ----
         CanvasGroup cg = gold.GetComponent<CanvasGroup>();
         if (cg == null) cg = gold.AddComponent<CanvasGroup>();
         cg.alpha = 0f; // 初始透明
 
-        // ---- 2. 构建主序列 ----
+        // ---- 2. 主序列（三次贝塞尔曲线飞入 + 金色星光拖尾，无起手上浮） ----
         Sequence flySeq = DOTween.Sequence();
 
-        // 2.1 淡入（0.2s）
-        flySeq.Join(cg.DOFade(1f, 0.2f).SetEase(Ease.OutQuad));
-        
-        // 2.2 悬浮效果（前 0.5 秒）：上下脉冲，自动回到原位
-        flySeq.Append(gold.transform.DOMove(starttemp, 0.2f).OnComplete(() =>
-            {
-                flySeq.Append(gold.transform.DOMove(start, 0.2f));
-            })
-            .SetEase(Ease.OutQuad));
+        // 2.1 主体：三次贝塞尔曲线飞入
+        //     ★ 不走 DOTween 的 PathType.CubicBezier（实验性，waypoint 需按 终点/IN/OUT 每 3 个一组、起点自动补），
+        //       这里直接按贝塞尔公式逐帧求值，曲线精确、无格式限制。
+        //     控制点 = 起终连线 1/3、2/3 处 + 垂直偏移；偏移按飞行距离等比，避免分辨率不同导致过弯或看不出弧度。
+        Vector3 p0 = start;
+        Vector3 p3 = endPos;
+        Vector3 chord = p3 - p0;
+        float chordLen = chord.magnitude;
 
-        // 2.3 曲线飞入（使用 CatmullRom）
-       
-        Vector3 mid = (start + endPos) / 2 + left * 0.2f;
-        Vector3[] path = new Vector3[] { start, mid, endPos };
-        flySeq.Append(gold.transform.DOPath(path, duration, PathType.CatmullRom)
+        Vector3 bendOffset = Vector3.zero;
+        if (chordLen > 0.001f)
+        {
+            Vector3 perp = new Vector3(-chord.y, chord.x, 0f) / chordLen; // 屏幕平面内与飞行方向垂直
+            if (perp.y < 0f) perp = -perp;                                 // 统一取朝上的一侧
+            bendOffset = perp * (chordLen * BezierBendRatio);
+        }
+
+        Vector3 p1 = p0 + chord * (1f / 3f) + bendOffset;
+        Vector3 p2 = p0 + chord * (2f / 3f) + bendOffset;
+
+        Transform goldTf = gold.transform;
+        float bezierT = 0f;
+        flySeq.Append(DOTween.To(
+                () => bezierT,
+                v =>
+                {
+                    bezierT = v;
+                    goldTf.position = EvaluateCubicBezier(p0, p1, p2, p3, v);
+                },
+                1f, duration)
             .SetEase(Ease.InOutSine));
-        flySeq.Join(gold.transform.DOScale(new Vector3(0.4f, 0.4f, 0.4f), duration));
 
-        // 2.4 淡出（0.2s）— 飞入完成后逐渐消失
-        flySeq.Append(cg.DOFade(0f, 0.2f).SetEase(Ease.InQuad));
+        // 2.2 起始快速淡入（与飞行并行）
+        flySeq.Join(cg.DOFade(1f, 0.12f).SetEase(Ease.OutQuad));
 
-        // ---- 4. 飞入完成后，按钮缩放反馈 + 回调 ----
-        flySeq.Join(endGameObject.transform.DOScale(new Vector3(1.1f, 1.1f, 1.1f), 0.1f)
+        // 2.3 飞行中轻微缩小（与飞行并行）
+        flySeq.Join(gold.transform.DOScale(new Vector3(0.45f, 0.45f, 0.45f), duration));
+
+        // 2.4 到达后淡出（顺序）
+        flySeq.Append(cg.DOFade(0f, 0.15f).SetEase(Ease.InQuad));
+
+        // 2.5 到达时目标计数器弹跳反馈（与淡出并行）
+        flySeq.Join(endGameObject.transform.DOScale(new Vector3(1.12f, 1.12f, 1.12f), 0.1f)
             .SetEase(Ease.OutBack)
             .OnComplete(() => endGameObject.transform.DOScale(Vector3.one, 0.1f)));
-        
+
+        // ---- 3. 飞行期间并行生成金色星光拖尾 ----
+        StartCoroutine(SparkleTrailRoutine(gold.transform, duration + 0.15f));
+
         yield return flySeq.WaitForCompletion();
-        
+
         // 执行回调（此处会销毁 gold 等）
         call?.Invoke();
+    }
+
+    /// <summary>
+    /// 三次贝塞尔曲线求值：B(t) = (1-t)³P0 + 3(1-t)²t·P1 + 3(1-t)t²·P2 + t³P3，t ∈ [0,1]。
+    /// </summary>
+    private static Vector3 EvaluateCubicBezier(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+    {
+        float u = 1f - t;
+        float uu = u * u;
+        float tt = t * t;
+        return uu * u * p0 + 3f * uu * t * p1 + 3f * u * tt * p2 + tt * t * p3;
+    }
+
+    // ======================= ★ 金色星光拖尾（对齐参考视频飞入效果） =======================
+
+    private static Sprite _sparkleSprite;
+
+    /// <summary>生成一枚柔和白色圆点精灵（金色星光着色用），仅创建一次并缓存。</summary>
+    private static Sprite GetSparkleSprite()
+    {
+        if (_sparkleSprite != null) return _sparkleSprite;
+        const int size = 32;
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        float half = (size - 1) / 2f;
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = x - half, dy = y - half;
+                float d = Mathf.Sqrt(dx * dx + dy * dy) / half;
+                float a = Mathf.Clamp01(1f - d);
+                a *= a; // 柔和边缘
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+        }
+        tex.Apply();
+        tex.wrapMode = TextureWrapMode.Clamp;
+        _sparkleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        return _sparkleSprite;
+    }
+
+    /// <summary>沿飞行物体轨迹周期性撒出金色星光，形成拖尾。</summary>
+    private IEnumerator SparkleTrailRoutine(Transform coin, float duration)
+    {
+        const float interval = 0.032f;
+        float elapsed = 0f;
+        Transform parent = AwardRoot != null ? AwardRoot : coin.parent;
+
+        // 参考尺寸：飞行金币当前渲染高度，用于星光大小成比例
+        float referenceSize = 90f;
+        RectTransform coinRt = coin as RectTransform;
+        if (coinRt == null) coinRt = coin.GetComponent<RectTransform>();
+
+        while (elapsed < duration)
+        {
+            if (coin != null)
+            {
+                if (coinRt != null)
+                    referenceSize = coinRt.rect.height * Mathf.Abs(coin.localScale.y);
+                SpawnSparkle(parent, coin.position, referenceSize);
+            }
+            elapsed += interval;
+            yield return new WaitForSeconds(interval);
+        }
+    }
+
+    /// <summary>在指定世界坐标生成一枚金色星光：上飘、缩小、淡出后销毁。</summary>
+    private void SpawnSparkle(Transform parent, Vector3 worldPos, float referenceSize)
+    {
+        GameObject go = new GameObject("goldSparkle", typeof(RectTransform), typeof(Image));
+        go.transform.SetParent(parent, false);
+
+        RectTransform rt = go.GetComponent<RectTransform>();
+        float size = Mathf.Clamp(referenceSize * Random.Range(0.16f, 0.30f), 6f, 48f);
+        rt.sizeDelta = new Vector2(size, size);
+
+        Image img = go.GetComponent<Image>();
+        img.sprite = GetSparkleSprite();
+        img.raycastTarget = false;
+        img.color = new Color(1f, 0.86f, 0.4f, 0.95f); // 金色星光
+
+        go.transform.position = worldPos;
+
+        // 轻微上飘 + 缩小 + 淡出
+        Vector3 drift = new Vector3(Random.Range(-0.02f, 0.02f), Random.Range(0.01f, 0.06f), 0f);
+        float life = Random.Range(0.35f, 0.55f);
+        go.transform.DOMove(worldPos + drift, life).SetEase(Ease.OutQuad);
+        img.DOFade(0f, life).SetEase(Ease.InQuad);
+        go.transform.DOScale(0.2f, life).SetEase(Ease.InQuad);
+        Destroy(go, life + 0.05f);
     }
     
     

@@ -5,6 +5,8 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
+#if UNITY_2022_3_55 || UNITY_2022_3_61
+
 /// <summary>
 /// OpenHarmony 工程导出入口（薄封装）。
 ///
@@ -112,3 +114,5 @@ public class HarmonyExportBuilder
         }
     }
 }
+
+#endif

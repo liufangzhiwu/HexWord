@@ -75,24 +75,76 @@ namespace Middleware
 
 
         /// <summary>
-        /// 鸿蒙：加载 Banner 并顺带拉起 APP_TRACKING_CONSENT（广告追踪）授权框。
-        /// 注意：授权框的"弹出时机"由 AdTrackingManager 控制（引导页点"继续"之后才调用），
-        ///       不要再在进入加载页时直接调用，否则会抢在引导页之前弹系统权限框。
-        ///       埋点（Pop_up / Pop_accept / Pop_refuse）也在 AdTrackingManager 里统一上报。
+        /// 鸿蒙：请求 APP_TRACKING_CONSENT（广告追踪 / OAID）系统授权框。
+        /// 注意：
+        ///   1) 只负责"弹权限框 + 拉起 ArkTS 侧授权请求"，不加载 Banner；
+        ///      Banner 的加载/展示/关闭见 Ads_harmony 的 LoadBannerAD / ShowBanner / HideBanner。
+        ///   2) 授权框的"弹出时机"由 AdTrackingManager 控制（引导页点"继续"之后才调用），
+        ///      不要一进加载页就调，否则会抢在广告追踪引导页之前弹系统权限框。
+        ///   3) 允许/拒绝都会通过 TuanjieSendMessage → PushMessageReceiver.OnOAIDClosedSignal 回到 Unity，
+        ///      埋点（Pop_up / Pop_accept / Pop_refuse）统一在 AdTrackingManager 里上报。
         /// </summary>
+        public void RequestTrackingConsent()
+        {
+#if UNITY_OPENHARMONY
+            try
+            {
+                OpenHarmonyJSObject adsObj = OHSDKKitManager.OHKitAdsManagerObj;
+                if (adsObj == null)
+                {
+                    // 触发一次初始化，拿到 ArkTS 侧 OHKitAdsManager 的实例
+                    var _ = OHSDKKitManager.Instance;
+                    adsObj = OHSDKKitManager.OHKitAdsManagerObj;
+                }
+
+                if (adsObj == null)
+                {
+                    Debug.LogWarning("[OAID] ArkTS 侧 OHKitAdsManager 未就绪，无法请求广告追踪授权");
+                    return;
+                }
+
+                if (_trackingConsentCallback == null)
+                    _trackingConsentCallback = new OpenHarmonyJSCallback(OnTrackingConsentCallback);
+
+                adsObj.Call("RequestTrackingConsentOnUI", _trackingConsentCallback);
+                Debug.Log("[OAID] 已请求广告追踪授权（APP_TRACKING_CONSENT）");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[OAID] 请求广告追踪授权失败：" + e.Message +
+                                 "（ArkTS 侧桥接方法未更新？需要重新导出鸿蒙工程）");
+            }
+#endif
+        }
+
+        /// <summary>兼容旧调用点：等同于 RequestTrackingConsent（早期语义是"加载 Banner 顺带拉授权框"）</summary>
         public void LoadAds_OAID()
         {
-            
-#if UNITY_OPENHARMONY
-  
-            AdRequestParams adRequestParams=new AdRequestParams();
-            AdOptions adOptions=new AdOptions(); 
-            AdDisplayOptions adDisplayOptions=new AdDisplayOptions();
-            
-            OHSDKKitManager.Instance.LoadBanner(adRequestParams, adOptions,adDisplayOptions);
-#endif
-            
+            RequestTrackingConsent();
         }
+
+        /// <summary>
+        /// 放行广告请求（鸿蒙专用）。
+        /// 广告追踪授权流程结束前，Ads_harmony 会把激励预加载 / 横幅全部挡下，
+        /// 避免 AdsKit 在加载页就去取 OAID、把系统授权框抢在引导页之前弹出来。
+        /// 由 AdTrackingManager 在引导流程结束（弹出过/无需弹/超时）时调用；其它平台空实现。
+        /// </summary>
+        public void AllowAdRequests()
+        {
+#if UNITY_OPENHARMONY && !UNITY_EDITOR
+            Ads_harmony.AllowAdRequests();
+#endif
+        }
+
+#if UNITY_OPENHARMONY 
+        private static OpenHarmonyJSCallback _trackingConsentCallback;
+
+        private static object OnTrackingConsentCallback(params OpenHarmonyJSObject[] args)
+        {
+            // 授权结果不走这里，统一由 ArkTS 的 TuanjieSendMessage → PushMessageReceiver.OnOAIDClosedSignal 回传
+            return true;
+        }
+#endif
         
         private void InitManagers()
         {

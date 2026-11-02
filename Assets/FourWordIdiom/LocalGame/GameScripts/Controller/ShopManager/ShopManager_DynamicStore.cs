@@ -41,28 +41,48 @@ public partial class ShopManager : MonoBehaviour
         }
     }
 
+    /// <summary>迎新礼包商品名 ID</summary>
+    public const string ProductNewcomerBox = "NewcomerBox";
+
     /// <summary>
     /// 固定商店 - 1号推荐位。
-    /// 审核开：复用审核固定商店列表；
-    /// 审核关：原推送逻辑。
+    /// ★ 迎新礼包（NewcomerBox）固定第一位展示；
+    /// ★ 迎新礼包购买后（限购已满）不再展示。
     /// </summary>
     public List<ShopDataItem> GetFixedStoreExpandedItems()
     {
-        // if (AuditConfig.IsAuditOpen)
-        // {
-        //     List<ShopDataItem> auditItems = GetAuditFixedStoreItems();
-        //     if (auditItems.Count > 0)
-        //     {
-        //         LogShop($"[Audit] GetFixedStoreExpandedItems 审核开，全部展示 {auditItems.Count} 个");
-        //         return auditItems.OrderBy(item=>item.price).ToList();
-        //     }
-        //     LogShop("[Audit] GetFixedStoreExpandedItems 审核开但无礼包，回退常规");
-        // }
-
         List<ShopDataItem> result = GetRecommendPacks(RecommendSlot.FixedStore);
-        return result
+
+        // ★ 迎新礼包：未购买则强制置顶；已购买则从列表剔除
+        ShopDataItem newcomer = allShopItems
+            .FirstOrDefault(x => x != null && x.produceNameId == ProductNewcomerBox);
+        bool newcomerAvailable = newcomer != null && !IsNewcomerPurchased(newcomer);
+
+        result = result
+            .Where(x => x != null && x.produceNameId != ProductNewcomerBox)
             .OrderBy(item => item.price)
             .ToList();
+
+        if (newcomerAvailable)
+            result.Insert(0, newcomer);
+
+        LogShop($"GetFixedStoreExpandedItems: newcomerAvailable={newcomerAvailable}, " +
+                $"list=[{string.Join(",", result.Select(x => x.produceNameId))}]");
+
+        return result;
+    }
+
+    /// <summary>迎新礼包是否已购买（购买后即隐藏）。</summary>
+    public bool IsNewcomerPurchased(ShopDataItem item)
+    {
+        if (item == null) return false;
+
+        // 限购已满（配置 limited=1，购买一次即满）
+        if (IsLimitedOut(item)) return true;
+
+        // 兜底：已有获取记录 / 购买次数 > 0
+        ShopLimitData data = GetLimitData(item);
+        return data != null && (data.isget || data.buyCount > 0);
     }
 
     /// <summary>

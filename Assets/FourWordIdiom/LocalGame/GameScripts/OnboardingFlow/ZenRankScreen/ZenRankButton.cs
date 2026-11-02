@@ -265,6 +265,14 @@ public class ZenRankButton : MonoBehaviour
     /// </summary>
     public void FetchMyCurrentRank()
     {
+        // 未解锁禅意榜时 CheckRankProgress 会把 ZenBtn 关掉，
+        // 这时再 StartCoroutine 会报 "Coroutine couldn't be started because the game object 'ZenBtn' is inactive!"
+        if (!gameObject.activeInHierarchy)
+        {
+            Debug.Log("[ZenRank] 禅意榜按钮未激活（未解锁），跳过拉取排名");
+            return;
+        }
+
         // if (!GameCoreManager.Instance.IsNetworkActive) return;
         // 状态 1：如果没加入，直接显示“未加入”
         if (!GameDataManager.Instance.UserData.isJoinedZenRank)

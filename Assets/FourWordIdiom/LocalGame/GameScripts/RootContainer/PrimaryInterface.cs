@@ -226,7 +226,12 @@ public class PrimaryInterface : UIWindow
             if (rankBtn != null)
             {
                 rankBtn.CheckRankProgress();
-                rankBtn.FetchMyCurrentRank(); // 主动请求真实排名数据
+
+                // CheckRankProgress 可能在未解锁时把 ZenBtn 关掉，关掉后不能起协程
+                if (rankBtn.gameObject.activeInHierarchy)
+                {
+                    rankBtn.FetchMyCurrentRank(); // 主动请求真实排名数据
+                }
             }
         }
   

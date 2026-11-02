@@ -251,7 +251,7 @@ GameObject:
   - component: {fileID: 8620063420390765235}
   - component: {fileID: 5770019300865852003}
   m_Layer: 5
-  m_Name: AddResetToolBtn
+  m_Name: AddRocketToolBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3090,7 +3090,7 @@ MonoBehaviour:
   EnterStageBtn: {fileID: 6555557041022933827}
   ChessStageBtn: {fileID: 5237642256380715531}
   ChessEBtn: {fileID: 915755273340447404}
-  AddResetToolBtn: {fileID: 5179917324992881742}
+  AddRocketToolBtn: {fileID: 5179917324992881742}
   AddHintToolBtn: {fileID: 5441386673500584846}
   AddButterflyToolBtn: {fileID: 2714458941229622422}
   setAbBtButton: {fileID: 2761878466767366771}
@@ -7667,7 +7667,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u589E\u52A0\u91CD\u7F6E\u9053\u5177"
+  m_Text: "\u589E\u52A0\u706B\u7BAD\u9053\u5177"
 --- !u!1 &5052854190853724896
 GameObject:
   m_ObjectHideFlags: 0

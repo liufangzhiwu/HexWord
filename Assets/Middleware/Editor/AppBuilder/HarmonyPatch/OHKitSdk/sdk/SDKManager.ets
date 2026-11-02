@@ -290,46 +290,85 @@ export class SDKManager {
     });
   }
 
+  // ============================================================
+  // ★ 横幅开关状态（用 AppStorage 共享，BannerAd 拉取失败自动关闭时由组件侧复位）
+  // ============================================================
+  private static readonly BANNER_SHOWING_KEY: string = 'BannerShowing';
+
+  /**
+   * 横幅：取 OAID → 同步参数给页面里的 BannerAd 组件 → 打开 BannerShowing 开关。
+   * 也就是说"加载"即"展示"（Unity 侧的 ShowBanner 就调这里），没有单独的 ShowBanner 了。
+   */
   static async LoadBanner(adParamJson: string, adOptionsJson: string, displayOptionsJson: string): Promise<Array<string>> {
+    // parse Json
     let adParam: advertising.AdRequestParams = JSON.parse(adParamJson) as advertising.AdRequestParams;
     let adOptions: advertising.AdOptions = json.parse(adOptionsJson) as advertising.AdOptions;
     let displayOptions: advertising.AdDisplayOptions = json.parse(displayOptionsJson) as advertising.AdDisplayOptions;
 
-    let Msg: string;
+    // ★ 用 await 等 OAID 回来再请求：如果写成 getOAID().then(...)，赋值可能晚于
+    //   BannerAd 组件发起广告请求，广告位拿到的还是空 oaid。
     try {
-      await SendOAID.RequestOAID();
+      const data: string = await identifier.getOAID();
+      adParam.oaid = data;
+      hilog.info(0x0000, 'SDKKit', '%{public}s', `Succeeded in getting adsIdentifierInfo by promise`);
     } catch (error) {
       let e = error as BusinessError;
-      hilog.error(0x0000, 'SDKKit', `Failed to get adsIdentifierInfo: ${e.code}, ${e.message}`);
-      Msg=`Failed to get adsIdentifierInfo: ${e.code}, ${e.message}`;
+      hilog.error(0x0000, 'SDKKit', '%{public}s',
+        `Failed to get adsIdentifierInfo, code: ${e.code}, message: ${e.message}`);
     }
 
-
+    // ★ 横幅是页面内组件（entry/pages/Index.ets 的根 Stack 里挂了 BannerAd），
+    //   这里只负责同步参数 + 打开开关，不再 ShowAdsWindow：
+    //   AutoAdComponent 放进 CustomDialog(ComponentContent) 真机会请求失败。
     return new Promise((resolve) => {
-      let result: Array<string> = ["LoadOAID", "{\"code\":\"" + 0 + "\",\"message\":\"" + "Load OAID advertising success" + "\"}"];
-      resolve(result);
-    });
-
-   // SDKManager.ShowAdsWindow();
-
-   /* return new Promise((resolve) => {
-      SDKHandler.getInstance().handleBannerLoad(adParam, adOptions, displayOptions, globalThis.AbilityContext).then((data: string) => {
+      SDKHandler.getInstance().handleBannerLoad(adParam, adOptions, displayOptions,
+        globalThis.AbilityContext as common.UIAbilityContext).then((data: string) => {
         let result: Array<string> = ["AdsLoad", data];
+        // 参数先落到 AppStorage，再打开开关，避免组件用上一次的旧 adId 发请求
+        AppStorage.setOrCreate(SDKManager.BANNER_SHOWING_KEY, true);
+        hilog.info(0x0000, 'SDKKit', `LoadBanner 参数已同步: adId=${adParam?.adId}, adType=${adParam?.adType}`);
         resolve(result);
       }).catch((error: BusinessError) => {
         let errorMsg: string = JSON.stringify(error);
         let result: Array<string> = [errorMsg];
         resolve(result);
       });
-    });*/
+    });
   }
 
+  /**
+   * 关闭横幅：只把 BannerShowing 置 false，页面里的 BannerAd 组件会自己隐藏。
+   * （横幅不再是对话框，不存在关闭失败的问题）
+   */
   static async HideBanner(): Promise<Array<string>> {
-    AdPlayerPromptActionClass.closeDialog();
+    if (AppStorage.get<boolean>(SDKManager.BANNER_SHOWING_KEY) === true) {
+      AppStorage.setOrCreate(SDKManager.BANNER_SHOWING_KEY, false);
+      hilog.info(0x0000, 'SDKKit', 'HideBanner: 横幅已关闭');
+    } else {
+      hilog.info(0x0000, 'SDKKit', 'HideBanner: 横幅未在展示，跳过');
+    }
     return new Promise((resolve) => {
       let result: Array<string> = ["AdsHide", "{\"code\":\"" + 0 + "\",\"message\":\"" + "hide Banner advertising success" + "\"}"];
       resolve(result);
     });
+  }
+
+  /**
+   * 请求 APP_TRACKING_CONSENT（广告追踪 / OAID）系统授权框。
+   * 弹出时机由 Unity 侧 AdTrackingManager 控制（引导页点"继续"后才调用）。
+   * 允许/拒绝都会由 SendOAID 通过 TuanjieSendMessage('PushMessageReceiver',
+   * 'OnOAIDClosedSignal', '1'/'0') 回传给 Unity（埋点与关引导页在 Unity 侧统一处理）。
+   */
+  static async RequestTrackingConsent(): Promise<Array<string>> {
+    hilog.info(0x0000, 'SDKKit', 'RequestTrackingConsent: 请求广告追踪授权');
+
+    // 不 await：权限框是模态交互，等玩家点了才 resolve；
+    // 结果统一由 SendOAID 走 TuanjieSendMessage('PushMessageReceiver','OnOAIDClosedSignal') 回传。
+    // 这里要像其它桥接方法一样返回 Array<string>，否则宿主端会报
+    // "Error occurred while calling callback=SDKManager.RequestTrackingConsent"。
+    SendOAID.RequestOAID();
+
+    return ["AdsTrackingConsent", "requested"];
   }
 
   static async LoadAdWithMultiSlots(adParamsJson: string, adOptionsJson: string): Promise<Array<string>> {
@@ -612,7 +651,6 @@ function buildAdDialog() {
   Column() {
     RollAd()
     SplashAds()
-    BannerAd()
     NativeAds()
   }.backgroundColor(Color.Transparent).position({ bottom: 0 })
   .onDisAppear(() => {

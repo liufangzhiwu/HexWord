@@ -8,9 +8,9 @@ using UnityEngine.UI;
 /// 交互约定（对应需求《广告跟踪引导 & 广告权限弹窗出现时机》）：
 ///   1. 首次加载：覆盖在加载页上方出现，按钮文案 = "继续"；
 ///      点"继续" → 请求系统广告追踪权限（系统弹窗盖在本页上层）；
-///      系统弹窗关闭后回到本页，再点一次"继续" → 关闭本页，继续走加载流程。
+///      系统弹窗关闭时（允许/拒绝），本页由 AdTrackingManager 同步关闭，继续走加载流程。
 ///   2. 设置入口（玩家之前拒绝过）：按钮文案 = "去开启"；
-///      点"去开启" → 跳到系统设置页，回到游戏后由 AdTrackingManager 校验结果。
+///      点"去开启" → 跳到系统设置页/再次请求授权，回到游戏后由 AdTrackingManager 校验结果。
 ///
 /// 本脚本只负责"长什么样/点了算不算数"，流程编排与奖励发放都在 AdTrackingManager。
 /// </summary>
@@ -82,7 +82,11 @@ public class AdTrackingGuidance : MonoBehaviour
         if (_confirmButton != null) _confirmButton.interactable = !busy;
     }
 
-    /// <summary>权限结果回来后解锁按钮（文案保持不变，玩家再点一次"继续"才关闭）</summary>
+    /// <summary>
+    /// 权限结果回来后解锁按钮。
+    /// 首次启动场景：结果回来的同时本页就会被 AdTrackingManager 关掉，这里主要服务于
+    /// "设置入口 + 玩家再次拒绝"这种需要留在本页重试的场景。
+    /// </summary>
     public void OnPermissionReturned(bool granted)
     {
         SetBusy(false);

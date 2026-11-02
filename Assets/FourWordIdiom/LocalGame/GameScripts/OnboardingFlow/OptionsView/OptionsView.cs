@@ -8,6 +8,7 @@ public class OptionsView : UIWindow
 {
     [SerializeField] private Button HideButton; // 关闭按钮
     [SerializeField] private Button autopushBtn; // 推送开关
+    [SerializeField] private Button adsTrackBtn; // 广告关联开关
     
     [SerializeField] private Toggle vibrateToggle; // 震动开关
     [SerializeField] private Toggle musicToggle; // 音乐开关
@@ -23,6 +24,7 @@ public class OptionsView : UIWindow
     [SerializeField] private GameObject soHandle; // 音效开关的视觉手柄
     [SerializeField] private GameObject viHandle; // 震动开关的视觉手柄
     [SerializeField] private GameObject auHandle; // 震动开关的视觉手柄
+    [SerializeField] private GameObject adsHandle; // 广告开关的视觉手柄
 
     [SerializeField] private Text VersionText;
     [SerializeField] private Text HeaderText;

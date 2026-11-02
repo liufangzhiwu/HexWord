@@ -18,6 +18,12 @@ public class AwardScreen : UIWindow
 
     public List<RewardItem> rewardItems;
 
+    /// <summary>
+    /// 非商店场景（如分享奖励）临时指定的奖励列表。
+    /// 非空时优先展示它，面板关闭后自动清空；为空则回退到 CurrentShopDataItem。
+    /// </summary>
+    public static List<RewardItem> OverrideRewards;
+
     protected override void OnEnable()
     {
         base.OnEnable();
@@ -47,6 +53,14 @@ public class AwardScreen : UIWindow
     private void RefreshAdsTableVisibility()
     {
         if (AdsTable == null) return;
+
+        // 非商店场景（分享奖励等）不展示推荐位
+        if (OverrideRewards != null)
+        {
+            if (AdsTable.gameObject.activeSelf)
+                AdsTable.gameObject.SetActive(false);
+            return;
+        }
 
         bool show = false;
 
@@ -89,6 +103,18 @@ public class AwardScreen : UIWindow
         foreach (GameObject rGameObject in rewardList)
         {
             rGameObject.gameObject.SetActive(false);
+        }
+
+        // 分享等非商店场景：直接渲染外部传入的奖励列表
+        if (OverrideRewards != null)
+        {
+            int count = Mathf.Min(OverrideRewards.Count, rewardList.Count);
+            for (int i = 0; i < count; i++)
+            {
+                ShowItemUI(OverrideRewards[i], i);
+            }
+            Debug.Log($"[AwardScreen] 使用 OverrideRewards 展示 {count} 项奖励");
+            return;
         }
 
         //var items = new List<AnalyticMgr.Item>();
@@ -175,7 +201,7 @@ public class AwardScreen : UIWindow
             case LimitRewordType.Pupas:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Pupas");
             case LimitRewordType.ReStartTool:
-                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_3");
+                return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("clock");
             case LimitRewordType.InfiniteEnergy:
                 return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("InfiniteEnergy");
             case LimitRewordType.RemoveDayAds:
@@ -193,6 +219,9 @@ public class AwardScreen : UIWindow
 
     private void ClickClaimBtn()
     {
+        // ★ 点领取：资源栏背景变实色，2 秒后渐隐回半透明
+        EventDispatcher.instance.TriggerAwardClaimed();
+
         if (SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen))
         {
             StartCoroutine(ShowRewardAnim());
@@ -207,7 +236,9 @@ public class AwardScreen : UIWindow
     IEnumerator ShowRewardAnim()
     {
         bool isneedFly = true;
-        //var items = new List<AnalyticMgr.Item>();
+        int pendingFlyCount = 0;
+        int completedFlyCount = 0;
+
         if (Game.self.Shop.CurrentShopDataItem != null)
         {
             int rewardid = 0;
@@ -217,7 +248,6 @@ public class AwardScreen : UIWindow
                 GameObject endposObj = CustomFlyInManager.Instance.ShopGoldObj;
                 int count = int.Parse(dataitem[1]);
                 int type = int.Parse(dataitem[0]);
-                //items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
@@ -232,6 +262,9 @@ public class AwardScreen : UIWindow
                     case (int)LimitRewordType.AutoComplete: //提示灯道具，单个字符提示
                         endposObj = CustomFlyInManager.Instance.ShopAutoObj;
                         break;
+                    case (int)LimitRewordType.ReStartTool:
+                        endposObj = CustomFlyInManager.Instance.ShopRestartObj;
+                        break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.RemoveDayAds:
                         isneedFly = false;
@@ -240,11 +273,12 @@ public class AwardScreen : UIWindow
 
                 if (isneedFly)
                 {
+                    pendingFlyCount++;
                     CustomFlyInManager.Instance.FlyAwardIn(icon.gameObject.transform.position, endposObj, icon.gameObject,
                         () =>
                         {
                             AudioManager.Instance.PlaySoundEffect("BtnUnlock");
-                            EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+                            completedFlyCount++;
                         });
                 }
 
@@ -253,6 +287,15 @@ public class AwardScreen : UIWindow
                 yield return new WaitForSeconds(0.1f);
             }
         }
+
+        // ★ 等所有飞入动画完成后，再刷新资源数值
+        while (completedFlyCount < pendingFlyCount)
+            yield return null;
+
+        EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+
+        // 短暂延迟让数值更新可见，再关闭面板
+        yield return new WaitForSeconds(0.15f);
 
         Close();
     }
@@ -273,6 +316,12 @@ public class AwardScreen : UIWindow
         if (AdsTable != null && AdsTable.gameObject.activeSelf)
             AdsTable.gameObject.SetActive(false);
 
+        // ★ 清空临时奖励，避免影响下一次商店场景
+        OverrideRewards = null;
+
         base.OnDisable();
+
+        // ★ 界面隐藏时：资源栏背景渐隐回 120（半透明）
+        EventDispatcher.instance.TriggerAwardScreenClosed();
     }
 }

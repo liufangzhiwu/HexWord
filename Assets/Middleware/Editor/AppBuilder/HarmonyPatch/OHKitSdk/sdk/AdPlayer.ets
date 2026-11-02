@@ -151,11 +151,19 @@ export struct BannerAd {
     // 设置广告内容分级上限: W: 3+,所有受众 PI: 7+,家长指导 J:12+,青少年 A: 16+/18+，成人受众
     adContentClassification: 'A'
   };
-  @State showBannerAd: Visibility = Visibility.None;
+  /**
+   * 横幅是否展示：由 SDKManager.LoadBanner / HideBanner 通过 AppStorage 控制。
+   * 横幅是【页面内组件】（挂在 entry/pages/Index.ets 的根 Stack 上），
+   * 不再是弹窗——AutoAdComponent 放在 CustomDialog(ComponentContent) 里
+   * 真机会请求失败（21800003 / registerFailCallback error）。
+   */
+  @StorageLink('BannerShowing') private bannerShowing: boolean = false;
 
-  updateBanner(propName: string): void {
-    hilog.info(0x0000, 'SDKKit', '%{public}s', 'adupdate success');
-    hilog.info(0x0000, 'SDKKit', '%{public}s', JSON.stringify(this.adParam));
+  aboutToAppear(): void {
+    this.applyBannerSize();
+  }
+
+  private applyBannerSize(): void {
     if (this.adParam?.adWidth && typeof (this.adParam?.adWidth) === 'number' && this.adParam?.adWidth > 0) {
       this.adWidth = this.adParam?.adWidth;
     }
@@ -165,12 +173,17 @@ export struct BannerAd {
     if (this.adWidth > 0 && this.adHeight > 0) {
       this.ratio = this.adWidth / this.adHeight;
     }
-    this.showBannerAd = Visibility.Visible;
+  }
+
+  updateBanner(propName: string): void {
+    hilog.info(0x0000, 'SDKKit', '%{public}s', 'adupdate success');
+    hilog.info(0x0000, 'SDKKit', '%{public}s', JSON.stringify(this.adParam));
+    this.applyBannerSize();
   }
 
   build() {
     Column() {
-      if (this.showBannerAd == Visibility.Visible) {
+      if (this.bannerShowing && this.adParam?.adId) {
         // AutoAdComponent组件用于展示轮播非全屏广告
         AutoAdComponent({
           adParam: this.adParam,
@@ -188,14 +201,15 @@ export struct BannerAd {
                   break;
                 case AdStatus.AD_CLOSED:
                   hilog.info(0x0000, 'SDKKit', '%{public}s', 'Status is onAdClose');
-                  AdPlayerPromptActionClass.closeDialog()
+                  // 横幅被关闭：只复位展示标记（组件随之隐藏），不再操作任何对话框
+                  AppStorage.setOrCreate('BannerShowing', false);
                   break;
                 case AdStatus.AD_LOAD:
                   hilog.info(0x0000, 'SDKKit', '%{public}s', 'Status is onAdLoad');
                   break;
                 case AdStatus.AD_FAIL:
-                  hilog.error(0x0000, 'SDKKit', '%{public}s', 'Status is onAdFail');
-                  AdPlayerPromptActionClass.closeDialog()
+                  hilog.error(0x0000, 'SDKKit', '%{public}s', `Status is onAdFail, data=${adData}`);
+                  AppStorage.setOrCreate('BannerShowing', false);
                   break;
               }
               // 定义一个eventId为1的事件，事件优先级为Low
@@ -215,7 +229,7 @@ export struct BannerAd {
           }
         }).width('100%').aspectRatio(this.ratio)
       }
-    }.visibility(this.showBannerAd)
+    }.width('100%')
   }
 }
 
@@ -485,6 +499,7 @@ export class AdPlayerPromptActionClass {
         })
     }
   }
+
 
   static updateDialog(options: Object) {
     if (AdPlayerPromptActionClass.contentNode !== null) {

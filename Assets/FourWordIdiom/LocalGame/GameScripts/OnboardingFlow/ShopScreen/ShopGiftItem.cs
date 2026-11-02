@@ -790,6 +790,29 @@ public class ShopGiftItem : ShopItemBase
         // ★ 去广告礼包购买完成后，刷新商店内所有包含去广告的礼包（其他礼包里的「去掉广告」项应一并隐藏）
         if (ContainsRemoveAdsContent())
             RefreshAllRemoveAdsGiftPacksInShop();
+
+        // ★ 迎新礼包购买后立即隐藏，并重排固定商店
+        TryHideSelfIfNewcomerPurchased();
+    }
+
+    /// <summary>
+    /// ★ 迎新礼包购买后隐藏自己，并刷新固定商店排版。
+    /// 仅在迎新礼包（NewcomerBox）自身的购买成功回调中调用（限购 1 次，买后即隐藏）。
+    /// </summary>
+    private void TryHideSelfIfNewcomerPurchased()
+    {
+        if (shopDataItem == null || ShopManager.shopManager == null) return;
+        if (shopDataItem.produceNameId != ShopManager.ProductNewcomerBox) return;
+
+        LogShopItem($"迎新礼包购买成功，隐藏: {shopDataItem.produceNameId}");
+
+        gameObject.SetActive(false);
+
+        if (SystemManager.Instance != null && SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen))
+        {
+            ShopScreen shopScreen = SystemManager.Instance.GetPanel(PanelType.ShopScreen) as ShopScreen;
+            if (shopScreen != null) shopScreen.RefreshFixedStore();
+        }
     }
 
     /// <summary>

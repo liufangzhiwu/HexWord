@@ -25,6 +25,27 @@ namespace Middleware
         private const string TIP_TOOL_REWARD_AD_ID = "e5dojfoi6c";
         private const string INTERSTITIAL_AD_ID = "i0tgl4g0bw";
 
+        /// <summary>
+        /// 横幅广告位：AGP 后台申请的鸿蒙正式横幅位 n56633mwpp。
+        /// 统一取 Define.ConfigHarmony.TestBannerAdId，避免两处各写一份对不上。
+        /// </summary>
+        private const string BANNER_AD_ID = Define.ConfigHarmony.TestBannerAdId;
+
+        /// <summary>横幅期望尺寸（vp）：鸿蒙横幅要求宽高必填，360x57 是华为推荐比例</summary>
+        private const int BANNER_WIDTH_VP = 360;
+        private const int BANNER_HEIGHT_VP = 57;
+
+        /// <summary>横幅轮播间隔（ms），取值范围 [30000, 120000]</summary>
+        private const int BANNER_REFRESH_TIME = 30000;
+
+        /// <summary>
+        /// 鸿蒙 AdsKit 的横幅广告类型值（advertising.AdRequestParams.adType）：
+        /// 1=开屏、3=原生、7=激励、8=横幅、12=插屏、60=贴片。
+        /// 注意不能用 C# 内部 AdType.Banner（=3），那是项目自定义枚举，
+        /// 传给 ArkTS 会被鸿蒙 SDK 当成"原生广告"导致横幅拉不出来。
+        /// </summary>
+        private const int HARMONY_AD_TYPE_BANNER = 8;
+
         // ================== 基础字段 ==================
         public bool isLoadReady;
         public bool IsPlaying { get; set; }
@@ -74,9 +95,65 @@ namespace Middleware
         private bool _adVideoStartReceived;
         private bool _adShowTimeoutTriggered;
 
+        // ================== Banner 状态 ==================
+        /// <summary>参数里带过的 OAID，授权状态变化后用它判断要不要重新同步</summary>
+        private string _bannerPreparedOaid;
+        /// <summary>横幅当前是否处于展示状态（C# 侧记账，ArkTS 侧也会幂等保护）</summary>
+        private bool _bannerShowing;
+        /// <summary>因为要播全屏广告而临时关掉的横幅，全屏广告结束后要恢复</summary>
+        private bool _bannerHiddenByFullScreenAd;
+        /// <summary>闸门关闭期间被挡下的横幅参数同步</summary>
+        private bool _bannerPending;
+        /// <summary>闸门关闭期间被挡下的横幅展示请求</summary>
+        private bool _bannerShowPending;
+        /// <summary>横幅拉取失败后的冷却截止时间（避免每次进关都重开一次原生对话框）</summary>
+        private DateTime _bannerRetryAt = DateTime.MinValue;
+        /// <summary>ArkTS 桥接回调（必须持有引用，否则会被 GC 回收导致回调丢失）</summary>
+        private static OpenHarmonyJSCallback _adsBridgeCallback;
+
+        // ================== 广告请求闸门 ==================
+        /// <summary>
+        /// 广告请求闸门：广告追踪授权（APP_TRACKING_CONSENT）流程结束前，禁止发起任何广告请求。
+        ///
+        /// 原因：华为 AdsKit 在 loadAd 时会自己去取 OAID，应用还没拿到授权时系统会直接弹
+        /// "广告标识符 / 跟踪"授权框。之前 Init 里 0.2s 就预加载两个激励位、加载页还同步了
+        /// Banner 参数，结果系统弹窗抢在"广告追踪引导页点继续"之前就弹了出来。
+        /// 现在统一的节奏是：引导页 → 点继续 → 系统弹窗 → 结果回来后 Game.AllowAdRequests() 放行广告。
+        /// </summary>
+        public static bool AdRequestsAllowed { get; private set; }
+
+        /// <summary>当前实例，供静态放行入口回调泵起被挡住的请求</summary>
+        private static Ads_harmony _current;
+
+        /// <summary>放行广告请求（由 AdTrackingManager 在广告追踪引导流程结束时调用）</summary>
+        public static void AllowAdRequests()
+        {
+            if (AdRequestsAllowed) return;
+
+            AdRequestsAllowed = true;
+            Debug.Log("[AD] 广告追踪流程已结束，放行广告请求");
+            _current?.PumpAfterTrackingGate();
+        }
+
+        /// <summary>闸门打开后，把之前挡下的横幅与预加载补起来</summary>
+        private void PumpAfterTrackingGate()
+        {
+            // 只补"玩家/玩法已经要求展示"的横幅；没要求展示就不要自己弹出来
+            if (_bannerShowPending)
+            {
+                _bannerShowPending = false;
+                ShowBanner();
+            }
+
+            foreach (var kv in _preloadInfos) kv.Value.wantPreload = true;
+            PumpPreload();
+        }
+
+
         // ================== 生命周期 ==================
         public void Init(float delay)
         {
+            _current = this;
             CreateAdsObj();
 
             UnityTimer.Delay(delay, () =>
@@ -86,7 +163,9 @@ namespace Middleware
                 SignalHandler.Instance.RegisterSignalDelegate<AdsStatusSignal>(OnAdsStatusTrigger);
                 _uniqueId = Game.self.GetOAID();
 
-                Debug.Log("[AD] SDK 初始化完成，两个激励位都发起预加载");
+                // 注意：这里只是"登记预加载"，真正发请求要等 AdRequestsAllowed 打开，
+                // 否则 AdsKit 会在加载页就去取 OAID，把系统授权弹窗抢在引导页之前弹出来。
+                Debug.Log($"[AD] SDK 初始化完成，两个激励位登记预加载（闸门={(AdRequestsAllowed ? "开" : "关")}）");
                 TryPreload(REWARD_AD_ID, AdType.Reward);
                 TryPreload(TIP_TOOL_REWARD_AD_ID, AdType.Reward);
             });
@@ -96,20 +175,24 @@ namespace Middleware
 
         public void DestoryAdsObj()
         {
-            Object.Destroy(SignalHandlerObj);
-            Object.Destroy(SignalReceiveObj);
+            // SignalHandler / AdsStatusSignalHandle 是 SDKKit 的进程级单例（登录流程先建好），
+            // 销毁会连带干掉登录、支付等模块的回调通道，这里只断开引用。
+            SignalHandlerObj = null;
+            SignalReceiveObj = null;
         }
 
         public void CreateAdsObj()
         {
-            if (SignalHandlerObj != null) return;
-            if (SignalReceiveObj != null) return;
+            // SignalHandler 是单例：Awake 里发现已有实例会直接抛
+            // "Already has a SignalHandler instance!!"。
+            // Account_harmony 登录时已通过 SignalHandler.Instance 建好它（并顺带建了
+            // AdsStatusSignalHandle），所以这里只能复用，不能再 new 一个挂上去。
+            if (SignalHandlerObj == null) SignalHandlerObj = SignalHandler.Instance;
 
-            SignalHandlerObj = new GameObject("SignalHandler").AddComponent<SignalHandler>();
-            SignalReceiveObj = new GameObject("SignalReceive").AddComponent<AdsStatusSignalHandle>();
-            Object.DontDestroyOnLoad(SignalHandlerObj);
-            Object.DontDestroyOnLoad(SignalReceiveObj);
+            if (SignalReceiveObj == null)
+                SignalReceiveObj = Object.FindObjectOfType<AdsStatusSignalHandle>();
         }
+
 
         #region 预加载池管理
 
@@ -136,11 +219,23 @@ namespace Middleware
             Debug.Log("[AD] 进入游戏场景，检查补池");
             TryPreload(REWARD_AD_ID, AdType.Reward);
             TryPreload(TIP_TOOL_REWARD_AD_ID, AdType.Reward);
+
+            // 注意：不要在这里调 LoadBannerAD()。
+            // 鸿蒙侧 LoadBanner 现在会直接拉起横幅弹窗（加载即展示），
+            // 进场景就调会让横幅在每个场景切换时自己弹出来；展示时机交给玩法（ShowBanner）。
         }
 
         private void TryPreload(string adId, AdType adType)
         {
             var info = GetOrCreateInfo(adId, adType);
+
+            // 广告追踪授权流程没走完之前不发任何广告请求（见 AdRequestsAllowed 注释）
+            if (!AdRequestsAllowed)
+            {
+                info.wantPreload = true;
+                Debug.Log($"[AD] 等待广告追踪授权，暂缓预加载：{adId}");
+                return;
+            }
 
             if (IsPlaying)
             {
@@ -173,6 +268,12 @@ namespace Middleware
 
         private void PumpPreload()
         {
+            if (!AdRequestsAllowed)
+            {
+                Debug.Log("[AD] Pump 跳过：等待广告追踪授权");
+                return;
+            }
+
             if (IsPlaying)
             {
                 Debug.Log("[AD] Pump 跳过：播放中");
@@ -442,6 +543,15 @@ namespace Middleware
         {
             CreateAdsObj();
 
+            // 闸门关着（广告追踪授权还没走完）时直接回调失败，避免转圈卡死
+            if (!AdRequestsAllowed)
+            {
+                Debug.LogWarning("[AD] 广告追踪授权未完成，激励视频暂不可用");
+                MessageSystem.Instance?.ShowTip("广告资源准备中，请稍后再试");
+                callback?.Invoke(false);
+                return;
+            }
+
             Debug.Log($"[AD] 点击视频点：{adId}");
 
             _currentAdKey = key;
@@ -508,6 +618,13 @@ namespace Middleware
             
             CreateAdsObj();
 
+            if (!AdRequestsAllowed)
+            {
+                Debug.LogWarning("[AD] 广告追踪授权未完成，插屏暂不可用");
+                callback?.Invoke(false);
+                return;
+            }
+
             _completeCallback = callback;
             _adType = AdType.Interstitial;
             _isNeedShow_Field = true;
@@ -546,10 +663,151 @@ namespace Middleware
             PumpPreload();
         }
 
-        public void LoadBannerAD() { }
-        private AdRequestParams BanneradRequestParams;
-        public void ShowBanner() { }
-        public void HideBanner() { }
+        /// <summary>
+        /// 鸿蒙横幅：ArkTS 侧 SDKManager.LoadBanner 现在会「取 OAID → 拉起横幅弹窗 → 请求广告」，
+        /// 也就是调用 LoadBannerAD 就等于展示横幅（不再有独立的 ShowBanner 桥接）。
+        /// </summary>
+        public void LoadBannerAD()
+        {
+            CreateAdsObj();
+
+            // 授权流程没走完之前不请求广告：AdsKit 取 OAID 时未授权会触发系统跟踪授权框，
+            // 会把弹窗抢在"广告追踪引导页点继续"之前弹出来。
+            if (!AdRequestsAllowed)
+            {
+                _bannerPending = true;
+                Debug.Log("[AD][Banner] 等待广告追踪授权，暂缓横幅");
+                return;
+            }
+
+            // 授权通过后 OAID 才会写进 oaid.txt，这里每次都取最新的，
+            // 保证"先拒绝 → 后来在设置里开启"之后横幅能带上 OAID 出价
+            string latestOaid = Game.self != null ? Game.self.GetOAID() : null;
+            if (!string.IsNullOrEmpty(latestOaid)) _uniqueId = latestOaid;
+           
+            var adRequestParams = new AdRequestParams()
+            {
+                // 必须传鸿蒙原生横幅类型 8（不是 C# 内部 AdType.Banner=3）
+                adType = HARMONY_AD_TYPE_BANNER,
+                adId = BANNER_AD_ID,
+                oaid = _uniqueId ?? string.Empty,
+                adWidth = BANNER_WIDTH_VP,
+                adHeight = BANNER_HEIGHT_VP
+            };
+            var adOptions = new AdOptions();
+            var adDisplayOptions = new AdDisplayOptions() { refreshTime = BANNER_REFRESH_TIME };
+
+            Debug.Log($"[AD][Banner] 准备横幅参数 adId={BANNER_AD_ID}, " +
+                      $"oaid={(string.IsNullOrEmpty(_uniqueId) ? "<空>" : "已就绪")}, 尺寸={BANNER_WIDTH_VP}x{BANNER_HEIGHT_VP}");
+
+            // 加载即展示：ArkTS 侧 SDKManager.LoadBanner 会先取 OAID，
+            // 再 ShowAdsWindow 拉起横幅弹窗，并把参数同步给 BannerAd 组件发起请求
+            OHSDKKitManager.Instance.LoadBanner(adRequestParams, adOptions, adDisplayOptions);
+           
+            _bannerPreparedOaid = _uniqueId ?? string.Empty;
+        }
+
+        public void ShowBanner()
+        {
+            // 广告追踪流程没走完：先记账，等 Game.AllowAdRequests() 后由闸门补展示
+            if (!AdRequestsAllowed)
+            {
+                _bannerShowPending = true;
+                Debug.Log("[AD][Banner] 等待广告追踪授权，暂缓展示横幅");
+                return;
+            }
+
+            if (_bannerShowing) return;
+
+            // 拉取失败后的冷却：横幅失败会由 ArkTS 侧自动关掉对话框，
+            // 这里不挡住的话每进一关都会重开一次原生对话框（真机上就是反复 open/close + 报错）
+            if (DateTime.Now < _bannerRetryAt)
+            {
+                Debug.Log($"[AD][Banner] 失败冷却中，跳过展示（剩余 {(int)(_bannerRetryAt - DateTime.Now).TotalSeconds}s）");
+                return;
+            }
+
+            // 加载即展示：ArkTS 的 LoadBanner 内部会 ShowAdsWindow + 让 BannerAd 发起请求
+            LoadBannerAD();
+
+            _bannerShowing = true;
+            _bannerShowPending = false;
+            _bannerPending = false;
+            Debug.Log($"[AD][Banner] 展示横幅：{BANNER_AD_ID}");
+        }
+
+        public void HideBanner()
+        {
+            _bannerShowPending = false;
+
+            if (!_bannerShowing)
+            {
+                // 没有展示就不必关，避免对未打开的对话框调 close（ArkTS 侧会报错日志）
+                return;
+            }
+
+            _bannerShowing = false;
+            CallAdsBridge("HideBannerOnUI");
+            Debug.Log("[AD][Banner] 关闭横幅");
+        }
+
+        /// <summary>
+        /// 调 ArkTS 侧桥接方法（HideBannerOnUI）。
+        /// 该方法由 AppBuilder_HARMONY.PatchOHKitAdsManager 在导出时注入 OHKitAdsManager.ets，
+        /// 若没重新导出工程，真机会打"没有该方法"的警告。
+        /// </summary>
+        private static void CallAdsBridge(string method)
+        {
+            try
+            {
+                OpenHarmonyJSObject adsObj = OHSDKKitManager.OHKitAdsManagerObj;
+                if (adsObj == null)
+                {
+                    var _ = OHSDKKitManager.Instance;   // 触发一次初始化拿实例
+                    adsObj = OHSDKKitManager.OHKitAdsManagerObj;
+                }
+
+                if (adsObj == null)
+                {
+                    Debug.LogWarning($"[AD][Banner] OHKitAdsManager 未就绪，跳过 {method}");
+                    return;
+                }
+
+                if (_adsBridgeCallback == null)
+                    _adsBridgeCallback = new OpenHarmonyJSCallback(OnAdsBridgeCallback);
+
+                adsObj.Call(method, _adsBridgeCallback);
+                Debug.Log($"[AD][Banner] 已调用 ArkTS 桥接：{method}");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[AD][Banner] 调用 {method} 失败：{e.Message}" +
+                                 "（ArkTS 侧桥接方法未注入？需要重新导出鸿蒙工程）");
+            }
+        }
+
+        private static object OnAdsBridgeCallback(params OpenHarmonyJSObject[] args)
+        {
+            return true;
+        }
+    
+        /// <summary>播全屏广告前先收起横幅（横幅是原生浮层，会盖在全屏广告上面）</summary>
+        private void HideBannerForFullScreenAd()
+        {
+            if (!_bannerShowing) return;
+
+            _bannerHiddenByFullScreenAd = true;
+            HideBanner();
+        }
+
+        /// <summary>全屏广告结束后恢复之前被收起的横幅</summary>
+        private void RestoreBannerAfterFullScreenAd()
+        {
+            if (!_bannerHiddenByFullScreenAd) return;
+
+            _bannerHiddenByFullScreenAd = false;
+            ShowBanner();
+        }
 
         #endregion
 
@@ -566,6 +824,9 @@ namespace Middleware
             _adOpenReceived = false;
             _adVideoStartReceived = false;
             _adShowTimeoutTriggered = false;
+
+            // 横幅是原生浮层，会盖在全屏广告上方：播全屏广告前先收起，结束后恢复
+            HideBannerForFullScreenAd();
 
             var adDisplayOptions = new AdDisplayOptions();
 
@@ -621,6 +882,9 @@ namespace Middleware
 
             _currentSlot = null;
 
+            // 全屏广告结束，恢复之前被收起的横幅
+            RestoreBannerAfterFullScreenAd();
+
             if (endedType == AdType.Reward)
             {
                 UnityTimer.Delay(0.5f, () =>
@@ -648,6 +912,15 @@ namespace Middleware
         {
             bool hasError = signal.hasError();
             string msg = signal.message;
+
+            // 横幅参数同步的回执：ArkTS LoadBanner 返回的是 {"code":0,"message":"load Banner advertising success"}，
+            // 会以 AdsLoadSignal 的形式回到这里。它不是真正的广告加载结果，
+            // 不挡掉会被当成"加载失败"，进而误回调正在播放的全屏广告（CallbackAd(false)）。
+            if (!string.IsNullOrEmpty(msg) && msg.Contains("Banner advertising success"))
+            {
+                Debug.Log("[AD][Banner] 收到横幅参数同步回执，忽略");
+                return;
+            }
 
             if (!hasError)
             {
@@ -730,14 +1003,43 @@ namespace Middleware
                 string statusLower = currentStatus.ToLower();
                 Debug.LogError($"[AD] 收到鸿蒙底层状态: status={currentStatus}");
 
+                bool isOpen = statusLower.Contains("open");
+                bool isClose = statusLower.Contains("close");
+                bool isFail = statusLower.Contains("fail");
+                bool isReward = statusLower.Contains("reward") || statusLower.Contains("videoplayend");
+                bool isVideoStart = statusLower.Contains("videoplaybegin") || statusLower.Contains("videostart");
+
+                // 横幅等"非全屏"广告也会走同一个状态通道（onAdOpen / onAdClose / onAdFail）。
+                // 没有全屏广告在播时，这些状态只同步横幅记账，不参与全屏广告的回调/发奖逻辑，
+                // 否则横幅关闭会被误判成激励视频关闭，导致错误发奖或错误回调。
+                if (!IsPlaying && !_isNeedShow_Field)
+                {
+                    if (isClose || isFail)
+                    {
+                        // 横幅自己关掉了（用户点关闭 / 拉取失败）：C# 侧记账同步复位，
+                        // 否则后续 ShowBanner 会一直以为"已经在展示"而不再拉起
+                        _bannerShowing = false;
+
+                        if (isFail)
+                        {
+                            // 无填充/参数不匹配时不要每关重试，冷却 3s 再试
+                            _bannerRetryAt = DateTime.Now.AddSeconds(3);
+                            Debug.LogWarning($"[AD][Banner] 横幅拉取失败，3s 内不再尝试（{currentStatus}）");
+                        }
+                        else
+                        {
+                            Debug.Log("[AD][Banner] 横幅已关闭（底层状态同步）");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log($"[AD] 忽略非全屏广告状态（横幅）: {currentStatus}");
+                    }
+                    return;
+                }
+
                 if (!signal.hasError())
                 {
-                    bool isOpen = statusLower.Contains("open");
-                    bool isClose = statusLower.Contains("close");
-                    bool isFail = statusLower.Contains("fail");
-                    bool isReward = statusLower.Contains("reward") || statusLower.Contains("videoplayend");
-                    bool isVideoStart = statusLower.Contains("videoplaybegin") || statusLower.Contains("videostart");
-
                     if (isOpen)
                     {
                         _adOpenReceived = true;

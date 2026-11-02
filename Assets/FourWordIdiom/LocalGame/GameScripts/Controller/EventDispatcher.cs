@@ -49,6 +49,8 @@ public class EventDispatcher:MonoBehaviour
     // 在 EventDispatcher.cs 中添加： 改变体力和蝶蛹
     private Action<bool> _onHighlightHeaderUI;
     private Action<bool> _onHighlightGoldAndEnergy;
+    private Action _onAwardClaimed;
+    private Action _onAwardScreenClosed;
     #endregion
 
     private void Awake()
@@ -202,7 +204,21 @@ public class EventDispatcher:MonoBehaviour
         add => _onHighlightGoldAndEnergy += value;
         remove => _onHighlightGoldAndEnergy -= value;
     }
-    
+
+    /// <summary>奖励面板（AwardScreen）领取事件：触发后资源栏背景立即变实色</summary>
+    public event Action OnAwardClaimed
+    {
+        add => _onAwardClaimed += value;
+        remove => _onAwardClaimed -= value;
+    }
+
+    /// <summary>奖励面板（AwardScreen）关闭/隐藏事件：触发后资源栏背景渐隐回半透明</summary>
+    public event Action OnAwardScreenClosed
+    {
+        add => _onAwardScreenClosed += value;
+        remove => _onAwardScreenClosed -= value;
+    }
+
     #endregion
 
     #region 事件触发方法
@@ -273,6 +289,12 @@ public class EventDispatcher:MonoBehaviour
         => _onHighlightHeaderUI?.Invoke(isHighlight);
     public void TriggerHighlightGoldAndEnergy(bool isHighlight)
         =>_onHighlightGoldAndEnergy?.Invoke(isHighlight);
+
+    public void TriggerAwardClaimed()
+        => _onAwardClaimed?.Invoke();
+
+    public void TriggerAwardScreenClosed()
+        => _onAwardScreenClosed?.Invoke();
 
     
     #endregion

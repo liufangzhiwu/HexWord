@@ -109,6 +109,11 @@ public class ShopScreen : UIWindow
         InitUI();
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
 
+        // ★ 资源栏背景渐变：订阅奖励面板领取/关闭事件 + 复位默认透明度 120
+        EventDispatcher.instance.OnAwardClaimed += OnAwardClaimed;
+        EventDispatcher.instance.OnAwardScreenClosed += OnAwardScreenClosed;
+        SetResourceBarBackgroundAlpha(ResourceBarBgDefaultAlpha, 0f);
+
         HeaderText.text = MultilingualManager.Instance.GetString("Shop");
         ShopManager.shopManager.paysuccess = false;
 
@@ -153,6 +158,8 @@ public class ShopScreen : UIWindow
     protected override void OnDisable()
     {
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
+        EventDispatcher.instance.OnAwardClaimed -= OnAwardClaimed;
+        EventDispatcher.instance.OnAwardScreenClosed -= OnAwardScreenClosed;
 
         ShowBanner();
 
@@ -266,6 +273,121 @@ public class ShopScreen : UIWindow
         GoldText.text = targetValue.ToString();
     }
 
+    // ======================= ★ 资源栏背景渐变 =======================
+
+    /// <summary>
+    /// 资源栏（顶部 金币/提示灯/火箭/蝴蝶/复活道具）每个条目的背景 Image。
+    /// 默认透明度 120/255；AwardScreen 显示时渐显到 255，关闭时渐隐回 120。
+    /// 背景取各图标父节点（Coins/TipTool/AutoTool/Butterfly/ReStore）上的 Image。
+    /// </summary>
+    private readonly List<Image> _resourceBarBackgrounds = new List<Image>();
+    private Coroutine _bgFadeCoroutine;
+
+    private const float ResourceBarBgDefaultAlpha = 120f / 255f; // 默认 120
+    private const float ResourceBarBgShownAlpha  = 255f / 255f; // 显示奖励面板时 255（完全不透明）
+    private const float ResourceBarBgFadeDuration = 0.3f;
+    private const int   ResourceBarBgDefaultSortingOrder = 52; // 默认层级
+    private const int   ResourceBarBgShownSortingOrder   = 70; // 领取时层级（置顶）
+
+    private Canvas _resourceBarContainerCanvas; // resourses 父对象的 Canvas
+
+    /// <summary>缓存资源栏 5 个条目的背景 Image + resourses 父对象 Canvas。</summary>
+    private void CacheResourceBarBackgrounds()
+    {
+        _resourceBarBackgrounds.Clear();
+        var icons = new[] { CoinIcon, TipIcon, AutoIcon, ButteryIcon, RestartIcon };
+
+        // 移除各资源条目上残留的层级 Canvas 组件（如果之前有加过）
+        foreach (var icon in icons)
+        {
+            if (icon == null) continue;
+            var itemCanvas = icon.transform.parent.GetComponent<Canvas>();
+            if (itemCanvas != null) Destroy(itemCanvas);
+        }
+
+        foreach (var icon in icons)
+        {
+            if (icon == null) continue;
+            var bg = icon.transform.parent.GetComponent<Image>();
+            if (bg != null) _resourceBarBackgrounds.Add(bg);
+        }
+
+        // 获取 resourses 父对象（图标父节点的父节点）的 Canvas
+        if (CoinIcon != null)
+        {
+            var resoursesParent = CoinIcon.transform.parent.parent;
+            _resourceBarContainerCanvas = resoursesParent.GetComponent<Canvas>();
+            if (_resourceBarContainerCanvas == null)
+                _resourceBarContainerCanvas = resoursesParent.gameObject.AddComponent<Canvas>();
+            _resourceBarContainerCanvas.overrideSorting = true;
+            _resourceBarContainerCanvas.sortingOrder = ResourceBarBgDefaultSortingOrder;
+        }
+    }
+
+    /// <summary>设置资源栏背景透明度（0~1）。duration&lt;=0 时立即设置。</summary>
+    public void SetResourceBarBackgroundAlpha(float targetAlpha, float duration = ResourceBarBgFadeDuration)
+    {
+        if (_resourceBarBackgrounds.Count == 0) CacheResourceBarBackgrounds();
+        if (_resourceBarBackgrounds.Count == 0) return;
+
+        if (_bgFadeCoroutine != null) StopCoroutine(_bgFadeCoroutine);
+        _bgFadeCoroutine = StartCoroutine(FadeResourceBarBackgroundCoroutine(targetAlpha, duration));
+    }
+
+    private IEnumerator FadeResourceBarBackgroundCoroutine(float targetAlpha, float duration)
+    {
+        float startAlpha = _resourceBarBackgrounds[0].color.a;
+        if (duration <= 0f)
+        {
+            ApplyResourceBarBgAlpha(targetAlpha);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float eased = t * t * (3f - 2f * t); // smoothstep 缓动
+            ApplyResourceBarBgAlpha(Mathf.Lerp(startAlpha, targetAlpha, eased));
+            yield return null;
+        }
+        ApplyResourceBarBgAlpha(targetAlpha);
+    }
+
+    private void ApplyResourceBarBgAlpha(float a)
+    {
+        foreach (var bg in _resourceBarBackgrounds)
+        {
+            if (bg == null) continue;
+            var c = bg.color;
+            c.a = a;
+            bg.color = c;
+        }
+    }
+
+    /// <summary>设置 resourses 父对象 Canvas 层级（sortingOrder）。</summary>
+    private void SetResourceBarBgSortingOrder(int sortingOrder)
+    {
+        if (_resourceBarContainerCanvas == null) return;
+        _resourceBarContainerCanvas.overrideSorting = true;
+        _resourceBarContainerCanvas.sortingOrder = sortingOrder;
+    }
+
+    /// <summary>AwardScreen 领取回调：资源栏背景立即变实色（255）+ 层级改为 70（置顶）。</summary>
+    private void OnAwardClaimed()
+    {
+        SetResourceBarBackgroundAlpha(ResourceBarBgShownAlpha, 0f);
+        SetResourceBarBgSortingOrder(ResourceBarBgShownSortingOrder);
+    }
+
+    /// <summary>AwardScreen 关闭回调：资源栏背景渐隐回半透明（120）+ 层级改回 52。</summary>
+    private void OnAwardScreenClosed()
+    {
+        SetResourceBarBackgroundAlpha(ResourceBarBgDefaultAlpha, ResourceBarBgFadeDuration);
+        SetResourceBarBgSortingOrder(ResourceBarBgDefaultSortingOrder);
+    }
+
     // ======================= 固定商店：商品创建 =======================
 
     private void CrateShopItem(List<ShopDataItem> shopDataItems)
@@ -339,15 +461,23 @@ public class ShopScreen : UIWindow
         // 1. 固定商店收起状态商品（内部处理一号位兜底）
         List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetFixedStoreExpandedItems();
 
-        // 2. 按顺序填充一号位
+        // 2. 按列表顺序填充一号位（siblingIndex = i，保证列表第 0 个显示在最前，如迎新礼包）
         for (int i = 0; i < collapsedItems.Count; i++)
         {
             ShopDataItem data = collapsedItems[i];
             if (data == null) continue;
-            CreateDynamicItem(data, parent, 0);
+            CreateDynamicItem(data, parent, i);
         }
 
         CrateShopItem(shopallDataItems);
+    }
+
+    /// <summary>刷新固定商店：购买后重新排版（已购买的迎新礼包不再展示）。</summary>
+    public void RefreshFixedStore()
+    {
+        if (ShopManager.shopManager == null) return;
+        if (ShopManager.shopManager.shopMode != ShopMode.FixedStore) return;
+        ShowFixedStore();
     }
 
     // ======================= 动态商店：收起 / 展开 =======================

@@ -3,7 +3,7 @@ import { BusinessError, emitter } from '@kit.BasicServicesKit';
 import {  identifier } from '@kit.AdsKit';
 import fs from '@ohos.file.fs';
 import { JSON } from '@kit.ArkTS';
-import { abilityAccessCtrl, common } from '@kit.AbilityKit';
+import { abilityAccessCtrl, common, Permissions, PermissionRequestResult } from '@kit.AbilityKit';
 import { dataShare } from '@kit.ArkData';
 import { Tuanjie } from './TuanjieNative';
 import { hilog } from '@kit.PerformanceAnalysisKit';
@@ -20,33 +20,92 @@ export class SendOAID {
   static  privacyConsentGranted: boolean = false;
 
 
+  static readonly PERMISSION_TRACKING: Permissions = 'ohos.permission.APP_TRACKING_CONSENT';
+
+  // ---------- 授权结果回传统一入口 ----------
+  // 允许/拒绝/异常都从这里回 '1'/'0'：埋点（Pop_accept/Pop_refuse）与关引导页都靠这次回包。
+  private static reportResult(granted: boolean, status: string): void {
+    SendOAID.permissionGranted = granted;
+    SendOAID.permissionStatus = status;
+    if (!granted) {
+      SendOAID.oaid = '00000000-0000-0000-0000-000000000000';
+    }
+    hilog.info(0x0000, 'OAIDPage', `权限结果回传: granted=${granted}, status=${status}`);
+    Tuanjie.TuanjieSendMessage(
+      'PushMessageReceiver',
+      'OnOAIDClosedSignal',
+      granted ? '1' : '0'
+    );
+  }
+
+  // 授权通过后的收尾：先回包（埋点/关页以权限结果为准），再后台取 OAID 与归因。
+  private static onGranted(ctx: common.Context): void {
+    SendOAID.reportResult(true, '权限已授予');
+    // 注意：授权结果已按权限结果回传（OnOAIDClosedSignal），
+    // OAID 只影响广告出价，不代表授权意向，不再重复回传。
+    SendOAID.getOAID();
+    SendOAID.fetchAndSaveAttribution(ctx);
+  }
+
   static async RequestOAID() {
 
     hilog.info(0x0000, 'OAIDPage', `正在请求权限...`);
 
     const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
+    // SDKManager 的方法由消息机制派发，未必在 UI 线程；globalThis.AbilityContext 优先，getContext() 兜底
+    const ctx = (globalThis.AbilityContext ?? getContext()) as common.Context;
+    const permissions: Array<Permissions> = [SendOAID.PERMISSION_TRACKING];
+
+    // ① 首选：标准系统授权弹窗（首次申请时由系统弹出）
+    let result: PermissionRequestResult | null = null;
     try {
-      const result = await atManager.requestPermissionsFromUser(
-        getContext(),
-        ["ohos.permission.APP_TRACKING_CONSENT"]
-      );
-      if (result.authResults[0] === 0) {
-        SendOAID.permissionGranted = true;
-        hilog.info(0x0000, 'OAIDPage', `权限已授予`);
-        SendOAID.permissionStatus = '权限已授予';
-        SendOAID.getOAID();
-
-        SendOAID.fetchAndSaveAttribution(getContext());
-
-      } else {
-        SendOAID.permissionStatus = '权限被拒绝';
-        SendOAID.permissionGranted = false;
-        SendOAID.oaid = '00000000-0000-0000-0000-000000000000';
-      }
+      result = await atManager.requestPermissionsFromUser(ctx, permissions);
     } catch (err) {
-      SendOAID.permissionStatus = `权限请求失败: ${(err as BusinessError).code}`;
-      SendOAID.permissionGranted = false;
-      SendOAID.oaid = '00000000-0000-0000-0000-000000000000';
+      hilog.info(0x0000, 'OAIDPage',
+        `requestPermissionsFromUser error: ${(err as BusinessError).code}, ${(err as BusinessError).message}`);
+    }
+
+    if (result != null) {
+      if (result.authResults[0] === 0) {
+        SendOAID.onGranted(ctx);
+        return;
+      }
+
+      // dialogShownResults（API 12+）：本次申请系统是否有弹窗。
+      // true  = 弹窗已弹出、被用户拒绝 → 尊重本次拒绝，不再打扰（引导页随弹窗关闭）
+      // false = 系统根本没弹窗 = 此前已拒绝过/权限已固定（requestPermissionsFromUser
+      //         被拒过一次后不再弹框，静默返回 -1）→ 走 requestPermissionOnSetting 兜底
+      const dialogShown: boolean =
+        result.dialogShownResults != null &&
+        result.dialogShownResults.length > 0 &&
+        result.dialogShownResults[0] === true;
+
+      if (dialogShown) {
+        // ★ 拒绝：同样要回 '0'（Pop_refuse 埋点 + 关引导页都靠这次回包，
+        //   不回包 Unity 侧只能等超时兜底，漏斗会缺"拒绝"出口）
+        SendOAID.reportResult(false, '权限被拒绝');
+        return;
+      }
+
+      hilog.info(0x0000, 'OAIDPage',
+        `系统未弹出标准授权弹窗（此前已拒绝或请求无效），改拉权限设置弹窗`);
+    }
+
+    // ② 兜底：应用内"权限设置弹窗"（带开关，API 12+；被拒过也能拉起，官方推荐的二次授权路径）
+    try {
+      const settingResults: Array<abilityAccessCtrl.GrantStatus> =
+        await atManager.requestPermissionOnSetting(ctx, permissions);
+      if (settingResults != null && settingResults.length > 0 &&
+          settingResults[0] === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
+        SendOAID.onGranted(ctx);
+        return;
+      }
+      SendOAID.reportResult(false, '权限被拒绝');
+    } catch (err) {
+      // ★ 请求异常（系统取消 / 未完成交互 / 兜底弹窗拉起失败等）也要回 '0'，保证引导页必被关闭
+      hilog.info(0x0000, 'OAIDPage',
+        `requestPermissionOnSetting error: ${(err as BusinessError).code}, ${(err as BusinessError).message}`);
+      SendOAID.reportResult(false, `权限请求失败: ${(err as BusinessError).code}`);
     }
 
   }
@@ -61,19 +120,11 @@ export class SendOAID {
         SendOAID.sendToFile(oaid,getContext());
 
         hilog.info(0x0000, 'OAIDPage', `Get OAID: ${oaid}`);
-        Tuanjie.TuanjieSendMessage(
-          'PushMessageReceiver',
-          'OnOAIDClosedSignal',
-          '1'
-        );
+        // 注意：授权结果已在 RequestOAID 里按权限结果回传（OnOAIDClosedSignal），
+        // 这里只负责拿 OAID 落盘，不再重复回传，避免一次授权回两次包。
       } else {
         SendOAID.oaid = '无法获取有效的OAID';
         hilog.info(0x0000, 'OAIDPage', `Failed to get OAID: 无法获取有效的OAID`);
-        Tuanjie.TuanjieSendMessage(
-          'PushMessageReceiver',
-          'OnOAIDClosedSignal',
-          '0'
-        );
       }
     } catch (error) {
       const err = error as BusinessError;

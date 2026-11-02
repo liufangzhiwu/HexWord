@@ -244,7 +244,26 @@ public sealed class AdvancedBundleLoader
             Debug.LogError($"图集@ {atlasName} 不存在精灵: {spriteName} ");
         return sp;
     }
-    
+
+    /// <summary>
+    /// 从图集里取精灵，但不打错误日志（取不到返回 null）。
+    /// 给"有兜底方案"的调用点用，避免缺图时刷 Error（例如礼包图标缺 _Icon 变体时可回退主图）。
+    /// </summary>
+    public Sprite TryGetSpriteFromAtlas(string spriteName, string atlasName = "UI_Universal")
+    {
+        if (string.IsNullOrEmpty(spriteName)) return null;
+
+        if (_spriteAtlasCache.TryGetValue(atlasName, out var cached))
+        {
+            if (cached == null) return null;
+            return cached.GetSprite(spriteName);
+        }
+
+        var atlas = LoadAtlas(atlasName.ToLower(), atlasName);
+        if (atlas == null) return null;
+        return atlas.GetSprite(spriteName);
+    }
+
     /// <summary>
     /// 加载音频资源
     /// </summary>

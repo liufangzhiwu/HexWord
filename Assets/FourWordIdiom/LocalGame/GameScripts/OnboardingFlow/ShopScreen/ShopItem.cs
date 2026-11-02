@@ -243,16 +243,19 @@ public class ShopItem : ShopItemBase
             CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
 
             // ★ 商店金币视频发放统一走 OnShopGoldClaimed（单次 100 金币 + 当日次数累计 + C 阈值兜底，C-STRAT-03）
-            if (ShopManager.shopManager != null)
-                ShopManager.shopManager.OnShopGoldClaimed();
-            else
-                GameDataManager.Instance.UserData.UpdateGold(int.Parse(giftdata[1]), true, true, "看广告领取商店金币");
+         
+            GameDataManager.Instance.UserData.UpdateGold(int.Parse(giftdata[1]), true, true, "看广告领取商店金币");
+
+            if (GameDataManager.Instance.UserData.isDayFreeGet)
+            {
+                if (ShopManager.shopManager != null)
+                    ShopManager.shopManager.OnShopGoldClaimed();
+                // ★ 刷新「剩余可用次数」显示
+                RefreshAdsUseCountUI();
+            }
 
             GameDataManager.Instance.UserData.isDayFreeGet = true;
             if (btnTagicon != null) btnTagicon.gameObject.SetActive(true);
-
-            // ★ 刷新「剩余可用次数」显示
-            RefreshAdsUseCountUI();
 
             AnalyticMgr.VideoAdSuccess("看广告领取商店金币");
             GameDataManager.Instance.UserData.totalSeeAds++;

@@ -8,7 +8,8 @@ using UnityEngine;
 ///
 /// 需求对应关系：
 ///   ① 首次启动（隐私弹完之后、加载页之上）出引导页 → 点"继续"出系统权限弹窗（盖在引导页上层）
-///      → 授权结果回来后仍停在引导页 → 再点"继续"关闭引导页，继续走加载流程进游戏。
+///      → 系统弹窗关闭时，引导页同步关闭（允许/拒绝都关），继续走加载流程进游戏。
+///      （系统弹窗"关闭"与"结果回调"是同一时刻，所以这里不要求玩家二次点"继续"）
 ///   ② 拒绝授权的玩家，玩法设置里出现"广告关联"开关（S=1 时才出现），点开关 → 引导页"去开启"
 ///      → 跳系统广告追踪设置页 → 回前台校验结果。
 ///   ③ 广告追踪激励 S_G：开启后奖励 G 金币（只发一次），奖励 UI 挂在设置开关与引导页按钮上，
@@ -16,7 +17,7 @@ using UnityEngine;
 ///
 /// 平台：
 ///   iOS        → AdTrackingPermission（ATT 原生桥）
-///   鸿蒙        → Game.LoadAds_OAID（ArkTS 侧 APP_TRACKING_CONSENT），结果经 PushMessageReceiver 回到 OnPermissionResult
+///   鸿蒙        → Game.RequestTrackingConsent（ArkTS 侧 APP_TRACKING_CONSENT），结果经 PushMessageReceiver 回到 OnPermissionResult
 ///   其它/安卓   → 无该权限概念，流程整体不触发
 /// </summary>
 public class AdTrackingManager : MonoBehaviour
@@ -45,8 +46,8 @@ public class AdTrackingManager : MonoBehaviour
     /// <summary>加载流程等待引导页结束的最长时间（兜底，防止卡在加载页）</summary>
     private const float StartupFlowTimeout = 90f;
 
-    /// <summary>等待系统授权结果的最长时间（鸿蒙没有回调时的兜底）</summary>
-    private const float PermissionTimeout = 25f;
+    /// <summary>点"继续"关页后，延迟多久放行广告请求（避开系统授权框的弹出时序）</summary>
+    private const float GateReleaseDelay = 2f;
 
     /// <summary>等待主界面出现以展示激励弹窗的最长时间</summary>
     private const float RewardPopupTimeout = 15f;
@@ -61,8 +62,8 @@ public class AdTrackingManager : MonoBehaviour
 
     private bool _startupFlowFinished = true;
     private bool _startupFlowStarted;
+    private bool _waitingUserData;
     private bool _permissionRequested;
-    private bool _awaitingPermissionResult;
     private bool _waitingSettingsReturn;
     private bool _openedSystemSettings;
 
@@ -165,10 +166,11 @@ public class AdTrackingManager : MonoBehaviour
 
         _guideParent = uiParent;
 
-        // UserData 还没就绪属于时序问题，不占用"只走一次"的机会，等下次加载页激活再试
+        // UserData 还没就绪属于时序问题，不占用"只走一次"的机会，等它就绪再判断
         if (User == null)
         {
-            Debug.LogWarning("[AdTracking] UserData 还没加载，本次跳过，等下次加载页再弹");
+            Debug.LogWarning("[AdTracking] UserData 还没加载，等它就绪后再判断是否弹引导");
+            if (!_waitingUserData) StartCoroutine(BeginStartupFlowWhenReady(uiParent));
             return;
         }
 
@@ -176,9 +178,9 @@ public class AdTrackingManager : MonoBehaviour
 
         if (!ShouldRunStartupFlow(out string skipReason))
         {
-            // 系统里已有授权结果 / 已经弹过 / 隐私还没同意 → 不弹引导，但鸿蒙仍要先拉起 Banner
+            // 系统里已有授权结果 / 已经弹过 / 隐私还没同意 → 不弹引导，直接放行加载
+            //（横幅由玩法里的 ShowBanner 触发，加载页不主动拉）
             Debug.Log($"[AdTracking] 本次加载页不弹广告追踪引导：{skipReason}");
-            if (Status != AdTrackingStatus.Denied) LoadBannerIfNeeded();
             FinishStartupFlow();
             return;
         }
@@ -202,6 +204,7 @@ public class AdTrackingManager : MonoBehaviour
         {
             Debug.LogWarning("[AdTracking] 等待引导流程超时，强制放行加载");
             _startupFlowFinished = true;
+            ReleaseAdGate();
         }
     }
 
@@ -259,6 +262,29 @@ public class AdTrackingManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>UserData 晚于加载页就绪时，等它到位再走一遍启动判断（避免整局都不弹引导/广告被永久挂起）</summary>
+    private IEnumerator BeginStartupFlowWhenReady(Transform uiParent)
+    {
+        _waitingUserData = true;
+
+        float waited = 0f;
+        while (User == null && waited < 10f)
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        _waitingUserData = false;
+
+        if (User == null)
+        {
+            Debug.LogWarning("[AdTracking] 等不到 UserData，本次不弹引导（广告请求保持挂起）");
+            yield break;
+        }
+
+        BeginStartupFlow(uiParent);
+    }
+
     private IEnumerator StartupGuideRoutine()
     {
         // 先让加载页渲染出来（这一帧玩家能看到加载界面），紧接着盖上引导页
@@ -302,7 +328,25 @@ public class AdTrackingManager : MonoBehaviour
     private void FinishStartupFlow()
     {
         _startupFlowFinished = true;
+        ReleaseAdGate();
     }
+
+    /// <summary>
+    /// 授权流程一结束就放行广告请求（鸿蒙）。
+    /// 隐私还没同意时继续挂起：广告请求会触发 AdsKit 的 OAID 获取，等于绕过隐私弹窗。
+    /// </summary>
+    private static void ReleaseAdGate()
+    {
+        UserData user = User;
+        if (user != null && !user.IsAgreePrivacy)
+        {
+            Debug.Log("[AdTracking] 隐私协议未同意，广告请求继续挂起");
+            return;
+        }
+
+        if (Game.self != null) Game.self.AllowAdRequests();
+    }
+
 
     #endregion
 
@@ -356,21 +400,24 @@ public class AdTrackingManager : MonoBehaviour
     private void HandleGuidePrimary()
     {
         if (_guide == null) return;
+    
 
         if (_guideMode == AdTrackingGuidance.Mode.Startup)
         {
-            // 第一次"继续" → 请求系统权限；第二次"继续" → 关闭引导页，继续加载进游戏
-            if (!_permissionRequested)
-            {
-                _permissionRequested = true;
-                _guide.SetBusy(true);
-                RequestPermission();
-            }
-            else
-            {
-                CloseGuide();
-                FinishStartupFlow();
-            }
+            // 需求：点"继续"后【立刻】关闭引导页并放行加载，不再等系统授权回调。
+            // 之前是等 OnPermissionResult 才关页，玩家会卡在引导页上（真机 6~8 秒无响应），
+            // 因为鸿蒙这边 requestPermissionsFromUser / requestPermissionOnSetting 的结果
+            // 回来得慢，甚至要等系统设置弹窗交互完。
+            // 授权结果异步回来只做：状态落盘 + 埋点 + 分层刷新 + 激励发放。
+            Debug.Log("[AdTracking] 玩家点击继续：关闭引导页并继续加载，同时拉起系统授权框");
+
+            _permissionRequested = true;
+
+            CloseGuide();                 // 只关 UI
+            _startupFlowFinished = true;  // 放行加载流程
+
+            StartCoroutine(RequestPermissionNextFrame());   // 下一帧再拉系统授权框
+            StartCoroutine(ReleaseAdGateDelayed(GateReleaseDelay));
             return;
         }
 
@@ -378,6 +425,33 @@ public class AdTrackingManager : MonoBehaviour
         _waitingSettingsReturn = true;
         _guide.SetBusy(true);
         OpenSystemTrackingSettings();
+    }
+
+    /// <summary>
+    /// 下一帧再发系统授权请求：保证引导页的 Destroy 和加载页的第一帧先跑完，
+    /// 避免点"继续"瞬间界面停住（真机上表现为"点了没反应"）。
+    /// </summary>
+    private IEnumerator RequestPermissionNextFrame()
+    {
+        yield return null;
+        RequestPermission();
+    }
+
+    /// <summary>
+    /// 延迟放行广告请求：系统授权框刚拉起时先别发广告请求，
+    /// 免得 AdsKit 取 OAID 的授权框和我们的授权框撞在一起弹两个。
+    /// 广告请求闸门本身是幂等的，结果先回来也不会重复放行。
+    /// </summary>
+    private IEnumerator ReleaseAdGateDelayed(float delay)
+    {
+        float waited = 0f;
+        while (waited < delay)
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        ReleaseAdGate();
     }
 
     private void CloseGuide()
@@ -389,6 +463,20 @@ public class AdTrackingManager : MonoBehaviour
         _guide = null;
     }
 
+    /// <summary>
+    /// 关闭引导页并放行加载流程。
+    /// 需求：系统权限弹窗关闭时，广告追踪引导页要同时关闭（允许/拒绝都关）。
+    /// </summary>
+    private void CloseGuideAndFinishStartupFlow(string reason)
+    {
+        if (_guide != null) Debug.Log($"[AdTracking] 关闭广告追踪引导页：{reason}");
+
+        CloseGuide();
+        _permissionRequested = false;
+        _waitingSettingsReturn = false;
+        FinishStartupFlow();
+    }
+
     #endregion
 
     #region 权限请求与结果
@@ -396,8 +484,6 @@ public class AdTrackingManager : MonoBehaviour
     /// <summary>发起系统授权请求（iOS 弹窗 / 鸿蒙权限框）</summary>
     private void RequestPermission()
     {
-        _awaitingPermissionResult = true;
-
         // 系统权限弹窗弹出（原生弹窗的"弹出"时机拿不到，用发起时刻兜底，保证漏斗有头）
         ReportPopShow(PopNameTracking);
 
@@ -407,11 +493,11 @@ public class AdTrackingManager : MonoBehaviour
             return;
         }
 
-#if UNITY_OPENHARMONY && !UNITY_EDITOR
-        // 鸿蒙：LoadBanner 内部会拉起 APP_TRACKING_CONSENT 授权框，
-        // 结果由 ArkTS 侧 TuanjieSendMessage → PushMessageReceiver.OnOAIDClosedSignal 回到 Unity
-        if (Game.self != null) Game.self.LoadAds_OAID();
-        StartCoroutine(PermissionTimeoutRoutine());
+#if UNITY_OPENHARMONY
+        // 鸿蒙：只请求 APP_TRACKING_CONSENT（不再顺带 LoadBanner，避免 Banner 的加载时机
+        // 影响权限弹窗的弹出顺序）。结果由 ArkTS 侧 TuanjieSendMessage
+        //PushMessageReceiver.OnOAIDClosedSignal 回到 Unity（允许/拒绝都会回）
+        if (Game.self != null) Game.self.RequestTrackingConsent();
 #else
         OnPermissionResult(false);
 #endif
@@ -425,35 +511,48 @@ public class AdTrackingManager : MonoBehaviour
     {
         UserData user = User;
         if (user == null) return;
-
-        bool fromSystemDialog = _awaitingPermissionResult;
+     
         bool fromSettings = _waitingSettingsReturn;
-        bool wasAwaiting = fromSystemDialog || fromSettings || _openedSystemSettings;
+        // 首启引导页：点"继续"时已经把页关掉了，_permissionRequested 一直为 true，
+        // 这次回来的结果要按"我方发起"处理（否则状态没变化会被当成重复回调直接 return，
+        // 埋点和激励都会丢）
+        bool wasAwaiting = fromSettings || _openedSystemSettings || _permissionRequested;
 
-        _awaitingPermissionResult = false;
+        // 同一个结果重复回调（鸿蒙侧可能既走 TuanjieSendMessage 又走 Promise；
+        // 登录补写也会调进来）：状态没变就不重复写盘/重复发奖
+        if (!wasAwaiting && user.adTrackingEnabled == (granted ? "1" : "0")) return;
+
+  
         _waitingSettingsReturn = false;
 
         user.adTrackingEnabled = granted ? "1" : "0";
         if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
 
         // ---------- 埋点（通用数数方案：系统权限弹窗结果） ----------
-        if (fromSystemDialog)
-        {
-            if (granted) ReportPopAccept(PopNameTracking);
-            else ReportPopRefuse(PopNameTracking);
-        }
-        else if (_openedSystemSettings && granted)
-        {
-            // 从系统设置里手动打开，也算一次"同意"，保证漏斗有出口
-            ReportPopAccept(PopNameTracking);
-        }
+        if (granted) ReportPopAccept(PopNameTracking);
+        else ReportPopRefuse(PopNameTracking);
 
         _openedSystemSettings = false;
 
         // ---------- 分层刷新（广告追踪权限是 IAA 分层依据） ----------
         RefreshUserLayer(granted);
 
-        if (_guide != null) _guide.OnPermissionReturned(granted);
+        // ---------- 引导页：系统弹窗关闭时同步关闭 ----------
+        // 首次启动场景：只有"本次真的发起过请求"才关页（避免登录补写状态把引导页提前关掉），
+        //   允许/拒绝都关，玩家不用再点一次"继续"（不关就会卡在引导页，要等 StartupFlowTimeout 才放行）；
+        // 设置入口场景：只有"已开启"才关（拒绝的话留页，方便玩家再试一次）。
+        bool closeGuide = granted || (_permissionRequested && !fromSettings);
+        if (closeGuide)
+        {
+            CloseGuideAndFinishStartupFlow(fromSettings
+                ? "系统设置返回，广告关联已开启"
+                : $"系统权限弹窗已关闭，结果 granted={granted}");
+        }
+        else if (_guide != null)
+        {
+            _guide.OnPermissionReturned(granted);
+            if (fromSettings && !granted) MessageSystem.Instance?.ShowTip("尚未开启广告关联");
+        }
 
         // ---------- 通知界面（设置里的"广告关联"开关） ----------
         OnAuthorizationChanged?.Invoke(granted);
@@ -462,18 +561,7 @@ public class AdTrackingManager : MonoBehaviour
         if (wasAwaiting && granted) GrantReward();
     }
 
-    private IEnumerator PermissionTimeoutRoutine()
-    {
-        yield return new WaitForSeconds(PermissionTimeout);
-        if (!_awaitingPermissionResult) yield break;
-
-        Debug.LogWarning("[AdTracking] 等待系统授权结果超时，解锁引导页按钮");
-        _awaitingPermissionResult = false;
-        _waitingSettingsReturn = false;
-        _openedSystemSettings = false;
-        if (_guide != null) _guide.SetBusy(false);
-    }
-
+    
     #endregion
 
     #region 跳系统设置 & 回前台校验
@@ -488,11 +576,12 @@ public class AdTrackingManager : MonoBehaviour
             return;
         }
 
-#if UNITY_OPENHARMONY && !UNITY_EDITOR
-        // 鸿蒙没有统一的"广告追踪设置"深链：重新发起一次授权请求，
-        // 若玩家之前选了"不再询问"，系统会直接返回拒绝，此时引导页保持"去开启"状态。
-        if (Game.self != null) Game.self.LoadAds_OAID();
-        StartCoroutine(PermissionTimeoutRoutine());
+#if UNITY_OPENHARMONY
+        // 鸿蒙没有统一的"广告追踪设置"深链：重新发起一次授权请求。
+        // 若玩家之前拒绝过（系统不再弹标准授权框），ArkTS 侧会自动改拉
+        // requestPermissionOnSetting 权限设置弹窗（带开关，官方二次授权路径），
+        // 结果仍是 OnOAIDClosedSignal 回包；玩家取消/未开启则引导页保持"去开启"状态。
+        if (Game.self != null) Game.self.RequestTrackingConsent();
 #else
         MessageSystem.Instance?.ShowTip("请在系统设置中开启广告关联");
 #endif
@@ -514,9 +603,8 @@ public class AdTrackingManager : MonoBehaviour
 
         if (IsAuthorized)
         {
+            // 关闭引导页 / 放行加载流程都在 OnPermissionResult 里统一处理
             OnPermissionResult(true);
-            CloseGuide();
-            FinishStartupFlow();
         }
         else
         {
@@ -650,13 +738,6 @@ public class AdTrackingManager : MonoBehaviour
         string layer = ShopManager.shopManager.GetCurrentUserLayer();
         ShopManager.shopManager.RefreshLayer();
         Debug.Log($"[AdTracking] 授权状态写入 adTrackingEnabled={(granted ? 1 : 0)}，刷新用户分层 → {layer}");
-    }
-
-    private void LoadBannerIfNeeded()
-    {
-#if UNITY_OPENHARMONY && !UNITY_EDITOR
-        if (Game.self != null) Game.self.LoadAds_OAID();
-#endif
     }
 
     private Transform ResolveUiParent(Transform preferred)

@@ -7,6 +7,16 @@
       "dependencies": {},
       "url": "https://packages.tuanjie.cn"
     },
+    "com.gamenami.unity-semantic-bridge": {
+      "version": "https://github.com/Programalyst/unity-semantic-bridge.git?path=/com.gamenami.unity-semantic-bridge",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.2",
+        "com.unity.ugui": "1.0.0"
+      },
+      "hash": "fba84b96487fc2a547f18ca562259a2c7746c05a"
+    },
     "com.unity.2d.animation": {
       "version": "9.1.2",
       "depth": 1,
@@ -199,8 +209,8 @@
       "url": "https://packages.unity.cn"
     },
     "com.unity.nuget.newtonsoft-json": {
-      "version": "3.2.1",
-      "depth": 0,
+      "version": "3.2.2",
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.cn"

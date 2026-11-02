@@ -621,11 +621,12 @@ public partial class ShopManager : MonoBehaviour
     public void ShowAdFailedPanel()
     {
         AdFailedParams p = GetAdFailedParams();
-        if (p.tipFailCooldown > 0)
-            SetAdFailBlockedUntil(DateTime.Now.AddSeconds(p.tipFailCooldown));
+        // if (p.tipFailCooldown > 0)
+        //     SetAdFailBlockedUntil(DateTime.Now.AddSeconds(p.tipFailCooldown));
 
         _lastAdFailedToolType = LimitRewordType.Coins; // 通用入口 = 商店金币视频路径
-        LogShop($"ShowAdFailedPanel (通用): 冷却={p.tipFailCooldown}s, 截止={GetAdFailBlockedUntil():HH:mm:ss}");
+        //LogShop($"ShowAdFailedPanel (通用): 冷却={p.tipFailCooldown}s, 截止={GetAdFailBlockedUntil():HH:mm:ss}");
+        LogShop($"ShowAdFailedPanel (通用)");
         SystemManager.Instance.ShowPanel(PanelType.AdsFailScreen);
     }
 
@@ -848,9 +849,29 @@ public partial class ShopManager : MonoBehaviour
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "分享奖励");     // 灯泡 +1
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, 1, "分享奖励");  // 复活 +1（需求 C-STRAT-06：灯泡1/复活1/金币50）
         GameDataManager.Instance.UserData.UpdateGold(50, false, false, "分享奖励");
-        MessageSystem.Instance.ShowTip("分享成功 +1灯泡 +1复活 +50金币");
+
+        // 奖励改用 AwardScreen 展示（替代原先的 Toast）
+        ShowShareAwardScreen();
+
         LogShop($"OnShareReturned: 分享成功, 今日次数={AdLimitData.shareUsed}");
         return true;
+    }
+
+    /// <summary>
+    /// 分享成功奖励弹窗：灯泡 1 / 复活 1 / 金币 50。
+    /// 通过 AwardScreen.OverrideRewards 展示，不复用商店商品数据。
+    /// </summary>
+    private void ShowShareAwardScreen()
+    {
+        AwardScreen.OverrideRewards = new List<RewardItem>
+        {
+            new RewardItem { type = (int)LimitRewordType.Tipstool,   amount = 1  },  // 灯泡
+            new RewardItem { type = (int)LimitRewordType.ReStartTool, amount = 1  }, // 复活
+            new RewardItem { type = (int)LimitRewordType.Coins,       amount = 50 },  // 金币
+        };
+
+        Debug.Log("[Shop] 分享成功，弹出 AwardScreen 展示奖励");
+        SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
     }
 
     // ======================= 破冰礼包策略 =======================

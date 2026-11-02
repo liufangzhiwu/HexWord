@@ -35,6 +35,8 @@ namespace Middleware
 #if UNITY_OPENHARMONY
         public struct ConfigHarmony
         {
+            // 鸿蒙 AGC 后台申请的正式横幅位（2026-11 提供），不再是官方测试位 testw6vs28auh3
+            //public const string TestBannerAdId = "n56633mwpp";
             public const string TestBannerAdId = "testw6vs28auh3";
             public const string TestInterstitialAdId = "testb4znbuh3n2";
             public const string TestRewardAdId = "testx9dtjwj8hp";

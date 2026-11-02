@@ -883,8 +883,30 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     protected Sprite LoadShopIcon(string showIcon)
     {
-        Sprite sprite = null;
-        sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        if (string.IsNullOrEmpty(showIcon)) return null;
+
+        Sprite sprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(showIcon);
+        if (sprite != null) return sprite;
+
+        // 兼容：少数礼包只有主图、没有 "_Icon" 变体（如 shopGifLing_Icon 在 UI_Universal 里并不存在），
+        // 取不到就用主图兜底，避免商店列表刷"精灵不存在"的 Error。
+        if (showIcon.EndsWith("_Icon"))
+        {
+            string baseName = showIcon.Substring(0, showIcon.Length - "_Icon".Length);
+            sprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(baseName);
+            if (sprite != null)
+            {
+                Debug.Log($"[Shop] 图标 {showIcon} 缺失，回退使用 {baseName}");
+            }
+            else
+            {
+                Debug.LogWarning($"[Shop] 图标 {showIcon} / {baseName} 都不存在，保留预制体默认图");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[Shop] 图标 {showIcon} 不存在，保留预制体默认图");
+        }
 
         return sprite;
     }

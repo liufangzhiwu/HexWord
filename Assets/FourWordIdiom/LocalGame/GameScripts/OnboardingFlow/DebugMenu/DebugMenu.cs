@@ -8,6 +8,7 @@ using System.IO;
 using Middleware;
 
 using UnityEngine.Networking;
+using UnityEngine.Serialization;
 
 
 public class DebugMenu : UIWindow
@@ -22,7 +23,8 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button EnterStageBtn; // 跳关   
     [SerializeField] private Button ChessStageBtn; // 跳关   
     [SerializeField] private Button ChessEBtn; // 拼字E值   
-    [SerializeField] private Button AddResetToolBtn; //重置道具
+    [FormerlySerializedAs("AddResetToolBtn")]
+    [SerializeField] private Button AddRocketToolBtn; //火箭道具（LimitRewordType.AutoComplete / toolInfo[104]）
     [SerializeField] private Button AddHintToolBtn; //提示道具
     [SerializeField] private Button AddButterflyToolBtn; //蝴蝶道具
     [SerializeField] private Button setAbBtButton; //设置AB包
@@ -80,7 +82,7 @@ public class DebugMenu : UIWindow
         EnterStageBtn.AddClickAction(OnEnterStageClick);
         ChessStageBtn.AddClickAction(OnChessStageClick);
         AddGoldBtn.AddClickAction(OnAddGoldClick);
-        AddResetToolBtn.AddClickAction(AddResetCountClick);
+        AddRocketToolBtn.AddClickAction(AddRocketCountClick);
         AddHintToolBtn.AddClickAction(AddHintCountClick);
         AddButterflyToolBtn.AddClickAction(AddButterflyCountClick);
         ReSetGameBtn.AddClickAction(OnReSetClick);
@@ -110,7 +112,7 @@ public class DebugMenu : UIWindow
     private void InitUIData()
     {
         InitBtnData(AddGoldBtn,"100");
-        InitBtnData(AddResetToolBtn, "10");
+        InitBtnData(AddRocketToolBtn, "10");
         InitBtnData(AddHintToolBtn, "10");
         InitBtnData(EnterStageBtn, "10");
         InitBtnData(AddButterflyToolBtn, "10");
@@ -336,31 +338,56 @@ public class DebugMenu : UIWindow
         ChessStageController.Instance.ClearCurrentLevelSave();
     }
 
-    private void AddResetCountClick()
+    /// <summary>
+    /// 统一的"增加道具"逻辑（火箭 / 提示 / 蝴蝶共用）。
+    /// 火箭在道具系统里就是「自动完成本关」= LimitRewordType.AutoComplete（toolInfo[104]），
+    /// 商店购买、领奖、埋点都走这个类型，所以没有单独的"重置"道具。
+    /// </summary>
+    private void AddToolCount(LimitRewordType type, Button btn, string toolName, int toolId)
     {
-        InputField Stagenumtxt = AddResetToolBtn.GetComponentInChildren<InputField>();
-        int value = int.Parse(Stagenumtxt.text);
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, value);
-        //EventManager.OnChangeLanguageUpdateUI?.Invoke();
-        MessageSystem.Instance.ShowTip("重置道具增加成功！");
+        InputField numText = btn != null ? btn.GetComponentInChildren<InputField>() : null;
+        if (numText == null || !int.TryParse(numText.text, out int value) || value == 0)
+        {
+            MessageSystem.Instance.ShowTip($"请输入有效的{toolName}数量");
+            return;
+        }
+
+        UserData user = GameDataManager.Instance.UserData;
+        user.UpdateTool(type, value, $"DebugMenu增加{toolName}");
+        GameDataManager.Instance.CommitGameData();
+
+        // 同步刷新大厅/关卡里的道具数量
+        if (EventDispatcher.instance != null)
+        {
+            EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+        }
+
+        int current = 0;
+        if (user.toolInfo != null && user.toolInfo.TryGetValue(toolId, out ToolInfo info) && info != null)
+        {
+            current = info.count;
+        }
+
+        string delta = value > 0 ? "+" + value : value.ToString();
+        MessageSystem.Instance.ShowTip($"{toolName}{delta}，当前 {current}");
     }
 
+    /// <summary>火箭道具（自动完成本关）</summary>
+    private void AddRocketCountClick()
+    {
+        AddToolCount(LimitRewordType.AutoComplete, AddRocketToolBtn, "火箭道具", 104);
+    }
+
+    /// <summary>蝴蝶道具</summary>
     private void AddButterflyCountClick()
     {
-        InputField Stagenumtxt = AddButterflyToolBtn.GetComponentInChildren<InputField>();
-        int value = int.Parse(Stagenumtxt.text);
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, value);
-        //EventManager.OnChangeLanguageUpdateUI?.Invoke();
-        MessageSystem.Instance.ShowTip("蝴蝶道具增加成功！");
+        AddToolCount(LimitRewordType.Butterfly, AddButterflyToolBtn, "蝴蝶道具", 103);
     }
-    
+
+    /// <summary>提示（放大镜）道具</summary>
     private void AddHintCountClick()
     {
-        InputField Stagenumtxt = AddHintToolBtn.GetComponentInChildren<InputField>();
-        int value = int.Parse(Stagenumtxt.text);
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, value);
-        //EventManager.OnChangeLanguageUpdateUI?.Invoke();
-        MessageSystem.Instance.ShowTip("提示道具增加成功！");
+        AddToolCount(LimitRewordType.Tipstool, AddHintToolBtn, "提示道具", 102);
     }
 
     private void OnAddGoldClick()

@@ -1,4 +1,5 @@
 import { SDKManager, TuanjiePlayerView } from 'tuanjieLib';
+import { BannerAd } from 'tuanjieLib';
 import { promptAction, PromptAction, window } from '@kit.ArkUI';
 import { BusinessError } from '@ohos.base';
 import identifier from '@ohos.identifier.oaid';
@@ -30,8 +31,11 @@ struct TuanjiePlayer {
   build() {
     Row() {
       Column() {
-        Stack() {
+        Stack({ alignContent: Alignment.Bottom }) {
           TuanjiePlayerView();
+          // ★ 横幅广告：页面内组件（不放弹窗，AutoAdComponent 在 CustomDialog 里请求会失败）。
+          //   显隐由 SDKManager.LoadBanner / HideBanner 通过 AppStorage 'BannerShowing' 控制。
+          BannerAd()
         }
         // ★ 挂到 Stack 上
         .onBlur(() => {
