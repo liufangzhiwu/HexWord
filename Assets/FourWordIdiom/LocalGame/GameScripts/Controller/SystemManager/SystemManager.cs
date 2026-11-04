@@ -107,6 +107,18 @@ public class SystemManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 显示面板并跳过入场动画（瞬间到位）。
+    /// 用于需要与其它瞬显界面同帧出现的场景，例如道具弹窗 + 顶部金币栏。
+    /// </summary>
+    public UIWindow ShowPanelImmediate(string panelName)
+    {
+        UIWindow panel = ShowPanel(panelName);
+        if (panel != null)
+            panel.SkipEnterTransition();
+        return panel;
+    }
+
+    /// <summary>
     /// 隐藏指定面板
     /// </summary>
     public void HidePanel(string panelName, bool useAnimation = true, UnityAction onComplete = null)

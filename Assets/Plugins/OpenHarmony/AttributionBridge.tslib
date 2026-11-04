@@ -4,19 +4,60 @@
 //      C# 侧通过 new OpenHarmonyJSObject("AttributionBridge") 调用
 // 说明: 鸿蒙没有客户端渠道查询接口（channel/taskid/callback），
 //      客户端只做「登记转化事件」，归因结果由华为回传服务端。
+//      另含三个「接入调试」接口（validateSource / setPostback / flushPostbacks），
+//      仅用于联调，正式包不要调用。
 // ====================================================================
-import { attributionManager } from '@kit.StoreKit';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { attributionManager, attributionTestManager } from '@kit.StoreKit';
+import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
 
 const TAG = '[AttributionBridge]';
 // 业务场景默认值（取值范围 [0,99]，C# 侧会传入真实值，此处仅兜底）
 const DEFAULT_BUSINESS_SCENE: number = 5;
+// 自 API 22 起 AdTriggerInfo 新增 serviceTag（分发平台关注的业务信息，≤32 字符）。
+// 缺失时底层 GetRequiredArg 会判为参数错误，导致整次上报被丢弃。
+const SERVICE_TAG: string = 'hexword_attribution';
+
+// ===== 调试接口入参（C# 侧用 JsonUtility 序列化后传入，字段名必须一致） =====
+
+// validateSource：验证媒体App/分发平台登记的归因来源信息
+//   signature 需用注册归因角色时提供的公钥所对应的私钥，
+//   按 SHA256withRSA/PSS 对 adTechId+campaignId+destinationId+serviceTag+mmpIdStr+nonce+timestamp
+//   签算后传入（拼接分隔符 \u2063）。私钥不要打进正式包，联调时由工具侧算好传入。
+interface SourceDebugConfig {
+    adTechId: string;
+    campaignId: string;
+    destinationId: string;
+    sourceType: number;      // 0 曝光 / 1 点击
+    nonce: string;           // 固定 32 字符
+    timestamp: number;       // 毫秒，与当前时间偏差不得超过 10 分钟
+    signature: string;
+    publicKey: string;       // 注册归因角色时提供给云侧的公钥
+    mmpIds?: string;         // 逗号分隔，最多 2 个
+    serviceTag?: string;
+}
+
+// setPostback：伪造一条归因结果回传，验证服务端能不能收到
+interface PostbackDebugConfig {
+    adTechId: string;        // 分发平台归因角色ID
+    campaignId: string;      // 营销任务ID
+    sourceId: string;        // 媒体应用id
+    destinationId: string;   // 开发者应用在华为应用市场的 appId，不带 C
+    businessScene: number;
+    triggerData: number;
+    postbackUrl: string;     // 服务端接收归因结果的地址
+    serviceTag?: string;
+}
 
 export class AttributionBridge {
 
+    // ================================================================
     // 登记转化事件
-    // eventCode:    转化事件 ID（与云端管理台登记的 ID 一致）
+    // eventCode:    标准转化事件编码（不是云端列表里的「事件ID」）
+    //               0 安装（客户端不上报，由系统/分发平台产生）
+    //               1 激活 / 2 启动 / 3 次日留存 / 4 付费
+    //               自定义转化事件编码范围 [501,600]
     // businessScene: 业务场景标识，取值 [0,99]，可空（缺省用 DEFAULT_BUSINESS_SCENE）
+    // ================================================================
     reportConversion(eventCode: number, businessScene?: number): void {
         // C# 侧统一按字符串传参，这里做整数化校验
         const code: number = Number(eventCode);
@@ -37,15 +78,33 @@ export class AttributionBridge {
             scene = DEFAULT_BUSINESS_SCENE;
         }
 
-        const triggerInfo: attributionManager.AdTriggerInfo = {
-            businessScene: scene,
-            triggerData: code
-        };
+        // API 22 起 AdTriggerInfo 新增「实际发生时间」与「业务标识」，
+        // 不补的话底层会报 timestamp/serviceTag is null 并丢弃本次上报。
+        // 低版本不能带这两个字段（会被序列化成 null），所以按版本分支构造。
+        let triggerInfo: attributionManager.AdTriggerInfo;
+        if (deviceInfo.sdkApiVersion >= 22) {
+            triggerInfo = {
+                businessScene: scene,
+                triggerData: code,
+                timestamp: Date.now(),
+                serviceTag: SERVICE_TAG
+            } as attributionManager.AdTriggerInfo;
+        } else {
+            triggerInfo = {
+                businessScene: scene,
+                triggerData: code
+            };
+        }
+
+        // 用 warn 级：部分日志导出工具会过滤 info
+        console.warn(`${TAG} reportConversion enter, triggerData=${code}, scene=${scene}, ` +
+            `api=${deviceInfo.sdkApiVersion}`);
 
         try {
             attributionManager.registerTrigger(triggerInfo)
                 .then(() => {
-                    console.info(`${TAG} registerTrigger success, triggerData=${code}`);
+                    // 用 warn 级：保证在过滤 info 的日志里也能看到成功标记
+                    console.warn(`${TAG} registerTrigger success, triggerData=${code}`);
                 })
                 .catch((err: BusinessError) => {
                     console.error(`${TAG} registerTrigger failed, code=${err.code}, msg=${err.message}, triggerData=${code}`);
@@ -53,6 +112,106 @@ export class AttributionBridge {
         } catch (error) {
             const err = error as BusinessError;
             console.error(`${TAG} registerTrigger exception, code=${err.code}, msg=${err.message}`);
+        }
+    }
+
+    // ================================================================
+    // 接入调试一：验证归因来源登记
+    //   对应华为 attributionTestManager.validateSource(adSourceInfo, publicKey)
+    //   configJson: SourceDebugConfig 的 JSON
+    // ================================================================
+    validateSource(configJson: string): void {
+        try {
+            const cfg = JSON.parse(configJson) as SourceDebugConfig;
+
+            const adSourceInfo: attributionTestManager.AdSourceInfo = {
+                adTechId: cfg.adTechId,
+                campaignId: cfg.campaignId,
+                destinationId: cfg.destinationId,
+                sourceType: cfg.sourceType === 0
+                    ? attributionTestManager.SourceType.IMPRESSION
+                    : attributionTestManager.SourceType.CLICK,
+                nonce: cfg.nonce,
+                timestamp: cfg.timestamp,
+                signature: cfg.signature
+            };
+            if (cfg.serviceTag) {
+                adSourceInfo.serviceTag = cfg.serviceTag;
+            }
+            if (cfg.mmpIds) {
+                adSourceInfo.mmpIds = cfg.mmpIds.split(',');
+            }
+
+            attributionTestManager.validateSource(adSourceInfo, cfg.publicKey)
+                .then(() => {
+                    console.info(`${TAG} validateSource success, adTechId=${cfg.adTechId}`);
+                })
+                .catch((err: BusinessError) => {
+                    console.error(`${TAG} validateSource failed, code=${err.code}, msg=${err.message}`);
+                });
+        } catch (error) {
+            const err = error as BusinessError;
+            console.error(`${TAG} validateSource exception, code=${err.code}, msg=${err.message}, json=${configJson}`);
+        }
+    }
+
+    // ================================================================
+    // 接入调试二：设置归因结果回传数据
+    //   对应华为 attributionTestManager.setPostback(postbackInfo)
+    //   configJson: PostbackDebugConfig 的 JSON
+    // ================================================================
+    setPostback(configJson: string): void {
+        try {
+            const cfg = JSON.parse(configJson) as PostbackDebugConfig;
+
+            const postbackInfo: attributionTestManager.PostbackInfo = {
+                adTechId: cfg.adTechId,
+                campaignId: cfg.campaignId,
+                sourceId: cfg.sourceId,
+                destinationId: cfg.destinationId,
+                businessScene: cfg.businessScene,
+                triggerData: cfg.triggerData,
+                postbackUrl: cfg.postbackUrl
+            };
+            if (cfg.serviceTag) {
+                postbackInfo.serviceTag = cfg.serviceTag;
+            }
+
+            attributionTestManager.setPostback(postbackInfo)
+                .then(() => {
+                    console.info(`${TAG} setPostback success, triggerData=${cfg.triggerData}, url=${cfg.postbackUrl}`);
+                })
+                .catch((err: BusinessError) => {
+                    console.error(`${TAG} setPostback failed, code=${err.code}, msg=${err.message}`);
+                });
+        } catch (error) {
+            const err = error as BusinessError;
+            console.error(`${TAG} setPostback exception, code=${err.code}, msg=${err.message}, json=${configJson}`);
+        }
+    }
+
+    // ================================================================
+    // 接入调试三：触发归因结果回传
+    //   对应华为 attributionTestManager.flushPostbacks(adTechId)
+    //   需先 setPostback，否则没有待回传数据
+    // ================================================================
+    flushPostbacks(adTechId: string): void {
+        if (!adTechId) {
+            console.error(`${TAG} flushPostbacks 缺少 adTechId`);
+            return;
+        }
+
+        try {
+            attributionTestManager.flushPostbacks(adTechId)
+                .then(() => {
+                    console.info(`${TAG} flushPostbacks success, adTechId=${adTechId}`);
+                })
+                .catch((err: BusinessError) => {
+                    console.error(`${TAG} flushPostbacks failed, code=${err.code}, msg=${err.message}`);
+                });
+        } catch (error) {
+            const err = error as BusinessError;
+            console.error(`${TAG} flushPostbacks exception, code=${err.code}, msg=${err.message}`);
         }
     }
 }

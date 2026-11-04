@@ -107,6 +107,10 @@ public abstract class UIWindow : MonoBehaviour, IPointerDownHandler
         UpdateWindowState(WindowState.Closed);
         ClearAllEventListeners();
         StopAllCoroutines();
+
+        // 安全网：跳过入场时临时拉高过播放倍速，若界面在恢复前就被关闭，这里兜底还原，
+        // 避免下次显示时整条动画以 100 倍速一闪而过。
+        if (_windowAnimator != null) _windowAnimator.speed = 1f;
     }
 
     #endregion
@@ -304,6 +308,61 @@ public abstract class UIWindow : MonoBehaviour, IPointerDownHandler
 
         // 播放自定义或默认动画
        CustomCloseAnimation();       
+    }
+
+    /// <summary>
+    /// 以指定倍速播放入场动画，播完后自动还原为正常速度。
+    /// 用于「入场要更快」但不希望改动画资源本身的场景（例如大厅/顶栏展示提速）。
+    /// </summary>
+    /// <param name="speed">播放倍速，2 表示快一倍</param>
+    /// <remarks>
+    /// 不能用 WindowState 判断是否在入场：HeaderSection / PrimaryInterface 等界面重写了 OnEnable
+    /// 且没有调用 base.OnEnable()，状态机根本不会进入 Opening。这里直接看 Animator 当前状态是否还没播完。
+    /// </remarks>
+    public void PlayEnterAtSpeed(float speed)
+    {
+        if (_windowAnimator == null || !_windowAnimator.isActiveAndEnabled) return;
+        if (!gameObject.activeInHierarchy) return;
+
+        // 注意：这里不能按 normalizedTime 提前 return。
+        // 界面刚 SetActive(true) 时 Animator 还没开始求值，读到的可能是上一次的旧状态（已播完），
+        // 那样就会被误判成"没在入场"而整个加速失效。这里一律设置倍速，由下面的还原协程兜底。
+        AnimatorStateInfo state = _windowAnimator.GetCurrentAnimatorStateInfo(0);
+        _windowAnimator.speed = Mathf.Max(0.01f, speed);
+        // 超时按「原始时长 / 倍速」再留 0.5s 余量，避免状态机没进预期状态时倍速残留
+        float timeout = (state.length > 0f ? state.length / Mathf.Max(0.01f, speed) : 1f) + 0.5f;
+        StartCoroutine(RestoreAnimatorSpeedRoutine(timeout));
+    }
+
+    /// <summary>
+    /// 跳过本次入场动画，让界面瞬间到位。
+    /// 用于「道具弹窗 + 顶部金币栏」这类必须同帧出现的组合：
+    /// 弹窗是瞬显的，若顶栏还在播入场动画，金币栏就会明显慢半拍。
+    /// </summary>
+    public void SkipEnterTransition()
+    {
+        if (_windowAnimator != null)
+        {
+            // 一帧内跑完即可，不必等状态自然结束
+            _windowAnimator.speed = 100f;
+            StartCoroutine(RestoreAnimatorSpeedRoutine(0.2f));
+        }
+    }
+
+    private IEnumerator RestoreAnimatorSpeedRoutine(float maxWaitSeconds)
+    {
+        float deadline = Time.unscaledTime + maxWaitSeconds;
+        yield return null;
+
+        // 等入场状态播完再还原；如果被 Hide/切状态打断，走超时兜底
+        while (_windowAnimator != null &&
+               Time.unscaledTime < deadline &&
+               _windowAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+        {
+            yield return null;
+        }
+
+        if (_windowAnimator != null) _windowAnimator.speed = 1f;
     }
 
     private void CloseImmediately()

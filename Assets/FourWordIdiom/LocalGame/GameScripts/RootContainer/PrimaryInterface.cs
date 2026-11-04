@@ -68,6 +68,27 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private Button SettingBtn;
     [Header("配置参数")]
     [SerializeField] private float topPanelDelay = 0.01f; // 顶部面板显示延迟时间
+
+    /// <summary>
+    /// 大厅展示动画倍速：2 = 入场动画快一倍（MainShow 原约 0.97s → 约 0.49s）
+    /// </summary>
+    private const float LobbyEnterSpeed = 2f;
+
+    /// <summary>顶部面板入场后到金币层刷新的常规等待</summary>
+    private const float TopPanelRevealGap = 0.3f;
+
+    /// <summary>首次从加载页进大厅时的衔接等待（顶栏已按 2x 播放）</summary>
+    private const float TopPanelRevealGapFast = 0.15f;
+
+    /// <summary>
+    /// 一次性标记：next 次显示大厅时使用 2 倍速入场动画。
+    /// 由 GameCoreManager 在「加载完成 → 首次进大厅」时置位，消费后立刻清空，
+    /// 保证从排行榜/商店/关卡等界面返回大厅时仍是正常速度。
+    /// </summary>
+    public static bool FastEnterOnce = false;
+
+    /// <summary>本次显示是否走了加速入场（供 ShowTopPanel 同步顶栏节奏）</summary>
+    private bool _fastEnterThisShow;
     
     private void Start()
     {
@@ -104,6 +125,16 @@ public class PrimaryInterface : UIWindow
     /// </summary>
     protected override void OnEnable()
     {
+        // 只有「加载页 → 首次进大厅」这一次走 2 倍速入场（MainShow 原 0.6 倍速 / 0.583s clip ≈ 0.97s）；
+        // 从排行榜、商店、关卡等界面返回大厅时保持正常速度。
+        _fastEnterThisShow = FastEnterOnce;
+        FastEnterOnce = false;
+        if (_fastEnterThisShow)
+            PlayEnterAtSpeed(LobbyEnterSpeed);
+
+        // 主页出现的第一帧就同步顶部状态：把结算页残留的「关内成语」入口收掉，避免一闪而过
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false);
+
         InitUI();
         GameCoreManager.Instance.PanelState = PanelState.MainMenuPanel;
         //EnhancedVideoController.Instance.PlayVideo();
@@ -804,9 +835,12 @@ public class PrimaryInterface : UIWindow
         UpdateLimintBtnUI();
         UpdateDailyTaskBtnUI();
         UIWindow uiWindow = SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
+        // 顶栏入场与大厅本体保持一致：仅首次进大厅时按 2x 播放（Top 状态 0.6 倍速，0.333s clip ≈ 0.56s）
+        if (_fastEnterThisShow)
+            uiWindow?.PlayEnterAtSpeed(LobbyEnterSpeed);
         Debug.Log("查看是否展示" + uiWindow.IsWindowVisible + " " + uiWindow.gameObject.activeSelf);
-        
-        yield return new WaitForSeconds(0.3f);
+
+        yield return new WaitForSeconds(_fastEnterThisShow ? TopPanelRevealGapFast : TopPanelRevealGap);
         EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
         //AdsManager.Instance.HideBannerAd();
     }

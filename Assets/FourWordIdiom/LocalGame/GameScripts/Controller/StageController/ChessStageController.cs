@@ -514,7 +514,7 @@ public partial class ChessStageController
     {
         if (!isJump) AudioManager.Instance.PlaySoundEffect("success");
 
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(FinishFlowTiming.LevelOutLead);
         float duration = GameDataManager.Instance.UserData.curStageOnlineTime;
         float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
         if (!isJump)
@@ -525,12 +525,13 @@ public partial class ChessStageController
             if(ChessDynamicHardManager.Instance.IsOpenDynamicHard())
                 CheckDynamicDifficultyIntervention(stageNumber, ComboErrorCount, duration);
         }
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(FinishFlowTiming.LevelOutBeforeHide);
         // UI切换
         SystemManager.Instance.HidePanel(PanelType.HeaderSection);
         SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
 
-        yield return new WaitForSeconds(0.8f);
+        // 等待关卡界面收起（ChessPlayArea 的 Hide 动画 0.42s，这里按转场节奏取 0.4s）
+        yield return new WaitForSeconds(FinishFlowTiming.LevelOutToFinish);
 
         SystemManager.Instance.ShowPanel(PanelType.ChessFinishView);
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);

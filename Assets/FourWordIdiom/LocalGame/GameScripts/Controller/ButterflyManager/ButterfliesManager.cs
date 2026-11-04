@@ -49,6 +49,12 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     [Tooltip("关卡养成")] public List<ButterflyGrow> ButterfliesGrow = new List<ButterflyGrow>();
     [Tooltip("获取条件配置")] public GetPupaConfig pupaConfig = new GetPupaConfig();
 
+    // ======================= 蝉蛹飞行速度 =======================
+    /// <summary>蝉蛹飞行默认倍速：3 = 时长缩到原来的三分之一</summary>
+    private const float DefaultPupaFlySpeedScale = 3f;
+    /// <summary>蝉蛹飞行最短时长，防止倍速调太高时一闪而过</summary>
+    private const float MinPupaFlyDuration = 0.15f;
+
     [SerializeField] private GameObject _processBar;
     public bool showButterflyRedPoint = false;
     
@@ -290,7 +296,8 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// <summary>
     /// 蝉蛹飞行协程
     /// </summary>
-    public IEnumerator FlyPupaCoroutine(Transform start, Transform target, Action call, float duration=0f)
+    /// <param name="speedScale">整体倍速，默认 2 表示比原时长快一倍（时长折半）</param>
+    public IEnumerator FlyPupaCoroutine(Transform start, Transform target, Action call, float duration=0f, float speedScale = DefaultPupaFlySpeedScale)
     {
            GameObject go = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "Pupa");
            GameObject effect = Instantiate(go, start.position, Quaternion.identity, target);
@@ -299,7 +306,10 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
            float distance = Vector3.Distance(start.position, endPosition);
 
            if (duration < 0.2f) duration = distance / 30f;
-           if (duration < 0.45f) duration = 0.45f;
+
+           // ★ 整体提速：调用方传入的时长按倍速折算，避免各调用点写死的时长拖慢手感
+           if (speedScale > 0f) duration /= speedScale;
+           duration = Mathf.Max(duration, MinPupaFlyDuration);
            
            var midPos = (endPosition + start.position) / 2f;
            var bezierMidPos = (midPos + start.position) / 2f + Vector3.right * 2;

@@ -65,7 +65,8 @@ public class TaskTable : MonoBehaviour
     /// </summary>
     IEnumerator ShowTaskWordAnim()
     { 
-        yield return new WaitForSeconds(1f);
+        // 原为 1 秒盲等，纯空转；改为短衔接，避免结算页在这里卡住
+        yield return new WaitForSeconds(FinishFlowTiming.TaskAnimLead);
         GameObject taskye = Instantiate(taskyezi.gameObject,taskyezi.transform);
         taskye.transform.localScale=new Vector3(0.8f,0.8f,0.8f);
         taskye.transform.SetAsLastSibling();

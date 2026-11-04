@@ -79,19 +79,26 @@ public class GetItemScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+
+        // ★ 金币栏必须和弹窗同帧出现：
+        //   关卡内 HeaderSection 是被隐藏的（进关时 HidePanel 掉了），打开道具弹窗会把它重新显示出来，
+        //   而它默认播的 Top 状态速度是 0.6（0.333s 的 clip 被拉到 0.56s），金币栏就跟着整条顶栏慢慢滑下来。
+        //   这里用 ShowPanelImmediate 跳过顶栏入场动画，让金币栏和弹窗同一帧到位。
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)
+            || SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea)
+            || SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
+        {
+            SystemManager.Instance.ShowPanelImmediate(PanelType.HeaderSection);
+        }
+
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true, true, false, true);
+
         InitUI();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
 
         // ★ 每次打开道具弹窗重置购买标记，用于关闭时判定「曝光未付费」（C-RECO-04 F+3）
         if (ShopManager.shopManager != null)
             ShopManager.shopManager.paysuccess = false;
-
-        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
-        {
-            SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
-        }
-
-        EventDispatcher.instance.TriggerUpdateLayerCoin(true, true, false, true);
     }
 
     protected override void OnDisable()

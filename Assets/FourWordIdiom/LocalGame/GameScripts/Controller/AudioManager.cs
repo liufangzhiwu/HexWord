@@ -148,6 +148,59 @@ public class AudioManager : MonoBehaviour
         StartCoroutine(ReleaseAudioSourceAfterPlay(source));
     }
     
+    /// <summary>
+    /// 循环播放音效，直到显式调用 <see cref="StopLoopSoundEffect"/>。
+    /// 用于「禅意分滚动」这类需要一直响到某个过程结束的音效，不能走 PlaySoundEffect（那是一次性播放 + 自动回收）。
+    /// </summary>
+    /// <returns>播放用的 AudioSource 句柄；播放失败返回 null。用完务必交给 StopLoopSoundEffect 回收。</returns>
+    public AudioSource PlaySoundEffectLoop(string clipName, float volume = 0.25f)
+    {
+        if (!soundClipCache.TryGetValue(clipName, out AudioClip clip) || clip == null)
+        {
+            clip = AdvancedBundleLoader.SharedInstance.LoadAudioClip("musics", clipName);
+            if (clip == null)
+            {
+                Debug.LogWarning($"[AudioManager] 循环音效加载失败: {clipName}");
+                return null;
+            }
+            soundClipCache[clipName] = clip;
+        }
+
+        AudioSource source = GetAvailableAudioSource();
+        if (source == null)
+        {
+            Debug.LogWarning("没有可用的AudioSource播放循环音效");
+            return null;
+        }
+
+        source.clip = clip;
+        source.volume = GameDataManager.Instance.UserData.IsSoundOn ? volume : 0;
+        source.pitch = 1;
+        source.loop = true;
+        source.Play();
+        return source;
+    }
+
+    /// <summary>
+    /// 停止并回收 <see cref="PlaySoundEffectLoop"/> 产生的音源。对 null 安全，可重复调用。
+    /// </summary>
+    public void StopLoopSoundEffect(AudioSource source)
+    {
+        if (source == null) return;
+
+        source.loop = false;
+        if (source.isPlaying) source.Stop();
+        source.clip = null;
+
+        activeSoundSources.Remove(source);
+
+        PoolObject poolObj = source.GetComponent<PoolObject>();
+        if (poolObj != null)
+        {
+            audioSourcePool.ReturnObjectToPool(poolObj);
+        }
+    }
+
     private AudioSource GetAvailableAudioSource()
     {
         // 1. 从对象池获取

@@ -11,6 +11,9 @@ public class Launch : MonoBehaviour
 {
     [SerializeField] private Button _ageTip;
 
+    /// <summary>启动页停留时长（原 3s，现按发行要求定为 2.2s）</summary>
+    private const float SplashHoldSeconds = 2.2f;
+
     private float timer = 0f;
     public bool isTiming = false;
     private void OnEnable()
@@ -26,7 +29,7 @@ public class Launch : MonoBehaviour
     {
         transform.parent.GetChild(transform.GetSiblingIndex() + 1).gameObject.SetActive(false);
         _ageTip.AddClickAction(OnAgeTipClick);
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.15f);
 
         if (!GameDataManager.Instance.UserData.IsAgreePrivacy)
         {
@@ -51,7 +54,7 @@ public class Launch : MonoBehaviour
     {
         if (!isTiming) return;
         timer += Time.deltaTime;
-        if (timer >= 3f)
+        if (timer >= SplashHoldSeconds)
         {
             isTiming = false;
             OpenNextPage();

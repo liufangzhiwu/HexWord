@@ -262,6 +262,9 @@ public partial class AnalyticMgr
 #endif
             }
         });
+        // 标准转化事件编码：0 安装 / 1 激活 / 2 启动 / 3 次日留存 / 4 付费。
+        // 登录即视为一次「启动应用」(2)；「激活应用」(1) 已在 HarmonyAttribution.Init
+        // 的启动阶段上报，不依赖登录，这里不再重复。
         Game.self?.Attributes?.ReportConversion("2");
     }
 

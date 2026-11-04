@@ -286,13 +286,10 @@ public class LightItem : MonoBehaviour
                 break;
             case LimitRewordType.Pupas:
                 int value = rlist[1];
-                //GameDataManager.Instance.ButterflyData.AddPupa(value);
-                GameDataManager.Instance.UserData.SendCurrencyEvent(value,"限时奖励蚕蛹",message);
-                
-                //int waterLine = GameDataManager.Instance.UserData.signid-1;
+            
                 Image pupaicon= rewardList[rewardid].GetComponentInChildren<Image>();
                 ButterfliesManager.Instance.AddObtainedPupaOnGamePanel(pupaicon.transform,value);
-                GameDataManager.Instance.UserData.SendCurrencyEvent(value,"签到奖励蚕蛹");
+                GameDataManager.Instance.UserData.SendCurrencyEvent(value,"签到奖励蚕蛹",message);
                 break;
             default:
                 break;

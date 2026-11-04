@@ -42,7 +42,13 @@ public class LoadingController : MonoBehaviour
 
     private AsyncOperation sceneLoadOperation;        // 场景加载操作
     private float loadStartTime;                      // 加载开始时间
-    [SerializeField] private float minLoadingTime = 1.5f;
+    [SerializeField] private float minLoadingTime = 0.75f;
+
+    /// <summary>进度条模拟时长（原 4s，按「进大厅快一倍」压到 2s）</summary>
+    private const float SimulatedProgressDuration = 2f;
+
+    /// <summary>引导页关闭后到正式进大厅的停顿（原 0.35s）</summary>
+    private const float EnterLobbyDelay = 0.2f;
 
     private UserData serverData;               // 服务器数据
     private UserData selectData;               // 选择的数据
@@ -145,7 +151,7 @@ public class LoadingController : MonoBehaviour
         // 说明：鸿蒙的 OAID/广告追踪授权与 LoadBanner 耦合，已统一挪到 AdTrackingManager 的引导流程里触发
         // （避免进入加载页就先弹系统权限框，抢在"广告追踪引导页"之前）
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.25f);
        
         Game.self.InitGame();
         
@@ -442,7 +448,7 @@ public class LoadingController : MonoBehaviour
         yield return AdTrackingManager.EnsureInstance().WaitStartupFlowFinished();
 
         // 引导页关闭后，让玩家看到加载页进度走完这一帧再进游戏（版号信息/防沉迷提示都在这一屏）
-        yield return new WaitForSecondsRealtime(0.35f);
+        yield return new WaitForSecondsRealtime(EnterLobbyDelay);
 
         sceneLoadOperation.allowSceneActivation = true;
     }
@@ -471,7 +477,7 @@ public class LoadingController : MonoBehaviour
         while (progress < 1f)
         {
             elapsedTime = Time.time - loadStartTime;
-            progress = Mathf.Clamp01(elapsedTime / 4f);
+            progress = Mathf.Clamp01(elapsedTime / SimulatedProgressDuration);
 
             progressSlider.value = progress;
             Vector3 currentPos = Vector3.Lerp(worldStart, worldEnd, progress);

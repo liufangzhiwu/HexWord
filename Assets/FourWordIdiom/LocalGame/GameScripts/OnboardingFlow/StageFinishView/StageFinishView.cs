@@ -303,7 +303,7 @@ public class StageFinishView : UIWindow
         if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
         {
             _limitBtnTable.CheckAndShowLimitedTimeEvent(Enlimiticon.transform);
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(FinishFlowTiming.LimitPanelGap);
             
             // 根据进度决定是否自动弹出限时活动面板
             if (LimitTimeManager.Instance != null && GetCompletedWordCount() >= LimitTimeManager.Instance.CurlimitData.num)
@@ -330,7 +330,7 @@ public class StageFinishView : UIWindow
         if (!GameDataManager.Instance.UserData.isAllCompleteTask && _tasktable.TaskBtn.gameObject.activeSelf)
         {
             _tasktable.CheckTasksScreen();
-            yield return new WaitForSeconds(1.5f);
+            yield return new WaitForSeconds(FinishFlowTiming.TaskPanelGap);
         }
 
         if (FishInfoController.Instance != null && FishInfoController.Instance.IsShowFishProgressAnim() && _matchFishtable.FishBtn.gameObject.activeSelf)

@@ -77,6 +77,10 @@ public class ChessFinishView : UIWindow
     private Coroutine _removeAdsCoroutine = null;
     /// <summary>限时去广告 BUFF 图标根节点（若未单独配置，则退化为 removeAdsBtn 本身）</summary>
     private GameObject _removeAdsBuffRoot;
+
+    // ======================= 禅意分滚动音效 =======================
+    /// <summary>禅意分滚动期间循环播放的音源，滚动结束后需停止回收</summary>
+    private AudioSource _zenRollSfx = null;
     
     protected override void InitializeUIComponents()
     {
@@ -728,7 +732,7 @@ public class ChessFinishView : UIWindow
         {
             _limitBtnTable.CheckAndShowLimitedTimeEvent(Enlimiticon.transform);
             _isWordsExtracted = true; // 锁住预判文案
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(FinishFlowTiming.LimitPanelGap);
 
             // 根据进度决定是否自动弹出限时活动面板
             if (LimitTimeManager.Instance != null &&
@@ -779,6 +783,10 @@ public class ChessFinishView : UIWindow
             int oldZenScore = Mathf.Max(0, targetZenScore - addZenCount);
             
             bool isRolling = true;
+
+            // ★ 禅意分开始变化时起播，一直循环到分数加完（2609 A-3(5)）
+            _zenRollSfx = AudioManager.Instance.PlaySoundEffectLoop("event_rank_change");
+
             DOTween.To(() => oldZenScore, x => 
                 {
                     zenScoreText.text = x.ToString();
@@ -787,11 +795,17 @@ public class ChessFinishView : UIWindow
                 .OnComplete(() => 
                 {
                     isRolling = false;
+                    // 分数加完，立刻收掉滚动音效，不要拖到下一段
+                    AudioManager.Instance.StopLoopSoundEffect(_zenRollSfx);
+                    _zenRollSfx = null;
                     zenScoreText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f);
                 });
                 
             yield return new WaitUntil(() => !isRolling);
-            yield return new WaitForSeconds(0.3f);
+            // 兜底：面板中途关闭等异常路径下也要把音效收掉
+            AudioManager.Instance.StopLoopSoundEffect(_zenRollSfx);
+            _zenRollSfx = null;
+            yield return new WaitForSeconds(FinishFlowTiming.AfterZenRoll);
         }
       
         // // ==========================================
@@ -819,14 +833,14 @@ public class ChessFinishView : UIWindow
                 GameDataManager.Instance.UserData.UpdateGold(leafReward[0].Value, true, true, "树叶收集结算获得");
                 // EventDispatcher.instance.TriggerChangeGoldUI(leafReward[0].Value, true);
             });
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(FinishFlowTiming.CoinFlyGap);
         }
 
         ChessStageController.Instance.LimitPuzzleCount = cachedLimitCount;
         if (!GameDataManager.Instance.UserData.isAllCompleteTask && _tasktable.TaskBtn.gameObject.activeSelf)
         {
             _tasktable.CheckTasksScreen();
-            yield return new WaitForSeconds(1.5f);
+            yield return new WaitForSeconds(FinishFlowTiming.TaskPanelGap);
         }
 
         ChessStageController.Instance.LimitPuzzleCount = 0;
@@ -942,13 +956,13 @@ public class ChessFinishView : UIWindow
             // ==========================================
             // 1. 直接替换图片
             // Image ligh = _centerLotusImage.transform.GetChild(0).GetComponent<Image>();
-            _centerLotusImage.DOFade(1, 1.5f).OnComplete(() =>
+            _centerLotusImage.DOFade(1, FinishFlowTiming.LotusLightFade).OnComplete(() =>
             {
                 // 2. 顺便给它一个“砰”地亮起的弹跳小动效 (放大到 1.15 倍再缩回来)
                 _centerLotusImage.transform.DOScale(1.02f, 0.2f).SetLoops(1, LoopType.Yoyo);
             });
-            // 3. 等待 0.4 秒，让玩家看清楚“它亮了”
-            yield return new WaitForSeconds(1.75f);
+            // 3. 等荷花点亮后稍作停顿，让玩家看清，再起飞
+            yield return new WaitForSeconds(FinishFlowTiming.LotusLightFade + FinishFlowTiming.LotusLightHold);
 
             // 初始化莲花状态（放在屏幕中央或者特定初始位置）
             Canvas canvas = lotusInstance.GetComponent<Canvas>();
@@ -1032,8 +1046,8 @@ public class ChessFinishView : UIWindow
             });
 
             yield return new WaitUntil(() => isAnimFinished);
-            // 阻塞等待动画大部分播完，再让结算界面去播下一个（比如灯笼）的动画
-            yield return new WaitForSeconds(0.3f);
+            // 落位后稍作缓冲，再让结算界面去播下一个（比如灯笼）的动画
+            yield return new WaitForSeconds(FinishFlowTiming.AfterLotusLand);
         }
     }
 
@@ -1093,9 +1107,9 @@ public class ChessFinishView : UIWindow
 
                     _pupaPool.ReturnObjectToPool(pupaInstance.GetComponent<PoolObject>());
                 });
-                // 每个蝶蛹启动后，间隔 0.2 秒再启动下一个（最后一个不用等）
+                // 每个蝶蛹启动后，间隔一小段再启动下一个（最后一个不用等）
                 if (i < earnedPupa - 1)
-                    yield return new WaitForSeconds(0.2f);
+                    yield return new WaitForSeconds(FinishFlowTiming.PupaStagger);
             }
             // 等待所有蝶蛹动画彻底结束
             yield return new WaitUntil(() => allDone);
@@ -1282,7 +1296,7 @@ public class ChessFinishView : UIWindow
                 );
 
                 yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ZenRankChangePanel));
-                yield return new WaitForSeconds(0.3f);
+                yield return new WaitForSeconds(FinishFlowTiming.StepGap);
             }
 
             // 动画播完，同步缓存防止重复播
@@ -1314,6 +1328,10 @@ public class ChessFinishView : UIWindow
             StopCoroutine(_removeAdsCoroutine);
             _removeAdsCoroutine = null;
         }
+
+        // ======================= 停止禅意分滚动音效 =======================
+        AudioManager.Instance.StopLoopSoundEffect(_zenRollSfx);
+        _zenRollSfx = null;
 
         // EventDispatcher.instance.TriggerUpdateLayerCoin(false,false,false);
         EventDispatcher.instance.TriggerChangeGoldUI(AppGameSettings.LevelCompleteBonus, false);

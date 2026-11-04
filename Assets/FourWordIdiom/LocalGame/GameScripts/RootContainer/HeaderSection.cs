@@ -223,6 +223,14 @@ public class HeaderSection : UIWindow
             LevelPuzzleBtn.gameObject.SetActive(true);
         }
 
+        // ★ 主页不展示「关内成语」入口。
+        //   从结算页退回主页时，结算页可能还没播完收起动画，上面的分支会把按钮判成"要显示"，
+        //   于是主页上出现一闪而过的 LevelPuzzleBtn。这里以"主页已在本帧显示"为准，直接压掉。
+        if (SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface))
+        {
+            LevelPuzzleBtn.gameObject.SetActive(false);
+        }
+
         InitPupaUI();
         InitEnergyUI();
         StartCoroutine(CheckLevelPuzzleVisibility());
@@ -286,25 +294,33 @@ public class HeaderSection : UIWindow
     private IEnumerator CheckLevelPuzzleVisibility()
     {
         yield return new WaitForSeconds(0.5f);  
-        bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) ||
-                          SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView);
-        
+
         LevelPuzzleBtn.GetComponent<CanvasGroup>().alpha = 0f;
-        
+
         bool hasLevelWords = false;
         while (true)
         {
             yield return new WaitForSeconds(0.8f);  
-            if (isgameshow)
+
+            // ★ 每次循环重新判断，不能用协程启动时的快照：
+            //   结算页退回主页后快照仍是 true，会持续在主页把按钮 SetActive(true)，表现为反复闪现。
+            bool isgameshow = SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView) ||
+                              SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView);
+
+            if (!isgameshow)
             {
-                if(GameDataManager.Instance.UserData.levelMode == 1)
-                    hasLevelWords = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count > 0 ;
-                else if (GameDataManager.Instance.UserData.levelMode == 2&&ChessStageController.Instance.CurrStageData!=null)
-                    hasLevelWords = ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0;
-                
-                LevelPuzzleBtn.gameObject.SetActive(hasLevelWords);
-                LevelPuzzleBtn.GetComponent<CanvasGroup>().DOFade(1f,0.2f);
+                if (LevelPuzzleBtn.gameObject.activeSelf)
+                    LevelPuzzleBtn.gameObject.SetActive(false);
+                continue;
             }
+
+            if(GameDataManager.Instance.UserData.levelMode == 1)
+                hasLevelWords = StageHexController.Instance.CurStageData.FoundTargetPuzzles.Count > 0 ;
+            else if (GameDataManager.Instance.UserData.levelMode == 2&&ChessStageController.Instance.CurrStageData!=null)
+                hasLevelWords = ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0;
+            
+            LevelPuzzleBtn.gameObject.SetActive(hasLevelWords);
+            LevelPuzzleBtn.GetComponent<CanvasGroup>().DOFade(1f,0.2f);
             yield return new WaitForSeconds(0.3f);  
         }
     }
@@ -421,6 +437,12 @@ public class HeaderSection : UIWindow
         if (isshowPupa)
         {
             InitPupaUI();
+        }
+
+        // ★ 回到主页就立刻收起「关内成语」入口，避免从结算页退回时残留一小段时间。
+        if (SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface))
+        {
+            LevelPuzzleBtn.gameObject.SetActive(false);
         }
 
         RefreshUnlimitedEnergyCache();

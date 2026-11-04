@@ -205,7 +205,8 @@ public sealed class GameCoreManager : MonoBehaviour
     /// </summary>
     private IEnumerator InitializeGameRoutine()
     {
-        yield return new WaitForSeconds(0.2f);
+        // 原 0.2s，进大厅提速一并减半
+        yield return new WaitForSeconds(0.1f);
         
         if (GameDataManager.Instance.UserData.IsFirstLaunch)
         {
@@ -213,6 +214,8 @@ public sealed class GameCoreManager : MonoBehaviour
         }
         else
         {
+            // 加载页 → 首次进大厅：标记走 2 倍速入场动画（消费一次后自动失效）
+            PrimaryInterface.FastEnterOnce = true;
             SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
             
             yield return new WaitForSeconds(0.5f);
