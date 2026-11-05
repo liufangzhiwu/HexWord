@@ -56,7 +56,19 @@ public class HuaweiTokenManager : MonoBehaviour
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
 
+            // 联调用日志：华为侧排查鉴权问题时需要看完整请求
+            Debug.LogWarning("========== [ATTR-TOKEN] 取 token 请求 START ==========");
+            Debug.LogWarning($"[ATTR-TOKEN] POST {TOKEN_URL}");
+            Debug.LogWarning($"[ATTR-TOKEN] Header Content-Type: application/json");
+            Debug.LogWarning($"[ATTR-TOKEN] Body: {{\"grant_type\":\"client_credentials\",\"client_id\":\"{CLIENT_ID}\",\"client_secret\":\"***\"}}");
+            Debug.LogWarning("========== [ATTR-TOKEN] 取 token 请求 END ==========");
+
             yield return request.SendWebRequest();
+
+            Debug.LogWarning("========== [ATTR-TOKEN] 取 token 响应 START ==========");
+            Debug.LogWarning($"[ATTR-TOKEN] HTTP Status: {request.responseCode}");
+            Debug.LogWarning($"[ATTR-TOKEN] Body: {request.downloadHandler?.text}");
+            Debug.LogWarning("========== [ATTR-TOKEN] 取 token 响应 END ==========");
 
             if (request.result == UnityWebRequest.Result.Success)
             {

@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ShopGifts
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: Android
+      m_MaxTextureSize: 4096
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 50
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_IgnorePlatformSupport: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 2
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 0
+      enableAlphaDilation: 1
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: c9b4a8b6f949262428290563394188e2, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - cf099c802a1dbe042946dc316d68a90b: 21300000
+    - 829c5ca014b678444ac0b38ddb64e780: 21300000
+    - 2d79e752fd7a4dd45a58da59cb93e6b9: 21300000
+    - dd965d0338aa53348a643159e39e97eb: 21300000
+    - 28702d63b7e38fb449e27ef6ac10826b: 21300000
+    - 48039a55bbde7774ba68e2b7d5a75528: 21300000
+    - 7fdd14758c6b3e94d990fdbd474e7538: 21300000
+    - 83c628d52fce4064e860d735ae23d0f3: 21300000
+    - f4ced4d88696cc64bab9e12937ed84b2: 21300000
+    - baabfe99bdd545344b94b4b001a0cdb7: 21300000
+    - b9b6926a71e4a284b84afe38e1c33ab3: 21300000
+    - 6a88c13bf80dd6548a40a7ec5f94391c: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: cf099c802a1dbe042946dc316d68a90b, type: 3}
+  - {fileID: 21300000, guid: 829c5ca014b678444ac0b38ddb64e780, type: 3}
+  - {fileID: 21300000, guid: 2d79e752fd7a4dd45a58da59cb93e6b9, type: 3}
+  - {fileID: 21300000, guid: dd965d0338aa53348a643159e39e97eb, type: 3}
+  - {fileID: 21300000, guid: 28702d63b7e38fb449e27ef6ac10826b, type: 3}
+  - {fileID: 21300000, guid: 48039a55bbde7774ba68e2b7d5a75528, type: 3}
+  - {fileID: 21300000, guid: 7fdd14758c6b3e94d990fdbd474e7538, type: 3}
+  - {fileID: 21300000, guid: 83c628d52fce4064e860d735ae23d0f3, type: 3}
+  - {fileID: 21300000, guid: f4ced4d88696cc64bab9e12937ed84b2, type: 3}
+  - {fileID: 21300000, guid: baabfe99bdd545344b94b4b001a0cdb7, type: 3}
+  - {fileID: 21300000, guid: b9b6926a71e4a284b84afe38e1c33ab3, type: 3}
+  - {fileID: 21300000, guid: 6a88c13bf80dd6548a40a7ec5f94391c, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - giftsbg
+  - yuanmanGift
+  - removeAds
+  - tehuibg
+  - tehuiGiftB
+  - highPricebg
+  - lowPricebg
+  - dajueGift
+  - chuxingGift
+  - tehuiGiftA
+  - xiwuGift
+  - removeAdsbg
+  m_RenderDataMap: {}
+  m_Tag: ShopGifts
+  m_IsVariant: 0

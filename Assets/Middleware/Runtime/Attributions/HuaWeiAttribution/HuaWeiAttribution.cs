@@ -347,13 +347,11 @@ namespace Middleware
         private void SendServerEvent(string actionType, long actionTime, decimal? amount = null, string currency = null)
         {
             
-#if Unity_ShowLog //方便测试
-            if (string.IsNullOrEmpty(callBack))
-            {
-                callBack =
-                    "security:4053FFBAAE7109AE51C6DF9A:D0A9FB392680FE8F2BD82C1215873DF84A6C5F5EEE3CBCCA4D56F65F8A08E9DC481BC0BBBDAA0666FD30B8D07CD21A";
-            }
-#endif
+            // 注意：不要用硬编码的测试 callBack 兜底。
+            // callBack 是华为在广告点击时按「设备 + 任务」下发的加密串，必须原值回传；
+            // 填别人的或历史遗留的 callBack，服务端会直接判「归因不匹配」，
+            // 而且会把脏数据写进后台，比不发更糟。
+            // 拿不到真实 callBack 时就应该静默跳过（下面的 Missing 分支）。
             
             // 前置检查（不变）
             if (string.IsNullOrEmpty(accessToken))
@@ -413,7 +411,28 @@ namespace Middleware
                 request.SetRequestHeader("Authorization", "Bearer " + accessToken);
                 request.SetRequestHeader("client_id", clientId);
 
+                // ===== 完整请求日志（联调用，直接给华为定位）=====
+                // 用 Warning 级：部分日志导出工具会过滤 Info
+                Debug.LogWarning("========== [ATTR-REQ] 转化回传请求 START ==========");
+                Debug.LogWarning($"[ATTR-REQ] POST {url}");
+                Debug.LogWarning("[ATTR-REQ] Header Content-Type: application/json");
+                Debug.LogWarning($"[ATTR-REQ] Header Authorization: Bearer {accessToken}");
+                Debug.LogWarning($"[ATTR-REQ] Header client_id: {clientId}");
+                Debug.LogWarning($"[ATTR-REQ] Body: {jsonData}");
+                Debug.LogWarning("========== [ATTR-REQ] 转化回传请求 END ==========");
+
                 yield return request.SendWebRequest();
+
+                // ===== 完整响应日志 =====
+                Debug.LogWarning("========== [ATTR-RSP] 转化回传响应 START ==========");
+                Debug.LogWarning($"[ATTR-RSP] HTTP Status: {request.responseCode}");
+                Debug.LogWarning($"[ATTR-RSP] Result: {request.result}");
+                Debug.LogWarning($"[ATTR-RSP] Body: {request.downloadHandler?.text}");
+                if (!string.IsNullOrEmpty(request.error))
+                {
+                    Debug.LogWarning($"[ATTR-RSP] Error: {request.error}");
+                }
+                Debug.LogWarning("========== [ATTR-RSP] 转化回传响应 END ==========");
 
                 if (request.result == UnityWebRequest.Result.Success)
                 {
