@@ -11,6 +11,19 @@ using UnityEngine.UI;
  */
 public partial class ChessPlayArea
 {
+    // ======================= 禅意值变化音效 =======================
+    /// <summary>禅意值变化音效名（与结算页保持一致）</summary>
+    private const string ZenScoreSfxName = "event_rank_change";
+
+    /// <summary>
+    /// 禅意值变化时播放一次。
+    /// 注意：玩法内得分频率高，这里刻意不用循环播放（结算页才是"一直响到分数加完"）。
+    /// </summary>
+    private void PlayZenScoreSfx()
+    {
+        AudioManager.Instance.PlaySoundEffect(ZenScoreSfxName);
+    }
+
     /// <summary>
     /// 响应暂停界面的退出二次确认：将局内的蝶蛹进度条提层显示
     /// </summary>
@@ -532,6 +545,9 @@ public partial class ChessPlayArea
         _zenScoreText.DOKill(true);
         _zenScoreText.rectTransform.DOKill(true);
         _zenScoreText.transform.localScale = Vector3.one;
+
+        // ★ 禅意值开始变化：播放一次音效（玩法内不做循环，结算页才一直响到加完）
+        PlayZenScoreSfx();
 
         Vector2 centerPos = _zenScoreText.rectTransform.anchoredPosition;
         

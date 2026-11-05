@@ -93,6 +93,7 @@ SpriteAtlas:
     - c97a40b14dfa03f49af1a29b8510b556: 21300000
     - effa4eb1f6eb0b54ba79e4a1ba6c48a6: 21300000
     - e15761c18aafb2a458b24751798885d7: 21300000
+    - 06aa2ec1253ad5045874753438024f07: 21300000
     - 4c4f3dd160058904ba8f02de31619f74: 21300000
     - 4f8592f168bb91243988c48d8e195506: 21300000
     - ed3e91023b3196e438cdc489257dac82: 21300000
@@ -146,7 +147,6 @@ SpriteAtlas:
     - 0c275eb5e6ec92f41b5d1785e4ffc07b: 21300000
     - bc7523e5f4ecdeb4ba8fd11c1e38fa7d: 21300000
     - 61a658e5f4a3cf547a6d0225f579473d: 21300000
-    - 4328dae5e81919f4fa8995d6c30883e1: 21300000
     - 2e475516bc52916458a09cb134cdcbed: 21300000
     - 5c401d66ad60ed54cb3e3359b00983a2: 21300000
     - aab181a61b17fa54387b089b109f6849: 21300000
@@ -159,7 +159,6 @@ SpriteAtlas:
     - 8c877457c2e3193428d929e7990a29b4: 21300000
     - cec2ba67322d5aa48a1b97bc9f90cae7: 21300000
     - 267ebe976457f3b4bac77fd027453a7c: 21300000
-    - bd25bfa78bc8a49408b43dce32bd0b5b: 21300000
     - c20569b7b60ecd94aa465a6ca003a368: 21300000
     - e6917628d60510d47a9b2ca526bde460: 21300000
     - 827de738dd4969b44906ba465bd368d4: 21300000
@@ -284,6 +283,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: c97a40b14dfa03f49af1a29b8510b556, type: 3}
   - {fileID: 21300000, guid: effa4eb1f6eb0b54ba79e4a1ba6c48a6, type: 3}
   - {fileID: 21300000, guid: e15761c18aafb2a458b24751798885d7, type: 3}
+  - {fileID: 21300000, guid: 06aa2ec1253ad5045874753438024f07, type: 3}
   - {fileID: 21300000, guid: 4c4f3dd160058904ba8f02de31619f74, type: 3}
   - {fileID: 21300000, guid: 4f8592f168bb91243988c48d8e195506, type: 3}
   - {fileID: 21300000, guid: ed3e91023b3196e438cdc489257dac82, type: 3}
@@ -337,7 +337,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 0c275eb5e6ec92f41b5d1785e4ffc07b, type: 3}
   - {fileID: 21300000, guid: bc7523e5f4ecdeb4ba8fd11c1e38fa7d, type: 3}
   - {fileID: 21300000, guid: 61a658e5f4a3cf547a6d0225f579473d, type: 3}
-  - {fileID: 21300000, guid: 4328dae5e81919f4fa8995d6c30883e1, type: 3}
   - {fileID: 21300000, guid: 2e475516bc52916458a09cb134cdcbed, type: 3}
   - {fileID: 21300000, guid: 5c401d66ad60ed54cb3e3359b00983a2, type: 3}
   - {fileID: 21300000, guid: aab181a61b17fa54387b089b109f6849, type: 3}
@@ -350,7 +349,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 8c877457c2e3193428d929e7990a29b4, type: 3}
   - {fileID: 21300000, guid: cec2ba67322d5aa48a1b97bc9f90cae7, type: 3}
   - {fileID: 21300000, guid: 267ebe976457f3b4bac77fd027453a7c, type: 3}
-  - {fileID: 21300000, guid: bd25bfa78bc8a49408b43dce32bd0b5b, type: 3}
   - {fileID: 21300000, guid: c20569b7b60ecd94aa465a6ca003a368, type: 3}
   - {fileID: 21300000, guid: e6917628d60510d47a9b2ca526bde460, type: 3}
   - {fileID: 21300000, guid: 827de738dd4969b44906ba465bd368d4, type: 3}
@@ -474,6 +472,7 @@ SpriteAtlas:
   - maxbutterfly
   - name_pinzi
   - "\u8776\u86F92 (1)"
+  - "\u7EA2\u8272\u95EA\u7EA2"
   - "\u7F16\u8F91"
   - clock
   - btnicon
@@ -527,7 +526,6 @@ SpriteAtlas:
   - zen_layer
   - headborder
   - "\u5E95"
-  - "\u590D\u6D3B\u5F39\u7A971"
   - UI_Icon_circle
   - UI_btn_pupa_fill
   - themeBtn
@@ -540,7 +538,6 @@ SpriteAtlas:
   - zen_bg
   - chess_bg
   - UI_Icon_selebg
-  - "\u590D\u6D3B\u5F39\u7A972"
   - energy
   - Coin3
   - infodi

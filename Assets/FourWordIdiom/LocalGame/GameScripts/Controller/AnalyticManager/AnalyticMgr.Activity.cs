@@ -120,6 +120,37 @@ public partial class AnalyticMgr
         _begunActivities.Add(activityId);
         ActivityBegin(activityId);
     }
+
+    /// <summary>按天去重的活动开启记录：key=活动id，value=最近一次上报的日期(yyyyMMdd)</summary>
+    private static readonly Dictionary<string, string> _begunActivityDay = new Dictionary<string, string>();
+
+    /// <summary>
+    /// 活动开启上报（按自然日去重），同一活动每天只报一次 activity_begin。
+    /// 用于「签到活动」这类每天重置、没有"活动结束"概念的活动；
+    /// 与 ActivityBeginOnce 的区别是后者按进程去重，长期不重启的玩家只会报一次。
+    /// 去重标记同时写 PlayerPrefs，避免"当天杀进程重进"时重复上报。
+    /// </summary>
+    public static void ActivityBeginDaily(string activityId)
+    {
+        if (string.IsNullOrEmpty(activityId)) return;
+
+        string todayKey = System.DateTime.Now.ToString("yyyyMMdd");
+
+        if (_begunActivityDay.TryGetValue(activityId, out string cached) && cached == todayKey)
+            return;
+
+        string prefKey = "act_begin_day_" + activityId;
+        if (UnityEngine.PlayerPrefs.GetString(prefKey, string.Empty) == todayKey)
+        {
+            _begunActivityDay[activityId] = todayKey;
+            return;
+        }
+
+        UnityEngine.PlayerPrefs.SetString(prefKey, todayKey);
+        UnityEngine.PlayerPrefs.Save();
+        _begunActivityDay[activityId] = todayKey;
+        ActivityBegin(activityId);
+    }
     
     /// <summary>
     /// 活动进度

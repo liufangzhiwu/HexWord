@@ -89,6 +89,8 @@ public partial class ChessStageController
         {
             ShopManager.shopManager.UnlockAllSlots();
             ShopManager.shopManager.SyncToolVideoLevel(StageIndex, true);
+            // ★ 新人礼全局唯一：进关就决出本关归属槽（灯泡＞复活＞火箭），避免三个槽各出一个
+            ShopManager.shopManager.ResetNewcomerGiftForNewLevel(StageIndex);
         }
 
         // 初始化关卡配置

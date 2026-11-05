@@ -116,7 +116,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     {
         base.OnEnable();
 
-        AudioManager.Instance.PlaySoundEffect("ShowUI");
+        AudioManager.Instance.PlaySoundEffect("fail");
 
         SwitchPanel(true); // 每次打开弹窗，强制显示主失败页
         RefreshReviveUI(); // 刷新复活按钮的UI表现 (是否免费)
@@ -128,7 +128,9 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         ChessStageController.Instance.CurrStageData.IsPausedOrFailed = true;
         GameDataManager.Instance.CommitGameData();
 
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false, true);
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true, true,false,true);
+        
+        //EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false, true);
 
         // ★ 刷新复活界面内购推荐位
         RefreshGiftTables();
@@ -533,7 +535,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (showFailPanel)
             SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
 
-        EventDispatcher.instance.TriggerHighlightHeaderUI(!showFailPanel);
+        //EventDispatcher.instance.TriggerHighlightHeaderUI(!showFailPanel);
     }
 
     private void RefreshReviveUI()
@@ -637,7 +639,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         }
         else
         {
-            MessageSystem.Instance.ShowTip("TipGoldInsufficient");
+            ShopManager.shopManager.OpenDynamicStore();
+            //MessageSystem.Instance.ShowTip("TipGoldInsufficient");
         }
     }
 
@@ -755,7 +758,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
             if (continuePanel.activeSelf)
             {
-                EventDispatcher.instance.TriggerHighlightHeaderUI(true);
+                EventDispatcher.instance.TriggerHighlightHeaderUI(false);
             }
         }
     }
@@ -766,7 +769,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         _isHiddenByLongPress = true;
         _canvasGroup.alpha = 0f;
-
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true);
         EventDispatcher.instance.TriggerHighlightHeaderUI(false);
     }
 }

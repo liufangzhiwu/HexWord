@@ -511,22 +511,26 @@ public partial class ChessPlayArea : UIWindow
     }
     
     /// <summary>
-    /// 时间耗尽：游戏失败
+    /// 时间耗尽：先播「红色呼吸 + 闹钟 + 时间到横幅」，再弹失败/复活界面
     /// </summary>
     private void HandleTimeOut()
     {
         _isTimerRunning = false; // 停住时间
         CurrStageData.RemainingTime = 0f;
         CurrStageData.SaveToFile();
-        if (_timerText != null)
-        {
-            _timerText.transform.DOKill(); 
-            _timerText.transform.localScale = Vector3.one; 
-        }
-        
+
         // 屏蔽屏幕操作
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
-        // TODO: 弹出你的失败结算/复活界面
+
+        StartCoroutine(CoHandleTimeOut());
+    }
+
+    private IEnumerator CoHandleTimeOut()
+    {
+        // 时间到演出：数字呼吸 + 红屏呼吸各 1s + 闹钟音效，横幅立刻出现、约 5s；
+        // 横幅显示约 2.5s 后再弹失败界面（横幅继续留在场景里自行收尾）
+        yield return StartCoroutine(PlayTimeUpSequence());
+
         SystemManager.Instance.ShowPanel(PanelType.FailGameScreen);
     }
     

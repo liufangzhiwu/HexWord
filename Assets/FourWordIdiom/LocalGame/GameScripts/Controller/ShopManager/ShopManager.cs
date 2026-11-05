@@ -219,6 +219,16 @@ public partial class ShopManager : MonoBehaviour
     private Dictionary<string, int> _payInvokeCount = new Dictionary<string, int>();
     private readonly Dictionary<int, int> _tierBuyCount = new Dictionary<int, int>();
     private readonly Dictionary<RecommendSlot, string> _shownNewcomer = new Dictionary<RecommendSlot, string>();
+
+    /// <summary>
+    /// 本关唯一允许出「新人礼」的推荐位槽（灯泡 / 复活 / 火箭）。
+    /// 进入关卡时一次性决出，避免"先点开的弹窗先拿到新人礼"导致三个槽各出一个。
+    /// </summary>
+    private RecommendSlot? _newcomerOwner;
+    private bool _newcomerOwnerResolved;
+    /// <summary>上次做新人礼重置的关卡号，用于"同关重进不重置"</summary>
+    private int _newcomerResetStage = -1;
+
     private ShopDataItem _lastPurchasedPack;
 
     // ======================= 道具折扣状态 =======================
@@ -1355,37 +1365,104 @@ public partial class ShopManager : MonoBehaviour
     /// </summary>
     private bool CanShowNewcomerGift(RecommendSlot slot)
     {
-        if (_shownNewcomer.Count == 0) return true;
+        // 兜底：正常流程在进关时就已决出 owner（ResetNewcomerGiftForNewLevel），
+        // 这里再判一次是防止有其它入口在关卡开始前就打开了道具弹窗。
+        ResolveNewcomerOwner();
 
-        // 本槽本关已出过新人礼，不重复出
+        if (!_newcomerOwner.HasValue)
+        {
+            LogShop($"CanShowNewcomerGift=false: 本关没有槽位被判定为新人礼归属槽，{slot} 不允许出");
+            return false;
+        }
+
+        // 本关只有决出的那个槽能出新人礼（全局唯一，避免三个槽同时出现）
+        if (_newcomerOwner.Value != slot)
+        {
+            LogShop($"CanShowNewcomerGift=false: 本关新人礼已归属 {_newcomerOwner.Value}，{slot} 不允许出");
+            return false;
+        }
+
+        // 同一关内已经出过一次就不再出
         if (_shownNewcomer.ContainsKey(slot))
         {
             LogShop($"CanShowNewcomerGift=false: 本关 {slot} 已出过新人礼({_shownNewcomer[slot]})");
             return false;
         }
 
-        int priority = GetSlotNewcomerPriority(slot);
-        foreach (var kv in _shownNewcomer)
-        {
-            if (GetSlotNewcomerPriority(kv.Key) > priority)
-            {
-                LogShop($"CanShowNewcomerGift=false: 更高优先级 {kv.Key} 本关已出新人礼({kv.Value})，{slot} 不允许出");
-                return false;
-            }
-        }
         return true;
     }
 
-    /// <summary>新人礼互斥优先级：灯泡 3 ＞ 复活 2 ＞ 火箭 1 ＞ 其他 0。</summary>
-    private static int GetSlotNewcomerPriority(RecommendSlot slot)
+    /// <summary>
+    /// 进入关卡时调用：清空本关新人礼记录，并**提前**决出唯一的归属槽。
+    /// 需求：灯泡/复活/火箭的新人礼不能同时出现，优先级 灯泡 ＞ 复活 ＞ 火箭；
+    /// 同一槽内多个新人礼候选时，价格低 ＞ 价格高。
+    /// </summary>
+    /// <param name="stageIndex">关卡号。同一关重复进入时不重置，保留本关已出过新人礼的状态。</param>
+    public void ResetNewcomerGiftForNewLevel(int stageIndex)
     {
-        switch (slot)
+        if (_newcomerResetStage == stageIndex && _newcomerOwnerResolved)
         {
-            case RecommendSlot.Bulb: return 3;
-            case RecommendSlot.Clock: return 2;   // 复活
-            case RecommendSlot.Rocket: return 1;
-            default: return 0;
+            LogShop($"[新人礼] 同一关({stageIndex})重进，保留本关新人礼状态");
+            return;
         }
+
+        _newcomerResetStage = stageIndex;
+        _shownNewcomer.Clear();
+        _newcomerOwner = null;
+        _newcomerOwnerResolved = false;
+
+        // 进关即判定，而不是等玩家点开某个弹窗时"先到先得"
+        ResolveNewcomerOwner();
+    }
+
+    /// <summary>决出本关新人礼归属槽（每关只判一次）。</summary>
+    private void ResolveNewcomerOwner()
+    {
+        if (_newcomerOwnerResolved) return;
+        _newcomerOwnerResolved = true;
+
+        // 审核态走"全部礼包展示"，不参与推送规则
+        if (AuditConfig.IsAuditOpen)
+        {
+            LogShop("[新人礼] 审核态，跳过归属槽决策");
+            return;
+        }
+
+        // 优先级：灯泡 3 ＞ 复活 2 ＞ 火箭 1
+        RecommendSlot[] order = { RecommendSlot.Bulb, RecommendSlot.Clock, RecommendSlot.Rocket };
+        foreach (RecommendSlot slot in order)
+        {
+            ShopDataItem cand = FindCheapestNewcomerCandidate(slot);
+            if (cand == null) continue;
+
+            _newcomerOwner = slot;
+            LogShop($"[新人礼] 本关归属槽={slot}, 礼包={cand.produceNameId}(price={cand.price}, giftType={cand.giftType})");
+            return;
+        }
+
+        LogShop("[新人礼] 本关无槽位可出新人礼");
+    }
+
+    /// <summary>
+    /// 取该槽当前真正可出的新人礼（同槽多个时取价格最低）。
+    /// 过滤口径与 DecideWinner 的 valid 一致：未限购满、冷却系数不为 0。
+    /// </summary>
+    private ShopDataItem FindCheapestNewcomerCandidate(RecommendSlot slot)
+    {
+        // 灯泡有三个推荐位，复活/火箭各一个
+        int maxFeatured = slot == RecommendSlot.Bulb ? 3 : 1;
+
+        List<ShopDataItem> pool = new List<ShopDataItem>();
+        for (int featured = 1; featured <= maxFeatured; featured++)
+        {
+            pool.AddRange(GetSlotCandidates(slot, featured));
+        }
+
+        return pool
+            .Where(c => IsNewcomerLabel(c.labelZh))
+            .Where(c => !IsLimitedOut(c) && GetCooldownCoefficient(c) > 0f)
+            .OrderBy(c => c.price)
+            .FirstOrDefault();
     }
 
     private static bool IsNewcomerLabel(string label)

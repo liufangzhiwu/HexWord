@@ -147,11 +147,11 @@ public partial class ChessPlayArea
         
         if(toolInfo.count <= 0)
         {
-            if (GameDataManager.Instance.UserData.Gold < toolInfo.cost)
-            {
-                ShopManager.shopManager.OpenDynamicStore();
-                return;
-            }
+            // if (GameDataManager.Instance.UserData.Gold < toolInfo.cost)
+            // {
+            //     ShopManager.shopManager.OpenDynamicStore();
+            //     return;
+            // }
             GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             return;
@@ -281,7 +281,7 @@ public partial class ChessPlayArea
         ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
         if (toolInfo == null) return;
         
-        if(toolInfo.count <= 0&&GameDataManager.Instance.UserData.Gold >= toolInfo.cost)
+        if(toolInfo.count <= 0)
         {
             GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
             // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
@@ -289,11 +289,11 @@ public partial class ChessPlayArea
             return;
         }
 
-        if (GameDataManager.Instance.UserData.Gold < toolInfo.cost&&toolInfo.count <= 0)
-        {
-            ShopManager.shopManager.OpenDynamicStore();
-            return;
-        }
+        // if (GameDataManager.Instance.UserData.Gold < toolInfo.cost&&toolInfo.count <= 0)
+        // {
+        //     ShopManager.shopManager.OpenDynamicStore();
+        //     return;
+        // }
 
         // 第二关新手引导 不计数
         if (CurrStageInfo.StageNumber == 2)

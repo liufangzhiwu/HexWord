@@ -361,6 +361,14 @@ public class StreakManager : Singleton<StreakManager>
         // 6. 保存用户数据
         userData.SaveData();
 
+        // ======================= 签到活动埋点 =======================
+        // 活动：签到活动（SevenSignScreen / 每日胜利签到）
+        // 只上报「开启」和「签到进度」，不上报 activity_complete ——
+        // 这个活动每天都能签到、没有真正的"结束"状态，报完成会让漏斗数据失真。
+        // 进度口径：累计签到总天数；时长口径：当天 00:00 到本次签到的秒数（与「每日任务」一致）。
+        System.TimeSpan sinceToday = System.DateTime.Now.Subtract(System.DateTime.Today);
+        AnalyticMgr.ActivityProgress("签到活动", signData.totalSignDays, (int)sinceToday.TotalSeconds);
+
         // 7. 触发事件
         OnSignSuccess?.Invoke(signData.currentStreak);
 

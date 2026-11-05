@@ -49,6 +49,11 @@ public class SevenSignScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+
+        // ★ 签到活动埋点：进入签到日历页也视为活动开启，按天去重（与每日胜利签到弹窗共用同一条记录）。
+        //   该活动每天都能签到、没有"完成"状态，因此只报开启 + 进度，不报 activity_complete。
+        AnalyticMgr.ActivityBeginDaily("签到活动");
+
         AudioManager.Instance?.PlaySoundEffect("ShowUI");
         
         StreakManager.Instance.UpdateWinStreak();

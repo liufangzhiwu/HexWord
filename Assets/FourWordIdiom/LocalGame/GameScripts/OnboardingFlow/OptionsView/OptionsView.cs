@@ -10,27 +10,28 @@ public class OptionsView : UIWindow
     [SerializeField] private Button autopushBtn; // 推送开关
     [SerializeField] private Button adsTrackBtn; // 广告关联开关
     
-    [SerializeField] private Toggle vibrateToggle; // 震动开关
-    [SerializeField] private Toggle musicToggle; // 音乐开关
-    [SerializeField] private Toggle soundsToggle; // 音效开关
-
+    [SerializeField] private Button MusicButton; // 音乐按钮
+    [SerializeField] private Button SoundBtn; // 音效按钮
+    [SerializeField] private Button VibrateBtn; // 震动按钮
+    
     [SerializeField] private Button privacyBtn; // 隐私条款按钮
     [SerializeField] private Button termsBtn; // 服务协议按钮
     [SerializeField] private Button opinionBtn; // 语言选择按钮
     [SerializeField] private Button restoreBuyBtn; // 服务协议按钮
     [SerializeField] private Button copyButton;   // 复制id和包名
     
-    [SerializeField] private GameObject muHandle; // 音乐开关的视觉手柄
-    [SerializeField] private GameObject soHandle; // 音效开关的视觉手柄
-    [SerializeField] private GameObject viHandle; // 震动开关的视觉手柄
+    [SerializeField] private GameObject muClose; // 音乐关闭的Icon
+    [SerializeField] private GameObject soClose; // 音效关闭的Icon
+    [SerializeField] private GameObject viClose; // 震动关闭的Icon
+    
     [SerializeField] private GameObject auHandle; // 震动开关的视觉手柄
     [SerializeField] private GameObject adsHandle; // 广告开关的视觉手柄
 
     [SerializeField] private Text VersionText;
     [SerializeField] private Text HeaderText;
-    [SerializeField] private Text musicText; // 音乐文本显示
-    [SerializeField] private Text soundText; // 音效文本显示
-    [SerializeField] private Text vibrateText; // 震动文本显示
+    // [SerializeField] private Text musicText; // 音乐文本显示
+    // [SerializeField] private Text soundText; // 音效文本显示
+    // [SerializeField] private Text vibrateText; // 震动文本显示
 
     // 广告关联（广告追踪授权）开关：运行时按"消息推送"行克隆出来的，见 SetupAdTrackingRow()
     private GameObject _adTrackingRow;
@@ -83,24 +84,17 @@ public class OptionsView : UIWindow
     
     private void UpdateToggleStates(bool animate)
     {
-        musicToggle.isOn = GameDataManager.Instance.UserData.IsMusicOn; // 更新音乐开关状态
-        soundsToggle.isOn = GameDataManager.Instance.UserData.IsSoundOn; // 更新音效开关状态
-        vibrateToggle.isOn = GameDataManager.Instance.UserData.IsVibrationOn; // 更新音效开关状态
+        muClose.SetActive(!GameDataManager.Instance.UserData.IsMusicOn);// 更新音乐开关状态
+        soClose.SetActive(!GameDataManager.Instance.UserData.IsSoundOn);// 更新音效开关状态
+        viClose.SetActive(!GameDataManager.Instance.UserData.IsVibrationOn); // 更新音效开关状态
         
         // 根据当前开关状态更新视觉效果
         if (animate)
         {
-            UpdateToggleVisuals(muHandle, musicToggle.isOn); // 带动画更新音乐手柄视觉
-            UpdateToggleVisuals(soHandle, soundsToggle.isOn); // 带动画更新音效手柄视觉
-            UpdateToggleVisuals(viHandle, vibrateToggle.isOn); // 带动画更新音效手柄视觉
             UpdateToggleVisuals(auHandle, GameDataManager.Instance.UserData.IsAutoPush); // 带动画更新音效手柄视觉
         }
         else
         {
-            // 直接设置颜色和位置，不带动画
-            SetToggleVisuals(muHandle, musicToggle.isOn);
-            SetToggleVisuals(soHandle, soundsToggle.isOn);
-            SetToggleVisuals(viHandle, vibrateToggle.isOn); // 带动画更新音效手柄视觉
             SetToggleVisuals(auHandle, GameDataManager.Instance.UserData.IsAutoPush); // 带动画更新音效手柄视觉
         }
     }
@@ -114,46 +108,38 @@ public class OptionsView : UIWindow
 
     private void AttachToggleListeners()
     {
-        musicToggle.onValueChanged.AddListener(ToggleMusic); // 绑定音乐开关变更事件
-        soundsToggle.onValueChanged.AddListener(ToggleSounds); // 绑定音效开关变更事件
-        vibrateToggle.onValueChanged.AddListener(ToggleVibrate); // 绑定音效开关变更事件
-
-        // 添加无用的点击监听器
-        foreach (var toggle in new Toggle[] { musicToggle, soundsToggle, vibrateToggle })
-        {
-            toggle.onValueChanged.AddListener((value) => {
-                // 无意义的回调
-                if (Random.value > 0.8f)
-                {
-                    Debug.Log($"[OptionsView] Toggle state changed to {value}");
-                }
-            });
-        }
+        MusicButton.AddClickAction(ToggleMusic); // 绑定音乐开关变更事件
+        SoundBtn.AddClickAction(ToggleSounds); // 绑定音效开关变更事件
+        VibrateBtn.AddClickAction(ToggleVibrate); // 绑定震动开关变更事件
     }
 
     private void OnChangeLanguage()
     {
         // 更新语言按钮和文本显示
-        musicText.text = MultilingualManager.Instance.GetString("Music").ToUpper(); // 音乐文本
-        soundText.text = MultilingualManager.Instance.GetString("Sounds").ToUpper(); // 音效文本
-        vibrateText.text = MultilingualManager.Instance.GetString("Vibrate").ToUpper(); // 音效文本
+        // musicText.text = MultilingualManager.Instance.GetString("Music").ToUpper(); // 音乐文本
+        // soundText.text = MultilingualManager.Instance.GetString("Sounds").ToUpper(); // 音效文本
+        // vibrateText.text = MultilingualManager.Instance.GetString("Vibrate").ToUpper(); // 音效文本
         HeaderText.text = MultilingualManager.Instance.GetString("Settings").ToUpper();
        
     }
 
-    private void ToggleMusic(bool isOn)
+    private void ToggleMusic()
     {
-        GameDataManager.Instance.UserData.IsMusicOn = isOn; // 保存音乐开关状态
+        bool isMusicOn = GameDataManager.Instance.UserData.IsMusicOn;
+        GameDataManager.Instance.UserData.IsMusicOn = !isMusicOn; // 保存音乐开关状态
         AudioManager.Instance.ToggleMusic();; // 切换音乐状态
-        UpdateToggleVisuals(muHandle, isOn); // 更新音乐手柄视觉
+        
+        muClose.SetActive(!GameDataManager.Instance.UserData.IsMusicOn);// 更新音乐开关状态
 
         AudioManager.Instance.TriggerVibration(40, 50);
     }
 
-    private void ToggleVibrate(bool isOn)
+    private void ToggleVibrate()
     {
-        GameDataManager.Instance.UserData.IsVibrationOn = isOn; // 保存音效开关状态
-        UpdateToggleVisuals(viHandle, isOn); // 更新音效手柄视觉
+        bool isVibrateOn = GameDataManager.Instance.UserData.IsVibrationOn;
+        GameDataManager.Instance.UserData.IsVibrationOn = !isVibrateOn; // 保存音效开关状态
+        
+        viClose.SetActive(!GameDataManager.Instance.UserData.IsVibrationOn); // 更新音效开关状态
     }
     
     private void ToggleAutoPush()
@@ -286,12 +272,16 @@ public class OptionsView : UIWindow
         return cur == root ? string.Join("/", parts) : null;
     }
 
-    private void ToggleSounds(bool isOn)
+    private void ToggleSounds()
     {
-        GameDataManager.Instance.UserData.IsSoundOn = isOn; // 保存音效开关状态
-        UpdateToggleVisuals(soHandle, isOn); // 更新音效手柄视觉
+        
+        bool isOn =  GameDataManager.Instance.UserData.IsSoundOn;
+        
+        GameDataManager.Instance.UserData.IsSoundOn = !isOn; // 保存音效开关状态
 
         AudioManager.Instance.TriggerVibration(40, 50);
+        
+        soClose.SetActive(!GameDataManager.Instance.UserData.IsSoundOn);// 更新音效开关状态
     }
 
     private void UpdateToggleVisuals(GameObject handle, bool isOn, float time = 0.2f)

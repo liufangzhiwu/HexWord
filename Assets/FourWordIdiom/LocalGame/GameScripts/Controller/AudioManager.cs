@@ -149,6 +149,26 @@ public class AudioManager : MonoBehaviour
     }
     
     /// <summary>
+    /// 连续播放同一音效 times 次，每次间隔 interval 秒。
+    /// 用于「金币入袋」这类需要"叮叮叮"叠加感的反馈，不走循环播放（循环会让尾音被硬切）。
+    /// </summary>
+    public void PlaySoundEffectRepeat(string clipName, int times = 3, float interval = 0.08f, float volume = 0.25f)
+    {
+        if (times <= 0) return;
+        StartCoroutine(PlaySoundEffectRepeatRoutine(clipName, times, interval, volume));
+    }
+
+    private IEnumerator PlaySoundEffectRepeatRoutine(string clipName, int times, float interval, float volume)
+    {
+        for (int i = 0; i < times; i++)
+        {
+            PlaySoundEffect(clipName, 0, volume);
+            if (i < times - 1 && interval > 0f)
+                yield return new WaitForSeconds(interval);
+        }
+    }
+
+    /// <summary>
     /// 循环播放音效，直到显式调用 <see cref="StopLoopSoundEffect"/>。
     /// 用于「禅意分滚动」这类需要一直响到某个过程结束的音效，不能走 PlaySoundEffect（那是一次性播放 + 自动回收）。
     /// </summary>

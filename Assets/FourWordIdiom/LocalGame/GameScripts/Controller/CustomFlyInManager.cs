@@ -24,6 +24,14 @@ public class CustomFlyInManager : MonoBehaviour
     [Header("奖励飞入曲线（贝塞尔）")]
     [Tooltip("弯曲程度：0=直线，越大越弯。按飞行距离等比计算，不会因屏幕尺寸失真")]
     [SerializeField] private float BezierBendRatio = 0.10f;
+
+    // ======================= 金币音效 =======================
+    /// <summary>金币入袋音效名（ui_coin_add_eff，0.18s）</summary>
+    private const string CoinAddSound = "ui_coin_add_eff";
+    /// <summary>金币入袋连播次数</summary>
+    private const int CoinAddSoundTimes = 3;
+    /// <summary>金币入袋连播间隔，间隔短于音效本身时长，尾音叠出"叮叮叮"的效果</summary>
+    private const float CoinAddSoundInterval = 0.08f;
     
     private void Awake()
     {
@@ -65,15 +73,17 @@ public class CustomFlyInManager : MonoBehaviour
 
     private IEnumerator FlyInValueGoldWithTarget(Transform start, Transform target, int count, Vector3 scale, Action call, bool isaudio)
     {
+        // ★ 金币上移悬浮：整批只播一次"出现"音效，替换掉原来每个金币各播一次的 filyGold
+        PlayCoinShowSound();
+
         for (int i = 0; i < count; i++)
         {
             float s = 0.55f - i * 0.01f;
             yield return new WaitForSeconds(0.085f);
-            if (i < 4 && isaudio)
-                AudioManager.Instance.PlaySoundEffect("filyGold");
-            
+
             // 🌟 重点：这里把 target 传给了底层的飞行逻辑，而不是写死的 GoldObj
-            StartCoroutine(FlyInGoldCoroutine(start, target, GoldPrefab, true, null, scale, s));
+            // 入袋音效只由第一个金币触发，避免 N 枚金币叠加成一片噪音
+            StartCoroutine(FlyInGoldCoroutine(start, target, GoldPrefab, true, null, scale, s, i == 0));
         }
         yield return new WaitForSeconds(0.35f);
         call?.Invoke();
@@ -95,16 +105,30 @@ public class CustomFlyInManager : MonoBehaviour
 
     IEnumerator FlyInValueGold(Transform start,int count,Vector3 scale,Action call,bool isaudio)
     {
+        // ★ 金币上移悬浮：整批只播一次"出现"音效
+        PlayCoinShowSound();
+
         for (int i = 0; i < count; i++)
         {
             float s = 0.55f - i * 0.01f;
             yield return new WaitForSeconds(0.085f);
-            if (i<4&&isaudio)
-                AudioManager.Instance.PlaySoundEffect("filyGold");
-            StartCoroutine(FlyInGoldCoroutine(start,GoldObj.transform,GoldPrefab,true,null,scale,s));
+            // 入袋音效只由第一个金币触发
+            StartCoroutine(FlyInGoldCoroutine(start,GoldObj.transform,GoldPrefab,true,null,scale,s, i == 0));
         }
         yield return new WaitForSeconds(0.35f);
         call?.Invoke();
+    }
+
+    /// <summary>金币浮起/出现音效（统一入口，便于后续替换）</summary>
+    private void PlayCoinShowSound()
+    {
+        AudioManager.Instance.PlaySoundEffect("ui_coin_show_eff");
+    }
+
+    /// <summary>金币入袋音效：与金币栏接触时连播 3 次（统一入口，便于后续替换）</summary>
+    private void PlayCoinAddSound()
+    {
+        AudioManager.Instance.PlaySoundEffectRepeat(CoinAddSound, CoinAddSoundTimes, CoinAddSoundInterval);
     }
 
     public void FlyIn(Transform start,Transform target,GameObject effect,Action call,float duration=0f)
@@ -376,7 +400,7 @@ public class CustomFlyInManager : MonoBehaviour
         call?.Invoke();
     }
     
-    private IEnumerator FlyInGoldCoroutine(Transform start,Transform target,GameObject gold,bool isCurve,Action call,Vector3 scale,float duration=0.45f)
+    private IEnumerator FlyInGoldCoroutine(Transform start,Transform target,GameObject gold,bool isCurve,Action call,Vector3 scale,float duration=0.45f,bool playLandSound=false)
     {
         GameObject Gold = Instantiate(gold,SystemManager.Instance._uiRoot);
         Gold.transform.position = start.position; // 设置起始位置
@@ -418,10 +442,12 @@ public class CustomFlyInManager : MonoBehaviour
         }
         
         Gold.transform.DOScale(new Vector3(0.78f,0.78f,1f), duration);
-        yield return new WaitForSeconds(0.2f);
-        //AudioManager.Instance.TriggerVibration();
-        AudioManager.Instance.PlaySoundEffect("filyGold");
         yield return new WaitForSeconds(duration);
+
+        // ★ 金币与金币栏接触的瞬间：连播 3 次入袋音效（只由本批第一枚金币触发）
+        if (playLandSound)
+            PlayCoinAddSound();
+
         Gold.GetComponent<Image>().DOFade(0, 0.1f).OnComplete(() =>
         {
             Gold.gameObject.SetActive(false);

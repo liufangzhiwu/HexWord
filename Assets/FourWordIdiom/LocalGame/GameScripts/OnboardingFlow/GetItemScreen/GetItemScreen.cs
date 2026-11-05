@@ -683,8 +683,8 @@ public class GetItemScreen : UIWindow
 
         if (toolInfo.cost > GameDataManager.Instance.UserData.Gold)
         {
-            SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
-            Close();
+            ShopManager.shopManager.OpenDynamicStore();
+            //Close();
             return;
         }
 

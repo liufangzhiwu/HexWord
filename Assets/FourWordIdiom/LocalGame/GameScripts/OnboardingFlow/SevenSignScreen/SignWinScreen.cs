@@ -32,6 +32,11 @@ public class SignWinScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+
+        // ★ 签到活动埋点：每日胜利签到弹窗只在"今天还没签到"时出现，
+        //   这里按天去重上报「活动开启」（同一天从日历页/弹窗重复进入只报一次）。
+        AnalyticMgr.ActivityBeginDaily("签到活动");
+
         AudioManager.Instance.PlaySoundEffect("ShowUI");
         InitUI();
 

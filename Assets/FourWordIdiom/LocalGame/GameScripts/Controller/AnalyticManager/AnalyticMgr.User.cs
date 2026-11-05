@@ -126,9 +126,16 @@ public partial class AnalyticMgr
     private static DateTime? _startTime;// 使用 记录开始时间
     private static DateTime firstLoginTime = DateTime.MinValue;
     
-    public static void GameStart()
+    /// <summary>
+    /// 游戏开始（登录）。
+    /// </summary>
+    /// <param name="countAsLogin">
+    /// true：真正的登录（启动、换号），会累加 total_login / active_day 并上报 ta_app_start；
+    /// false：从后台切回前台，只刷新会话时间与用户属性，**不计一次登录**。
+    /// </param>
+    public static void GameStart(bool countAsLogin = true)
     {
-        SetLoginProperties();
+        SetLoginProperties(countAsLogin);
 
         if (SystemManager.Instance != null)
         {
@@ -152,52 +159,64 @@ public partial class AnalyticMgr
     /// 注意：这是 total_login / active_day / first_login_time 的【唯一】写入口，
     /// 其它地方（含 SetCommonProperties）只读，避免累计值被埋点调用次数刷高。
     /// </summary>
-    private static void SetLoginProperties()
+    /// <param name="countAsLogin">
+    /// true 才累加 total_login / active_day 并上报启动事件；
+    /// 从后台回前台时传 false，只刷新会话时间与用户属性。
+    /// </param>
+    private static void SetLoginProperties(bool countAsLogin = true)
     {
-        // 记录本次登录开始时间
+        // 记录本次会话开始时间（回前台也算一次新会话，用于时长统计）
         var now = DateTime.Now;
         _startTime = now;
         var userData = GameDataManager.Instance.UserData;
         var today = now.Date;
 
-        // 处理首次登录（仅在首次时设置，避免 OnAnalyticsSdkInit 中重复覆盖）
-        if (string.IsNullOrEmpty(userData.firstLoginTime))
+        if (countAsLogin)
         {
-            userData.firstLoginTime = now.ToString("yyyy-MM-dd HH:mm:ss");
-            userData.activeDayCnt = 1;
-            userData.lastLoginDay = today.ToString("yyyy-MM-dd");
-            userData.totallogin = 1;
-        }
-        else
-        {
-            // 非首次登录：更新活跃天数（基于上次登录日期）
-            if (DateTime.TryParse(userData.lastLoginDay, out var lastLoginDate))
+            // 处理首次登录（仅在首次时设置，避免 OnAnalyticsSdkInit 中重复覆盖）
+            if (string.IsNullOrEmpty(userData.firstLoginTime))
             {
-                if (lastLoginDate.Date != today)
-                {
-                    userData.activeDayCnt++;
-                }
+                userData.firstLoginTime = now.ToString("yyyy-MM-dd HH:mm:ss");
+                userData.activeDayCnt = 1;
+                userData.lastLoginDay = today.ToString("yyyy-MM-dd");
+                userData.totallogin = 1;
             }
             else
             {
-                // 解析失败，保守增加
-                userData.activeDayCnt++;
-            }
-            
-            if(userData.activeDayCnt<=0) userData.activeDayCnt = 1;
+                // 非首次登录：更新活跃天数（基于上次登录日期）
+                if (DateTime.TryParse(userData.lastLoginDay, out var lastLoginDate))
+                {
+                    if (lastLoginDate.Date != today)
+                    {
+                        userData.activeDayCnt++;
+                    }
+                }
+                else
+                {
+                    // 解析失败，保守增加
+                    userData.activeDayCnt++;
+                }
 
-            userData.totallogin++;
-            userData.lastLoginDay = today.ToString("yyyy-MM-dd");
+                if (userData.activeDayCnt <= 0) userData.activeDayCnt = 1;
+
+                userData.totallogin++;
+                userData.lastLoginDay = today.ToString("yyyy-MM-dd");
+            }
         }
-      
+        else if (string.IsNullOrEmpty(userData.firstLoginTime))
+        {
+            // 兜底：首次登录一定先于回前台，这里只防止下面 Parse 抛异常
+            userData.firstLoginTime = now.ToString("yyyy-MM-dd HH:mm:ss");
+        }
+
         firstLoginTime = DateTime.Parse(userData.firstLoginTime);
 
         // 计算生命周期天数（基于首次登录时间）
         int lifeDays = (today - firstLoginTime.Date).Days+ 1; // +1 表示第1天
         Debug.Log("当前时间："+today.ToString("yyyy-MM-dd HH:mm:ss")+"周期天数 life:"+lifeDays);
 
-        // 留存回传只在登录时机上报一次（原先放在 SetCommonProperties 里会随调用次数重复上报）
-        if (lifeDays == 2)
+        // 留存回传只在真正的登录时机上报一次（回前台不算登录，不重复上报）
+        if (countAsLogin && lifeDays == 2)
         {
 #if UNITY_HUAWEI || UNITY_OPENHARMONY
             long nowTimeMilliseconds = DateTimeOffset.Now.ToUnixTimeMilliseconds();
@@ -245,7 +264,16 @@ public partial class AnalyticMgr
         }
 
         SetCommonProperties();
+
+        // ★ ta_app_start 回前台也要发：用于会话/启动事件的配对统计。
+        //   注意它只代表「应用回到前台」，不等于一次登录 —— 登录计数与启动转化在下面按 countAsLogin 处理。
         Game.self?.Analytics.LogEvent("ta_app_start", Define.DataTarget.Think);
+
+        if (!countAsLogin)
+        {
+            Debug.Log("[Analytics] 回到前台：已上报 ta_app_start，但不累加登录次数、不报启动转化");
+            return;
+        }
 
         UnityTimer.Delay(3, () =>
         {
@@ -325,9 +353,8 @@ public partial class AnalyticMgr
         }
         var durationSeconds = (DateTime.Now - _startTime.Value).TotalSeconds;
         durationSeconds = Math.Max(0, durationSeconds);
-        
-        // #duration 规范为数值，直接传 double，避免被锁成字符串类型
-        var outproperties = new Dictionary<string, object>(){{"#duration", Math.Round(durationSeconds, 2)}};
+         
+        var outproperties = new Dictionary<string, object>(){{"#duration", durationSeconds.ToString("0.00")}};
         Game.self.Analytics?.LogEvent("ta_app_end",outproperties, Define.DataTarget.Think);
     }
     

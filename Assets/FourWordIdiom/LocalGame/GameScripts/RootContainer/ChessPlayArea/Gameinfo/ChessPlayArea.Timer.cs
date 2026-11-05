@@ -12,6 +12,40 @@ using UnityEngine.UI;
  */
 public partial class ChessPlayArea
 {
+    // ======================= 倒计时提醒参数 =======================
+    /// <summary>剩余 1 分钟的时间文字颜色 #FF3737</summary>
+    private static readonly Color TimeWarningColor = new Color32(255, 55, 55, 255);
+    /// <summary>最后 10 秒的时间文字颜色（更深一档）</summary>
+    private static readonly Color TimeDangerColor = new Color32(255, 0, 0, 255);
+    /// <summary>倒计时提醒音效（闹钟）</summary>
+    private const string ClockSfxName = "clock";
+    /// <summary>时间到红屏呼吸的透明度下限 30/255</summary>
+    private const float TimeUpRedAlphaMin = 30f / 255f;
+    /// <summary>时间到：四面泛红呼吸时长</summary>
+    private const float TimeUpRedDuration = 1f;
+    /// <summary>时间到：时间数字放大呼吸时长</summary>
+    private const float TimeUpTextBreathDuration = 1f;
+    /// <summary>横幅出现后多久弹失败界面</summary>
+    private const float TimeUpFailDelay = 2.5f;
+    /// <summary>1 分钟提醒音效 clock.ogg 的时长，红屏闪烁与文字晃动都跟着它走完全程</summary>
+    private const float ClockSfxDuration = 2.5f;
+    /// <summary>提醒动效分段数（6 段 = 3 次完整呼吸，单段约 0.42s）</summary>
+    private const int WarningBreathLoops = 6;
+    private static float WarningBreathStep => ClockSfxDuration / WarningBreathLoops;
+    /// <summary>提醒时时间文字的放大峰值</summary>
+    private const float WarningTextPeakScale = 1.18f;
+    /// <summary>「时间到！」横幅停留时长（加上进出场约 5s）</summary>
+    private const float TimeUpBannerHold = 4.6f;
+
+    /// <summary>最后 10 秒提醒是否已触发</summary>
+    private bool _isDangerTriggered;
+    /// <summary>时间到红屏（ChessPlayArea/TimeNoEnough）</summary>
+    private Image _timeNoEnoughRed;
+    /// <summary>1 分钟闪红的呼吸 Tween（时间到时需要先掐掉，避免它把 5s 循环复位）</summary>
+    private Tween _warnRedTween;
+    /// <summary>「时间到！」横幅实例（复活时需要提前收掉）</summary>
+    private GameObject _timeUpBanner;
+
     private int _lastDisplayedSeconds = -1;
     private Image _pupaIcon;
     private void Update()
@@ -51,7 +85,12 @@ public partial class ChessPlayArea
         // ==========================================
         // 4. 警告与超时处理
         // ==========================================
-        if (_remainingTime <= 60f && !_isWarningTriggered)
+        // 最后 10 秒优先（如果关卡一进来就只剩 10 秒，不要和 1 分钟提醒叠着播两遍）
+        if (_remainingTime <= 10f && !_isDangerTriggered)
+        {
+            TriggerTimeDanger();
+        }
+        else if (_remainingTime <= 60f && !_isWarningTriggered)
         {
             TriggerTimeWarning();
         }
@@ -169,11 +208,19 @@ public partial class ChessPlayArea
     }
     
     /// <summary>
-    /// 触发时间警告表现（红色背景 + 单次呼吸放大）
+    /// 倒计时进入 1 分钟：时间文字变红 + 放大动效 + 音效（原有背景呼吸保留）
     /// </summary>
     private void TriggerTimeWarning()
     {
         _isWarningTriggered = true;
+
+        SetTimerTextColor(TimeWarningColor);
+        PlayWarningTimerShake();
+        AudioManager.Instance.PlaySoundEffect(ClockSfxName);
+
+        // ★ 倒计时音效响起的同时，四周泛红跟着音效闪完全程（与 0 秒那套同一个节点）
+        PlayTimeUpRedPulse();
+
         if (gameTimeBg != null)
         {
             gameTimeBg.gameObject.SetActive(true);
@@ -184,7 +231,342 @@ public partial class ChessPlayArea
                 .OnComplete(()=>{ gameTimeBg.gameObject.SetActive(false); });
         }
     }
-    
+
+    /// <summary>
+    /// 最后 10 秒：和 1 分钟提醒同一套表现（文字晃动 + 红屏闪烁 + 闹钟音效），
+    /// 只是文字用更深的红，强调"马上要结束了"。
+    /// </summary>
+    private void TriggerTimeDanger()
+    {
+        _isDangerTriggered = true;
+        // 直接进入 10 秒档时，避免 1 分钟那次再补一遍
+        _isWarningTriggered = true;
+
+        SetTimerTextColor(TimeDangerColor);
+        PlayWarningTimerShake();
+        AudioManager.Instance.PlaySoundEffect(ClockSfxName);
+        PlayTimeUpRedPulse();
+    }
+
+    private void SetTimerTextColor(Color color)
+    {
+        if (_timerText != null) _timerText.color = color;
+    }
+
+    #endregion
+
+    #region 时间到表现（红屏呼吸 → 闹钟音效 → 「时间到！」横幅）
+
+    /// <summary>
+    /// 时间到整套演出：
+    /// 0~1s：时间数字呼吸 + 四周泛红呼吸 + 闹钟音效；
+    /// 横幅立刻出现、总共停留约 5s；横幅出现约 2.5s 后由调用方弹失败界面。
+    /// </summary>
+    private IEnumerator PlayTimeUpSequence()
+    {
+        // 0. 时间数字变色 + 1s 放大呼吸
+        SetTimerTextColor(TimeDangerColor);
+        PlayTimeUpTextBreath(TimeUpTextBreathDuration);
+
+        // 1. 全屏红屏呼吸（TimeNoEnough，#FF3737，约 1s）
+        PlayTimeUpRedScreen(TimeUpRedDuration);
+
+        // 2. 闹钟音效
+        AudioManager.Instance.PlaySoundEffect(ClockSfxName, 0, 0.35f);
+
+        // 3. 「时间到！」横幅：与红屏并行，停留约 5s
+        StartCoroutine(ShowTimeUpBanner());
+
+        // 4. 横幅显示约 2.5s 后再弹失败界面
+        yield return new WaitForSeconds(TimeUpFailDelay);
+    }
+
+    /// <summary>时间到那一刻，时间数字的放大呼吸（1s）</summary>
+    private void PlayTimeUpTextBreath(float duration)
+    {
+        if (_timerText == null) return;
+
+        _timerText.transform.DOKill();
+        _timerText.transform.localScale = Vector3.one;
+
+        // duration 内做 2 次完整呼吸：4 段 yoyo
+        float step = Mathf.Max(0.05f, duration / 4f);
+        _timerText.transform.DOScale(1.25f, step)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(4, LoopType.Yoyo)
+            .OnComplete(() =>
+            {
+                if (_timerText != null) _timerText.transform.localScale = Vector3.one;
+            });
+    }
+
+    /// <summary>
+    /// 全屏红色呼吸：使用 ChessPlayArea/TimeNoEnough。
+    /// 该节点的贴图「红色闪红」本身就是"四周泛红"的暗角图（中心透明、边缘最高 alpha≈139），
+    /// 按美术本意只做暗角闪红、不铺整屏红底，所以这里只驱动它自己的 alpha：30/255 ↔ 255/255。
+    /// </summary>
+    private void PlayTimeUpRedScreen(float duration)
+    {
+        Image red = GetTimeNoEnoughImage();
+        if (red == null) return;
+
+        // 1 分钟那次闪红如果还没播完，先掐掉，避免它的 OnComplete 把这次的循环提前复位
+        if (_warnRedTween != null)
+        {
+            _warnRedTween.Kill();
+            _warnRedTween = null;
+        }
+
+        red.gameObject.SetActive(true);
+        // 顶到最上层：白屏/遮罩/玩法元素都排在它前面，不顶上来会被盖住
+        red.transform.SetAsLastSibling();
+        red.raycastTarget = false;
+        red.DOKill();
+
+        // 保留贴图原色（它本身是红的），只动透明度
+        Color c = red.color;
+        c.a = TimeUpRedAlphaMin;
+        red.color = c;
+
+        Debug.Log($"[ChessPlayArea] 时间到红屏起播: node={red.name}, active={red.gameObject.activeInHierarchy}, " +
+                  $"alpha={c.a:F3}");
+
+        // duration 内跑 2 次完整呼吸（4 段 yoyo）；1s 档约 0.25s 一段
+        int loops = duration >= 3f ? 6 : 4;
+        float step = Mathf.Max(0.08f, duration / loops);
+        red.DOFade(1f, step)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(loops, LoopType.Yoyo)
+            .OnComplete(() =>
+            {
+                // 呼吸结束再淡出，避免突然消失
+                red.DOFade(0f, 0.15f).OnComplete(() => ResetTimeUpRedScreen());
+            });
+    }
+
+    /// <summary>
+    /// 1 分钟提醒时时间文字的"晃动"：跟着 clock 音效全程呼吸放大（1 ↔ 1.18），
+    /// 与四周泛红同一节奏，音效放完才停。
+    /// </summary>
+    private void PlayWarningTimerShake()
+    {
+        if (_timerText == null) return;
+
+        _timerText.transform.DOKill();
+        _timerText.transform.localScale = Vector3.one;
+        _timerText.transform.DOScale(WarningTextPeakScale, WarningBreathStep)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(WarningBreathLoops, LoopType.Yoyo)
+            .OnComplete(() =>
+            {
+                if (_timerText != null) _timerText.transform.localScale = Vector3.one;
+            });
+    }
+
+    /// <summary>
+    /// 四周泛红"闪一下"：1 分钟提醒音效响起时用，跟着音效全程呼吸（30/255 ↔ 255/255），约 2.5s。
+    /// 复用同一个 TimeNoEnough 节点，与 0 秒那套 5s 循环互斥（起播前会 Kill 掉前一段）。
+    /// </summary>
+    private void PlayTimeUpRedPulse()
+    {
+        Image red = GetTimeNoEnoughImage();
+        if (red == null) return;
+
+        red.gameObject.SetActive(true);
+        red.transform.SetAsLastSibling();
+        red.raycastTarget = false;
+        red.DOKill();
+
+        Color c = red.color;
+        c.a = TimeUpRedAlphaMin;
+        red.color = c;
+
+        _warnRedTween = red.DOFade(1f, WarningBreathStep)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(WarningBreathLoops, LoopType.Yoyo)
+            .OnComplete(() =>
+            {
+                // 呼吸结束时停在 30/255，再淡到 0 收尾，避免一下跳没
+                red.DOFade(0f, 0.15f).OnComplete(ResetTimeUpRedScreen);
+            });
+    }
+
+    /// <summary>缓存 TimeNoEnough 节点（找不到就返回 null，不影响主流程）</summary>
+    private Image GetTimeNoEnoughImage()
+    {
+        if (_timeNoEnoughRed != null) return _timeNoEnoughRed;
+
+        Transform t = transform.Find("TimeNoEnough");
+        if (t == null)
+        {
+            // 兜底：层级被调整过时，递归找同名节点
+            Transform[] all = GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i].name == "TimeNoEnough") { t = all[i]; break; }
+            }
+        }
+
+        if (t == null)
+        {
+            Debug.LogWarning("[ChessPlayArea] 未找到 TimeNoEnough，跳过时间到红屏呼吸");
+            return null;
+        }
+
+        _timeNoEnoughRed = t.GetComponent<Image>();
+        if (_timeNoEnoughRed == null)
+            Debug.LogWarning("[ChessPlayArea] TimeNoEnough 上没有 Image 组件");
+
+        return _timeNoEnoughRed;
+    }
+
+    /// <summary>复位红屏（复活 / 换关时调用），避免残留在屏幕上</summary>
+    private void ResetTimeUpRedScreen()
+    {
+        if (_warnRedTween != null)
+        {
+            _warnRedTween.Kill();
+            _warnRedTween = null;
+        }
+
+        if (_timeNoEnoughRed == null) return;
+
+        _timeNoEnoughRed.DOKill();
+
+        Color c = _timeNoEnoughRed.color;
+        c.a = 0f;
+        _timeNoEnoughRed.color = c;
+        _timeNoEnoughRed.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 「时间到！」横幅：运行时拼一个 UI，避免依赖预制体。
+    /// 底图取 Resources/TimeUp/timeup_banner，取不到就退化成纯色块。
+    /// </summary>
+    private IEnumerator ShowTimeUpBanner()
+    {
+        // 上一次的横幅还在就直接收掉，避免叠出两条
+        DestroyTimeUpBanner();
+
+        GameObject root = new GameObject("TimeUpBanner", typeof(RectTransform), typeof(CanvasGroup));
+        _timeUpBanner = root;
+        RectTransform rootRT = root.GetComponent<RectTransform>();
+        rootRT.SetParent(transform, false);
+        rootRT.SetAsLastSibling();          // 盖在玩法界面最上层
+        rootRT.anchorMin = rootRT.anchorMax = new Vector2(0.5f, 0.5f);
+        rootRT.pivot = new Vector2(0.5f, 0.5f);
+        rootRT.sizeDelta = new Vector2(820f, 208f);   // 底图 1023x259，按比例收缩
+        Vector2 centerPos = new Vector2(0f, 120f);
+
+        CanvasGroup cg = root.GetComponent<CanvasGroup>();
+        cg.alpha = 0f;
+        cg.blocksRaycasts = false;
+        cg.interactable = false;
+
+        // 底图
+        GameObject bgObj = new GameObject("bg", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        RectTransform bgRT = bgObj.GetComponent<RectTransform>();
+        bgRT.SetParent(rootRT, false);
+        bgRT.anchorMin = Vector2.zero;
+        bgRT.anchorMax = Vector2.one;
+        bgRT.offsetMin = Vector2.zero;
+        bgRT.offsetMax = Vector2.zero;
+
+        Image bg = bgObj.GetComponent<Image>();
+        Sprite bannerSprite = LoadTimeUpBannerSprite();
+        if (bannerSprite != null)
+        {
+            bg.sprite = bannerSprite;
+            bg.type = Image.Type.Simple;
+            bg.preserveAspect = true;
+        }
+        else
+        {
+            // 兜底：没有图就画一块同色圆角底
+            bg.color = TimeWarningColor;
+        }
+        bg.raycastTarget = false;
+
+        // 文案
+        GameObject txtObj = new GameObject("txt", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+        RectTransform txtRT = txtObj.GetComponent<RectTransform>();
+        txtRT.SetParent(rootRT, false);
+        txtRT.anchorMin = Vector2.zero;
+        txtRT.anchorMax = Vector2.one;
+        txtRT.offsetMin = Vector2.zero;
+        txtRT.offsetMax = Vector2.zero;
+
+        Text txt = txtObj.GetComponent<Text>();
+        txt.font = _timerText != null ? _timerText.font : null;   // 复用计时器字体，保证有字形
+        txt.fontSize = 64;
+        txt.fontStyle = FontStyle.Bold;
+        txt.alignment = TextAnchor.MiddleCenter;
+        txt.color = Color.white;
+        txt.text = GetTimeUpText();
+        txt.raycastTarget = false;
+        txt.horizontalOverflow = HorizontalWrapMode.Overflow;
+        txt.verticalOverflow = VerticalWrapMode.Overflow;
+
+        // 入场：从上方落下
+        rootRT.anchoredPosition = centerPos + new Vector2(0f, 140f);
+        cg.DOFade(1f, 0.18f);
+        rootRT.DOAnchorPos(centerPos, 0.26f).SetEase(Ease.OutBack);
+
+        yield return new WaitForSeconds(TimeUpBannerHold);
+
+        // 退场：向上飘走并淡出
+        cg.DOFade(0f, 0.18f);
+        rootRT.DOAnchorPos(centerPos + new Vector2(0f, 70f), 0.2f).SetEase(Ease.InQuad);
+
+        yield return new WaitForSeconds(0.22f);
+
+        cg.DOKill();
+        rootRT.DOKill();
+        if (_timeUpBanner == root) _timeUpBanner = null;
+        Destroy(root);
+    }
+
+    /// <summary>提前收掉「时间到！」横幅（复活时用，避免横幅飘在局内）</summary>
+    private void DestroyTimeUpBanner()
+    {
+        if (_timeUpBanner == null) return;
+
+        Destroy(_timeUpBanner);
+        _timeUpBanner = null;
+    }
+
+    /// <summary>「时间到！」文案（缺多语言时兜底中文）</summary>
+    private static string GetTimeUpText()
+    {
+        string text = MultilingualManager.Instance != null
+            ? MultilingualManager.Instance.GetString("TimeUp", "hudie")
+            : null;
+        if (string.IsNullOrEmpty(text) || text == "TimeUp")
+            text = "时间到！";
+        return text;
+    }
+
+    private static Sprite _timeUpBannerSprite;
+
+    /// <summary>
+    /// 加载横幅底图。用 Texture2D + Sprite.Create 而不是直接 Load&lt;Sprite&gt;，
+    /// 这样即使图片按 Default Texture 导入也能用。
+    /// </summary>
+    private static Sprite LoadTimeUpBannerSprite()
+    {
+        if (_timeUpBannerSprite != null) return _timeUpBannerSprite;
+
+        Texture2D tex = Resources.Load<Texture2D>("TimeUp/timeup_banner");
+        if (tex == null)
+        {
+            Debug.LogWarning("[ChessPlayArea] 未找到 Resources/TimeUp/timeup_banner，时间到横幅使用纯色底");
+            return null;
+        }
+
+        _timeUpBannerSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+        return _timeUpBannerSprite;
+    }
+
     #endregion
     
     /// <summary>
@@ -196,6 +578,7 @@ public partial class ChessPlayArea
         _remainingTime += addSeconds;
         CurrStageData.RemainingTime = _remainingTime;
         _isWarningTriggered = false;
+        _isDangerTriggered = false;
         
         // 恢复 UI 状态
         _timerText.color = Color.white; 
@@ -205,6 +588,8 @@ public partial class ChessPlayArea
         if (outline != null) outline.effectColor = new Color(0, 0, 0, 0.5f); // 假设你原本的描边是半透明黑色，按需修改
         
         ResetTimeWarning();
+        ResetTimeUpRedScreen();   // 复活时清掉时间到的红屏
+        DestroyTimeUpBanner();    // 复活时收掉可能还在显示的「时间到！」横幅
         UpdateTimerUI();
         _isTimerRunning = true; // 重新跑秒
         EventDispatcher.instance.TriggerChangeTopRaycast(true); // 解除屏幕屏蔽
@@ -216,6 +601,16 @@ public partial class ChessPlayArea
     private void ResetTimeWarning()
     {
         _isWarningTriggered = false;
+        _isDangerTriggered = false;
+
+        // 时间文字恢复白色（1 分钟 / 10 秒提醒会把文字染红）
+        if (_timerText != null)
+        {
+            _timerText.transform.DOKill();
+            _timerText.transform.localScale = Vector3.one;
+            _timerText.color = Color.white;
+        }
+
         if (gameTimeBg != null)
         {
             // 停止动画，恢复缩放

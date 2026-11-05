@@ -43,6 +43,32 @@ public sealed class GameCoreManager : MonoBehaviour
     [SerializeField] private Image backgroundImage;
     [SerializeField] private GameObject changjing01_texiao;
 
+    // ======================= 大厅场景特效（按主题 id 动态加载） =======================
+    /// <summary>
+    /// 主题 id → 大厅场景特效预制体名（放在 Resources/LobbyEffect 下）。
+    /// 没有配置的主题不会加载任何特效。
+    /// </summary>
+    private static readonly Dictionary<int, string> LobbyEffectByThemeId = new Dictionary<int, string>()
+    {
+        { 0,  "changjing01_texiao" },
+        { 1,  "changjing02_texiao" },
+        { 3,  "changjing04_texiao" },
+        { 9,  "changjing10_texiao" },
+        { 13, "changjing14_texiao" },
+        { 14, "changjing15_texiao" },
+    };
+
+    private const string LobbyEffectResPath = "LobbyEffect/";
+
+    /// <summary>当前大厅特效实例（null = 该主题没有特效）</summary>
+    private GameObject _lobbyEffect;
+    /// <summary>当前实例对应的主题 id，用于避免重复加载</summary>
+    private int _lobbyEffectThemeId = int.MinValue;
+    /// <summary>当前主题是否已经处理过（含"判定为无特效"的情况）</summary>
+    private bool _lobbyEffectResolved;
+    /// <summary>特效挂载点（沿用原先 changjing01_texiao 的父节点，保证层级/排序一致）</summary>
+    private Transform _lobbyEffectRoot;
+
     [Header("Blur Settings")] [SerializeField]
     private Material blurMaterial; // 挂载你第一版写的3x3模糊Shader的材质球
 
@@ -112,25 +138,9 @@ public sealed class GameCoreManager : MonoBehaviour
             ThemeManager.Instance.GetThemeDataItem(GameDataManager.Instance.UserData.userthemeid);
         Sprite sprite = GetSprite(curDataItem.iconName);
 
+        // 换背景图的同时按主题 id 加载/切换大厅场景特效（没有对应 id 的预制体就不加载）
         ChangeBackgroundImage(sprite);
 
-        // ===== 替换原来获取 ps 的代码 =====
-        allPs.Clear();
-        allParticleArrays.Clear();
-        originalRates.Clear();
-
-        // 获取所有子物体上的粒子系统（包括自身若有）
-        allPs.AddRange(changjing01_texiao.GetComponentsInChildren<ParticleSystem>());
-
-        foreach (var ps in allPs)
-        {
-            // 预分配每个粒子系统的粒子数组
-            int maxParticles = ps.main.maxParticles;
-            allParticleArrays.Add(new ParticleSystem.Particle[maxParticles]);
-            // 保存原始发射率（用于淡入时恢复）
-            originalRates.Add(ps.emission.rateOverTime.constant);
-        }
-       
         // ② 满足「关卡进度 ≥ 1 + 已过 Loading」后
         Game.self.Pushs?.RequestEnableNotification();
 
@@ -379,6 +389,119 @@ public sealed class GameCoreManager : MonoBehaviour
         {
             ToggleBackgroundBlur(true);
         }
+
+        // ★ 背景换了，同步按主题 id 切换场景特效（进入大厅 + 换肤都会走这里）
+        int themeId = GameDataManager.Instance != null ? GameDataManager.Instance.UserData.userthemeid : 0;
+        SetupLobbyEffect(themeId);
+    }
+
+    /// <summary>
+    /// 按主题 id 加载并播放大厅场景特效。
+    /// 没有对应预制体的主题：不加载、不播放（并清掉上一个主题的实例）。
+    /// 粒子淡入淡出沿用原来 changjing01_texiao 那一套（FadeIn / FadeOut）。
+    /// </summary>
+    private void SetupLobbyEffect(int themeId)
+    {
+        // 同一主题已经处理过（无论加载成功还是判定为"无特效"），直接返回
+        if (_lobbyEffectResolved && _lobbyEffectThemeId == themeId) return;
+
+        // 先停掉可能还在跑的淡入淡出，避免它们引用到马上要销毁的粒子
+        if (fadeInCoroutine != null) { StopCoroutine(fadeInCoroutine); fadeInCoroutine = null; }
+        if (fadeOutCoroutine != null) { StopCoroutine(fadeOutCoroutine); fadeOutCoroutine = null; }
+
+        // 清掉旧实例
+        if (_lobbyEffect != null)
+        {
+            _lobbyEffect.SetActive(false);
+            Destroy(_lobbyEffect);
+            _lobbyEffect = null;
+        }
+
+        allPs.Clear();
+        allParticleArrays.Clear();
+        originalRates.Clear();
+        isFadeInComplete = false;
+
+        _lobbyEffectThemeId = themeId;
+        _lobbyEffectResolved = true;
+
+        if (!LobbyEffectByThemeId.TryGetValue(themeId, out string prefabName))
+        {
+            Debug.Log($"[LobbyEffect] 主题 {themeId} 没有配置场景特效，不加载");
+            return;
+        }
+
+        GameObject prefab = Resources.Load<GameObject>(LobbyEffectResPath + prefabName);
+        if (prefab == null)
+        {
+            Debug.LogWarning($"[LobbyEffect] 找不到预制体 Resources/{LobbyEffectResPath}{prefabName}，不加载");
+            return;
+        }
+
+        if (_lobbyEffectRoot == null)
+        {
+            // ★ UI 粒子必须挂在 Canvas 节点下才会渲染。
+            //   优先用大厅背景图所在的那个 Canvas（RootCanvas 层级）；
+            //   场景里没挂 changjing01 摆件时也能拿到正确的父节点。
+            Canvas uiCanvas = backgroundImage != null ? backgroundImage.canvas : null;
+            if (uiCanvas != null)
+            {
+                _lobbyEffectRoot = uiCanvas.transform;
+            }
+            else if (changjing01_texiao != null)
+            {
+                _lobbyEffectRoot = changjing01_texiao.transform.parent;
+            }
+            else
+            {
+                Canvas selfCanvas = GetComponentInParent<Canvas>();
+                _lobbyEffectRoot = selfCanvas != null ? selfCanvas.transform : transform;
+            }
+
+            // 场景里预摆的 changjing01 摆件不再使用，统一走动态加载，避免同屏两份
+            if (changjing01_texiao != null) changjing01_texiao.SetActive(false);
+        }
+
+        _lobbyEffect = Instantiate(prefab, _lobbyEffectRoot);
+        _lobbyEffect.name = prefabName;
+
+        // 沿用场景里那个摆件的位置/尺寸/层级，保证美术调好的效果不被重置
+        RectTransform srcRT = changjing01_texiao != null ? changjing01_texiao.transform as RectTransform : null;
+        RectTransform dstRT = _lobbyEffect.transform as RectTransform;
+        if (srcRT != null && dstRT != null)
+        {
+            dstRT.anchorMin = srcRT.anchorMin;
+            dstRT.anchorMax = srcRT.anchorMax;
+            dstRT.pivot = srcRT.pivot;
+            dstRT.anchoredPosition = srcRT.anchoredPosition;
+            dstRT.sizeDelta = srcRT.sizeDelta;
+            dstRT.localScale = srcRT.localScale;
+        }
+
+        // 层级：紧跟在 Background 后面 —— 压在背景之上、UI 面板之下
+        if (dstRT != null)
+        {
+            RectTransform bgRT = backgroundImage != null ? backgroundImage.rectTransform : null;
+            if (bgRT != null && bgRT.parent == dstRT.parent)
+                dstRT.SetSiblingIndex(bgRT.GetSiblingIndex() + 1);
+            else
+                dstRT.SetAsLastSibling();
+        }
+
+        _lobbyEffect.SetActive(true);
+
+        // 沿用原逻辑：收集粒子系统、预分配数组、记录原始发射率
+        allPs.AddRange(_lobbyEffect.GetComponentsInChildren<ParticleSystem>());
+        foreach (var ps in allPs)
+        {
+            allParticleArrays.Add(new ParticleSystem.Particle[ps.main.maxParticles]);
+            originalRates.Add(ps.emission.rateOverTime.constant);
+        }
+
+        Debug.Log($"[LobbyEffect] 主题 {themeId} → {prefabName}，粒子系统 {allPs.Count} 个");
+
+        // 进场直接淡入，和原来 changjing01 的表现一致
+        FadeIn(0.5f);
     }
 
     /// <summary>
@@ -386,16 +509,19 @@ public sealed class GameCoreManager : MonoBehaviour
     /// </summary>
     public void FadeIn(float duration = 0.5f)
     {
+        // 该主题没有场景特效，直接跳过
+        if (_lobbyEffect == null) return;
+
         // 如果已经处于淡入完成状态，跳过（可根据需要调整）
-        if (isFadeInComplete && changjing01_texiao.activeSelf) return;
+        if (isFadeInComplete && _lobbyEffect.activeSelf) return;
 
         // 停止正在进行的淡入淡出协程
         if (fadeInCoroutine != null) StopCoroutine(fadeInCoroutine);
         if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
 
         // 确保物体激活
-        if (!changjing01_texiao.activeSelf)
-            changjing01_texiao.SetActive(true);
+        if (!_lobbyEffect.activeSelf)
+            _lobbyEffect.SetActive(true);
 
         fadeInCoroutine = StartCoroutine(FadeInCoroutine(duration));
     }
@@ -483,6 +609,13 @@ public sealed class GameCoreManager : MonoBehaviour
     // 新增重载：支持完成回调（比如隐藏物体）
     public void FadeOut(float duration, Action onComplete)
     {
+        // 该主题没有场景特效，直接走完成回调
+        if (_lobbyEffect == null || allPs.Count == 0)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
         if (fadeOutCoroutine != null) StopCoroutine(fadeOutCoroutine);
         if (fadeInCoroutine != null) StopCoroutine(fadeInCoroutine);
 
@@ -541,17 +674,13 @@ public sealed class GameCoreManager : MonoBehaviour
     {
         if (PanelState == PanelState.GamePingPanel || PanelState == PanelState.GameXiaoPanel)
         {
-            //changjing01_texiao.gameObject.SetActive(false);
             FadeOut(0.5f);
         }
-        else
+        else if (_lobbyEffect != null)
         {
-            if (GameDataManager.Instance.UserData.userthemeid == 0)
-            {
-                FadeIn(0.5f);
-            }
-
-            changjing01_texiao.gameObject.SetActive(GameDataManager.Instance.UserData.userthemeid == 0);
+            // 回到大厅/主界面：把当前主题的特效淡回来（不再限定主题 0）
+            if (!_lobbyEffect.activeSelf) _lobbyEffect.SetActive(true);
+            FadeIn(0.5f);
         }
 
         backgroundImage.color = Color.Lerp(backgroundImage.color, color, 2f);

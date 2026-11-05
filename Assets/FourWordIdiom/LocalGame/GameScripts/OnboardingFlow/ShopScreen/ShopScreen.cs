@@ -123,8 +123,8 @@ public class ShopScreen : UIWindow
         GameDataManager.Instance.UserData.CheckShopBuyData();
         GameDataManager.Instance.UserData.isHideShopRedPoint = true;
         GameDataManager.Instance.UserData.isShowDiscountGift = false;
-
-        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true);
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false);
 
         if (ShopManager.shopManager.shopMode == ShopMode.DynamicStore)
         {
@@ -166,7 +166,15 @@ public class ShopScreen : UIWindow
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea) ||
             SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
         {
-            EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false);
+
+            if (ShopManager.shopManager.shopMode == ShopMode.DynamicStore)
+            {
+                EventDispatcher.instance.TriggerUpdateLayerCoin(true, true,false,true);
+            }
+            else
+            {
+                EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false);
+            }
         }
     }
 

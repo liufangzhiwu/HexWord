@@ -192,11 +192,6 @@ public class UserData
     /// </summary>
     public Dictionary<int, ToolInfo> toolInfo;
 
-    //签到数据
-    public int signid; // 签到id
-    public bool isDayEnterSign; // 签到活动重置后是否为首次进入
-    public string signOpenTime; // 签到活动开启时间
-
     //限时活动数据
     public int timePuzzlecount; // 限时活动中连出成语数量
     public int timerePuzzleid; // 限时活动中奖励领取id
@@ -487,10 +482,6 @@ public class UserData
                     count = 0 } }
         };
 
-        // 签到数据
-        signOpenTime = null;
-        signid = 0;
-        isDayEnterSign = true;
         butterflyTaskIsOpen = false;
         taskButterflyUseMinutes = 0;
         butterflyTaskOpenTime = null;
@@ -731,10 +722,6 @@ public class UserData
             }
         }
        
-        // 签到数据
-        signOpenTime = user.signOpenTime;
-        signid = user.signid;
-        isDayEnterSign = user.isDayEnterSign;
         curStageStartTime = user.curStageStartTime;
         curStageOnlineTime = user.curStageOnlineTime;
         //显示奖励数据
@@ -915,9 +902,6 @@ public class UserData
         limitEndTime = null;
         timePuzzlecount = 0;
         isDayEnterLimint = true;
-        //签到数据
-        signid = 0;
-        isDayEnterSign = true;
         //每日通过数据
         dayPassStageCount = 0;
         chessdayPassStageCount = 0;
@@ -1270,35 +1254,6 @@ public class UserData
         }
 
         GameDataManager.Instance.CommitGameData();
-    }
-
-    /// <summary>
-    /// 每日首次开启签到活动
-    /// </summary>
-    public void EveryDayOpenSign()
-    {
-        signOpenTime = DateTime.Now.ToString();
-        isDayEnterSign = false;
-    }
-
-    /// <summary>
-    /// 更新限时活动进度id
-    /// </summary>
-    public void UpdateSignid()
-    {
-        signid++;
-        // 新一轮签到活动（从第 1 档重新开始）视为活动开启
-        if (signid == 1)
-        {
-            AnalyticMgr.ActivityBegin("签到活动");
-        }
-        if (string.IsNullOrEmpty(signOpenTime)) signOpenTime = DateTime.Now.ToString();
-        TimeSpan ts = DateTime.Now.Subtract(DateTime.Parse(signOpenTime));
-        AnalyticMgr.ActivityProgress("签到活动", signid, (int)ts.TotalSeconds);
-        if (signid > 3)
-        {
-            AnalyticMgr.ActivityComplete("签到活动", (int)ts.TotalSeconds);
-        }
     }
 
     /// <summary>

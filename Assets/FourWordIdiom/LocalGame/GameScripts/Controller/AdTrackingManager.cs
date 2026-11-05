@@ -302,28 +302,8 @@ public class AdTrackingManager : MonoBehaviour
 
         // 首启时账号/商店可能还没初始化完，先按当前能拿到的激励展示，拿到配置后再补 "+G"
         ShowGuide(AdTrackingGuidance.Mode.Startup, ResolveRewardGold());
-        StartCoroutine(RefreshGuideRewardWhenReady());
     }
 
-    /// <summary>分层配置晚于引导页就绪时，把"+G 金币"标签补上（不影响弹窗时机）</summary>
-    private IEnumerator RefreshGuideRewardWhenReady()
-    {
-        float waited = 0f;
-        while (waited < LayerConfigWait)
-        {
-            if (_guide == null) yield break;
-
-            int gold = ResolveRewardGold();
-            if (gold > 0)
-            {
-                _guide.RefreshReward(gold);
-                yield break;
-            }
-
-            waited += Time.unscaledDeltaTime;
-            yield return null;
-        }
-    }
 
     private void FinishStartupFlow()
     {

@@ -439,7 +439,9 @@ public class GameDataManager : SingletonMono<GameDataManager>
         }
         else if (requireFocusCheck)
         {
-            AnalyticMgr.GameStart();
+            // ★ 后台切回前台不算一次登录：只刷新会话时间与用户属性，
+            //   不累加 total_login / active_day，也不上报 ta_app_start / 启动转化
+            AnalyticMgr.GameStart(false);
             
             if(Game.self.Ads?.IsPlaying==true) return; //播放广告中
             
