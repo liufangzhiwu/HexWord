@@ -28,6 +28,27 @@ public class GiftItem : MonoBehaviour
     private Button tipbtn;
     private int shopid;
 
+    /// <summary>是否为横向布局 Prefab（GiftHengItem）。横向项的图标位置由 hengIconAnchoredPosition 决定，不做外部覆盖。</summary>
+    public bool IsHengItem => isGiftHengItem;
+
+    /// <summary>
+    /// 直接覆盖图标节点的 anchoredPosition.y 和尺寸（宽 / 高），x 位置保持不变。
+    /// 用于 itemEnergyList 内只有 1 个子对象时的排版微调：
+    /// 在 SetShopData 设置完之后调用，作为最终覆盖。
+    /// </summary>
+    public void SetIconAnchoredYAndSize(float y, float width, float height)
+    {
+        if (shopIcon == null) return;
+
+        RectTransform rt = shopIcon.rectTransform;
+
+        Vector2 pos = rt.anchoredPosition;
+        pos.y = y;
+        rt.anchoredPosition = pos;
+
+        rt.sizeDelta = new Vector2(width, height);
+    }
+
     
      public void SetBuyListData(List<string> data, int itemid, Color color, string des = "", string pointdes = "")
     {

@@ -19,9 +19,13 @@ using UnityEngine.UI;
 ///      ★ 实际需要创建的数量 > 4 时用 giftHengItemPrefab（横向布局，父节点 giftsHengParent），否则用 giftItemPrefab（父节点 giftsParent）；
 ///      ★ 广告 / 体力类资源（RemoveAds / RemoveDayAds / InfiniteEnergy）优先挂到 itemEnergyList（若配置）；
 ///      ★ itemEnergyList 内的 Prefab 独立判断：
+///         - 只有 1 个子对象 → giftItemPrefab（单个用横向 Prefab 会变形/留白）；
 ///         - 全部是体力资源（InfiniteEnergy）→ giftItemPrefab（普通 GiftItem）；
-///         - 含广告资源或其他资源 → giftHengItemPrefab（横向 GiftHengItem）；
+///         - 含广告资源或其他资源且多于 1 项 → giftHengItemPrefab（横向 GiftHengItem）；
 ///         - 目标 Prefab 不可用时回退到本次传入的 prefab；
+///      ★ itemEnergyList 的排版微调（对象池复用，每次刷新都重算）：
+///         - GridLayoutGroup.padding.left：特惠礼包B → -70，其它礼包 → 0；
+///         - 只有 1 个 GiftItem 时：图标 anchoredPosition.y = 40、宽 = 186.3、高 = 230；
 ///      ★ InitGiftItems 开头清理 giftsParent / giftsHengParent / itemEnergyList 下的旧 GiftItem 子物体（对象池复用必须清理）；
 ///      ★ type=2 跳过金币；type=1 金币也走 GiftItem；
 ///  - IsContentSkippedOnPurchase：已拥有永久去广告 → 购买时跳过 RemoveAds / RemoveDayAds 的发放；
@@ -49,8 +53,8 @@ public class ShopGiftItem : ShopItemBase
     [SerializeField] protected Transform itemEnergyList;          // 广告 and 体力资源的父节点（RemoveAds / RemoveDayAds / InfiniteEnergy 等）
     [SerializeField] protected Transform giftsParent;            // 礼包内容父节点（普通 GiftItem，实际数量 <= 4）
     [SerializeField] protected Transform giftsHengParent;        // 礼包内容父节点（横向 GiftHengItem，实际数量 > 4）
-    [SerializeField] protected GiftItem giftItemPrefab;          // 礼包内容项 Prefab（实际数量 <= 4 时用；itemEnergyList 内只有体力时也用它）
-    [SerializeField] protected GiftItem giftHengItemPrefab;      // 礼包内容项 Prefab（实际数量 > 4 时用，横向布局；itemEnergyList 内含广告/其他资源时也用它）
+    [SerializeField] protected GiftItem giftItemPrefab;          // 礼包内容项 Prefab（实际数量 <= 4 时用；itemEnergyList 内只有 1 项或只有体力时也用它）
+    [SerializeField] protected GiftItem giftHengItemPrefab;      // 礼包内容项 Prefab（实际数量 > 4 时用，横向布局；itemEnergyList 内含多项广告/其他资源时也用它）
     [SerializeField] protected Text oldPriceText;                // 原价文本（有折扣时显示 originalPrice）
     [SerializeField] protected Text limitCountText;              // 限购次数文本
     [SerializeField] protected Text tagText;                     // 礼包标签
@@ -60,6 +64,19 @@ public class ShopGiftItem : ShopItemBase
 
     /// <summary>阈值：礼包实际展示资源超过该数量时，切换为横向布局 Prefab（giftHengItemPrefab）</summary>
     private const int HorizontalLayoutThreshold = 4;
+
+    // ======================= ★ itemEnergyList 细节微调（按礼包区分） =======================
+
+    /// <summary>特惠礼包B：itemEnergyList 上 GridLayoutGroup 的 padding.left</summary>
+    private const int SpecialPackageBPaddingLeft = -70;
+    /// <summary>其它礼包：itemEnergyList 上 GridLayoutGroup 的 padding.left（复位用）</summary>
+    private const int CommonPaddingLeft = 0;
+    /// <summary>itemEnergyList 下只有 1 个子对象时：GiftItem 图标的 anchoredPosition.y</summary>
+    private const float SingleEnergyItemIconY = 40f;
+    /// <summary>itemEnergyList 下只有 1 个子对象时：GiftItem 图标的宽度（sizeDelta.x）</summary>
+    private const float SingleEnergyItemIconWidth = 186.3f;
+    /// <summary>itemEnergyList 下只有 1 个子对象时：GiftItem 图标的高度（sizeDelta.y）</summary>
+    private const float SingleEnergyItemIconHeight = 230f;
 
     /// <summary>本次已生成的 GiftItem 列表（用于清理，避免对象池复用时旧子物体残留）</summary>
     private readonly List<GiftItem> _spawnedGiftItems = new List<GiftItem>();
@@ -254,6 +271,13 @@ public class ShopGiftItem : ShopItemBase
     protected override void HandleMultiProductContent(ShopDataItem data)
     {
         if (data == null) return;
+
+        // ★ 是否为特惠礼包B（itemEnergyList 的排版对它有单独一套参数）
+        bool isSpecialPackageB = IsSpecialPackageB(data);
+
+        // ★ itemEnergyList 的 GridLayoutGroup.left 按礼包区分；对象池复用，必须每次刷新都重置
+        ApplyItemEnergyListPadding(isSpecialPackageB);
+
         if (data.productContent == null || data.productContent.Count == 0) return;
 
         // ★ 计算实际需要创建的 GiftItem 数量（按 InitGiftItems 的跳过规则：跳过金币 / 跳过去广告）
@@ -331,6 +355,49 @@ public class ShopGiftItem : ShopItemBase
 
         LogShopItem($"HandleMultiProductContent: 实际数量={actualCount}, 使用={(selectedPrefab == giftHengItemPrefab ? "giftHengItemPrefab" : "giftItemPrefab")}");
         InitGiftItems(selectedPrefab);
+    }
+
+    // ======================= ★ itemEnergyList 细节微调 =======================
+
+    /// <summary>是否为特惠礼包B（SpecialPackageB）。</summary>
+    private bool IsSpecialPackageB(ShopDataItem data)
+    {
+        if (data == null || string.IsNullOrEmpty(data.produceNameId)) return false;
+
+        string specialB = ShopManager.shopManager != null
+            ? ShopManager.shopManager.ProductSpecialPackageB
+            : "SpecialPackageB";
+
+        return data.produceNameId == specialB;
+    }
+
+    /// <summary>
+    /// ★ 设置 itemEnergyList 上 GridLayoutGroup 的 padding.left：
+    ///  - 特惠礼包B → -70；
+    ///  - 其它礼包 → 0（对象池复用，必须显式复位，否则会残留上一个礼包的 -70）。
+    /// 找不到 GridLayoutGroup 时只打日志，不影响其它逻辑。
+    /// </summary>
+    private void ApplyItemEnergyListPadding(bool isSpecialPackageB)
+    {
+        if (itemEnergyList == null) return;
+
+        GridLayoutGroup grid = itemEnergyList.GetComponent<GridLayoutGroup>();
+        if (grid == null)
+        {
+            LogShopItem("ApplyItemEnergyListPadding: itemEnergyList 上未找到 GridLayoutGroup，跳过 padding.left 调整");
+            return;
+        }
+
+        int targetLeft = isSpecialPackageB ? SpecialPackageBPaddingLeft : CommonPaddingLeft;
+        RectOffset padding = grid.padding;
+        if (padding != null && padding.left == targetLeft) return;
+
+        int right = padding != null ? padding.right : 0;
+        int top = padding != null ? padding.top : 0;
+        int bottom = padding != null ? padding.bottom : 0;
+        grid.padding = new RectOffset(targetLeft, right, top, bottom);
+
+        LogShopItem($"ApplyItemEnergyListPadding: padding.left → {targetLeft} (isSpecialPackageB={isSpecialPackageB})");
     }
 
     /// <summary>
@@ -413,8 +480,11 @@ public class ShopGiftItem : ShopItemBase
 
     /// <summary>
     /// ★ itemEnergyList 内 Prefab 规则（只影响挂到 itemEnergyList 的项）：
+    ///  - itemEnergyList 内【只有 1 项】→ 返回 false，使用 giftItemPrefab；
+    ///    （横向 GiftHengItem 是按「并排多个」设计的，只放 1 个会撑得很宽/留白，
+    ///      例：特惠礼包B 只有「去广告1天」会挂到 itemEnergyList）
     ///  - itemEnergyList 内【实际展示的项全部是体力资源（InfiniteEnergy）】→ 返回 false，使用 giftItemPrefab；
-    ///  - itemEnergyList 内【含广告资源或其他资源】→ 返回 true，使用 giftHengItemPrefab。
+    ///  - itemEnergyList 内【含广告资源或其他资源，且多于 1 项】→ 返回 true，使用 giftHengItemPrefab。
     /// 跳过规则与 InitGiftItems 保持一致（type=2 跳过金币、已拥有永久去广告跳过 RemoveAds/RemoveDayAds），
     /// 以保证判断依据与实际展示的项一致。
     /// </summary>
@@ -425,8 +495,8 @@ public class ShopGiftItem : ShopItemBase
         bool ownsPermanentRemoveAds =
             ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
 
-        bool hasAny = false;
         bool allEnergy = true;
+        int energyItemCount = 0; // ★ 实际会挂到 itemEnergyList 的项数
 
         foreach (var giftdata in data.productContent)
         {
@@ -442,13 +512,16 @@ public class ShopGiftItem : ShopItemBase
             if (giftType == (int)LimitRewordType.Coins && data.type != 1) continue;
             if (ownsPermanentRemoveAds && IsRemoveAdsRelatedType(giftType)) continue;
 
-            hasAny = true;
+            energyItemCount++;
             if (giftType != (int)LimitRewordType.InfiniteEnergy)
                 allEnergy = false;
         }
 
-        // 全部是体力资源 → GiftItem；含广告/其他资源 → GiftHengItem
-        return hasAny && !allEnergy;
+        // ★ 只有 1 个子对象 → 一律用 GiftItem（横向 Prefab 单个摆放会变形）
+        if (energyItemCount <= 1) return false;
+
+        // 全部是体力资源 → GiftItem；含广告/其他资源且多于 1 项 → GiftHengItem
+        return !allEnergy;
     }
 
     /// <summary>
@@ -558,8 +631,9 @@ public class ShopGiftItem : ShopItemBase
         LogShopItem($"InitGiftItems: prefab={prefab.name}, isHengPrefab={isHengPrefab}");
 
         // ★ itemEnergyList 内 Prefab 规则（仅影响挂到 itemEnergyList 的项，不影响其他项）：
+        //    - itemEnergyList 内【只有 1 项】→ 使用 giftItemPrefab（单个用横向 Prefab 会变形/留白）；
         //    - itemEnergyList 内实际展示的项【全部是体力资源（InfiniteEnergy）】→ 使用 giftItemPrefab；
-        //    - itemEnergyList 内实际展示的项【含广告资源或其他资源】→ 使用 giftHengItemPrefab；
+        //    - itemEnergyList 内实际展示的项【含广告资源或其他资源且多于 1 项】→ 使用 giftHengItemPrefab；
         //    - 目标 Prefab 不可用时回退到本次传入的 prefab。
         bool energyUseHeng = ShouldUseHengForItemEnergyList(shopDataItem);
         GiftItem energyPrefab;
@@ -654,6 +728,46 @@ public class ShopGiftItem : ShopItemBase
 
             LogShopItem($"InitGiftItems: 礼包 {shopDataItem.produceNameId} (type={shopDataItem.type}) 内容 type={giftType}, isBonus={isBonus}, prefab={itemPrefab.name}, parent={parent.name}");
         }
+
+        // ★ 全部创建完之后再统一处理「itemEnergyList 只有 1 个子对象」的图标微调（依赖真实子节点数量）
+        ApplySingleEnergyItemIconLayout();
+    }
+
+    /// <summary>
+    /// ★ itemEnergyList 下只有 1 个 GiftItem 时，图标统一改为 y = 40、宽 = 186.3、高 = 230。
+    /// （横向 GiftHengItem 或子对象多于 1 个时不动，避免破坏已有的排列）
+    ///
+    /// 注意：这里必须用「本次新生成的 _spawnedGiftItems」来数，不能遍历 itemEnergyList.childCount ——
+    /// 购买后刷新时 ClearGiftItems() 只是 Destroy（延迟到帧末），旧子物体这一帧仍挂在父节点下，
+    /// 直接数子节点会得到「旧的 + 新的」= 2，导致规则不生效、图标保持 SetShopData 的原始尺寸。
+    /// </summary>
+    private void ApplySingleEnergyItemIconLayout()
+    {
+        if (itemEnergyList == null) return;
+
+        GiftItem singleItem = null;
+        int giftItemCount = 0;
+
+        for (int i = 0; i < _spawnedGiftItems.Count; i++)
+        {
+            GiftItem item = _spawnedGiftItems[i];
+            if (item == null) continue;
+
+            // 只看本次生成、且挂在 itemEnergyList 下的项
+            if (item.transform.parent != itemEnergyList) continue;
+
+            giftItemCount++;
+            singleItem = item;
+
+            if (giftItemCount > 1) break; // 多于 1 个就不用继续找了
+        }
+
+        if (giftItemCount != 1 || singleItem == null) return;
+        if (singleItem.IsHengItem) return;
+
+        singleItem.SetIconAnchoredYAndSize(SingleEnergyItemIconY, SingleEnergyItemIconWidth, SingleEnergyItemIconHeight);
+
+        LogShopItem($"ApplySingleEnergyItemIconLayout: itemEnergyList 只有 1 个子对象 → icon y={SingleEnergyItemIconY}, w={SingleEnergyItemIconWidth}, h={SingleEnergyItemIconHeight}");
     }
 
     private bool IsRemoveAdsRelatedType(int type)

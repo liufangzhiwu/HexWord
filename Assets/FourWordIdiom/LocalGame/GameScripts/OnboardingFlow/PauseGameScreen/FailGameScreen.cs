@@ -55,9 +55,23 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [Range(0f, 1f)] public float snapSmoothness = 0.6f;
     public float stopVelocityThreshold = 50f;
 
+    [Header("长按空白处查看棋盘")]
+    [Tooltip("按住多久触发隐藏（秒）")]
+    [SerializeField] private float longPressDelay = 0.25f;
+    [Tooltip("按下后移动超过这个像素就当作滑动，不再触发隐藏")]
+    [SerializeField] private float longPressMoveTolerance = 30f;
+    [Tooltip("关闭后长按空白处不再隐藏弹窗")]
+    [SerializeField] private bool enableLongPressHide = true;
+
     private CanvasGroup _canvasGroup;
-    private Coroutine _longPressCoroutine;
+    /// <summary>空白处按下的时刻（unscaledTime），&lt;0 表示当前没有按住</summary>
+    private float _pressStartTime = -1f;
+    /// <summary>按下时的屏幕坐标，用来区分「长按」和「滑动」</summary>
+    private Vector2 _pressStartPos;
+    private bool _isPressing;
     private bool _isHiddenByLongPress = false;
+    /// <summary>全屏透明接收层：保证「空白处」一定有射线目标，按下事件能冒泡到本窗口</summary>
+    private GameObject _longPressCatcher;
 
     // ======================= 审核多礼包状态 =======================
 
@@ -85,6 +99,68 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
     // ======================= 生命周期 =======================
 
+    /// <summary>
+    /// Awake 阶段就把长按所需的组件准备好。
+    /// 说明：原来 _canvasGroup 是在 Start() 里才取的，一旦 Start 里前面任何一行
+    /// （按钮绑定 / 多语言文本）抛异常，_canvasGroup 就会一直是 null，
+    /// 长按协程里 `_canvasGroup.alpha = 0f` 直接 NRE 中断 —— 表现就是「长按没反应」。
+    /// </summary>
+    protected override void InitializeUIComponents()
+    {
+        base.InitializeUIComponents();
+        EnsureLongPressSupport();
+    }
+
+    /// <summary>
+    /// 准备长按隐藏所需的组件：CanvasGroup（控制整体透明度）+ 全屏透明接收层。
+    /// 可重复调用，不会产生重复节点。
+    /// </summary>
+    private void EnsureLongPressSupport()
+    {
+        if (_canvasGroup == null)
+        {
+            _canvasGroup = GetComponent<CanvasGroup>();
+            if (_canvasGroup == null) _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        // 只有一种可能拿不到：物体正在被销毁
+        if (_canvasGroup != null)
+        {
+            _canvasGroup.alpha = 1f;
+            _canvasGroup.interactable = true;
+            _canvasGroup.blocksRaycasts = true; // 隐藏时仍拦截点击，避免误触棋盘
+        }
+
+        EnsureLongPressCatcher();
+    }
+
+    /// <summary>
+    /// 建一个全屏透明的接收层放在最底层（不遮挡、不抢任何已有元素的点击）。
+    /// 空白处按下时即使场景里的 Background 关掉了 RaycastTarget，
+    /// 也能命中它并冒泡到本窗口的 OnPointerDown。
+    /// </summary>
+    private void EnsureLongPressCatcher()
+    {
+        if (_longPressCatcher != null) return;
+
+        _longPressCatcher = new GameObject("LongPressCatcher", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        _longPressCatcher.layer = gameObject.layer;
+
+        RectTransform rt = (RectTransform)_longPressCatcher.transform;
+        rt.SetParent(transform, false);
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+        rt.localScale = Vector3.one;
+        rt.SetAsFirstSibling(); // 放到所有内容后面
+
+        Image img = _longPressCatcher.GetComponent<Image>();
+        img.color = new Color(0f, 0f, 0f, 0f); // 完全透明，但 raycastTarget 仍然生效
+        img.raycastTarget = true;
+        img.raycastPadding = Vector4.zero;
+    }
+
     private void Start()
     {
         adsAddTimeBtn.AddClickAction(OnReviveClicked);
@@ -96,10 +172,16 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         conTitleText.text = MultilingualManager.Instance.GetString("AreYouSure");
         conTipText.text = MultilingualManager.Instance.GetString("YouWillLose");
-        realExitBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ConfirmExit");
 
-        _canvasGroup = GetComponent<CanvasGroup>();
-        if (_canvasGroup == null) _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        // ★ 注意：realExitBtn 挂的是确认页右上角的 CloseBtn（纯图标，没有 Text 子节点）。
+        // 原来这里直接 GetComponentInChildren<Text>().text 会抛 NullReferenceException，
+        // 导致 Start 后面的逻辑（包括初始化 _canvasGroup）全部被跳过 —— 长按隐藏因此彻底失效。
+        // 这里做空值保护，找不到文本就跳过，不能因为一个文案让整个界面初始化中断。
+        Text realExitLabel = realExitBtn != null ? realExitBtn.GetComponentInChildren<Text>(true) : null;
+        if (realExitLabel != null)
+            realExitLabel.text = MultilingualManager.Instance.GetString("ConfirmExit");
+
+        EnsureLongPressSupport();
 
         // ★ pointBtns 只作为模板，场景里原有按钮全部隐藏，运行时动态生成
         if (pointBtns != null)
@@ -134,6 +216,9 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         // ★ 刷新复活界面内购推荐位
         RefreshGiftTables();
+
+        // ★ 复位长按状态（防止上次被长按隐藏后没松手就关窗，导致下次打开是透明的）
+        ResetLongPressState();
     }
 
     protected override void OnDisable()
@@ -151,6 +236,9 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         _wasDragging = false;
         _isDragStartRecorded = false;
 
+        // ★ 长按隐藏的透明度必须复位，否则下次打开弹窗会是全透明的
+        ResetLongPressState();
+
         base.OnDisable();
     }
 
@@ -160,6 +248,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         {
             HandleAutoSnapping();
         }
+
+        UpdateLongPress();
     }
 
     // ======================= 复活界面内购推荐位 =======================
@@ -735,41 +825,115 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     }
 
     // ==========================================
-    // 🌟 长按隐藏逻辑
+    // 🌟 长按空白处 → 临时隐藏弹窗（看棋盘，松手恢复）
     // ==========================================
+    // 说明：
+    //  1. 按下点落在按钮 / ScrollRect 等可交互控件上时，事件会被控件自己消费，
+    //     不会冒泡到这里 —— 天然实现「只有空白处才触发」。
+    //  2. 计时改到 Update 里用 unscaledTime 判断，不再用协程 + WaitForSeconds，
+    //     避免协程被 StopAllCoroutines / 帧时间异常影响导致「按了没反应」。
+    //  3. _canvasGroup 在 Awake 就已准备好，任何情况下都不会是 null。
+
     public new void OnPointerDown(PointerEventData eventData)
     {
-        if (_longPressCoroutine != null) StopCoroutine(_longPressCoroutine);
-        _longPressCoroutine = StartCoroutine(LongPressRoutine());
+        if (!enableLongPressHide) return;
+        if (!isActiveAndEnabled) return;
+
+        _isPressing = true;
+        _pressStartTime = Time.unscaledTime;
+        _pressStartPos = eventData != null ? eventData.position : (Vector2)Input.mousePosition;
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (_longPressCoroutine != null)
-        {
-            StopCoroutine(_longPressCoroutine);
-            _longPressCoroutine = null;
-        }
-
-        if (_isHiddenByLongPress)
-        {
-            _isHiddenByLongPress = false;
-            _canvasGroup.alpha = 1f;
-
-            if (continuePanel.activeSelf)
-            {
-                EventDispatcher.instance.TriggerHighlightHeaderUI(false);
-            }
-        }
+        EndLongPress();
     }
 
-    private IEnumerator LongPressRoutine()
+    /// <summary>每帧检查是否已经按够时长</summary>
+    private void UpdateLongPress()
     {
-        yield return new WaitForSeconds(0.25f);
+        if (!enableLongPressHide || !_isPressing) return;
+
+        // 兜底：切后台 / 多指 / 事件被系统吃掉时可能收不到 OnPointerUp，
+        // 用原始输入状态判断松手，避免弹窗一直停在全透明的状态。
+        if (Input.touchCount == 0 && !Input.GetMouseButton(0))
+        {
+            EndLongPress();
+            return;
+        }
+
+        // 手指移动了（比如横滑礼包）就当作滑动，不算长按
+        if (!_isHiddenByLongPress &&
+            Vector2.Distance(GetPointerPosition(), _pressStartPos) > longPressMoveTolerance)
+        {
+            _isPressing = false;
+            _pressStartTime = -1f;
+            return;
+        }
+
+        if (_isHiddenByLongPress) return;
+
+        if (Time.unscaledTime - _pressStartTime < longPressDelay) return;
+
+        // 已经弹二次确认页时不允许隐藏（避免把「确认退出」藏起来，用户找不到按钮）
+        if (continuePanel != null && continuePanel.activeSelf) return;
+
+        EnterLongPressHidden();
+    }
+
+    /// <summary>当前指针位置（触摸/鼠标都兼容）</summary>
+    private static Vector2 GetPointerPosition()
+    {
+        if (Input.touchCount > 0) return Input.GetTouch(0).position;
+        return Input.mousePosition;
+    }
+
+    private void EnterLongPressHidden()
+    {
+        if (_isHiddenByLongPress) return;
+
+        EnsureLongPressSupport();
+        if (_canvasGroup == null) return;
 
         _isHiddenByLongPress = true;
-        _canvasGroup.alpha = 0f;
+        _canvasGroup.alpha = 0f;   // 视觉隐藏；blocksRaycasts 保持 true，防止误触棋盘
         EventDispatcher.instance.TriggerUpdateLayerCoin(false, true);
         EventDispatcher.instance.TriggerHighlightHeaderUI(false);
+
+        LogFailGame("长按空白处 → 隐藏复活弹窗");
+    }
+
+    private void EndLongPress()
+    {
+        _isPressing = false;
+        _pressStartTime = -1f;
+
+        if (!_isHiddenByLongPress) return;
+
+        _isHiddenByLongPress = false;
+        ShowSelfAfterLongPress();
+
+        LogFailGame("松手 → 恢复复活弹窗");
+    }
+
+    /// <summary>把弹窗透明度恢复为 1（松手 / 关窗时调用）</summary>
+    private void ShowSelfAfterLongPress()
+    {
+        EnsureLongPressSupport();
+        if (_canvasGroup != null) _canvasGroup.alpha = 1f;
+
+        // 二次确认页本身没有高亮头部，这里只在需要时复位，避免把顶栏留在错误状态
+        if (continuePanel != null && continuePanel.activeSelf)
+            EventDispatcher.instance.TriggerHighlightHeaderUI(false);
+    }
+
+    /// <summary>无任何前置状态地复位（打开 / 关闭弹窗时调用）</summary>
+    private void ResetLongPressState()
+    {
+        _isPressing = false;
+        _pressStartTime = -1f;
+        _isHiddenByLongPress = false;
+        EnsureLongPressSupport();
+        if (_canvasGroup != null) _canvasGroup.alpha = 1f;
     }
 }
