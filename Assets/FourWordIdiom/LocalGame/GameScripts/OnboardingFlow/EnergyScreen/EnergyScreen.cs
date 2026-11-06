@@ -15,6 +15,26 @@ public class EnergyScreen : UIWindow
     [SerializeField] private Text titleText;
     [SerializeField] private Text descriptionText;
     private Coroutine _timerCoroutine;
+
+    // ======================= ★ 无限体力状态 =======================
+    /// <summary>无限体力期间「获得下一个体力时间」这行替换成剩余时间说明</summary>
+    private const string UnlimitedEnergyTips = "无限体力剩余：";
+
+    /// <summary>通用图集（UI_Universal）里用到的按钮图片</summary>
+    private const string SpriteButtonNormal = "UI_button_Bg";   // 可点击态
+    private const string SpriteCanNotGold   = "NoCanGold";      // 金币按钮不可用
+    private const string SpriteCanNotGoldAlt = "noCanGold";     // 兼容小写文件名
+    private const string SpriteCanNotAds    = "NoCanAds";       // 广告按钮不可用
+
+    private string _defaultDescription;
+    private bool _defaultDescriptionCached;
+    /// <summary>当前是否处于「无限体力」表现（幂等，避免每秒重写）</summary>
+    private bool _isUnlimitedActive;
+    /// <summary>图集取图缓存（含取不到时的 null，避免重复请求/重复报错）</summary>
+    private readonly Dictionary<string, Sprite> _spriteCache = new Dictionary<string, Sprite>();
+    /// <summary>按钮子节点（icon / 文字）原始的显隐状态（隐藏/还原用）</summary>
+    private readonly Dictionary<Transform, bool> _defaultChildActive = new Dictionary<Transform, bool>();
+
     // Start is called before the first frame update
     void Start()
     {
@@ -30,7 +50,24 @@ public class EnergyScreen : UIWindow
         }
         titleText.text = MultilingualManager.Instance.GetString("MorePower");
         descriptionText.text = MultilingualManager.Instance.GetString("TimeToPower");
-        adsButton.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("FreePower").Substring(0,2);
+
+        // ★ 注意：无限体力期间按钮下的 icon / 文字会被隐藏，
+        //   这里必须用 includeInactive = true，否则首次打开时会取到 null 而抛异常。
+        Text adsLabel = adsButton.GetComponentInChildren<Text>(true);
+        if (adsLabel != null)
+            adsLabel.text = MultilingualManager.Instance.GetString("FreePower").Substring(0,2);
+
+        // ★ 缓存提示文案原文，无限体力结束后要还原
+        if (descriptionText != null)
+        {
+            _defaultDescription = descriptionText.text;
+            _defaultDescriptionCached = true;
+
+            // 首次打开时 OnEnable 里的定时器会先跑一帧（比 Start 早），若已处于无限体力状态，
+            // 这里会被上面这行覆盖回默认文案，需要再盖回来。
+            if (_isUnlimitedActive)
+                descriptionText.text = UnlimitedEnergyTips;
+        }
     }
 
     protected override void OnEnable()
@@ -52,7 +89,16 @@ public class EnergyScreen : UIWindow
             // 顺手核算一下体力，防止玩家打开界面发呆跨越了30分钟恢复点
             userData.CalculateEnergyRegen();
 
-            if (userData.Energy >= UserData.MAX_NATURAL_ENERGY)
+            // ★ 无限体力：两个按钮置灰禁用，时间位置显示剩余时长
+            bool unlimited = userData.HasUnlimitedEnergy();
+            ApplyUnlimitedEnergyState(unlimited);
+
+            if (unlimited)
+            {
+                // 提示行已改成「无限体力剩余：」，这里只放倒计时，避免撑破 count_bg 的宽度
+                nextEnergyTimeText.text = FormatRemainTime(userData.GetUnlimitedEnergyRemainSeconds());
+            }
+            else if (userData.Energy >= UserData.MAX_NATURAL_ENERGY)
             {
                 // 👇 修复 1：体力满了不要显示 00:00，显示中文“已满”
                 nextEnergyTimeText.text = "已满"; 
@@ -67,6 +113,116 @@ public class EnergyScreen : UIWindow
             }
             yield return wait;
         }
+    }
+
+    // ======================= ★ 无限体力 =======================
+
+    /// <summary>
+    /// 无限体力剩余时长格式化：超过 1 小时用 H:MM:SS，否则 MM:SS。
+    /// </summary>
+    private static string FormatRemainTime(double remainSeconds)
+    {
+        int total = Mathf.Max(0, Mathf.FloorToInt((float)remainSeconds));
+        int hours = total / 3600;
+        int mins = (total % 3600) / 60;
+        int secs = total % 60;
+
+        return hours > 0
+            ? string.Format("{0}:{1:00}:{2:00}", hours, mins, secs)
+            : string.Format("{0:00}:{1:00}", mins, secs);
+    }
+
+    /// <summary>
+    /// 按「是否处于无限体力」切换弹窗表现（幂等，状态没变直接返回）：
+    ///  - 是 → 金币/广告按钮不可点击，并换成通用图集里的 NoCanGold / NoCanAds 图；
+    ///  - 否 → 恢复可点击，图片换回通用图集里的 UI_button_Bg。
+    /// </summary>
+    private void ApplyUnlimitedEnergyState(bool unlimited)
+    {
+        if (_isUnlimitedActive == unlimited) return;
+        _isUnlimitedActive = unlimited;
+
+        SetButtonUnavailable(buyButton, unlimited, SpriteCanNotGold, SpriteCanNotGoldAlt);
+        SetButtonUnavailable(adsButton, unlimited, SpriteCanNotAds, null);
+
+        if (descriptionText != null)
+        {
+            if (unlimited)
+                descriptionText.text = UnlimitedEnergyTips;
+            else if (_defaultDescriptionCached)
+                descriptionText.text = _defaultDescription;
+        }
+    }
+
+    /// <summary>
+    /// 不可用 → 换 NoCan 图 + 隐藏 icon/文字 + 不可点击；恢复 → 换 UI_button_Bg + 还原子节点 + 可点击。
+    /// 只改按钮背景 Image 的 sprite 与子节点显隐，不动颜色。
+    /// </summary>
+    private void SetButtonUnavailable(Button button, bool unavailable, string unavailableSprite, string unavailableSpriteAlt)
+    {
+        if (button == null) return;
+
+        Image image = button.targetGraphic as Image;
+        if (image == null) image = button.GetComponent<Image>();
+
+        if (image != null)
+        {
+            Sprite sprite = unavailable
+                ? GetAtlasSprite(unavailableSprite, unavailableSpriteAlt)
+                : GetAtlasSprite(SpriteButtonNormal);
+
+            if (sprite != null) image.sprite = sprite;
+        }
+
+        // ★ 按钮下的 icon / 文本：不可用时整体隐藏，恢复时按各自原始状态还原
+        for (int i = 0; i < button.transform.childCount; i++)
+        {
+            Transform child = button.transform.GetChild(i);
+            if (child == null) continue;
+
+            if (!_defaultChildActive.TryGetValue(child, out bool defaultActive))
+            {
+                defaultActive = child.gameObject.activeSelf;
+                _defaultChildActive[child] = defaultActive;
+            }
+
+            child.gameObject.SetActive(unavailable ? false : defaultActive);
+        }
+
+        if (unavailable)
+        {
+            // 让 Unity 默认的 disabledColor（半透明灰）不要再叠在 NoCan 图上
+            ColorBlock colors = button.colors;
+            if (colors.disabledColor != Color.white)
+            {
+                colors.disabledColor = Color.white;
+                button.colors = colors;
+            }
+        }
+
+        button.interactable = !unavailable;
+    }
+
+    /// <summary>从通用图集取图并缓存（取不到时返回 null，只警告一次）。</summary>
+    private Sprite GetAtlasSprite(string spriteName, string fallbackName = null)
+    {
+        if (string.IsNullOrEmpty(spriteName)) return null;
+        if (_spriteCache.TryGetValue(spriteName, out Sprite cached)) return cached;
+
+        Sprite sprite = null;
+        if (AdvancedBundleLoader.SharedInstance != null)
+        {
+            sprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(spriteName);
+
+            if (sprite == null && !string.IsNullOrEmpty(fallbackName))
+                sprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(fallbackName);
+        }
+
+        _spriteCache[spriteName] = sprite;
+        if (sprite == null)
+            Debug.LogWarning($"[EnergyScreen] 通用图集 UI_Universal 缺少图片: {spriteName}");
+
+        return sprite;
     }
     
     private void OnGoldBuyClicked()

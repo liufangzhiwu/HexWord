@@ -1,18 +1,17 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &43663558675478142
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7060876982972402723}
   - component: {fileID: 7849792100476978037}
   - component: {fileID: 5106554298170130616}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4784,9 +4783,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -4850,7 +4846,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6094422494341979569}
   - component: {fileID: 614301368000594103}
@@ -4859,7 +4855,6 @@ GameObject:
   - component: {fileID: 1100624976492199315}
   - component: {fileID: 3245565672862823842}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CoinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4978,7 +4973,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6899976926192427488}
   - component: {fileID: 4991199343690111593}
@@ -4987,7 +4982,6 @@ GameObject:
   - component: {fileID: 8999323234728311456}
   - component: {fileID: 6239656640499956353}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CoinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5106,13 +5100,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3019070825759020886}
   - component: {fileID: 4305848169164073717}
   - component: {fileID: 3822996276674663691}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9875,9 +9868,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -9940,13 +9930,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8884003690414835837}
   - component: {fileID: 3557679699881611524}
   - component: {fileID: 6484652770071173748}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14709,9 +14698,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -14774,13 +14760,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3424553998469543586}
   - component: {fileID: 304157151466919115}
   - component: {fileID: 5017988082760194339}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19552,9 +19537,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -19618,13 +19600,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1605058959862240192}
   - component: {fileID: 9166640880521648611}
   - component: {fileID: 9184933932454004482}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24414,9 +24395,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -24479,13 +24457,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3599789565990547902}
   - component: {fileID: 3768533581784727499}
   - component: {fileID: 7145000676743541336}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: adsDes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24559,11 +24536,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3376214966522702867}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WordAppear
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24592,13 +24568,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1042879031900666667}
   - component: {fileID: 8886820251308740229}
   - component: {fileID: 6978881903227517454}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29361,9 +29336,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -29426,13 +29398,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1184770674064822054}
   - component: {fileID: 8666274105162791836}
   - component: {fileID: 7294061869852525342}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -34204,9 +34175,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -34270,7 +34238,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 155117374198709340}
   - component: {fileID: 1500690374294045520}
@@ -34279,7 +34247,6 @@ GameObject:
   - component: {fileID: 9112339897277434018}
   - component: {fileID: 5880291552419129458}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CoinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -34398,7 +34365,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3132390440500477901}
   - component: {fileID: 8028195601366293247}
@@ -34406,7 +34373,6 @@ GameObject:
   - component: {fileID: 8669820515858649924}
   - component: {fileID: 4022678627263825456}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -34517,12 +34483,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 645392698739956524}
   - component: {fileID: 5736749202375274434}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: UIBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -34573,13 +34538,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5487443220219468895}
   - component: {fileID: 8156153373792560839}
   - component: {fileID: 3807737477409866670}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -39369,9 +39333,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -39434,11 +39395,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4966111653037609006}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AdsTip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -39472,13 +39432,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 9134954830812363241}
   - component: {fileID: 4423687900997764207}
   - component: {fileID: 87339323787979544}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44241,9 +44200,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -44306,12 +44262,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2564933962495218571}
   - component: {fileID: 2660555280819451324}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardItemThree (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44354,11 +44309,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 9011536385550313866}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WordAppear
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44387,7 +44341,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8697458112094401019}
   - component: {fileID: 7403607752670369549}
@@ -44395,7 +44349,6 @@ GameObject:
   - component: {fileID: 3804168657782779926}
   - component: {fileID: 7544298473223066567}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44506,13 +44459,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4480885764492999575}
   - component: {fileID: 7706563834367426876}
   - component: {fileID: 3337783083347300185}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49284,9 +49236,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -49350,14 +49299,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1592811840992224041}
   - component: {fileID: 271702363293096977}
   - component: {fileID: 6957446064154168966}
   - component: {fileID: 7244914413087738706}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ClaimBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49472,7 +49420,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8124746020727616607}
   - component: {fileID: 5071341958338388329}
@@ -49483,7 +49431,6 @@ GameObject:
   - component: {fileID: 3083397867755322667}
   - component: {fileID: 9121077055562814047}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: adsDes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49630,11 +49577,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4364336180836893495}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WordAppear
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49663,12 +49609,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8158197388088369543}
   - component: {fileID: 6387377597349660182}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardItemThree (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49711,13 +49656,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8807195787801061545}
   - component: {fileID: 6849240992621992280}
   - component: {fileID: 7728324062991048616}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -54480,9 +54424,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -54545,13 +54486,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7418701621477751271}
   - component: {fileID: 301973799272945564}
   - component: {fileID: 5745258199439166837}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -59314,9 +59254,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -59379,13 +59316,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1806577418320674792}
   - component: {fileID: 4634779379431447518}
   - component: {fileID: 1210613822359116437}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Bg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -59455,7 +59391,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2461102071692649293}
   - component: {fileID: 7375395098821127855}
@@ -59463,7 +59399,6 @@ GameObject:
   - component: {fileID: 7979961633646053693}
   - component: {fileID: 7683859670158522672}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -59574,7 +59509,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3348149280488444271}
   - component: {fileID: 8280429790780138894}
@@ -59583,7 +59518,6 @@ GameObject:
   - component: {fileID: 1666292927205201055}
   - component: {fileID: 4252132264418535529}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -59640,7 +59574,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: -1357356475
-  m_SortingOrder: 60
+  m_SortingOrder: 65
   m_TargetDisplay: 0
 --- !u!114 &5780311666598182103
 MonoBehaviour:
@@ -59661,7 +59595,7 @@ MonoBehaviour:
     m_Bits: 4294967295
 --- !u!95 &1666292927205201055
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -59672,8 +59606,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 835c0bedda34a9522b62ea712cd1b3c4, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -59714,13 +59646,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7205436480873334906}
   - component: {fileID: 1079524705643647968}
   - component: {fileID: 1989549643060829322}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -64510,9 +64441,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -64575,13 +64503,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3639377159461050683}
   - component: {fileID: 8987878495567880993}
   - component: {fileID: 819004029207150274}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -69344,9 +69271,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -69409,7 +69333,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7296728016522542297}
   - component: {fileID: 7734632560040199546}
@@ -69418,7 +69342,6 @@ GameObject:
   - component: {fileID: 515486581878148164}
   - component: {fileID: 6364068503337077895}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CoinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -69537,11 +69460,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7504414308669395081}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WordAppear
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -69570,12 +69492,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8688896338962270263}
   - component: {fileID: 8983636730350564765}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardList
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -69635,13 +69556,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 164234375691742945}
   - component: {fileID: 1048300027948769474}
   - component: {fileID: 452488988700787417}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -74409,9 +74329,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -74474,14 +74391,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6758687246408085037}
   - component: {fileID: 4101914575001008508}
   - component: {fileID: 6043342328112555402}
   - component: {fileID: 4024886413001663278}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CloseBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -74596,13 +74512,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8602004960402617989}
   - component: {fileID: 4745274402050693968}
   - component: {fileID: 2542162473968259006}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -79365,9 +79280,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -79430,13 +79342,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6530715061308650562}
   - component: {fileID: 2274908683292774314}
   - component: {fileID: 2953972868603041173}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -79506,7 +79417,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1856245374379725069}
   - component: {fileID: 8401901436008803738}
@@ -79517,7 +79428,6 @@ GameObject:
   - component: {fileID: 8154168193057091015}
   - component: {fileID: 4125717252847928066}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: adsDes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -79664,7 +79574,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7785859173941634310}
   - component: {fileID: 4115903766987361812}
@@ -79673,7 +79583,6 @@ GameObject:
   - component: {fileID: 226122811691518113}
   - component: {fileID: 8110876048965448150}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CoinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -79792,13 +79701,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4222999267363239460}
   - component: {fileID: 8915226023898204852}
   - component: {fileID: 1506374544782358916}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -84561,9 +84469,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -84626,13 +84531,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4090904616465916042}
   - component: {fileID: 7920333809334763073}
   - component: {fileID: 5888777495231396323}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -89422,9 +89326,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -89487,7 +89388,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4806253192574478770}
   - component: {fileID: 357418714599642492}
@@ -89495,7 +89396,6 @@ GameObject:
   - component: {fileID: 2619131735143237037}
   - component: {fileID: 5219414265504900366}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -89606,11 +89506,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8448431209684069722}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AdsTip (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -89644,13 +89543,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 511549603547915925}
   - component: {fileID: 899168065341878202}
   - component: {fileID: 2655924506787669188}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94418,9 +94316,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -94483,13 +94378,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1004127374491779086}
   - component: {fileID: 7366987597886823263}
   - component: {fileID: 4782020233990801956}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -99252,9 +99146,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -99317,13 +99208,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3542094842872968203}
   - component: {fileID: 8731429587986970494}
   - component: {fileID: 898150735489969468}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104113,9 +104003,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -104178,11 +104065,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4526204827021692183}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WordAppear
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104211,13 +104097,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2047928785679274507}
   - component: {fileID: 4727371033709284755}
   - component: {fileID: 5782599347965746942}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -108985,9 +108870,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -109050,13 +108932,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1401831227920675941}
   - component: {fileID: 3530083351529207634}
   - component: {fileID: 5935456214593822216}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113824,9 +113705,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -113889,7 +113767,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7875338985530049267}
   - component: {fileID: 4336129799909379143}
@@ -113900,7 +113778,6 @@ GameObject:
   - component: {fileID: 8143655162276043563}
   - component: {fileID: 2234435844270903616}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: adsDes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -114047,13 +113924,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8938541056546615303}
   - component: {fileID: 1908199634625618948}
   - component: {fileID: 4210508003666432378}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -118816,9 +118692,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -118881,7 +118754,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5072035771178629957}
   - component: {fileID: 3251163698295011083}
@@ -118890,7 +118763,6 @@ GameObject:
   - component: {fileID: 3141981661815378081}
   - component: {fileID: 4957960074464448194}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CoinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -119009,13 +118881,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5394116315843691737}
   - component: {fileID: 3279946021594231178}
   - component: {fileID: 5754132085052521419}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -123778,9 +123649,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -123843,13 +123711,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1384099298312963905}
   - component: {fileID: 7271072118908418347}
   - component: {fileID: 5094603305262881006}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -128612,9 +128479,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -128677,13 +128541,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2966831241296256763}
   - component: {fileID: 4754417588240341665}
   - component: {fileID: 1108449982968127283}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133451,9 +133314,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -133516,13 +133376,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7560964298087099284}
   - component: {fileID: 8452697119731700639}
   - component: {fileID: 8682402031451728629}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -138285,9 +138144,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -138350,7 +138206,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4380412999329086665}
   - component: {fileID: 4445516641192034413}
@@ -138358,7 +138214,6 @@ GameObject:
   - component: {fileID: 3344492439619042863}
   - component: {fileID: 8692456158393209351}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -138469,11 +138324,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4558272333487020628}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AdsTip (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -138507,13 +138361,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2222451945342179224}
   - component: {fileID: 8837094625758398658}
   - component: {fileID: 2108096667752751399}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -143276,9 +143129,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -143341,7 +143191,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8335031810404678649}
   - component: {fileID: 4576009888549833289}
@@ -143350,7 +143200,6 @@ GameObject:
   - component: {fileID: 2753224808015342921}
   - component: {fileID: 1876399888156386719}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CoinText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -143469,7 +143318,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4420310134267839563}
   - component: {fileID: 5241254857139940018}
@@ -143477,7 +143326,6 @@ GameObject:
   - component: {fileID: 258507927710467835}
   - component: {fileID: 5971986848172685780}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: HeaderText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -143579,13 +143427,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8222605453905973352}
   - component: {fileID: 2905698076176996804}
   - component: {fileID: 4691096521642005813}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -148353,9 +148200,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -148418,11 +148262,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1364614025785856173}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WordAppear
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -148451,13 +148294,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4454236157551206563}
   - component: {fileID: 2547702562493788601}
   - component: {fileID: 5630192877518882952}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -148527,13 +148369,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2814130856373345557}
   - component: {fileID: 2612525531330240344}
   - component: {fileID: 5530323504246368922}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ads
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -148603,12 +148444,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3513237782715495810}
   - component: {fileID: 5589219761834091523}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardItemThree (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -148651,13 +148491,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6429686472509948836}
   - component: {fileID: 1721436902544888259}
   - component: {fileID: 609296588277649549}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -153420,9 +153259,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -153485,13 +153321,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3207849968450647975}
   - component: {fileID: 7648351428746718385}
   - component: {fileID: 239904325823714036}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -158254,9 +158089,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -158319,13 +158151,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4151097972585627416}
   - component: {fileID: 6078148361741082991}
   - component: {fileID: 3242792446360238987}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -163115,9 +162946,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -163180,13 +163008,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1036930550264078958}
   - component: {fileID: 4079597478583155343}
   - component: {fileID: 6350994918719206274}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -167958,9 +167785,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -168024,12 +167848,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3442531366792913436}
   - component: {fileID: 4553208647847599063}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardItemThree
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -168072,12 +167895,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6169433917263858766}
   - component: {fileID: 2863696299430180409}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardList (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -168136,11 +167958,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3713627188468255234}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: WordAppear
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -168169,13 +167990,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2524601986258775532}
   - component: {fileID: 1947702955382427972}
   - component: {fileID: 6156128959840255392}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -172938,9 +172758,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -173003,13 +172820,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3621330060812751684}
   - component: {fileID: 117809434667030752}
   - component: {fileID: 4476333922183331656}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -177777,9 +177593,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -177842,7 +177655,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3160528248630728416}
   - component: {fileID: 8972396999452446095}
@@ -177850,7 +177663,6 @@ GameObject:
   - component: {fileID: 4217745274848058000}
   - component: {fileID: 4546073115879437333}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -177961,13 +177773,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6136446940335308460}
   - component: {fileID: 2889406243811226645}
   - component: {fileID: 1968737090534544555}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -182739,9 +182550,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -182805,13 +182613,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3825114471866057373}
   - component: {fileID: 6726108908521704280}
   - component: {fileID: 7800467555077236822}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ads
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -182881,13 +182688,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5090982818300420550}
   - component: {fileID: 3146195105473425755}
   - component: {fileID: 534182031117745472}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -187677,9 +187483,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -187742,13 +187545,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3824603265248293771}
   - component: {fileID: 3559311580467473150}
   - component: {fileID: 1606375284803544230}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ads
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -187818,12 +187620,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5421485892467010932}
   - component: {fileID: 2263221039592439524}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardItemThree (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -187866,13 +187667,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2284300569082167400}
   - component: {fileID: 4828062046775343619}
   - component: {fileID: 8618625651469255174}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -192635,9 +192435,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -192700,13 +192497,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1475969286220910173}
   - component: {fileID: 3711524415710520681}
   - component: {fileID: 7799910914535802138}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AdsDesList
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -192775,13 +192571,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8680437957142959396}
   - component: {fileID: 1342891826334399604}
   - component: {fileID: 593028819981812551}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -197553,9 +197348,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -197619,13 +197411,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1816249186277311506}
   - component: {fileID: 693857460521892583}
   - component: {fileID: 2182036920747157131}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -202388,9 +202179,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -202453,13 +202241,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1268560412233469408}
   - component: {fileID: 3315430336080669505}
   - component: {fileID: 4594134451853815776}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AdsTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -202530,12 +202317,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5070031307716423663}
   - component: {fileID: 6707838970447440243}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardItemThree (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -202578,12 +202364,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5568862499129575026}
   - component: {fileID: 7039467415797806650}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AwardItemThree
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -202626,7 +202411,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5265605041662661428}
   - component: {fileID: 8988183041724701057}
@@ -202634,7 +202419,6 @@ GameObject:
   - component: {fileID: 5085949952934070539}
   - component: {fileID: 8369437841463948235}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -202745,13 +202529,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6743276785159198198}
   - component: {fileID: 7070559928737032813}
   - component: {fileID: 5287633325585902657}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ParticleSystem2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -207514,9 +207297,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:

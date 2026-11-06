@@ -461,8 +461,10 @@ public class HeaderSection : UIWindow
 
         if (_isUnlimitedEnergyActive)
         {
-            energyAdd.SetActive(false);
-            energyBtn.interactable = false;
+            // ★ 无限体力期间：「+」角标照常显示，按钮保持可点，用来打开体力弹窗
+            //   （弹窗内的购买/广告按钮会换成 NoCan 图并禁用，见 EnergyScreen.ApplyUnlimitedEnergyState）
+            energyAdd.SetActive(true);
+            energyBtn.interactable = true;
         }
         
         BackBtn.gameObject.SetActive(!SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea)&&
@@ -474,7 +476,7 @@ public class HeaderSection : UIWindow
     {
         RefreshUnlimitedEnergyCache();
 
-        energyAdd.SetActive(!isHighlight && !_isUnlimitedEnergyActive);
+        energyAdd.SetActive(!isHighlight);
         Canvas energyCanvas = energyBtn.GetComponent<Canvas>();
         if (energyCanvas == null) energyCanvas = energyBtn.gameObject.AddComponent<Canvas>();
         if (energyBtn.GetComponent<GraphicRaycaster>() == null) energyBtn.gameObject.AddComponent<GraphicRaycaster>();
@@ -497,10 +499,11 @@ public class HeaderSection : UIWindow
             int stage = Mathf.Max(userData.CurrentHexStage, userData.CurrentChessStage);
             bool isAdequate = (userData.Energy >= UserData.MAX_NATURAL_ENERGY) || (stage == 1);
 
-            energyBtn.interactable = !isAdequate && !_isUnlimitedEnergyActive;
+            energyBtn.interactable = _isUnlimitedEnergyActive || !isAdequate;
             energyBtn.gameObject.SetActive(false);
         }
-        _isShowEnergyAdd = !isHighlight && !_isUnlimitedEnergyActive;
+        // ★ 无限体力期间也要显示「+」角标，只是点击后弹窗里的按钮不可用
+        _isShowEnergyAdd = !isHighlight;
         energyAdd.SetActive(_isShowEnergyAdd);
     }
 
@@ -538,14 +541,15 @@ public class HeaderSection : UIWindow
         {
             energyCanvas.overrideSorting = false;
             energyCanvas.sortingOrder = 0;
-            energyBtn.interactable = !isAdequate && !_isUnlimitedEnergyActive;
+            energyBtn.interactable = _isUnlimitedEnergyActive || !isAdequate;
             
             goldCanvas.overrideSorting = false;
             goldCanvas.sortingOrder = 0;
             ShopBtn.interactable = true;
         }
         
-        energyAdd.SetActive(!isAdequate && !_isUnlimitedEnergyActive);
+        // ★ 无限体力期间也显示「+」角标
+        energyAdd.SetActive(_isUnlimitedEnergyActive || !isAdequate);
     }
 
     private void InitPupaUI()
@@ -582,8 +586,8 @@ public class HeaderSection : UIWindow
             {
                 energyTxt.text = "∞";
                 energyTimer.text = FormatUnlimitedRemainTime(_unlimitedEnergyRemainSeconds);
-                energyAdd.SetActive(false);
-                energyBtn.interactable = false;
+                energyAdd.SetActive(true);      // ★ 无限体力期间也显示「+」角标
+                energyBtn.interactable = true;  // ★ 仍可点开体力弹窗
 
                 yield return wait;
                 continue;

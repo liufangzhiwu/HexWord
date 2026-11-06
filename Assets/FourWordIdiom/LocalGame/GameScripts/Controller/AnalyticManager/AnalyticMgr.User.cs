@@ -67,55 +67,175 @@ public static class ResId
 }
 
 /// <summary>
-/// resource_change.change_reason 规范枚举（来源同上）。规范外原因统一映射到最接近的规范值，
-/// 无法映射的走 Other 前缀保留原文，便于后续回填规范。
+/// resource_change 的原因两级口径：change_reason（一级，仅 5 个封闭大类）+ reason_index（二级，具体场景）。
+///
+/// 背景：原 change_reason 枚举膨胀到 20+ 项，看板无法筛选；20261106 需求把原因收敛为 5 类，
+/// 细节统一丢给 reason_index，取值对照如下（来源：飞书《通用数数埋点方案 / #事件数据 / resource_change》）：
+///
+///   change_reason   reason_index
+///   内购            商品表「商品名」列的内容
+///   系统活动        任务 / 竞速 / 莲心榜 / 月榜 / 限时奖励(灯笼) / 连胜(7、10、20、30 日)
+///   激励视频        对应的视频点名称
+///   关卡内行为      叶子收集 / 金币关 / 金币购买道具灯泡 / 火箭 / 复活 / 通关结算
+///   其他            分享奖励 / 商店免费金币 / 抽取皮肤 / 自然恢复体力 / 金币购买体力 / 改名奖励 /
+///                   广告追踪激励 / 插屏赠礼；都不符合时用 XXX，并找策划补 reason_index 枚举
 /// </summary>
 public static class ResReason
 {
-    public const string InLevel = "关卡内使用";
-    public const string BuyItem = "购买道具";
-    public const string ShopBuy = "商店购买";
-    public const string SignFree = "签到免费获得";
-    public const string SignAd = "签到广告获得";
-    public const string GoldAdPop = "金币广告弹窗获得";
-    public const string LevelSettle = "结算获得";
-    public const string LimitReward = "限时奖励获得";
-    public const string RaceReward = "竞速获得";
-    public const string TaskReward = "任务获得";
-    public const string RankReward = "排行榜获得";
-    public const string GoldWord = "金币词获得";
-    public const string GoldLeafGet = "金箔获得";
-    public const string SkinDraw = "抽取皮肤";
-    public const string AdTrackingReward = "广告追踪激励"; // 开启广告追踪（关联应用）的一次性金币奖励
+    #region 一级：change_reason（只允许这 5 个取值）
+    public const string Iap = "内购";
+    public const string SystemActivity = "系统活动";
+    public const string RewardVideo = "激励视频";
+    public const string InLevel = "关卡内行为";
+    public const string Other = "其他";
+    #endregion
 
-    /// <summary>规范外原因前缀：&lt;Other&gt;原文，回填规范后即可去掉。</summary>
-    public const string OtherPrefix = "其他_";
+    #region 二级：reason_index 常用取值
+    // 系统活动
+    public const string IdxTask = "任务";
+    public const string IdxRace = "竞速";
+    public const string IdxZenRank = "莲心榜";
+    public const string IdxMonthRank = "月榜";
+    public const string IdxLimitReward = "限时奖励";
+    public const string IdxCombo = "连胜";
 
-    /// <summary>把自由文本原因收敛到规范枚举。</summary>
-    public static string Normalize(string reason)
+    // 关卡内行为
+    public const string IdxLeafCollect = "叶子收集";
+    public const string IdxGoldLevel = "金币关";
+    public const string IdxBuyBulb = "金币购买道具灯泡";
+    public const string IdxBuyRocket = "金币购买道具火箭";
+    public const string IdxBuyRevive = "金币购买道具复活";
+    public const string IdxLevelSettle = "通关结算";
+    /// <summary>关卡内直接用掉库存道具（非金币购买）。需求表未列，待策划确认是否并入“金币购买道具XXX”。</summary>
+    public const string IdxLevelUse = "关卡内使用道具";
+
+    // 其他
+    public const string IdxShare = "分享奖励";
+    public const string IdxShopFreeGold = "商店免费金币";
+    public const string IdxSkinDraw = "抽取皮肤";
+    public const string IdxEnergyRecover = "自然恢复体力";
+    public const string IdxEnergyBuy = "金币购买体力";
+    public const string IdxRename = "改名奖励";
+    public const string IdxAdTracking = "广告追踪激励";
+    public const string IdxInterstitialGift = "插屏赠礼";
+    /// <summary>需求表未列，待策划确认。</summary>
+    public const string IdxIceRefund = "冰块拦截退还";
+    /// <summary>需求表未列，待策划确认。</summary>
+    public const string IdxReturnWin = "回归首胜奖励";
+    /// <summary>需求表未列，待策划确认。</summary>
+    public const string IdxSign = "签到";
+    /// <summary>调试菜单直接改资源，仅测试环境出现。</summary>
+    public const string IdxDebug = "调试加资源";
+
+    /// <summary>上表场景都无法覆盖时的兜底值；一旦出现在正式数据里，必须找策划补枚举。</summary>
+    public const string IdxUnknown = "XXX";
+    #endregion
+
+    /// <summary>一级 + 二级的成对取值。</summary>
+    public struct Ctx
     {
-        if (string.IsNullOrEmpty(reason)) return OtherPrefix + "空";
+        public readonly string Category;
+        public readonly string Index;
 
-        // 前缀/关键字匹配，覆盖 "商店购买XXX"、"限时宝箱商店购买XXX" 这类拼接串
-        if (reason.Contains("商店购买")) return ShopBuy;
-        if (reason.Contains("购买道具")) return BuyItem;
-        if (reason.Contains("关卡内使用") || reason.Contains("退出关卡") || reason.Contains("进程中断")) return InLevel;
-        if (reason.Contains("排行榜") || reason.Contains("月榜") || reason.Contains("赛季结算")) return RankReward;
-        if (reason.Contains("签到") && reason.Contains("广告")) return SignAd;
-        if (reason.Contains("签到")) return SignFree;
-        if (reason.Contains("限时奖励") || reason.Contains("限时宝箱")) return LimitReward;
-        if (reason.Contains("竞速")) return RaceReward;
-        if (reason.Contains("任务")) return TaskReward;
-        if (reason.Contains("金币词")) return GoldWord;
-        if (reason.Contains("金箔")) return GoldLeafGet;
-        if (reason.Contains("皮肤")) return SkinDraw;
-        if (reason.Contains("结算")) return LevelSettle;
-        // 必须排在通用"广告"之前，否则会被收敛成"金币广告弹窗获得"
-        if (reason.Contains("广告追踪")) return AdTrackingReward;
-        if (reason.Contains("广告")) return GoldAdPop;
+        public Ctx(string category, string index)
+        {
+            Category = string.IsNullOrEmpty(category) ? Other : category;
+            Index = string.IsNullOrEmpty(index) ? IdxUnknown : index;
+        }
+    }
 
-        Debug.LogWarning($"[Analytics] change_reason 未登记，按规范外上报：{reason}");
-        return OtherPrefix + reason;
+    /// <summary>内购：reason_index = 商品表「商品名」列的内容。</summary>
+    public static Ctx IapItem(string productName) => new Ctx(Iap, productName);
+
+    /// <summary>激励视频：reason_index = 对应的视频点名称（建议与 videoAd_show.adName 保持一致）。</summary>
+    public static Ctx VideoPoint(string pointName) => new Ctx(RewardVideo, pointName);
+
+    /// <summary>“其他”类固定场景，例如 ResReason.OtherOf(ResReason.IdxShare)。</summary>
+    public static Ctx OtherOf(string index) => new Ctx(Other, index);
+
+    /// <summary>
+    /// 把历史自由文本原因收敛成 (change_reason, reason_index)。
+    /// 保留给既有调用点（UpdateGold/UpdateTool 的 message 参数）；新代码建议直接传 Ctx 的 Category/Index。
+    /// </summary>
+    public static Ctx Resolve(string reason)
+    {
+        string raw = reason == null ? string.Empty : reason.Trim();
+        if (raw.Length == 0) return new Ctx(Other, IdxUnknown);
+
+        // ---------- 内购：reason_index 取商品名 ----------
+        if (raw == Iap) return new Ctx(Iap, IdxUnknown);
+        if (raw.StartsWith("补单发货")) return new Ctx(Iap, Strip(raw, "补单发货"));
+        if (raw.Contains("商店购买") || raw.Contains("购买金币"))
+            return new Ctx(Iap, ExtractProductName(raw));
+
+        // ---------- 这几条必须先于通用“广告”判断 ----------
+        if (raw.Contains("广告追踪")) return new Ctx(Other, IdxAdTracking);
+        // “复活广告消耗金币 / 金币复活赠送蝴蝶”属于关卡内行为，不能落到激励视频
+        if (raw.Contains("复活")) return new Ctx(InLevel, IdxBuyRevive);
+
+        // ---------- 激励视频：reason_index 取视频点名称 ----------
+        if (raw.Contains("看广告") || raw.Contains("激励视频") || raw.Contains("商店金币视频"))
+            return new Ctx(RewardVideo, raw);
+
+        if (raw.Contains("插屏")) return new Ctx(Other, IdxInterstitialGift);
+
+        // ---------- 关卡内行为 ----------
+        if (raw.Contains("树叶") || raw.Contains("叶子")) return new Ctx(InLevel, IdxLeafCollect);
+        if (raw.Contains("金币关") || raw.Contains("金币词")) return new Ctx(InLevel, IdxGoldLevel);
+        if (raw.Contains("通关结算")) return new Ctx(InLevel, IdxLevelSettle);
+        // 金币购买道具：调用点应按道具类型细分成 灯泡/火箭/复活，这里只兜底
+        if (raw.Contains("金币购买道具") || raw.Contains("道具购买") || raw.Contains("购买道具"))
+            return new Ctx(InLevel, IdxUnknown);
+        if (raw.Contains("关卡内使用") || raw.Contains("退出关卡") || raw.Contains("进程中断"))
+            return new Ctx(InLevel, IdxLevelUse);
+
+        // ---------- 系统活动 ----------
+        if (raw.Contains("月榜")) return new Ctx(SystemActivity, IdxMonthRank);
+        if (raw.Contains("赛季") || raw.Contains("排行榜")) return new Ctx(SystemActivity, IdxZenRank);
+        if (raw.Contains("限时奖励") || raw.Contains("限时宝箱") || raw.Contains("灯笼"))
+            return new Ctx(SystemActivity, IdxLimitReward);
+        if (raw.Contains("竞速")) return new Ctx(SystemActivity, IdxRace);
+        if (raw.Contains("任务")) return new Ctx(SystemActivity, IdxTask);
+        if (raw.Contains("连胜")) return new Ctx(SystemActivity, IdxCombo);
+        if (raw.Contains("签到")) return new Ctx(SystemActivity, IdxSign);
+
+        // ---------- 其他 ----------
+        if (raw.Contains("分享")) return new Ctx(Other, IdxShare);
+        if (raw.Contains("皮肤")) return new Ctx(Other, IdxSkinDraw);
+        if (raw.Contains("自然恢复") || raw.Contains("时间恢复")) return new Ctx(Other, IdxEnergyRecover);
+        if (raw.Contains("购买体力")) return new Ctx(Other, IdxEnergyBuy);
+        if (raw.Contains("改名")) return new Ctx(Other, IdxRename);
+        if (raw.Contains("冰块")) return new Ctx(Other, IdxIceRefund);
+        if (raw.Contains("回归首胜")) return new Ctx(Other, IdxReturnWin);
+        if (raw.Contains("DebugMenu") || raw.Contains("调试")) return new Ctx(Other, IdxDebug);
+
+        // 兜底：通关类结算（如“树叶收集结算”已在上面拦掉，这里只剩无来源的“结算”）
+        if (raw.Contains("结算")) return new Ctx(InLevel, IdxLevelSettle);
+
+        Debug.LogWarning($"[Analytics] reason_index 未登记，按 {IdxUnknown} 上报：{raw}（请补枚举或调用点显式传值）");
+        return new Ctx(Other, IdxUnknown);
+    }
+
+    /// <summary>从“商品名 + 商店购买XXX / 商品名 + 购买金币”这类拼接串里切出商品名。</summary>
+    private static string ExtractProductName(string raw)
+    {
+        string s = raw;
+
+        int buy = s.IndexOf("商店购买");
+        if (buy > 0) s = s.Substring(0, buy);          // “金币礼包商店购买蝴蝶” → 金币礼包
+        else if (buy == 0) s = s.Substring(4);          // “商店购买” + 商品名 → 商品名
+
+        int gold = s.IndexOf("购买金币");
+        if (gold >= 0) s = s.Substring(0, gold);        // “金币礼包购买金币” → 金币礼包
+
+        s = s.Trim();
+        return s.Length == 0 ? IdxUnknown : s;
+    }
+
+    private static string Strip(string raw, string prefix)
+    {
+        string s = raw.Substring(prefix.Length).Trim();
+        return s.Length == 0 ? IdxUnknown : s;
     }
 }
 
@@ -724,44 +844,53 @@ public partial class AnalyticMgr
     /// 获得资源与道具
     /// </summary>
     public static void ResourceGet(string resName,int changeNum,string reason)
-    {
-        var properties = new Dictionary<string, object>
-        {
-            {"resource_id", ResId.Normalize(resName)},
-            {"change_type", "获得"},
-            {"change_num",changeNum},
-            {"change_reason",ResReason.Normalize(reason)},
-        }; 
-        Game.self.Analytics.LogEvent("resource_change", properties, Define.DataTarget.Think);
-    }
-  
-    
+        => ResourceChange(resName, changeNum, reason, string.Empty);
+
     /// <summary>
-    /// 资源变化（获得或消耗）
+    /// 资源变化（获得或消耗）。
+    /// change_reason 只上报 5 个大类，细节走 reason_index。
     /// </summary>
-    /// <param name="resId">资源名（中文），内部统一归一成规范编码 0~13</param>
+    /// <param name="resId">资源名（中文），内部统一归一成规范编码 0~15</param>
     /// <param name="changeNum">变化数量（正数为获得，负数为消耗）</param>
-    /// <param name="reason">变化原因，内部统一收敛到规范枚举</param>
-    public static void ResourceChange(string resId, int changeNum, string reason, string word)
+    /// <param name="reason">变化原因（历史自由文本，内部会收敛成 5 大类 + reason_index）</param>
+    /// <param name="word">关联的词语，无则传空</param>
+    /// <param name="reasonIndex">reason_index 显式值；传了就不再做关键字推断（内购传商品名、激励视频传视频点名称）</param>
+    /// <param name="reasonCategory">change_reason 显式值；与 reasonIndex 同时传时完全跳过推断</param>
+    public static void ResourceChange(string resId, int changeNum, string reason, string word,
+        string reasonIndex = null, string reasonCategory = null)
     {
+        string category = reasonCategory;
+        string index = reasonIndex;
+
+        // 两个都没显式给，才走历史文本推断；只给一个时另一个用推断结果补齐
+        if (string.IsNullOrEmpty(category) || string.IsNullOrEmpty(index))
+        {
+            ResReason.Ctx ctx = ResReason.Resolve(reason);
+            if (string.IsNullOrEmpty(category)) category = ctx.Category;
+            if (string.IsNullOrEmpty(index)) index = ctx.Index;
+        }
+
         string changeType = changeNum >= 0 ? "获得" : "消耗";
         var properties = new Dictionary<string, object>
         {
             { "resource_id", ResId.Normalize(resId) },
             { "change_type", changeType },
             { "change_num", Math.Abs(changeNum) },
-            { "change_reason", ResReason.Normalize(reason) },
+            { "change_reason", category },
+            { "reason_index", index },
             { "tip_word", word ?? string.Empty }
         };
         Game.self.Analytics.LogEvent("resource_change", properties, Define.DataTarget.Think);
     }
 
     // 保留原有方法便于调用，内部调用统一方法
-    public static void ResourceGet(string resName, int changeNum, string reason, string word)
-        => ResourceChange(resName, changeNum, reason, word);
+    public static void ResourceGet(string resName, int changeNum, string reason, string word,
+        string reasonIndex = null, string reasonCategory = null)
+        => ResourceChange(resName, changeNum, reason, word, reasonIndex, reasonCategory);
 
-    public static void ResourceReduce(string resId, int changeNum, string reason, string word)
-        => ResourceChange(resId, -changeNum, reason, word);
+    public static void ResourceReduce(string resId, int changeNum, string reason, string word,
+        string reasonIndex = null, string reasonCategory = null)
+        => ResourceChange(resId, -changeNum, reason, word, reasonIndex, reasonCategory);
     
     #endregion
     

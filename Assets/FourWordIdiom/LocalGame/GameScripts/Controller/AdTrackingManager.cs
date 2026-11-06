@@ -205,6 +205,7 @@ public class AdTrackingManager : MonoBehaviour
             Debug.LogWarning("[AdTracking] 等待引导流程超时，强制放行加载");
             _startupFlowFinished = true;
             ReleaseAdGate();
+            if (ShopManager.shopManager != null) ShopManager.shopManager.LogStartupLayerAndConfig();
         }
     }
 
@@ -279,6 +280,7 @@ public class AdTrackingManager : MonoBehaviour
         if (User == null)
         {
             Debug.LogWarning("[AdTracking] 等不到 UserData，本次不弹引导（广告请求保持挂起）");
+            if (ShopManager.shopManager != null) ShopManager.shopManager.LogStartupLayerAndConfig();
             yield break;
         }
 
@@ -309,6 +311,9 @@ public class AdTrackingManager : MonoBehaviour
     {
         _startupFlowFinished = true;
         ReleaseAdGate();
+
+        // 启动日志：当前用户分层 + 正在执行的配置（每次启动一次，ShopManager 内部去重）
+        if (ShopManager.shopManager != null) ShopManager.shopManager.LogStartupLayerAndConfig();
     }
 
     /// <summary>
@@ -614,7 +619,8 @@ public class AdTrackingManager : MonoBehaviour
         // 埋点：金币资源变动（change_reason = 广告追踪激励）
         if (Game.self != null && Game.self.Analytics != null)
         {
-            AnalyticMgr.ResourceChange(ResId.Gold, gold, ResReason.AdTrackingReward, string.Empty);
+            AnalyticMgr.ResourceChange(ResId.Gold, gold, ResReason.Other, string.Empty,
+                reasonIndex: ResReason.IdxAdTracking, reasonCategory: ResReason.Other);
         }
 
         _pendingRewardGold = gold;

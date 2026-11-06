@@ -330,6 +330,45 @@ public partial class ShopManager : MonoBehaviour
         }
     }
 
+    // ======================= 启动日志（分层 + 生效配置） =======================
+
+    /// <summary>启动日志是否已打印（每次进程启动只打一次）</summary>
+    private bool _startupLayerLogged;
+
+    /// <summary>
+    /// 启动日志：打印当前用户分层与正在执行的配置（每次启动调用一次，内部去重）。
+    /// 由 AdTrackingManager 启动流程收尾（FinishStartupFlow / 超时放行）触发。
+    /// </summary>
+    public void LogStartupLayerAndConfig()
+    {
+        if (_startupLayerLogged) return;
+        _startupLayerLogged = true;
+
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        string layer = GetCurrentUserLayer();   // 顺带按当前分层刷新 _layerConfig
+
+        string basis = userData == null
+            ? "UserData=null（走默认层）"
+            : $"adTrackingEnabled={userData.adTrackingEnabled}, activeDayCnt={userData.activeDayCnt}, " +
+              $"isPaid={userData.TotalPayTimes > 0}, MaxSinglePayAmount={userData.MaxSinglePayAmount:F2}, " +
+              $"TotalPayTimes={userData.TotalPayTimes}";
+
+        LogShop("[启动] ========== 用户分层与生效配置 ==========");
+        LogShop($"[启动] 当前用户分层={layer} | 分层依据: {basis}");
+        LogShop($"[启动] 执行的分层配置(shop_layer/{layer}): AdFailed={_layerConfig.adFailed}, " +
+                $"BrokenIce={_layerConfig.brokenIce}, InterAdsGroup={_layerConfig.interAdsGroup}, " +
+                $"AdTrackingStimulate={_layerConfig.adTrackingStimulate}, AllowSpecialPopup={_layerConfig.allowSpecialPopup}");
+
+        if (AdRuleManager.Instance != null)
+        {
+            AdRuleManager.Instance.LogCurrentConfig();
+        }
+        else
+        {
+            LogShop("[启动] AdRuleManager 未初始化，跳过广告规则配置日志");
+        }
+    }
+
     // ======================= 获取当前用户分层（含配置刷新） =======================
 
     /// <summary>

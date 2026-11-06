@@ -1120,17 +1120,19 @@ public class UserData
     /// <summary>
     /// 更新金箔数量
     /// </summary>
-    public void UpdateGoldLeaf(int value, string message = "")
+    /// <param name="reasonIndex">resource_change.reason_index（不传则按 message 关键字推断）</param>
+    /// <param name="reasonCategory">resource_change.change_reason（不传则按 message 关键字推断）</param>
+    public void UpdateGoldLeaf(int value, string message = "", string reasonIndex = "", string reasonCategory = "")
     {
         GoldLeaf += value;
 
         if (value <= 0)
         {
-            SendCurrencyEvent(value, "金箔", message);
+            SendCurrencyEvent(value, "金箔", message, string.Empty, reasonIndex, reasonCategory);
         }
         else
         {
-            SendCurrencyEvent(value, "金箔", message);
+            SendCurrencyEvent(value, "金箔", message, string.Empty, reasonIndex, reasonCategory);
         }
 
         Debug.Log($"金箔{(value > 0 ? "增加" : "减少")}: {Math.Abs(value)}, 当前金箔: {GoldLeaf}");
@@ -1232,7 +1234,8 @@ public class UserData
     /// <summary>
     /// 更新金币数量
     /// </summary>
-    public void UpdateGold(int value, bool isanim = false, bool updateui = true, string message = "")
+    public void UpdateGold(int value, bool isanim = false, bool updateui = true, string message = "",
+        string reasonIndex = "", string reasonCategory = "")
     {
         Gold += value;
 
@@ -1245,12 +1248,12 @@ public class UserData
         if (value <= 0)
         {
             TotalConsumedGold += Math.Abs(value);
-            SendCurrencyEvent(value, "金币", message);
+            SendCurrencyEvent(value, "金币", message, string.Empty, reasonIndex, reasonCategory);
         }
         else
         {
             TotalEarnedGold += value;
-            SendCurrencyEvent(value, "金币", message);
+            SendCurrencyEvent(value, "金币", message, string.Empty, reasonIndex, reasonCategory);
         }
 
         GameDataManager.Instance.CommitGameData();
@@ -1259,16 +1262,17 @@ public class UserData
     /// <summary>
     /// 发送货币事件（用于统计）
     /// </summary>
-    public void SendCurrencyEvent(int value, string currencyName, string message = "", string word = "")
+    public void SendCurrencyEvent(int value, string currencyName, string message = "", string word = "",
+        string reasonIndex = "", string reasonCategory = "")
     {
         AnalyticMgr.SetCommonProperties();
         if (value <= 0)
         {
-            AnalyticMgr.ResourceReduce(currencyName, Mathf.Abs(value), message, word);
+            AnalyticMgr.ResourceReduce(currencyName, Mathf.Abs(value), message, word, reasonIndex, reasonCategory);
         }
         else
         {
-            AnalyticMgr.ResourceGet(currencyName, value, message, word);
+            AnalyticMgr.ResourceGet(currencyName, value, message, word, reasonIndex, reasonCategory);
         }
     }
 
@@ -1337,7 +1341,8 @@ public class UserData
     /// <summary>
     /// 更新道具数量
     /// </summary>
-    public void UpdateTool(LimitRewordType type, int value, string message = "", string word = "")
+    public void UpdateTool(LimitRewordType type, int value, string message = "", string word = "",
+        string reasonIndex = "", string reasonCategory = "")
     {
         int toolId = GetToolIdByType(type);
 
@@ -1373,7 +1378,7 @@ public class UserData
             }
 
             // 发送道具统计事件
-            SendCurrencyEvent(value, toolName, message, word);
+            SendCurrencyEvent(value, toolName, message, word, reasonIndex, reasonCategory);
         }
     }
 
@@ -1652,6 +1657,13 @@ public class UserData
     public bool ConsumeEnergy(int stageId, int amount = 1, string message = "进入关卡消耗")
     {
         if (stageId == 1) return true;
+
+        // ★ 无限体力期间不扣体力（进入 / 退出 / 进程中断惩罚都不扣）
+        if (HasUnlimitedEnergy())
+        {
+            Debug.Log($"[Energy] 无限体力期间，跳过体力扣除：{message} (-{amount})");
+            return true;
+        }
 
         if (Energy >= amount)
         {

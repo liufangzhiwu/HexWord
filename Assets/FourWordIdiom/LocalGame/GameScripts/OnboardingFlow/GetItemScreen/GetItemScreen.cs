@@ -688,8 +688,16 @@ public class GetItemScreen : UIWindow
             return;
         }
 
-        GameDataManager.Instance.UserData.UpdateTool(limitRewordType, 1, "金币购买道具");
-        GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, true, true, "金币购买道具");
+        // 关卡内用金币买道具：reason_index 按道具类型细分（需求：金币购买道具灯泡/火箭/复活）
+        string buyItemIndex = limitRewordType == LimitRewordType.Tipstool ? ResReason.IdxBuyBulb
+            : limitRewordType == LimitRewordType.AutoComplete ? ResReason.IdxBuyRocket
+            : limitRewordType == LimitRewordType.ReStartTool ? ResReason.IdxBuyRevive
+            : ResReason.IdxUnknown;
+
+        GameDataManager.Instance.UserData.UpdateTool(limitRewordType, 1, ResReason.InLevel, string.Empty,
+            buyItemIndex, ResReason.InLevel);
+        GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, true, true, ResReason.InLevel,
+            buyItemIndex, ResReason.InLevel);
 
         if (limitRewordType == LimitRewordType.Tipstool)
         {

@@ -75,6 +75,7 @@ SpriteAtlas:
     - a9a27ad0cec7579488a144dc765a96b5: 21300000
     - 63bea301a791a434593210466b6e7d76: 21300000
     - 67099021048f3f843a2c1605cd8f5552: 21300000
+    - fcbb02212007e294c93de83e9a9c57e9: 21300000
     - 61f77b21bac833a4cb7fd208bbcbd08f: 21300000
     - 82ffe731da3e96b489d89a3ce35ee78f: 21300000
     - 29f4be31c0a82154e977a80e238ef3ca: 21300000
@@ -214,6 +215,7 @@ SpriteAtlas:
     - 9d40e54a603f44e4b835c3574000932f: 21300000
     - f93c774ace0c9ff48ac0e70f2a7e7c7c: 21300000
     - 46d4645a16900a54fbc54b73bc747ff9: 21300000
+    - f468728a8538f9e4192e492a78c413ee: 21300000
     - 70a05a9ab6606954f90f4e6509cf8eb0: 21300000
     - e601a3ba7da531b4d9c0b698a9798143: 21300000
     - 756095ba4a22ed147aa0531769d962aa: 21300000
@@ -304,6 +306,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: a9a27ad0cec7579488a144dc765a96b5, type: 3}
   - {fileID: 21300000, guid: 63bea301a791a434593210466b6e7d76, type: 3}
   - {fileID: 21300000, guid: 67099021048f3f843a2c1605cd8f5552, type: 3}
+  - {fileID: 21300000, guid: fcbb02212007e294c93de83e9a9c57e9, type: 3}
   - {fileID: 21300000, guid: 61f77b21bac833a4cb7fd208bbcbd08f, type: 3}
   - {fileID: 21300000, guid: 82ffe731da3e96b489d89a3ce35ee78f, type: 3}
   - {fileID: 21300000, guid: 29f4be31c0a82154e977a80e238ef3ca, type: 3}
@@ -443,6 +446,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 9d40e54a603f44e4b835c3574000932f, type: 3}
   - {fileID: 21300000, guid: f93c774ace0c9ff48ac0e70f2a7e7c7c, type: 3}
   - {fileID: 21300000, guid: 46d4645a16900a54fbc54b73bc747ff9, type: 3}
+  - {fileID: 21300000, guid: f468728a8538f9e4192e492a78c413ee, type: 3}
   - {fileID: 21300000, guid: 70a05a9ab6606954f90f4e6509cf8eb0, type: 3}
   - {fileID: 21300000, guid: e601a3ba7da531b4d9c0b698a9798143, type: 3}
   - {fileID: 21300000, guid: 756095ba4a22ed147aa0531769d962aa, type: 3}
@@ -532,6 +536,7 @@ SpriteAtlas:
   - twoBox
   - hehua_5
   - shopGiftAds
+  - noCanGold
   - giftgold
   - error_bg
   - UI_Icon_adsloading
@@ -671,6 +676,7 @@ SpriteAtlas:
   - rank2
   - shopGiftAdsWeek
   - leaf_skin_01
+  - NoCanAds
   - Coin1
   - tipsThreeGiftbg
   - adsicon

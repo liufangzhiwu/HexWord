@@ -673,8 +673,12 @@ public partial class ChessPlayArea
         _isTimerRunning = false;
 
         // 🌟 核心：在此刻正式扣除体力！
+        //    无限体力期间 ConsumeEnergy 内部会直接跳过扣除（返回 true 不扣），这里只负责把日志说清楚。
+        bool unlimitedEnergy = GameDataManager.Instance.UserData.HasUnlimitedEnergy();
         GameDataManager.Instance.UserData.ConsumeEnergy(CurrStageInfo.StageNumber, 1, "退出关卡消耗");
-        Debug.Log("玩家彻底退出关卡，扣除 1 点体力！");
+        Debug.Log(unlimitedEnergy
+            ? "无限体力期间退出关卡，不扣除体力！"
+            : "玩家彻底退出关卡，扣除 1 点体力！");
         ChessStageController.Instance.ClearCurrentLevelSave();
 
         // TODO: 关掉游戏界面，回到主大厅

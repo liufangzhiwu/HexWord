@@ -247,7 +247,8 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = AddGoldLeafBtn.GetComponentInChildren<InputField>();
         int value = int.Parse(Stagenumtxt.text);
-        GameDataManager.Instance.UserData.UpdateGoldLeaf(value);
+        GameDataManager.Instance.UserData.UpdateGoldLeaf(value,
+            message: string.Empty, reasonIndex: ResReason.IdxDebug, reasonCategory: ResReason.Other);
         MessageSystem.Instance.ShowTip($"添加成功 {value} 个");
     }
 
@@ -353,7 +354,8 @@ public class DebugMenu : UIWindow
         }
 
         UserData user = GameDataManager.Instance.UserData;
-        user.UpdateTool(type, value, $"DebugMenu增加{toolName}");
+        user.UpdateTool(type, value, $"DebugMenu增加{toolName}",
+            reasonIndex: ResReason.IdxDebug, reasonCategory: ResReason.Other);
         GameDataManager.Instance.CommitGameData();
 
         // 同步刷新大厅/关卡里的道具数量
@@ -394,7 +396,8 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = AddGoldBtn.GetComponentInChildren<InputField>();
         int Stagenum = int.Parse(Stagenumtxt.text);
-        GameDataManager.Instance.UserData.UpdateGold(Stagenum);
+        GameDataManager.Instance.UserData.UpdateGold(Stagenum,
+            reasonIndex: ResReason.IdxDebug, reasonCategory: ResReason.Other);
 
         MessageSystem.Instance.ShowTip("金币增加成功！");
     }

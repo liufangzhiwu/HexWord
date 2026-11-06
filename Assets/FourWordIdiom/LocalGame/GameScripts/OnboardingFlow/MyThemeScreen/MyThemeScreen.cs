@@ -206,7 +206,9 @@ public class MyThemeScreen : UIWindow
         }
 
         // 4. 扣除金箔
-        GameDataManager.Instance.UserData.UpdateGoldLeaf(-rule.needGoldLeaf);
+        // 消耗金箔抽皮肤 → 其他 / 抽取皮肤
+        GameDataManager.Instance.UserData.UpdateGoldLeaf(-rule.needGoldLeaf,
+            message: string.Empty, reasonIndex: ResReason.IdxSkinDraw, reasonCategory: ResReason.Other);
 
         // 5. 从未解锁的主题中随机抽取一个
         List<int> unlockedThemeIds = themeSaveItems.Select(t => t.id).ToList();

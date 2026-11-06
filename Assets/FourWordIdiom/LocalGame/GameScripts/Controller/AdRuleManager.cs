@@ -121,6 +121,20 @@ public class AdRuleManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 启动日志：打印当前生效的广告规则配置行（adv_general_config，按 InterAdsGroup 选行）。
+    /// 由 ShopManager.LogStartupLayerAndConfig 在每次启动时调用一次。
+    /// </summary>
+    public void LogCurrentConfig()
+    {
+        AdGeneralConfigRow row = CurrentConfig;
+        string group = ShopManager.shopManager != null ? ShopManager.shopManager.GetInterAdsGroup() : DefaultUserLayerKey;
+        Debug.Log($"[AdRule] [启动] 执行的广告规则(adv_general_config) InterAdsGroup={group} → 行Key={row.UserLayer}: " +
+                  $"T1={row.T1}, T2={row.T2}, T3={row.T3}, T4={row.T4}, T5={row.T5}, " +
+                  $"A1={row.A1}, A2={row.A2}, A3={row.A3}, L1={row.L1}, L2={row.L2}, L3={row.L3}, " +
+                  $"D={row.D:F2}, InterAdsSwitch={row.InterAdsSwitch}");
+    }
+
     // ==========================================
     // 便捷访问属性（供内部与其他模块调用）
     // ==========================================

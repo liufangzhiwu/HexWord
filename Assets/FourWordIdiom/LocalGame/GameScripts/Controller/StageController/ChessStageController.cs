@@ -424,7 +424,9 @@ public partial class ChessStageController
 
         if (CurrStageData.GoldLeafCount > 0 && !isJump)
         {
-            GameDataManager.Instance.UserData.UpdateGoldLeaf(CurrStageData.GoldLeafCount);
+            // 金箔是通关后才计数的资源 → 关卡内行为 / 通关结算
+            GameDataManager.Instance.UserData.UpdateGoldLeaf(CurrStageData.GoldLeafCount,
+                message: string.Empty, reasonIndex: ResReason.IdxLevelSettle, reasonCategory: ResReason.InLevel);
         }
         CoroutineRunner.StartCoroutine(CompleteStageRoutine(stageNumber,isJump));
         GoldLeafChessViews.Clear();

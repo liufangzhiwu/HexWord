@@ -892,9 +892,13 @@ public class HexGamePlayArea : UIWindow
             StartCoroutine(ShowTipsPuzzle(puzzleDatas));
             if (useCoins)
             {
-                GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true,"购买道具");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1,"道具购买");
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1,"关卡内使用");
+                // 关卡内用金币买火箭道具，购买与立即使用都归到“金币购买道具火箭”
+                GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true, ResReason.InLevel,
+                    ResReason.IdxBuyRocket, ResReason.InLevel);
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1, ResReason.InLevel,
+                    string.Empty, ResReason.IdxBuyRocket, ResReason.InLevel);
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, ResReason.InLevel,
+                    string.Empty, ResReason.IdxBuyRocket, ResReason.InLevel);
                 AudioManager.Instance.PlaySoundEffect("tishidaoju");
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
             }
