@@ -6577,7 +6577,7 @@ Canvas:
   m_VertexColorAlwaysGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: -1357356475
+  m_SortingLayerID: -506211957
   m_SortingOrder: 60
   m_TargetDisplay: 0
 --- !u!114 &5137269912621740754
@@ -6635,10 +6635,17 @@ MonoBehaviour:
   realExitBtn: {fileID: 1090128628074915310}
   adsAddTimeBtn2: {fileID: 7320938568454010555}
   goldAddTimeBtn2: {fileID: 2235629445552420186}
+  reviveAdsText2: {fileID: 0}
+  adsIcon2: {fileID: 0}
   freeGetButterToolTable2: {fileID: 7177956869985374234}
   confirmPupaIcon: {fileID: 7275704411710715131}
   adsCanUseTable2: {fileID: 7728991675234594447}
   adsUseCountText2: {fileID: 1248695542806313461}
+  reviveToolIconName: clock
+  goldReviveIcon: {fileID: 0}
+  goldReviveCountText: {fileID: 0}
+  goldReviveIcon2: {fileID: 0}
+  goldReviveCountText2: {fileID: 0}
   snapDuration: 0.2
   snapSmoothness: 0.6
   stopVelocityThreshold: 50

@@ -41,14 +41,15 @@ public partial class ChessPlayArea
 
         if (isHighlight)
         {
-            // 提层穿透黑色遮罩，参数需与 HeaderSection 中体力的层级保持一致
+            // 提层：只提到 UpPopPanel 层，保证能盖住玩法界面本身，
+            // 但要压在复活 / 失败弹窗（画布在 UpPopTwoPanel 层）之下，不能浮在弹窗上面。
             pupaCanvas.overrideSorting = true;
-            pupaCanvas.sortingLayerName = UIPanelLayer.TipsPanel;
-            pupaCanvas.sortingOrder = 101; // 保证在弹窗蒙版之上
+            pupaCanvas.sortingLayerName = UIPanelLayer.UpPopPanel;
+            pupaCanvas.sortingOrder = 0;
         }
         else
         {
-            // 恢复默认层级
+            // 恢复默认层级（回到父级 Canvas 的 BasePanel 层）
             pupaCanvas.overrideSorting = false;
             pupaCanvas.sortingOrder = 0;
         }

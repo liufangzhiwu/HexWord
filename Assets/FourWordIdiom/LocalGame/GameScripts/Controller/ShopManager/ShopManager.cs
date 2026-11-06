@@ -28,6 +28,30 @@ public class ShopRecommendConfig
 }
 
 /// <summary>
+/// 决策权重的完整拆解（计算与日志共用同一份数据，避免两处算法走偏）。
+/// </summary>
+public struct DecisionWeightInfo
+{
+    /// <summary>是否算出有效权重（false 时看 skipReason）</summary>
+    public bool valid;
+    /// <summary>跳过原因（中文）</summary>
+    public string skipReason;
+
+    public float baseWeight;        // 配置基础权重
+    public float payTendency;       // 付费倾向分
+    public float exploreScore;      // 探价分
+    public float failScore;         // 转化失败分
+    public float packWeight;        // 礼包分（base+pay(+explore-fail)，已封顶）
+    public float cap;               // 封顶值
+    public float specialWeight;     // 节日/周末加权
+    public float peakWeight;        // 高峰时段加权
+    public float returnWeight;      // 流失回归加权
+    public float cooldown;          // 冷却系数
+    public float pushIndex;         // 推送指数
+    public float decision;          // 最终权重
+}
+
+/// <summary>
 /// 道具折扣机制配置
 /// </summary>
 [Serializable]
@@ -1090,45 +1114,76 @@ public partial class ShopManager : MonoBehaviour
     {
         if (item == null || cfg == null)
         {
-            LogShop($"CalculateDecisionWeight 跳过: item={(item == null ? "null" : item.produceNameId)}, cfg={(cfg == null ? "null" : cfg.nameID)}, slot={slot}");
+            LogShop($"计算决策权重(CalculateDecisionWeight) 跳过：礼包={(item == null ? "null" : item.produceNameId)}，" +
+                    $"配置={(cfg == null ? "null" : cfg.nameID)}，推荐位={SlotNameCn(slot)}");
             return 0;
+        }
+
+        DecisionWeightInfo info = EvaluateDecisionWeight(item, cfg, slot);
+
+        if (!info.valid)
+        {
+            LogShop($"计算决策权重(CalculateDecisionWeight) 跳过：{item.produceNameId} {info.skipReason}");
+            return 0;
+        }
+
+        LogShop($"计算决策权重(CalculateDecisionWeight) {item.produceNameId}（推荐位={SlotNameCn(slot)}）：" +
+                $"基础={info.baseWeight:F1}，付费倾向={info.payTendency:F1}，探价={info.exploreScore:F1}，失败分={info.failScore:F1}" +
+                $" → 礼包分={info.packWeight:F2}(封顶{info.cap:F0})；" +
+                $"节日周末={info.specialWeight:F2}，高峰={info.peakWeight:F2}，流失回归={info.returnWeight:F2}，" +
+                $"冷却={info.cooldown:F2}，推送指数={info.pushIndex:F2} → 最终权重={info.decision:F2}");
+
+        return info.decision;
+    }
+
+    /// <summary>
+    /// 计算决策权重并返回完整拆解（算法唯一入口，CalculateDecisionWeight / 购买后日志快照都走这里）。
+    /// </summary>
+    private DecisionWeightInfo EvaluateDecisionWeight(ShopDataItem item, ShopRecommendConfig cfg, RecommendSlot slot)
+    {
+        DecisionWeightInfo info = new DecisionWeightInfo();
+
+        if (item == null || cfg == null)
+        {
+            info.valid = false;
+            info.skipReason = $"缺少数据(item={(item == null ? "null" : item.produceNameId)}, cfg={(cfg == null ? "null" : cfg.nameID)})";
+            return info;
         }
 
         if (IsLimitedOut(item))
         {
             ShopLimitData ld = GetLimitData(item);
-            LogShop($"CalculateDecisionWeight 跳过: {item.produceNameId} 限购已满(limited={item.limited}, buyCount={ld?.buyCount ?? 0})");
-            return 0;
+            info.valid = false;
+            info.skipReason = $"限购已满(限购={item.limited}, 已购={ld?.buyCount ?? 0})";
+            return info;
         }
 
         ShopLimitData limit = GetLimitData(item);
-        float payTendency = limit?.payTendencyScore ?? 0f;
-        float explore = limit?.exploreScore ?? 0f;
-        float fail = limit?.conversionFailScore ?? 0f;
-        float pushIndex = limit?.pushStateIndex ?? 1f;
+        info.baseWeight = cfg.baseWeight;
+        info.payTendency = limit?.payTendencyScore ?? 0f;
+        info.exploreScore = limit?.exploreScore ?? 0f;
+        info.failScore = limit?.conversionFailScore ?? 0f;
+        info.pushIndex = limit?.pushStateIndex ?? 1f;
 
-        float packWeight = cfg.baseWeight + payTendency;
+        float packWeight = cfg.baseWeight + info.payTendency;
         if (slot == RecommendSlot.Bulb || slot == RecommendSlot.DynamicStore)
         {
-            packWeight += explore - fail;
+            packWeight += info.exploreScore - info.failScore;
         }
         packWeight = Mathf.Max(0, packWeight);
 
-        float cap = cfg.maxWeight > 0 ? cfg.maxWeight : 100f;
-        packWeight = Mathf.Min(packWeight, cap);
+        info.cap = cfg.maxWeight > 0 ? cfg.maxWeight : 100f;
+        info.packWeight = Mathf.Min(packWeight, info.cap);
 
-        float special = IsHolidayOrWeekend() ? cfg.specialWeight : 0;
-        float peak = IsPeakHour() ? cfg.peakWeight : 0;
-        float ret = IsChurnReturn() ? cfg.returnWeight : 0;
+        info.specialWeight = IsHolidayOrWeekend() ? cfg.specialWeight : 0;
+        info.peakWeight = IsPeakHour() ? cfg.peakWeight : 0;
+        info.returnWeight = IsChurnReturn() ? cfg.returnWeight : 0;
+        info.cooldown = GetCooldownCoefficient(item);
 
-        float cooldown = GetCooldownCoefficient(item);
-        float decision = (packWeight + special + peak + ret) * cooldown * pushIndex;
-
-        LogShop($"CalculateDecisionWeight {item.produceNameId} [slot={slot}]: " +
-                $"base={cfg.baseWeight}, pay={payTendency:F1}, explore={explore:F1}, fail={fail:F1} => pack={packWeight:F2}(cap={cap}), " +
-                $"special={special:F2}, peak={peak:F2}, ret={ret:F2}, cooldown={cooldown:F2}, pushIndex={pushIndex:F2} => decision={decision:F2}");
-
-        return decision;
+        info.decision = (info.packWeight + info.specialWeight + info.peakWeight + info.returnWeight)
+                        * info.cooldown * info.pushIndex;
+        info.valid = true;
+        return info;
     }
 
     private bool IsPeakHour()
@@ -1358,6 +1413,18 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 礼包档位（策划的 GiftType 字段）。
+    /// 优先取商店表 shop.csv 的「礼包档位」列；推荐配置表（shop_clockbox / shop_rocketbox）里没有 GiftType 列，
+    /// 解析时全被默认成 3，不能作为档位依据，只作为兜底。
+    /// </summary>
+    private static int GetPackTier(ShopDataItem item, ShopRecommendConfig cfg = null)
+    {
+        if (item != null && item.giftType > 0) return item.giftType;
+        if (cfg != null && cfg.giftType > 0) return cfg.giftType;
+        return 0;
+    }
+
+    /// <summary>
     /// 当前推荐位本关是否允许出「新人礼」（需求 C-RECO-09）。
     /// 规则：
     ///   1. 本关任何弹窗已出过新人礼 → 不再并发第二个；
@@ -1577,6 +1644,17 @@ public partial class ShopManager : MonoBehaviour
                     case (int)LimitRewordType.RemoveDayAds:
                         LogShop($"  去广告商品，交由 HandleRemoveAdsPurchase 处理 (adstype={type})");
                         break;
+                    case (int)LimitRewordType.ReStartTool:
+                        // ★ 复活道具（toolId=105）：复活弹窗售卖的礼包（如悠然礼包 0;120#8;16#1;2）里有这个类型，
+                        //   原来没有分支，奖励直接丢失。
+                        GameDataManager.Instance.UserData.UpdateTool(
+                            LimitRewordType.ReStartTool, count, shopDataItem.name + "礼包购买复活道具");
+                        break;
+                    case (int)LimitRewordType.InfiniteEnergy:
+                        // ★ 内容里的 9;N 表示 N 小时无限体力；产品名自带 Energy 的走下面的 HandleUnlimitedEnergyPurchase，避免重复叠加
+                        if (!IsUnlimitedEnergyProduct(shopDataItem.produceNameId))
+                            GrantUnlimitedEnergyHours(count, shopDataItem);
+                        break;
                     default:
                         LogShop($"  未处理的商品类型: type={type}, count={count}");
                         break;
@@ -1706,6 +1784,27 @@ public partial class ShopManager : MonoBehaviour
         return produceNameId != null && produceNameId.Contains("Energy");
     }
 
+    /// <summary>
+    /// 直接发放 N 小时无限体力（供礼包内容里的 9;N 使用，与产品级的 HandleUnlimitedEnergyPurchase 区分）。
+    /// </summary>
+    private void GrantUnlimitedEnergyHours(int hours, ShopDataItem item)
+    {
+        if (hours <= 0) return;
+
+        var userData = GameDataManager.Instance.UserData;
+
+        double beforeRemain = userData.GetUnlimitedEnergyRemainSeconds();
+        DateTime newEnd = userData.AddUnlimitedEnergy(hours);
+        double afterRemain = userData.GetUnlimitedEnergyRemainSeconds();
+
+        LogShop($"礼包发放无限体力: {item?.produceNameId}, +{hours}h, " +
+                $"原剩余={TimeSpan.FromSeconds(beforeRemain):hh\\:mm\\:ss}, " +
+                $"新剩余={TimeSpan.FromSeconds(afterRemain):hh\\:mm\\:ss}, " +
+                $"新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
+
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, true);
+    }
+
     private void HandleRemoveAdsPurchase(ShopDataItem shopDataItem)
     {
         int adstype = (int)LimitRewordType.RemoveDayAds;
@@ -1800,7 +1899,12 @@ public partial class ShopManager : MonoBehaviour
         return int.TryParse(s.Substring(idx + 1), out hours) ? hours : 0;
     }
 
-    private void OnPackPurchased(ShopDataItem shopDataItem)
+    /// <summary>
+    /// 礼包购买后的统一收口：付费倾向 / 探价 / 档位累计 / 购买次数 / 推荐位锁定 + 购买后权重快照。
+    /// 调用方：GiftTable（复活、道具弹窗）、ShopManager.OnPurchaseSuccess、ShopItemBase（商店界面 1/2 号位等）。
+    /// 注意：这里会 buyCount++，调用方不要再自行累加。
+    /// </summary>
+    public void OnPackPurchased(ShopDataItem shopDataItem)
     {
         LogShop($"OnPackPurchased 开始: {shopDataItem.produceNameId}, type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
 
@@ -1814,19 +1918,43 @@ public partial class ShopManager : MonoBehaviour
 
         limit.SetLastBuyTime(DateTime.Now);
 
-        int a = shopDataItem.giftType;
+        int a = GetPackTier(shopDataItem, GetCfg(shopDataItem.produceNameId));
         if (a > 0)
         {
+            // ★ 付费倾向积分规则（策划文档）：
+            //   与购买礼包【同档位】的礼包 +2；【档位 a+1】的礼包 +1；【档位 a+2 及以上】的礼包 +0.5。
+            //   档位统一取 shop.csv 的「礼包档位」列（GetPackTier），低于 a 的档位不加分。
+            int sameTierCount = 0;
+            int nextTierCount = 0;
+            int aboveTierCount = 0;
+
             foreach (var cfg in _recommendConfigs)
             {
                 ShopDataItem it = allShopItems.FirstOrDefault(x => x.produceNameId == cfg.Key);
                 if (it == null) continue;
+
                 ShopLimitData ld = GetOrCreateLimitData(it);
-                if (cfg.Value.giftType == a) ld.payTendencyScore += 2f;
-                else if (cfg.Value.giftType == a + 1) ld.payTendencyScore += 1f;
-                else if (cfg.Value.giftType == a + 2) ld.payTendencyScore += 0.5f;
+                int tier = GetPackTier(it, cfg.Value);
+
+                if (tier == a)
+                {
+                    ld.payTendencyScore += 2f;
+                    sameTierCount++;
+                }
+                else if (tier == a + 1)
+                {
+                    ld.payTendencyScore += 1f;
+                    nextTierCount++;
+                }
+                else if (tier >= a + 2)
+                {
+                    ld.payTendencyScore += 0.5f;
+                    aboveTierCount++;
+                }
             }
-            LogShop($"  付费倾向积分更新: 基准档 a={a}");
+
+            LogShop($"  付费倾向积分更新（基准档 a={a}）：同档位 +2 → {sameTierCount} 个，" +
+                    $"a+1 +1 → {nextTierCount} 个，a+2 及以上 +0.5 → {aboveTierCount} 个");
         }
 
         limit.exploreScore += 3f;
@@ -1840,15 +1968,14 @@ public partial class ShopManager : MonoBehaviour
             {
                 foreach (var cfg in _recommendConfigs)
                 {
-                    if (cfg.Value.giftType == a + 1)
+                    ShopDataItem it = allShopItems.FirstOrDefault(x => x.produceNameId == cfg.Key);
+                    if (it == null) continue;
+
+                    if (GetPackTier(it, cfg.Value) == a + 1)
                     {
-                        ShopDataItem it = allShopItems.FirstOrDefault(x => x.produceNameId == cfg.Key);
-                        if (it != null)
-                        {
-                            ShopLimitData ld = GetOrCreateLimitData(it);
-                            ld.exploreScore += 6f;
-                            LogShop($"    探价加分: 下一档 {it.produceNameId} +6");
-                        }
+                        ShopLimitData ld = GetOrCreateLimitData(it);
+                        ld.exploreScore += 6f;
+                        LogShop($"    探价加分: 下一档 {it.produceNameId} +6");
                     }
                 }
             }
@@ -1878,6 +2005,106 @@ public partial class ShopManager : MonoBehaviour
         }
 
         LogShop($"OnPackPurchased 结束: {shopDataItem.produceNameId}, payTendency={limit.payTendencyScore:F1}, explore={limit.exploreScore:F1}, fail={limit.conversionFailScore:F1}, buyCount={limit.buyCount}");
+
+        // ★ 购买后打印权重快照：当前礼包 + 同档位所有礼包（此时各项积分都已更新）
+        if (shopDataItem.type == 2 || shopDataItem.giftType > 0)
+        {
+            LogWeightSnapshotAfterPurchase(shopDataItem);
+        }
+    }
+
+    // ======================= ★ 购买后权重快照日志 =======================
+
+    /// <summary>
+    /// 购买礼包后打印权重快照：**当前礼包** + **同档位（礼包档位 giftType）的所有礼包**。
+    /// 数据取的是购买后的最新状态（付费倾向 / 探价 / 转化失败分 / 限购次数都已刷新）。
+    /// </summary>
+    private void LogWeightSnapshotAfterPurchase(ShopDataItem purchased)
+    {
+        if (purchased == null) return;
+
+        ShopRecommendConfig purchasedCfg = GetCfg(purchased.produceNameId);
+        int tier = GetPackTier(purchased, purchasedCfg);
+        RecommendSlot? purchasedSlot = GetSlotOfPack(purchased);
+
+        LogShop("========== 【购买后权重快照】 ==========");
+        LogShop($"刚购买的礼包：{purchased.produceNameId}" +
+                $"（档位={tier}，推荐位={SlotNameCn(purchasedSlot)}，featured={(purchasedCfg != null ? purchasedCfg.featured : 0)}，价格={purchased.price:0.##}）");
+
+        LogPackWeightLine("当前礼包", purchased, purchasedSlot);
+
+        LogShop($"---------- 同档位（档位={tier}）其它礼包 ----------");
+        int sameTierCount = 0;
+        foreach (var kv in _recommendConfigs)
+        {
+            ShopRecommendConfig cfg = kv.Value;
+            if (cfg == null) continue;
+
+            ShopDataItem other = allShopItems.FirstOrDefault(x => x != null && x.produceNameId == kv.Key);
+            if (other == null) continue;
+            if (other.produceNameId == purchased.produceNameId) continue;
+            if (GetPackTier(other, cfg) != tier) continue;
+
+            sameTierCount++;
+            // 每个礼包按它自己所属推荐位计算（explore/fail 只对灯泡、动态商店生效）
+            LogPackWeightLine("同档位", other, GetSlotOfPack(other) ?? purchasedSlot ?? RecommendSlot.DynamicStore);
+        }
+
+        if (sameTierCount == 0)
+            LogShop("（没有其它同档位礼包）");
+
+        LogShop("======================================");
+    }
+
+    /// <summary>打印单个礼包的权重明细（中文标注）。</summary>
+    private void LogPackWeightLine(string label, ShopDataItem item, RecommendSlot? slot)
+    {
+        if (item == null) return;
+
+        ShopRecommendConfig cfg = GetCfg(item.produceNameId);
+        ShopLimitData limit = GetLimitData(item);
+        int buyCount = limit != null ? limit.buyCount : 0;
+
+        string basic = $"[{label}] {item.produceNameId}" +
+                       $"（档位={GetPackTier(item, cfg)}，" +
+                       $"推荐位={SlotNameCn(slot)}，" +
+                       $"限购={(item.limited > 0 ? item.limited.ToString() : "不限")}，" +
+                       $"已购={buyCount}）";
+
+        if (cfg == null)
+        {
+            LogShop($"{basic} → 无推荐配置（shop_recommend 里没有该礼包），不参与权重计算");
+            return;
+        }
+
+        DecisionWeightInfo info = EvaluateDecisionWeight(item, cfg, slot ?? RecommendSlot.DynamicStore);
+        if (!info.valid)
+        {
+            LogShop($"{basic} → 不参与推荐：{info.skipReason}");
+            return;
+        }
+
+        LogShop($"{basic} → 基础权重={info.baseWeight:F1}，付费倾向={info.payTendency:F1}，" +
+                $"探价={info.exploreScore:F1}，转化失败分={info.failScore:F1}，" +
+                $"礼包分={info.packWeight:F2}(封顶{info.cap:F0})；" +
+                $"节日周末={info.specialWeight:F1}，高峰={info.peakWeight:F1}，流失回归={info.returnWeight:F1}；" +
+                $"冷却={info.cooldown:F2}，推送指数={info.pushIndex:F2} → 最终权重={info.decision:F2}");
+    }
+
+    /// <summary>推荐位中文名（日志用）。</summary>
+    private static string SlotNameCn(RecommendSlot? slot)
+    {
+        if (!slot.HasValue) return "未归属";
+
+        switch (slot.Value)
+        {
+            case RecommendSlot.Bulb: return "灯泡";
+            case RecommendSlot.Rocket: return "火箭";
+            case RecommendSlot.Clock: return "复活";
+            case RecommendSlot.DynamicStore: return "动态商店";
+            case RecommendSlot.FixedStore: return "固定商店";
+            default: return slot.Value.ToString();
+        }
     }
 
     private int GetTierBuyCount(int tier)

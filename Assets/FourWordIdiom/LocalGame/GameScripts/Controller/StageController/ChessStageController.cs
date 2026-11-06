@@ -103,8 +103,12 @@ public partial class ChessStageController
         // int ctrlDataCount = CurrStageData.BoardSnapshot.Count(p => p.hasIce);
         // Debug.LogWarning($"<color=#00FFFF>[冰块追踪-步骤3-控制器沉淀]</color> 核心交付数据：静态配置层中的冰块数 = {ctrlInfoCount} | 即将提供给 UI 的进度快照中的冰块数 = {ctrlDataCount}");
         
-        // 如果不是第一次进，且读出来的剩余时间 <= 0，说明玩家上次在失败界面杀了进程！
-        if (!CurrStageData.IsFirstEnter && (CurrStageData.RemainingTime <= 0 || CurrStageData.IsPausedOrFailed))
+        // 如果不是第一次进，且读出来的存档「剩余时间已经归零」，说明玩家上次在失败界面杀了进程（视作放弃关卡）。
+        // ★ 这里只看剩余时间，不看 IsPausedOrFailed：
+        //    失败界面只会在倒计时归零后出现，归零就是判定逃逸的充分条件；
+        //    而暂停弹窗会把这个标记写成 false 并存档（见 PauseGameScreen.SaveCurrentLevelProgress），
+        //    暂停后杀进程时剩余时间 > 0，不能当成逃逸，否则会清掉玩家本局进度。
+        if (!CurrStageData.IsFirstEnter && CurrStageData.RemainingTime <= 0f)
         {
             Debug.LogWarning("[防逃逸系统] 检测到玩家上次在失败界面强退！视作放弃关卡，执行扣除体力惩罚！");
             

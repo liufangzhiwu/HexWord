@@ -96,10 +96,27 @@ public class PauseGameScreen : UIWindow
         SetToggleVisuals(muHandle, musicToggle.isOn);
         SetToggleVisuals(soHandle, soundsToggle.isOn);
         SetToggleVisuals(viHandle, vibrateToggle.isOn);
-        
-        // 🌟 玩家点开了暂停，视为进入“嫌疑状态”，立即存入硬盘！
-        ChessStageController.Instance.CurrStageData.IsPausedOrFailed = true;
-        GameDataManager.Instance.CommitGameData();
+
+        // ★ 玩家点开暂停 = 随时可能被杀的存档检查点：立刻把本局进度（棋盘 / 字盘 / 词本 / 剩余时间）落盘，
+        //   这样暂停后关进程再进来，能恢复到暂停那一刻。
+        //   注意：这里【不能】把 IsPausedOrFailed 置 true —— 那个标记代表「在失败界面强退」，
+        //   置 true 会让下次启动走防逃逸分支（清档 + 扣体力），表现就是「暂停后杀进程，进度全丢」。
+        SaveCurrentLevelProgress();
+    }
+
+    /// <summary>
+    /// 把当前关卡进度马上写入硬盘（暂停时调用，防止玩家直接杀进程导致进度丢失）。
+    /// </summary>
+    private void SaveCurrentLevelProgress()
+    {
+        ChessStageController ctrl = ChessStageController.Instance;
+        if (ctrl == null || ctrl.CurrStageData == null) return;
+
+        // 暂停不是失败，清掉失败标记，避免读档时被判定成「失败界面强退」
+        ctrl.CurrStageData.IsPausedOrFailed = false;
+        ctrl.CurrStageData.SaveToFile();
+
+        Debug.Log($"[PauseGameScreen] 暂停存档检查点已写入：关卡 {ctrl.CurrStageData.StageId}，剩余 {ctrl.CurrStageData.RemainingTime:F1}s");
     }
     
     private void ToggleMusic(bool isOn)

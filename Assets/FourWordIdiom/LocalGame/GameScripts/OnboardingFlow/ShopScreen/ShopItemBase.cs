@@ -671,14 +671,35 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         ShopLimitData limitData =
             GameDataManager.Instance.UserData.limitShopItems.Find((x) => x.nameid == shopDataItem.produceNameId);
+
+        // ★ 限购礼包（迎新 / 萤火 / 飞驰 / 从容礼盒等）可能还没有跟踪数据，
+        //   先补建，否则 IsLimitedOut() 永远是 false，买满了也不会隐藏（含下次进店复现）。
+        if (limitData == null && shopDataItem.limited > 0)
+        {
+            limitData = new ShopLimitData
+            {
+                id = shopDataItem.id,
+                nameid = shopDataItem.produceNameId,
+                pushStateIndex = 1f,
+            };
+            GameDataManager.Instance.UserData.limitShopItems.Add(limitData);
+            LogShopItem($"补建限购跟踪数据: {shopDataItem.produceNameId}(id={shopDataItem.id}, 限购={shopDataItem.limited})");
+        }
+
+        // ★ 这里只置 isget（去广告 / 限时权益判断用）；
+        //   购买次数 +1、付费倾向 / 探价 / 推荐位锁定、购买后权重快照统一交给 ShopManager.OnPackPurchased，
+        //   避免两处都 +1 造成 buyCount 重复累加。
         if (limitData != null)
         {
             limitData.isget = true;
-            limitData.buyCount += 1;
         }
 
+        // ★ 商店界面（1 号位 / 2 号位 / 动态商店 / 固定商店）购买的礼包也要走推荐权重更新 + 权重快照日志。
+        //   原来只有 GiftTable（复活/道具弹窗）和 ShopManager.OnPurchaseSuccess 两条链路会调，商店这边漏了。
         if (ShopManager.shopManager != null)
         {
+            ShopManager.shopManager.OnPackPurchased(shopDataItem);
+
             string beforeLayer = ShopManager.shopManager.GetCurrentUserLayer();
             ShopManager.shopManager.RefreshLayer();
             string afterLayer = ShopManager.shopManager.GetCurrentUserLayer();

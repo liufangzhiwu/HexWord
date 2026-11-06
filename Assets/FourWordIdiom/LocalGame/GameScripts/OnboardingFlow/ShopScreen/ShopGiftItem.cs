@@ -905,27 +905,28 @@ public class ShopGiftItem : ShopItemBase
         if (ContainsRemoveAdsContent())
             RefreshAllRemoveAdsGiftPacksInShop();
 
-        // ★ 迎新礼包购买后立即隐藏，并重排固定商店
-        TryHideSelfIfNewcomerPurchased();
+        // ★ 限购次数用完（含迎新礼包）→ 隐藏自己并重排商店
+        TryHideSelfIfSoldOut();
     }
 
     /// <summary>
-    /// ★ 迎新礼包购买后隐藏自己，并刷新固定商店排版。
-    /// 仅在迎新礼包（NewcomerBox）自身的购买成功回调中调用（限购 1 次，买后即隐藏）。
+    /// ★ 限购次数用完（limited > 0 且已买满）后隐藏自己，并重排商店。
+    /// 原来只处理迎新礼包（NewcomerBox），现在萤火 / 飞驰 / 从容礼盒等所有限购礼包都适用；
+    /// 下次进店时 ShopScreen 的条目创建逻辑也会过滤掉售罄礼包，不会重新冒出来。
     /// </summary>
-    private void TryHideSelfIfNewcomerPurchased()
+    private void TryHideSelfIfSoldOut()
     {
         if (shopDataItem == null || ShopManager.shopManager == null) return;
-        if (shopDataItem.produceNameId != ShopManager.ProductNewcomerBox) return;
+        if (!ShopManager.shopManager.IsLimitedOut(shopDataItem)) return;
 
-        LogShopItem($"迎新礼包购买成功，隐藏: {shopDataItem.produceNameId}");
+        LogShopItem($"限购次数已用完，隐藏礼包: {shopDataItem.produceNameId}(id={shopDataItem.id}, 限购={shopDataItem.limited})");
 
         gameObject.SetActive(false);
 
         if (SystemManager.Instance != null && SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen))
         {
             ShopScreen shopScreen = SystemManager.Instance.GetPanel(PanelType.ShopScreen) as ShopScreen;
-            if (shopScreen != null) shopScreen.RefreshFixedStore();
+            if (shopScreen != null) shopScreen.RefreshAfterPackSoldOut();
         }
     }
 

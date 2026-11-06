@@ -410,6 +410,9 @@ public class ShopScreen : UIWindow
             if (shopDataItem.type != 0 && shopDataItem.type != 1 && shopDataItem.type != 2)
                 continue;
 
+            // ★ 限购次数已用完 → 不展示（这里会直接 SetActive(true) 复用池对象，必须提前拦掉）
+            if (SkipSoldOutLimitedItem(shopDataItem)) continue;
+
             var pool = shopDataItem.type == 2 ? giftobjectPool : objectPool;
             Transform itemparent = shopDataItem.type == 2 ? parent : goldItemTable.transform;
 
@@ -486,6 +489,43 @@ public class ShopScreen : UIWindow
         if (ShopManager.shopManager == null) return;
         if (ShopManager.shopManager.shopMode != ShopMode.FixedStore) return;
         ShowFixedStore();
+    }
+
+    /// <summary>
+    /// 礼包限购次数用完后的商店重排：
+    ///  - 固定商店：重建一号位列表（一号位按 siblingIndex 排，售罄的礼包被过滤后由后面的顶上）；
+    ///  - 动态商店：列表是 VerticalLayoutGroup，条目隐藏后会自动收起，不需要整屏重建
+    ///    （下次进店 ShowCollapsedState 会按推荐逻辑重新排布）。
+    /// </summary>
+    public void RefreshAfterPackSoldOut()
+    {
+        if (ShopManager.shopManager == null) return;
+
+        if (ShopManager.shopManager.shopMode == ShopMode.FixedStore)
+        {
+            RefreshFixedStore();
+            return;
+        }
+
+        Debug.Log("[Shop] 动态商店礼包售罄，已隐藏该条目（重新进店后按推荐重新排布）");
+    }
+
+    /// <summary>
+    /// ★ 限购次数已用完的礼包不再展示（缓存实例存在时先隐藏），返回 true 表示本次应跳过。
+    /// 所有条目创建/激活路径（CreateDynamicItem、CrateShopItem）都要过这一层，
+    /// 否则缓存的池对象会被重新 SetActive(true) 又冒出来。
+    /// </summary>
+    private bool SkipSoldOutLimitedItem(ShopDataItem data)
+    {
+        if (data == null || data.limited <= 0) return false;
+        if (ShopManager.shopManager == null) return false;
+        if (!ShopManager.shopManager.IsLimitedOut(data)) return false;
+
+        if (shopallItems != null && shopallItems.TryGetValue(data.id, out var exist) && exist != null)
+            exist.gameObject.SetActive(false);
+
+        Debug.Log($"[Shop] 限购次数已用完，跳过礼包: {data.produceNameId}(id={data.id}, 限购={data.limited})");
+        return true;
     }
 
     // ======================= 动态商店：收起 / 展开 =======================
@@ -578,6 +618,10 @@ public class ShopScreen : UIWindow
     private void CreateDynamicItem(ShopDataItem data, Transform parent, int siblingIndex)
     {
         if (data == null || parent == null) return;
+
+        // ★ 限购次数已用完 → 不展示（含已缓存的池对象）
+        if (SkipSoldOutLimitedItem(data)) return;
+
         var targetDict = shopallItems;
 
         if (targetDict.TryGetValue(data.id, out var shopItem))

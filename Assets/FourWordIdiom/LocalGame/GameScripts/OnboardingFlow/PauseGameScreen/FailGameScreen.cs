@@ -44,6 +44,10 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private Button realExitBtn;
     [SerializeField] private Button adsAddTimeBtn2;
     [SerializeField] private Button goldAddTimeBtn2;
+    [Tooltip("二次确认页看广告复活按钮的文本（留空则运行时自动取 AdsAddTimeBtn2 下的 Text）")]
+    [SerializeField] private Text reviveAdsText2;
+    [Tooltip("二次确认页看广告复活按钮的广告图标（留空则运行时自动取 AdsAddTimeBtn2 下的 AdsIcon）")]
+    [SerializeField] private GameObject adsIcon2;
     [SerializeField] private GameObject freeGetButterToolTable2; // 免费赠送一个蝴蝶道具
     [SerializeField] private GameObject confirmPupaIcon;
     
@@ -53,17 +57,35 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [Header("金币复活按钮（持有复活道具时切换为道具复活）")]
     [Tooltip("复活道具图标在 UI_Universal 图集里的名字")]
     [SerializeField] private string reviveToolIconName = "clock";
-    [Tooltip("金币复活按钮的图标（留空则运行时自动取 GoldAddTimeBtn 下的 Icon）")]
+    [Tooltip("主失败页金币按钮的图标（留空则运行时自动取 GoldAddTimeBtn 下的 Icon）")]
     [SerializeField] private Image goldReviveIcon;
-    [Tooltip("金币复活按钮的数量文本（留空则运行时自动取 GoldAddTimeBtn 下的 Text）")]
+    [Tooltip("主失败页金币按钮的数量文本（留空则运行时自动取 GoldAddTimeBtn 下的 Text）")]
     [SerializeField] private Text goldReviveCountText;
+    [Tooltip("二次确认页金币按钮的图标（留空则运行时自动取 GoldAddTimeBtn2 下的 Icon）")]
+    [SerializeField] private Image goldReviveIcon2;
+    [Tooltip("二次确认页金币按钮的数量文本（留空则运行时自动取 GoldAddTimeBtn2 下的 Text）")]
+    [SerializeField] private Text goldReviveCountText2;
 
     /// <summary>复活道具在 UserData.toolInfo 里的 id（见 UserData.GetToolIdByType）</summary>
     private const int ReviveToolId = 105;
+    /// <summary>蝴蝶道具在 UserData.toolInfo 里的 id（见 UserData.GetToolIdByType）</summary>
+    private const int ButterflyToolId = 103;
 
+    /// <summary>首次免费复活时广告按钮上显示的文案</summary>
+    private const string FreeReviveText = "免费复活";
+    /// <summary>免费复活用完后广告按钮恢复的文案</summary>
+    private const string PaidReviveText = "复活";
+
+    // 主失败页金币按钮的默认表现（金币图标 + 价格文本）
     private Sprite _goldButtonDefaultIcon;
     private string _goldButtonDefaultText;
     private bool _goldButtonDefaultCached;
+
+    // 二次确认页金币按钮的默认表现
+    private Sprite _goldButton2DefaultIcon;
+    private string _goldButton2DefaultText;
+    private bool _goldButton2DefaultCached;
+
     /// <summary>复活道具图标（首次用时从图集取一次，之后复用）</summary>
     private Sprite _reviveToolIconSprite;
     /// <summary>复活道具图标取过一次但失败，避免重复请求 / 重复报错</summary>
@@ -234,6 +256,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         EventDispatcher.instance.TriggerUpdateLayerCoin(true, true,false,true);
         
         //EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false, true);
+        
+        EventDispatcher.instance.TriggerHighlightHeaderUI(true);
 
         // ★ 刷新复活界面内购推荐位
         RefreshGiftTables();
@@ -310,6 +334,9 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             ? ShopManager.shopManager.GetAuditPacksForSlot(ShopManager.RecommendSlot.Clock)
             : ShopManager.shopManager.GetRecommendPacks(ShopManager.RecommendSlot.Clock);
 
+        // ★ 本关已经买过的推荐礼包不再展示（进入下一关 / 重启游戏后自动恢复）
+        packs = FilterPurchasedPacksThisLevel(packs);
+
         int count = packs != null ? packs.Count : 0;
         LogFailGame($"复活礼包候选数={count}, 审核开={AuditConfig.IsAuditOpen}");
 
@@ -325,6 +352,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         // ★ 审核关 或 候选 ≤ 1：原单礼包逻辑
         if (!AuditConfig.IsAuditOpen || count <= 1)
         {
+            // 购买后隐藏推荐位时会把 scrollRect 一起收起，重新打开要恢复，否则 giftTable 在隐藏父节点下显示不出来
+            if (scrollRect != null) scrollRect.gameObject.SetActive(true);
             giftTable.gameObject.SetActive(true);
             giftTable.InitUI(LimitRewordType.ReStartTool, packs[0]);
             if (pointTransform != null) pointTransform.gameObject.SetActive(false);
@@ -336,6 +365,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (scrollRect == null || scrollRect.content == null)
         {
             LogFailGame("ScrollRect / content 未配置，退回单礼包");
+            if (scrollRect != null) scrollRect.gameObject.SetActive(true);
             giftTable.gameObject.SetActive(true);
             giftTable.transform.SetParent(scrollRect.content);
             giftTable.InitUI(LimitRewordType.ReStartTool, packs[0]);
@@ -395,6 +425,104 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             }
         }
         _giftTableInstances.Clear();
+    }
+
+    // ======================= ★ 购买礼包后隐藏推荐位 =======================
+
+    /// <summary>
+    /// 本关内已经购买过、需要从推荐位隐藏的礼包 id。
+    /// 关卡切换（ChessStageController.SetStageData）或重启游戏后自动清空，礼包恢复推荐。
+    /// </summary>
+    private static string _purchasedPackLevelKey;
+    private static readonly HashSet<int> _purchasedPackIdsThisLevel = new HashSet<int>();
+
+    /// <summary>当前关卡标识（levelMode_关卡号），用于判断是否已经换关。</summary>
+    private static string GetCurrentLevelKey()
+    {
+        var ctrl = ChessStageController.Instance;
+        if (ctrl == null || ctrl.CurrStageInfo == null) return string.Empty;
+
+        string mode = GameDataManager.Instance != null && GameDataManager.Instance.UserData != null
+            ? GameDataManager.Instance.UserData.levelMode.ToString()
+            : "0";
+
+        return $"{mode}_{ctrl.CurrStageInfo.StageNumber}";
+    }
+
+    /// <summary>关卡变了就清空「本关已购买」记录。</summary>
+    private static void SyncPurchasedPackLevelKey()
+    {
+        string key = GetCurrentLevelKey();
+        if (_purchasedPackLevelKey == key) return;
+
+        _purchasedPackLevelKey = key;
+        _purchasedPackIdsThisLevel.Clear();
+    }
+
+    /// <summary>
+    /// 过滤掉本关已经购买过的推荐礼包（传进来的列表会被复制，避免改动 ShopManager 内部集合）。
+    /// </summary>
+    private List<ShopDataItem> FilterPurchasedPacksThisLevel(List<ShopDataItem> packs)
+    {
+        if (packs == null || packs.Count == 0) return packs;
+
+        SyncPurchasedPackLevelKey();
+        if (_purchasedPackIdsThisLevel.Count == 0) return packs;
+
+        var filtered = new List<ShopDataItem>(packs.Count);
+        for (int i = 0; i < packs.Count; i++)
+        {
+            ShopDataItem item = packs[i];
+            if (item != null && _purchasedPackIdsThisLevel.Contains(item.id))
+            {
+                LogFailGame($"本关已购买，跳过推荐礼包: {item.produceNameId}(id={item.id})");
+                continue;
+            }
+            filtered.Add(item);
+        }
+
+        return filtered;
+    }
+
+    /// <summary>
+    /// 复活弹窗推荐位里购买成功后由 GiftTable 回调：
+    /// 立刻隐藏刚买的那个礼包；如果推荐位里已经没有可见礼包，把滚动区/页码一起收起。
+    /// 本次弹窗生命周期内保持隐藏；进入下一关 / 重启游戏后重新推荐。
+    /// </summary>
+    public void HideGiftTableAfterPurchase(GiftTable purchasedTable, ShopDataItem purchasedData)
+    {
+        // ★ 记下「本关已购买」，下次打开弹窗（同一关）也不会再推这个礼包
+        if (purchasedData != null)
+        {
+            SyncPurchasedPackLevelKey();
+            _purchasedPackIdsThisLevel.Add(purchasedData.id);
+        }
+
+        if (purchasedTable == null) return;
+
+        bool wasVisible = purchasedTable.gameObject.activeSelf;
+        purchasedTable.gameObject.SetActive(false);
+        LogFailGame($"购买成功，隐藏礼包推荐位（{(purchasedTable == giftTable ? "场景实例" : purchasedTable.name)}），之前可见={wasVisible}");
+
+        if (AnyGiftTableVisible()) return;
+
+        if (scrollRect != null) scrollRect.gameObject.SetActive(false);
+        if (pointTransform != null) pointTransform.gameObject.SetActive(false);
+        LogFailGame("推荐位内已无可见礼包，收起滚动区与页码");
+    }
+
+    /// <summary>推荐位里是否还有可见的礼包。</summary>
+    private bool AnyGiftTableVisible()
+    {
+        if (giftTable != null && giftTable.gameObject.activeSelf) return true;
+
+        for (int i = 0; i < _giftTableInstances.Count; i++)
+        {
+            GiftTable gt = _giftTableInstances[i];
+            if (gt != null && gt.gameObject.activeSelf) return true;
+        }
+
+        return false;
     }
 
     // ======================= 页面按钮 =======================
@@ -646,6 +774,14 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (failPanel != null) failPanel.SetActive(showFailPanel);
         if (continuePanel != null) continuePanel.SetActive(!showFailPanel);
 
+        // ★ 切页时同步「免费复活」表现：
+        //   玩家可能没在主失败页用掉首次免费复活就直接进了二次确认页，
+        //   那里的看广告复活按钮也必须是「免费复活」，且点击不走广告视频。
+        RefreshFreeReviveVisual();
+
+        // ★ 免费蝴蝶提示也按最新的蝴蝶数量刷新（两个页面一起）
+        RefreshFreeButterToolUI();
+
         if (showFailPanel)
             SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
 
@@ -654,24 +790,87 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
     private void RefreshReviveUI()
     {
-        bool isFree = !GameDataManager.Instance.UserData.hasUsedFreeRevive;
-
-        if (isFree)
-        {
-            reviveAdsText.text = "免费复活";
-            adsIcon.SetActive(false);
-        }
-        else
-        {
-            reviveAdsText.text = "复活";
-            adsIcon.SetActive(true);
-        }
+        // ★ 首次免费复活：主失败页 + 二次确认页的看广告复活按钮都要同步表现
+        RefreshFreeReviveVisual();
 
         // ★ 刷新复活视频「剩余可用次数/总可用次数」显示
         RefreshAdsUseCountUI();
 
         // ★ 金币复活按钮：持有复活道具时切换为「道具图标 + 道具数量」
         RefreshGoldReviveButton();
+    }
+
+    // ======================= 首次免费复活（两个页面共用一个判定） =======================
+
+    /// <summary>
+    /// 刷新两个页面「看广告复活」按钮的免费复活表现：
+    ///  - 尚未使用过首次免费复活 → 文案「免费复活」+ 隐藏广告图标；
+    ///  - 已使用过 → 文案「复活」+ 显示广告图标。
+    /// 首次免费复活的判定是全局的（UserData.hasUsedFreeRevive），
+    /// 所以即使玩家在主失败页没点免费复活就进了二次确认页，那里也应该显示「免费复活」。
+    /// </summary>
+    private void RefreshFreeReviveVisual()
+    {
+        EnsureAdsFreeReviveRefs();
+
+        bool isFree = !GameDataManager.Instance.UserData.hasUsedFreeRevive;
+
+        ApplyFreeReviveVisual(reviveAdsText, adsIcon, isFree);
+        ApplyFreeReviveVisual(reviveAdsText2, adsIcon2, isFree);
+    }
+
+    /// <summary>把一套（文本 + 广告图标）刷成「免费复活」或「看广告复活」。</summary>
+    private void ApplyFreeReviveVisual(Text label, GameObject adsIconObj, bool isFree)
+    {
+        if (label != null)
+            label.text = isFree ? FreeReviveText : PaidReviveText;
+
+        if (adsIconObj != null)
+            adsIconObj.SetActive(!isFree);
+    }
+
+    /// <summary>
+    /// 自动绑定两个页面「看广告复活」按钮的文本 / 广告图标（Inspector 已指定则跳过）。
+    /// 预制体里两个按钮是各自独立的节点（AdsAddTimeBtn 下各有一个 AdsIcon + Text），
+    /// 原来只绑了主失败页那一套，二次确认页的文案永远不会变。
+    /// </summary>
+    private void EnsureAdsFreeReviveRefs()
+    {
+        if (reviveAdsText == null && adsAddTimeBtn != null)
+            reviveAdsText = FindChildComponent<Text>(adsAddTimeBtn.transform);
+
+        if (adsIcon == null && adsAddTimeBtn != null)
+        {
+            Image icon = FindChildComponent<Image>(adsAddTimeBtn.transform);
+            if (icon != null) adsIcon = icon.gameObject;
+        }
+
+        if (reviveAdsText2 == null && adsAddTimeBtn2 != null)
+            reviveAdsText2 = FindChildComponent<Text>(adsAddTimeBtn2.transform);
+
+        if (adsIcon2 == null && adsAddTimeBtn2 != null)
+        {
+            Image icon = FindChildComponent<Image>(adsAddTimeBtn2.transform);
+            if (icon != null) adsIcon2 = icon.gameObject;
+        }
+    }
+
+    /// <summary>
+    /// 在给定节点下找第一个挂了 T 的子节点（不含节点自身）。
+    /// 按钮自身的 Image 是底图，不能当图标用，所以跳过自身。
+    /// </summary>
+    private static T FindChildComponent<T>(Transform root) where T : Component
+    {
+        if (root == null) return null;
+
+        T[] comps = root.GetComponentsInChildren<T>(true);
+        for (int i = 0; i < comps.Length; i++)
+        {
+            if (comps[i] != null && comps[i].gameObject != root.gameObject)
+                return comps[i];
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -722,39 +921,50 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
     /// <summary>
     /// 自动绑定金币复活按钮的图标 / 文本节点，并缓存它们的默认表现（金币图标 + 金币价格）。
-    /// 只在第一次调用时缓存，之后复用。
+    /// 只在第一次调用时缓存，之后复用。主失败页（goldAddTimeBtn）与二次确认页（goldAddTimeBtn2）各一套。
     /// </summary>
     private void EnsureGoldReviveButtonRefs()
     {
-        if (goldAddTimeBtn == null) return;
+        BindGoldButton(goldAddTimeBtn, ref goldReviveIcon, ref goldReviveCountText,
+            ref _goldButtonDefaultIcon, ref _goldButtonDefaultText, ref _goldButtonDefaultCached);
 
-        if (goldReviveIcon == null)
+        BindGoldButton(goldAddTimeBtn2, ref goldReviveIcon2, ref goldReviveCountText2,
+            ref _goldButton2DefaultIcon, ref _goldButton2DefaultText, ref _goldButton2DefaultCached);
+    }
+
+    /// <summary>绑定单个金币按钮的 icon / 文本，并缓存默认表现（只缓存一次）。</summary>
+    private void BindGoldButton(Button button, ref Image icon, ref Text countText,
+        ref Sprite defaultIcon, ref string defaultText, ref bool cached)
+    {
+        if (button == null) return;
+
+        if (icon == null)
         {
             // 按钮自身也有 Image（底图），所以要跳过按钮所在节点，取第一个子节点的 Image（Icon）
-            var images = goldAddTimeBtn.GetComponentsInChildren<Image>(true);
+            var images = button.GetComponentsInChildren<Image>(true);
             for (int i = 0; i < images.Length; i++)
             {
-                if (images[i] != null && images[i].gameObject != goldAddTimeBtn.gameObject)
+                if (images[i] != null && images[i].gameObject != button.gameObject)
                 {
-                    goldReviveIcon = images[i];
+                    icon = images[i];
                     break;
                 }
             }
         }
 
-        if (goldReviveCountText == null)
-            goldReviveCountText = goldAddTimeBtn.GetComponentInChildren<Text>(true);
+        if (countText == null)
+            countText = button.GetComponentInChildren<Text>(true);
 
-        if (_goldButtonDefaultCached) return;
-        if (goldReviveIcon == null || goldReviveCountText == null) return;
+        if (cached) return;
+        if (icon == null || countText == null) return;
 
-        _goldButtonDefaultIcon = goldReviveIcon.sprite;
-        _goldButtonDefaultText = goldReviveCountText.text;
-        _goldButtonDefaultCached = true;
+        defaultIcon = icon.sprite;
+        defaultText = countText.text;
+        cached = true;
     }
 
     /// <summary>
-    /// 按当前复活道具数量刷新金币按钮：
+    /// 按当前复活道具数量刷新两个金币按钮：
     ///  - 数量 > 0 → 图标换成复活道具图标、文本换成道具数量（点击走「消耗 1 个道具复活」）；
     ///  - 数量 = 0 → 还原为金币图标 + 金币价格（点击走原来的金币购买逻辑）。
     /// </summary>
@@ -767,43 +977,51 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         bool useItem = reviveCount > 0;
 
-        if (goldReviveIcon != null)
-        {
-            Sprite targetSprite = null;
-            if (useItem)
-            {
-                if (_reviveToolIconSprite == null
-                    && !_reviveToolIconLoadFailed
-                    && AdvancedBundleLoader.SharedInstance != null
-                    && !string.IsNullOrEmpty(reviveToolIconName))
-                {
-                    _reviveToolIconSprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(reviveToolIconName);
-                    if (_reviveToolIconSprite == null)
-                    {
-                        _reviveToolIconLoadFailed = true;
-                        Debug.LogError($"[Shop][FailGameScreen] 复活道具图标缺失: {reviveToolIconName} @ UI_Universal");
-                    }
-                }
+        ApplyGoldButtonVisual(goldReviveIcon, goldReviveCountText,
+            _goldButtonDefaultIcon, _goldButtonDefaultText, useItem, reviveCount);
 
-                targetSprite = _reviveToolIconSprite;
-            }
-            else
-            {
-                targetSprite = _goldButtonDefaultIcon;
-            }
-
-            if (targetSprite != null) goldReviveIcon.sprite = targetSprite;
-        }
-
-        if (goldReviveCountText != null)
-        {
-            if (useItem)
-                goldReviveCountText.text = reviveCount.ToString();
-            else if (!string.IsNullOrEmpty(_goldButtonDefaultText))
-                goldReviveCountText.text = _goldButtonDefaultText;
-        }
+        ApplyGoldButtonVisual(goldReviveIcon2, goldReviveCountText2,
+            _goldButton2DefaultIcon, _goldButton2DefaultText, useItem, reviveCount);
 
         LogFailGame($"金币复活按钮刷新: 复活道具={reviveCount}, 使用道具复活={useItem}");
+    }
+
+    /// <summary>把一套图标 / 文本刷成「道具态」或「金币态」。</summary>
+    private void ApplyGoldButtonVisual(Image icon, Text countText, Sprite defaultIcon, string defaultText,
+        bool useItem, int reviveCount)
+    {
+        if (icon != null)
+        {
+            Sprite targetSprite = useItem ? GetReviveToolIcon() : defaultIcon;
+            if (targetSprite != null) icon.sprite = targetSprite;
+        }
+
+        if (countText != null)
+        {
+            if (useItem)
+                countText.text = reviveCount.ToString();
+            else if (!string.IsNullOrEmpty(defaultText))
+                countText.text = defaultText;
+        }
+    }
+
+    /// <summary>取复活道具图标（图集只会请求一次，失败也只报一次错）。</summary>
+    private Sprite GetReviveToolIcon()
+    {
+        if (_reviveToolIconSprite != null || _reviveToolIconLoadFailed) return _reviveToolIconSprite;
+
+        if (AdvancedBundleLoader.SharedInstance != null && !string.IsNullOrEmpty(reviveToolIconName))
+        {
+            _reviveToolIconSprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(reviveToolIconName);
+        }
+
+        if (_reviveToolIconSprite == null)
+        {
+            _reviveToolIconLoadFailed = true;
+            Debug.LogError($"[Shop][FailGameScreen] 复活道具图标缺失: {reviveToolIconName} @ UI_Universal");
+        }
+
+        return _reviveToolIconSprite;
     }
 
     /// <summary>
@@ -829,10 +1047,10 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         return true;
     }
 
-    // ======================= 免费赠送蝴蝶道具（首次金币复活） =======================
+    // ======================= 免费赠送蝴蝶道具（复活按钮触发） =======================
 
     /// <summary>
-    /// 是否显示「免费赠送蝴蝶道具」提示：玩家尚未使用过金币复活 && 玩家没有蝴蝶道具。
+    /// 是否显示「免费赠送蝴蝶道具」提示：玩家尚未通过复活按钮获得过赠送 && 玩家没有蝴蝶道具。
     /// </summary>
     private bool ShouldShowFreeButterTool()
     {
@@ -842,7 +1060,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         // 玩家没有蝴蝶道具（toolId = 103）
         if (userData.toolInfo != null
-            && userData.toolInfo.TryGetValue(103, out var butterflyInfo)
+            && userData.toolInfo.TryGetValue(ButterflyToolId, out var butterflyInfo)
             && butterflyInfo != null
             && butterflyInfo.count > 0)
         {
@@ -860,11 +1078,65 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (freeGetButterToolTable2 != null) freeGetButterToolTable2.SetActive(show);
     }
 
+    /// <summary>玩家当前持有的蝴蝶道具数量（toolInfo[103]）。</summary>
+    private int GetButterflyToolCount()
+    {
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null || userData.toolInfo == null) return 0;
+
+        if (userData.toolInfo.TryGetValue(ButterflyToolId, out var info) && info != null)
+            return info.count;
+
+        return 0;
+    }
+
+    /// <summary>「免费赠送蝴蝶道具」面板当前是否处于显示状态（主失败页 / 二次确认页任一）。</summary>
+    private bool IsFreeButterToolPanelShowing()
+    {
+        // 两个节点都没配置时退化为只看业务条件（ShouldShowFreeButterTool），避免不配节点就永远不赠送
+        if (freeGetButterToolTable == null && freeGetButterToolTable2 == null) return true;
+
+        if (freeGetButterToolTable != null && freeGetButterToolTable.activeInHierarchy) return true;
+        if (freeGetButterToolTable2 != null && freeGetButterToolTable2.activeInHierarchy) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// 复活成功后按「免费赠送蝴蝶道具」规则发放：
+    /// 蝴蝶道具数量 ≤ 0 且 FreeGetButterToolTable 面板正在显示 → 发放 1 个蝴蝶道具（并关掉该提示）。
+    /// 「消耗复活道具复活」和「金币购买复活」两条路径都会调用；同一次复活只发一次。
+    /// </summary>
+    private bool GrantFreeButterToolIfNeeded(string source)
+    {
+        // 蝴蝶道具数量必须 ≤ 0
+        if (GetButterflyToolCount() > 0) return false;
+
+        // FreeGetButterToolTable 面板必须处于显示状态
+        if (!IsFreeButterToolPanelShowing()) return false;
+
+        // 兼容旧规则（已赠送过 / 已用金币复活过就不再赠送）
+        if (!ShouldShowFreeButterTool()) return false;
+
+        var userData = GameDataManager.Instance.UserData;
+        userData.UpdateTool(LimitRewordType.Butterfly, 1, $"{source}赠送蝴蝶");
+        userData.hasUsedGoldRevive = true;
+
+        MessageSystem.Instance.ShowTip("赠送蝴蝶道具 x1");
+
+        // 立刻收起提示（两个页面一起）
+        RefreshFreeButterToolUI();
+
+        LogFailGame($"{source}触发：蝴蝶数量≤0 且免费蝴蝶提示显示中 → 发放蝴蝶道具 x1，当前数量={GetButterflyToolCount()}");
+        return true;
+    }
+
     private void OnGoldReviveClicked()
     {
         // ★ 持有复活道具 → 直接消耗 1 个道具复活 60 秒，不再走金币购买逻辑
         if (TryConsumeReviveTool())
         {
+            // ★ 消耗复活道具复活同样适用「免费赠送蝴蝶道具」规则
+            GrantFreeButterToolIfNeeded("复活道具复活");
             ExecuteRevive();
             return;
         }
@@ -876,13 +1148,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             Debug.Log("使用金币复活！");
             GameDataManager.Instance.UserData.UpdateGold(-60, true, true, "复活广告消耗金币");
 
-            // ★ 首次金币复活 + 玩家没有蝴蝶道具 → 赠送一个蝴蝶道具
-            if (ShouldShowFreeButterTool())
-            {
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, 1, "金币复活赠送蝴蝶");
-                GameDataManager.Instance.UserData.hasUsedGoldRevive = true;
-                MessageSystem.Instance.ShowTip("赠送蝴蝶道具 x1");
-            }
+            // ★ 金币购买复活 + 蝴蝶数量≤0 + 免费蝴蝶提示显示中 → 赠送一个蝴蝶道具
+            GrantFreeButterToolIfNeeded("金币复活");
 
             ExecuteRevive();
         }
@@ -899,6 +1166,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         if (isFree)
         {
+            // ★ 首次免费复活：主失败页 / 二次确认页共用这个判定，都不走广告视频
             Debug.Log("使用首次免费复活！");
             GameDataManager.Instance.UserData.hasUsedFreeRevive = true;
             ExecuteRevive();
@@ -942,6 +1210,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         ChessStageController.Instance.CurrStageData.IsPausedOrFailed = false;
         GameDataManager.Instance.CommitGameData();
         ChessPlayArea.Instance.ReviveGame(60f);
+        
+        EventDispatcher.instance.TriggerUpdateLayerCoin(false, false,false,true);
     }
 
     private void OnRealExitClicked()
@@ -1034,9 +1304,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         if (Time.unscaledTime - _pressStartTime < longPressDelay) return;
 
-        // 已经弹二次确认页时不允许隐藏（避免把「确认退出」藏起来，用户找不到按钮）
-        if (continuePanel != null && continuePanel.activeSelf) return;
-
+        // 主失败页 / 二次确认页都支持长按隐藏
+        // （二次确认页是嵌套预制体 ContinueUI，仍在 FailGameScreen 根节点下，隐藏根 CanvasGroup 即可一起隐藏）
         EnterLongPressHidden();
     }
 

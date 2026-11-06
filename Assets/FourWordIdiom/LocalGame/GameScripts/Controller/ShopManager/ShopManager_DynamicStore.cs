@@ -82,7 +82,25 @@ public partial class ShopManager : MonoBehaviour
 
         // 兜底：已有获取记录 / 购买次数 > 0
         ShopLimitData data = GetLimitData(item);
-        return data != null && (data.isget || data.buyCount > 0);
+        if (data != null && (data.isget || data.buyCount > 0)) return true;
+
+        // 兜底：购买记录里已有该商品（老存档购买时没写限购跟踪数据，避免升级后迎新礼包又冒出来）
+        var records = GameDataManager.Instance != null && GameDataManager.Instance.UserData != null
+            ? GameDataManager.Instance.UserData.purchaseRecords
+            : null;
+        if (records != null)
+        {
+            for (int i = 0; i < records.Count; i++)
+            {
+                if (records[i] != null && records[i].produceNameId == item.produceNameId)
+                {
+                    LogShop($"IsNewcomerPurchased: 购买记录里已有 {item.produceNameId}，视为已购买");
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

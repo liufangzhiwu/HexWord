@@ -647,11 +647,22 @@ public class GiftTable : MonoBehaviour
                 LogShop("ShopManager.shopManager 为空，无法处理购买后逻辑（回退：仅打印）");
             }
 
+            // ★ 复活弹窗推荐位：先拿到弹窗引用（下面可能把自己隐藏，隐藏后再取就取不到了）
+            FailGameScreen failScreen = GetComponentInParent<FailGameScreen>();
+
             // ★ 限购一次礼包购买后立即隐藏（下一关卡由推荐权重重新选出新礼包）
             if (ShopManager.shopManager != null && ShopManager.shopManager.IsLimitedOut(shopDataItem))
             {
                 LogShop($"限购已满，立即隐藏礼包: {shopDataItem.produceNameId}");
                 gameObject.SetActive(false);
+            }
+
+            // ★ 复活弹窗里买的礼包：购买后立刻隐藏（本次弹窗内不再展示），
+            //   下次打开弹窗（进入下一关 / 退出游戏后再进）会由 RefreshGiftTables 重建并恢复显示。
+            if (failScreen != null)
+            {
+                LogShop($"通知复活弹窗隐藏已购买礼包: {shopDataItem.produceNameId}");
+                failScreen.HideGiftTableAfterPurchase(this, shopDataItem);
             }
 
             // ★ 写入购买记录（礼包名称、价格、礼包内容快照、购买时间）

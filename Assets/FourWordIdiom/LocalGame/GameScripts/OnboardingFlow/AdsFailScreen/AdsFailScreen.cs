@@ -40,10 +40,15 @@ public class AdsFailScreen : UIWindow
     [Header("路径2：单道具商品")]
     [SerializeField] private Button BuyBtn;         // 单道具商品按钮
     [SerializeField] private Text priceText;        // 商品价格（price）
+    [Tooltip("购买按钮上的数量文本（留空则运行时自动取 BuyBtn/icon 下的 countText），显示本次购买会增加多少奖励资源")]
+    [SerializeField] private Text buyCountText;
     [SerializeField] private Text discountText;     // 折扣标签（discountText，取内购配置表）
     [SerializeField] private Transform discountTable; // 折扣标签容器（discountbg）
 
     // ======================= 分享状态（仅本面板生命周期内） =======================
+
+    /// <summary>支付进行中（防连点拉起多次支付）</summary>
+    private bool _purchasing;
 
     private bool _sharePending;        // 已点击分享、等待判定
     private bool _shareFocusLost;      // 分享后是否真的切出过前台
@@ -65,6 +70,7 @@ public class AdsFailScreen : UIWindow
     {
         base.OnEnable();
         ResetShareState();
+        _purchasing = false;   // 上次关闭时若还挂着支付标记，重新打开要清掉，否则购买按钮会失效
         InitUI();
 
 #if UNITY_OPENHARMONY && !UNITY_EDITOR
@@ -194,6 +200,11 @@ public class AdsFailScreen : UIWindow
     {
         ResetShareState();
 
+        // 关面板时清掉「支付中」状态与 loading，避免下次打开时购买按钮点了没反应
+        _purchasing = false;
+        if (MessageSystem.Instance != null)
+            MessageSystem.Instance.HideLoadingAnimation();
+
 #if UNITY_OPENHARMONY && !UNITY_EDITOR
         HarmonyShareSignalReceiver.SignalReceived -= OnHarmonyShareSignalFromUnity;
 #endif
@@ -270,6 +281,7 @@ public class AdsFailScreen : UIWindow
             if (discountText != null) discountText.gameObject.SetActive(false);
             if (discountTable != null) discountTable.gameObject.SetActive(false);
             if (priceText != null) priceText.gameObject.SetActive(false);
+            if (buyCountText != null) buyCountText.gameObject.SetActive(false);
             return;
         }
 
@@ -292,13 +304,45 @@ public class AdsFailScreen : UIWindow
         if (discountTable != null && discountText == null)
             discountTable.gameObject.SetActive(!string.IsNullOrEmpty(item.discountZh) || !string.IsNullOrEmpty(item.discount));
 
-        // 商品内容数量（如「灯泡 x1」），无内容时隐藏
-        if (countText != null && ShareBtn != null && !ShareBtn.gameObject.activeSelf)
+        // ★ 购买按钮上的数量：显示这次购买会让奖励资源增加多少
+        //   金币 600 / 提示道具 6 / 复活道具 8（取 shop.csv「商品内容」里与触发道具对应的那一项）
+        RefreshBuyCountUI(item, toolType);
+    }
+
+    /// <summary>
+    /// 刷新购买按钮上的数量文本（BuyBtn/icon/countText）。
+    /// 与分享按钮的 <see cref="countText"/>（剩余次数）是两个独立节点，不能混用。
+    /// </summary>
+    private void RefreshBuyCountUI(ShopDataItem item, LimitRewordType toolType)
+    {
+        EnsureBuyCountText();
+        if (buyCountText == null) return;
+
+        int rewardCount = GetGoodsMainCount(item, toolType);
+        buyCountText.gameObject.SetActive(rewardCount > 0);
+
+        if (rewardCount > 0)
+            buyCountText.text = string.Format("×{0}", rewardCount);
+    }
+
+    /// <summary>
+    /// 自动绑定购买按钮下的数量文本（预制体里 BuyBtn/icon/countText，默认文案「×1」）。
+    /// Inspector 已指定则跳过。
+    /// </summary>
+    private void EnsureBuyCountText()
+    {
+        if (buyCountText != null || BuyBtn == null) return;
+
+        Text[] texts = BuyBtn.GetComponentsInChildren<Text>(true);
+        for (int i = 0; i < texts.Length; i++)
         {
-            int count = GetGoodsMainCount(item, toolType);
-            countText.gameObject.SetActive(count > 0);
-            if (count > 0)
-                countText.text = string.Format("x{0}", count);
+            if (texts[i] == null) continue;
+
+            if (texts[i].gameObject.name == "countText")
+            {
+                buyCountText = texts[i];
+                return;
+            }
         }
     }
 
@@ -318,21 +362,28 @@ public class AdsFailScreen : UIWindow
         return ShopManager.shopManager.GetShopItemByProduceName(productId);
     }
 
-    /// <summary>取商品内容中与触发道具类型对应的主道具数量（展示用）。</summary>
+    /// <summary>
+    /// 取商品内容中与触发道具类型对应的主道具数量（展示用）。
+    /// 找不到完全匹配的类型时，退化为商品内容里的第一项数量，保证购买按钮上的数量不会空着。
+    /// </summary>
     private int GetGoodsMainCount(ShopDataItem item, LimitRewordType toolType)
     {
         if (item == null || item.productContent == null) return 0;
+
+        int fallbackCount = 0;
         foreach (var row in item.productContent)
         {
             if (row == null || row.Count < 2) continue;
+
             int type;
             int count;
-            if (int.TryParse(row[0], out type) && int.TryParse(row[1], out count))
-            {
-                if (type == (int)toolType) return count;
-            }
+            if (!int.TryParse(row[0], out type) || !int.TryParse(row[1], out count)) continue;
+            if (count <= 0) continue;
+
+            if (type == (int)toolType) return count;
+            if (fallbackCount == 0) fallbackCount = count;
         }
-        return 0;
+        return fallbackCount;
     }
 
     // ======================= 事件 =======================
@@ -345,6 +396,9 @@ public class AdsFailScreen : UIWindow
     /// <summary>点击单道具商品：直接调起系统支付；成功走 ShopManager.OnPurchaseSuccess（发奖+AwardScreen）。</summary>
     private void OnBuyClick()
     {
+        // 支付进行中忽略重复点击（避免连点拉起多次支付）
+        if (_purchasing) return;
+
         LimitRewordType toolType = ShopManager.shopManager != null
             ? ShopManager.shopManager.LastAdFailedToolType
             : LimitRewordType.Tipstool;
@@ -356,21 +410,58 @@ public class AdsFailScreen : UIWindow
             return;
         }
 
+        _purchasing = true;
+        MessageSystem.Instance.ShowLoadingAnimation();
+
+        // ★ 编辑器（或没接支付的环境）不会有真实支付回调，这里直接走成功流程，
+        //   与 ShopItemBase / GiftTable / AdsDiscountScreen 的处理保持一致，否则点了完全没反应。
+        if (UIUtilities.isEditMode)
+        {
+            HandleBuySuccess(new ProductItem
+            {
+                order_id = "",
+                IsoCurrencyCode = "",
+                ItemName = item.produceNameId,
+                ProductId = item.produceNameId,
+                LocalizedPrice = item.price * 100,
+            });
+            return;
+        }
+
         Debug.Log($"[AdsFail] 发起单道具购买: {item.produceNameId}, price={item.price}");
+        AnalyticMgr.PurchaseStart(item.produceNameId);
         Game.self.Shop.Purchase(
             item.GetProduceName(),
-            productItem =>
-            {
-                // 复用商店统一的购买成功处理（发放内容 + 内购成功弹窗 AwardScreen + 购买记录）
-                if (ShopManager.shopManager != null)
-                    ShopManager.shopManager.OnPurchaseSuccess(productItem);
-                Close();
-            },
-            error =>
-            {
-                Debug.Log($"[AdsFail] 单道具购买失败/取消: {item.produceNameId}, error={error}");
-                // 取消/失败不弹额外窗：取消购买弹窗由 ShopManager.OnPurchaseCanceled 统一调度
-            });
+            HandleBuySuccess,
+            error => HandleBuyFailed(item, error));
+    }
+
+    /// <summary>购买成功：复用商店统一的购买成功处理（发放内容 + 内购成功弹窗 AwardScreen + 购买记录）。</summary>
+    private void HandleBuySuccess(ProductItem productItem)
+    {
+        _purchasing = false;
+        MessageSystem.Instance.HideLoadingAnimation();
+
+        Debug.Log($"[AdsFail] 单道具购买成功: {productItem?.ProductId}");
+
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnPurchaseSuccess(productItem);
+
+        Close();
+    }
+
+    /// <summary>购买失败 / 取消：关掉 loading，交给商店统一的「取消购买」调度。</summary>
+    private void HandleBuyFailed(ShopDataItem item, string error)
+    {
+        _purchasing = false;
+        MessageSystem.Instance.HideLoadingAnimation();
+
+        Debug.Log($"[AdsFail] 单道具购买失败/取消: {item?.produceNameId}, error={error}");
+        AnalyticMgr.PurchaseFailed(item?.GetProduceName(), error);
+
+        // 拉起系统支付后未完成购买（取消/失败），由商店统一弹「取消购买」弹窗
+        if (item != null && ShopManager.shopManager != null)
+            ShopManager.shopManager.OnPurchaseCanceled(item.produceNameId, true);
     }
 
     /// <summary>点击分享：记录时刻 → 调起系统分享 → 等切回前台判定（OnApplicationFocus）。</summary>
