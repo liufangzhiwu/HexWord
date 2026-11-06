@@ -2204,9 +2204,9 @@ RectTransform:
   - {fileID: 5637222817541211253}
   m_Father: {fileID: 2393627028303625844}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 565.7875, y: 267.60022}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 567, y: -269.5}
   m_SizeDelta: {x: 1104, y: 467}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4910036109796254327
@@ -3971,9 +3971,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3752867999458075414}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -323.4, y: -155}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 248.8, y: -155}
   m_SizeDelta: {x: 440.3807, y: 122.835}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1921714210715829163
@@ -6642,6 +6642,9 @@ MonoBehaviour:
   snapDuration: 0.2
   snapSmoothness: 0.6
   stopVelocityThreshold: 50
+  longPressDelay: 0.25
+  longPressMoveTolerance: 30
+  enableLongPressHide: 1
 --- !u!1 &9101054475588368581
 GameObject:
   m_ObjectHideFlags: 0

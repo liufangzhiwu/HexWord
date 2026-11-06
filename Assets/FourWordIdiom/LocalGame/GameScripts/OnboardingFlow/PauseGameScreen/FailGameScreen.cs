@@ -50,6 +50,27 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private GameObject adsCanUseTable2; // 广告可以用次数
     [SerializeField] private Text adsUseCountText2;      // 广告剩余可用次数/总可用次数
 
+    [Header("金币复活按钮（持有复活道具时切换为道具复活）")]
+    [Tooltip("复活道具图标在 UI_Universal 图集里的名字")]
+    [SerializeField] private string reviveToolIconName = "clock";
+    [Tooltip("金币复活按钮的图标（留空则运行时自动取 GoldAddTimeBtn 下的 Icon）")]
+    [SerializeField] private Image goldReviveIcon;
+    [Tooltip("金币复活按钮的数量文本（留空则运行时自动取 GoldAddTimeBtn 下的 Text）")]
+    [SerializeField] private Text goldReviveCountText;
+
+    /// <summary>复活道具在 UserData.toolInfo 里的 id（见 UserData.GetToolIdByType）</summary>
+    private const int ReviveToolId = 105;
+
+    private Sprite _goldButtonDefaultIcon;
+    private string _goldButtonDefaultText;
+    private bool _goldButtonDefaultCached;
+    /// <summary>复活道具图标（首次用时从图集取一次，之后复用）</summary>
+    private Sprite _reviveToolIconSprite;
+    /// <summary>复活道具图标取过一次但失败，避免重复请求 / 重复报错</summary>
+    private bool _reviveToolIconLoadFailed;
+    /// <summary>上一次刷新时玩家的复活道具数量（-1 表示尚未刷新，用于「数量变化才刷新」）</summary>
+    private int _lastReviveToolCount = -1;
+
     [Header("翻页设置（审核多礼包模式）")]
     public float snapDuration = 0.2f;
     [Range(0f, 1f)] public float snapSmoothness = 0.6f;
@@ -250,6 +271,9 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         }
 
         UpdateLongPress();
+
+        // ★ 复活道具数量变化时同步金币按钮表现（弹窗内买礼包/领奖后也能立刻切换）
+        UpdateGoldReviveButtonState();
     }
 
     // ======================= 复活界面内购推荐位 =======================
@@ -645,6 +669,9 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         // ★ 刷新复活视频「剩余可用次数/总可用次数」显示
         RefreshAdsUseCountUI();
+
+        // ★ 金币复活按钮：持有复活道具时切换为「道具图标 + 道具数量」
+        RefreshGoldReviveButton();
     }
 
     /// <summary>
@@ -675,6 +702,131 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         }
 
         canUseTable.SetActive(show);
+    }
+
+    // ======================= ★ 金币复活按钮：持有复活道具时改成「消耗道具复活」 =======================
+
+    /// <summary>
+    /// 玩家当前持有的复活道具数量（toolInfo[105]）。
+    /// </summary>
+    private int GetReviveToolCount()
+    {
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null || userData.toolInfo == null) return 0;
+
+        if (userData.toolInfo.TryGetValue(ReviveToolId, out var info) && info != null)
+            return Mathf.Max(0, info.count);
+
+        return 0;
+    }
+
+    /// <summary>
+    /// 自动绑定金币复活按钮的图标 / 文本节点，并缓存它们的默认表现（金币图标 + 金币价格）。
+    /// 只在第一次调用时缓存，之后复用。
+    /// </summary>
+    private void EnsureGoldReviveButtonRefs()
+    {
+        if (goldAddTimeBtn == null) return;
+
+        if (goldReviveIcon == null)
+        {
+            // 按钮自身也有 Image（底图），所以要跳过按钮所在节点，取第一个子节点的 Image（Icon）
+            var images = goldAddTimeBtn.GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < images.Length; i++)
+            {
+                if (images[i] != null && images[i].gameObject != goldAddTimeBtn.gameObject)
+                {
+                    goldReviveIcon = images[i];
+                    break;
+                }
+            }
+        }
+
+        if (goldReviveCountText == null)
+            goldReviveCountText = goldAddTimeBtn.GetComponentInChildren<Text>(true);
+
+        if (_goldButtonDefaultCached) return;
+        if (goldReviveIcon == null || goldReviveCountText == null) return;
+
+        _goldButtonDefaultIcon = goldReviveIcon.sprite;
+        _goldButtonDefaultText = goldReviveCountText.text;
+        _goldButtonDefaultCached = true;
+    }
+
+    /// <summary>
+    /// 按当前复活道具数量刷新金币按钮：
+    ///  - 数量 > 0 → 图标换成复活道具图标、文本换成道具数量（点击走「消耗 1 个道具复活」）；
+    ///  - 数量 = 0 → 还原为金币图标 + 金币价格（点击走原来的金币购买逻辑）。
+    /// </summary>
+    private void RefreshGoldReviveButton()
+    {
+        EnsureGoldReviveButtonRefs();
+
+        int reviveCount = GetReviveToolCount();
+        _lastReviveToolCount = reviveCount;
+
+        bool useItem = reviveCount > 0;
+
+        if (goldReviveIcon != null)
+        {
+            Sprite targetSprite = null;
+            if (useItem)
+            {
+                if (_reviveToolIconSprite == null
+                    && !_reviveToolIconLoadFailed
+                    && AdvancedBundleLoader.SharedInstance != null
+                    && !string.IsNullOrEmpty(reviveToolIconName))
+                {
+                    _reviveToolIconSprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(reviveToolIconName);
+                    if (_reviveToolIconSprite == null)
+                    {
+                        _reviveToolIconLoadFailed = true;
+                        Debug.LogError($"[Shop][FailGameScreen] 复活道具图标缺失: {reviveToolIconName} @ UI_Universal");
+                    }
+                }
+
+                targetSprite = _reviveToolIconSprite;
+            }
+            else
+            {
+                targetSprite = _goldButtonDefaultIcon;
+            }
+
+            if (targetSprite != null) goldReviveIcon.sprite = targetSprite;
+        }
+
+        if (goldReviveCountText != null)
+        {
+            if (useItem)
+                goldReviveCountText.text = reviveCount.ToString();
+            else if (!string.IsNullOrEmpty(_goldButtonDefaultText))
+                goldReviveCountText.text = _goldButtonDefaultText;
+        }
+
+        LogFailGame($"金币复活按钮刷新: 复活道具={reviveCount}, 使用道具复活={useItem}");
+    }
+
+    /// <summary>
+    /// 每帧低频同步（数量变化才刷新），保证在弹窗内买了含复活道具的礼包后按钮也能立刻切过来。
+    /// </summary>
+    private void UpdateGoldReviveButtonState()
+    {
+        if (GetReviveToolCount() != _lastReviveToolCount)
+            RefreshGoldReviveButton();
+    }
+
+    /// <summary>
+    /// 尝试消耗 1 个复活道具。返回 true 表示已消耗（调用方直接复活，不再走金币逻辑）。
+    /// </summary>
+    private bool TryConsumeReviveTool()
+    {
+        if (GetReviveToolCount() <= 0) return false;
+
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, -1, "复活消耗道具");
+        LogFailGame($"消耗复活道具 x1 复活 60 秒，剩余 {GetReviveToolCount()}");
+
+        RefreshGoldReviveButton();
+        return true;
     }
 
     // ======================= 免费赠送蝴蝶道具（首次金币复活） =======================
@@ -710,6 +862,13 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
     private void OnGoldReviveClicked()
     {
+        // ★ 持有复活道具 → 直接消耗 1 个道具复活 60 秒，不再走金币购买逻辑
+        if (TryConsumeReviveTool())
+        {
+            ExecuteRevive();
+            return;
+        }
+
         bool isGold = GameDataManager.Instance.UserData.Gold >= 60;
 
         if (isGold)

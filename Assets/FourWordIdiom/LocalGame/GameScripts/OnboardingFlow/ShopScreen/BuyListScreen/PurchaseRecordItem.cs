@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -59,11 +61,34 @@ public class PurchaseRecordItem : MonoBehaviour
         // }
 
         // ---------- 购买时间 ----------
+        // ★ 只显示日期（yyyy-MM-dd），不显示具体时分秒
         if (timeText != null)
-            timeText.text = record.buyTime ?? "";
+            timeText.text = FormatBuyDate(record.buyTime);
 
         // ---------- 礼包内容 ----------
         RefreshContent(record);
+    }
+
+    /// <summary>
+    /// 购买时间只取日期部分展示。
+    /// 存档里 buyTime 是 "yyyy-MM-dd HH:mm:ss"（旧记录也是这个格式），
+    /// 这里解析后统一输出 "yyyy-MM-dd"，解析失败则退化为「取空格前的部分」。
+    /// </summary>
+    private static string FormatBuyDate(string buyTime)
+    {
+        if (string.IsNullOrEmpty(buyTime)) return "";
+
+        if (DateTime.TryParseExact(buyTime, "yyyy-MM-dd HH:mm:ss",
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out var exact))
+        {
+            return exact.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        }
+
+        if (DateTime.TryParse(buyTime, out var dt))
+            return dt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        int spaceIndex = buyTime.IndexOf(' ');
+        return spaceIndex > 0 ? buyTime.Substring(0, spaceIndex) : buyTime;
     }
 
     private void RefreshContent(PurchaseRecord record)
