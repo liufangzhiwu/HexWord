@@ -318,15 +318,80 @@ namespace Middleware
             Restore(restoreCallback);
         }
 
+        // ------------------------------------------------------------
+        //  恢复购买 / 启动补单
+        // ------------------------------------------------------------
+        private Action<bool, ProductItem[]> _restoreCallback;
+        private readonly List<ProductItem> _restoreItems = new List<ProductItem>();
+        private int _restoreQueriesPending;
+        private bool _restoreInProgress;
+
+        /// <summary>
+        /// 恢复购买（也是启动补单入口：GameCoreManager 进大厅时会调 Restore(null)）。
+        ///
+        /// 三步：
+        ///   1) 本地待处理订单（pending_orders.json）→ 没发过奖的直接补发；
+        ///   2) 平台已购查询（消耗型）→ 平台侧未核销的订单补发 + 核销；
+        ///   3) 平台已购查询（非消耗型）→ 永久去广告这类没有核销流程，只能靠这里核对补发（bug51）。
+        ///
+        /// 旧实现是「同步立刻回调 (false, null)」，所以按钮永远弹「没有可恢复的内购」，
+        /// 而且从来没查过非消耗型商品，永久去广告丢了就再也补不回来。
+        /// </summary>
         public void Restore(Action<bool, ProductItem[]> restoreCallback)
         {
-            // 1) 先处理本地遗留的待补单
+            Debug.Log("[IAP] Restore 开始：本地待补单 + 平台已购查询（消耗型 / 非消耗型）");
+
+            _restoreCallback = restoreCallback;
+            _restoreItems.Clear();
+            _restoreInProgress = true;
+
+            // 1) 本地遗留的待补单
             RetryAllPendingOrders();
 
-            // 2) 再查询商品列表 & 已购订单（已购查询里可能还会再补一批）
-            QueryConsumable();
-            ConfirmCheckPurchase();
-            restoreCallback?.Invoke(false, null);
+            // 2) 平台已购查询（两个查询各自会回一次 OnCheckPurchaseInfo）
+            QueryConsumable();            // 顺带刷新一次消耗型商品列表（保持原行为）
+            _restoreQueriesPending = 2;
+            ConfirmCheckPurchase(ProductType.CONSUMABLE);
+            ConfirmCheckPurchase(ProductType.NONCONSUMABLE);
+
+            // 3) 兜底：某些环境查询不回来（未登录 / 网络异常）时别把 UI 卡死
+            if (Game.self != null) Game.self.StartCoroutine(CoRestoreTimeout(4f));
+            else CompleteRestore("Game.self 为空");
+        }
+
+        private System.Collections.IEnumerator CoRestoreTimeout(float seconds)
+        {
+            float waited = 0f;
+            while (waited < seconds && _restoreInProgress && _restoreQueriesPending > 0)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (_restoreInProgress) CompleteRestore($"{seconds}s 超时兜底");
+        }
+
+        /// <summary>每次已购查询回包后调一次（成功/失败都要调，否则计数永远不归零）</summary>
+        private void NotifyRestoreQueryDone()
+        {
+            if (!_restoreInProgress) return;
+
+            _restoreQueriesPending--;
+            if (_restoreQueriesPending <= 0) CompleteRestore("已购查询完成");
+        }
+
+        private void CompleteRestore(string reason)
+        {
+            if (!_restoreInProgress) return;
+            _restoreInProgress = false;
+
+            Action<bool, ProductItem[]> cb = _restoreCallback;
+            _restoreCallback = null;
+
+            var items = _restoreItems.ToArray();
+            Debug.Log($"[IAP] Restore 完成（{reason}）：本次补发 {items.Length} 笔");
+
+            cb?.Invoke(items.Length > 0, items.Length > 0 ? items : null);
         }
 
         // ------------------------------------------------------------
@@ -364,8 +429,31 @@ namespace Middleware
             foreach (var order in snapshot)
             {
                 GrantRewardIfNeeded(order);
-                ConsumePendingOrder(order);
+                FinishOrderAfterGrant(order);
             }
+        }
+
+        /// <summary>
+        /// 发奖成功后收尾：消耗型通知平台核销；非消耗型（永久去广告）没有核销流程，直接清掉待处理记录。
+        /// 以前非消耗型也去调 ConsumePurchase，平台必然报错，记录就永远躺在表里，每次启动都重试一遍（bug51）。
+        /// </summary>
+        private void FinishOrderAfterGrant(PendingOrder order)
+        {
+            if (order == null) return;
+            if (!PendingOrderStore.IsGranted(order.orderId))
+            {
+                // 没发成功就留着，下次启动/下次查询重试
+                return;
+            }
+
+            if (order.productType == (int)ProductType.NONCONSUMABLE)
+            {
+                PendingOrderStore.Remove(order.orderId);
+                Debug.Log("[IAP] 非消耗型商品无需核销，已从待处理表移除: " + order.orderId);
+                return;
+            }
+
+            ConsumePendingOrder(order);
         }
 
         // ------------------------------------------------------------
@@ -419,8 +507,8 @@ namespace Middleware
             long actionTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             Game.self?.Attributes?.ReportPurchase(actionTime, payload.price, payload.currency);
 
-            // ④ 通知平台消耗
-            ConsumePendingOrder(pending);
+            // ④ 通知平台消耗（非消耗型直接收尾，不调核销）
+            FinishOrderAfterGrant(pending);
         }
 
         public void OnStartSubscribeTrigger(SignalBase signal)
@@ -468,6 +556,19 @@ namespace Middleware
         // ------------------------------------------------------------
         public void OnCheckPurchaseInfo(SignalBase signal)
         {
+            try
+            {
+                HandleCheckPurchaseInfo(signal);
+            }
+            finally
+            {
+                // 一次查询（成功/失败/空结果）都算这次已购查询结束，Restore 靠它收口
+                NotifyRestoreQueryDone();
+            }
+        }
+
+        private void HandleCheckPurchaseInfo(SignalBase signal)
+        {
             if (signal.hasError())
             {
                 Debug.Log("[CheckPurchase Error ] " + "\n "
@@ -493,10 +594,15 @@ namespace Middleware
             {
                 Debug.Log("purchaseToken: " + purchaseData.purchaseToken
                           + "\n purchaseOrderId: " + purchaseData.purchaseOrderId
-                          + "\n" + purchaseData.finishStatus);
+                          + "\n purchaseType: " + purchaseData.productType
+                          + "\n finishStatus: " + purchaseData.finishStatus);
 
-                // 只处理平台侧尚未完成的订单
-                if (purchaseData.finishStatus != "2") continue;
+                // 非消耗型（永久去广告）：没有"核销"流程，finishStatus 不一定是 2，
+                // 只要平台侧还查得到就算已购（bug51：以前这里被 finishStatus 过滤掉，永远补不回来）
+                bool isNonConsumable = purchaseData.productType == ProductType.NONCONSUMABLE;
+
+                // 消耗型：只处理平台侧尚未完成的订单
+                if (!isNonConsumable && purchaseData.finishStatus != "2") continue;
 
                 var pending = new PendingOrder
                 {
@@ -519,9 +625,11 @@ namespace Middleware
                     LocalizedPrice  = purchaseData.price,
                 };
 
-                // 先发奖（幂等）-> 再消耗
-                GrantRewardIfNeeded(pending);
-                ConsumePendingOrder(pending);
+                // 先发奖（幂等，内部按购买记录 orderId 去重）-> 再收尾（消耗型核销 / 非消耗型清记录）
+                // 非消耗型：不受 pending 的 granted 标记限制，交给业务层按「购买记录」判重
+                //（老版本可能已经标记过 granted 但奖励丢了，这里要能自愈，bug51）
+                GrantRewardIfNeeded(pending, ignoreGrantedFlag: isNonConsumable);
+                FinishOrderAfterGrant(pending);
             }
         }
 
@@ -568,28 +676,55 @@ namespace Middleware
         // ------------------------------------------------------------
         //  内部辅助：发奖 & 消耗
         // ------------------------------------------------------------
-        private void GrantRewardIfNeeded(PendingOrder order)
+        private void GrantRewardIfNeeded(PendingOrder order, bool ignoreGrantedFlag = false)
         {
             if (order == null) return;
 
-            if (PendingOrderStore.IsGranted(order.orderId))
+            if (!ignoreGrantedFlag && PendingOrderStore.IsGranted(order.orderId))
             {
                 Debug.Log("[IAP] already granted, skip: " + order.orderId);
                 return;
             }
 
+            // 按订单构造 ProductItem（不要用共享的 productItem 字段，多订单串行时会串单）
+            var orderItem = new ProductItem
+            {
+                order_id        = order.orderId,
+                ProductId       = order.productId,
+                ItemName        = order.productId,
+                IsoCurrencyCode = order.currency,
+                LocalizedPrice  = ParsePrice(order.price),
+            };
+
             try
             {
-                if (buySuccessAction != null)
+                // 恢复购买 / 启动补单阶段一律走业务层的统一补发：
+                // 这时候 buySuccessAction 可能是上一次购买残留的界面回调（界面早关了），
+                // 直接调它会把奖励发到错误的界面、而且漏掉体力/去广告/购买记录。
+                bool useRestoreDelivery = buySuccessAction == null || _restoreInProgress;
+
+                if (!useRestoreDelivery)
                 {
-                    buySuccessAction.Invoke(productItem);
+                    // 正常应用内购买：交给发起购买的界面（商店 / 礼包弹窗 / 广告失败弹窗）发货
+                    buySuccessAction.Invoke(orderItem);
                 }
                 else
                 {
-                    OnPurchaseSuccess(productItem);
+                    if (ShopManager.shopManager == null)
+                    {
+                        Debug.LogWarning("[IAP] ShopManager 未就绪，补发稍后重试: " + order.orderId);
+                        return;
+                    }
+
+                    bool delivered = ShopManager.shopManager.DeliverRestoredPurchase(orderItem, "启动补单");
+                    if (delivered) _restoreItems.Add(orderItem);
                 }
 
-                // 只有发奖成功后才落盘标记，避免“标记成功但发奖异常”导致漏发
+                // ★ 发奖后先落盘，再标记已发：
+                //   旧实现先 MarkGranted（写 pending_orders.json）才等下次自然存档，
+                //   玩家在这中间杀进程 → 奖励和购买记录全丢，且因为已标记 granted 再也不会补发（bug50 / bug51）
+                if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
+
                 PendingOrderStore.MarkGranted(order.orderId);
                 Debug.Log("[IAP] Reward granted: " + order.orderId);
             }
@@ -600,65 +735,32 @@ namespace Middleware
             }
         }
 
+        /// <summary>订单价格是字符串（分），补发时要还原成 float 用于购买记录/统计</summary>
+        private static float ParsePrice(string price)
+        {
+            if (string.IsNullOrEmpty(price)) return 0f;
+            float v;
+            return float.TryParse(price, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out v) ? v : 0f;
+        }
+
+        /// <summary>
+        /// 兼容旧入口。
+        /// 旧实现自己写了一份发货 switch：只有金币 / 蝴蝶 / 提示 / 火箭，去广告是空 break，
+        /// 无限体力 / 复活道具 / 购买记录全都没有（bug49、bug50）。
+        /// 现在统一交给 ShopManager.DeliverRestoredPurchase，保证补发内容与正常购买一致。
+        /// </summary>
         public void OnPurchaseSuccess(ProductItem item)
         {
-            //todo 关闭loading界面
-            Debug.Log("购买成功: " + item.ProductId);
+            Debug.Log("[IAP] OnPurchaseSuccess（兼容入口）: " + (item != null ? item.ProductId : "null"));
 
-            ShopDataItem shopDataItem = ShopManager.shopManager.GetProduct(item.ProductId);
-
-            Debug.Log("获取恢复购买商品ID: " + shopDataItem.produceNameId);
-            if (shopDataItem != null)
+            if (ShopManager.shopManager == null)
             {
-                Game.self.Shop.CurrentShopDataItem = shopDataItem.DeepCopy();
-
-                SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
-
-                foreach (var dataitem in shopDataItem.productContent)
-                {
-                    int count = int.Parse(dataitem[1]);
-                    int type = int.Parse(dataitem[0]);
-                    //items.Add(new AnalyticMgr.Item { item_name = type.ToString(), quantity = count });
-                    switch (type)
-                    {
-                        case (int)LimitRewordType.Coins:
-                            GameDataManager.Instance.UserData.UpdateGold(count, false, false, "商店购买" + item.ItemName);
-                            break;
-                        case (int)LimitRewordType.Butterfly:
-                            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count,
-                                "商店购买" + item.ItemName);
-                            break;
-                        case (int)LimitRewordType.Tipstool: //放大镜道具，整个词语提示
-                            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count,
-                                "商店购买" + item.ItemName);
-                            break;
-                        case (int)LimitRewordType.AutoComplete: //提示灯道具，单个字符提示
-                            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count,
-                                "商店购买" + item.ItemName);
-                            break;
-                        case (int)LimitRewordType.RemoveAds:
-                        case (int)LimitRewordType.RemoveDayAds:
-                            //BuyRemoveAdsEvent(type);
-                            break;
-                    }
-                }
+                Debug.LogWarning("[IAP] ShopManager 未就绪，补发失败: " + (item != null ? item.ProductId : "null"));
+                return;
             }
 
-            ShopManager.shopManager.paysuccess = true;
-            bool firstPay = GameDataManager.Instance.UserData.TotalPayTimes == 0;
-            if (firstPay)
-                GameDataManager.Instance.UserData.firstPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            GameDataManager.Instance.UserData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            GameDataManager.Instance.UserData.LastPayTimeTicks = DateTime.Now.Ticks;
-            GameDataManager.Instance.UserData.TotalPayTimes++;
-            GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
-            DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy, 1);
-
-            if (!UIUtilities.isEditMode)
-            {
-                AnalyticMgr.PurchaseFinished(item, firstPay);
-            }
-
+            ShopManager.shopManager.DeliverRestoredPurchase(item, "补单");
         }
 
         private void ConsumePendingOrder(PendingOrder order)
@@ -679,12 +781,12 @@ namespace Middleware
         }
 
         // ------------------------------------------------------------
-        //  已购订单查询
+        //  已购订单查询（消耗型 / 非消耗型都要查：永久去广告属于非消耗型，没有核销流程）
         // ------------------------------------------------------------
-        private void ConfirmCheckPurchase()
+        private void ConfirmCheckPurchase(ProductType productType)
         {
             QueryPurchasesParameter queryPurchasesParameter = new QueryPurchasesParameter();
-            queryPurchasesParameter.productType = ProductType.CONSUMABLE;
+            queryPurchasesParameter.productType = productType;
             queryPurchasesParameter.queryType   = PurchaseQueryType.ALL;
             OHSDKKitManager.Instance.CheckPurchase(queryPurchasesParameter);
         }

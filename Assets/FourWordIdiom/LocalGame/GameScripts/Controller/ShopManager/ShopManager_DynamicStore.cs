@@ -48,6 +48,7 @@ public partial class ShopManager : MonoBehaviour
     /// 固定商店 - 1号推荐位。
     /// ★ 迎新礼包（NewcomerBox）固定第一位展示；
     /// ★ 迎新礼包购买后（限购已满）不再展示。
+    /// ★ bug52：其余礼包按价格排，但「1 号位」必须留在第一位（与动态商店共用同一个 1 号位决策）。
     /// </summary>
     public List<ShopDataItem> GetFixedStoreExpandedItems()
     {
@@ -58,10 +59,9 @@ public partial class ShopManager : MonoBehaviour
             .FirstOrDefault(x => x != null && x.produceNameId == ProductNewcomerBox);
         bool newcomerAvailable = newcomer != null && !IsNewcomerPurchased(newcomer);
 
-        result = result
-            .Where(x => x != null && x.produceNameId != ProductNewcomerBox)
-            .OrderBy(item => item.price)
-            .ToList();
+        // 先把迎新礼包摘出去（由下面统一决定是否置顶），再保证 1 号位在最前
+        result = result.Where(x => x != null && x.produceNameId != ProductNewcomerBox).ToList();
+        result = OrderStoreItemsKeepingSlot1First(result);
 
         if (newcomerAvailable)
             result.Insert(0, newcomer);
@@ -70,6 +70,31 @@ public partial class ShopManager : MonoBehaviour
                 $"list=[{string.Join(",", result.Select(x => x.produceNameId))}]");
 
         return result;
+    }
+
+    /// <summary>
+    /// 商店列表排序：**1 号位固定排第一**，其余按价格升序。
+    ///
+    /// 为什么不能整表按价格排（bug52）：
+    ///   GetRecommendPacks 里 1 号位是按权重决策出来的，2 号位/其它礼包可能更便宜，
+    ///   整表 OrderBy(price) 会把便宜的顶到第一位 → 固定商店和动态商店各自的第一张卡就不一样了。
+    /// </summary>
+    private List<ShopDataItem> OrderStoreItemsKeepingSlot1First(List<ShopDataItem> items)
+    {
+        if (items == null || items.Count == 0) return items;
+
+        // 优先用共享 1 号位决策；对不上时退回「推荐结果里的第一个」（GetRecommendPacks 先加 featured=1）
+        ShopDataItem first = null;
+        if (_slot1Decision != null)
+            first = items.FirstOrDefault(x => x != null && x.id == _slot1Decision.id);
+        if (first == null) first = items[0];
+
+        var ordered = new List<ShopDataItem>(items.Count) { first };
+        ordered.AddRange(items
+            .Where(x => x != null && x != first)
+            .OrderBy(x => x.price));
+
+        return ordered;
     }
 
     /// <summary>迎新礼包是否已购买（购买后即隐藏）。</summary>
@@ -106,13 +131,12 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>
     /// 动态商店 - 收起状态列表。
     /// ★ 不走审核配置，始终走原权重推荐逻辑。
+    /// ★ bug52：1 号位固定第一（与固定商店共用同一份决策），其余按价格升序。
     /// </summary>
     public List<ShopDataItem> GetDynamicStoreCollapsedItems()
     {
         List<ShopDataItem> result = GetRecommendPacks(RecommendSlot.DynamicStore);
-        return result
-            .OrderBy(item => item.price)
-            .ToList();
+        return OrderStoreItemsKeepingSlot1First(result);
     }
 
     /// <summary>
@@ -128,9 +152,7 @@ public partial class ShopManager : MonoBehaviour
             if (!result.Contains(item))
                 result.Add(item);
         }
-        return result
-            .OrderBy(item => item.price)
-            .ToList();
+        return OrderStoreItemsKeepingSlot1First(result);
     }
 
     // ======================= 消费标记读写 =======================
@@ -292,7 +314,7 @@ public partial class ShopManager : MonoBehaviour
         }
 
         if (GetTodayHolidayLabel() == "周末")
-            return "周末" + zhe + "折";
+            return "周末" + zhe;
 
         return "节日" + zhe;
     }

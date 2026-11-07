@@ -47,6 +47,46 @@ export class SendOAID {
     SendOAID.fetchAndSaveAttribution(ctx);
   }
 
+  // ---------- 静默查询（bug34）----------
+  // 只读核对当前 APP_TRACKING_CONSENT 是否已授予，【绝不弹任何框】：
+  //   · 已同意 → requestPermissionsFromUser 立即返回 0（不弹框）
+  //   · 已拒绝 → 立即返回 -1（系统对被拒过的权限不再弹标准框，静默返回）
+  //   · 故意不调 requestPermissionOnSetting：那是带开关的"二次授权弹窗"，启动/回前台不能打扰玩家
+  // 结果单独走 OnOAIDQueryResult 回包（区别于 OnOAIDClosedSignal：不埋点、不发奖、不动引导页）。
+  static async QueryTrackingConsent(): Promise<boolean> {
+    try {
+      const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
+      const ctx = (globalThis.AbilityContext ?? getContext()) as common.Context;
+      const permissions: Array<Permissions> = [SendOAID.PERMISSION_TRACKING];
+
+      const result: PermissionRequestResult =
+        await atManager.requestPermissionsFromUser(ctx, permissions);
+
+      const granted: boolean =
+        result != null && result.authResults != null &&
+        result.authResults.length > 0 && result.authResults[0] === 0;
+
+      hilog.info(0x0000, 'OAIDPage', `静默查询广告追踪授权: granted=${granted}`);
+      return granted;
+    } catch (err) {
+      hilog.info(0x0000, 'OAIDPage',
+        `静默查询广告追踪授权异常: ${(err as BusinessError).code}, ${(err as BusinessError).message}`);
+      return false;
+    }
+  }
+
+  // 静默查询并回包到 Unity（PushMessageReceiver.OnOAIDQueryResult）
+  static async QueryTrackingConsentAndReport(): Promise<Array<string>> {
+    const granted: boolean = await SendOAID.QueryTrackingConsent();
+    Tuanjie.TuanjieSendMessage(
+      'PushMessageReceiver',
+      'OnOAIDQueryResult',
+      granted ? '1' : '0'
+    );
+    let result: Array<string> = ["AdsTrackingConsent", granted ? "1" : "0"];
+    return result;
+  }
+
   static async RequestOAID() {
 
     hilog.info(0x0000, 'OAIDPage', `正在请求权限...`);

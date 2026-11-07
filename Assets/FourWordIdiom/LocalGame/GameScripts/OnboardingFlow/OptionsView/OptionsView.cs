@@ -38,6 +38,8 @@ public class OptionsView : UIWindow
     private GameObject _adTrackingHandle;
     private Text _adTrackingLabel;
     private AdTrackingManager _adTracking;
+    /// <summary>本次打开设置界面期间，「广告关联」行是否已经露出过（露出后不再因状态变化被隐藏）</summary>
+    private bool _adTrackingRowShown;
 
     Sprite Opensprite;
     Sprite Closesprite;
@@ -72,6 +74,7 @@ public class OptionsView : UIWindow
         VersionText.text = "Ver " + Application.version;
 
         UpdateAutoPushToggle();
+        _adTrackingRowShown = false;   // 每次打开设置界面重新判断这一行要不要出现
         RefreshAdTrackingRow();
         SubscribeAdTrackingEvent();
     }
@@ -111,6 +114,11 @@ public class OptionsView : UIWindow
         MusicButton.AddClickAction(ToggleMusic); // 绑定音乐开关变更事件
         SoundBtn.AddClickAction(ToggleSounds); // 绑定音效开关变更事件
         VibrateBtn.AddClickAction(ToggleVibrate); // 绑定震动开关变更事件
+
+        // ★ 广告关联开关：预制体里已有现成的一行（adsTrackBtn / adsHandle），
+        //   之前只声明字段却从未绑定点击，所以点了完全没反应。
+        if (adsTrackBtn != null)
+            adsTrackBtn.AddClickAction(OnClickAdTracking);
     }
 
     private void OnChangeLanguage()
@@ -156,7 +164,25 @@ public class OptionsView : UIWindow
 
     private void SetupAdTrackingRow()
     {
-        if (_adTrackingRow != null || autopushBtn == null) return;
+        if (_adTrackingRow != null) return;
+
+        // ★ 优先用预制体里现成的「广告关联」行（adsTrackBtn + adsHandle 已绑好）
+        if (adsTrackBtn != null)
+        {
+            _adTrackingRow = adsTrackBtn.transform.parent != null
+                ? adsTrackBtn.transform.parent.gameObject
+                : adsTrackBtn.gameObject;
+
+            _adTrackingHandle = adsHandle != null ? adsHandle : FindHandleUnder(adsTrackBtn.transform);
+            _adTrackingLabel = FindTextByName(_adTrackingRow.transform, "autopushText");
+            if (_adTrackingLabel == null) _adTrackingLabel = _adTrackingRow.GetComponentInChildren<Text>(true);
+
+            _adTrackingRow.SetActive(false);
+            return;
+        }
+
+        // 兜底：老预制体没有这一行时，按「消息推送」行克隆一份
+        if (autopushBtn == null) return;
 
         Transform sourceRow = autopushBtn.transform.parent;
         if (sourceRow == null || sourceRow.parent == null) return;
@@ -190,6 +216,25 @@ public class OptionsView : UIWindow
         _adTrackingRow.SetActive(false);
     }
 
+    /// <summary>在按钮下找开关手柄（Background 下的 Handle），用于兜底没有配置 adsHandle 的情况。</summary>
+    private static GameObject FindHandleUnder(Transform buttonRoot)
+    {
+        if (buttonRoot == null) return null;
+
+        Transform background = buttonRoot.Find("Background");
+        if (background != null && background.childCount > 0)
+            return background.GetChild(0).gameObject;
+
+        // 再退一步：按钮下第一个带 Image 的子节点
+        Image[] images = buttonRoot.GetComponentsInChildren<Image>(true);
+        for (int i = 0; i < images.Length; i++)
+        {
+            if (images[i] != null && images[i].gameObject != buttonRoot.gameObject)
+                return images[i].gameObject;
+        }
+        return null;
+    }
+
     private void RefreshAdTrackingRow()
     {
         if (_adTrackingRow == null) return;
@@ -201,7 +246,12 @@ public class OptionsView : UIWindow
         }
 
         _adTracking = AdTrackingManager.Instance;
-        bool show = _adTracking != null && _adTracking.ShouldShowSettingsEntry();
+        if (_adTracking == null) _adTracking = AdTrackingManager.EnsureInstance();
+
+        // 一旦本次打开设置时露出过，就保持显示：玩家从系统设置回来、开关变"开"时能直观看到同步结果
+        bool show = _adTracking != null && (_adTracking.ShouldShowSettingsEntry() || _adTrackingRowShown);
+        if (show) _adTrackingRowShown = true;
+
         _adTrackingRow.SetActive(show);
         if (!show) return;
 
@@ -224,19 +274,19 @@ public class OptionsView : UIWindow
     private void OnClickAdTracking()
     {
         if (_adTracking == null) _adTracking = AdTrackingManager.Instance;
+        if (_adTracking == null) _adTracking = AdTrackingManager.EnsureInstance();
         if (_adTracking == null) return;
 
-        // 引导页挂在当前 Canvas 最上层（覆盖设置界面）
-        Transform canvas = GetComponentInParent<Canvas>() != null
-            ? GetComponentInParent<Canvas>().transform
-            : transform;
-
-        _adTracking.OpenSettingsGuide(canvas);
+        // ★ 按需求：直接调起系统「当前应用广告追踪」设置界面
+        //   （鸿蒙 = 应用权限设置弹窗 requestPermissionOnSetting；iOS = 系统设置/ATT）
+        //   玩家关闭该界面后，系统回调会把最新授权状态同步回来，这里通过 OnAuthorizationChanged 刷新开关。
+        _adTracking.OpenSystemTrackingSettingsFromEntry();
     }
 
     private void SubscribeAdTrackingEvent()
     {
         if (_adTracking == null) _adTracking = AdTrackingManager.Instance;
+        if (_adTracking == null) _adTracking = AdTrackingManager.EnsureInstance();
         if (_adTracking == null) return;
 
         _adTracking.OnAuthorizationChanged -= HandleAdAuthorizationChanged;
@@ -353,14 +403,23 @@ public class OptionsView : UIWindow
     
     private void OnRestoreBuyBtn()
     {
-        //todo 打开loading界面
+        // 统一走 ShopManager 的恢复购买（loading + 真实查询 + 结果 toast），
+        // 原来的 Restore(OnRestoreBack) 回调是空实现，玩家点了没有任何结果（bug51）
+        if (ShopManager.shopManager != null)
+        {
+            ShopManager.shopManager.RestorePurchases();
+            return;
+        }
+
         Game.self.Shop.Restore(OnRestoreBack);
     }
 
     private void OnRestoreBack(bool success, ProductItem[] items)
     {
-        //todo 关闭loading界面
-        //todo 处理items数据
+        MessageSystem.Instance?.HideLoadingAnimation();
+
+        int count = items != null ? items.Length : 0;
+        MessageSystem.Instance?.ShowTip(count > 0 ? $"已恢复 {count} 笔内购" : "没有可恢复的内购");
     }
     /// <summary>
     /// 复制包名和 OpenId 到系统剪贴板

@@ -201,8 +201,15 @@ public class ShopItem : ShopItemBase
             int count = int.Parse(giftdata[1]);
             int type = int.Parse(giftdata[0]);
 
-            GameDataManager.Instance.UserData.UpdateGold(-needgold, true, true, "看广告领取商店金币");
-            GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count, "看广告领取商店金币");
+            // ★ bug42：原来金币扣除和道具发放都用的"看广告领取商店金币"，
+            //   那是上面 FreeGoods（看广告领金币）的原因，会导致商店金币消费被打成"激励视频"。
+            //   商店页金币购买道具与局内金币买道具是同一个行为，按道具类型细分 reason_index。
+            string reasonIndex = GetGoldBuyReasonIndex((LimitRewordType)type);
+
+            GameDataManager.Instance.UserData.UpdateGold(-needgold, true, true, string.Empty,
+                reasonIndex, ResReason.InLevel);
+            GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count, string.Empty,
+                string.Empty, reasonIndex, ResReason.InLevel);
 
             EventDispatcher.instance.TriggerChangeGoldUI(0, true);
             GameDataManager.Instance.UserData.isDayGoldBuy = true;
@@ -214,6 +221,21 @@ public class ShopItem : ShopItemBase
         {
             MessageSystem.Instance.ShowTip("每日只能购买一次！");
             shopPriceText.text = "已购买";
+        }
+    }
+
+    /// <summary>
+    /// 商店页「金币购买道具」的 reason_index（需求口径：金币购买道具灯泡 / 火箭 / 复活）。
+    /// 与局内 GetItemScreen 的金币买道具保持一致，避免同一行为在商店页和局内落成两条原因。
+    /// </summary>
+    private static string GetGoldBuyReasonIndex(LimitRewordType type)
+    {
+        switch (type)
+        {
+            case LimitRewordType.Tipstool: return ResReason.IdxBuyBulb;
+            case LimitRewordType.AutoComplete: return ResReason.IdxBuyRocket;
+            case LimitRewordType.ReStartTool: return ResReason.IdxBuyRevive;
+            default: return ResReason.IdxUnknown;
         }
     }
 

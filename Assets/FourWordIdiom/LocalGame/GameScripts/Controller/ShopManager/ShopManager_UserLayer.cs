@@ -417,8 +417,9 @@ public partial class ShopManager : MonoBehaviour
             }
             else
             {
-                // A ≤ 9
-                layer = (payTimes > 100) ? "IAP12" : "IAP11";
+                // A ≤ 9：付费累积次数 > 1 → IAP12，= 1 → IAP11
+                // （bug35：原来写成 payTimes > 100，导致买了 2 次的用户被判成 IAP11）
+                layer = (payTimes > 1) ? "IAP12" : "IAP11";
             }
 
             LogShop($"GetCurrentUserLayer 计算: isPaid=True, MaxSinglePayAmount={maxSinglePayAmount:F2},TotalPayAmount={totalPayAmount}, TotalPayTimes={payTimes} => layer={layer}");
@@ -566,6 +567,9 @@ public partial class ShopManager : MonoBehaviour
     /// 关卡进入时调用：只有"关卡标识变化"才清零提示/复活视频次数。
     ///   - 换关（关卡号或模式变化）→ 清零，满足"每关刷新"；
     ///   - 同一关重进 / 关掉游戏再打开继续本关 → 保留已用次数，满足"数据继承"。
+    /// 换关同时清掉「广告失败冷却 T」：冷却只约束"同一关内不要反复弹"，
+    /// 否则上一关用完次数弹过 AdsFailScreen 后，T（90~150s）会压到下一关，
+    /// 新关卡视频点还有可用次数却一点就弹「广告无法加载」。
     /// </summary>
     /// <param name="stageIndex">即将进入的关卡号</param>
     /// <param name="isChess">是否拼字关卡（false = 六边形/方块关卡）</param>
@@ -578,8 +582,14 @@ public partial class ShopManager : MonoBehaviour
         d.toolLevelKey = key;
         d.bulbUsed = 0;
         d.reviveUsed = 0;
+
+        // ★ 换关刷新广告失败冷却（T）：A/B 次数已按新关卡重置，冷却不应跨关生效。
+        bool hadCooldown = d.adFailBlockedUntilTicks > 0 && DateTime.Now < GetAdFailBlockedUntil();
+        d.adFailBlockedUntilTicks = 0;
+
         PersistAdLimit();
-        LogShop($"[AdFailed] 换关 → {key}，提示/复活视频次数已刷新");
+        LogShop($"[AdFailed] 换关 → {key}，提示/复活视频次数已刷新" +
+                (hadCooldown ? "，上一关的广告失败冷却已清除" : string.Empty));
     }
 
     /// <summary>

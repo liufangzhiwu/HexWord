@@ -156,6 +156,10 @@ public class StageHexController
             ShopManager.shopManager.ResetNewcomerGiftForNewLevel(StageIndex);
         }
 
+        // ★ 新一局开始：清掉复活弹窗「本关已购礼包」记录（bug31：退出关卡重进同一关时，
+        //   关卡号没变，静态记录会一直生效，导致推荐位被过滤空、时间耗尽后没有内购展示）
+        FailGameScreen.ResetPurchasedPackTracking();
+
         // 初始化关卡配置
         //IsFirstEnterStage = GetIsFirstEnterStage();
         

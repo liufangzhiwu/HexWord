@@ -69,15 +69,45 @@ public partial class ShopManager : MonoBehaviour
         return DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday;
     }
 
-    /// <summary>获取今天的节日/周末标签："周末"、"中秋节"、"国庆节"等；非节日周末返回空串</summary>
+    /// <summary>
+    /// 二十四节气名。表里会把节气也写进「活动标签」（如 2026-11-07 立冬），
+    /// 但节气不是购物节日，落在周末时角标应显示「周末 X 折」而不是「节日 X 折」（bug45）。
+    /// </summary>
+    private static readonly HashSet<string> SolarTerms = new HashSet<string>
+    {
+        "立春", "雨水", "惊蛰", "春分", "清明", "谷雨",
+        "立夏", "小满", "芒种", "夏至", "小暑", "大暑",
+        "立秋", "处暑", "白露", "秋分", "寒露", "霜降",
+        "立冬", "小雪", "大雪", "冬至", "小寒", "大寒",
+    };
+
+    private static bool IsSolarTerm(string label)
+    {
+        return !string.IsNullOrEmpty(label) && SolarTerms.Contains(label);
+    }
+
+    /// <summary>
+    /// 获取今天的节日/周末标签："周末"、"中秋节"、"国庆节"等；非节日周末返回空串。
+    /// 优先级：法定/传统节日 ＞ 自然周末 ＞ 节气（节气落在周末时按周末算）。
+    /// </summary>
     private string GetTodayHolidayLabel()
     {
-        string today = DateTime.Now.ToString("yyyy-MM-dd");
+        DateTime now = DateTime.Now;
+        string today = now.ToString("yyyy-MM-dd");
+        bool isWeekend = now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday;
+
         string label;
         if (_holidayWeekendTable.TryGetValue(today, out label))
-            return label;
-        if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday)
+        {
+            // ★ bug45：2026-11-07 是周六，表里写着「立冬」→ 角标原本显示「节日 5 折」。
+            //   节气不是节日，周末当天应按自然周末走标签。
+            if (!(isWeekend && IsSolarTerm(label)))
+                return label;
+        }
+
+        if (isWeekend)
             return "周末";
+
         return "";
     }
 

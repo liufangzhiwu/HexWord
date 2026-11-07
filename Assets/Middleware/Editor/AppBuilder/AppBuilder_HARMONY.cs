@@ -1621,12 +1621,34 @@ namespace Middleware
                 }
 
                 var text = File.ReadAllText(target);
-                if (text.Contains("RequestTrackingConsentOnUI") &&
-                    text.Contains("HideBannerOnUI"))
+                bool hasBaseBridge = text.Contains("RequestTrackingConsentOnUI") &&
+                                     text.Contains("HideBannerOnUI");
+                bool hasQueryBridge = text.Contains("QueryTrackingConsentOnUI");
+
+                if (hasBaseBridge && hasQueryBridge)
                 {
                     log.Add("ALREADY OHKitAdsManager.ets 桥接方法已注入");
                     return true;
                 }
+
+                // ★ 桥接补丁：广告追踪授权状态静默查询（bug34）
+                //   Unity 侧 AdTrackingManager 启动/回前台时调用，用于核对系统真实授权状态；
+                //   结果由 SendOAID 经 TuanjieSendMessage('PushMessageReceiver',
+                //   'OnOAIDQueryResult', '1'/'0') 回传（不弹框、不走埋点）。
+                const string queryMethod = @"  // ★ 桥接补丁：静默查询广告追踪授权状态（APP_TRACKING_CONSENT，不弹框）
+  QueryTrackingConsentOnUI(callback: (...args: Array<ESObject>) => ESObject) {
+    hilog.info(0x0000, ""SDKKit"", 'QueryTrackingConsentOnUI Start!');
+    let msg: ESObject = {
+      modulePath: ""OHKitSdk"",
+      funcName: ""SDKManager.QueryTrackingConsent"",
+      args: [],
+      callback: callback,
+      timeoutMs: 100000,
+    }
+    POST_MESSAGE_TO_HOST(msg);
+  }
+
+";
 
                 const string methods = @"  // ★ 桥接补丁：广告追踪授权请求（APP_TRACKING_CONSENT）
   //   Unity 侧 AdTrackingManager 引导页点""继续""后调用；
@@ -1670,9 +1692,20 @@ namespace Middleware
                     return false;
                 }
 
-                text = text.Substring(0, idx) + methods + text.Substring(idx);
+                if (!hasBaseBridge)
+                {
+                    // 首次注入：三个桥接方法一起插到锚点前
+                    text = text.Substring(0, idx) + methods + queryMethod + text.Substring(idx);
+                    log.Add("SYNC   OHKitAdsManager.ets <- 注入 RequestTrackingConsentOnUI / HideBannerOnUI / QueryTrackingConsentOnUI");
+                }
+                else
+                {
+                    // 老版本导出工程（只有前两个方法）：单独补注入静默查询
+                    text = text.Substring(0, idx) + queryMethod + text.Substring(idx);
+                    log.Add("SYNC   OHKitAdsManager.ets <- 补注入 QueryTrackingConsentOnUI");
+                }
+
                 File.WriteAllText(target, text, new UTF8Encoding(false));
-                log.Add("SYNC   OHKitAdsManager.ets <- 注入 RequestTrackingConsentOnUI / HideBannerOnUI");
                 return true;
             }
 

@@ -541,9 +541,9 @@ public class GiftTable : MonoBehaviour
     {
         DayOfWeek dayOfWeek = DateTime.Now.DayOfWeek;
         if (dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday)
-            return MultilingualManager.Instance?.GetString("WeekendSpecialOffer") ?? "周末特惠";
+            return  "周末特惠";
 
-        return MultilingualManager.Instance?.GetString("HolidaySpecialOffer") ?? "节日特惠";
+        return  "节日特惠";
     }
 
     // ======================= 价格 =======================
@@ -698,6 +698,10 @@ public class GiftTable : MonoBehaviour
         }
 
         MessageSystem.Instance.HideLoadingAnimation();
+
+        // ★ bug50/bug51：购买成功后立刻落盘（奖励 + 购买记录），
+        //   否则买完马上杀进程会全部丢失，而平台订单已被标记发货，重进也不会补。
+        if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
 
         LogShop($"========== 购买成功结束: {shopDataItem.produceNameId} ==========");
     }

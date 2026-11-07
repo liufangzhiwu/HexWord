@@ -255,8 +255,6 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         EventDispatcher.instance.TriggerUpdateLayerCoin(true, true,false,true);
         
-        //EventDispatcher.instance.TriggerUpdateLayerCoin(false, true, false, true);
-        
         EventDispatcher.instance.TriggerHighlightHeaderUI(true);
 
         // ★ 刷新复活界面内购推荐位
@@ -334,8 +332,17 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             ? ShopManager.shopManager.GetAuditPacksForSlot(ShopManager.RecommendSlot.Clock)
             : ShopManager.shopManager.GetRecommendPacks(ShopManager.RecommendSlot.Clock);
 
-        // ★ 本关已经买过的推荐礼包不再展示（进入下一关 / 重启游戏后自动恢复）
+        // ★ 本关已经买过的推荐礼包不再展示（进入下一关 / 重新开局 / 重启游戏后自动恢复）
         packs = FilterPurchasedPacksThisLevel(packs);
+
+        // ★ 兜底（bug31）：过滤后推荐位空了（例如本关只推过一个礼包、且玩家刚买掉），
+        //   排除已购礼包重新走一次决策，把次优礼包补上，避免「后台算了权重但界面什么都不展示」。
+        if ((packs == null || packs.Count == 0) && _purchasedPackIdsThisLevel.Count > 0)
+        {
+            LogFailGame($"本关已购 {_purchasedPackIdsThisLevel.Count} 个礼包，过滤后无候选 → 排除已购礼包重新决策");
+            packs = ShopManager.shopManager.GetRecommendPacks(ShopManager.RecommendSlot.Clock, _purchasedPackIdsThisLevel);
+            LogFailGame($"重新决策候选数={(packs != null ? packs.Count : 0)}");
+        }
 
         int count = packs != null ? packs.Count : 0;
         LogFailGame($"复活礼包候选数={count}, 审核开={AuditConfig.IsAuditOpen}");
@@ -456,6 +463,21 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (_purchasedPackLevelKey == key) return;
 
         _purchasedPackLevelKey = key;
+        _purchasedPackIdsThisLevel.Clear();
+    }
+
+    /// <summary>
+    /// 清空「本关已购买」记录。由关卡开始（ChessStageController / StageHexController.SetStageData）调用。
+    ///
+    /// 为什么不能只按关卡标识判断（bug31）：
+    ///   关卡标识是 levelMode_关卡号，玩家【退出关卡再重进同一关】时标识没变，
+    ///   静态记录会一直留着 → 复活推荐位里的礼包全被过滤 → 时间耗尽后弹复活界面没有内购
+    ///   （但后台权重照常计算，日志里能看到候选）。
+    ///   所以每次真正开局（SetStageData）都清一次：新一局重新推荐，同一局内买了才不再推。
+    /// </summary>
+    public static void ResetPurchasedPackTracking()
+    {
+        _purchasedPackLevelKey = null;
         _purchasedPackIdsThisLevel.Clear();
     }
 
@@ -1121,7 +1143,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         userData.UpdateTool(LimitRewordType.Butterfly, 1, $"{source}赠送蝴蝶");
         userData.hasUsedGoldRevive = true;
 
-        MessageSystem.Instance.ShowTip("赠送蝴蝶道具 x1");
+        //MessageSystem.Instance.ShowTip("赠送蝴蝶道具 x1");
 
         // 立刻收起提示（两个页面一起）
         RefreshFreeButterToolUI();
@@ -1136,8 +1158,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (TryConsumeReviveTool())
         {
             // ★ 消耗复活道具复活同样适用「免费赠送蝴蝶道具」规则
-            GrantFreeButterToolIfNeeded("复活道具复活");
-            ExecuteRevive();
+            bool grantedButterfly = GrantFreeButterToolIfNeeded("复活道具复活");
+            ExecuteRevive(grantedButterfly);
             return;
         }
 
@@ -1149,9 +1171,9 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             GameDataManager.Instance.UserData.UpdateGold(-60, true, true, "复活广告消耗金币");
 
             // ★ 金币购买复活 + 蝴蝶数量≤0 + 免费蝴蝶提示显示中 → 赠送一个蝴蝶道具
-            GrantFreeButterToolIfNeeded("金币复活");
+            bool grantedButterfly = GrantFreeButterToolIfNeeded("金币复活");
 
-            ExecuteRevive();
+            ExecuteRevive(grantedButterfly);
         }
         else
         {
@@ -1204,12 +1226,19 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    private void ExecuteRevive()
+    /// <summary>
+    /// 执行复活并关闭失败弹窗。
+    /// </summary>
+    /// <param name="autoUseGrantedButterfly">
+    /// 本次复活是否刚赠送了蝴蝶。为 true 时交给 ChessPlayArea.ReviveGame 判断
+    /// 「场上空位 &gt; 5 就立刻把蝴蝶飞出去提示」（bug47）。
+    /// </param>
+    private void ExecuteRevive(bool autoUseGrantedButterfly = false)
     {
         SystemManager.Instance.HidePanel(PanelType.FailGameScreen);
         ChessStageController.Instance.CurrStageData.IsPausedOrFailed = false;
         GameDataManager.Instance.CommitGameData();
-        ChessPlayArea.Instance.ReviveGame(60f);
+        ChessPlayArea.Instance.ReviveGame(60f, autoUseGrantedButterfly);
         
         EventDispatcher.instance.TriggerUpdateLayerCoin(false, false,false,true);
     }
@@ -1350,9 +1379,13 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         EnsureLongPressSupport();
         if (_canvasGroup != null) _canvasGroup.alpha = 1f;
 
-        // 二次确认页本身没有高亮头部，这里只在需要时复位，避免把顶栏留在错误状态
-        if (continuePanel != null && continuePanel.activeSelf)
-            EventDispatcher.instance.TriggerHighlightHeaderUI(false);
+        // ★ 长按取消（松手）后要把顶栏恢复成「失败弹窗打开时」的样子：
+        //   EnterLongPressHidden 里关掉了金币层（TriggerUpdateLayerCoin(false, ...)）和蝶蛹高亮
+        //   （TriggerHighlightHeaderUI(false)），只把弹窗 alpha 拉回来是不够的 ——
+        //   顶栏的金币/蝶蛹会一直不显示。这里按 OnEnable 的同一组参数重放一次：
+        //   TriggerUpdateLayerCoin(true, true, false, true) + TriggerHighlightHeaderUI(true)。
+        EventDispatcher.instance.TriggerUpdateLayerCoin(true, true, false, true);
+        EventDispatcher.instance.TriggerHighlightHeaderUI(true);
     }
 
     /// <summary>无任何前置状态地复位（打开 / 关闭弹窗时调用）</summary>

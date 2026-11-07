@@ -397,13 +397,26 @@ public partial class ChessPlayArea
     }
     private void UseButterfly()
     {
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[103];
+        // 用 TryGetValue：养成模式 / 老存档里可能没有 103 这个键，直接索引会 KeyNotFoundException
+        ToolInfo toolInfo = null;
+        GameDataManager.Instance.UserData.toolInfo.TryGetValue(103, out toolInfo);
         
         if ((toolInfo == null || toolInfo.count <= 0)&&!GameDataManager.Instance.UserData.butterflyTaskIsOpen)
         {
             Debug.LogError("蝴蝶道具数据为空！");
             // crossPuzzleGrid.SetPuzzleBoardState(true);
             butterflyObj.GetComponent<RectTransform>().DOAnchorPosX(-300, 0.3f);
+            return;
+        }
+
+        // ★ 先找落点：没有可提示的空位就直接收手【不消耗道具、不扣本关次数】，
+        //   避免旧代码里 selectView 为 null 时后面 selectView.transform 空引用，也避免白发一只蝴蝶
+        ChessView selectView = chessboardGrid.GetRandomNoneNonTipChess();
+        if (selectView == null)
+        {
+            Debug.LogWarning("[蝴蝶] 没有可提示的空位，本次不使用蝴蝶（不消耗道具）");
+            butterflyObj.GetComponent<RectTransform>().DOAnchorPosX(-300, 0.3f);
+            EventDispatcher.instance.TriggerChangeTopRaycast(true);
             return;
         }
 
@@ -422,7 +435,6 @@ public partial class ChessPlayArea
         if(useButterflyCount==0)
             AudioManager.Instance.PlaySoundEffect("showButterfly");
         
-        ChessView selectView = chessboardGrid.GetRandomNoneNonTipChess();
         butterChess.Add(selectView);
         
         // ChessView  selectNext  蝴蝶搜索的位置
@@ -489,5 +501,122 @@ public partial class ChessPlayArea
         var bezierMidPos = (midPos + starttrans.position) / 2; // + Vector3.right * 8;
         Vector3[] movePoints = CustomFlyInManager.Instance.CreatTwoBezierCurve(starttrans.position,butterflyEndPos,bezierMidPos).ToArray();
         return movePoints;
+    }
+
+    // ======================= 复活赠送的蝴蝶：立刻使用（bug47） =======================
+
+    /// <summary>复活后自动使用蝴蝶时，要求棋盘上的空位（还没填字的格子）大于这个值</summary>
+    private const int ReviveAutoUseButterflyMinEmpty = 5;
+
+    /// <summary>等失败界面关闭的最长时间（秒），超时也照飞，避免卡在等待里</summary>
+    private const float ReviveWaitPanelCloseTimeout = 1.5f;
+
+    private Coroutine _reviveButterflyRoutine;
+
+    /// <summary>
+    /// 复活后（失败界面关闭后）如果场上空位 &gt; 5，立刻把蝴蝶飞出去提示一次。
+    ///
+    /// 背景（bug47）：进关时的「飞蝴蝶」只在 IsFirstEnterStage &amp;&amp; useButterflyCount &lt;= 2 时跑一次，
+    /// 复活赠送的蝴蝶只是躺在背包里，玩家不点就一直不生效。
+    ///
+    /// 判定口径：
+    ///  - 「场上空位」= 棋盘上还没填字的格子（TileState.None），和策划说的"空位"一致；
+    ///  - 背包里没有蝴蝶（且不是蝴蝶养成模式）→ 不处理；
+    ///  - 空位 ≤ 5 → 不处理（留给玩家，下次复活再说）；
+    ///  - 每次复活只用 1 只（useButterflyCount 置 1），不会把背包里的全放完。
+    ///
+    /// 说明：不管是「金币复活 / 道具复活 / 广告复活 / 免费复活」，只要复活后背包里有蝴蝶、空位够，都会飞。
+    /// （复活赠送的那只本来就是在这条链路上发放的，不区分来源更不容易漏。）
+    /// </summary>
+    /// <param name="grantedThisRevive">本次复活是否刚赠送了蝴蝶（只用于日志）</param>
+    public void TryAutoUseButterflyAfterRevive(bool grantedThisRevive = false)
+    {
+        if (chessboardGrid == null || butterflyObj == null || butterflyPrefab == null)
+        {
+            Debug.LogWarning("[蝴蝶] 复活自动使用跳过：棋盘/蝴蝶节点/特效预制体未就绪 " +
+                             $"(grid={(chessboardGrid != null)}, obj={(butterflyObj != null)}, prefab={(butterflyPrefab != null)})");
+            return;
+        }
+
+        ToolInfo toolInfo = null;
+        if (GameDataManager.Instance != null && GameDataManager.Instance.UserData != null)
+            GameDataManager.Instance.UserData.toolInfo.TryGetValue(103, out toolInfo);
+
+        int bagCount = toolInfo != null ? toolInfo.count : 0;
+        bool taskOpen = GameDataManager.Instance.UserData.butterflyTaskIsOpen;
+
+        int emptyCount = chessboardGrid.GetEmptySlotCount();
+        int usableCount = chessboardGrid.GetNoneNonTipChessCount();
+
+        LogButterfly($"复活自动使用检查：本次赠送={grantedThisRevive}, 背包={bagCount}, 养成模式={taskOpen}, " +
+                     $"场上空位={emptyCount}（None+Check）, 可落点={usableCount}, 棋盘={chessboardGrid.GetTileStateSummary()}");
+
+        if (bagCount <= 0 && !taskOpen)
+        {
+            LogButterfly("复活自动使用跳过：背包里没有蝴蝶道具");
+            return;
+        }
+
+        if (emptyCount <= ReviveAutoUseButterflyMinEmpty)
+        {
+            LogButterfly($"复活自动使用跳过：场上空位={emptyCount}，未超过 {ReviveAutoUseButterflyMinEmpty}");
+            return;
+        }
+
+        if (_reviveButterflyRoutine != null)
+        {
+            StopCoroutine(_reviveButterflyRoutine);
+            _reviveButterflyRoutine = null;
+        }
+
+        _reviveButterflyRoutine = StartCoroutine(CoAutoUseButterflyAfterRevive(emptyCount));
+    }
+
+    private IEnumerator CoAutoUseButterflyAfterRevive(int emptyCount)
+    {
+        // 1. 等失败界面真正关掉（有关闭动画），否则蝴蝶会飞在弹窗后面看不见
+        float waited = 0f;
+        while (waited < ReviveWaitPanelCloseTimeout
+               && SystemManager.Instance != null
+               && SystemManager.Instance.PanelIsShowing(PanelType.FailGameScreen))
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        yield return null;                 // 让弹窗销毁/隐藏的那一帧先跑完
+        yield return new WaitForSeconds(0.15f);
+
+        // 2. 每次复活只用 1 只（useButterflyCount 是"本关还能用几只"，进关快照里没有复活赠送的这只）
+        useButterflyCount = 1;
+
+        // 特效对象池里没有就补上（进关时数量为 0 的话列表是空的）
+        while (EffectButterFlays.Count < useButterflyCount)
+        {
+            GameObject effectButt = Instantiate(butterflyPrefab, butterflyObj.transform.parent);
+            EffectButterFlays.Add(effectButt);
+        }
+
+        LogButterfly($"复活后场上空位={emptyCount} > {ReviveAutoUseButterflyMinEmpty}，自动使用蝴蝶 x1");
+
+        CanvasGroup gameCanvas = GameBase != null ? GameBase.GetComponent<CanvasGroup>() : null;
+        if (gameCanvas != null) gameCanvas.blocksRaycasts = false;
+        EventDispatcher.instance.TriggerChangeTopRaycast(false);
+
+        yield return new WaitForSeconds(0.2f);
+
+        // 3. 飞出去（UseButterfly 内部找不到落点会自己收手、不扣道具）
+        UseButterfly();
+
+        // UseButterfly 内部是 DOTween 逐段动画，等它飞完再恢复点击（与进关流程的 1.2s 保持一致）
+        yield return new WaitForSeconds(1.6f);
+        if (gameCanvas != null) gameCanvas.blocksRaycasts = true;
+
+        _reviveButterflyRoutine = null;
+    }
+
+    private static void LogButterfly(string msg)
+    {
+        Debug.Log($"[蝴蝶] {msg}");
     }
 }

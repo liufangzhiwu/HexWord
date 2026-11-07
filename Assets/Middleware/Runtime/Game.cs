@@ -126,6 +126,49 @@ namespace Middleware
         }
 
         /// <summary>
+        /// 鸿蒙：静默查询 APP_TRACKING_CONSENT 当前是否已授权（不弹任何系统框）。
+        /// 用于启动 / 回前台时核对授权状态（bug34：玩家去系统设置把"广告关联"改成禁止后，
+        /// 存档里的状态不会变，导致 IAA 分层不刷新）。
+        ///
+        /// 实现：ArkTS 侧只调 abilityAccessCtrl.requestPermissionsFromUser ——
+        ///   已同意 → 直接返回 granted；已拒绝 → 静默返回 -1（系统不会再弹框）；
+        ///   从不去拉 requestPermissionOnSetting 兜底弹窗。
+        /// 结果经 TuanjieSendMessage('PushMessageReceiver','OnOAIDQueryResult','1'/'0') 回传。
+        /// ★ 需要重新导出鸿蒙工程（ArkTS 侧是新增的桥接方法），未更新时只会打一条 warning。
+        /// </summary>
+        public void QueryTrackingConsent()
+        {
+#if UNITY_OPENHARMONY
+            try
+            {
+                OpenHarmonyJSObject adsObj = OHSDKKitManager.OHKitAdsManagerObj;
+                if (adsObj == null)
+                {
+                    var _ = OHSDKKitManager.Instance;
+                    adsObj = OHSDKKitManager.OHKitAdsManagerObj;
+                }
+
+                if (adsObj == null)
+                {
+                    Debug.LogWarning("[OAID] ArkTS 侧 OHKitAdsManager 未就绪，无法静默查询广告追踪授权状态");
+                    return;
+                }
+
+                if (_trackingConsentCallback == null)
+                    _trackingConsentCallback = new OpenHarmonyJSCallback(OnTrackingConsentCallback);
+
+                adsObj.Call("QueryTrackingConsentOnUI", _trackingConsentCallback);
+                Debug.Log("[OAID] 已发起广告追踪授权状态静默查询");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[OAID] 静默查询广告追踪授权状态失败：" + e.Message +
+                                 "（ArkTS 侧桥接方法未更新？需要重新导出鸿蒙工程）");
+            }
+#endif
+        }
+
+        /// <summary>
         /// 放行广告请求（鸿蒙专用）。
         /// 广告追踪授权流程结束前，Ads_harmony 会把激励预加载 / 横幅全部挡下，
         /// 避免 AdsKit 在加载页就去取 OAID、把系统授权框抢在引导页之前弹出来。

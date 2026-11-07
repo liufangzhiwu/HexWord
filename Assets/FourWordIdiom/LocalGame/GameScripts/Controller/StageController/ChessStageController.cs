@@ -93,6 +93,10 @@ public partial class ChessStageController
             ShopManager.shopManager.ResetNewcomerGiftForNewLevel(StageIndex);
         }
 
+        // ★ 新一局开始：清掉复活弹窗「本关已购礼包」记录（bug31：退出关卡重进同一关时，
+        //   关卡号没变，静态记录会一直生效，导致推荐位被过滤空、时间耗尽后没有内购展示）
+        FailGameScreen.ResetPurchasedPackTracking();
+
         // 初始化关卡配置
         IsFirstEnterStage = GameDataManager.Instance.IsNewLevelEntry(StageIndex, true);
 
@@ -428,9 +432,10 @@ public partial class ChessStageController
 
         if (CurrStageData.GoldLeafCount > 0 && !isJump)
         {
-            // 金箔是通关后才计数的资源 → 关卡内行为 / 通关结算
+            // ★ bug43：局内获得金箔，埋点表里有专门的原因「金箔收集」，
+            //   原来报的是「通关结算」（更早的版本 message 为空直接落「其他」）。
             GameDataManager.Instance.UserData.UpdateGoldLeaf(CurrStageData.GoldLeafCount,
-                message: string.Empty, reasonIndex: ResReason.IdxLevelSettle, reasonCategory: ResReason.InLevel);
+                message: string.Empty, reasonIndex: ResReason.IdxGoldLeaf, reasonCategory: ResReason.InLevel);
         }
         CoroutineRunner.StartCoroutine(CompleteStageRoutine(stageNumber,isJump));
         GoldLeafChessViews.Clear();

@@ -573,7 +573,11 @@ public partial class ChessPlayArea
     /// 复活接口：看完广告后调用此方法重新开始
     /// </summary>
     /// <param name="addSeconds">复活额外给的秒数，默认给 60 秒</param>
-    public void ReviveGame(float addSeconds = 60f)
+    /// <param name="autoUseGrantedButterfly">
+    /// 本次复活是否赠送了蝴蝶（FailGameScreen.GrantFreeButterToolIfNeeded 的结果）。
+    /// 为 true 且场上空位 &gt; 5 时，立刻把这只蝴蝶飞出去提示（bug47）。
+    /// </param>
+    public void ReviveGame(float addSeconds = 60f, bool autoUseGrantedButterfly = false)
     {
         _remainingTime += addSeconds;
         CurrStageData.RemainingTime = _remainingTime;
@@ -593,6 +597,10 @@ public partial class ChessPlayArea
         UpdateTimerUI();
         _isTimerRunning = true; // 重新跑秒
         EventDispatcher.instance.TriggerChangeTopRaycast(true); // 解除屏幕屏蔽
+
+        // ★ bug47：复活后如果背包里有蝴蝶、且场上空位 > 5，立刻飞出去提示一次
+        //   （复活赠送的蝴蝶就是在这条链路上发的；这里不区分复活方式，避免漏掉广告/免费复活）
+        TryAutoUseButterflyAfterRevive(autoUseGrantedButterfly);
     }
     
     /// <summary>

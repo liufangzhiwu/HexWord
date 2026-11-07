@@ -52,6 +52,15 @@ public class AdTrackingManager : MonoBehaviour
     /// <summary>等待主界面出现以展示激励弹窗的最长时间</summary>
     private const float RewardPopupTimeout = 15f;
 
+    /// <summary>静默查询授权状态的最小间隔（秒）。启动 / 每次回前台都可能触发，做个节流。</summary>
+    private const float StatusQueryThrottle = 3f;
+
+    /// <summary>静默查询等待回包的最长时间（秒）。超时视为桥接不可用/回包丢失，允许重试。</summary>
+    private const float StatusQueryTimeout = 5f;
+
+    /// <summary>Pop_up 等待埋点就绪的最长时间（秒）。首启引导页出现得早，超时只打错误日志。</summary>
+    private const float PopReportRetryTimeout = 10f;
+
     #endregion
 
     #region 运行时状态
@@ -67,7 +76,16 @@ public class AdTrackingManager : MonoBehaviour
     private bool _waitingSettingsReturn;
     private bool _openedSystemSettings;
 
+    /// <summary>静默查询授权状态是否在进行中（鸿蒙是异步回包，避免连点/重入）</summary>
+    private bool _statusQueryInFlight;
+
+    /// <summary>上次静默查询的时间（realtimeSinceStartup），用于节流</summary>
+    private float _lastStatusQueryTime = -999f;
+
     private int _pendingRewardGold;
+
+    /// <summary>本次引导页实例是否已经上报过 Pop_up（bug44：展示与上报必须是同一时刻，且只报一次）</summary>
+    private bool _guidePopReported;
 
     #endregion
 
@@ -157,6 +175,120 @@ public class AdTrackingManager : MonoBehaviour
 
     #endregion
 
+    #region 授权状态静默同步（bug34：改系统设置后再启动，IAA 分层不刷新）
+
+    /// <summary>
+    /// 静默核对系统里的真实广告追踪授权状态，与存档 <see cref="UserData.adTrackingEnabled"/> 不一致时写回并刷新用户分层。
+    ///
+    /// 背景（bug34）：玩家在游戏里先同意了广告关联，之后去【系统设置】把它改成禁止，再启动游戏。
+    /// 因为引导页只弹一次（adTrackingGuideShown=true），启动流程不会再发起授权请求，
+    /// 存档里的 adTrackingEnabled 一直是 "1"，于是 IAA 分层仍然按"已通过"算（IAA10/11/12），
+    /// 正确结果应该是 IAA00/01/02。
+    ///
+    /// 平台差异：
+    ///   iOS / 编辑器 → AdTrackingPermission.GetStatus() 直接读系统状态（只读，不弹框）；
+    ///   鸿蒙         → 没有只读 API，走新增的静默查询桥接 Game.QueryTrackingConsent()
+    ///                  （内部只调 requestPermissionsFromUser：已决定过时系统不弹框，直接返回同意/拒绝），
+    ///                  结果经 PushMessageReceiver.OnOAIDQueryResult → OnTrackingStatusQueried 回来。
+    ///
+    /// 只在"已经决定过"（存档为 1 或 0）时才查：
+    ///   - 存档为空表示还没走过引导页，查询有可能会拉起系统授权框；这种情况交给引导页流程处理。
+    /// </summary>
+    /// <param name="reason">日志用（启动 / 回前台）</param>
+    public void SyncTrackingStatusFromPlatform(string reason)
+    {
+        UserData user = User;
+        if (user == null) return;
+
+        // 还没决定过授权 → 交给引导页流程，别在这里拉系统弹窗
+        if (user.adTrackingEnabled != "1" && user.adTrackingEnabled != "0")
+        {
+            Debug.Log($"[AdTracking] {reason}静默核对跳过：授权状态还未决定（adTrackingEnabled=\"{user.adTrackingEnabled}\"）");
+            return;
+        }
+
+        // 正在走"设置 → 去开启"流程时别插一脚，结果由 OnPermissionResult 统一处理
+        if (_waitingSettingsReturn || _openedSystemSettings)
+        {
+            Debug.Log($"[AdTracking] {reason}静默核对跳过：正在系统设置授权流程中");
+            return;
+        }
+
+        if (_statusQueryInFlight)
+        {
+            // 上次查询迟迟没有回包（ArkTS 桥接未更新 / 消息丢失）→ 超时后允许重试
+            if (Time.realtimeSinceStartup - _lastStatusQueryTime < StatusQueryTimeout) return;
+            _statusQueryInFlight = false;
+        }
+
+        if (Time.realtimeSinceStartup - _lastStatusQueryTime < StatusQueryThrottle) return;
+
+        if (AdTrackingPermission.IsSupported)
+        {
+            // iOS / 编辑器：直接读，无副作用
+            AdTrackingStatus status = AdTrackingPermission.GetStatus();
+            if (status != AdTrackingStatus.Authorized && status != AdTrackingStatus.Denied)
+            {
+                Debug.Log($"[AdTracking] {reason}静默核对跳过：系统状态未决定/不支持（{status}）");
+                return;
+            }
+
+            _lastStatusQueryTime = Time.realtimeSinceStartup;
+            ApplyTrackingStatus(status == AdTrackingStatus.Authorized, $"{reason}系统状态={status}");
+            return;
+        }
+
+#if UNITY_OPENHARMONY && !UNITY_EDITOR
+        // 鸿蒙：异步静默查询，结果由 OnOAIDQueryResult 回来
+        if (Game.self == null) return;
+
+        _lastStatusQueryTime = Time.realtimeSinceStartup;
+        _statusQueryInFlight = true;
+        Debug.Log($"[AdTracking] {reason}静默核对：向 ArkTS 侧查询 APP_TRACKING_CONSENT 当前状态");
+        Game.self.QueryTrackingConsent();
+#else
+        Debug.Log($"[AdTracking] {reason}静默核对跳过：当前平台没有可读的授权状态");
+#endif
+    }
+
+    /// <summary>
+    /// 鸿蒙静默查询回包（ArkTS TuanjieSendMessage → PushMessageReceiver.OnOAIDQueryResult）。
+    /// 只做状态同步 + 分层刷新，不走埋点、不发激励、不动引导页。
+    /// </summary>
+    public void OnTrackingStatusQueried(bool granted)
+    {
+        _statusQueryInFlight = false;
+        ApplyTrackingStatus(granted, "鸿蒙静默查询");
+    }
+
+    /// <summary>
+    /// 把核对到的授权状态写回存档，变化时刷新用户分层（IAA 分层依赖该字段）。
+    /// </summary>
+    private void ApplyTrackingStatus(bool granted, string reason)
+    {
+        UserData user = User;
+        if (user == null) return;
+
+        string want = granted ? "1" : "0";
+        if (user.adTrackingEnabled == want)
+        {
+            Debug.Log($"[AdTracking] {reason}: 授权状态无变化（{want}），分层保持");
+            return;
+        }
+
+        string before = user.adTrackingEnabled;
+        user.adTrackingEnabled = want;
+        if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
+
+        string layer = ShopManager.shopManager != null ? ShopManager.shopManager.GetCurrentUserLayer() : "(ShopManager 未初始化)";
+        if (ShopManager.shopManager != null) ShopManager.shopManager.RefreshLayer();
+
+        Debug.Log($"[AdTracking] {reason}: 授权状态 {before} → {want}（系统真实状态），已刷新用户分层 → {layer}");
+        OnAuthorizationChanged?.Invoke(granted);
+    }
+
+    #endregion
+
     #region 启动流程（加载页）
 
     /// <summary>加载页出现时调用：决定要不要出引导页，并让加载流程等它结束</summary>
@@ -175,6 +307,11 @@ public class AdTrackingManager : MonoBehaviour
         }
 
         _startupFlowStarted = true;
+
+        // ★ bug34：启动时先静默核对系统里的真实授权状态（玩家可能在系统设置里改过），
+        //   状态变了会写回存档并刷新分层。必须放在判断要不要弹引导页之前，
+        //   这样"已经弹过引导页"的玩家也能拿到正确的分层。
+        SyncTrackingStatusFromPlatform("启动");
 
         if (!ShouldRunStartupFlow(out string skipReason))
         {
@@ -202,10 +339,11 @@ public class AdTrackingManager : MonoBehaviour
 
         if (!_startupFlowFinished)
         {
-            Debug.LogWarning("[AdTracking] 等待引导流程超时，强制放行加载");
-            _startupFlowFinished = true;
-            ReleaseAdGate();
-            if (ShopManager.shopManager != null) ShopManager.shopManager.LogStartupLayerAndConfig();
+            // ★ bug44：玩家在引导页上静默（不点"继续"）超过 StartupFlowTimeout 会被这里强制放行，
+            //   随后加载场景卸载 → 引导页跟着被销毁，但 _guide 引用还在、Pop_up 也可能没补上。
+            //   现在按"玩家未操作、超时自动进游戏"统一收尾：补一次曝光 + 正常关页 + 走标准收尾流程。
+            Debug.LogWarning("[AdTracking] 等待引导流程超时，按“玩家未操作”收尾并强制放行加载");
+            CloseGuideAndFinishStartupFlow("引导页静默超时自动进入游戏");
         }
     }
 
@@ -299,9 +437,12 @@ public class AdTrackingManager : MonoBehaviour
             if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
         }
 
-        ReportPopShow(PopNameGuide);
         _permissionRequested = false;
 
+        // ★ bug44：Pop_up 不再在"准备弹"时上报，统一挪到 ShowGuide 真正把页面显示出来之后
+        //   （见 ShowGuide 里的 ReportPopShowSafe）。原来在实例化之前就上报，
+        //   一旦 prefab/父节点异常没真正显示，就会出现"有曝光无弹窗"的脏数据；
+        //   反过来在"静默超时自动进游戏"等异常收尾路径上，也容易和展示时机错位。
         // 首启时账号/商店可能还没初始化完，先按当前能拿到的激励展示，拿到配置后再补 "+G"
         ShowGuide(AdTrackingGuidance.Mode.Startup, ResolveRewardGold());
     }
@@ -344,8 +485,39 @@ public class AdTrackingManager : MonoBehaviour
 
         if (uiParent != null) _guideParent = uiParent;
         _permissionRequested = false;
-        ReportPopShow(PopNameGuideSettings);
+        // Pop_up(广告追踪引导-设置) 同样在 ShowGuide 真正显示后再报（bug44）
         ShowGuide(AdTrackingGuidance.Mode.Settings, ResolveRewardGold());
+    }
+
+    /// <summary>
+    /// 设置界面「广告关联」开关点击（需求：点开关直接调起系统「当前应用广告追踪」设置界面）：
+    ///   - 鸿蒙：requestPermissionsFromUser 已被拒过 → 自动走 requestPermissionOnSetting（应用权限设置弹窗，带开关）；
+    ///   - iOS ：跳系统设置页；
+    ///   - 玩家关闭该界面时，系统回调（鸿蒙 OnOAIDClosedSignal / iOS 回前台校验）读回最新授权状态，
+    ///     经 OnPermissionResult 落盘并通知设置界面的 Toggle 刷新。
+    /// 不再先弹内部引导页，避免"点了没反应"。
+    /// </summary>
+    public void OpenSystemTrackingSettingsFromEntry()
+    {
+        if (!PlatformSupportsTracking)
+        {
+            MessageSystem.Instance?.ShowTip("当前系统无需设置广告关联");
+            return;
+        }
+
+        // 已经开启：直接刷新开关即可，不再打扰
+        if (IsAuthorized)
+        {
+            Debug.Log("[AdTracking] 广告关联已开启，跳过跳转设置");
+            OnAuthorizationChanged?.Invoke(true);
+            return;
+        }
+
+        _waitingSettingsReturn = true;
+        _permissionRequested = false;
+
+        ReportPopShow(PopNameTracking);
+        OpenSystemTrackingSettings();
     }
 
     #endregion
@@ -380,6 +552,22 @@ public class AdTrackingManager : MonoBehaviour
 
         _guide.OnPrimaryClicked += HandleGuidePrimary;
         _guide.Setup(mode, rewardGold);
+
+        // ★ bug44：页面真正显示出来这一刻才上报 Pop_up，并且每个实例只报一次。
+        //   （原来在 StartupGuideRoutine / OpenSettingsGuide 里"先报再弹"，
+        //     展示失败时会产生脏曝光；静默超时自动进游戏时也拿不到对应曝光。）
+        ReportGuidePopOnce(mode == AdTrackingGuidance.Mode.Startup ? PopNameGuide : PopNameGuideSettings);
+    }
+
+    /// <summary>
+    /// 引导页 Pop_up 上报（每个引导页实例只报一次）。
+    /// 埋点 SDK 还没就绪时改为延迟重试，避免首启第一条曝光被静默丢弃（bug44）。
+    /// </summary>
+    private void ReportGuidePopOnce(string popName)
+    {
+        if (_guidePopReported) return;
+        _guidePopReported = true;
+        ReportPopShowSafe(popName);
     }
 
     private void HandleGuidePrimary()
@@ -446,6 +634,7 @@ public class AdTrackingManager : MonoBehaviour
         _guide.OnPrimaryClicked -= HandleGuidePrimary;
         _guide.Close();
         _guide = null;
+        _guidePopReported = false;   // 下一次引导页实例重新计一次曝光（bug44）
     }
 
     /// <summary>
@@ -538,6 +727,11 @@ public class AdTrackingManager : MonoBehaviour
             _guide.OnPermissionReturned(granted);
             if (fromSettings && !granted) MessageSystem.Instance?.ShowTip("尚未开启广告关联");
         }
+        else if (fromSettings && !granted)
+        {
+            // 设置界面直接跳系统设置（没有内部引导页）时，返回未开启也要给个提示
+            MessageSystem.Instance?.ShowTip("尚未开启广告关联");
+        }
 
         // ---------- 通知界面（设置里的"广告关联"开关） ----------
         OnAuthorizationChanged?.Invoke(granted);
@@ -575,10 +769,42 @@ public class AdTrackingManager : MonoBehaviour
     private void OnFocusChanged(bool hasFocus)
     {
         if (!hasFocus) return;
+
+        // ★ bug34：玩家可能刚去系统设置里把"广告关联"改掉了，回前台时静默核对一次。
+        //   正在走"设置 → 去开启"流程时跳过，避免和下面的结果判定抢同一个结果。
+        if (!_waitingSettingsReturn) SyncTrackingStatusFromPlatform("回前台");
+
         if (!_waitingSettingsReturn) return;
-        if (!AdTrackingPermission.IsSupported) return; // 鸿蒙靠回调，不轮询
+
+        if (!AdTrackingPermission.IsSupported)
+        {
+            // 鸿蒙：授权结果由 OnOAIDClosedSignal 回传（玩家关闭权限设置弹窗时触发）。
+            // 这里只做兜底：回前台后迟迟收不到回调，就按当前存档状态刷新一次设置开关，避免界面卡在"等待"。
+            StartCoroutine(HarmonySettingsFallbackRoutine());
+            return;
+        }
 
         StartCoroutine(CheckSettingsResultRoutine());
+    }
+
+    /// <summary>
+    /// 鸿蒙兜底：从系统设置回前台后，如果 3 秒内没有收到授权回调，先按当前存档状态刷新一次设置开关。
+    /// 注意：只刷新 UI，不清 _waitingSettingsReturn / _openedSystemSettings ——
+    /// 真正的授权回调（OnOAIDClosedSignal）回来时仍按"设置入口发起"处理，埋点与激励不会丢。
+    /// </summary>
+    private IEnumerator HarmonySettingsFallbackRoutine()
+    {
+        float waited = 0f;
+        while (waited < 3f && _waitingSettingsReturn)
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!_waitingSettingsReturn) yield break;   // 回调已经处理过
+
+        Debug.Log("[AdTracking] 鸿蒙系统设置返回后 3s 内无授权回调，先按当前存档状态刷新设置开关");
+        OnAuthorizationChanged?.Invoke(IsAuthorized);
     }
 
     private IEnumerator CheckSettingsResultRoutine()
@@ -757,6 +983,45 @@ public class AdTrackingManager : MonoBehaviour
     {
         if (Game.self == null || Game.self.Analytics == null) return;
         AnalyticMgr.PopShow(popName);
+    }
+
+    /// <summary>
+    /// 带重试的 Pop_up 上报：首启引导页出现得很早（加载页 1.2s 后），
+    /// 埋点 SDK / Analytics 实例可能还没就绪，直接调就会把这条曝光丢掉（bug44）。
+    /// 这里等到就绪再报，最多等 <see cref="PopReportRetryTimeout"/> 秒。
+    /// </summary>
+    private void ReportPopShowSafe(string popName)
+    {
+        if (Game.self != null && Game.self.Analytics != null && AnalyticMgr.IsSdkReady)
+        {
+            AnalyticMgr.PopShow(popName);
+            return;
+        }
+
+        Debug.LogWarning($"[AdTracking] 埋点 SDK 未就绪，Pop_up({popName}) 延迟重试");
+        StartCoroutine(ReportPopShowWhenReady(popName));
+    }
+
+    private IEnumerator ReportPopShowWhenReady(string popName)
+    {
+        float waited = 0f;
+        while (waited < PopReportRetryTimeout)
+        {
+            if (Game.self != null && Game.self.Analytics != null && AnalyticMgr.IsSdkReady)
+            {
+                AnalyticMgr.PopShow(popName);
+                Debug.Log($"[AdTracking] 埋点就绪，补报 Pop_up({popName})，等待 {waited:F2}s");
+                yield break;
+            }
+
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        // 兜底：等不到就绪状态也补报一次（宁可时间偏移，也不要整条曝光丢失）
+        Debug.LogError($"[AdTracking] 埋点等待 {PopReportRetryTimeout}s 仍未就绪，Pop_up({popName}) 强制补报");
+        if (Game.self != null && Game.self.Analytics != null)
+            AnalyticMgr.PopShow(popName);
     }
 
     private static void ReportPopAccept(string popName)

@@ -14,6 +14,8 @@ public class EnergyScreen : UIWindow
     [SerializeField] private Button buyButton;
     [SerializeField] private Text titleText;
     [SerializeField] private Text descriptionText;
+    [Tooltip("体力图标（count_bg/icon）：无限体力期间换成 InfiniteEnergy 图标，留空则运行时自动绑定")]
+    [SerializeField] private Image energyIcon;
     private Coroutine _timerCoroutine;
 
     // ======================= ★ 无限体力状态 =======================
@@ -25,9 +27,14 @@ public class EnergyScreen : UIWindow
     private const string SpriteCanNotGold   = "NoCanGold";      // 金币按钮不可用
     private const string SpriteCanNotGoldAlt = "noCanGold";     // 兼容小写文件名
     private const string SpriteCanNotAds    = "NoCanAds";       // 广告按钮不可用
+    /// <summary>无限体力期间的体力图标</summary>
+    private const string SpriteInfiniteEnergy = "InfiniteEnergy";
 
     private string _defaultDescription;
     private bool _defaultDescriptionCached;
+    /// <summary>体力图标原始 sprite（无限体力结束后还原用）</summary>
+    private Sprite _defaultEnergyIconSprite;
+    private bool _defaultEnergyIconCached;
     /// <summary>当前是否处于「无限体力」表现（幂等，避免每秒重写）</summary>
     private bool _isUnlimitedActive;
     /// <summary>图集取图缓存（含取不到时的 null，避免重复请求/重复报错）</summary>
@@ -145,12 +152,67 @@ public class EnergyScreen : UIWindow
         SetButtonUnavailable(buyButton, unlimited, SpriteCanNotGold, SpriteCanNotGoldAlt);
         SetButtonUnavailable(adsButton, unlimited, SpriteCanNotAds, null);
 
+        // ★ 体力图标：无限体力期间换成通用图集里的 InfiniteEnergy，结束后还原
+        ApplyEnergyIcon(unlimited);
+
         if (descriptionText != null)
         {
             if (unlimited)
                 descriptionText.text = UnlimitedEnergyTips;
             else if (_defaultDescriptionCached)
                 descriptionText.text = _defaultDescription;
+        }
+    }
+
+    /// <summary>
+    /// 切换体力图标：无限体力 → 通用图集 UI_Universal 的 InfiniteEnergy；结束 → 还原为原图标。
+    /// </summary>
+    private void ApplyEnergyIcon(bool unlimited)
+    {
+        EnsureEnergyIcon();
+        if (energyIcon == null) return;
+
+        // 只在第一次切换前缓存原图，保证无限体力结束后能准确还原
+        if (!_defaultEnergyIconCached)
+        {
+            _defaultEnergyIconSprite = energyIcon.sprite;
+            _defaultEnergyIconCached = true;
+        }
+
+        if (unlimited)
+        {
+            Sprite sprite = GetAtlasSprite(SpriteInfiniteEnergy);
+            if (sprite != null)
+                energyIcon.sprite = sprite;
+        }
+        else
+        {
+            energyIcon.sprite = _defaultEnergyIconSprite;
+        }
+    }
+
+    /// <summary>
+    /// 自动绑定体力图标（预制体里是 count_bg/icon，和倒计时文本同级）。
+    /// Inspector 已指定则跳过。
+    /// </summary>
+    private void EnsureEnergyIcon()
+    {
+        if (energyIcon != null || nextEnergyTimeText == null) return;
+
+        Transform parent = nextEnergyTimeText.transform.parent;   // count_bg
+        if (parent == null) return;
+
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Transform child = parent.GetChild(i);
+            if (child == null || child == nextEnergyTimeText.transform) continue;
+
+            Image image = child.GetComponent<Image>();
+            if (image != null)
+            {
+                energyIcon = image;
+                return;
+            }
         }
     }
 

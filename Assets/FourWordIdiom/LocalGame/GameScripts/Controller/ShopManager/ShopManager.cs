@@ -975,6 +975,103 @@ public partial class ShopManager : MonoBehaviour
         };
     }
 
+    /// <summary>该礼包是否在本次决策的排除列表里（excludeIds 为 null 时一律返回 false）。</summary>
+    private static bool IsExcludedPack(ShopDataItem item, ICollection<int> excludeIds)
+    {
+        return item != null && excludeIds != null && excludeIds.Contains(item.id);
+    }
+
+    /// <summary>
+    /// 过滤掉本次决策要排除的礼包。
+    /// 列表是新建的副本，不会改动 ShopManager 内部的推荐配置集合 / 候选缓存。
+    /// </summary>
+    private static List<ShopDataItem> FilterExcludedPacks(List<ShopDataItem> packs, ICollection<int> excludeIds)
+    {
+        if (packs == null || packs.Count == 0) return packs;
+        if (excludeIds == null || excludeIds.Count == 0) return packs;
+
+        var filtered = new List<ShopDataItem>(packs.Count);
+        for (int i = 0; i < packs.Count; i++)
+        {
+            ShopDataItem item = packs[i];
+            if (IsExcludedPack(item, excludeIds)) continue;
+            filtered.Add(item);
+        }
+        return filtered;
+    }
+
+    // ======================= 1 号位共享决策（bug52） =======================
+
+    /// <summary>1 号位决策的上下文 key（关卡 / 审核开关 / 是否已拥有永久去广告），变了就重新决策</summary>
+    private string _slot1DecisionKey;
+
+    /// <summary>1 号位已决定的礼包（固定商店 / 动态商店共用）</summary>
+    private ShopDataItem _slot1Decision;
+
+    /// <summary>构造 1 号位决策上下文 key</summary>
+    private string BuildSlot1DecisionKey()
+    {
+        var ctrl = ChessStageController.Instance;
+        string stage = (ctrl != null && ctrl.CurrStageInfo != null)
+            ? $"{GameDataManager.Instance.UserData.levelMode}_{ctrl.CurrStageInfo.StageNumber}"
+            : "-";
+
+        return $"{stage}|audit={AuditConfig.IsAuditOpen}|rmads={IsRemoveAdsOwned()}";
+    }
+
+    /// <summary>
+    /// 固定商店 / 动态商店共用的 1 号位决策。
+    /// 缓存仍然有效（同关卡、未被限购、未被排除、仍在候选里）就直接复用，保证两个入口展示同一个礼包；
+    /// 否则重新跑一次 DecideWinner 并记下结果。
+    /// </summary>
+    private List<ShopDataItem> DecideSharedSlot1Winner(List<ShopDataItem> candidates, RecommendSlot slot, ICollection<int> excludeIds)
+    {
+        // ★ 迎新礼包未购买时固定占 1 号位（固定商店原来是自己 Insert(0)，动态商店没有 → 两边必然不一致）。
+        //   现在把「迎新礼包置顶」也纳入共享 1 号位决策，两个商店在迎新礼包卖掉之前都会展示它。
+        ShopDataItem newcomer = candidates.FirstOrDefault(c => c != null && c.produceNameId == ProductNewcomerBox);
+        if (newcomer != null
+            && !IsNewcomerPurchased(newcomer)
+            && !IsExcludedPack(newcomer, excludeIds))
+        {
+            _slot1DecisionKey = BuildSlot1DecisionKey();
+            _slot1Decision = newcomer;
+            LogShop($"  1号位共享决策: 迎新礼包固定置顶 {newcomer.produceNameId}（本次入口={slot}）");
+            return new List<ShopDataItem> { newcomer };
+        }
+
+        string key = BuildSlot1DecisionKey();
+
+        if (_slot1Decision != null
+            && _slot1DecisionKey == key
+            && !IsLimitedOut(_slot1Decision)
+            && !IsExcludedPack(_slot1Decision, excludeIds)
+            && candidates.Any(c => c != null && c.id == _slot1Decision.id))
+        {
+            LogShop($"  1号位共享决策: 复用 {_slot1Decision.produceNameId}（本次入口={slot}）");
+            return new List<ShopDataItem> { _slot1Decision };
+        }
+
+        var winner = DecideWinner(candidates, slot);
+        if (winner != null && winner.Count > 0)
+        {
+            _slot1DecisionKey = key;
+            _slot1Decision = winner[0];
+            LogShop($"  1号位共享决策: 新决策 {winner[0].produceNameId}（本次入口={slot}），后续两个商店共用");
+        }
+
+        return winner;
+    }
+
+    /// <summary>清空 1 号位共享决策（换关 / 购买后重新决策）</summary>
+    private void ResetSlot1Decision(string reason)
+    {
+        if (_slot1Decision == null) return;
+
+        _slot1Decision = null;
+        _slot1DecisionKey = null;
+        LogShop($"  1号位共享决策已清空（{reason}）");
+    }
+
     private List<ShopDataItem> GetSlotCandidates(RecommendSlot slot, int featured)
     {
         List<ShopDataItem> list = new List<ShopDataItem>();
@@ -1089,6 +1186,8 @@ public partial class ShopManager : MonoBehaviour
         _slotLastShownPack.Clear();
         _bulbDiscountConsumed = false;
         _rocketDiscountConsumed = false;
+        // ★ bug52：换关/重进关卡要重新决策 1 号位（固定商店与动态商店共用这一份）
+        ResetSlot1Decision("UnlockAllSlots（进关/换关）");
         // 提示/复活视频次数改由 SyncToolVideoLevel 按"关卡变化"刷新（并持久化），
         // 这里不再无条件清空，避免同一关重进/重启游戏时误清零。
         LogShop("UnlockAllSlots: 全部推荐位解锁, 折扣消费标记复位, 回显记录已清空");
@@ -1166,7 +1265,11 @@ public partial class ShopManager : MonoBehaviour
         info.pushIndex = limit?.pushStateIndex ?? 1f;
 
         float packWeight = cfg.baseWeight + info.payTendency;
-        if (slot == RecommendSlot.Bulb || slot == RecommendSlot.DynamicStore)
+        // ★ 固定商店 / 动态商店的 1 号位是同一个推荐位（bug52），权重口径必须一致：
+        //   之前只有灯泡和动态商店算探价/失败分，固定商店不算 → 同一份候选池算出不同礼包。
+        if (slot == RecommendSlot.Bulb
+            || slot == RecommendSlot.DynamicStore
+            || slot == RecommendSlot.FixedStore)
         {
             packWeight += info.exploreScore - info.failScore;
         }
@@ -1223,7 +1326,14 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 推荐位决策入口 =======================
 
-    public List<ShopDataItem> GetRecommendPacks(RecommendSlot slot)
+    /// <summary>
+    /// 取某推荐位本次要展示的礼包。
+    /// </summary>
+    /// <param name="excludeIds">
+    /// 需要排除的礼包 id（例如「本关已经买过、本次不想再推」的礼包）。
+    /// 传 null 表示不排除。★ 注意：只是本次决策时跳过，不会改动任何积分/冷却数据。
+    /// </param>
+    public List<ShopDataItem> GetRecommendPacks(RecommendSlot slot, ICollection<int> excludeIds = null)
     {
         
         int maxFeatured = 1;
@@ -1234,10 +1344,10 @@ public partial class ShopManager : MonoBehaviour
             
             switch (slot)
             {
-                case RecommendSlot.Bulb: return GetAuditPacksForSlot(slot);
+                case RecommendSlot.Bulb: return FilterExcludedPacks(GetAuditPacksForSlot(slot), excludeIds);
                 case RecommendSlot.DynamicStore: maxFeatured = 2; break;
                 case RecommendSlot.Rocket:
-                case RecommendSlot.Clock:return GetAuditPacksForSlot(slot);
+                case RecommendSlot.Clock:return FilterExcludedPacks(GetAuditPacksForSlot(slot), excludeIds);
                 case RecommendSlot.FixedStore: maxFeatured = 1;break;
             }
         }
@@ -1253,7 +1363,7 @@ public partial class ShopManager : MonoBehaviour
             }
         }
 
-        LogShop($"========== GetRecommendPacks 开始: slot={slot}, shopMode={shopMode}, 时间={DateTime.Now:HH:mm:ss} ==========");
+        LogShop($"========== GetRecommendPacks 开始: slot={slot}, shopMode={shopMode}, 排除数={(excludeIds == null ? 0 : excludeIds.Count)}, 时间={DateTime.Now:HH:mm:ss} ==========");
 
         List<ShopDataItem> result = new List<ShopDataItem>();
         bool slot1Empty = false;
@@ -1263,26 +1373,30 @@ public partial class ShopManager : MonoBehaviour
             if (IsSlotLocked(slot, featured))
             {
                 ShopDataItem lastShown = GetLastShownPack(slot, featured);
-                if (lastShown != null && !IsLimitedOut(lastShown))
+                if (lastShown != null && !IsLimitedOut(lastShown) && !IsExcludedPack(lastShown, excludeIds))
                 {
                     result.Add(lastShown);
                     LogShop($"  featured={featured} 已锁定（本关该推荐位购买过），回显礼包: {lastShown.produceNameId}");
                 }
                 else
                 {
-                    LogShop($"  featured={featured} 已锁定，但回显礼包为空或已限购，跳过");
+                    LogShop($"  featured={featured} 已锁定，但回显礼包为空/已限购/已排除，跳过");
                 }
                 continue;
             }
 
-            List<ShopDataItem> candidates = GetSlotCandidates(slot, featured);
+            List<ShopDataItem> candidates = FilterExcludedPacks(GetSlotCandidates(slot, featured), excludeIds);
             LogShop($"  featured={featured}, 候选数={candidates.Count}, 候选=[{string.Join(",", candidates.Select(x => x.produceNameId))}]");
 
             if (candidates.Count == 0) continue;
 
             if ((slot == RecommendSlot.DynamicStore || slot == RecommendSlot.FixedStore) && featured == 1)
             {
-                var winners = DecideWinner(candidates, slot);
+                // ★ bug52：固定商店与动态商店的 1 号位是同一个推荐位，必须展示同一个礼包。
+                //   两个入口各自调一次 GetRecommendPacks，之前每次都是「重新决策」（还有随机并列兜底、
+                //   以及固定商店把探价/失败分排除在权重外），所以两边经常算出不同的礼包。
+                //   现在 1 号位决策按「关卡 + 审核开关 + 是否已拥有永久去广告」缓存一次，两个商店共用。
+                var winners = DecideSharedSlot1Winner(candidates, slot, excludeIds);
                 if (winners == null || winners.Count == 0)
                 {
                     slot1Empty = true;
@@ -1315,7 +1429,7 @@ public partial class ShopManager : MonoBehaviour
         if (slot == RecommendSlot.DynamicStore && slot1Empty && IsRemoveAdsOwned()
             && !IsSlotLocked(slot, 2))
         {
-            List<ShopDataItem> second = GetSlotCandidates(slot, 2);
+            List<ShopDataItem> second = FilterExcludedPacks(GetSlotCandidates(slot, 2), excludeIds);
             var secondSorted = second
                 .OrderByDescending(x => CalculateDecisionWeight(x, GetCfg(x.produceNameId), slot))
                 .ThenBy(x => x.price)
@@ -1612,6 +1726,8 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"HandleGiftTablePurchaseRewards 开始: {shopDataItem.produceNameId}, " +
                 $"type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
 
+        bool removeAdsGrantedByContent = false;
+
         if (shopDataItem.productContent != null)
         {
             foreach (var dataitem in shopDataItem.productContent)
@@ -1641,8 +1757,14 @@ public partial class ShopManager : MonoBehaviour
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, shopDataItem.name + "商店购买提示灯");
                         break;
                     case (int)LimitRewordType.RemoveAds:
+                        // 内容里的 6;N = 永久去广告（N 无意义，按永久发）
+                        GrantRemoveAdsByContent((int)LimitRewordType.RemoveAds, 0, shopDataItem);
+                        removeAdsGrantedByContent = true;
+                        break;
                     case (int)LimitRewordType.RemoveDayAds:
-                        LogShop($"  去广告商品，交由 HandleRemoveAdsPurchase 处理 (adstype={type})");
+                        // 内容里的 7;N = N 天限时去广告（混合礼包夹带的时长以前直接丢了）
+                        GrantRemoveAdsByContent((int)LimitRewordType.RemoveDayAds, count * 24, shopDataItem);
+                        removeAdsGrantedByContent = true;
                         break;
                     case (int)LimitRewordType.ReStartTool:
                         // ★ 复活道具（toolId=105）：复活弹窗售卖的礼包（如悠然礼包 0;120#8;16#1;2）里有这个类型，
@@ -1662,8 +1784,9 @@ public partial class ShopManager : MonoBehaviour
             }
         }
 
-        if (IsRemoveAdsProduct(shopDataItem.produceNameId))
+        if (IsRemoveAdsProduct(shopDataItem.produceNameId) && !removeAdsGrantedByContent)
         {
+            // 商品本身就是去广告 SKU（RemoveADS / RemoveAdsWeek）：内容里没写 6/7 时按商品名兜底
             LogShop($"  非消耗型: 去广告 {shopDataItem.produceNameId}");
             HandleRemoveAdsPurchase(shopDataItem);
         }
@@ -1677,6 +1800,239 @@ public partial class ShopManager : MonoBehaviour
         OnPackPurchased(shopDataItem);
 
         LogShop($"HandleGiftTablePurchaseRewards 结束: {shopDataItem.produceNameId}");
+    }
+
+    // ======================= 补发 / 恢复购买（bug49 / bug50 / bug51） =======================
+
+    /// <summary>
+    /// 补发（补单 / 恢复购买）统一发货入口。
+    ///
+    /// 调用方：平台层在「启动补单」「已购查询」「恢复购买」里查到「已支付、但本地还没发过奖」的订单时进来
+    /// （鸿蒙：Shop_harmony.GrantRewardIfNeeded → 这里）。
+    ///
+    /// 与正常购买的区别：不弹 AwardScreen、不报 PurchaseFinished 埋点（这不是一次新的转化）。
+    /// 除此之外【必须完全一致】：
+    ///   - 以前补发只发金币 / 蝴蝶 / 提示 / 火箭，礼包里的「无限体力(9)」「限时去广告(7)」「复活道具(8)」全丢（bug49）；
+    ///   - 以前补发不写购买记录，玩家在「购买记录」里看不到这笔（bug50）。
+    ///
+    /// 幂等：同一 orderId 已经有购买记录 → 直接跳过（防止重复发货、重复累加支付统计）。
+    /// </summary>
+    /// <param name="item">平台回调的订单信息（order_id 一定要带上，用于幂等）</param>
+    /// <param name="source">日志用来源标记（启动补单 / 恢复购买）</param>
+    /// <returns>true=本次真的发了货；false=跳过（找不到商品 / 已发过）</returns>
+    public bool DeliverRestoredPurchase(ProductItem item, string source)
+    {
+        if (item == null) return false;
+
+        string productId = !string.IsNullOrEmpty(item.ProductId) ? item.ProductId : item.ItemName;
+        ShopDataItem shopDataItem = GetProduct(productId) ?? FormAllItemsGetProduct(productId);
+
+        if (shopDataItem == null)
+        {
+            LogShop($"[补发] 未找到商品配置: {productId}（source={source}），跳过");
+            return false;
+        }
+
+        if (HasPurchaseRecordForOrder(item.order_id))
+        {
+            LogShop($"[补发] 订单 {item.order_id} 已有购买记录，视为已发货，跳过（source={source}）");
+            return false;
+        }
+
+        LogShop($"[补发] 开始发货: {shopDataItem.produceNameId}(id={shopDataItem.id}), " +
+                $"order={item.order_id}, price={item.LocalizedPrice}, currency={item.IsoCurrencyCode}, source={source}");
+
+        if (shopDataItem.productContent != null)
+        {
+            foreach (var dataitem in shopDataItem.productContent)
+            {
+                if (dataitem == null || dataitem.Count < 2) continue;
+
+                int type = GetInt(dataitem[0]);
+                int count = GetInt(dataitem[1]);
+                if (count <= 0) continue;
+
+                LogShop($"[补发] 发放: type={type}, count={count}");
+                switch (type)
+                {
+                    case (int)LimitRewordType.Coins:
+                        GameDataManager.Instance.UserData.UpdateGold(count, false, false, $"{source}补发 {item.ItemName}");
+                        break;
+                    case (int)LimitRewordType.Butterfly:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count, $"{source}补发 {item.ItemName}");
+                        break;
+                    case (int)LimitRewordType.Tipstool:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count, $"{source}补发 {item.ItemName}");
+                        break;
+                    case (int)LimitRewordType.AutoComplete:
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, $"{source}补发 {item.ItemName}");
+                        break;
+                    case (int)LimitRewordType.ReStartTool:
+                        // 复活道具（toolId=105）
+                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, count, $"{source}补发 {item.ItemName}");
+                        break;
+                    case (int)LimitRewordType.InfiniteEnergy:
+                        // 内容里的 9;N = N 小时无限体力
+                        GrantUnlimitedEnergyHours(count, shopDataItem);
+                        break;
+                    case (int)LimitRewordType.RemoveAds:
+                        GrantRemoveAdsByContent((int)LimitRewordType.RemoveAds, 0, shopDataItem);
+                        break;
+                    case (int)LimitRewordType.RemoveDayAds:
+                        // 内容里的 7;N = N 天限时去广告
+                        GrantRemoveAdsByContent((int)LimitRewordType.RemoveDayAds, count * 24, shopDataItem);
+                        break;
+                    default:
+                        LogShop($"[补发] 未处理的商品类型: type={type}, count={count}");
+                        break;
+                }
+            }
+        }
+
+        // ---------- 支付统计（补发说明这次支付第一次成功落盘，按正常购买记账） ----------
+        var userData = GameDataManager.Instance.UserData;
+        bool firstPay = userData.TotalPayTimes == 0;
+        if (firstPay) userData.firstPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        userData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        userData.LastPayTimeTicks = DateTime.Now.Ticks;
+        userData.TotalPayTimes++;
+        userData.TotalRevenue += item.LocalizedPrice;
+        if (item.LocalizedPrice > userData.MaxSinglePayAmount)
+            userData.MaxSinglePayAmount = item.LocalizedPrice;
+
+        // ---------- 购买记录（bug50） ----------
+        AddPurchaseRecordForRestore(shopDataItem, item, source);
+
+        // ---------- 限购计数 / 付费倾向 / 推荐位锁定 ----------
+        OnPackPurchased(shopDataItem);
+
+        // ---------- 立刻落盘：下次启动才不会又补一遍 / 又丢一遍（bug51） ----------
+        GameDataManager.Instance.CommitGameData();
+
+        LogShop($"[补发] 发货完成并已落盘: {shopDataItem.produceNameId}, order={item.order_id}");
+        return true;
+    }
+
+    /// <summary>该订单号是否已经写过购买记录（补发幂等判断）。空订单号一律视为没有记录。</summary>
+    public bool HasPurchaseRecordForOrder(string orderId)
+    {
+        if (string.IsNullOrEmpty(orderId)) return false;
+
+        var records = GameDataManager.Instance != null && GameDataManager.Instance.UserData != null
+            ? GameDataManager.Instance.UserData.purchaseRecords
+            : null;
+        if (records == null) return false;
+
+        for (int i = 0; i < records.Count; i++)
+        {
+            if (records[i] != null && records[i].orderId == orderId) return true;
+        }
+        return false;
+    }
+
+    /// <summary>补发时写一条购买记录（结构 / 快照规则与 GiftTable.RecordPurchase、ShopItemBase.RecordPurchase 一致）。</summary>
+    private void AddPurchaseRecordForRestore(ShopDataItem shopDataItem, ProductItem item, string source)
+    {
+        try
+        {
+            float price = shopDataItem.price;
+            if (item != null && item.LocalizedPrice > 0) price = item.LocalizedPrice;
+
+            string nameText = MultilingualManager.Instance?.GetString(shopDataItem.name)
+                              ?? shopDataItem.name
+                              ?? shopDataItem.produceNameId
+                              ?? "";
+
+            var record = new PurchaseRecord
+            {
+                orderId = string.IsNullOrEmpty(item?.order_id)
+                    ? Guid.NewGuid().ToString("N")
+                    : item.order_id,
+                produceNameId = shopDataItem.produceNameId ?? "",
+                nameKey = shopDataItem.name ?? "",
+                nameText = nameText,
+                price = price,
+                originalPrice = shopDataItem.originalPrice,
+                currency = item?.IsoCurrencyCode ?? "",
+                showIcon = shopDataItem.showIcon ?? "",
+                limitRewordType = shopDataItem.type,
+                buyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                productContent = shopDataItem.DeepCopy()?.productContent ?? new List<List<string>>(),
+            };
+
+            GameDataManager.Instance?.UserData?.AddPurchaseRecord(record);
+
+            LogShop($"[补发] 购买记录已写入（{source}）: name={record.nameText}, order={record.orderId}, " +
+                    $"price={record.price}, contentCount={record.productContent.Count}");
+        }
+        catch (Exception ex)
+        {
+            LogShop($"[补发] 购买记录写入异常: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 按礼包内容发放去广告（6=永久 / 7=限时 N 天）。
+    /// 与 ShopItemBase.HandleRemoveAdsPurchaseInternal 同一套数据结构（UserData.limitShopItems + adstype），
+    /// 只是把「读商品名猜类型」改成「读内容类型」，这样补发也能正确发限时去广告。
+    /// </summary>
+    private void GrantRemoveAdsByContent(int adstype, int hours, ShopDataItem source)
+    {
+        bool permanent = adstype == (int)LimitRewordType.RemoveAds;
+        if (!permanent && hours <= 0) hours = 24;   // 内容里没写时长时兜底 1 天
+
+        LogShop($"[补发] 去广告发放: adstype={adstype}, permanent={permanent}, hours={hours}, item={source?.produceNameId}");
+
+        ShopLimitData exist = GameDataManager.Instance.UserData.limitShopItems
+            .Find(x => x.adstype == adstype);
+
+        if (exist != null && !exist.isoverdate)
+        {
+            if (permanent)
+            {
+                exist.isget = true;
+                exist.isopen = false;
+                exist.isoverdate = false;
+                exist.endtime = "";
+                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+            else
+            {
+                DateTime baseEnd = DateTime.Now;
+                DateTime oldEnd = exist.GetEndTime();
+                if (oldEnd != DateTime.MinValue && oldEnd > DateTime.Now) baseEnd = oldEnd;
+
+                DateTime newEnd = baseEnd.AddHours(hours);
+                exist.endtime = newEnd.ToString("yyyy-MM-dd HH:mm:ss");
+                exist.isget = true;
+                exist.isopen = false;
+                exist.isoverdate = false;
+                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                LogShop($"[补发] 限时去广告续期: 原结束={oldEnd:yyyy-MM-dd HH:mm:ss}, 新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
+            }
+        }
+        else
+        {
+            DateTime newEnd = permanent ? DateTime.MinValue : DateTime.Now.AddHours(hours);
+            GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData
+            {
+                id = source != null ? source.id : 0,
+                nameid = source != null ? source.produceNameId : "",
+                endtime = permanent ? "" : newEnd.ToString("yyyy-MM-dd HH:mm:ss"),
+                isopen = false,
+                gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                adstype = adstype,
+                isget = true,
+                isoverdate = false,
+            });
+            LogShop($"[补发] 新增去广告记录: adstype={adstype}, permanent={permanent}, " +
+                    $"endtime={(permanent ? "永久" : newEnd.ToString("yyyy-MM-dd HH:mm:ss"))}");
+        }
+
+        OnRemoveAdsApplied(adstype);
+        if (AdRuleManager.Instance != null) AdRuleManager.Instance.HideBannerAd();
+        UpdateAdsBtnUI?.Invoke(permanent ? null : DateTime.Now.ToString(), true);
+        RefreshLimitData();
     }
 
     public void OnPurchaseSuccess(ProductItem item)
@@ -1773,6 +2129,9 @@ public partial class ShopManager : MonoBehaviour
 
         MessageSystem.Instance.ShowTip($"{shopDataItem.name} 购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
+
+        // ★ bug50/bug51：立刻落盘，避免「买完杀进程」导致奖励丢失且平台已标记发货不再补发
+        if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
 
         LogShop($"========== OnPurchaseSuccess 结束: {shopDataItem.produceNameId} ==========");
     }
@@ -1922,8 +2281,9 @@ public partial class ShopManager : MonoBehaviour
         if (a > 0)
         {
             // ★ 付费倾向积分规则（策划文档）：
-            //   与购买礼包【同档位】的礼包 +2；【档位 a+1】的礼包 +1；【档位 a+2 及以上】的礼包 +0.5。
-            //   档位统一取 shop.csv 的「礼包档位」列（GetPackTier），低于 a 的档位不加分。
+            //   与购买礼包【同档位】的礼包 +2；【档位 a+1】的礼包 +1；【档位 a+2】的礼包 +0.5。
+            //   档位统一取 shop.csv 的「礼包档位」列（GetPackTier），低于 a 或高于 a+2 的档位都不加分。
+            //   （bug32：原来写成 tier >= a+2，会把 a+3、a+4 也 +0.5，与需求不符）
             int sameTierCount = 0;
             int nextTierCount = 0;
             int aboveTierCount = 0;
@@ -1946,7 +2306,7 @@ public partial class ShopManager : MonoBehaviour
                     ld.payTendencyScore += 1f;
                     nextTierCount++;
                 }
-                else if (tier >= a + 2)
+                else if (tier == a + 2)
                 {
                     ld.payTendencyScore += 0.5f;
                     aboveTierCount++;
@@ -1954,7 +2314,7 @@ public partial class ShopManager : MonoBehaviour
             }
 
             LogShop($"  付费倾向积分更新（基准档 a={a}）：同档位 +2 → {sameTierCount} 个，" +
-                    $"a+1 +1 → {nextTierCount} 个，a+2 及以上 +0.5 → {aboveTierCount} 个");
+                    $"a+1 +1 → {nextTierCount} 个，a+2 +0.5 → {aboveTierCount} 个");
         }
 
         limit.exploreScore += 3f;
@@ -1989,6 +2349,9 @@ public partial class ShopManager : MonoBehaviour
 
         limit.isActivityPack = false;
         limit.SetLimitEndTime(DateTime.MinValue);
+
+        // ★ bug52：买过礼包后积分/限购都变了，1 号位共享决策要作废（下个入口重新算，两边仍然一致）
+        ResetSlot1Decision($"购买 {shopDataItem.produceNameId} 后");
 
         RecommendSlot? slot = GetSlotOfPack(shopDataItem);
         ShopRecommendConfig packCfg = GetCfg(shopDataItem.produceNameId);
@@ -2145,7 +2508,65 @@ public partial class ShopManager : MonoBehaviour
     public void RestorePurchases()
     {
         LogShop("RestorePurchases 调用");
-        MessageSystem.Instance.ShowTip("没有可恢复的内购");
+
+        if (Game.self == null || Game.self.Shop == null)
+        {
+            LogShop("RestorePurchases: 商店未初始化，跳过");
+            MessageSystem.Instance?.ShowTip("商店暂不可用，请稍后再试");
+            return;
+        }
+
+        MessageSystem.Instance?.ShowLoadingAnimation();
+
+        // 平台回调可能永远不来（安卓实现是空的），用超时兜底，别把 loading 卡死
+        _restoreCallbackInvoked = false;
+        StartCoroutine(CoRestoreTimeout(4f));
+
+        Game.self.Shop.Restore((success, items) =>
+        {
+            _restoreCallbackInvoked = true;
+            MessageSystem.Instance?.HideLoadingAnimation();
+
+            int count = items != null ? items.Length : 0;
+            LogShop($"RestorePurchases 回调: success={success}, 恢复商品数={count}" +
+                    (count > 0
+                        ? $", 商品=[{string.Join(",", items.Select(x => x != null ? x.ProductId : "null"))}]"
+                        : ""));
+
+            if (count > 0)
+            {
+                MessageSystem.Instance?.ShowTip($"已恢复 {count} 笔内购");
+                EventDispatcher.instance?.TriggerChangeGoldUI(0, true);
+                RefreshLimitData();
+            }
+            else if (success)
+            {
+                MessageSystem.Instance?.ShowTip("没有可恢复的内购");
+            }
+            else
+            {
+                MessageSystem.Instance?.ShowTip("没有可恢复的内购");
+            }
+        });
+    }
+
+    /// <summary>恢复购买回调是否已经回来（超时兜底用）</summary>
+    private bool _restoreCallbackInvoked;
+
+    private IEnumerator CoRestoreTimeout(float seconds)
+    {
+        float waited = 0f;
+        while (waited < seconds && !_restoreCallbackInvoked)
+        {
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (_restoreCallbackInvoked) yield break;
+
+        LogShop($"RestorePurchases: {seconds}s 内没有平台回调，按「没有可恢复的内购」处理");
+        MessageSystem.Instance?.HideLoadingAnimation();
+        MessageSystem.Instance?.ShowTip("没有可恢复的内购");
     }
 
     /// <summary>

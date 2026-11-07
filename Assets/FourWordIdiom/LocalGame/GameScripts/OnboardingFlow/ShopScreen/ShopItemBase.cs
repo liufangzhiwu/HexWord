@@ -560,6 +560,15 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 ProductId = data.produceNameId,
                 LocalizedPrice = data.price * 100,
             };
+
+            // ★ 编辑器专用：固定商店购买礼包时按概率模拟支付失败，方便验证「取消购买」等失败流程
+            if (ShouldSimulateEditorPurchaseFail(data))
+            {
+                LogShopItem($"【编辑器模拟】固定商店礼包支付失败({EditorPurchaseFailChance:P0}): {data.produceNameId}");
+                OnPurchaseFailed("simulated_editor_purchase_failed");
+                return;
+            }
+
             OnPurchaseSuccess(productItem);
         }
         else
@@ -567,6 +576,25 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             AnalyticMgr.PurchaseStart(data.produceNameId);
             Game.self.Shop.Purchase(data.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
         }
+    }
+
+    /// <summary>编辑器模拟支付失败的概率（仅固定商店礼包）</summary>
+    private const float EditorPurchaseFailChance = 0.5f;
+
+    /// <summary>
+    /// 编辑器模式下是否需要模拟一次支付失败：
+    ///  - 只在 Unity 编辑器里生效（<see cref="UIUtilities.isEditMode"/>），真机永远返回 false；
+    ///  - 只作用于【固定商店】且【礼包类商品（type == 2）】；
+    ///  - 概率 <see cref="EditorPurchaseFailChance"/>（50%）。
+    /// </summary>
+    private bool ShouldSimulateEditorPurchaseFail(ShopDataItem data)
+    {
+        if (!UIUtilities.isEditMode) return false;
+        if (ShopManager.shopManager == null) return false;
+        if (ShopManager.shopManager.shopMode != ShopMode.FixedStore) return false;
+        if (data == null || data.type != 2) return false; // 2 = 礼包
+
+        return UnityEngine.Random.value < EditorPurchaseFailChance;
     }
 
     protected virtual void OnPurchaseSuccess(ProductItem item)
@@ -712,6 +740,11 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         MessageSystem.Instance.HideLoadingAnimation();
         RefreshButtonInteractable();
+
+        // ★ bug50/bug51：购买成功后立刻落盘。
+        //   以前这里完全不存档，玩家在「买完 → 下次自然存档」之间杀进程，
+        //   奖励和购买记录会一起丢，而平台侧订单已经标记 granted，重进游戏也不会补发。
+        if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
     }
 
     protected virtual void OnPurchaseFailed(string error)

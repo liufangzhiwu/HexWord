@@ -2265,6 +2265,70 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
     }
     
     /// <summary>
+    /// 统计棋盘上的「空位」数量 —— 玩家肉眼看到的空格子。
+    ///
+    /// 判定依据（见 ChessView.UpdateTile）：
+    ///   None  → 不显示文字、隐藏底图 = 空
+    ///   Check → 不显示文字、隐藏底图 = 空（光标/待填的那一格，视觉上同样是空的）
+    ///   其余（Default / Fill / Error / Success）都会显示文字 + 底图 → 不算空位
+    ///
+    /// ★ 之前只算 None，光标停着的那一格（Check）被漏掉，会出现"场上有 6 个空位只算成 5 个"（bug47 返工）。
+    /// </summary>
+    public int GetEmptySlotCount()
+    {
+        int count = 0;
+        foreach (var v in GridList.Values)
+        {
+            if (v == null) continue;
+            if (v.CurrState != TileState.None && v.CurrState != TileState.Check) continue;
+            count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// 棋盘各状态格子数量汇总（日志排查用，例如 None=5, Check=1, Fill=2 ...）。
+    /// </summary>
+    public string GetTileStateSummary()
+    {
+        int none = 0, check = 0, def = 0, fill = 0, error = 0, success = 0;
+        foreach (var v in GridList.Values)
+        {
+            if (v == null) continue;
+            switch (v.CurrState)
+            {
+                case TileState.None: none++; break;
+                case TileState.Check: check++; break;
+                case TileState.Default: def++; break;
+                case TileState.Fill: fill++; break;
+                case TileState.Error: error++; break;
+                case TileState.Success: success++; break;
+            }
+        }
+        return $"None={none}, Check={check}, Default={def}, Fill={fill}, Error={error}, Success={success}, 总格数={GridList.Count}";
+    }
+
+    /// <summary>
+    /// 统计棋盘上「可被蝴蝶落点」的空位数量（bug47 复活后自动用蝴蝶的兜底判断）：
+    /// 当前状态为 None、没被冻住、自身没被提示过 —— 与 <see cref="GetRandomNoneNonTipChess"/> 的口径一致，
+    /// 保证"空位 &gt; N"时蝴蝶一定找得到落点。
+    /// </summary>
+    public int GetNoneNonTipChessCount()
+    {
+        int count = 0;
+        foreach (var v in GridList.Values)
+        {
+            if (v == null) continue;
+            if (v.CurrState != TileState.None) continue;
+            if (v.chesspiece == null) continue;
+            if (v.chesspiece.tip) continue;
+            if (v.chesspiece.hasIce) continue;
+            count++;
+        }
+        return count;
+    }
+
+    /// <summary>
     /// 在 GridList 中随机返回一个满足：
     /// 1. 当前状态为 None
     /// 2. ChessPiece.Tip == false

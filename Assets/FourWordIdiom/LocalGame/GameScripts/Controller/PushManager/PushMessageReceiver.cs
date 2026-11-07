@@ -94,4 +94,44 @@ public class PushMessageReceiver : MonoBehaviour
             Debug.Log($"[PushMessageReceiver] 广告追踪状态写入（兜底路径）：granted={granted}，分层={curLayer}");
         }
     }
+
+    // ============================================================
+    // ★ 广告追踪授权状态「静默查询」回包（bug34）
+    //   ArkTS 侧（SendOAID.QueryTrackingConsent）调用：
+    //     Tuanjie.TuanjieSendMessage('PushMessageReceiver', 'OnOAIDQueryResult', '1' or '0')
+    //
+    //   与 OnOAIDClosedSignal 的区别：
+    //     - 这次查询不会弹系统框，也不代表玩家刚做了授权操作，
+    //       所以【不】走埋点（Pop_accept/Pop_refuse）、不发激励、不动引导页；
+    //     - 只把系统里的真实状态同步到存档，并在变化时刷新用户分层。
+    // ============================================================
+    public void OnOAIDQueryResult(string enabledStr)
+    {
+        int enabled = 0;
+        int.TryParse(enabledStr, out enabled);
+        bool granted = enabled == 1;
+        Debug.Log($"[PushMessageReceiver] OnOAIDQueryResult 收到, enabledStr={enabledStr}, granted={granted}");
+
+        AdTrackingManager manager = AdTrackingManager.Instance;
+        if (manager != null)
+        {
+            manager.OnTrackingStatusQueried(granted);
+            return;
+        }
+
+        // 兜底：管理器尚未创建时直接同步存档 + 刷新分层
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null) return;
+
+        string want = granted ? "1" : "0";
+        if (userData.adTrackingEnabled == want) return;
+
+        userData.adTrackingEnabled = want;
+        if (ShopManager.shopManager != null)
+        {
+            string curLayer = ShopManager.shopManager.GetCurrentUserLayer();
+            ShopManager.shopManager.RefreshLayer();
+            Debug.Log($"[PushMessageReceiver] 广告追踪状态静默同步（兜底路径）：granted={granted}，分层={curLayer}");
+        }
+    }
 }

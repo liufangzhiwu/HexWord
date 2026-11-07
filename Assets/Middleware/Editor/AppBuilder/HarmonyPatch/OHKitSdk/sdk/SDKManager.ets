@@ -371,6 +371,17 @@ export class SDKManager {
     return ["AdsTrackingConsent", "requested"];
   }
 
+  /**
+   * 静默查询 APP_TRACKING_CONSENT 当前是否已授予（bug34）。
+   * 只读核对：不弹任何系统框（已同意/已拒绝时 requestPermissionsFromUser 都直接返回），
+   * 也绝不走 requestPermissionOnSetting 那个带开关的二次授权弹窗。
+   * 结果由 SendOAID 经 TuanjieSendMessage('PushMessageReceiver', 'OnOAIDQueryResult', '1'/'0') 回传。
+   */
+  static async QueryTrackingConsent(): Promise<Array<string>> {
+    hilog.info(0x0000, 'SDKKit', 'QueryTrackingConsent: 静默查询广告追踪授权状态');
+    return SendOAID.QueryTrackingConsentAndReport();
+  }
+
   static async LoadAdWithMultiSlots(adParamsJson: string, adOptionsJson: string): Promise<Array<string>> {
     let adParams: advertising.AdRequestParams[] = JSON.parse(adParamsJson) as advertising.AdRequestParams[];
     let adOptions: advertising.AdOptions = json.parse(adOptionsJson) as advertising.AdOptions;

@@ -101,6 +101,8 @@ public static class ResReason
 
     // 关卡内行为
     public const string IdxLeafCollect = "叶子收集";
+    /// <summary>局内获得金箔（bug43：埋点表里有专门的金箔原因，不能落到"其他/通关结算"）。</summary>
+    public const string IdxGoldLeaf = "金箔收集";
     public const string IdxGoldLevel = "金币关";
     public const string IdxBuyBulb = "金币购买道具灯泡";
     public const string IdxBuyRocket = "金币购买道具火箭";
@@ -181,6 +183,8 @@ public static class ResReason
 
         // ---------- 关卡内行为 ----------
         if (raw.Contains("树叶") || raw.Contains("叶子")) return new Ctx(InLevel, IdxLeafCollect);
+        // 金箔：必须排在通用“结算”之前，否则“金箔结算”会被兜底成通关结算
+        if (raw.Contains("金箔")) return new Ctx(InLevel, IdxGoldLeaf);
         if (raw.Contains("金币关") || raw.Contains("金币词")) return new Ctx(InLevel, IdxGoldLevel);
         if (raw.Contains("通关结算")) return new Ctx(InLevel, IdxLevelSettle);
         // 金币购买道具：调用点应按道具类型细分成 灯泡/火箭/复活，这里只兜底
@@ -589,8 +593,17 @@ public partial class AnalyticMgr
         }
     }
 
+    /// <summary>
+    /// 埋点 SDK 是否已经 Init 完成。
+    /// TD SDK 在 Init 之前调用 Track 会直接丢弃事件（所以 ta_app_install / ta_app_startFirst
+    /// 都是在 OnAnalyticsSdkInit 里补报的）。启动页在 1.2s 就弹广告追踪引导页，
+    /// 早于 SDK 就绪时这条 Pop_up 会被丢掉（bug44），所以这里暴露一个就绪标记给调用方等待。
+    /// </summary>
+    public static bool IsSdkReady { get; private set; }
+
     public static void OnAnalyticsSdkInit(object sender, EventArgs e)
     {
+        IsSdkReady = true;
         var uid = Game.self.GetUniqueId();
         SetCommonProperties();
 
