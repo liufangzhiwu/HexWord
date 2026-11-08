@@ -51,6 +51,21 @@ public class AdRuleManager : MonoBehaviour
     /// <summary>本次启动已成功播放的插屏次数（破冰礼包条件之一：> 3，需求 C-STRAT-08）</summary>
     public int InterAdsCountThisSession { get; private set; }
 
+    /// <summary>
+    /// GM/调试：自定义「本次启动插屏展示次数」。
+    /// 依赖该计数的逻辑（如破冰礼包要求本 session 插屏 > 3、结算礼包调度的入参）会立即按新值生效；
+    /// 只改内存计数，不写存档，重启后从 0 重新累计。
+    /// </summary>
+    /// <param name="count">目标次数（小于 0 按 0 处理）</param>
+    /// <returns>设置后的实际次数</returns>
+    public int SetInterAdsCountThisSession(int count)
+    {
+        int old = InterAdsCountThisSession;
+        InterAdsCountThisSession = Mathf.Max(0, count);
+        Debug.Log($"[AdRule] [GM] 自定义插屏展示次数：{old} → {InterAdsCountThisSession}");
+        return InterAdsCountThisSession;
+    }
+
     /// <summary>默认分层 Key（adv 表中"标准"行对应的 UserLayer 值）</summary>
     private const string DefaultUserLayerKey = "1";
 

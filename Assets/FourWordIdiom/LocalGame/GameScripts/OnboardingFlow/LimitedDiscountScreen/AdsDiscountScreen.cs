@@ -59,6 +59,27 @@ public class AdsDiscountScreen : UIWindow
     /// <summary>初心礼包标题描边色：hsla(227, 100%, 33%, 1)</summary>
     private static readonly Color ChuxinTitleOutline = new Color(0f, 0.143f, 0.66f, 1f);
 
+    /// <summary>破冰礼包（一周去广告）标题文案：多语言 key / 兜底文案</summary>
+    private const string BreakIceTitleKey = "BreakIceTitle";
+    private const string BreakIceTitleFallback = "移除广告";
+    /// <summary>破冰礼包标题描边色：hsla(268, 94%, 25%, 1) ≈ #3C047C</summary>
+    private static readonly Color BreakIceTitleOutline = new Color(0.2343f, 0.015f, 0.485f, 1f);
+
+    /// <summary>破冰礼包奖励容器的 GridLayoutGroup 左边距（Padding.Left）</summary>
+    private const int BreakIceGridPaddingLeft = 130;
+    /// <summary>破冰礼包奖励网格的横向间距</summary>
+    private const float BreakIceGridSpacingX = 80f;
+
+    /// <summary>复购弹窗奖励容器的 GridLayoutGroup 左边距（Padding.Left）</summary>
+    private const int RepurchaseGridPaddingLeft = 20;
+    /// <summary>复购弹窗奖励网格的横向间距</summary>
+    private const float RepurchaseGridSpacingX = 10f;
+
+    /// <summary>圆满礼包（Box4）：与它共用背景图的礼包，标题描边统一用一套配色</summary>
+    private const string YuanmanPackId = "Box4";
+    /// <summary>与圆满礼包同背景图的礼包标题描边色：hsla(293, 100%, 25%, 1) ≈ #710080</summary>
+    private static readonly Color HighPriceTitleOutline = new Color(0.4412f, 0f, 0.5f, 1f);
+
     /// <summary>有折扣时价格文本的 y（相对原位置的上移量）</summary>
     private const float PriceYWithDiscount = -30f;
     /// <summary>无折扣时价格文本的 y</summary>
@@ -81,6 +102,7 @@ public class AdsDiscountScreen : UIWindow
     private bool _defaultRewardLayoutCached;
     private float _defaultParentX;
     private Vector2 _defaultGridSpacing;
+    private int _defaultGridPaddingLeft;
 
     /// <summary>标题的描边组件与默认颜色（换成礼包专属描边色后可还原）</summary>
     private Outline[] _titleOutlines;
@@ -298,7 +320,11 @@ public class AdsDiscountScreen : UIWindow
     }
 
     /// <summary>
-    /// 标题描边配色：初心礼包（Box0）用 hsla(227,100%,33%)，其它礼包还原 Prefab 上的默认描边。
+    /// 标题描边配色：
+    ///   破冰礼包（一周去广告）→ hsla(268, 94%, 25%)；
+    ///   初心礼包（Box0）→ hsla(227,100%,33%)；
+    ///   与圆满礼包（Box4）共用背景图的礼包 → hsla(293,100%,25%)；
+    ///   其它礼包 → 还原 Prefab 上的默认描边。
     /// 标题上有多个 Outline（深色描边 + 白色高光），这里只换深色那几层，白色高光保留。
     /// </summary>
     private void ApplyTitleOutline(string produceNameId)
@@ -320,6 +346,16 @@ public class AdsDiscountScreen : UIWindow
         }
 
         bool chuxin = produceNameId == ChuxinPackId;
+        bool breakIce = IsBreakIcePopup();
+        bool sameBgAsYuanman = UsesSameBgAsYuanman(produceNameId);
+
+        // 需要特殊描边的礼包配色；null = 用 Prefab 默认色
+        // 优先级：破冰（去广告周卡） > 初心 Box0 > 与圆满礼包同背景图的礼包
+        Color? specialColor = breakIce
+            ? BreakIceTitleOutline
+            : (chuxin
+                ? ChuxinTitleOutline
+                : (sameBgAsYuanman ? HighPriceTitleOutline : (Color?)null));
 
         for (int i = 0; i < _titleOutlines.Length; i++)
         {
@@ -330,15 +366,37 @@ public class AdsDiscountScreen : UIWindow
             // 白色那层是高光，不参与换色
             bool highlight = original.r > 0.9f && original.g > 0.9f && original.b > 0.9f;
 
-            outline.effectColor = (chuxin && !highlight) ? ChuxinTitleOutline : original;
+            outline.effectColor = (specialColor.HasValue && !highlight) ? specialColor.Value : original;
         }
 
-        if (chuxin)
+        if (breakIce)
+            Debug.Log("[AdsDiscountScreen] 破冰礼包标题描边: hsla(268,94%,25%,1)");
+        else if (chuxin)
             Debug.Log("[AdsDiscountScreen] 初心礼包标题描边: hsla(227,100%,33%,1)");
+        else if (sameBgAsYuanman)
+            Debug.Log("[AdsDiscountScreen] 与圆满礼包同背景图 → 标题描边: hsla(293,100%,25%,1)");
+    }
+
+    /// <summary>
+    /// 该礼包是否和圆满礼包（Box4）共用同一张背景图。
+    /// 按「背景图 sprite 名」比较，映射表以后调整分组也能自动跟上（当前 highPricebg 分组 = Box3 / Box4）。
+    /// </summary>
+    private static bool UsesSameBgAsYuanman(string produceNameId)
+    {
+        if (string.IsNullOrEmpty(produceNameId)) return false;
+
+        string bg, yuanmanBg;
+        if (!GiftBgSprites.TryGetValue(produceNameId, out bg) || string.IsNullOrEmpty(bg)) return false;
+        if (!GiftBgSprites.TryGetValue(YuanmanPackId, out yuanmanBg) || string.IsNullOrEmpty(yuanmanBg)) return false;
+        return bg == yuanmanBg;
     }
 
     private string GetTitleText()
     {
+        // 破冰礼包（去广告周卡）：标题固定为「移除广告」，不用商品名（shop.csv 里该商品没有名称 key）
+        if (IsBreakIcePopup())
+            return GetLocalized(BreakIceTitleKey, BreakIceTitleFallback);
+
         switch (_mode)
         {
             // case ShopManager.GiftPopupMode.BreakIce:
@@ -350,6 +408,23 @@ public class AdsDiscountScreen : UIWindow
                     ? GetLocalized("GiftTitle", "限时特惠")
                     : currentShopItem.name;
         }
+    }
+
+    /// <summary>
+    /// 当前弹窗是不是破冰礼包：
+    ///   1. 主动弹窗模式 = BreakIce（含从结算页按钮再次打开的路径）；
+    ///   2. 或者卖的就是一周去广告（RemoveAdsWeek）。
+    /// </summary>
+    private bool IsBreakIcePopup()
+    {
+        if (_mode == ShopManager.GiftPopupMode.BreakIce) return true;
+        return currentShopItem != null && currentShopItem.produceNameId == ShopManager.ProductRemoveAdsWeekly;
+    }
+
+    /// <summary>当前弹窗是不是复购/升层礼包（结算页「限时折扣」按钮打开的那类）。</summary>
+    private bool IsRepurchasePopup()
+    {
+        return _mode == ShopManager.GiftPopupMode.Repurchase;
     }
 
     private void InitPriceText(bool needDiscount)
@@ -468,8 +543,8 @@ public class AdsDiscountScreen : UIWindow
         // 奖励区布局：> 3 个奖励要两排（矮高度会裁掉第二排），同时大图往上让位
         ApplyRewardLayout(contents.Count);
 
-        // 7 个奖励时的专属排版（parent x / 网格间距），其它数量恢复 Prefab 默认值
-        ApplySevenRewardGridLayout(sevenRewards);
+        // 7 个奖励时的专属排版（parent x / 网格间距）、破冰礼包的左内边距+间距，其它数量恢复 Prefab 默认值
+        ApplyRewardGridLayout(contents.Count);
 
         // 加赠金币单独占一个「加赠」格（不进 productContent，奖励项数量保持礼包原始数量）
         InitGiftAddItem();
@@ -524,46 +599,101 @@ public class AdsDiscountScreen : UIWindow
     }
 
     /// <summary>
-    /// 奖励 = 7 个时的专属排版：
-    ///   parent（奖励容器）的 x = 130，GridLayoutGroup 的横向间距 = -70；
-    ///   其它数量恢复 Prefab 上的默认值。
+    /// 奖励网格排版（按弹窗类型 / 奖励数量）：
+    ///   1. 7 个奖励：parent（奖励容器）的 x = 200，GridLayoutGroup 横向间距 = -70；
+    ///   2. 破冰礼包：GridLayoutGroup 左边距（Padding.Left）= 130、横向间距 = 80；
+    ///   3. 复购弹窗：GridLayoutGroup 左边距 = 20、横向间距 = 10；
+    ///   4. 其它数量：恢复 Prefab 上的默认值。
     /// </summary>
-    private void ApplySevenRewardGridLayout(bool sevenRewards)
+    private void ApplyRewardGridLayout(int rewardCount)
     {
         if (parent == null) return;
 
         RectTransform parentRt = parent as RectTransform;
-        GridLayoutGroup grid = parent.GetComponent<GridLayoutGroup>();
+        GridLayoutGroup grid = ResolveRewardGrid(parentRt);
 
         // 首次调用时把 Prefab 上的默认值记下来（此时还没被改过）
         if (!_defaultRewardLayoutCached)
         {
             _defaultParentX = parentRt != null ? parentRt.anchoredPosition.x : 0f;
             _defaultGridSpacing = grid != null ? grid.spacing : Vector2.zero;
+            _defaultGridPaddingLeft = grid != null ? grid.padding.left : 0;
             _defaultRewardLayoutCached = true;
+        }
+
+        bool sevenRewards = rewardCount == SevenRewardCount;
+        // 破冰礼包固定 2 个奖励（一周去广告 + 金币）；7 个奖励时仍按 7 个的专属排版走，避免间距 80 溢出
+        bool breakIce = IsBreakIcePopup() && !sevenRewards;
+        bool repurchase = !breakIce && IsRepurchasePopup();
+
+        float parentX = _defaultParentX;
+        Vector2 spacing = _defaultGridSpacing;
+        int paddingLeft = _defaultGridPaddingLeft;
+
+        if (breakIce)
+        {
+            paddingLeft = BreakIceGridPaddingLeft;
+            spacing.x = BreakIceGridSpacingX;
+        }
+        else if (repurchase)
+        {
+            paddingLeft = RepurchaseGridPaddingLeft;
+            spacing.x = RepurchaseGridSpacingX;
+        }
+        else if (sevenRewards)
+        {
+            parentX = ParentXSevenRewards;
+            spacing.x = GridSpacingXSevenRewards;
         }
 
         if (parentRt != null)
         {
             Vector2 pos = parentRt.anchoredPosition;
-            pos.x = sevenRewards ? ParentXSevenRewards : _defaultParentX;
+            pos.x = parentX;
             parentRt.anchoredPosition = pos;
         }
 
         if (grid != null)
         {
-            grid.spacing = sevenRewards
-                ? new Vector2(GridSpacingXSevenRewards, _defaultGridSpacing.y)
-                : _defaultGridSpacing;
+            grid.spacing = spacing;
+
+            RectOffset padding = grid.padding;
+            if (padding.left != paddingLeft)
+            {
+                padding.left = paddingLeft;
+                grid.padding = padding;
+            }
         }
 
         // 子物体数量/间距都变了，立刻重排一次，避免第一帧叠在一起
         if (parentRt != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(parentRt);
 
-        Debug.Log($"[AdsDiscountScreen] 7 奖励排版: {(sevenRewards ? "启用" : "恢复默认")}, " +
+        string variant = breakIce ? "破冰礼包" : (repurchase ? "复购弹窗" : (sevenRewards ? "7 奖励" : "默认"));
+        Debug.Log($"[AdsDiscountScreen] 奖励网格排版: {variant}, 奖励数={rewardCount}, " +
                   $"parentX={(parentRt != null ? parentRt.anchoredPosition.x : 0)}, " +
+                  $"paddingLeft={(grid != null ? grid.padding.left : 0)}, " +
                   $"spacing={(grid != null ? grid.spacing.ToString() : "无网格")}");
+    }
+
+    /// <summary>
+    /// 取奖励容器上的 GridLayoutGroup：
+    ///   先找 parent 自己；parent 上没有时再往上一层 / 子树里找（兼容美术把网格挂在 parent 的父节点上的情况）。
+    /// </summary>
+    private GridLayoutGroup ResolveRewardGrid(RectTransform parentRt)
+    {
+        if (parentRt == null) return null;
+
+        GridLayoutGroup grid = parentRt.GetComponent<GridLayoutGroup>();
+        if (grid != null) return grid;
+
+        Transform up = parentRt.parent;
+        if (up == null) return null;
+
+        grid = up.GetComponent<GridLayoutGroup>();
+        if (grid != null) return grid;
+
+        return up.GetComponentInChildren<GridLayoutGroup>(true);
     }
 
     /// <summary>

@@ -341,11 +341,8 @@ public class ChessFinishView : UIWindow
         bool showBreakIce = kind == ShopManager.SettlementGiftKind.BreakIce;
         bool showRepurchase = kind == ShopManager.SettlementGiftKind.Repurchase;
 
-        if (removeAdsGiftBtn != null && removeAdsGiftBtn.gameObject.activeSelf != showBreakIce)
-            removeAdsGiftBtn.gameObject.SetActive(showBreakIce);
-
-        if (giftButton != null && giftButton.gameObject.activeSelf != showRepurchase)
-            giftButton.gameObject.SetActive(showRepurchase);
+        SetSettlementGiftButtonVisible(removeAdsGiftBtn, showBreakIce);
+        SetSettlementGiftButtonVisible(giftButton, showRepurchase);
 
         // 按钮上的限时倒计时（TimeObj/TimeText）跟着礼包的结束时间走
         RefreshSettlementGiftCountdown();
@@ -357,6 +354,44 @@ public class ChessFinishView : UIWindow
 
         Debug.Log($"[ChessFinishView] 结算礼包按钮刷新: kind={kind}, 破冰按钮={showBreakIce}, 限时折扣按钮={showRepurchase}, " +
                   $"礼包={packId}, 截止时间={giftEndTime:yyyy-MM-dd HH:mm:ss}");
+    }
+
+    /// <summary>
+    /// 结算页礼包按钮的显隐：
+    ///   - 显示：淡入 + 轻微放大（0.24s），避免跟着结算页「啪」一下冒出来显得突兀；
+    ///   - 隐藏：直接关掉并杀掉动画。
+    /// 只有状态真的变化时才处理，避免每次刷新都重播动画。
+    /// </summary>
+    private void SetSettlementGiftButtonVisible(Button btn, bool visible)
+    {
+        if (btn == null) return;
+
+        GameObject go = btn.gameObject;
+        if (go.activeSelf == visible) return;
+
+        RectTransform rt = btn.transform as RectTransform;
+
+        if (!visible)
+        {
+            if (rt != null) rt.DOKill();
+            go.SetActive(false);
+            return;
+        }
+
+        go.SetActive(true);
+        if (rt == null) return;
+
+        CanvasGroup group = rt.GetComponent<CanvasGroup>();
+        if (group == null) group = go.AddComponent<CanvasGroup>();
+
+        rt.DOKill();
+        group.DOKill(false);
+
+        group.alpha = 0f;
+        rt.localScale = Vector3.one * 0.9f;
+
+        group.DOFade(1f, 0.18f).SetEase(Ease.OutQuad);
+        rt.DOScale(Vector3.one, 0.24f).SetEase(Ease.OutBack);
     }
 
     /// <summary>

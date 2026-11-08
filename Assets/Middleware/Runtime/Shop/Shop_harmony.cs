@@ -604,9 +604,24 @@ namespace Middleware
                 // 消耗型：只处理平台侧尚未完成的订单
                 if (!isNonConsumable && purchaseData.finishStatus != "2") continue;
 
+                // ★ 订单号是补发幂等的唯一 key（业务层按 PurchaseRecord.orderId 判重）。
+                //   有些渠道/场景会返回空 purchaseOrderId，此时 order_id 为空会让
+                //   HasPurchaseRecordForOrder("") 恒为 false → 每次启动都重新发一遍。
+                //   退化用 purchaseToken（同一笔订单稳定不变），再不行才用商品名兜底（非消耗型最多发一次）。
+                string orderId = purchaseData.purchaseOrderId;
+                if (string.IsNullOrEmpty(orderId))
+                {
+                    orderId = !string.IsNullOrEmpty(purchaseData.purchaseToken)
+                        ? purchaseData.purchaseToken
+                        : (isNonConsumable ? "nonconsumable_" + purchaseData.productId : "");
+
+                    Debug.LogWarning("[IAP] 平台未返回 purchaseOrderId，改用兜底 key 去重: " + orderId
+                                     + " productId=" + purchaseData.productId);
+                }
+
                 var pending = new PendingOrder
                 {
-                    orderId       = purchaseData.purchaseOrderId,
+                    orderId       = orderId,
                     productId     = purchaseData.productId,
                     price         = purchaseData.price.ToString(),
                     currency      = purchaseData.currency,
@@ -618,7 +633,7 @@ namespace Middleware
 
                 productItem = new ProductItem
                 {
-                    order_id        = purchaseData.purchaseOrderId,
+                    order_id        = orderId,
                     IsoCurrencyCode = purchaseData.currency,
                     ItemName        = purchaseData.productId,
                     ProductId       = purchaseData.productId,

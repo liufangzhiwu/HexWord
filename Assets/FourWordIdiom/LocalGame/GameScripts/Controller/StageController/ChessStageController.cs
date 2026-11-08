@@ -546,17 +546,24 @@ public partial class ChessStageController
         // 等待关卡界面收起（ChessPlayArea 的 Hide 动画 0.42s，这里按转场节奏取 0.4s）
         yield return new WaitForSeconds(FinishFlowTiming.LevelOutToFinish);
 
+        // ★ 结算页礼包：先把策略跑完并「预登记」（只登记、不弹窗），
+        //   这样破冰/复购按钮能跟结算页一起出现，不再是结算页出来 1.2s 后才冒出来。
+        if (ShopManager.shopManager != null)
+        {
+            ShopManager.shopManager.PrepareSettlementGift(
+                AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCountThisSession : 0);
+        }
+
         SystemManager.Instance.ShowPanel(PanelType.ChessFinishView);
         SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
 
-        // ★ 结算页礼包弹窗调度：破冰 → 复购（需求 C-STRAT-08/09/12）
+        // ★ 结算页礼包弹窗：破冰 → 复购（需求 C-STRAT-08/09/12），等结算页展示 1.2s 后再弹预登记好的那一个
         yield return new WaitForSeconds(1.2f);
         if (ShopManager.shopManager != null)
         {
-            ShopManager.shopManager.TryShowSettlementGiftPopup(
-                AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCountThisSession : 0);
+            ShopManager.shopManager.PlayPreparedSettlementGiftPopup();
 
-            // 结算策略决定后刷新结算页的「破冰礼包 / 限时折扣礼包」按钮
+            // 兜底刷新结算页的「破冰礼包 / 限时折扣礼包」按钮（显隐与登记状态保持一致）
             if (SystemManager.Instance != null && SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
             {
                 SystemManager.Instance.GetPanel(PanelType.ChessFinishView)

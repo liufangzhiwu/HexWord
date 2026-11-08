@@ -47,6 +47,7 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button AddBreakIceBtn;
     [SerializeField] private Button AddPickFlowerBtn;
     [SerializeField] private Button AddPerfectBtn;
+    [SerializeField] private Button SetInsertAdsBtn;
 
     public InputField EmailText; 
     public Text FPSText; 
@@ -107,6 +108,9 @@ public class DebugMenu : UIWindow
         AddPickFlowerBtn.AddClickAction(OnPickFlowerClick);
         AddPerfectBtn.AddClickAction(OnPerfectClick);
         AddZenScoreBtn.AddClickAction(OnAddZenCount);
+        // 自定义插屏展示次数（输入框填目标次数，点按钮生效）
+        if (SetInsertAdsBtn != null)
+            SetInsertAdsBtn.AddClickAction(OnSetInsertAdsClick);
     }
 
     private void InitUIData()
@@ -129,6 +133,8 @@ public class DebugMenu : UIWindow
         InitBtnData(AddBreakIceBtn, "10");
         InitBtnData(AddPickFlowerBtn, "10");
         InitBtnData(AddPerfectBtn, "10");
+        // 插屏次数默认显示当前本次启动已累计的次数，方便直接改成想要的值
+        InitInsertAdsBtnData();
         ChessEBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue.ToString("0.00");
         ChessStageBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.UserData.CurrentChessStage.ToString();
         
@@ -207,8 +213,48 @@ public class DebugMenu : UIWindow
         MessageSystem.Instance.ShowTip($"添加成功连击数量 {value} 个");
     }
     
+    /// <summary>
+    /// 自定义插屏展示次数（SetInsertAdsBtn）。
+    /// 生效对象是 AdRuleManager.InterAdsCountThisSession（本次启动已成功播放的插屏次数）：
+    /// 依赖它的逻辑会立刻按新值走 —— 破冰礼包「本 session 插屏 &gt; 3」、结算礼包调度的次数入参等。
+    /// 只改内存计数，不写存档，重启后从 0 重新累计。
+    /// </summary>
+    private void OnSetInsertAdsClick()
+    {
+        if (AdRuleManager.Instance == null)
+        {
+            MessageSystem.Instance.ShowTip("AdRuleManager 未初始化，无法设置插屏次数");
+            return;
+        }
+
+        InputField numText = SetInsertAdsBtn != null ? SetInsertAdsBtn.GetComponentInChildren<InputField>() : null;
+        if (numText == null || !int.TryParse(numText.text, out int value) || value < 0)
+        {
+            MessageSystem.Instance.ShowTip("请输入有效的插屏次数（≥0 的整数）");
+            return;
+        }
+
+        int current = AdRuleManager.Instance.SetInterAdsCountThisSession(value);
+        numText.text = current.ToString();
+        MessageSystem.Instance.ShowTip($"插屏展示次数已设为 {current}");
+    }
+
+    /// <summary>
+    /// 「设置插屏次数」输入框初始化：默认填当前本次启动已累计的插屏次数。
+    /// </summary>
+    private void InitInsertAdsBtnData()
+    {
+        if (SetInsertAdsBtn == null) return;
+
+        InputField numText = SetInsertAdsBtn.GetComponentInChildren<InputField>();
+        if (numText == null) return;
+
+        int current = AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCountThisSession : 0;
+        numText.text = current.ToString();
+    }
+
     private void OnAddZenCount()
-    { 
+    {
         InputField Stagenumtxt = AddZenScoreBtn.GetComponentInChildren<InputField>();
         int value = int.Parse(Stagenumtxt.text);
 

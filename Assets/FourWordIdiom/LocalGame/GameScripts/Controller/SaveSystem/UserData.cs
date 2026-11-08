@@ -868,6 +868,31 @@ public class UserData
     }
 
     /// <summary>
+    /// 按条件删除购买记录（调试用：例如"清除永久去广告"时把对应的订单记录一起删掉，
+    /// 让玩家彻底回到没买过该商品的状态）。
+    /// 注意：删掉记录后，平台已购查询就失去了去重依据，
+    /// 所以必须配合 `ShopManager` 的补单拦截一起用，否则下次启动会被补发回来。
+    /// </summary>
+    /// <returns>被删除的记录条数</returns>
+    public int RemovePurchaseRecords(Predicate<PurchaseRecord> match)
+    {
+        if (match == null) return 0;
+
+        if (purchaseRecords == null)
+        {
+            purchaseRecords = new List<PurchaseRecord>();
+            return 0;
+        }
+
+        int removed = purchaseRecords.RemoveAll(match);
+        if (removed <= 0) return 0;
+
+        Debug.Log($"[UserData] 已删除 {removed} 条购买记录，剩余 {purchaseRecords.Count} 条");
+        SaveData();
+        return removed;
+    }
+
+    /// <summary>
     /// 检查并重置每日限时数据
     /// </summary>
     public void CheckResetDailyTime()

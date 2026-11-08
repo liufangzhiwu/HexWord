@@ -329,6 +329,12 @@ public partial class ShopManager : MonoBehaviour
     private int _settlementGiftBonusGold;
     private string _settlementGiftBonusPackId;
 
+    /// <summary>为 true 时 ShowSettlementGift 只登记不弹窗（结算页先出按钮，稍后再弹）</summary>
+    private bool _suspendGiftPopup;
+
+    /// <summary>预登记结束后，是否还有一个礼包弹窗等着被弹出来</summary>
+    private bool _settlementGiftPopupPending;
+
     /// <summary>结算页是否指定类型（破冰 / 复购）的礼包可售。</summary>
     public bool HasSettlementGift(SettlementGiftKind kind)
     {
@@ -338,13 +344,35 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>
     /// 登记结算页礼包并立刻弹出 AdsDiscountScreen。
     /// 调用方：TryShowBreakIcePopup（破冰）/ ShowRepurchasePopup（复购）。
+    /// 处于「预登记」状态（PrepareSettlementGift）时只登记，弹窗留给 PlayPreparedSettlementGiftPopup。
     /// </summary>
     public void ShowSettlementGift(SettlementGiftKind kind, ShopDataItem displayItem, System.DateTime endTime,
                                    int bonusGold = 0, string bonusPackId = null)
     {
+        RegisterSettlementGift(kind, displayItem, endTime, bonusGold, bonusPackId);
+
+        if (CurrentSettlementGift == SettlementGiftKind.None) return;   // 登记失败（礼包为空）
+
+        if (_suspendGiftPopup)
+        {
+            _settlementGiftPopupPending = true;
+            LogShop($"[结算礼包] 预登记（暂不弹窗）kind={kind}，等结算页展示后再弹");
+            return;
+        }
+
+        OpenSettlementGiftPopup();
+    }
+
+    /// <summary>
+    /// 只登记结算页礼包、<b>不弹窗</b>（结算页的「破冰礼包 / 限时折扣礼包」按钮据此显示）。
+    /// 场景：复购弹窗在本活动期已经主动弹过一次 → 后续结算只保留按钮，不再主动弹出。
+    /// </summary>
+    public void RegisterSettlementGift(SettlementGiftKind kind, ShopDataItem displayItem, System.DateTime endTime,
+                                       int bonusGold = 0, string bonusPackId = null)
+    {
         if (displayItem == null)
         {
-            LogShop($"ShowSettlementGift 跳过: 礼包为空 (kind={kind})");
+            LogShop($"RegisterSettlementGift 跳过: 礼包为空 (kind={kind})");
             return;
         }
 
@@ -354,10 +382,8 @@ public partial class ShopManager : MonoBehaviour
         _settlementGiftBonusGold = bonusGold;
         _settlementGiftBonusPackId = bonusPackId;
 
-        LogShop($"ShowSettlementGift: 登记结算页礼包 kind={kind}, item={displayItem.produceNameId}, " +
+        LogShop($"RegisterSettlementGift: 登记结算页礼包 kind={kind}, item={displayItem.produceNameId}, " +
                 $"endTime={(endTime == System.DateTime.MinValue ? "无限时" : endTime.ToString("yyyy-MM-dd HH:mm:ss"))}, 加赠={bonusGold}");
-
-        OpenSettlementGiftPopup();
     }
 
     /// <summary>
@@ -387,6 +413,8 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>清空结算页礼包登记（换结算 / 已购买 / 离开结算页）。</summary>
     public void ClearSettlementGift(string reason)
     {
+        _settlementGiftPopupPending = false;
+
         if (CurrentSettlementGift == SettlementGiftKind.None) return;
 
         CurrentSettlementGift = SettlementGiftKind.None;
@@ -490,6 +518,15 @@ public partial class ShopManager : MonoBehaviour
         paysuccess = false;
 
         LoadRuntimeConfigs();
+
+        // ★ 调试开关（LogManager 上勾选）：启动时先清掉「永久去广告」状态 + 对应购买记录
+        //   （= 彻底回到没买过去广告的新号），再 Initialize 重建限购缓存
+        if (LogManager.ClearPermanentRemoveAdsOnStart)
+            ClearPermanentRemoveAds("LogManager 启动开关", blockRestore: true, clearPurchaseRecords: true);
+        else if (IsPermanentRemoveAdsRestoreBlocked())
+            LogShop("[去广告] 当前处于「永久去广告补单拦截」状态（之前调试清除留下）：" +
+                    "平台已购订单不会补发回来；重新购买永久去广告或 GM 重置存档可解除");
+
         Initialize();
 
         LogShop($"Start 完成: shopMode={shopMode}, 推荐位配置数={_recommendConfigs.Count}, 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
@@ -1060,6 +1097,121 @@ public partial class ShopManager : MonoBehaviour
     public bool IsRemoveAdsGift()
     {
         return IsRemoveAdsOwned() || IsRemoveAdsActive();
+    }
+
+    /// <summary>
+    /// 清除「永久去广告」状态（把 isget 的 RemoveAds 记录整条移除）。
+    /// 清除后 IsRemoveAdsOwned() 变 false，广告会恢复正常展示。
+    ///
+    /// 用途：开发/测试反复验证「去广告购买 → IAA 分层 / 广告链路」时，
+    /// 不用清整份存档；入口有两个：
+    ///   · `LogManager.clearPermanentRemoveAdsOnStart` 勾选 → 每次启动自动做「彻底回到新号」的清理；
+    ///   · 代码里直接调 `ShopManager.shopManager.ClearPermanentRemoveAds("原因")`。
+    ///
+    /// ★ 只清 limitShopItems 不够：永久去广告在平台侧是**非消耗型商品**，
+    ///   每次启动 `Game.self.Shop.Restore()` 都会把这张已完成的订单查回来，
+    ///   `DeliverRestoredPurchase` 只按「购买记录 orderId」去重 —— 记录还在就不会重复发，
+    ///   但只要记录缺失（老版本购买 / GM 清过档 / 重装换机 / 记录超 100 条被截断 / 平台没回 orderId），
+    ///   下次启动就会被当成一笔"待补单"重新发放，永久去广告又回来了。
+    ///   所以这里同时写一个**本地拦截标记**（PlayerPrefs，跨进程有效），
+    ///   由 `DeliverRestoredPurchase` 拦掉永久去广告的补单；玩家重新购买或 GM 重置存档时自动解除。
+    ///
+    /// ★ 明确要求「连购买记录一起清、彻底回到新号」（测试去广告相关功能）时，
+    ///   传 `clearPurchaseRecords: true` —— 会删掉 RemoveADS 的订单记录（含订单历史列表里的那一条），
+    ///   之后只能靠上面的拦截标记来阻止平台重新补发，两者必须同时启用。
+    /// </summary>
+    /// <param name="reason">调用来源，仅用于日志</param>
+    /// <param name="blockRestore">是否同时拦截后续的平台补单（默认 true；调试想验证补单链路时传 false）</param>
+    /// <param name="clearPurchaseRecords">是否把「永久去广告」的购买记录一起删掉（默认 false；LogManager 开关会传 true）</param>
+    /// <returns>被清除的 limitShopItems 记录条数</returns>
+    public int ClearPermanentRemoveAds(string reason = "手动清除", bool blockRestore = true,
+        bool clearPurchaseRecords = false)
+    {
+        UserData user = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (user == null || user.limitShopItems == null)
+        {
+            LogShop($"[去广告] 清除永久去广告失败：UserData 未就绪（{reason}）");
+            return 0;
+        }
+
+        // ★ 先置拦截：即使本次没有可清的记录（已经清过 / 上次被 GM 清档清掉了），
+        //   也要拦住平台补单，否则下一次 Restore 又会把它发回来。
+        if (blockRestore) SetPermanentRemoveAdsRestoreBlock(true, reason);
+
+        int removed = user.limitShopItems.RemoveAll(x => x != null
+            && x.isget
+            && x.adstype == (int)LimitRewordType.RemoveAds);
+
+        // 连购买记录一起清：删掉的是「永久去广告」这个商品本身的订单（RemoveADS）。
+        // 注意不能删普通礼包的记录 —— 那些是消耗型，删了只会让订单历史缺一条，对补单没有意义。
+        int removedRecords = 0;
+        if (clearPurchaseRecords)
+        {
+            removedRecords = user.RemovePurchaseRecords(
+                r => r != null && r.produceNameId == ProductRemoveAds);
+        }
+
+        if (removed <= 0 && removedRecords <= 0)
+        {
+            LogShop($"[去广告] 清除永久去广告：没有已生效的永久去广告记录 / 购买记录（{reason}）");
+            return 0;
+        }
+
+        if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
+        RefreshLimitData();
+
+        // 通知外部（结算页/商店的去广告入口、广告规则）按"无去广告"刷新
+        UpdateAdsBtnUI?.Invoke(null, false);
+
+        LogShop($"[去广告] 已清除永久去广告：状态记录 {removed} 条" +
+                (clearPurchaseRecords ? $"、购买记录 {removedRecords} 条" : "") +
+                $"（{reason}），当前 IsRemoveAdsOwned={IsRemoveAdsOwned()}，" +
+                $"补单拦截={IsPermanentRemoveAdsRestoreBlocked()}");
+        return removed;
+    }
+
+    /// <summary>
+    /// 是否正在拦截「永久去广告」的平台补单（由 <see cref="ClearPermanentRemoveAds"/> 置位，
+    /// 玩家重新购买 / GM 重置存档 / 手动调用 <see cref="SetPermanentRemoveAdsRestoreBlock"/> 解除）。
+    /// </summary>
+    public bool IsPermanentRemoveAdsRestoreBlocked()
+    {
+        return PlayerPrefs.GetInt(PrefRemoveAdsRestoreBlock, 0) == 1;
+    }
+
+    /// <summary>开启/关闭「永久去广告补单拦截」（本地持久化，杀进程也不丢）。</summary>
+    public void SetPermanentRemoveAdsRestoreBlock(bool blocked, string reason = "")
+    {
+        bool current = IsPermanentRemoveAdsRestoreBlocked();
+        if (current == blocked) return;
+
+        if (blocked) PlayerPrefs.SetInt(PrefRemoveAdsRestoreBlock, 1);
+        else PlayerPrefs.DeleteKey(PrefRemoveAdsRestoreBlock);
+
+        PlayerPrefs.Save();
+        LogShop($"[去广告] 补单拦截 {(blocked ? "已开启" : "已解除")}（{reason}）");
+    }
+
+    /// <summary>
+    /// 是否「永久去广告」商品：商品名是 RemoveADS，或礼包内容里带 6（RemoveAds）。
+    /// 注意不含 7（限时去广告）—— 那个是消耗型，补单本身就靠购买记录去重。
+    /// </summary>
+    private bool IsPermanentRemoveAdsProduct(ShopDataItem item)
+    {
+        if (item == null) return false;
+        if (item.produceNameId == ProductRemoveAds) return true;
+
+        if (item.productContent != null)
+        {
+            for (int i = 0; i < item.productContent.Count; i++)
+            {
+                var content = item.productContent[i];
+                if (content != null && content.Count > 0
+                    && GetInt(content[0]) == (int)LimitRewordType.RemoveAds)
+                    return true;
+            }
+        }
+        return false;
     }
 
     // ======================= 推荐位推送规则 =======================
@@ -1912,6 +2064,9 @@ public partial class ShopManager : MonoBehaviour
     private const string PrefBreakIceCooldownStart = "shop_breakice_cooldown_start";
     private const string PrefBreakIceCount = "shop_breakice_count";
 
+    // 调试用：手动清除「永久去广告」后，阻止平台非消耗型补单把它重新发回来
+    private const string PrefRemoveAdsRestoreBlock = "shop_removeads_restore_block";
+
     /// <summary>
     /// 清空「复购 / 破冰礼包」推送用到的**全部**本地记录与运行时状态（GM 重置存档时调用）。
     ///
@@ -1927,6 +2082,9 @@ public partial class ShopManager : MonoBehaviour
         PlayerPrefs.DeleteKey(PrefRepurchaseLastOfferPack);
         PlayerPrefs.DeleteKey(PrefBreakIceCooldownStart);
         PlayerPrefs.DeleteKey(PrefBreakIceCount);
+
+        // 重置存档 = 回到干净状态：永久去广告的补单拦截也一并解除
+        PlayerPrefs.DeleteKey(PrefRemoveAdsRestoreBlock);
 
         // 支付调起次数是「一个礼包一个 key」，按当前礼包表逐个删
         for (int i = 0; i < allShopItems.Count; i++)
@@ -2114,6 +2272,17 @@ public partial class ShopManager : MonoBehaviour
         return GetProduct(id) ?? FormAllItemsGetProduct(id);
     }
 
+    /// <summary>
+    /// 只更新「上次展示的礼包」，不动倒计时/冷却。
+    /// 用途：本活动期已弹过复购弹窗后，上次那款售罄需要换个替补礼包给结算页按钮用（但不再弹窗）。
+    /// </summary>
+    public void SaveRepurchaseOfferPack(string packProduceNameId)
+    {
+        PlayerPrefs.SetString(PrefRepurchaseLastOfferPack, packProduceNameId ?? "");
+        PlayerPrefs.Save();
+        LogShop($"[复购] 更新本次展示的礼包(不弹窗) = {packProduceNameId}");
+    }
+
     public void AddConversionFail(ShopDataItem item)
     {
         if (item == null) return;
@@ -2146,6 +2315,95 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 购买流程 =======================
 
+    /// <summary>
+    /// 统一发放礼包内容（shop.csv 的 productContent）。购买 / 补发 / 推送礼包都走这里，
+    /// 避免各处各写一份 switch 导致「某个入口少了一种类型 → 奖励不到账」。
+    ///
+    /// 支持的资源类型（LimitRewordType）：
+    ///   0  Coins          金币
+    ///   1  Butterfly      蝴蝶道具
+    ///   2  Tipstool       提示（放大镜）
+    ///   3  AutoComplete   火箭（自动完成本关）
+    ///   6  RemoveAds      永久去广告
+    ///   7  RemoveDayAds   N 天限时去广告（count = 天数）
+    ///   8  ReStartTool    复活道具
+    ///   9  InfiniteEnergy N 小时无限体力（产品名自带 Energy 时交给 HandleUnlimitedEnergyPurchase，避免重复叠加）
+    ///   1002 ReviveToolType 旧的复活类型，按提示灯兜底
+    ///
+    /// 目前礼包表没用到 4/5(限时双倍)、10(重置)、11(蛹)、12(禅意分)、13(金叶)、14(体力)、15(头像)、16~18(月卡)，
+    /// 命中会打 warning，方便以后补。
+    /// </summary>
+    /// <param name="item">礼包配置</param>
+    /// <param name="reason">资源变动原因（日志 / 埋点）</param>
+    /// <param name="logPrefix">日志前缀</param>
+    /// <param name="skipNonPositive">count ≤ 0 的项跳过（补发路径口径）</param>
+    /// <returns>内容里是否发过 6/7（调用方据此决定要不要再按商品名兜底发去广告）</returns>
+    private bool GrantProductContent(ShopDataItem item, string reason,
+                                     string logPrefix = "  发放奖励", bool skipNonPositive = false)
+    {
+        bool removeAdsGranted = false;
+        if (item == null || item.productContent == null) return false;
+
+        foreach (var dataitem in item.productContent)
+        {
+            if (dataitem == null || dataitem.Count < 2)
+            {
+                LogShop($"{logPrefix} 跳过无效 productContent 项 (Count<2)");
+                continue;
+            }
+
+            int count = GetInt(dataitem[1]);
+            int type = GetInt(dataitem[0]);
+            if (skipNonPositive && count <= 0) continue;
+
+            LogShop($"{logPrefix}: type={type}({(LimitRewordType)type}), count={count}, item={item.produceNameId}");
+
+            switch (type)
+            {
+                case (int)LimitRewordType.Coins:
+                    GameDataManager.Instance.UserData.UpdateGold(count, false, false, reason);
+                    break;
+
+                // 道具类：蝴蝶 / 提示 / 火箭 / 复活
+                case (int)LimitRewordType.Butterfly:
+                case (int)LimitRewordType.Tipstool:
+                case (int)LimitRewordType.AutoComplete:
+                case (int)LimitRewordType.ReStartTool:
+                    GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count, reason);
+                    break;
+
+                case (int)LimitRewordType.RemoveAds:
+                    // 内容里的 6;N = 永久去广告（N 无意义，按永久发）
+                    GrantRemoveAdsByContent((int)LimitRewordType.RemoveAds, 0, item);
+                    removeAdsGranted = true;
+                    break;
+
+                case (int)LimitRewordType.RemoveDayAds:
+                    // 内容里的 7;N = N 天限时去广告
+                    GrantRemoveAdsByContent((int)LimitRewordType.RemoveDayAds, count * 24, item);
+                    removeAdsGranted = true;
+                    break;
+
+                case (int)LimitRewordType.InfiniteEnergy:
+                    // 内容里的 9;N = N 小时无限体力
+                    if (!IsUnlimitedEnergyProduct(item.produceNameId))
+                        GrantUnlimitedEnergyHours(count, item);
+                    break;
+
+                case ReviveToolType:
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count, reason);
+                    Debug.LogWarning("[ShopManager] 旧复活类型 ReviveToolType=1002 按提示灯发放，请与道具系统确认");
+                    break;
+
+                default:
+                    LogShop($"{logPrefix} 未处理的商品类型: type={type}({(LimitRewordType)type}), count={count}（奖励未发放）");
+                    break;
+            }
+        }
+
+        return removeAdsGranted;
+    }
+
     public void HandleGiftTablePurchaseRewards(ShopDataItem shopDataItem, ProductItem productItem)
     {
         if (shopDataItem == null)
@@ -2157,63 +2415,8 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"HandleGiftTablePurchaseRewards 开始: {shopDataItem.produceNameId}, " +
                 $"type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
 
-        bool removeAdsGrantedByContent = false;
-
-        if (shopDataItem.productContent != null)
-        {
-            foreach (var dataitem in shopDataItem.productContent)
-            {
-                if (dataitem == null || dataitem.Count < 2)
-                {
-                    LogShop($"  跳过无效 productContent 项 (Count<2)");
-                    continue;
-                }
-
-                int count = GetInt(dataitem[1]);
-                int type = GetInt(dataitem[0]);
-                LogShop($"  发放奖励: type={type}, count={count}");
-
-                switch (type)
-                {
-                    case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count, false, false, shopDataItem.name + "购买金币");
-                        break;
-                    case (int)LimitRewordType.Butterfly:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count, shopDataItem.name + "商店购买蝴蝶");
-                        break;
-                    case (int)LimitRewordType.Tipstool:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count, shopDataItem.name + "商店购买放大镜");
-                        break;
-                    case (int)LimitRewordType.AutoComplete:
-                        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, shopDataItem.name + "商店购买提示灯");
-                        break;
-                    case (int)LimitRewordType.RemoveAds:
-                        // 内容里的 6;N = 永久去广告（N 无意义，按永久发）
-                        GrantRemoveAdsByContent((int)LimitRewordType.RemoveAds, 0, shopDataItem);
-                        removeAdsGrantedByContent = true;
-                        break;
-                    case (int)LimitRewordType.RemoveDayAds:
-                        // 内容里的 7;N = N 天限时去广告（混合礼包夹带的时长以前直接丢了）
-                        GrantRemoveAdsByContent((int)LimitRewordType.RemoveDayAds, count * 24, shopDataItem);
-                        removeAdsGrantedByContent = true;
-                        break;
-                    case (int)LimitRewordType.ReStartTool:
-                        // ★ 复活道具（toolId=105）：复活弹窗售卖的礼包（如悠然礼包 0;120#8;16#1;2）里有这个类型，
-                        //   原来没有分支，奖励直接丢失。
-                        GameDataManager.Instance.UserData.UpdateTool(
-                            LimitRewordType.ReStartTool, count, shopDataItem.name + "礼包购买复活道具");
-                        break;
-                    case (int)LimitRewordType.InfiniteEnergy:
-                        // ★ 内容里的 9;N 表示 N 小时无限体力；产品名自带 Energy 的走下面的 HandleUnlimitedEnergyPurchase，避免重复叠加
-                        if (!IsUnlimitedEnergyProduct(shopDataItem.produceNameId))
-                            GrantUnlimitedEnergyHours(count, shopDataItem);
-                        break;
-                    default:
-                        LogShop($"  未处理的商品类型: type={type}, count={count}");
-                        break;
-                }
-            }
-        }
+        // 内容统一发放（0/1/2/3/6/7/8/9 全类型）
+        bool removeAdsGrantedByContent = GrantProductContent(shopDataItem, shopDataItem.name + "礼包购买");
 
         if (IsRemoveAdsProduct(shopDataItem.produceNameId) && !removeAdsGrantedByContent)
         {
@@ -2261,6 +2464,16 @@ public partial class ShopManager : MonoBehaviour
         if (shopDataItem == null)
         {
             LogShop($"[补发] 未找到商品配置: {productId}（source={source}），跳过");
+            return false;
+        }
+
+        // ★ 永久去广告是平台侧的非消耗型商品：清掉本地状态后，每次启动的已购查询都会把它查回来。
+        //   这里按「手动清除时置的拦截标记」拦掉，避免"清完 → 重启 → 又被补单恢复"。
+        //   玩家重新购买 / GM 重置存档 会解除该标记（见 GrantRemoveAdsByContent / ClearPromotionLocalData）。
+        if (IsPermanentRemoveAdsProduct(shopDataItem) && IsPermanentRemoveAdsRestoreBlocked())
+        {
+            LogShop($"[补发] 永久去广告补单已拦截（本地状态被手动清除过）: " +
+                    $"order={item.order_id}, source={source}；如需恢复请重新购买或重置存档");
             return false;
         }
 
@@ -2412,6 +2625,10 @@ public partial class ShopManager : MonoBehaviour
         bool permanent = adstype == (int)LimitRewordType.RemoveAds;
         if (!permanent && hours <= 0) hours = 24;   // 内容里没写时长时兜底 1 天
 
+        // ★ 玩家真的又买到了永久去广告（或礼包里含 6）→ 之前"清除后拦截补单"的标记失效，
+        //   否则重装/换机时的正常补单会被误拦。
+        if (permanent) SetPermanentRemoveAdsRestoreBlock(false, $"永久去广告重新发放（{source?.produceNameId}）");
+
         LogShop($"[补发] 去广告发放: adstype={adstype}, permanent={permanent}, hours={hours}, item={source?.produceNameId}");
 
         ShopLimitData exist = GameDataManager.Instance.UserData.limitShopItems
@@ -2479,17 +2696,6 @@ public partial class ShopManager : MonoBehaviour
 
         LogShop($"匹配到商店商品: id={shopDataItem.id}, produceNameId={shopDataItem.produceNameId}, type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}, label={shopDataItem.labelZh}");
 
-        if (IsRemoveAdsProduct(shopDataItem.produceNameId))
-        {
-            LogShop($"非消耗型: 去广告 {shopDataItem.produceNameId}");
-            HandleRemoveAdsPurchase(shopDataItem);
-        }
-        if (IsUnlimitedEnergyProduct(shopDataItem.produceNameId))
-        {
-            LogShop($"非消耗型: 无限体力 {shopDataItem.produceNameId}");
-            HandleUnlimitedEnergyPurchase(shopDataItem);
-        }
-
         // ★ bug54：复购弹窗的「加量不加价」加赠金币只对这一单生效（不污染商店里的商品数据）
         int giftBonusGold = ConsumePendingGiftBonus(shopDataItem.produceNameId);
 
@@ -2501,38 +2707,21 @@ public partial class ShopManager : MonoBehaviour
         }
         SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
 
-        foreach (var dataitem in shopDataItem.productContent)
+        // ★ 推送礼包（破冰 / 复购弹窗、结算页礼包按钮、广告失败页单道具）都走这里。
+        //   以前这份 switch 缺 8 复活道具 / 9 无限体力，7 天去广告也只刷了 UI 没写存档 → 礼包奖励没到账；
+        //   现在统一走 GrantProductContent（与礼包表购买、补发同一套逻辑）。
+        bool removeAdsGrantedByContent = GrantProductContent(shopDataItem, "商店购买" + item.ItemName);
+
+        // 商品本身就是去广告 SKU（RemoveADS / RemoveAdsWeek）：内容里没写 6/7 时才按商品名兜底
+        if (IsRemoveAdsProduct(shopDataItem.produceNameId) && !removeAdsGrantedByContent)
         {
-            if (dataitem == null || dataitem.Count < 2) continue;
-            int count = GetInt(dataitem[1]);
-            int type = GetInt(dataitem[0]);
-            LogShop($"发放奖励: type={type}, count={count}");
-            switch (type)
-            {
-                case (int)LimitRewordType.Coins:
-                    GameDataManager.Instance.UserData.UpdateGold(count, false, false, "商店购买" + item.ItemName);
-                    break;
-                case (int)LimitRewordType.Butterfly:
-                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count, "商店购买" + item.ItemName);
-                    break;
-                case (int)LimitRewordType.Tipstool:
-                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count, "商店购买" + item.ItemName);
-                    break;
-                case (int)LimitRewordType.AutoComplete:
-                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, "商店购买" + item.ItemName);
-                    break;
-                case (int)LimitRewordType.RemoveAds:
-                case (int)LimitRewordType.RemoveDayAds:
-                    BuyRemoveAdsEvent(type);
-                    break;
-                case ReviveToolType:
-                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count, "商店购买" + item.ItemName);
-                    Debug.LogWarning("[ShopManager] 复活道具类型 ReviveToolType=" + type + " 发放逻辑请与道具系统确认");
-                    break;
-                default:
-                    Debug.LogWarning("购买成功：未处理的商品类型 type=" + type + " count=" + count);
-                    break;
-            }
+            LogShop($"非消耗型: 去广告 {shopDataItem.produceNameId}");
+            HandleRemoveAdsPurchase(shopDataItem);
+        }
+        if (IsUnlimitedEnergyProduct(shopDataItem.produceNameId))
+        {
+            LogShop($"非消耗型: 无限体力 {shopDataItem.produceNameId}");
+            HandleUnlimitedEnergyPurchase(shopDataItem);
         }
 
         // ★ bug54：复购礼包加赠金币（弹窗里卖出才有的那份）
@@ -2573,7 +2762,10 @@ public partial class ShopManager : MonoBehaviour
             }
         }
 
-        MessageSystem.Instance.ShowTip($"{shopDataItem.name} 购买成功！");
+        // ★ 复购礼包（复购弹窗 / 结算页「限时折扣」按钮）成交后不再弹「xxx 购买成功！」toast：
+        //   AwardScreen 已经是成功反馈，这里再弹一次是重复提示。
+        if (pendingGiftPopupMode != GiftPopupMode.Repurchase)
+            MessageSystem.Instance.ShowTip($"{shopDataItem.name} 购买成功！");
         MessageSystem.Instance.HideLoadingAnimation();
 
         // ★ bug50/bug51：立刻落盘，避免「买完杀进程」导致奖励丢失且平台已标记发货不再补发
