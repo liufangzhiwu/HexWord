@@ -17,6 +17,18 @@ public class UserData
     #region 用户基础数据
 
     public string PlayerId; // 玩家ID
+
+    /// <summary>
+    /// PlayerId 转 int（排行榜用）。
+    /// ★ 未登录 / 离线时 PlayerId 是 null（InitData 里就是 PlayerId = null），
+    ///   直接 int.Parse 会抛 ArgumentException: Value cannot be null. Parameter name: s（ZenRankChangePanel 崩过）。
+    /// </summary>
+    public int GetPlayerIdInt()
+    {
+        int id = 0;
+        int.TryParse(PlayerId, out id);
+        return id;
+    }
     public string ABName; // AB测试包名
     public string PushToken; // 推送Token
     public string UserName;

@@ -1624,8 +1624,9 @@ namespace Middleware
                 bool hasBaseBridge = text.Contains("RequestTrackingConsentOnUI") &&
                                      text.Contains("HideBannerOnUI");
                 bool hasQueryBridge = text.Contains("QueryTrackingConsentOnUI");
+                bool hasOpenSettingsBridge = text.Contains("OpenTrackingSettingsOnUI");
 
-                if (hasBaseBridge && hasQueryBridge)
+                if (hasBaseBridge && hasQueryBridge && hasOpenSettingsBridge)
                 {
                     log.Add("ALREADY OHKitAdsManager.ets 桥接方法已注入");
                     return true;
@@ -1641,6 +1642,23 @@ namespace Middleware
     let msg: ESObject = {
       modulePath: ""OHKitSdk"",
       funcName: ""SDKManager.QueryTrackingConsent"",
+      args: [],
+      callback: callback,
+      timeoutMs: 100000,
+    }
+    POST_MESSAGE_TO_HOST(msg);
+  }
+
+";
+
+                // ★ 桥接补丁：设置页「关联应用」入口 —— 无条件拉起广告关联权限设置弹窗
+                //   （已开启 / 已关闭都弹），玩家关闭弹窗后由 SendOAID 按最新状态回 OnOAIDClosedSignal。
+                const string openSettingsMethod = @"  // ★ 桥接补丁：打开「当前应用广告关联设置」弹窗（不区分是否已开启）
+  OpenTrackingSettingsOnUI(callback: (...args: Array<ESObject>) => ESObject) {
+    hilog.info(0x0000, ""SDKKit"", 'OpenTrackingSettingsOnUI Start!');
+    let msg: ESObject = {
+      modulePath: ""OHKitSdk"",
+      funcName: ""SDKManager.OpenTrackingSettings"",
       args: [],
       callback: callback,
       timeoutMs: 100000,
@@ -1694,15 +1712,21 @@ namespace Middleware
 
                 if (!hasBaseBridge)
                 {
-                    // 首次注入：三个桥接方法一起插到锚点前
-                    text = text.Substring(0, idx) + methods + queryMethod + text.Substring(idx);
-                    log.Add("SYNC   OHKitAdsManager.ets <- 注入 RequestTrackingConsentOnUI / HideBannerOnUI / QueryTrackingConsentOnUI");
+                    // 首次注入：全部桥接方法一起插到锚点前
+                    text = text.Substring(0, idx) + methods + queryMethod + openSettingsMethod + text.Substring(idx);
+                    log.Add("SYNC   OHKitAdsManager.ets <- 注入 RequestTrackingConsentOnUI / HideBannerOnUI / QueryTrackingConsentOnUI / OpenTrackingSettingsOnUI");
+                }
+                else if (!hasQueryBridge)
+                {
+                    // 老版本导出工程（只有前两个方法）：补注入静默查询 + 设置弹窗入口
+                    text = text.Substring(0, idx) + queryMethod + openSettingsMethod + text.Substring(idx);
+                    log.Add("SYNC   OHKitAdsManager.ets <- 补注入 QueryTrackingConsentOnUI / OpenTrackingSettingsOnUI");
                 }
                 else
                 {
-                    // 老版本导出工程（只有前两个方法）：单独补注入静默查询
-                    text = text.Substring(0, idx) + queryMethod + text.Substring(idx);
-                    log.Add("SYNC   OHKitAdsManager.ets <- 补注入 QueryTrackingConsentOnUI");
+                    // 已有静默查询、缺设置弹窗入口：只补这一条
+                    text = text.Substring(0, idx) + openSettingsMethod + text.Substring(idx);
+                    log.Add("SYNC   OHKitAdsManager.ets <- 补注入 OpenTrackingSettingsOnUI");
                 }
 
                 File.WriteAllText(target, text, new UTF8Encoding(false));

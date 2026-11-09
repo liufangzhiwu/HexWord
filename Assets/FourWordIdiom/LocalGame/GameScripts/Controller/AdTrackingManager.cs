@@ -505,14 +505,8 @@ public class AdTrackingManager : MonoBehaviour
             return;
         }
 
-        // 已经开启：直接刷新开关即可，不再打扰
-        if (IsAuthorized)
-        {
-            Debug.Log("[AdTracking] 广告关联已开启，跳过跳转设置");
-            OnAuthorizationChanged?.Invoke(true);
-            return;
-        }
-
+        // ★ 需求：无论广告关联当前是开启还是关闭，点击都要调起系统的「当前应用广告关联设置」。
+        //   所以这里不再因为 IsAuthorized 直接短路返回。
         _waitingSettingsReturn = true;
         _permissionRequested = false;
 
@@ -692,6 +686,17 @@ public class AdTrackingManager : MonoBehaviour
         // 埋点和激励都会丢）
         bool wasAwaiting = fromSettings || _openedSystemSettings || _permissionRequested;
 
+        // ★ 设置页只是"进去看看"（原本已开启、关闭设置后仍然是开启）：
+        //   只同步开关状态，不算一次新的授权转化（否则每次点按钮都会多报一次 Pop_accept）
+        if (fromSettings && granted && user.adTrackingEnabled == "1")
+        {
+            _waitingSettingsReturn = false;
+            _openedSystemSettings = false;
+            Debug.Log("[AdTracking] 设置页返回：授权状态未变化（仍为已开启），仅刷新开关");
+            OnAuthorizationChanged?.Invoke(true);
+            return;
+        }
+
         // 同一个结果重复回调（鸿蒙侧可能既走 TuanjieSendMessage 又走 Promise；
         // 登录补写也会调进来）：状态没变就不重复写盘/重复发奖
         if (!wasAwaiting && user.adTrackingEnabled == (granted ? "1" : "0")) return;
@@ -756,11 +761,11 @@ public class AdTrackingManager : MonoBehaviour
         }
 
 #if UNITY_OPENHARMONY
-        // 鸿蒙没有统一的"广告追踪设置"深链：重新发起一次授权请求。
-        // 若玩家之前拒绝过（系统不再弹标准授权框），ArkTS 侧会自动改拉
-        // requestPermissionOnSetting 权限设置弹窗（带开关，官方二次授权路径），
-        // 结果仍是 OnOAIDClosedSignal 回包；玩家取消/未开启则引导页保持"去开启"状态。
-        if (Game.self != null) Game.self.RequestTrackingConsent();
+        // 鸿蒙：直接拉起「当前应用广告关联设置」权限弹窗（带开关）。
+        //   以前是 RequestTrackingConsent（先走标准授权请求）：已开启时系统会静默直接返回，
+        //   玩家点了按钮看不到任何界面。现在无条件调 requestPermissionOnSetting，
+        //   关闭弹窗后由 SendOAID 按最新状态回 OnOAIDClosedSignal（'1'/'0'）。
+        if (Game.self != null) Game.self.OpenTrackingSettings();
 #else
         MessageSystem.Instance?.ShowTip("请在系统设置中开启广告关联");
 #endif
@@ -788,9 +793,10 @@ public class AdTrackingManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 鸿蒙兜底：从系统设置回前台后，如果 3 秒内没有收到授权回调，先按当前存档状态刷新一次设置开关。
-    /// 注意：只刷新 UI，不清 _waitingSettingsReturn / _openedSystemSettings ——
-    /// 真正的授权回调（OnOAIDClosedSignal）回来时仍按"设置入口发起"处理，埋点与激励不会丢。
+    /// 鸿蒙兜底：从系统设置回前台后，如果 3 秒内没有收到 ArkTS 的授权回调，
+    /// 就主动向系统静默查询一次最新授权状态（不弹框），保证关闭设置界面后开关/分层是同步的。
+    /// 注意：会先清掉等待标志，否则静默查询会被 SyncTrackingStatusFromPlatform 的
+    /// "正在系统设置流程中" 判断挡掉。
     /// </summary>
     private IEnumerator HarmonySettingsFallbackRoutine()
     {
@@ -803,7 +809,14 @@ public class AdTrackingManager : MonoBehaviour
 
         if (!_waitingSettingsReturn) yield break;   // 回调已经处理过
 
-        Debug.Log("[AdTracking] 鸿蒙系统设置返回后 3s 内无授权回调，先按当前存档状态刷新设置开关");
+        // 没等到 ArkTS 回包：主动向系统查一次最新授权状态
+        // （需求：关闭广告关联设置界面后要拿到当前状态，不能只刷缓存）
+        Debug.Log("[AdTracking] 鸿蒙设置界面返回后 3s 内无回包 → 主动静默查询最新授权状态");
+        _waitingSettingsReturn = false;
+        _openedSystemSettings = false;
+        SyncTrackingStatusFromPlatform("系统设置返回");
+
+        // 状态没变化时 SyncTrackingStatusFromPlatform 不会回调 → 这里再刷一次开关，保证界面同步
         OnAuthorizationChanged?.Invoke(IsAuthorized);
     }
 

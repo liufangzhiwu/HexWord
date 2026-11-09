@@ -340,6 +340,11 @@ public class LoadingController : MonoBehaviour
     private void UserServerData()
     {
         GameDataManager.Instance.UserData.InitData(serverUserData);
+
+        // ★ 服务器存档覆盖了本地数据 → 「上次离开时间」快照要跟着更新
+        //   （商店流失回归权重靠它判断"最近 7 天未登录"，而 logoutTime 随后会被自动存档刷成现在）
+        GameDataManager.CaptureSessionLogoutTime(GameDataManager.Instance.UserData.logoutTime);
+
         if (serverFishData != null)
             GameDataManager.Instance.FishUserSave.InitData(serverFishData);
         if (serverButterflyData != null)

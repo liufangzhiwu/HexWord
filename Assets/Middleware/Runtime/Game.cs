@@ -169,6 +169,47 @@ namespace Middleware
         }
 
         /// <summary>
+        /// 鸿蒙：无条件拉起「当前应用广告关联（APP_TRACKING_CONSENT）」权限设置弹窗。
+        /// 与 RequestTrackingConsent 的区别：不先走标准授权请求 ——
+        ///   已授权时 requestPermissionsFromUser 会静默直接返回、界面上什么都看不到；
+        ///   而这里直接调 requestPermissionOnSetting（带开关的设置弹窗），开/关状态都能打开。
+        /// 玩家关闭弹窗后，ArkTS 按最新状态经 TuanjieSendMessage('PushMessageReceiver',
+        /// 'OnOAIDClosedSignal', '1'/'0') 回包，Unity 侧沿用原有回调刷新开关与埋点。
+        /// ★ 需要重新导出鸿蒙工程（ArkTS 侧是新增的桥接方法），未更新时只会打一条 warning。
+        /// </summary>
+        public void OpenTrackingSettings()
+        {
+#if UNITY_OPENHARMONY
+            try
+            {
+                OpenHarmonyJSObject adsObj = OHSDKKitManager.OHKitAdsManagerObj;
+                if (adsObj == null)
+                {
+                    var _ = OHSDKKitManager.Instance;
+                    adsObj = OHSDKKitManager.OHKitAdsManagerObj;
+                }
+
+                if (adsObj == null)
+                {
+                    Debug.LogWarning("[OAID] ArkTS 侧 OHKitAdsManager 未就绪，无法打开广告关联设置");
+                    return;
+                }
+
+                if (_trackingConsentCallback == null)
+                    _trackingConsentCallback = new OpenHarmonyJSCallback(OnTrackingConsentCallback);
+
+                adsObj.Call("OpenTrackingSettingsOnUI", _trackingConsentCallback);
+                Debug.Log("[OAID] 已请求打开广告关联权限设置弹窗");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[OAID] 打开广告关联设置失败：" + e.Message +
+                                 "（ArkTS 侧桥接方法未更新？需要重新导出鸿蒙工程）");
+            }
+#endif
+        }
+
+        /// <summary>
         /// 放行广告请求（鸿蒙专用）。
         /// 广告追踪授权流程结束前，Ads_harmony 会把激励预加载 / 横幅全部挡下，
         /// 避免 AdsKit 在加载页就去取 OAID、把系统授权框抢在引导页之前弹出来。

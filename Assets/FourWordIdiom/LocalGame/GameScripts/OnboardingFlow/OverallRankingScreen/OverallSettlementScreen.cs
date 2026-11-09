@@ -191,7 +191,7 @@ public class OverallSettlementScreen : UIWindow
     {
         return new OverallRankState
         {
-            PlayerId = int.Parse(GameDataManager.Instance.UserData.PlayerId), // isMe=true → 金色底 + 棕字
+            PlayerId = GameDataManager.Instance.UserData.GetPlayerIdInt(), // isMe=true → 金色底 + 棕字
             Avatar   = GameDataManager.Instance.UserData.UserHeadId,
             Frame    = GameDataManager.Instance.UserData.UserHeadBorderId.ToString(),
             Name     = GameDataManager.Instance.UserData.UserName,

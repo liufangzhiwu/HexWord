@@ -599,7 +599,7 @@ namespace Middleware
 
                 // 非消耗型（永久去广告）：没有"核销"流程，finishStatus 不一定是 2，
                 // 只要平台侧还查得到就算已购（bug51：以前这里被 finishStatus 过滤掉，永远补不回来）
-                bool isNonConsumable = purchaseData.productType == ProductType.NONCONSUMABLE;
+                bool isNonConsumable = purchaseData.productType == (int)ProductType.NONCONSUMABLE;
 
                 // 消耗型：只处理平台侧尚未完成的订单
                 if (!isNonConsumable && purchaseData.finishStatus != "2") continue;

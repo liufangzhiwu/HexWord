@@ -28,6 +28,13 @@ public class GiftItem : MonoBehaviour
     private Button tipbtn;
     private int shopid;
 
+    /// <summary>
+    /// 本次 SetShopData 是否需要改图标 / 文字的表现（尺寸、位置、字号、描边色）。
+    /// AdsDiscountScreen 的 DiscountItem 预制体已经排好版（icon 与 countText 的大小、位置、描边都在 Prefab 里定死），
+    /// 传 false 就只填内容（图标 sprite、数量文字），不再覆盖任何表现参数。
+    /// </summary>
+    private bool _applyStyle = true;
+
     /// <summary>是否为横向布局 Prefab（GiftHengItem）。横向项的图标位置由 hengIconAnchoredPosition 决定，不做外部覆盖。</summary>
     public bool IsHengItem => isGiftHengItem;
 
@@ -163,10 +170,16 @@ public class GiftItem : MonoBehaviour
         }
     }
     
-    public void SetShopData(List<string> data, int itemid, Color color, string des = "", string pointdes = "")
+    /// <param name="applyStyle">
+    /// true（默认）：按道具类型覆盖图标 / 数量的尺寸、位置、字号与描边色；
+    /// false：只填图标 sprite 与数量文字，其它表现全部交给 Prefab（AdsDiscountScreen 用）。
+    /// </param>
+    public void SetShopData(List<string> data, int itemid, Color color, string des = "", string pointdes = "",
+        bool applyStyle = true)
     {
         string spritename = "";
         shopid = itemid;
+        _applyStyle = applyStyle;
 
         if (des != "")
         {
@@ -269,9 +282,13 @@ public class GiftItem : MonoBehaviour
             //shopIcon.SetNativeSize();
         }
 
-        for (int i = 1; i < Outlines.Count; i++)
+        // 描边色也归「表现」：AdsDiscountScreen 的 DiscountItem 在 Prefab 里定好描边，脚本不再改
+        if (_applyStyle)
         {
-            Outlines[i].effectColor = color;
+            for (int i = 1; i < Outlines.Count; i++)
+            {
+                Outlines[i].effectColor = color;
+            }
         }
     }
 
@@ -285,6 +302,7 @@ public class GiftItem : MonoBehaviour
 
     private void SetCountFontSize(int size)
     {
+        if (!_applyStyle) return;
         if (isGiftHengItem) return;
         if (countText == null) return;
         countText.fontSize = size;
@@ -292,6 +310,7 @@ public class GiftItem : MonoBehaviour
 
     private void SetCountAnchoredPosition(Vector2 pos)
     {
+        if (!_applyStyle) return;
         if (isGiftHengItem) return;
         if (countText == null) return;
         countText.GetComponent<RectTransform>().anchoredPosition = pos;
@@ -307,6 +326,7 @@ public class GiftItem : MonoBehaviour
     private void SetIconSize(Vector2 size)
     {
         if (shopIcon == null) return;
+        if (!_applyStyle) return;
         if (!isGiftHengItem&&size==Vector2.zero) return;
         
         shopIcon.rectTransform.sizeDelta = isGiftHengItem ? hengIconSize : size;
@@ -320,6 +340,7 @@ public class GiftItem : MonoBehaviour
     private void SetIconAnchoredPosition(Vector2 pos)
     {
         if (shopIcon == null) return;
+        if (!_applyStyle) return;
         shopIcon.rectTransform.anchoredPosition = isGiftHengItem ? hengIconAnchoredPosition : pos;
     }
 

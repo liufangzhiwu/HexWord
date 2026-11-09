@@ -70,8 +70,9 @@ public class ZenRankItem : MonoBehaviour
         currentRank = state.Rank;
         // GoPlay.gameObject.SetActive(false);
         // isMe = state.Name == GameDataManager.Instance.UserData.UserName;
-        isMe = !string.IsNullOrEmpty(GameDataManager.Instance.UserData.PlayerId) && 
-               state.PlayerId == int.Parse(GameDataManager.Instance.UserData.PlayerId);
+        // ★ PlayerId 未登录时为 null、也可能是非数字串 → 用 GetPlayerIdInt 兜底，避免 int.Parse 抛异常
+        UserData myUser = GameDataManager.Instance.UserData;
+        isMe = !string.IsNullOrEmpty(myUser.PlayerId) && state.PlayerId == myUser.GetPlayerIdInt();
         if (isDisplayOnly)
         {
             BoxReward.interactable = false; // 禁用宝箱点击

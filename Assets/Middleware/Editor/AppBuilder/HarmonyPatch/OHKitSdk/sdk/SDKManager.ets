@@ -382,6 +382,16 @@ export class SDKManager {
     return SendOAID.QueryTrackingConsentAndReport();
   }
 
+  /**
+   * 设置页「关联应用」入口：无条件拉起「当前应用广告关联设置」弹窗（带开关）。
+   * 已开启 / 已关闭都会弹；玩家关闭弹窗后按最新授权状态回包
+   *（TuanjieSendMessage('PushMessageReceiver','OnOAIDClosedSignal','1'/'0')）。
+   */
+  static async OpenTrackingSettings(): Promise<Array<string>> {
+    hilog.info(0x0000, 'SDKKit', 'OpenTrackingSettings: 打开广告关联权限设置');
+    return SendOAID.OpenTrackingSettings();
+  }
+
   static async LoadAdWithMultiSlots(adParamsJson: string, adOptionsJson: string): Promise<Array<string>> {
     let adParams: advertising.AdRequestParams[] = JSON.parse(adParamsJson) as advertising.AdRequestParams[];
     let adOptions: advertising.AdOptions = json.parse(adOptionsJson) as advertising.AdOptions;

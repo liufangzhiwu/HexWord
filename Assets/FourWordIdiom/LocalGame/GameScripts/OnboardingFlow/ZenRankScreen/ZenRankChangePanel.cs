@@ -14,23 +14,23 @@ public class ZenRankChangePanel : UIWindow
     [SerializeField] private RectTransform topBanner;       // 顶部 "提升了X名" 横幅
     [SerializeField] private Text topBannerText;            // 横幅文字
     [SerializeField] private CanvasGroup continueBtn;       // 继续按钮
-    
+
     [Header("段位信息区")]
     [SerializeField] private Text zenTitleText;             // 禅修榜标题
     [SerializeField] private Text zenTimeText;              // 当前榜单的剩余时间
     [SerializeField] private Image zenImage;                // 榜单等级图标 (荷花)
     [SerializeField] private Text zenNameText;              // 榜单名称 (枯淡界等)
 
-    [Header("玩家列表区域")] 
+    [Header("玩家列表区域")]
     [SerializeField] private RectTransform listContainer;
     [Tooltip("列表滚动组件")]
     [SerializeField] private RectTransform contentRect;
     [SerializeField] private RectTransform glowFrame;       // 像Vita那样的发光/星星高亮框
     [Tooltip("从旁边飞入的莲花图标")]
-    [SerializeField] private GameObject flyingLotus;   
+    [SerializeField] private GameObject flyingLotus;
     [Tooltip("莲花出现在玩家条目右侧的偏移量 (可根据 UI 宽度微调)")]
     [SerializeField] private float lotusOffsetX = 350f;
-    
+
     [Header("动画与测试")]
     [SerializeField] private float itemSpacing = 120f;      // 列表中每个条目的间距
     [SerializeField] private float animationDelay = 0.5f;   // 界面打开后多久开始播动画
@@ -46,11 +46,53 @@ public class ZenRankChangePanel : UIWindow
     private List<ZenRankItem> otherPlayersPool = new List<ZenRankItem>(); // 动态生成的垫背玩家池
     // private GameObject cachedUpTag;
     // private GameObject cachedDownTag;
-    
+
     private WaitForSeconds delayWait;
     private bool isAnimating = false;
     private Sequence currentSequence; // 缓存当前动画序列，方便统一 Kill
-    
+
+    // ======================= 动画看门狗（防结算流程卡死） =======================
+    /// <summary>排名动画最长容忍时长（秒）。超时视为异常（协程被异常中断等），强制收尾恢复继续按钮。</summary>
+    private const float MaxAnimationSeconds = 30f;
+    /// <summary>本次动画已经走的时长（只在 Update 里累加，切后台不会误判）</summary>
+    private float _animationElapsed;
+
+    private void Update()
+    {
+        if (!isAnimating) return;
+
+        _animationElapsed += Time.unscaledDeltaTime;
+        if (_animationElapsed < MaxAnimationSeconds) return;
+
+        Debug.LogError($"[ZenRankChange] 排名动画超过 {MaxAnimationSeconds}s 仍未结束" +
+                       "（协程可能被异常中断）→ 强制收尾，恢复继续按钮，避免结算流程卡死");
+        ForceFinishAnimation();
+    }
+
+    /// <summary>
+    /// 异常兜底：跳过剩余动画，直接把面板恢复到"可点击继续"的状态。
+    /// （协程内部抛异常时 MoveNext 会终止，后面的收尾代码不会执行，面板就会停在半透明且按钮不可点）
+    /// </summary>
+    private void ForceFinishAnimation()
+    {
+        isAnimating = false;
+
+        if (currentSequence != null && currentSequence.IsActive()) currentSequence.Kill();
+
+        if (mainCanvasGroup != null)
+        {
+            mainCanvasGroup.DOKill();
+            mainCanvasGroup.alpha = 1f;
+        }
+
+        if (continueBtn != null)
+        {
+            continueBtn.transform.DOKill();
+            continueBtn.alpha = 1f;
+            continueBtn.interactable = true;
+        }
+    }
+
     [Header("重播按钮")]
     [SerializeField] private Button replayBtn;          // 拖拽赋值
     [SerializeField] private CanvasGroup replayBtnCanvasGroup; // 可选，控制显隐
@@ -64,21 +106,21 @@ public class ZenRankChangePanel : UIWindow
 {
     // 避免连点或在动画未完全结束时混乱
     if (replayBtn != null) replayBtn.interactable = false;
-    
+
     // 1. 强制停止当前正在运行的动画序列
     if (currentSequence != null && currentSequence.IsActive())
         currentSequence.Kill();
-    
+
     // 2. 杀掉所有相关物体的 DOTween 动画
     KillAllTweens();
-    
+
     // 3. 重置 UI 视觉状态（回到动画前的样子）
     ResetUIForReplay();
-    
+
     // 4. 用缓存的参数重新播放
     PlayRankChange(cacheOldRank, cacheNewRank, cacheOldScore, cacheNewScore,
                    cacheLevelCode, cacheLevelName, cacheRemainingSeconds, cachePassedPlayers);
-    
+
     // 播放开始后可以再次允许重播（或等动画结束再允许，按需设定）
     replayBtn.interactable = true;
 }
@@ -93,7 +135,7 @@ private void KillAllTweens()
     }
     foreach (var p in otherPlayersPool)
         p.GetComponent<RectTransform>()?.DOKill();
-    
+
     contentRect.DOKill();
     mainCanvasGroup.DOKill();
     topBanner.DOKill();
@@ -109,14 +151,14 @@ private void ResetUIForReplay()
     if (glowFrame != null) glowFrame.gameObject.SetActive(false);
     // if (cachedUpTag != null) cachedUpTag.SetActive(false);
     // if (cachedDownTag != null) cachedDownTag.SetActive(false);
-    
+
     // 恢复缩放（重点：之前我们放大过）
     if (myRankItem != null)
     {
         RectTransform myRect = myRankItem.GetComponent<RectTransform>();
         myRect.localScale = Vector3.one;
         // 如有层级变动，恢复默认（设为最后一个兄弟可能导致布局错乱，视需求决定）
-        // myRect.SetSiblingIndex(0); 
+        // myRect.SetSiblingIndex(0);
     }
     foreach (var p in otherPlayersPool)
     {
@@ -126,7 +168,7 @@ private void ResetUIForReplay()
             p.gameObject.SetActive(false); // 等 PlayRankChange 会重新激活
         }
     }
-    
+
     // 重置容器位置
     contentRect.anchoredPosition = Vector2.zero;
     mainCanvasGroup.alpha = 1;
@@ -153,7 +195,7 @@ private void ResetUIForReplay()
         //         cachedUpTag.GetComponentInChildren<Text>(true).text = MultilingualManager.Instance.GetString("ImproveRanking");
         //         cachedUpTag.SetActive(false);
         //     }
-        //    
+        //
         // }
         // if (cachedDownTag == null)
         // {
@@ -169,9 +211,9 @@ private void ResetUIForReplay()
         {
             rankItemPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "ChangeRankItem");
         }
-         
+
         rankItemPool = new ObjectPool(rankItemPrefab, listContainer, 5, PoolBehaviour.GameObject);
-        
+
         _scoreLotusPool = new ObjectPool(flyingLotus.gameObject, ObjectPool.CreatePoolContainer(transform,"scoreLotusPool"), 5, PoolBehaviour.GameObject);
     }
 
@@ -179,7 +221,7 @@ private void ResetUIForReplay()
     {
         base.OnEnable();
         DOTween.Init();
-        
+
         // 🌟 注册事件
         if (ZenRankManager.Instance != null)
             ZenRankManager.Instance.OnRankTimerTick += UpdateTimerUI;
@@ -188,11 +230,11 @@ private void ResetUIForReplay()
     private void Start()
     {
         // 初始化基础静态文本
-        if (zenTitleText != null) 
+        if (zenTitleText != null)
             zenTitleText.text = MultilingualManager.Instance.GetString("MeditationList") ?? "禅修榜";
         continueBtn.GetComponentInChildren<Text>(true).text = MultilingualManager.Instance.GetString("Continue");
     }
-    
+
     // ==========================================
     // 🚀 正式调用入口 (带假数据兜底)
     // ==========================================
@@ -209,14 +251,14 @@ private void ResetUIForReplay()
             {
                 duration = (int)(DateTime.UtcNow - ZenRankManager.Instance.LastScoreUpdateTime).TotalSeconds;
             }
-        
+
             AnalyticMgr.SetCommonProperties();
             AnalyticMgr.RefreshRankUserProperties();
             AnalyticMgr.ActivityProgress("连心榜活动", newScore, duration);
-        
+
             // 埋点完毕后，更新最后一次得分的时间戳，为下次做准备
             ZenRankManager.Instance.LastScoreUpdateTime = DateTime.UtcNow;
-        
+
             Debug.Log($"【Rank Debug - Analytics】结算面板弹出，上报连心榜分数: {newScore}, 距上次耗时: {duration} 秒");
         }
         if (passedPlayers == null) passedPlayers = new List<ZenRankState>();
@@ -226,7 +268,7 @@ private void ResetUIForReplay()
         cacheLevelCode = levelCode; cacheLevelName = levelName;
         cacheRemainingSeconds = remainingSeconds;
         cachePassedPlayers = new List<ZenRankState>(passedPlayers); // 深拷贝防止外部修改
-        
+
         // 解决后端延迟未分组导致 rank = 0，但本地明明有分数的情况
         if (newRank <= 0 && newScore > 0)
         {
@@ -269,10 +311,10 @@ private void ResetUIForReplay()
             return scoreComp;
         });
         StartCoroutine(RankChangeRoutine(oldRank, newRank, oldScore, newScore, levelCode, levelName, remainingSeconds, passedPlayers));
-        
+
         AchievementManager.Instance.AddAvatarFrameItems(AvatarUnlockType.FlowerRank,newRank);
     }
-   
+
     // ==========================================
     // 🛠️ 动态对象池生成器
     // ==========================================
@@ -281,14 +323,25 @@ private void ResetUIForReplay()
         // 1. 确保玩家自己的条目已生成
         if (myRankItem == null)
         {
-            myRankItem = rankItemPool.GetObject<ZenRankItem>();
+            myRankItem = rankItemPool != null ? rankItemPool.GetObject<ZenRankItem>() : null;
         }
+
+        if (myRankItem == null)
+        {
+            Debug.LogError("[ZenRankChange] rankItem 生成失败（对象池为空 / 预制体未配置）→ 跳过排名动画");
+            return;
+        }
+
         myRankItem.gameObject.SetActive(true);
+
+        if (rankItemPool == null) return;
 
         // 2. 确保垫背玩家条目已生成足够的数量
         while (otherPlayersPool.Count < requiredOthersCount)
         {
-            otherPlayersPool.Add(rankItemPool.GetObject<ZenRankItem>());
+            ZenRankItem other = rankItemPool.GetObject<ZenRankItem>();
+            if (other == null) break;
+            otherPlayersPool.Add(other);
         }
 
         // 3. 隐藏多余的垫背条目
@@ -297,7 +350,7 @@ private void ResetUIForReplay()
             otherPlayersPool[i].gameObject.SetActive(i < requiredOthersCount);
         }
     }
-    
+
    // ==========================================
     // 🎬 核心动效协程 (完美整合：插槽防重叠 + 摄像机跟随 + 顺序修正)
     // 🎬 核心动效协程 (最终修正：插槽空间补全 + 莲花坐标系修复)
@@ -305,8 +358,9 @@ private void ResetUIForReplay()
     private IEnumerator RankChangeRoutine(int oldRank, int newRank, int oldScore, int newScore, string levelCode, string levelName, int remainingSeconds, List<ZenRankState> surpassedPlayers)
     {
         isAnimating = true;
+        _animationElapsed = 0f;   // 看门狗计时归零
         mainCanvasGroup.alpha = 0;
-        topBanner.anchoredPosition = new Vector2(0, 500f); 
+        topBanner.anchoredPosition = new Vector2(0, 500f);
         continueBtn.alpha = 0;
         continueBtn.interactable = false;
         if (myRankItem != null && myRankItem.ScoreText != null)
@@ -314,8 +368,12 @@ private void ResetUIForReplay()
         if(glowFrame != null) glowFrame.gameObject.SetActive(false);
         // if (cachedUpTag != null) cachedUpTag.SetActive(false);
         // if (cachedDownTag != null) cachedDownTag.SetActive(false);
-        
-        string extractName = MultilingualManager.Instance.GetString(levelCode) ?? levelName;
+
+        // ★ levelCode 可能是 null（新号/未加入禅修榜时 UserData.Zenlevel 为空），
+        //   直接 GetString(null) 会在字典 TryGetValue 里抛 ArgumentNullException → 协程中断、面板卡死
+        string extractName = string.IsNullOrEmpty(levelCode)
+            ? (string.IsNullOrEmpty(levelName) ? "" : levelName)
+            : MultilingualManager.Instance.GetString(levelCode);
         if (zenNameText != null) zenNameText.text = extractName;
         // ==========================================
         // 提取 levelCode(如"ZenState01") 中的数字，动态加载对应的荷花图片
@@ -325,7 +383,7 @@ private void ResetUIForReplay()
             string zenLevelNum = UIUtilities.ExtractNumber(levelCode);
             // 先尝试 lotus_p 系列命名，如果没有再尝试 zenicon_ 系列 (根据你之前的代码习惯兼容)
             Sprite icon = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("zenlevel_icon" + zenLevelNum);
-            if (icon != null) 
+            if (icon != null)
             {
                 zenImage.sprite = icon;
                 zenImage.SetNativeSize(); // 保证图片不变形
@@ -333,15 +391,26 @@ private void ResetUIForReplay()
         }
         // 1. 状态判定
         bool isUp = (oldRank == 0 && newRank > 0) || (oldRank > newRank);
-    
+
         // if (viewportMask != null)
         //     viewportMask.softness = (newRank == 1) ? new UnityEngine.Vector2Int(0, 0) : new UnityEngine.Vector2Int(0, 110);
         bool isKeep = oldRank == newRank;
         // bool isDown = (oldRank > 0 && oldRank < newRank);
         // 2. 准备 UI 节点
         PrepareRankItems(surpassedPlayers.Count);
+
+        // 对象池没跑起来（预制体缺失等）→ 不硬撑，直接收尾，避免后面 myRankItem 空引用再次把结算流程卡死
+        if (myRankItem == null)
+        {
+            Debug.LogError("[ZenRankChange] 没有可用的 rank item，跳过排名变化动画");
+            ForceFinishAnimation();
+            yield break;
+        }
+
         var user = GameDataManager.Instance.UserData;
-        ZenRankState myState = new ZenRankState { PlayerId = int.Parse(user.PlayerId), Rank = newRank, Score = oldScore, 
+        if (string.IsNullOrEmpty(user.PlayerId))
+            Debug.LogWarning("[ZenRankChange] 玩家 PlayerId 为空（未登录 / 离线）→ 自己的 ID 记 0，不再 int.Parse 崩溃");
+        ZenRankState myState = new ZenRankState { PlayerId = user.GetPlayerIdInt(), Rank = newRank, Score = oldScore,
             Name = user.UserName, Avatar = user.UserHeadId, Frame = user.UserHeadBorderId.ToString()};
         myRankItem.SetRankInfo(myState, true);
         RectTransform myRect = myRankItem.GetComponent<RectTransform>();
@@ -350,7 +419,7 @@ private void ResetUIForReplay()
         if (myRankItem.ScoreText != null) myRankItem.ScoreText.text = oldScore.ToString();
         if (myRankItem.RankText != null) myRankItem.RankText.text = oldRank <= 0 ? "-" : oldRank.ToString();
         myRankItem.UpdateRankVisual(oldRank, true);
-        
+
         // 全部挂载到滚动的 Content 容器下
         myRect.SetParent(contentRect, false);
         for (int i = 0; i < surpassedPlayers.Count; i++) {
@@ -363,9 +432,9 @@ private void ResetUIForReplay()
             {
                 // 在动画开始前，他的名次应该假装比现在“高 1 名”（即减1），保持旧榜单的连贯性
                 int initialVisualRank = p.Rank - 1;
-                if (otherPlayersPool[i].RankText != null) 
+                if (otherPlayersPool[i].RankText != null)
                     otherPlayersPool[i].RankText.text = initialVisualRank.ToString();
-            
+
                 otherPlayersPool[i].UpdateRankVisual(initialVisualRank, true);
             }
         }
@@ -375,25 +444,25 @@ private void ResetUIForReplay()
         int myTargetLogicalIndex = 0;
         for (int i = 0; i < totalOthers; i++) {
             // 如果对方分数比我高，或者【分数相等但对方名次数字比我小】，他依然排在我前面！
-            if (surpassedPlayers[i].Score > newScore || 
-                (surpassedPlayers[i].Score == newScore && surpassedPlayers[i].Rank < newRank)) 
+            if (surpassedPlayers[i].Score > newScore ||
+                (surpassedPlayers[i].Score == newScore && surpassedPlayers[i].Rank < newRank))
             {
                 myTargetLogicalIndex++;
             }
         }
 
         int myStartLogicalIndex = 0;
-        if (oldRank <= 0) 
+        if (oldRank <= 0)
         {
             // 🌟 修复 2：首次上榜时，初始位置强制锁定在视口的最底部，防止乱挤
             myStartLogicalIndex = totalOthers;
-        } 
-        else 
+        }
+        else
         {
             for (int i = 0; i < totalOthers; i++) {
                 // 同样的同分比对逻辑应用在初始排布上
-                if (surpassedPlayers[i].Score > oldScore || 
-                    (surpassedPlayers[i].Score == oldScore && surpassedPlayers[i].Rank < oldRank)) 
+                if (surpassedPlayers[i].Score > oldScore ||
+                    (surpassedPlayers[i].Score == oldScore && surpassedPlayers[i].Rank < oldRank))
                 {
                     myStartLogicalIndex++;
                 }
@@ -402,22 +471,22 @@ private void ResetUIForReplay()
         if (viewportMask != null)
         {
             bool isLastPosition = (myTargetLogicalIndex == totalOthers); // 当前自己在整个界面的最后一个
-            viewportMask.softness = (newRank == 1 || isLastPosition) 
-                ? new UnityEngine.Vector2Int(0, 0) 
+            viewportMask.softness = (newRank == 1 || isLastPosition)
+                ? new UnityEngine.Vector2Int(0, 0)
                 : new UnityEngine.Vector2Int(0, 110);
         }
-        // if (isDown) myStartLogicalIndex = 0;         
-        // if (isDown) tagSlot = myTargetLogicalIndex;   
+        // if (isDown) myStartLogicalIndex = 0;
+        // if (isDown) tagSlot = myTargetLogicalIndex;
         // 定义标签专属的“微小间隙”，不再粗暴占用一整格(120像素)
         // float tagHeightOffset = 70f; // 这个值控制垫背玩家往下让出的距离，可微调
         // float tagHeight = cachedUpTag != null ? cachedUpTag.GetComponent<RectTransform>().sizeDelta.y : 0f;
         // float gap = 20f;   // 标签与条目之间的垂直间隙，可微调
         // 补全给标签让位的空间 (+= 2)
-        float GetSlotY(int index, bool isPlayer, bool isStart) 
+        float GetSlotY(int index, bool isPlayer, bool isStart)
         {
             int slot;
             // float extraY = 0f;
-            if (isStart) 
+            if (isStart)
             {
                 // 初始状态排布
                 if (isPlayer) {
@@ -428,7 +497,7 @@ private void ResetUIForReplay()
                     else slot = index;
                 }
             }
-            else 
+            else
             {
                 // 下降或不变时，不需要任何换位动画，直接输出最终正确的排布结构
                 if (isPlayer) slot = myTargetLogicalIndex;
@@ -451,20 +520,20 @@ private void ResetUIForReplay()
             otherPlayersPool[i].GetComponent<RectTransform>().anchoredPosition = new Vector2(0, GetSlotY(i, false, true));
         }
         contentRect.anchoredPosition = Vector2.zero;
-        // float centerOffset = itemSpacing * 1.5f; 
+        // float centerOffset = itemSpacing * 1.5f;
         // float initialContentY = Mathf.Abs(myRect.anchoredPosition.y) - centerOffset;
         // //  如果算出负数，强制设为 0，保证刚打开面板时，顶部的人完美贴顶没有空隙
-        // if (initialContentY < 0) initialContentY = 0; 
+        // if (initialContentY < 0) initialContentY = 0;
         // contentRect.anchoredPosition = new Vector2(0, initialContentY);
         mainCanvasGroup.DOFade(1f, 0.3f);
-        yield return delayWait; 
+        yield return delayWait;
 
         // =====================================
         // 5. 动画播放序列
         // =====================================
         currentSequence = DOTween.Sequence();
         currentSequence.SetUpdate(true);
-        
+
         // ----------------------------------------------------
         // [阶段 1]: 莲花飞入与分数上涨
         // ----------------------------------------------------
@@ -479,7 +548,7 @@ private void ResetUIForReplay()
             float popDuration = 0.08f;
             float flightDuration = 0.3f;   // 飞行与滚动同步时长（加快）
             float lotusInterval = 0.15f;
-            
+
             // ========== 1. 从对象池取出 5 朵莲花，并水平排列 ==========
             List<RectTransform> lotusList = new List<RectTransform>();
             for (int i = 0; i < lotusCount; i++)
@@ -489,19 +558,19 @@ private void ResetUIForReplay()
                 lotusList.Add(lotus);
             }
             float phase1Start = currentSequence.Duration();
-            
+
             // 目标散落点 (以分数为中心的相对偏移)
             Vector2[] fannedFinalTargetsRel = new Vector2[] {
                 new Vector2(-15f, 30f),
                 new Vector2(0f, 20f),
-                new Vector2(15f, 0f), 
+                new Vector2(15f, 0f),
                 new Vector2(0f, -20f),
                 new Vector2(-15f, -30f)
             };
             RectTransform scoreLotusLocalPos = myRankItem.ScoreText.transform.parent.parent.GetChild(0).GetComponent<RectTransform>();
             // 如果分数文本的父物体不是 contentRect，需要转换一次，但一般情况下它是 myRect 的子物体，所以需要转换：
             Vector2 scoreLotusLocalInContent = contentRect.InverseTransformPoint(scoreLotusLocalPos.position);
-            
+
             for (int i = 0; i < lotusCount; i++)
             {
                 // 本次增加量（最后一次加上余数）
@@ -509,12 +578,12 @@ private void ResetUIForReplay()
                 int nextScore = currentScore + addThisStep;
                 int stepStart = currentScore;
                 int stepEnd = nextScore;
-                
+
                 RectTransform lotusI = lotusList[i];
                 float itemStart = phase1Start + (i * lotusInterval); // 计算每朵莲花出现的绝对时间
                 // ================= 核心修复：纯局部坐标系 (Local Space) 计算 =================
                 Vector2 itemBasePos = myRect.anchoredPosition;
-            
+
                 // 1. 起点：玩家条目偏左的位置，并在 Y 轴上散开 (制造排队飞出的感觉)
                 Vector2 originLocal = itemBasePos + new Vector2(lotusOffsetX + 50f, (i - 2) * 3f - 20f);
                 originLocal = originLocal + fannedFinalTargetsRel[i];
@@ -522,13 +591,13 @@ private void ResetUIForReplay()
                 Vector2 targetCenterLocal = scoreLotusLocalInContent;
                 Vector2 targetLocal =
                     targetCenterLocal + new Vector2(Random.Range(-2f, 2f), Random.Range(-2f, 2f) + 25f);
-            
+
                 // 3. 控制点：在上空画一个抛物线弧度
                 Vector2 controlLocal = itemBasePos + new Vector2(lotusOffsetX +60f, 20f + Mathf.Abs(i - 2) * 5f);
-            
+
                 // 对于 CatmullRom 曲线，仅需要传入起点之后的路径点
                 Vector3[] pathPoints = new Vector3[] { controlLocal, targetLocal };
-                
+
                 // =====================================================================
                 currentSequence.InsertCallback(itemStart,() =>
                 {
@@ -539,18 +608,18 @@ private void ResetUIForReplay()
                     lotusI.anchoredPosition = originLocal; // Set starting absolute position
                     // lotusI.anchoredPosition = new Vector2(myRect.anchoredPosition.x + lotusOffsetX + (i * 8f), myRect.anchoredPosition.y);
                     lotusI.gameObject.SetActive(true);
-                    
+
                     // 打印调试信息
                     Debug.Log($"[Lotus {i}] originLocal={originLocal}  |  targetLocal={targetLocal}  |scoreLotusLocalInContent={scoreLotusLocalInContent}|  myRect.anchoredPosition={myRect.anchoredPosition}  |  lotusI.anchoredPosition={lotusI.anchoredPosition}  |  lotusI.worldPos={lotusI.position}  |  myRect.worldPos={myRect.position}");
-              
+
                 });
-                
+
                 currentSequence.Insert(itemStart,lotusI.DOScale(Vector3.one, popDuration).SetEase(Ease.OutBack));
                 float flyStart = itemStart + popDuration;
                 Tween flyAnim = lotusI.DOLocalPath(pathPoints, flightDuration,PathType.CatmullRom).SetEase(Ease.OutQuad);
                 currentSequence.Insert(flyStart, flyAnim);
                 // currentSequence.Insert(flyStart, lotusI.DORotate(new Vector3(0f, 0f, (i - 2) * 25f), flightDuration));
-                
+
                 // 使用 Join 让数字滚动与飞行同时发生、同时结束
                 currentSequence.Insert(flyStart,DOVirtual.Float(stepStart, stepEnd, flightDuration, (v) =>
                 {
@@ -589,7 +658,7 @@ private void ResetUIForReplay()
         // 增加“是否需要物理换位”的判定
         // 如果分数超越了对手导致插槽发生变化，即使名次数字没变，也必须强制播放换位动画！
         bool needMove = (myStartLogicalIndex != myTargetLogicalIndex);
-        
+
         if (totalOthers > 0 && (isUp || needMove))
         {
             // [阶段 2]: 提层级、放大
@@ -597,14 +666,14 @@ private void ResetUIForReplay()
                 myRect.SetAsLastSibling(); // 提升到最顶层，绝对覆盖其他人
             });
             // 先放大，产生飞起来超越的感觉
-            currentSequence.Append(myRect.DOScale(1.15f, 0.35f).SetEase(Ease.OutBack)); 
+            currentSequence.Append(myRect.DOScale(1.15f, 0.35f).SetEase(Ease.OutBack));
             currentSequence.AppendInterval(0.1f);
-            
+
             // [阶段 3]: 获取此时时间轴点，开始同步滚动换位
             // currentSequence.AppendInterval(0.2f);
-            float moveStartTime = currentSequence.Duration(); 
+            float moveStartTime = currentSequence.Duration();
             float moveDuration = 1.3f; // 干脆的超越速度
-            
+
             if (isUp)
             {
                 if (oldRank > 0)
@@ -614,10 +683,10 @@ private void ResetUIForReplay()
                         int currentTempRank = Mathf.RoundToInt(v);
                         if (myRankItem.RankText != null) myRankItem.RankText.text = currentTempRank.ToString();
                         myRankItem.UpdateRankVisual(currentTempRank, true);
-                    }).SetEase(Ease.Linear)); 
+                    }).SetEase(Ease.Linear));
                 }
                 // 兜底：如果之前没上榜(oldRank<=0)，给个虚拟的起始大名次让它往下滚
-                // int startVisualRank = oldRank > 0 ? oldRank : newRank + surpassedPlayers.Count; 
+                // int startVisualRank = oldRank > 0 ? oldRank : newRank + surpassedPlayers.Count;
                 //
                 // currentSequence.Insert(moveStartTime, DOVirtual.Float(startVisualRank, newRank, moveDuration, (v) => {
                 //     int currentTempRank = Mathf.RoundToInt(v);
@@ -625,33 +694,33 @@ private void ResetUIForReplay()
                 //     myRankItem.UpdateRankVisual(currentTempRank, true);
                 // }).SetEase(Ease.Linear)); // 线性变化，仿佛一层层突破
             }
-            
+
             // 别人让位
             for (int i = 0; i < totalOthers; i++) {
                 float targetOtherY = GetSlotY(i, false, false);
                 currentSequence.Insert(moveStartTime, otherPlayersPool[i].GetComponent<RectTransform>().DOAnchorPosY(targetOtherY, moveDuration).SetEase(Ease.InOutCubic));
             }
-      
+
             // 自己往前飞：延迟 0.15s 再开始，时长为 1.8s，并伴随放大效果
             float myDelay = 0.15f;
             targetMyY = GetSlotY(myTargetLogicalIndex, true, false);
             currentSequence.Insert(moveStartTime+ myDelay, myRect.DOAnchorPosY(targetMyY, moveDuration).SetEase(Ease.OutCubic));
-            
+
             // --- 核心改动：Content 的跟随滚动与第一名防挡判定 ---
-            // float targetContentY = Mathf.Abs(targetMyY) - itemSpacing * 1.5f; 
+            // float targetContentY = Mathf.Abs(targetMyY) - itemSpacing * 1.5f;
             // if (targetContentY < 0) targetContentY = 10; // 不再为第一名或最后一名强制留出顶部/底部异常的空位
-            // if (newRank == 1) 
+            // if (newRank == 1)
             // {
             //     // 第一名：允许 Content Y 出现负数(往下扯)，在顶部留出约一个身位的距离，避免被透明虚化挡住
-            //     targetContentY = Mathf.Abs(targetMyY) - itemSpacing * 0.4f; 
-            // } 
-            // else 
+            //     targetContentY = Mathf.Abs(targetMyY) - itemSpacing * 0.4f;
+            // }
+            // else
             // {
             //     // 其他名次：保证上下边界不留出奇怪的空白 (限制不小于0)
-            //     if (targetContentY < 0) targetContentY = 0; 
+            //     if (targetContentY < 0) targetContentY = 0;
             // }
             // currentSequence.Insert(moveStartTime, contentRect.DOAnchorPosY(targetContentY, moveDuration).SetEase(Ease.InOutQuad));
-            
+
             // 放大覆盖动画：在移动开始前提升层级，移动期间放大，落位后缩回
             currentSequence.InsertCallback(moveStartTime + moveDuration - 0.05f, () =>
             {
@@ -665,14 +734,14 @@ private void ResetUIForReplay()
             {
                 for (int i = 0; i < totalOthers; i++) {
                     ZenRankState p = surpassedPlayers[i];
-                    if (isUp && p.Rank > newRank && (oldRank <= 0 || p.Rank <= oldRank)) 
+                    if (isUp && p.Rank > newRank && (oldRank <= 0 || p.Rank <= oldRank))
                     {
                         // 恢复他们真实的（被挤下后的）名次
-                        if (otherPlayersPool[i].RankText != null) 
+                        if (otherPlayersPool[i].RankText != null)
                             otherPlayersPool[i].RankText.text = p.Rank.ToString();
-                
+
                         otherPlayersPool[i].UpdateRankVisual(p.Rank, true);
-                
+
                         // 加上重重落地的震颤感
                         if (otherPlayersPool[i].RankText != null) {
                             otherPlayersPool[i].RankText.transform.DOPunchScale(new Vector3(0.4f, 0.4f, 0), 0.3f, 10, 1f);
@@ -695,7 +764,7 @@ private void ResetUIForReplay()
             // 抬起：Y轴向上偏移 25 像素，同时放大
             currentSequence.Insert(moveStartTime, myRect.DOAnchorPosY(origY + 12f, 0.35f).SetEase(Ease.OutCubic));
             currentSequence.Insert(moveStartTime, myRect.DOScale(1.12f, 0.35f).SetEase(Ease.OutBack));
-   
+
             // 原地等待 0.2s 之后落下
             float dropTime = moveStartTime + 0.35f + 0.2f;
             currentSequence.InsertCallback(dropTime - 0.05f, () => {
@@ -705,7 +774,7 @@ private void ResetUIForReplay()
             // 落下
             currentSequence.Insert(dropTime, myRect.DOAnchorPosY(origY, 0.3f).SetEase(Ease.InCubic));
             currentSequence.Insert(dropTime, myRect.DOScale(1f, 0.3f).SetEase(Ease.InBack));
-           
+
             // 落下后播放发光框特效
             currentSequence.InsertCallback(dropTime + 0.3f, () => {
                 if (glowFrame != null) {
@@ -719,7 +788,7 @@ private void ResetUIForReplay()
                     // glowFrame.DOScale(Vector3.one, 0.4f).SetEase(Ease.OutBounce);
                 }
             });
-            
+
             // 填充序列长度
             currentSequence.InsertCallback(dropTime + 0.3f + 0.4f, () => {});
         }
@@ -745,7 +814,7 @@ private void ResetUIForReplay()
         //     // 落下
         //     currentSequence.Insert(dropTime, myRect.DOAnchorPosY(origY, 0.3f).SetEase(Ease.InCubic));
         //     currentSequence.Insert(dropTime, myRect.DOScale(1f, 0.3f).SetEase(Ease.InBack));
-        //    
+        //
         //     // 落下后播放发光框特效
         //     currentSequence.InsertCallback(dropTime + 0.3f, () => {
         //         if (glowFrame != null) {
@@ -758,7 +827,7 @@ private void ResetUIForReplay()
         //             glowFrame.localScale = Vector3.one;
         //         }
         //     });
-        //     
+        //
         //     // 填充序列长度
         //     currentSequence.InsertCallback(dropTime + 0.3f + 0.4f, () => {});
         // }
@@ -772,7 +841,7 @@ private void ResetUIForReplay()
         }
 
         // 6. 爆出标签和特效
-        currentSequence.AppendCallback(() => 
+        currentSequence.AppendCallback(() =>
         {
             if (isUp)
             {
@@ -821,7 +890,7 @@ private void ResetUIForReplay()
             //     }
             // }
         });
-        
+
         // 只有上升段位才展示挂牌
         if (isUp)
         {
@@ -835,7 +904,7 @@ private void ResetUIForReplay()
             {
                 string desc = MultilingualManager.Instance.GetString("WellDone");
                 int rankDiff =  oldRank - newRank;
-                topBannerText.text = string.Format(desc, rankDiff); // 展示提升了几个名次 
+                topBannerText.text = string.Format(desc, rankDiff); // 展示提升了几个名次
             }
             currentSequence.Append(topBanner.DOAnchorPosY(0f, 0.4f).SetEase(Ease.OutBack));
         }
@@ -847,26 +916,26 @@ private void ResetUIForReplay()
         continueBtn.transform.DOScale(1.05f, 0.8f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
 
         isAnimating = false;
-        
+
         // 【新增自动跑关检测】
         if (GameCoreManager.Instance.IsTrueAuto)
         {
             // 停顿0.5秒让视觉有一个缓冲（可根据需要调整时间）
-            yield return new WaitForSeconds(0.5f); 
+            yield return new WaitForSeconds(0.5f);
             OnClickContinue(); // 自动调用点击继续
         }
     }
-    
+
     // ==========================================
     // 👆 交互控制
     // ==========================================
     public void OnClickContinue()
     {
         if (isAnimating) return; // 动画未播完严禁关闭
-        
+
         // 停止按钮动画
         continueBtn.transform.DOKill();
-        
+
         // 关闭当前变动页面，去往真正的发奖结算界面
         SystemManager.Instance.HidePanel(PanelType.ZenRankChangePanel);
     }
@@ -882,17 +951,17 @@ private void ResetUIForReplay()
             if (myRankItem.ScoreText != null) myRankItem.ScoreText.transform.DOKill();
         }
         foreach (var p in otherPlayersPool) { p.GetComponent<RectTransform>()?.DOKill(); }
-        
+
         // 🌟 注销事件
         if (ZenRankManager.Instance != null)
             ZenRankManager.Instance.OnRankTimerTick -= UpdateTimerUI;
-        
+
         topBanner.DOKill();
         glowFrame.DOKill();
         // if (cachedUpTag != null) cachedUpTag.transform.DOKill();
         // if (cachedDownTag != null) cachedDownTag.transform.DOKill();
-        continueBtn.transform.DOKill(); 
-    
+        continueBtn.transform.DOKill();
+
         base.OnDisable();
     }
     //  更新 UI
@@ -900,7 +969,7 @@ private void ResetUIForReplay()
     {
         if (zenTimeText != null) zenTimeText.text = timeStr;
     }
-    
+
     #if UNITY_EDITOR
     // ==========================================
     // 🧪 开发者测试区 (右键点击脚本组件运行)
@@ -949,7 +1018,7 @@ private void ResetUIForReplay()
         // oldRank: 2, newRank: 6, oldScore: 500, newScore: 500 (分数没变，但别人涨了)
         PlayRankChange(2, 6, 500, 500, "ZenState01", "枯淡界", 3600, mockPlayers);
     }
-    
+
     [ContextMenu("▶ 测试: 首次进榜 (未上榜 -> 99名)")]
     public void TestFirstTimeRank()
     {

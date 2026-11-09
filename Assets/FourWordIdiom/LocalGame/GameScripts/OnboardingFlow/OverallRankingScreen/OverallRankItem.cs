@@ -82,8 +82,9 @@ public class OverallRankItem : MonoBehaviour
         _playerId = state.PlayerId; // 记录PlayerId
         _isDisplayOnly = isDisplayOnly; // 存下来，留给点击头像时判断使用
         currentRank = state.Rank;
-        isMe = !string.IsNullOrEmpty(GameDataManager.Instance.UserData.PlayerId) && 
-               state.PlayerId == int.Parse(GameDataManager.Instance.UserData.PlayerId);
+        // ★ PlayerId 未登录时为 null、也可能是非数字串 → 用 GetPlayerIdInt 兜底，避免 int.Parse 抛异常
+        UserData myUser = GameDataManager.Instance.UserData;
+        isMe = !string.IsNullOrEmpty(myUser.PlayerId) && state.PlayerId == myUser.GetPlayerIdInt();
         Button boxBtn = boxReward.GetComponent<Button>();
         if (boxBtn != null)
         {

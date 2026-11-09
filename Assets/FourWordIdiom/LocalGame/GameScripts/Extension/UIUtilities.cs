@@ -141,7 +141,7 @@ public static class UIUtilities
         float curscreenRatio = Screen.width/(float)Screen.height;
 
         float scale = curscreenRatio / baseRatio;
-        Debug.Log("屏幕缩放比例："+scale);
+        //Debug.Log("屏幕缩放比例："+scale);
         return scale;
     }
       

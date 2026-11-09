@@ -224,6 +224,194 @@ public partial class ShopManager : MonoBehaviour
         pendingGiftPopupItem = null;
         pendingGiftPopupMode = GiftPopupMode.None;
         pendingGiftPopupEndTime = System.DateTime.MinValue;
+
+        // 加赠金币跟着弹窗走：弹窗关了没买，赠品也要作废
+        _pendingGiftBonusPackId = null;
+        _pendingGiftBonusGold = 0;
+    }
+
+    // ---- 复购礼包「加量不加价」的加赠金币（只对弹窗里卖出的那一单生效）----
+
+    /// <summary>待生效的加赠金币对应礼包 produceNameId</summary>
+    private string _pendingGiftBonusPackId;
+
+    /// <summary>待生效的加赠金币数量</summary>
+    private int _pendingGiftBonusGold;
+
+    /// <summary>
+    /// 登记「这个礼包这一单要额外加赠 N 金币」。
+    /// 注意：不去改商店里的真实 ShopDataItem（以前 AddPackBonus 直接往 productContent 里塞，
+    /// 弹两次就叠两遍，而且之后从商店正常买也会白送金币）。
+    /// </summary>
+    public void SetPendingGiftBonus(string packProduceNameId, int bonusGold)
+    {
+        _pendingGiftBonusPackId = bonusGold > 0 ? packProduceNameId : null;
+        _pendingGiftBonusGold = bonusGold > 0 ? bonusGold : 0;
+        LogShop($"SetPendingGiftBonus: pack={packProduceNameId}, bonusGold={bonusGold}");
+    }
+
+    /// <summary>取出并清空该礼包的加赠金币（购买成功时用；不匹配返回 0）。</summary>
+    public int ConsumePendingGiftBonus(string packProduceNameId)
+    {
+        if (_pendingGiftBonusGold <= 0) return 0;
+        if (string.IsNullOrEmpty(packProduceNameId) || _pendingGiftBonusPackId != packProduceNameId) return 0;
+
+        int bonus = _pendingGiftBonusGold;
+        _pendingGiftBonusPackId = null;
+        _pendingGiftBonusGold = 0;
+        LogShop($"ConsumePendingGiftBonus: pack={packProduceNameId}, +{bonus} 金币");
+        return bonus;
+    }
+
+    /// <summary>
+    /// 当前弹窗里这个礼包的加赠金币（不做消耗，给界面展示用；例如 AdsDiscountScreen 的 GiftAddItem）。
+    /// </summary>
+    public int GetPendingGiftBonus(string packProduceNameId)
+    {
+        if (_pendingGiftBonusGold <= 0) return 0;
+        if (string.IsNullOrEmpty(packProduceNameId) || _pendingGiftBonusPackId != packProduceNameId) return 0;
+        return _pendingGiftBonusGold;
+    }
+
+    /// <summary>
+    /// 把「加赠金币」并进礼包里已有的金币条目（加量不加价）。
+    /// ★ 不再新增一条内容：礼包本来 7 个奖励，多加一条会变成 8 个奖励项（初心礼包的问题）。
+    /// 礼包里完全没有金币条目时才新增一条。
+    /// </summary>
+    public static void MergeBonusGoldIntoContent(ShopDataItem item, int bonusGold)
+    {
+        if (item == null || bonusGold <= 0) return;
+
+        if (item.productContent == null)
+            item.productContent = new List<List<string>>();
+
+        foreach (var entry in item.productContent)
+        {
+            if (entry == null || entry.Count < 2) continue;
+
+            int type;
+            if (!int.TryParse(entry[0], out type) || type != (int)LimitRewordType.Coins) continue;
+
+            int count;
+            int.TryParse(entry[1], out count);
+            entry[1] = (count + bonusGold).ToString();
+            return;
+        }
+
+        // 礼包里没有金币条目 → 只能单独加一条
+        item.productContent.Add(new List<string>
+        {
+            ((int)LimitRewordType.Coins).ToString(), bonusGold.ToString()
+        });
+    }
+
+    // ======================= 结算页礼包入口（破冰 / 复购按钮） =======================
+
+    /// <summary>结算页礼包类型。</summary>
+    public enum SettlementGiftKind
+    {
+        None = 0,
+        BreakIce = 1,     // 破冰礼包（去广告一周）
+        Repurchase = 2    // 限时折扣礼包（复购/升层）
+    }
+
+    /// <summary>
+    /// 当前结算页可售的礼包类型。
+    /// 结算策略（TryShowBreakIcePopup / TryShowRepurchasePopup）决定后登记在这里，
+    /// 结算页据此显示「破冰礼包 / 限时折扣礼包」按钮；弹窗被关掉也能用按钮再次打开。
+    /// </summary>
+    public SettlementGiftKind CurrentSettlementGift { get; private set; } = SettlementGiftKind.None;
+
+    /// <summary>登记的结算页礼包（展示用副本，含加赠金币）</summary>
+    private ShopDataItem _settlementGiftItem;
+
+    private System.DateTime _settlementGiftEndTime = System.DateTime.MinValue;
+    private int _settlementGiftBonusGold;
+    private string _settlementGiftBonusPackId;
+
+    /// <summary>结算页是否指定类型（破冰 / 复购）的礼包可售。</summary>
+    public bool HasSettlementGift(SettlementGiftKind kind)
+    {
+        return kind != SettlementGiftKind.None && CurrentSettlementGift == kind;
+    }
+
+    /// <summary>
+    /// 登记结算页礼包并立刻弹出 AdsDiscountScreen。
+    /// 调用方：TryShowBreakIcePopup（破冰）/ ShowRepurchasePopup（复购）。
+    /// </summary>
+    public void ShowSettlementGift(SettlementGiftKind kind, ShopDataItem displayItem, System.DateTime endTime,
+                                   int bonusGold = 0, string bonusPackId = null)
+    {
+        if (displayItem == null)
+        {
+            LogShop($"ShowSettlementGift 跳过: 礼包为空 (kind={kind})");
+            return;
+        }
+
+        CurrentSettlementGift = kind;
+        _settlementGiftItem = displayItem;
+        _settlementGiftEndTime = endTime;
+        _settlementGiftBonusGold = bonusGold;
+        _settlementGiftBonusPackId = bonusPackId;
+
+        LogShop($"ShowSettlementGift: 登记结算页礼包 kind={kind}, item={displayItem.produceNameId}, " +
+                $"endTime={(endTime == System.DateTime.MinValue ? "无限时" : endTime.ToString("yyyy-MM-dd HH:mm:ss"))}, 加赠={bonusGold}");
+
+        OpenSettlementGiftPopup();
+    }
+
+    /// <summary>
+    /// 结算页礼包按钮点击：用登记过的数据再次打开弹窗（弹窗关掉也能重开）。
+    /// </summary>
+    public void OpenSettlementGiftPopup()
+    {
+        if (CurrentSettlementGift == SettlementGiftKind.None || _settlementGiftItem == null)
+        {
+            LogShop("OpenSettlementGiftPopup 跳过: 当前结算页没有可售礼包");
+            return;
+        }
+
+        GiftPopupMode mode = CurrentSettlementGift == SettlementGiftKind.BreakIce
+            ? GiftPopupMode.BreakIce
+            : GiftPopupMode.Repurchase;
+
+        SetPendingGiftPopup(_settlementGiftItem, mode, _settlementGiftEndTime);
+        SetPendingGiftBonus(_settlementGiftBonusPackId, _settlementGiftBonusGold);
+
+        if (SystemManager.Instance != null)
+            SystemManager.Instance.ShowPanel(PanelType.AdsDiscountScreen);
+
+        LogShop($"OpenSettlementGiftPopup: kind={CurrentSettlementGift}, item={_settlementGiftItem.produceNameId}");
+    }
+
+    /// <summary>清空结算页礼包登记（换结算 / 已购买 / 离开结算页）。</summary>
+    public void ClearSettlementGift(string reason)
+    {
+        if (CurrentSettlementGift == SettlementGiftKind.None) return;
+
+        CurrentSettlementGift = SettlementGiftKind.None;
+        _settlementGiftItem = null;
+        _settlementGiftEndTime = System.DateTime.MinValue;
+        _settlementGiftBonusGold = 0;
+        _settlementGiftBonusPackId = null;
+
+        LogShop($"ClearSettlementGift: {reason}");
+    }
+
+    /// <summary>
+    /// 结算页登记礼包的限时截止时间（结算页按钮倒计时用）。
+    /// 没有登记 / 该礼包没有倒计时 → DateTime.MinValue。
+    /// </summary>
+    public System.DateTime GetSettlementGiftEndTime()
+    {
+        if (CurrentSettlementGift == SettlementGiftKind.None) return System.DateTime.MinValue;
+        return _settlementGiftEndTime;
+    }
+
+    /// <summary>结算页登记礼包的 ID（日志 / 排查用）。</summary>
+    public string GetSettlementGiftPackId()
+    {
+        return _settlementGiftItem != null ? _settlementGiftItem.produceNameId : string.Empty;
     }
 
     private Dictionary<int, ShopLimitData> shoplimitDatas = new Dictionary<int, ShopLimitData>();
@@ -1295,10 +1483,49 @@ public partial class ShopManager : MonoBehaviour
         return hour >= PeakHourStart && hour < PeakHourEnd;
     }
 
+    /// <summary>上次打印流失回归日志的结论（只在结论变化时打印，避免每个礼包刷一条）。</summary>
+    private bool? _lastChurnReturnLogged;
+
+    /// <summary>
+    /// 「流失回归」判定：最近 ChurnReturnDays(7) 天未登录。
+    ///
+    /// ★ 不能用 UserData.logoutTime 直接判断：`UserData.SaveData()` 每次存档都会把 logoutTime 刷成"现在"，
+    ///   玩家回归后只要触发一次自动存档（进关/购买/切后台…），间隔就变成 0，
+    ///   回归权重从此变成 0 且整次会话不再恢复 —— 这正是"成功触发一次之后，再次满足条件也没有权重"的原因。
+    ///
+    /// 现在用两个来源取或：
+    ///   ① GameDataManager.SessionLogoutTime：启动/应用服务器存档时抓的「上次离开时间」快照（整次会话不变）；
+    ///   ② 当前 logoutTime：覆盖"App 一直挂在后台好几天"的情况（切后台时会存档，此时它=离开时间）。
+    /// 只要其中一个间隔 ≥ 7 天就算回归，不会因为后续存档把已生效的权重冲掉。
+    /// </summary>
     private bool IsChurnReturn()
     {
-        DateTime lastLogin = DateTime.Parse(GameDataManager.Instance.UserData.logoutTime);
-        return lastLogin != default && (DateTime.Now - lastLogin).TotalDays >= ChurnReturnDays;
+        DateTime now = DateTime.Now;
+
+        DateTime snapshotLogout = GameDataManager.SessionLogoutTime;
+        DateTime currentLogout;
+        if (!DateTime.TryParse(GameDataManager.Instance?.UserData?.logoutTime, out currentLogout))
+            currentLogout = DateTime.MinValue;
+
+        double snapshotDays = snapshotLogout == DateTime.MinValue ? 0 : (now - snapshotLogout).TotalDays;
+        double currentDays = currentLogout == DateTime.MinValue ? 0 : (now - currentLogout).TotalDays;
+
+        bool isReturn = snapshotDays >= ChurnReturnDays || currentDays >= ChurnReturnDays;
+
+        if (_lastChurnReturnLogged != isReturn)
+        {
+            _lastChurnReturnLogged = isReturn;
+            LogShop($"[权重] 流失回归: 启动前离开={FormatTime(snapshotLogout)}({snapshotDays:F1}天前), " +
+                    $"当前 logoutTime={FormatTime(currentLogout)}({currentDays:F1}天前), " +
+                    $"阈值={ChurnReturnDays}天 → {isReturn}");
+        }
+
+        return isReturn;
+    }
+
+    private static string FormatTime(DateTime t)
+    {
+        return t == DateTime.MinValue ? "无" : t.ToString("yyyy-MM-dd HH:mm");
     }
 
     private float GetCooldownCoefficient(ShopDataItem item)
@@ -1671,16 +1898,220 @@ public partial class ShopManager : MonoBehaviour
             && item.type == 2;
     }
 
+    // ======================= 复购策略的本地记录（bug54） =======================
+    // 说明：以前这几个数据（最近购买礼包A / 支付调起次数 / 上次弹窗时间）都只存在运行时字段里，
+    //      玩家杀进程或换一局就全丢 → 结算页永远凑不齐条件，"IAP 层推送礼包不触发"。
+
+    private const string PrefRepurchaseLastPack = "shop_repurchase_last_pack";
+    private const string PrefRepurchaseLastPopupTime = "shop_repurchase_last_popup_time";
+    private const string PrefRepurchaseLastPopupEnd = "shop_repurchase_last_popup_end";
+    private const string PrefRepurchaseLastOfferPack = "shop_repurchase_last_offer_pack";
+    private const string PrefPayInvokePrefix = "shop_pay_invoke_";
+
+    // 破冰礼包：冷却起点（倒计时结束时间）+ 已展示次数（决定冷却 7/10/13 天）
+    private const string PrefBreakIceCooldownStart = "shop_breakice_cooldown_start";
+    private const string PrefBreakIceCount = "shop_breakice_count";
+
+    /// <summary>
+    /// 清空「复购 / 破冰礼包」推送用到的**全部**本地记录与运行时状态（GM 重置存档时调用）。
+    ///
+    /// 这些数据都存在 PlayerPrefs 里（礼包A、支付调起次数、弹窗倒计时截止时间、破冰冷却与次数），
+    /// 而 `GameDataManager.WipeAllGameData()` 只删 persistentDataPath 下的存档文件，删不到 PlayerPrefs，
+    /// 所以重置存档后复购/破冰的倒计时、冷却、已弹次数都还会残留。
+    /// </summary>
+    public void ClearPromotionLocalData(string reason = "清理推广弹窗数据")
+    {
+        PlayerPrefs.DeleteKey(PrefRepurchaseLastPack);
+        PlayerPrefs.DeleteKey(PrefRepurchaseLastPopupTime);
+        PlayerPrefs.DeleteKey(PrefRepurchaseLastPopupEnd);
+        PlayerPrefs.DeleteKey(PrefRepurchaseLastOfferPack);
+        PlayerPrefs.DeleteKey(PrefBreakIceCooldownStart);
+        PlayerPrefs.DeleteKey(PrefBreakIceCount);
+
+        // 支付调起次数是「一个礼包一个 key」，按当前礼包表逐个删
+        for (int i = 0; i < allShopItems.Count; i++)
+        {
+            ShopDataItem item = allShopItems[i];
+            if (item == null || string.IsNullOrEmpty(item.produceNameId)) continue;
+            PlayerPrefs.DeleteKey(PrefPayInvokePrefix + item.produceNameId);
+        }
+
+        PlayerPrefs.Save();
+
+        // 运行时状态
+        _lastPurchasedPack = null;
+        if (_payInvokeCount != null) _payInvokeCount.Clear();
+        _lastBreakIcePopupTime = DateTime.MinValue;
+        _breakIceCountCache = -1;          // 下次读会重新从 PlayerPrefs 取（已删 = 0）
+
+        // 结算页礼包登记 / 待弹窗数据 / 共享 1 号位决策
+        ClearSettlementGift(reason);
+        ClearPendingGiftPopup();
+        ResetSlot1Decision(reason);
+
+        LogShop($"[推广] 已清理复购/破冰本地数据与运行时状态: {reason}");
+    }
+
+    /// <summary>
+    /// 破冰礼包本轮冷却的起点：上次弹窗的「倒计时结束时间」
+    /// （非周末/节假日弹出、没有倒计时时，退化为弹窗时刻）。
+    /// </summary>
+    public DateTime GetBreakIceCooldownStart()
+    {
+        string s = PlayerPrefs.GetString(PrefBreakIceCooldownStart, "");
+        DateTime t;
+        return DateTime.TryParse(s, out t) ? t : DateTime.MinValue;
+    }
+
+    /// <summary>记录破冰礼包本次展示：冷却起点 + 累计次数（本地持久化）。</summary>
+    public void SaveBreakIcePopupState(DateTime cooldownStart, int popupCount)
+    {
+        PlayerPrefs.SetString(PrefBreakIceCooldownStart, cooldownStart.ToString("yyyy-MM-dd HH:mm:ss"));
+        PlayerPrefs.SetInt(PrefBreakIceCount, popupCount);
+        PlayerPrefs.Save();
+
+        int cooldownDays = BreakIceCooldownBaseDays + popupCount * BreakIceCooldownStepDays;
+        LogShop($"[破冰] 记录本次展示: 次数={popupCount}, 冷却起点（倒计时结束）={cooldownStart:yyyy-MM-dd HH:mm:ss}，" +
+                $"下次需间隔 {cooldownDays} 天");
+    }
+
+    /// <summary>记录「支付调起次数」（点击礼包、成功拉起系统支付但没完成购买时 +1），本地持久化。</summary>
     public void RecordPayInvoke(string produceNameId)
     {
-        _payInvokeCount[produceNameId] = GetPayInvokeCount(produceNameId) + 1;
-        LogShop($"RecordPayInvoke: {produceNameId}, 次数={_payInvokeCount[produceNameId]}");
+        if (string.IsNullOrEmpty(produceNameId)) return;
+
+        int c = GetPayInvokeCount(produceNameId) + 1;
+        _payInvokeCount[produceNameId] = c;
+
+        PlayerPrefs.SetInt(PrefPayInvokePrefix + produceNameId, c);
+        PlayerPrefs.Save();
+
+        LogShop($"[复购] 支付调起次数 {produceNameId} = {c}（已本地记录）");
     }
 
     public int GetPayInvokeCount(string produceNameId)
     {
+        if (string.IsNullOrEmpty(produceNameId)) return 0;
+
         int c;
-        return _payInvokeCount.TryGetValue(produceNameId, out c) ? c : 0;
+        if (_payInvokeCount.TryGetValue(produceNameId, out c)) return c;
+
+        c = PlayerPrefs.GetInt(PrefPayInvokePrefix + produceNameId, 0);
+        _payInvokeCount[produceNameId] = c;
+        return c;
+    }
+
+    /// <summary>
+    /// 记录「最近一次完成购买的商店礼包 A」。
+    /// 需求：不含金币商品和两个去广告商品 → 只记 type==2 的礼包，且排除去广告 SKU。
+    /// </summary>
+    private void SaveRepurchaseLastPack(ShopDataItem item)
+    {
+        if (item == null) return;
+        if (item.type != 2)
+        {
+            LogShop($"[复购] 不记录为礼包A（非礼包商品）: {item.produceNameId}, type={item.type}");
+            return;
+        }
+        if (IsRemoveAdsProduct(item.produceNameId))
+        {
+            LogShop($"[复购] 不记录为礼包A（去广告商品）: {item.produceNameId}");
+            return;
+        }
+
+        PlayerPrefs.SetString(PrefRepurchaseLastPack, item.produceNameId);
+        PlayerPrefs.Save();
+        LogShop($"[复购] 记录礼包A={item.produceNameId}(price={item.price}, giftType={item.giftType})");
+    }
+
+    /// <summary>取「最近一次完成购买的礼包 A」（优先本地记录，回退运行时记录 / 购买记录，兼容老存档）。</summary>
+    public ShopDataItem GetRepurchaseBasePack()
+    {
+        string id = PlayerPrefs.GetString(PrefRepurchaseLastPack, "");
+        ShopDataItem item = null;
+        if (!string.IsNullOrEmpty(id))
+            item = GetProduct(id) ?? FormAllItemsGetProduct(id);
+
+        if (item == null && _lastPurchasedPack != null)
+            item = _lastPurchasedPack;
+
+        // 兼容升级前的老存档：那时候没有本地记录，只能从购买记录（最新在前）里找最近一笔礼包
+        if (item == null)
+        {
+            var records = GameDataManager.Instance != null && GameDataManager.Instance.UserData != null
+                ? GameDataManager.Instance.UserData.purchaseRecords
+                : null;
+
+            if (records != null)
+            {
+                for (int i = 0; i < records.Count; i++)
+                {
+                    PurchaseRecord r = records[i];
+                    if (r == null || string.IsNullOrEmpty(r.produceNameId)) continue;
+                    if (IsRemoveAdsProduct(r.produceNameId)) continue;
+
+                    ShopDataItem p = GetProduct(r.produceNameId) ?? FormAllItemsGetProduct(r.produceNameId);
+                    if (p == null || p.type != 2) continue;
+
+                    item = p;
+                    LogShop($"[复购] 本地无记录，从购买记录回推礼包A={p.produceNameId}（{r.buyTime}）");
+                    break;
+                }
+            }
+        }
+
+        if (item == null)
+            LogShop($"[复购] 取礼包A失败：本地记录='{id}'，运行时记录={(_lastPurchasedPack != null ? _lastPurchasedPack.produceNameId : "null")}，购买记录也未命中");
+        else
+            LogShop($"[复购] 礼包A={item.produceNameId}(price={item.price}, giftType={item.giftType})，本地记录='{id}'");
+
+        return item;
+    }
+
+    /// <summary>上次复购弹窗时间（本地持久化，仅日志/排查用）。</summary>
+    public DateTime GetRepurchaseLastPopupTime()
+    {
+        string s = PlayerPrefs.GetString(PrefRepurchaseLastPopupTime, "");
+        DateTime t;
+        return DateTime.TryParse(s, out t) ? t : DateTime.MinValue;
+    }
+
+    /// <summary>记录本次复购弹窗时间（本地持久化）。</summary>
+    public void SaveRepurchaseLastPopupTime(DateTime time)
+    {
+        PlayerPrefs.SetString(PrefRepurchaseLastPopupTime, time.ToString("yyyy-MM-dd HH:mm:ss"));
+        PlayerPrefs.Save();
+        LogShop($"[复购] 记录弹窗时间 {time:yyyy-MM-dd HH:mm:ss}");
+    }
+
+    // ---- 冷却口径：从「弹窗倒计时结束」开始算 7 天（策划口径） ----
+    // 倒计时期间（Now < 上次倒计时结束）属于本次限时展示期内 → 继续展示；
+    // 倒计时结束后再过 7 天，才允许出新的复购弹窗。
+
+    /// <summary>上次复购弹窗的「倒计时结束时间」（本地持久化）。</summary>
+    public DateTime GetRepurchaseLastPopupEndTime()
+    {
+        string s = PlayerPrefs.GetString(PrefRepurchaseLastPopupEnd, "");
+        DateTime t;
+        return DateTime.TryParse(s, out t) ? t : DateTime.MinValue;
+    }
+
+    /// <summary>记录本次复购弹窗的倒计时结束时间 + 本次展示的礼包（本地持久化）。</summary>
+    public void SaveRepurchaseLastPopupEndTime(DateTime endTime, string packProduceNameId)
+    {
+        PlayerPrefs.SetString(PrefRepurchaseLastPopupEnd, endTime.ToString("yyyy-MM-dd HH:mm:ss"));
+        PlayerPrefs.SetString(PrefRepurchaseLastOfferPack, packProduceNameId ?? "");
+        PlayerPrefs.Save();
+        LogShop($"[复购] 记录本次展示: 礼包={packProduceNameId}, 倒计时结束={endTime:yyyy-MM-dd HH:mm:ss}；" +
+                $"该时间点之后需间隔 {RepurchaseCooldownDays} 天才有新弹窗");
+    }
+
+    /// <summary>上次展示的礼包（倒计时未结束时继续展示同一款，保持限时与加赠一致）。</summary>
+    public ShopDataItem GetRepurchaseLastOfferPack()
+    {
+        string id = PlayerPrefs.GetString(PrefRepurchaseLastOfferPack, "");
+        if (string.IsNullOrEmpty(id)) return null;
+        return GetProduct(id) ?? FormAllItemsGetProduct(id);
     }
 
     public void AddConversionFail(ShopDataItem item)
@@ -2059,7 +2490,15 @@ public partial class ShopManager : MonoBehaviour
             HandleUnlimitedEnergyPurchase(shopDataItem);
         }
 
+        // ★ bug54：复购弹窗的「加量不加价」加赠金币只对这一单生效（不污染商店里的商品数据）
+        int giftBonusGold = ConsumePendingGiftBonus(shopDataItem.produceNameId);
+
         Game.self.Shop.CurrentShopDataItem = shopDataItem.DeepCopy();
+        if (giftBonusGold > 0)
+        {
+            // 内购成功弹窗里也要看到这份加赠（并进已有金币条目，不新增奖励项）
+            MergeBonusGoldIntoContent(Game.self.Shop.CurrentShopDataItem, giftBonusGold);
+        }
         SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
 
         foreach (var dataitem in shopDataItem.productContent)
@@ -2094,6 +2533,13 @@ public partial class ShopManager : MonoBehaviour
                     Debug.LogWarning("购买成功：未处理的商品类型 type=" + type + " count=" + count);
                     break;
             }
+        }
+
+        // ★ bug54：复购礼包加赠金币（弹窗里卖出才有的那份）
+        if (giftBonusGold > 0)
+        {
+            GameDataManager.Instance.UserData.UpdateGold(giftBonusGold, false, false, "复购礼包加量不加价");
+            LogShop($"[复购] 已发放加赠金币 +{giftBonusGold}（{shopDataItem.produceNameId}）");
         }
 
         shopManager.paysuccess = true;
@@ -2271,7 +2717,14 @@ public partial class ShopManager : MonoBehaviour
         {
             _lastPurchasedPack = shopDataItem;
             LogShop($"  记录上次购买礼包: {_lastPurchasedPack.produceNameId}");
+
+            // ★ bug54：复购策略要以「最近一次完成购买的礼包A」为基准，必须跨进程保存
+            SaveRepurchaseLastPack(shopDataItem);
         }
+
+        // 结算页登记的礼包已成交 → 清掉登记（结算页按钮随之收起，避免重复弹/重复买）
+        if (_settlementGiftItem != null && shopDataItem.produceNameId == _settlementGiftItem.produceNameId)
+            ClearSettlementGift($"结算页礼包已购买: {shopDataItem.produceNameId}");
 
         ShopLimitData limit = GetOrCreateLimitData(shopDataItem);
 

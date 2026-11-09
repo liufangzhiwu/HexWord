@@ -33,13 +33,9 @@ public class OptionsView : UIWindow
     // [SerializeField] private Text soundText; // 音效文本显示
     // [SerializeField] private Text vibrateText; // 震动文本显示
 
-    // 广告关联（广告追踪授权）开关：运行时按"消息推送"行克隆出来的，见 SetupAdTrackingRow()
-    private GameObject _adTrackingRow;
-    private GameObject _adTrackingHandle;
-    private Text _adTrackingLabel;
+    // 广告关联（广告追踪授权）开关：预制体里已有现成的一行（adsTrackBtn / adsHandle），常驻显示，
+    // 这里只负责同步开关状态（不再运行时克隆行）
     private AdTrackingManager _adTracking;
-    /// <summary>本次打开设置界面期间，「广告关联」行是否已经露出过（露出后不再因状态变化被隐藏）</summary>
-    private bool _adTrackingRowShown;
 
     Sprite Opensprite;
     Sprite Closesprite;
@@ -51,8 +47,7 @@ public class OptionsView : UIWindow
         Opensprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_OpenToggle");
         Closesprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
         UpdateToggleStates(false); // 启用时更新状态，不带动画
-        SetupAdTrackingRow();      // 广告关联开关（玩家拒绝过授权时才显示）
-        RefreshAdTrackingRow();
+        RefreshAdTrackingToggle(); // 广告关联开关（预制体常驻行，只同步开关状态）
 #if UNITY_OPENHARMONY
         opinionBtn.gameObject.SetActive(true);
         restoreBuyBtn.gameObject.SetActive(false);
@@ -74,8 +69,7 @@ public class OptionsView : UIWindow
         VersionText.text = "Ver " + Application.version;
 
         UpdateAutoPushToggle();
-        _adTrackingRowShown = false;   // 每次打开设置界面重新判断这一行要不要出现
-        RefreshAdTrackingRow();
+        RefreshAdTrackingToggle();
         SubscribeAdTrackingEvent();
     }
 
@@ -157,87 +151,14 @@ public class OptionsView : UIWindow
 
     // ============================================================
     // 广告关联（广告追踪授权）开关
-    // 需求：玩家拒绝过广告追踪权限时，玩法设置里出现该开关（是否出现由分层配置 S 控制），
-    //      点开关 → 广告追踪引导页（按钮"去开启"）→ 系统广告追踪设置页。
-    // 实现：直接克隆"消息推送"这一行，复用图标/文字/手柄样式，避免再维护一套预制体。
+    //      预制体里已经有现成的一行（adsTrackBtn / adsHandle），且这一行常驻显示；
+    //      点开关 → 系统「广告追踪」设置界面，返回后由 OnAuthorizationChanged 同步开关状态。
     // ============================================================
 
-    private void SetupAdTrackingRow()
+    /// <summary>同步广告关联开关的视觉状态（手柄开/关）。行本身常驻显示，不做显隐控制。</summary>
+    private void RefreshAdTrackingToggle()
     {
-        if (_adTrackingRow != null) return;
-
-        // ★ 优先用预制体里现成的「广告关联」行（adsTrackBtn + adsHandle 已绑好）
-        if (adsTrackBtn != null)
-        {
-            _adTrackingRow = adsTrackBtn.transform.parent != null
-                ? adsTrackBtn.transform.parent.gameObject
-                : adsTrackBtn.gameObject;
-
-            _adTrackingHandle = adsHandle != null ? adsHandle : FindHandleUnder(adsTrackBtn.transform);
-            _adTrackingLabel = FindTextByName(_adTrackingRow.transform, "autopushText");
-            if (_adTrackingLabel == null) _adTrackingLabel = _adTrackingRow.GetComponentInChildren<Text>(true);
-
-            _adTrackingRow.SetActive(false);
-            return;
-        }
-
-        // 兜底：老预制体没有这一行时，按「消息推送」行克隆一份
-        if (autopushBtn == null) return;
-
-        Transform sourceRow = autopushBtn.transform.parent;
-        if (sourceRow == null || sourceRow.parent == null) return;
-
-        GameObject row = Instantiate(sourceRow.gameObject, sourceRow.parent);
-        row.name = "AdTrackingTable";
-        row.transform.SetAsLastSibling();
-        _adTrackingRow = row;
-
-        _adTrackingLabel = FindTextByName(row.transform, "autopushText");
-        if (_adTrackingLabel == null) _adTrackingLabel = row.GetComponentInChildren<Text>(true);
-
-        // 开关手柄：按"原行 → auHandle"的相对路径，在新行里找同一个节点
-        if (auHandle != null)
-        {
-            string handlePath = GetRelativePath(sourceRow, auHandle.transform);
-            if (!string.IsNullOrEmpty(handlePath))
-            {
-                Transform handle = row.transform.Find(handlePath);
-                if (handle != null) _adTrackingHandle = handle.gameObject;
-            }
-        }
-
-        Button button = row.GetComponentInChildren<Button>(true);
-        if (button != null)
-        {
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(OnClickAdTracking);
-        }
-
-        _adTrackingRow.SetActive(false);
-    }
-
-    /// <summary>在按钮下找开关手柄（Background 下的 Handle），用于兜底没有配置 adsHandle 的情况。</summary>
-    private static GameObject FindHandleUnder(Transform buttonRoot)
-    {
-        if (buttonRoot == null) return null;
-
-        Transform background = buttonRoot.Find("Background");
-        if (background != null && background.childCount > 0)
-            return background.GetChild(0).gameObject;
-
-        // 再退一步：按钮下第一个带 Image 的子节点
-        Image[] images = buttonRoot.GetComponentsInChildren<Image>(true);
-        for (int i = 0; i < images.Length; i++)
-        {
-            if (images[i] != null && images[i].gameObject != buttonRoot.gameObject)
-                return images[i].gameObject;
-        }
-        return null;
-    }
-
-    private void RefreshAdTrackingRow()
-    {
-        if (_adTrackingRow == null) return;
+        if (adsHandle == null) return;
 
         if (Opensprite == null || Closesprite == null)
         {
@@ -245,30 +166,11 @@ public class OptionsView : UIWindow
             Closesprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
         }
 
-        _adTracking = AdTrackingManager.Instance;
+        if (_adTracking == null) _adTracking = AdTrackingManager.Instance;
         if (_adTracking == null) _adTracking = AdTrackingManager.EnsureInstance();
 
-        // 一旦本次打开设置时露出过，就保持显示：玩家从系统设置回来、开关变"开"时能直观看到同步结果
-        bool show = _adTracking != null && (_adTracking.ShouldShowSettingsEntry() || _adTrackingRowShown);
-        if (show) _adTrackingRowShown = true;
-
-        _adTrackingRow.SetActive(show);
-        if (!show) return;
-
-        bool isOn = _adTracking.IsAuthorized;
-
-        if (_adTrackingLabel != null)
-        {
-            string label = MultilingualManager.Instance.GetString("AdTracking");
-            int gold = _adTracking.SettingsEntryRewardGold;
-
-            // 奖励金币的 UI 表现：直接挂在开关文字下方（跟引导页按钮上的 +G 是同一份激励）
-            _adTrackingLabel.text = gold > 0
-                ? $"{label}\n<color=#F2991F>+{gold}</color>"
-                : label;
-        }
-
-        if (_adTrackingHandle != null) SetToggleVisuals(_adTrackingHandle, isOn);
+        bool isOn = _adTracking != null && _adTracking.IsAuthorized;
+        SetToggleVisuals(adsHandle, isOn);
     }
 
     private void OnClickAdTracking()
@@ -295,31 +197,7 @@ public class OptionsView : UIWindow
 
     private void HandleAdAuthorizationChanged(bool granted)
     {
-        RefreshAdTrackingRow();
-    }
-
-    private static Text FindTextByName(Transform root, string name)
-    {
-        Text[] texts = root.GetComponentsInChildren<Text>(true);
-        for (int i = 0; i < texts.Length; i++)
-        {
-            if (texts[i].gameObject.name == name) return texts[i];
-        }
-        return null;
-    }
-
-    private static string GetRelativePath(Transform root, Transform target)
-    {
-        if (root == null || target == null || target == root) return null;
-
-        System.Collections.Generic.List<string> parts = new System.Collections.Generic.List<string>();
-        Transform cur = target;
-        while (cur != null && cur != root)
-        {
-            parts.Insert(0, cur.name);
-            cur = cur.parent;
-        }
-        return cur == root ? string.Join("/", parts) : null;
+        RefreshAdTrackingToggle();
     }
 
     private void ToggleSounds()

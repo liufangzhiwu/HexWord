@@ -3,7 +3,7 @@ import { BusinessError, emitter } from '@kit.BasicServicesKit';
 import {  identifier } from '@kit.AdsKit';
 import fs from '@ohos.file.fs';
 import { JSON } from '@kit.ArkTS';
-import { abilityAccessCtrl, common, Permissions, PermissionRequestResult } from '@kit.AbilityKit';
+import { abilityAccessCtrl, bundleManager, common, Permissions, PermissionRequestResult, Want } from '@kit.AbilityKit';
 import { dataShare } from '@kit.ArkData';
 import { Tuanjie } from './TuanjieNative';
 import { hilog } from '@kit.PerformanceAnalysisKit';
@@ -85,6 +85,104 @@ export class SendOAID {
     );
     let result: Array<string> = ["AdsTrackingConsent", granted ? "1" : "0"];
     return result;
+  }
+
+  // ---------- 设置页入口：广告关联 ----------
+  // 需求：开、关两种状态点击都要能"反复拉起"设置界面（像「消息推送」那样）。
+  //
+  // 鸿蒙限制（官方文档）：权限弹窗只会弹一次；一旦授予（或拒绝）过，
+  //   requestPermissionOnSetting 会直接返回 12100011「All permissions ... granted」，
+  //   弹窗被系统立刻关掉 —— 这就是之前"一闪"且状态被写成 0 的原因。
+  //   官方的二次入口是 startAbility 跳系统「应用详情页」(application_info_entry)，可反复打开。
+  //
+  // 所以这里按状态分流：
+  //   · 未授予 → requestPermissionOnSetting：带开关的权限设置弹窗（可停留、可直接改）
+  //   · 已授予 → 跳系统应用详情页（在那里可以关掉权限），并回 '1' 保持开关
+  static async OpenTrackingSettings(): Promise<Array<string>> {
+    hilog.info(0x0000, 'OAIDPage', 'OpenTrackingSettings: 打开广告关联设置');
+
+    if (SendOAID.isTrackingGrantedNow()) {
+      // 已授权：系统不允许再弹权限设置弹窗（会 12100011 一闪即关）→
+      // 回 '1' 保持开关为开，并打开系统「应用信息」页让玩家查看/调整权限
+      hilog.info(0x0000, 'OAIDPage', 'OpenTrackingSettings: 当前已是授权状态 → 回 1 并打开应用设置页');
+      SendOAID.reportResult(true, '已授权（无需权限弹窗）');
+      SendOAID.openAppSettingsPage();
+      return ["AdsTrackingSettings", "already_granted"];
+    }
+
+    const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
+    const ctx = (globalThis.AbilityContext ?? getContext()) as common.Context;
+    const permissions: Array<Permissions> = [SendOAID.PERMISSION_TRACKING];
+
+    try {
+      const settingResults: Array<abilityAccessCtrl.GrantStatus> =
+        await atManager.requestPermissionOnSetting(ctx, permissions);
+
+      if (settingResults != null && settingResults.length > 0 &&
+          settingResults[0] === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
+        SendOAID.onGranted(ctx);
+      } else {
+        SendOAID.reportResult(false, '设置弹窗关闭：未开启');
+      }
+    } catch (err) {
+      const code = (err as BusinessError).code;
+      if (code === 12100011) {
+        // 查询与弹窗之间的时序差：权限其实已授予 → 按已授权回包，不能当成拒绝
+        hilog.info(0x0000, 'OAIDPage', 'OpenTrackingSettings: 12100011 权限已授予 → 按已授权回包');
+        SendOAID.reportResult(true, '已授权（12100011）');
+      } else {
+        // 玩家取消 / 拉起失败：按"未开启"回包，界面开关同步成关闭，不会卡在等待
+        hilog.info(0x0000, 'OAIDPage',
+          `OpenTrackingSettings error: ${code}, ${(err as BusinessError).message}`);
+        SendOAID.reportResult(false, `设置弹窗异常: ${code}`);
+      }
+    }
+
+    return ["AdsTrackingSettings", "opened"];
+  }
+
+  /// 只读检查 APP_TRACKING_CONSENT 当前是否已授予（不弹框、无副作用）
+  private static isTrackingGrantedNow(): boolean {
+    try {
+      const bundleInfo = bundleManager.getBundleInfoForSelfSync(
+        bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION);
+      const tokenId: number = bundleInfo.appInfo.accessTokenId;
+
+      const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
+      const status: abilityAccessCtrl.GrantStatus =
+        atManager.checkAccessTokenSync(tokenId, SendOAID.PERMISSION_TRACKING);
+
+      hilog.info(0x0000, 'OAIDPage', `checkAccessToken APP_TRACKING_CONSENT: ${status}`);
+      return status === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
+    } catch (err) {
+      hilog.info(0x0000, 'OAIDPage',
+        `checkAccessToken 异常: ${(err as BusinessError).code}, ${(err as BusinessError).message}`);
+      return false;
+    }
+  }
+
+  /// 跳系统「应用信息」页（官方推荐的可反复打开的权限入口），玩家可在里面开关广告关联权限
+  private static openAppSettingsPage(): void {
+    try {
+      const ctx = (globalThis.AbilityContext ?? getContext()) as common.UIAbilityContext;
+      const bundleName: string = ctx.abilityInfo.bundleName;
+
+      const want: Want = {
+        bundleName: 'com.huawei.hmos.settings',
+        abilityName: 'com.huawei.hmos.settings.MainAbility',
+        uri: 'application_info_entry',
+        parameters: { pushParams: bundleName }
+      };
+
+      ctx.startAbility(want).then(() => {
+        hilog.info(0x0000, 'OAIDPage', `已打开应用设置页: ${bundleName}`);
+      }).catch((e: BusinessError) => {
+        hilog.info(0x0000, 'OAIDPage', `打开应用设置页失败: ${e.code}, ${e.message}`);
+      });
+    } catch (err) {
+      hilog.info(0x0000, 'OAIDPage',
+        `打开应用设置页失败: ${(err as BusinessError).code}, ${(err as BusinessError).message}`);
+    }
   }
 
   static async RequestOAID() {

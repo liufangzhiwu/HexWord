@@ -324,6 +324,12 @@ public class DebugMenu : UIWindow
     private void OnReSetClick()
     {           
         GameDataManager.Instance.WipeAllGameData();            
+
+        // ★ 复购/破冰礼包的本地记录（礼包A、支付调起次数、弹窗倒计时截止、冷却与已弹次数）存在 PlayerPrefs，
+        //   WipeAllGameData 只删 persistentDataPath 下的存档文件，删不到它们 → 这里要单独清
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.ClearPromotionLocalData("GM重置游戏数据");
+
         //EventDispatcher.instance.TriggerChangeGoldUI(0,false);
         //EventDispatcher.OnChangeLanguageUpdateUI?.Invoke();
         StageHexController.Instance.LimitPuzzlecount = 0;

@@ -25,6 +25,8 @@ public class ChessFinishView : UIWindow
     [SerializeField] private TaskTable _tasktable;
     [SerializeField] private Button butterflyBtn;
     [SerializeField] private Button removeAdsBtn; //去广告限时按钮
+    [SerializeField] private Button removeAdsGiftBtn; //破冰礼包按钮（去广告一周礼包）
+    [SerializeField] private Button giftButton; //限时折扣礼包按钮（复购/升层）
     [SerializeField] private Text removeAds; //去广告限时文本
     [SerializeField] private GameObject hardStageTable;          // 困难模式
     [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
@@ -78,6 +80,14 @@ public class ChessFinishView : UIWindow
     /// <summary>限时去广告 BUFF 图标根节点（若未单独配置，则退化为 removeAdsBtn 本身）</summary>
     private GameObject _removeAdsBuffRoot;
 
+    // ======================= 结算页礼包按钮倒计时 =======================
+    /// <summary>结算页礼包按钮倒计时协程</summary>
+    private Coroutine _settlementGiftCoroutine = null;
+    private GameObject _breakIceTimeObj;
+    private Text _breakIceTimeText;
+    private GameObject _giftTimeObj;
+    private Text _giftTimeText;
+
     // ======================= 禅意分滚动音效 =======================
     /// <summary>禅意分滚动期间循环播放的音源，滚动结束后需停止回收</summary>
     private AudioSource _zenRollSfx = null;
@@ -100,6 +110,19 @@ public class ChessFinishView : UIWindow
         {
             removeAdsBtn.AddClickAction(OnRemoveAdsBtnClick);
             _removeAdsBuffRoot = removeAdsBtn.gameObject;
+        }
+
+        // ======================= 结算页礼包入口（破冰 / 限时折扣） =======================
+        // 两个按钮默认隐藏，等结算策略（TryShowSettlementGiftPopup）决定后由 RefreshSettlementGiftButtons 显示
+        if (removeAdsGiftBtn != null)
+        {
+            removeAdsGiftBtn.AddVibraClickAction(OnRemoveAdsGiftBtnClick);
+            removeAdsGiftBtn.gameObject.SetActive(false);
+        }
+        if (giftButton != null)
+        {
+            giftButton.AddVibraClickAction(OnGiftButtonClick);
+            giftButton.gameObject.SetActive(false);
         }
         
         // 初始化莲花状态（放在屏幕中央或者特定初始位置）
@@ -174,6 +197,9 @@ public class ChessFinishView : UIWindow
 
         // ======================= 刷新限时去广告 BUFF =======================
         RefreshRemoveAdsBuff();
+
+        // 结算页礼包入口（破冰 / 限时折扣）：按当前登记状态刷新（策略尚未决定时两个都隐藏）
+        RefreshSettlementGiftButtons();
     }
 
     // ======================= 限时去广告 BUFF 逻辑 =======================
@@ -295,6 +321,195 @@ public class ChessFinishView : UIWindow
 
         // 展示弹窗（RemoveAdsScreen 已在 ShopItem.BuyRemoveAdsEvent 中被调用，此处复用同一面板）
         SystemManager.Instance.ShowPanel(PanelType.RemoveAdsScreen);
+    }
+
+    // ======================= 结算页礼包入口（破冰 / 限时折扣） =======================
+
+    /// <summary>
+    /// 刷新「破冰礼包 / 限时折扣礼包」按钮的显隐。
+    /// 由结算策略决定后调用（ChessStageController 结算流程 + AdsDiscountScreen 关闭时）：
+    ///   - 当前结算页登记的是破冰礼包 → 显示 removeAdsGiftBtn；
+    ///   - 登记的是复购/升层礼包 → 显示 giftButton；
+    ///   - 没有登记（未命中策略 / 已购买）→ 两个都隐藏。
+    /// </summary>
+    public void RefreshSettlementGiftButtons()
+    {
+        ShopManager.SettlementGiftKind kind = ShopManager.shopManager != null
+            ? ShopManager.shopManager.CurrentSettlementGift
+            : ShopManager.SettlementGiftKind.None;
+
+        bool showBreakIce = kind == ShopManager.SettlementGiftKind.BreakIce;
+        bool showRepurchase = kind == ShopManager.SettlementGiftKind.Repurchase;
+
+        if (removeAdsGiftBtn != null && removeAdsGiftBtn.gameObject.activeSelf != showBreakIce)
+            removeAdsGiftBtn.gameObject.SetActive(showBreakIce);
+
+        if (giftButton != null && giftButton.gameObject.activeSelf != showRepurchase)
+            giftButton.gameObject.SetActive(showRepurchase);
+
+        // 按钮上的限时倒计时（TimeObj/TimeText）跟着礼包的结束时间走
+        RefreshSettlementGiftCountdown();
+
+        string packId = ShopManager.shopManager != null ? ShopManager.shopManager.GetSettlementGiftPackId() : string.Empty;
+        DateTime giftEndTime = ShopManager.shopManager != null
+            ? ShopManager.shopManager.GetSettlementGiftEndTime()
+            : DateTime.MinValue;
+
+        Debug.Log($"[ChessFinishView] 结算礼包按钮刷新: kind={kind}, 破冰按钮={showBreakIce}, 限时折扣按钮={showRepurchase}, " +
+                  $"礼包={packId}, 截止时间={giftEndTime:yyyy-MM-dd HH:mm:ss}");
+    }
+
+    /// <summary>
+    /// 结算页礼包按钮上的倒计时：按登记礼包的限时截止时间每秒刷新。
+    ///  - 没有倒计时（限时为空）→ 只隐藏 TimeObj，按钮保留；
+    ///  - 倒计时归零 → 收起按钮并清掉登记（礼包已过期，点开也没意义）。
+    /// </summary>
+    private void RefreshSettlementGiftCountdown()
+    {
+        CacheSettlementGiftTimeNodes();
+
+        if (_settlementGiftCoroutine != null)
+        {
+            StopCoroutine(_settlementGiftCoroutine);
+            _settlementGiftCoroutine = null;
+        }
+
+        if (!IsSettlementGiftButtonVisible()) return;
+
+        DateTime endTime = ShopManager.shopManager != null
+            ? ShopManager.shopManager.GetSettlementGiftEndTime()
+            : DateTime.MinValue;
+
+        double remain = (endTime - DateTime.Now).TotalSeconds;
+        if (endTime == DateTime.MinValue || remain <= 0)
+        {
+            ApplySettlementGiftTime(false, 0);
+            return;
+        }
+
+        ApplySettlementGiftTime(true, remain);
+        if (isActiveAndEnabled)
+            _settlementGiftCoroutine = StartCoroutine(SettlementGiftCountdownCoroutine());
+    }
+
+    /// <summary>每秒刷新按钮上的剩余时间，归零后收起按钮。</summary>
+    private IEnumerator SettlementGiftCountdownCoroutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(1f);
+
+        while (IsSettlementGiftButtonVisible())
+        {
+            DateTime endTime = ShopManager.shopManager != null
+                ? ShopManager.shopManager.GetSettlementGiftEndTime()
+                : DateTime.MinValue;
+
+            if (endTime == DateTime.MinValue)
+            {
+                // 没有限时 → 不显示倒计时，按钮保留
+                ApplySettlementGiftTime(false, 0);
+                break;
+            }
+
+            double remain = (endTime - DateTime.Now).TotalSeconds;
+            if (remain <= 0)
+            {
+                ApplySettlementGiftTime(false, 0);
+                HideSettlementGiftButtons();
+                if (ShopManager.shopManager != null)
+                    ShopManager.shopManager.ClearSettlementGift("结算页礼包限时结束");
+                Debug.Log("[ChessFinishView] 结算礼包限时结束，按钮收起");
+                break;
+            }
+
+            ApplySettlementGiftTime(true, remain);
+            yield return wait;
+        }
+
+        _settlementGiftCoroutine = null;
+    }
+
+    private bool IsSettlementGiftButtonVisible()
+    {
+        return (removeAdsGiftBtn != null && removeAdsGiftBtn.gameObject.activeSelf)
+            || (giftButton != null && giftButton.gameObject.activeSelf);
+    }
+
+    private void HideSettlementGiftButtons()
+    {
+        if (removeAdsGiftBtn != null) removeAdsGiftBtn.gameObject.SetActive(false);
+        if (giftButton != null) giftButton.gameObject.SetActive(false);
+    }
+
+    /// <summary>把倒计时刷到「当前可见」的那个礼包按钮上（另一个按钮隐藏时跳过）。</summary>
+    private void ApplySettlementGiftTime(bool show, double remainSeconds)
+    {
+        SetOneSettlementGiftTime(removeAdsGiftBtn, _breakIceTimeObj, _breakIceTimeText, show, remainSeconds);
+        SetOneSettlementGiftTime(giftButton, _giftTimeObj, _giftTimeText, show, remainSeconds);
+    }
+
+    private void SetOneSettlementGiftTime(Button btn, GameObject timeObj, Text timeText, bool show, double remainSeconds)
+    {
+        if (btn == null || !btn.gameObject.activeSelf) return;
+
+        bool visible = show && remainSeconds > 0;
+        if (timeObj != null && timeObj.activeSelf != visible) timeObj.SetActive(visible);
+
+        // ★ 格式必须和 AdsDiscountScreen 的倒计时一致（同一个工具方法：X小时Y分）
+        if (timeText != null && visible)
+            timeText.text = UIUtilities.FormatTimeRemaining(TimeSpan.FromSeconds(remainSeconds));
+    }
+
+    /// <summary>按钮下的倒计时节点（TimeObj/TimeText）没绑定时按路径自动查找。</summary>
+    private void CacheSettlementGiftTimeNodes()
+    {
+        if (_breakIceTimeText == null && removeAdsGiftBtn != null)
+            ResolveSettlementGiftTimeNodes(removeAdsGiftBtn.transform, out _breakIceTimeObj, out _breakIceTimeText);
+
+        if (_giftTimeText == null && giftButton != null)
+            ResolveSettlementGiftTimeNodes(giftButton.transform, out _giftTimeObj, out _giftTimeText);
+    }
+
+    private static void ResolveSettlementGiftTimeNodes(Transform btn, out GameObject timeObj, out Text timeText)
+    {
+        timeObj = null;
+        timeText = null;
+
+        Transform timeNode = btn.Find("TimeObj");
+        if (timeNode == null) return;
+
+        timeObj = timeNode.gameObject;
+        timeText = timeNode.GetComponentInChildren<Text>(true);
+    }
+
+    /// <summary>破冰礼包按钮（去广告一周）：打开破冰礼包弹窗。</summary>
+    private void OnRemoveAdsGiftBtnClick()
+    {
+        Debug.Log("[ChessFinishView] 点击破冰礼包按钮");
+
+        if (ShopManager.shopManager == null
+            || !ShopManager.shopManager.HasSettlementGift(ShopManager.SettlementGiftKind.BreakIce))
+        {
+            // 礼包已经买过 / 登记被清掉 → 直接收起按钮，避免点了没反应
+            RefreshSettlementGiftButtons();
+            return;
+        }
+
+        ShopManager.shopManager.OpenSettlementGiftPopup();
+    }
+
+    /// <summary>限时折扣礼包按钮（复购/升层）：打开限时折扣礼包弹窗。</summary>
+    private void OnGiftButtonClick()
+    {
+        Debug.Log("[ChessFinishView] 点击限时折扣礼包按钮");
+
+        if (ShopManager.shopManager == null
+            || !ShopManager.shopManager.HasSettlementGift(ShopManager.SettlementGiftKind.Repurchase))
+        {
+            RefreshSettlementGiftButtons();
+            return;
+        }
+
+        ShopManager.shopManager.OpenSettlementGiftPopup();
     }
 
     public void CheckFishiTable()
@@ -890,6 +1105,10 @@ public class ChessFinishView : UIWindow
     private void OnNextButtonClick()
     {
         _hasPlayedRewardSequence = false; // 离开结算页去下一关时重置标记
+
+        // 离开结算页：结算礼包登记作废（下次结算重新决定）
+        ShopManager.shopManager?.ClearSettlementGift("离开结算页");
+
         SystemManager.Instance.HidePanel(PanelType.HeaderSection, false, LoadNextStage);
         Close();
     }
@@ -1295,7 +1514,25 @@ public class ChessFinishView : UIWindow
                     contextPlayers // 传入真实环境数据
                 );
 
-                yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ZenRankChangePanel));
+                // ★ 兜底：面板若因异常/卡死一直不关闭，整个结算流程会永远停在这一步
+                //   （线上表现就是"结算界面点不了下一关"）。
+                //   正常路径：面板自己的看门狗（30s）会把「继续」按钮恢复可点，玩家点了才关闭；
+                //   这里的超时只是最后一道保险，取一个足够长的值，避免玩家正在看名次时被强行关掉。
+                const float waitLimitSeconds = 180f;
+                float waited = 0f;
+                while (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankChangePanel)
+                       && waited < waitLimitSeconds)
+                {
+                    waited += Time.unscaledDeltaTime;
+                    yield return null;
+                }
+
+                if (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankChangePanel))
+                {
+                    Debug.LogError($"[ZenFlow] 排名变化面板 {waitLimitSeconds}s 仍未关闭 → 强制关闭，继续结算流程");
+                    SystemManager.Instance.HidePanel(PanelType.ZenRankChangePanel);
+                }
+
                 yield return new WaitForSeconds(FinishFlowTiming.StepGap);
             }
 

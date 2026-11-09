@@ -95,6 +95,23 @@ public class GameDataManager : SingletonMono<GameDataManager>
 
     #region 初始化方法
 
+    /// <summary>
+    /// 本次启动读到的「上次离开游戏的时间」（UserData.logoutTime 的快照）。
+    ///
+    /// ★ 为什么需要快照：`UserData.SaveData()` 每次存档都会把 logoutTime 刷成"现在"，
+    ///   所以 "最近 N 天未登录"（商店的流失回归权重）这类判断不能在存档之后再去读 logoutTime，
+    ///   否则玩家回归后只要发生一次自动存档，权重就立刻变 0（且整次会话都不再恢复）。
+    ///   这份快照在启动加载存档时抓一次，整次会话不变。
+    /// </summary>
+    public static DateTime SessionLogoutTime { get; private set; } = DateTime.MinValue;
+
+    /// <summary>抓取「上次离开时间」快照（启动加载存档 / 应用服务器存档时调用）。</summary>
+    public static void CaptureSessionLogoutTime(string rawLogoutTime)
+    {
+        DateTime parsed;
+        SessionLogoutTime = DateTime.TryParse(rawLogoutTime, out parsed) ? parsed : DateTime.MinValue;
+    }
+
     public void LoadPlayerProfile()
     {
         playerProfile.LoadData();
@@ -104,6 +121,9 @@ public class GameDataManager : SingletonMono<GameDataManager>
         butterfly.LoadData();
         overallRankData.LoadData();
         AchieveSaveDataList.LoadData();
+
+        // ★ 立刻抓「上次离开时间」快照（此后 logoutTime 会被存档不断刷新）
+        CaptureSessionLogoutTime(playerProfile.logoutTime);
         
         if (string.IsNullOrEmpty(playerProfile.ABName))
         {
@@ -499,6 +519,10 @@ public class GameDataManager : SingletonMono<GameDataManager>
         PurgePersistentFiles();
 
         playerProfile.InitData();
+
+        // 清档后 logoutTime 变成"现在"，快照也要同步刷新，避免被当成"流失回归"
+        CaptureSessionLogoutTime(playerProfile.logoutTime);
+
         fishUserSave.InitData();
         LevelProgressDict.Clear();
         ChessLevelProgressDict.Clear();

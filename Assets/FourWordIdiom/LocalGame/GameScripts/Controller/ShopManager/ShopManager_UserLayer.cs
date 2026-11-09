@@ -926,7 +926,27 @@ public partial class ShopManager : MonoBehaviour
     // ======================= 破冰礼包策略 =======================
 
     private DateTime _lastBreakIcePopupTime = DateTime.MinValue;
-    private int _breakIcePopupCount;
+
+    /// <summary>
+    /// 破冰弹窗已展示次数（本地持久化，决定冷却天数 7/10/13…）。
+    /// 以前只在内存里，杀进程就回到 0 → 冷却天数也跟着退回 7 天。
+    /// </summary>
+    private int _breakIceCountCache = -1;
+    private int BreakIcePopupCount
+    {
+        get
+        {
+            if (_breakIceCountCache < 0)
+                _breakIceCountCache = PlayerPrefs.GetInt(PrefBreakIceCount, 0);
+            return _breakIceCountCache;
+        }
+        set
+        {
+            _breakIceCountCache = value;
+            PlayerPrefs.SetInt(PrefBreakIceCount, value);
+            PlayerPrefs.Save();
+        }
+    }
 
     public bool TryShowBreakIcePopup(int interAdsCountThisSession)
     {
@@ -967,11 +987,20 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
-        int cooldownDays = BreakIceCooldownBaseDays + _breakIcePopupCount * BreakIceCooldownStepDays;
-        if (_lastBreakIcePopupTime != DateTime.MinValue
-            && DateTime.Now.Subtract(_lastBreakIcePopupTime).TotalDays < cooldownDays)
+        // 破冰冷却：从「上次弹窗倒计时结束」起算（策划口径，与复购/升层一致）
+        //   - 倒计时还没结束 → 仍在本次限时展示期内，继续展示；
+        //   - 倒计时结束后 N 天内（N = 7/10/13 递增）→ 冷却中；
+        //   - 无倒计时（非周末/节假日弹出的情况）→ 退化为从弹窗那一刻算，保持原行为。
+        int cooldownDays = BreakIceCooldownBaseDays + BreakIcePopupCount * BreakIceCooldownStepDays;
+        DateTime lastCooldownStart = GetBreakIceCooldownStart();
+        bool inOfferCountdown = lastCooldownStart != DateTime.MinValue && DateTime.Now < lastCooldownStart;
+
+        if (!inOfferCountdown
+            && lastCooldownStart != DateTime.MinValue
+            && DateTime.Now.Subtract(lastCooldownStart).TotalDays < cooldownDays)
         {
-            LogShop($"TryShowBreakIcePopup 跳过: 冷却中, 需要{cooldownDays}天");
+            LogShop($"TryShowBreakIcePopup 跳过: 冷却中（上次倒计时结束={lastCooldownStart:yyyy-MM-dd HH:mm}，" +
+                    $"已过 {DateTime.Now.Subtract(lastCooldownStart).TotalDays:F1} 天，需满 {cooldownDays} 天）");
             return false;
         }
 
@@ -995,113 +1024,309 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
-        _breakIcePopupCount++;
-        _lastBreakIcePopupTime = DateTime.Now;
+        // 限时 = 本次连续周末或节假日区间；倒计时未结束时沿用上次的截止时间（不重置倒计时）
+        DateTime endTime;
+        if (inOfferCountdown)
+        {
+            endTime = lastCooldownStart;
+            LogShop($"TryShowBreakIcePopup: 上次弹窗倒计时未结束（截止 {lastCooldownStart:yyyy-MM-dd HH:mm}）→ 继续展示 {pack.produceNameId}");
+        }
+        else
+        {
+            endTime = IsHolidayOrWeekend() ? GetCurrentHolidayEndTime() : DateTime.MinValue;
 
-        // 限时 = 本次连续周末或节假日区间
-        DateTime endTime = IsHolidayOrWeekend() ? GetCurrentHolidayEndTime() : DateTime.MinValue;
-        SetPendingGiftPopup(pack, GiftPopupMode.BreakIce, endTime);
-        SystemManager.Instance.ShowPanel(PanelType.AdsDiscountScreen);
+            // 新一轮：累计次数 +1，并记录本轮冷却起点（有倒计时就记倒计时结束，没有就记当前时间）
+            BreakIcePopupCount = BreakIcePopupCount + 1;
+            SaveBreakIcePopupState(endTime != DateTime.MinValue ? endTime : DateTime.Now, BreakIcePopupCount);
+            _lastBreakIcePopupTime = DateTime.Now;
+        }
 
-        LogShop($"TryShowBreakIcePopup: 展示破冰礼包 {pack.produceNameId}, 累计次数={_breakIcePopupCount}, 下次冷却={BreakIceCooldownBaseDays + _breakIcePopupCount * BreakIceCooldownStepDays}天, 限时截止={(endTime == DateTime.MinValue ? "无" : endTime.ToString("yyyy-MM-dd HH:mm"))}");
+        // 登记到「结算页礼包」并弹窗：结算页的破冰礼包按钮据此显示，关掉弹窗也能再打开
+        ShowSettlementGift(SettlementGiftKind.BreakIce, pack, endTime);
+
+        LogShop($"TryShowBreakIcePopup: 展示破冰礼包 {pack.produceNameId}, 累计次数={BreakIcePopupCount}, " +
+                $"下次冷却={BreakIceCooldownBaseDays + BreakIcePopupCount * BreakIceCooldownStepDays}天" +
+                $"（从倒计时结束 {(inOfferCountdown ? lastCooldownStart : endTime):yyyy-MM-dd HH:mm} 起算）, " +
+                $"限时截止={(endTime == DateTime.MinValue ? "无" : endTime.ToString("yyyy-MM-dd HH:mm"))}");
         return true;
     }
 
-    // ======================= 复购/升层策略 =======================
+    // ======================= 复购/升层策略（bug54） =======================
 
-    private DateTime _lastRepurchasePopupTime = DateTime.MinValue;
+    /// <summary>弹窗门槛：玩家持有金币 &lt; 200 才弹（需求·弹窗条件 6）</summary>
+    private const long RepurchaseMaxGold = 200;
 
+    /// <summary>金币 &lt; 100 时才按「支付调起次数最多」选包（需求·弹出礼包 3）</summary>
+    private const long RepurchaseLowGoldThreshold = 100;
+
+    /// <summary>基准价：MAX(A, 10)</summary>
+    private const float RepurchaseMinBasePrice = 10f;
+
+    /// <summary>
+    /// 结算页「复购/升层礼包」弹窗（IAP 层）。
+    ///
+    /// 弹窗条件（策划）：
+    ///   1. 用户属于任意 IAP 层；
+    ///   2. 关卡通关、结算时（由 TryShowSettlementGiftPopup 调用）；
+    ///   3. 结算页没有其它弹窗（插屏 / 七日胜利 / 灯明心悟（LimitTimeScreen）/ 新手奖励进度（项目暂无）/ 锦鲤竞速开始 等）；
+    ///   4. 当前是周末或节假日；
+    ///   5. 弹窗冷却：从「上次弹窗倒计时结束」开始算，满 7 天才能出新弹窗；
+    ///      倒计时期间（限时还没到期）属于本次展示期，继续展示，不按 7 天冷却拦。
+    ///   6. 金币 &lt; 200。
+    ///
+    /// 弹出哪一款（★ 策划口径：A 优先）：
+    ///   1. 有「最近一次成功购买的礼包 A」（不含金币商品和两个去广告）→ 直接弹 A 的优惠款（复购）；
+    ///   2. 没有 A（从没成功买过礼包）→ 才走「支付调起次数」规则：
+    ///      取调起次数最多的礼包，并列取价格最低的；连调起记录都没有则不弹；
+    ///   3. 优惠款 = 加量不加价（额外金币 = 取整(礼包金币价值 × 10%)，显示在 GiftAddItem 里）；
+    ///   4. 限时 = 本次连续周末 / 节假日结束时间。
+    ///
+    /// ★ bug54 根因：A / 调起次数 / 上次弹窗时间以前都是运行时字段，杀进程就丢 → 条件永远凑不齐；
+    ///   且没有「周末或节假日」这一条、选了「升档礼包（giftType+1）」而不是策划要求的调起次数规则、限时也没设。
+    /// </summary>
     public bool TryShowRepurchasePopup(ShopDataItem lastPurchasedPack)
     {
-        if (lastPurchasedPack == null)
-        {
-            LogShop("TryShowRepurchasePopup 跳过: lastPurchasedPack 为空");
-            return false;
-        }
+        LogShop("========== 复购礼包判定开始 ==========");
+
+        // 兼容旧调用方：外部传进来的礼包A作为兜底（本地记录优先）
+        if (lastPurchasedPack != null) _lastPurchasedPack = lastPurchasedPack;
+
+        // 条件1：只对 IAP 层推（IAA 层走破冰礼包）
         if (IsIaaLayer())
         {
-            LogShop("TryShowRepurchasePopup 跳过: 非 IAP 层");
-            return false;
-        }
-        if (GetPlayerGold() >= 200)
-        {
-            LogShop($"TryShowRepurchasePopup 跳过: 金币={GetPlayerGold()} >= 200");
+            LogShop($"TryShowRepurchasePopup 跳过: 当前是 IAA 层（{GetCurrentUserLayer()}）");
             return false;
         }
 
-        // 已有互斥弹窗在展示时不叠加
-        if (IsExclusivePopupShowing())
+        // 条件4：只在周末 / 节假日弹
+        if (!IsHolidayOrWeekend())
         {
-            LogShop("TryShowRepurchasePopup 跳过: 已有互斥弹窗在展示");
-            return false;
-        }
-        if (_lastRepurchasePopupTime != DateTime.MinValue
-            && DateTime.Now.Subtract(_lastRepurchasePopupTime).TotalDays < RepurchaseCooldownDays)
-        {
-            LogShop($"TryShowRepurchasePopup 跳过: 冷却中, 需要{RepurchaseCooldownDays}天");
+            LogShop($"TryShowRepurchasePopup 跳过: 今天既不是周末也不是节假日（{DateTime.Now:yyyy-MM-dd dddd}）");
             return false;
         }
 
-        ShopDataItem a = lastPurchasedPack;
-        float basePrice = Math.Max(a.price, 10);
+        // 条件6：金币 < 200
+        long gold = GetPlayerGold();
+        if (gold >= RepurchaseMaxGold)
+        {
+            LogShop($"TryShowRepurchasePopup 跳过: 金币={gold} >= {RepurchaseMaxGold}");
+            return false;
+        }
 
+        // 条件3：结算页其它弹窗（插屏 / 七日胜利 / 灯明心悟 / 新手奖励进度 / 锦鲤竞速开始 等）
+        if (IsSettlementOtherPopupShowing())
+        {
+            LogShop("TryShowRepurchasePopup 跳过: 结算页已有其它弹窗/插屏在展示");
+            return false;
+        }
+
+        // 条件5：弹窗冷却（策划口径：从「上次弹窗倒计时结束」开始算 7 天）
+        //   - 倒计时还没结束（Now < 上次倒计时结束）→ 属于本次限时展示期内，继续展示，不受 7 天冷却限制；
+        //   - 倒计时结束后 7 天内 → 冷却中，不弹；
+        //   - 倒计时结束后满 7 天 → 可以出新的弹窗。
+        DateTime lastPopupEndTime = GetRepurchaseLastPopupEndTime();
+        bool inOfferCountdown = lastPopupEndTime != DateTime.MinValue && DateTime.Now < lastPopupEndTime;
+
+        if (!inOfferCountdown
+            && lastPopupEndTime != DateTime.MinValue
+            && DateTime.Now.Subtract(lastPopupEndTime).TotalDays < RepurchaseCooldownDays)
+        {
+            LogShop($"TryShowRepurchasePopup 跳过: 冷却中（上次倒计时结束={lastPopupEndTime:yyyy-MM-dd HH:mm}，" +
+                    $"已过 {DateTime.Now.Subtract(lastPopupEndTime).TotalDays:F1} 天，需满 {RepurchaseCooldownDays} 天）");
+            return false;
+        }
+
+        // 基准礼包 A：最近一次完成购买的商店礼包（本地记录，排除金币商品/去广告）。
+        // ★ 策划口径：优先弹「最近一次成功购买的礼包A」的优惠款；没有A时才走「支付调起次数」规则。
+        ShopDataItem a = GetRepurchaseBasePack();
+
+        // A 已经限购售罄 → 再弹它也买不了，退回调起次数规则
+        if (a != null && IsLimitedOut(a))
+        {
+            LogShop($"[复购] 礼包A={a.produceNameId} 已售罄 → 改走支付调起次数规则");
+            a = null;
+        }
+
+        float basePrice = a != null ? Mathf.Max(a.price, RepurchaseMinBasePrice) : RepurchaseMinBasePrice;
+
+        // 候选：有 A 时按「价格 ≥ MAX(A,10)」；没有 A 时取全部可售礼包（靠调起次数挑）
         List<ShopDataItem> candidates = shopItems
-            .Where(x => x.type == 2 && x.price >= basePrice && !IsRemoveAdsProduct(x.produceNameId)
-                && !IsLimitedOut(x) && !IsActivityPack(x) && x.limited == 0)
+            .Where(x => x != null && x.type == 2
+                        && (a == null || x.price >= basePrice)
+                        && !IsRemoveAdsProduct(x.produceNameId)
+                        && !IsLimitedOut(x)
+                        && !IsActivityPack(x)
+                        && x.limited == 0)
             .OrderBy(x => x.price)
             .ToList();
 
-        if (candidates.Count == 0)
+        LogShop(a != null
+            ? $"[复购] 礼包A={a.produceNameId}(price={a.price})，基准价={basePrice}，" +
+              $"候选={candidates.Count} 个：[{string.Join(", ", candidates.Select(x => $"{x.produceNameId}({x.price}/调起{GetPayInvokeCount(x.produceNameId)}次)"))}]"
+            : $"[复购] 没有「成功购买的礼包A」→ 走支付调起次数规则，候选={candidates.Count} 个：" +
+              $"[{string.Join(", ", candidates.Select(x => $"{x.produceNameId}({x.price}/调起{GetPayInvokeCount(x.produceNameId)}次)"))}]");
+
+        ShopDataItem chosen;
+        DateTime endTime;
+
+        if (inOfferCountdown)
         {
-            LogShop("TryShowRepurchasePopup 跳过: 无候选礼包");
+            // ★ 倒计时未结束：继续展示「上一次那款礼包」，限时沿用原来的结束时间（策划：倒计时期间都要展示）
+            ShopDataItem lastOffer = GetRepurchaseLastOfferPack();
+            if (lastOffer != null && IsLimitedOut(lastOffer))
+            {
+                LogShop($"[复购] 上次展示的 {lastOffer.produceNameId} 已售罄 → 重新选包");
+                lastOffer = null;
+            }
+
+            chosen = lastOffer ?? PickRepurchasePack(a, candidates);
+            endTime = lastPopupEndTime;
+            LogShop($"[复购] 上次弹窗倒计时未结束（截止 {lastPopupEndTime:yyyy-MM-dd HH:mm}）→ 继续展示 {chosen?.produceNameId}");
+        }
+        else
+        {
+            chosen = PickRepurchasePack(a, candidates);
+            // 限时 = 本次连续周末 / 节假日结束时间
+            endTime = GetCurrentHolidayEndTime();
+        }
+
+        if (chosen == null)
+        {
+            LogShop("TryShowRepurchasePopup 跳过: 选包结果为空");
             return false;
         }
 
-        ShopDataItem chosen = candidates.FirstOrDefault(x => x.giftType == a.giftType + 1);
-        if (chosen == null)
-        {
-            int maxInvoke = candidates.Max(x => GetPayInvokeCount(x.produceNameId));
-            var mostInvoked = candidates.Where(x => GetPayInvokeCount(x.produceNameId) == maxInvoke && maxInvoke > 0).ToList();
-            if (mostInvoked.Count > 0)
-                chosen = mostInvoked.OrderBy(x => x.price).First();
-            else
-                chosen = candidates[0];
-        }
-
-        // 加量不加价：额外金币 = 取整(礼包金币价值 V × 10%)（需求 C-STRAT-10）
+        // 优惠款：加量不加价（额外金币 = 取整(礼包金币价值 V × 10%)）
         int bonusGold = Mathf.RoundToInt(chosen.coinValue * 0.1f);
-        AddPackBonus(chosen, a, bonusGold);
 
-        _lastRepurchasePopupTime = DateTime.Now;
-
-        SetPendingGiftPopup(chosen, GiftPopupMode.Repurchase, DateTime.MinValue);
-        SystemManager.Instance.ShowPanel(PanelType.AdsDiscountScreen);
-        LogShop($"TryShowRepurchasePopup: 展示复购礼包, a={a.produceNameId}, chosen={chosen.produceNameId}, price={chosen.price}, 加赠金币={bonusGold}(coinValue={chosen.coinValue})");
+        ShowRepurchasePopup(chosen, a, bonusGold, endTime);
         return true;
     }
 
     /// <summary>
-    /// 给目标礼包追加额外金币（加量不加价，需求 C-STRAT-10）。
+    /// 选包（策划口径）：
+    ///   1. 优先「最近一次成功购买的礼包A」的优惠款（复购）；
+    ///   2. 没有 A（从没成功买过礼包）才走「支付调起次数」：次数最多 → 并列取价格最低；
+    ///   3. 连调起记录也没有 → 不弹（返回 null）。
     /// </summary>
-    /// <param name="bonusGold">额外金币数量（= 取整(金币价值 V × 10%)）</param>
-    private void AddPackBonus(ShopDataItem target, ShopDataItem basePack, int bonusGold)
+    private ShopDataItem PickRepurchasePack(ShopDataItem a, List<ShopDataItem> candidates)
     {
-        if (bonusGold <= 0)
+        // 1. 有成功购买的礼包 → 直接弹它的优惠款
+        if (a != null)
         {
-            LogShop($"AddPackBonus 跳过: 加赠金币={bonusGold} <= 0 (target={target?.produceNameId})");
-            return;
+            LogShop($"[复购] 优先弹最近一次成功购买礼包的优惠款：{a.produceNameId}(price={a.price})");
+            return a;
         }
 
-        if (target.productContent == null)
-            target.productContent = new List<List<string>>();
-
-        target.productContent.Add(new List<string>
+        // 2. 没有 A → 用支付调起次数（玩家点过但没付款的礼包）
+        if (candidates == null || candidates.Count == 0)
         {
-            ((int)LimitRewordType.Coins).ToString(),
-            bonusGold.ToString()
-        });
+            LogShop("[复购] 没有成功购买的礼包A，也没有可售礼包 → 不弹");
+            return null;
+        }
 
-        LogShop($"AddPackBonus: {target.produceNameId} 加赠金币 {bonusGold}, 基准礼包={basePack?.produceNameId}");
+        int maxInvoke = 0;
+        for (int i = 0; i < candidates.Count; i++)
+            maxInvoke = Mathf.Max(maxInvoke, GetPayInvokeCount(candidates[i].produceNameId));
+
+        if (maxInvoke <= 0)
+        {
+            LogShop("[复购] 没有成功购买的礼包A，也没有支付调起记录 → 不弹");
+            return null;
+        }
+
+        ShopDataItem picked = candidates
+            .Where(x => GetPayInvokeCount(x.produceNameId) == maxInvoke)
+            .OrderBy(x => x.price)
+            .FirstOrDefault();
+
+        LogShop($"[复购] 无礼包A → 取调起次数最多({maxInvoke})的礼包：{picked?.produceNameId}");
+        return picked;
+    }
+
+    /// <summary>展示复购弹窗：展示用副本里补一条加赠金币，真实商品数据不动，加赠只在成交那一单发放。</summary>
+    private void ShowRepurchasePopup(ShopDataItem pack, ShopDataItem basePack, int bonusGold, DateTime endTime)
+    {
+        if (pack == null) return;
+
+        ShopDataItem display = pack.DeepCopy();
+        // 展示副本保持礼包原始内容（7 个就是 7 个）；
+        // 加赠金币不塞进 productContent，由 AdsDiscountScreen 的 GiftAddItem 单独展示
+
+        // 记录「本次展示」：冷却从倒计时结束开始算（策划口径），并记住这款礼包，
+        // 倒计时未结束时下次结算继续展示同一款。
+        SaveRepurchaseLastPopupTime(DateTime.Now);
+        SaveRepurchaseLastPopupEndTime(endTime, pack.produceNameId);
+
+        // 登记到「结算页礼包」（结算页的限时折扣礼包按钮据此显示），并弹出 AdsDiscountScreen
+        // （展示用副本 + 加赠金币都由 ShowSettlementGift/OpenSettlementGiftPopup 写进 pending 数据）
+        ShowSettlementGift(SettlementGiftKind.Repurchase, display, endTime, bonusGold, pack.produceNameId);
+
+        LogShop($"TryShowRepurchasePopup: 展示复购礼包 A={basePack?.produceNameId}, chosen={pack.produceNameId}, " +
+                $"price={pack.price}, 加赠金币={bonusGold}(coinValue={pack.coinValue}), " +
+                $"限时截止={endTime:yyyy-MM-dd HH:mm:ss}, 当前金币={GetPlayerGold()}");
+    }
+
+    /// <summary>
+    /// 结算页是否有「不能同时弹复购礼包」的其它界面。
+    ///
+    /// 需求第 3 条（结算页不弹的 5 类）与本项目界面对应关系：
+    ///   1. 插屏                      → AdRuleManager.IsInterstitialShowing
+    ///   2. 七日胜利弹窗              → PanelType.SignWinScreen / SignAwardScreen / SevenSignScreen
+    ///   3. 灯明心悟页面              → PanelType.LimitTimeScreen（限时活动页，策划确认）
+    ///   4. 新手奖励活动进度弹窗      → 项目里暂无该活动（预留：以后加了把 PanelType 填进来即可）
+    ///   5. 锦鲤竞速活动开始弹窗      → PanelType.CompetitionStart（同族 DashCompetition / MatchSuccess / CompetitionFail / CompetitionHelp）
+    ///
+    /// 命中会打日志说明被谁挡住，方便按实际表现增删。
+    /// </summary>
+    private bool IsSettlementOtherPopupShowing()
+    {
+        if (SystemManager.Instance == null) return false;
+
+        // 1. 插屏广告（不是 Panel，单独取广告规则状态）
+        if (AdRuleManager.Instance != null && AdRuleManager.Instance.IsInterstitialShowing)
+        {
+            LogShop("[复购] 被拦截：插屏正在展示");
+            return true;
+        }
+
+        // 已有的互斥弹窗（内购成功 / 广告奖励 / 七日签到 / 每日任务 / 破冰复购弹窗本身 ...）
+        if (IsExclusivePopupShowing()) return true;
+
+        string[] others =
+        {
+            // 3. 灯明心悟（限时活动页）
+            PanelType.LimitTimeScreen,
+
+            // 2. 七日胜利弹窗 / 七日签到
+            PanelType.SignWinScreen,
+            PanelType.SignAwardScreen,
+            PanelType.SevenSignScreen,
+
+            // 5. 锦鲤竞速（活动开始弹窗 + 同族结算/失败/说明）
+            PanelType.CompetitionStart,
+            PanelType.DashCompetition,
+            PanelType.MatchSuccess,
+            PanelType.CompetitionFail,
+            PanelType.CompetitionHelp,
+
+            // 其它可能挡在结算页上的弹窗
+            PanelType.ReturnFirstWinScreen,   // 回归首胜
+            PanelType.RateUsScreen,           // 评分
+            PanelType.PolicyView,             // 隐私协议
+            PanelType.HardView                // 难度提示
+        };
+
+        foreach (var p in others)
+        {
+            if (SystemManager.Instance.PanelIsShowing(p))
+            {
+                LogShop($"[复购] 被拦截：{p} 正在展示");
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // ======================= 弹窗互斥 =======================
@@ -1150,10 +1375,18 @@ public partial class ShopManager : MonoBehaviour
     {
         if (ShopManager.shopManager == null) return false;
 
+        // 每次结算重新决定：先清掉上一次结算遗留的礼包登记（结算页按钮据此显示）
+        ClearSettlementGift("新的结算开始");
+
+        LogShop($"[结算礼包] 开始调度: 本次插屏={interAdsCountThisSession}, 分层={GetCurrentUserLayer()}, " +
+                $"金币={GetPlayerGold()}, 周末/节假日={IsHolidayOrWeekend()}, " +
+                $"上次复购倒计时结束={GetRepurchaseLastPopupEndTime():yyyy-MM-dd HH:mm}");
+
         if (TryShowBreakIcePopup(interAdsCountThisSession))
             return true;
 
-        return TryShowRepurchasePopup(_lastPurchasedPack);
+        // 礼包A 由 TryShowRepurchasePopup 内部从本地记录取（跨进程保留），这里不用再传
+        return TryShowRepurchasePopup(null);
     }
 
     // ======================= 数据访问桩 =======================

@@ -455,7 +455,7 @@ public class OverallRankingManager : MonoBehaviour
                     ? GameDataManager.Instance.UserData.UserName
                     : resp.my_nickname,
                 
-                user_id = int.Parse(GameDataManager.Instance.UserData.PlayerId)
+                user_id = GameDataManager.Instance.UserData.GetPlayerIdInt()
             },
         };
         // 2) 奖励按名次查本地配置 —— 必须放在初始化器外面

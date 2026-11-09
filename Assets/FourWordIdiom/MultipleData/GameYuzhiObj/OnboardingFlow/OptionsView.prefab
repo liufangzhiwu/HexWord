@@ -1,17 +1,18 @@
 %YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
+%TAG !u! tag:yousandi.cn,2023:
 --- !u!1 &120084807537134827
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4981728114522281591}
   - component: {fileID: 4454247385827353184}
   - component: {fileID: 413099379946586012}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: closeIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -81,13 +82,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1520636010491511881}
   - component: {fileID: 1832304556556772982}
   - component: {fileID: 228045195004989445}
   - component: {fileID: 9052931804836296343}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: OpinitionBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -203,7 +205,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 23508729502226434}
   - component: {fileID: 2687840112996669171}
@@ -211,6 +213,7 @@ GameObject:
   - component: {fileID: 998380011551828946}
   - component: {fileID: 358087773304885115}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: PrivacyBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -343,13 +346,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 645392698739956524}
   - component: {fileID: 5736749202375274434}
   - component: {fileID: 5939183420622046628}
   - component: {fileID: 5001193374558417349}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: BackUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -443,12 +447,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1653895024028727908}
   - component: {fileID: 448131267126933842}
   - component: {fileID: 6171347572623163553}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -519,12 +524,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4864893607469152284}
   - component: {fileID: 1363434860303359012}
   - component: {fileID: 5012279557467088262}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: iamge
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -594,12 +600,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2544986362880162593}
   - component: {fileID: 6731551257758101558}
   - component: {fileID: 946743906024527463}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: iamge
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -669,12 +676,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7259076542685871510}
   - component: {fileID: 1001426270360478605}
   - component: {fileID: 1619909706383432159}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -745,13 +753,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8665138031441540186}
   - component: {fileID: 474903993879952286}
   - component: {fileID: 8273657677085684551}
   - component: {fileID: 4111736949934905908}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: VibrateTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -866,13 +875,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1038444917095770766}
   - component: {fileID: 6136069668864970219}
   - component: {fileID: 5040277329645171308}
   - component: {fileID: 159793849690514795}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -959,12 +969,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1865415201834377368}
   - component: {fileID: 8565396081054976179}
   - component: {fileID: 3487771061625457849}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: closeIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1034,11 +1045,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5008724844036973049}
   - component: {fileID: 3673062025289764967}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Switch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1098,7 +1110,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3348149280488444271}
   - component: {fileID: 8280429790780138894}
@@ -1107,6 +1119,7 @@ GameObject:
   - component: {fileID: 961960803429749341}
   - component: {fileID: 1666292927205201055}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: OptionsView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1216,7 +1229,7 @@ MonoBehaviour:
   HeaderText: {fileID: 899973376308756124}
 --- !u!95 &1666292927205201055
 Animator:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1227,6 +1240,8 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 5aa0b95a48a8d744d9d0cdf89a69d2b2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
+  m_UpdateFrequencyMode: 0
+  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -1241,12 +1256,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 9011649462240208586}
   - component: {fileID: 9176665384269149479}
   - component: {fileID: 39211230252885002}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: closeIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1316,13 +1332,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6758687246408085037}
   - component: {fileID: 4101914575001008508}
   - component: {fileID: 6043342328112555402}
   - component: {fileID: 4024886413001663278}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: HideButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1437,10 +1454,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3499967148058803354}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: AutoPushTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1474,12 +1492,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6530715061308650562}
   - component: {fileID: 2274908683292774314}
   - component: {fileID: 2953972868603041173}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1549,12 +1568,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 455170469998775657}
   - component: {fileID: 5940206942267449275}
   - component: {fileID: 4670216597708734773}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: autopushText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1628,12 +1648,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5211774199080543793}
   - component: {fileID: 2590129318100713803}
   - component: {fileID: 1205780943370009385}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: adsTrackHandle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1703,13 +1724,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1801828448208255745}
   - component: {fileID: 772468302060169721}
   - component: {fileID: 4775945105077139366}
   - component: {fileID: 6314668139701938831}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MusicButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1824,12 +1846,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4124096452438057380}
   - component: {fileID: 274825268253460266}
   - component: {fileID: 9010896396305360195}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: gameText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1903,7 +1926,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7061916866768761332}
   - component: {fileID: 4391603026772468634}
@@ -1911,6 +1934,7 @@ GameObject:
   - component: {fileID: 1347189578153008503}
   - component: {fileID: 2574617907594531867}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: CopyId
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2044,12 +2068,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5070614904007108525}
   - component: {fileID: 4419106211592767064}
   - component: {fileID: 3158476364075924252}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: copy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2119,12 +2144,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5124430122628630283}
   - component: {fileID: 378465223553777405}
   - component: {fileID: 3703395080409689164}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: iamge
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2194,12 +2220,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2888813990288803311}
   - component: {fileID: 6507944466639411417}
   - component: {fileID: 1841066099262296511}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: autopushHandle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2269,7 +2296,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4420310134267839563}
   - component: {fileID: 5241254857139940018}
@@ -2277,6 +2304,7 @@ GameObject:
   - component: {fileID: 6181985999877278059}
   - component: {fileID: 7752687693632445801}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: HeaderText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2378,12 +2406,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 4454236157551206563}
   - component: {fileID: 2547702562493788601}
   - component: {fileID: 5630192877518882952}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: di
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2453,12 +2482,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1780534567009544982}
   - component: {fileID: 4081635221816094672}
   - component: {fileID: 7945728263538578372}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: autopushText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2532,11 +2562,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7434933838247435414}
   - component: {fileID: 9157612518490013208}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: adsTrackBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2613,7 +2644,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6626836154344673030}
   - component: {fileID: 3877408454578474725}
@@ -2621,6 +2652,7 @@ GameObject:
   - component: {fileID: 6515294714938953608}
   - component: {fileID: 3982323068680114052}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: TermsBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2753,11 +2785,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 6745263045669654008}
   - component: {fileID: 5557303179569384814}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Buttons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2817,10 +2850,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 5334548957625713244}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: adsTrackTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2854,13 +2888,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 42361463592303719}
   - component: {fileID: 7029124501257762500}
   - component: {fileID: 4221236672547948899}
   - component: {fileID: 3350495663239675527}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: RestroeBuyBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2974,13 +3009,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 437020695523371955}
   - component: {fileID: 5352313768587748778}
   - component: {fileID: 5003393348464316262}
   - component: {fileID: 1119017639026126587}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: SoundButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3095,12 +3131,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 3761238687519455872}
   - component: {fileID: 1143345128132438930}
   - component: {fileID: 4199278587259363794}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3174,13 +3211,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 7200325429271672333}
   - component: {fileID: 547834281858988814}
   - component: {fileID: 8329414609806300500}
   - component: {fileID: 709523607074276808}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: MyTheme
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3295,12 +3333,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 712843763258941816}
   - component: {fileID: 220782609347975153}
   - component: {fileID: 2860147015928647713}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3370,11 +3409,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 8776763394665844352}
   - component: {fileID: 5693975400316801156}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: autopushBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}

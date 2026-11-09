@@ -361,6 +361,12 @@ public class AdRuleManager : MonoBehaviour
     // ==========================================
 
     /// <summary>
+    /// 插屏是否正在展示（bug54：结算页要弹「复购礼包」时必须避开插屏）。
+    /// TryShowInterstitial 拉起到回调期间为 true。
+    /// </summary>
+    public bool IsInterstitialShowing { get; private set; }
+
+    /// <summary>
     /// 展示插屏广告
     /// 流程：拦截审核 → 播广告 → onComplete 立即回调（业务继续）→ 再尝试弹赠礼
     /// </summary>
@@ -379,8 +385,10 @@ public class AdRuleManager : MonoBehaviour
 #endif
 
         // 2. 播广告
+        IsInterstitialShowing = true;
         Game.self.Ads.ShowInterstitial((success) =>
         {
+            IsInterstitialShowing = false;
             if (success)
             {
                 ReportAdShown(Define.AdType.Interstitial);
