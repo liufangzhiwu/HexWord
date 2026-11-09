@@ -1,4 +1,4 @@
-#if UNITY_OPENHARMONY
+#if UNITY_OPENHARMONY&&!UNITY_EDITOR
 using System;
 using UnityEngine;
 using UnityEngine.OpenHarmony;
