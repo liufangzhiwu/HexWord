@@ -486,8 +486,10 @@ public partial class ChessPlayArea
         int curLeaves = ChessStageController.Instance.CurrStageData.CollectedLeaves;
         bool isButterflyTaskFinished = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining();
         
-        // 获取终点坐标
-        Transform goldTargetPos = ColdTable.transform.GetChild(0);        // 金币终点（关卡暂停时间按钮处）
+        // 获取终点坐标（ColdTable 是金币收集点，HexWord 当前预制体未挂该节点，兜底飞到分数牌）
+        Transform goldTargetPos = ColdTable != null && ColdTable.transform.childCount > 0
+            ? ColdTable.transform.GetChild(0)
+            : _zenScoreText.transform;
         Transform pupaPos = pupaProgressBar.transform;     // 蝶蛹终点
         Transform zenPos = _zenScoreText.transform;               // 禅意分/莲花终点
 
@@ -1361,6 +1363,9 @@ public partial class ChessPlayArea
     /// </summary>
     private void ClearAndResetLeafSliderComponents()
     {
+        // 退出关卡/关闭编辑器 Play Mode 时控制器可能已先销毁，这里直接跳过，避免 OnDisable 抛空引用
+        if (ChessStageController.Instance == null) return;
+
         bool isLeafLevel = ChessStageController.Instance.CheckLeafMechanic(ChessStageController.Instance.CurrentStage, out _);
         
         int maxLeavesInStage = 10; // 安全兜底默认值

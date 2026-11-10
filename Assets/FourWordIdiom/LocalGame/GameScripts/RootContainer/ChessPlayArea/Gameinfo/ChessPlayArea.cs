@@ -358,14 +358,19 @@ public partial class ChessPlayArea : UIWindow
         InitToolUI();
         
         bool isGoldLevel = ChessStageController.Instance.CheckGoldMechanic(ChessStageController.Instance.CurrentStage, out _, out _);
-        if (isGoldLevel)
+        if (isGoldLevel && ColdTable != null)
         {
             ColdTable.SetActive(true);
             Canvas cans = ColdTable.GetComponent<Canvas>();
             if (cans != null) cans.sortingLayerName = UIPanelLayer.BasePanel;
-            coldNumberText.text = GameDataManager.Instance.UserData.Gold.ToString();
+            if (coldNumberText != null)
+                coldNumberText.text = GameDataManager.Instance.UserData.Gold.ToString();
             
-        }else ColdTable.SetActive(false);
+        }
+        else if (ColdTable != null)
+        {
+            ColdTable.SetActive(false);
+        }
         
     }
 

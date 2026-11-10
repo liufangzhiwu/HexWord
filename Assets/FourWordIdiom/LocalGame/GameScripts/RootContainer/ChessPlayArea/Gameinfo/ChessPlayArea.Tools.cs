@@ -184,10 +184,17 @@ public partial class ChessPlayArea
             }
         }
         // 像 InitToolUI 一样动态获取 CompCount 和 HintCount
-        Transform compCount = CompleteBtn != null ? CompleteBtn.transform.GetChild(1) : null;
-        Transform compFree = CompleteBtn != null ? CompleteBtn.transform.GetChild(2) : null;
-        Transform hintCount = HitsBtn != null ? HitsBtn.transform.GetChild(1) : null;
-        Transform hintFree = HitsBtn != null ? HitsBtn.transform.GetChild(2) : null;
+        // 注意：不同版本预制体的子节点数量不同，越界取子会抛 Transform child out of bounds，这里统一做安全取值
+        Transform SafeChild(Button btn, int index)
+        {
+            if (btn == null) return null;
+            Transform t = btn.transform;
+            return index < t.childCount ? t.GetChild(index) : null;
+        }
+        Transform compCount = SafeChild(CompleteBtn, 1);
+        Transform compFree = SafeChild(CompleteBtn, 2);
+        Transform hintCount = SafeChild(HitsBtn, 1);
+        Transform hintFree = SafeChild(HitsBtn, 2);
         TintBadgeNode(compCount);
         TintBadgeNode(compFree);
         TintBadgeNode(hintCount);

@@ -609,11 +609,16 @@ public class PrimaryInterface : UIWindow
         bool isLocked = !ButterfliesManager.Instance.IsOpen;
         if (isLocked)
         {
-            ButterflyUnlockText.gameObject.SetActive(true);
-            ButterflyUnlockText.GetComponentInChildren<Text>().text = $"第{AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel}关";
+            // 锁文案节点是 WT 新增的，HexWord 预制体暂无，做空保护
+            if (ButterflyUnlockText != null)
+            {
+                ButterflyUnlockText.SetActive(true);
+                var lockText = ButterflyUnlockText.GetComponentInChildren<Text>(true);
+                if (lockText != null) lockText.text = $"第{AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel}关";
+            }
             if (pupaSlider != null) pupaSlider.gameObject.SetActive(false);
             if (pupaText != null) pupaText.gameObject.SetActive(false);
-            ButterflyRedpoint.gameObject.SetActive(false);
+            if (ButterflyRedpoint != null) ButterflyRedpoint.gameObject.SetActive(false);
             return;
         }
         // 4. 已解锁状态：隐藏锁文本，处理正常的进度逻辑
@@ -905,17 +910,19 @@ public class PrimaryInterface : UIWindow
                 difficulty = ChessStageController.Instance.CurLevelMode;
                 break;
         }
-        if(sprite != null)
+        if(sprite != null && ModeBtn != null)
             ModeBtn.GetComponent<Image>().sprite = sprite;
         
         Stage=Stage==0?1:Stage;
-        Stagetxt.text = MultilingualManager.Instance.GetString("Level")+" " + Stage;
+        // HexWord 的 PrimaryInterface 预制体没有 WT 的「关卡/下一元素」这一组节点，统一做空保护
+        if (Stagetxt != null)
+            Stagetxt.text = MultilingualManager.Instance.GetString("Level")+" " + Stage;
 
         if (currentPlayMode != 2)
         {
             // 1. 开启自身专属 UI
-            hardStageTable.gameObject.SetActive(difficulty == LevelModes.Hard);
-            extrahardStageTable.gameObject.SetActive(difficulty == LevelModes.ExtraHard);
+            if (hardStageTable != null) hardStageTable.gameObject.SetActive(difficulty == LevelModes.Hard);
+            if (extrahardStageTable != null) extrahardStageTable.gameObject.SetActive(difficulty == LevelModes.ExtraHard);
         
             // 2. 强制关闭拼字模式专属 UI，防止残留
             if (nextUnlockTip != null) nextUnlockTip.SetActive(false);
@@ -929,8 +936,10 @@ public class PrimaryInterface : UIWindow
             if (extrahardStageTable != null) extrahardStageTable.gameObject.SetActive(false);
             
             int stageBgIndex = ChessStageController.Instance.GetLevelGameplayID(Stage);
-            nextStageImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
-            stageSpace.SetActive(stageBgIndex is not (0 or 4 or 5 or 6));
+            if (nextStageImage != null)
+                nextStageImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
+            if (stageSpace != null)
+                stageSpace.SetActive(stageBgIndex is not (0 or 4 or 5 or 6));
             // var unlockHint = ChessStageController.Instance.GetNextMechanicUnlockHint(Stage);
             // if (unlockHint.HasValue)
             // {
