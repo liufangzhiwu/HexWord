@@ -771,6 +771,7 @@ public partial class AnalyticMgr
     
     public static void LevelProgress(int wordIndex, string word, float duration, int errorCount, int combo, int userToolCount, float energy)
     {
+        // 保留 HexWord 侧改装：按进度门槛判定（WT 侧为固定 1000 关，此处不采用）
         if (CurrentStageForProgressGate() > LevelProgressMaxStage) return;
 
         var contentItem = new Dictionary<string, object>

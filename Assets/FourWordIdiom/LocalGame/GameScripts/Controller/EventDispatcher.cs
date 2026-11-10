@@ -51,6 +51,9 @@ public class EventDispatcher:MonoBehaviour
     private Action<bool> _onHighlightGoldAndEnergy;
     private Action _onAwardClaimed;
     private Action _onAwardScreenClosed;
+    // 同步自 WT 1.9.8（新手奖励 / emoji 开关）
+    private Action _onBeginnerBonusClaimed;
+    private Action<bool> _onEmojiStateChanged;
     #endregion
 
     private void Awake()
@@ -219,6 +222,18 @@ public class EventDispatcher:MonoBehaviour
         remove => _onAwardScreenClosed -= value;
     }
 
+    // ===== 同步自 WT 1.9.8 =====
+    public event Action OnBeginnerBonusClaimed  
+    {
+        add => _onBeginnerBonusClaimed += value;
+        remove => _onBeginnerBonusClaimed -= value;
+    }
+    public event Action<bool> OnEmojiStateChanged  
+    {
+        add => _onEmojiStateChanged += value;
+        remove => _onEmojiStateChanged -= value;
+    }
+
     #endregion
 
     #region 事件触发方法
@@ -295,6 +310,12 @@ public class EventDispatcher:MonoBehaviour
 
     public void TriggerAwardScreenClosed()
         => _onAwardScreenClosed?.Invoke();
+
+    // ===== 同步自 WT 1.9.8 =====
+    public void TriggerBeginnerBonusClaimed()
+        => _onBeginnerBonusClaimed?.Invoke();
+    public void TriggerEmojiStateChanged(bool isOn)
+        => _onEmojiStateChanged?.Invoke(isOn);
 
     
     #endregion

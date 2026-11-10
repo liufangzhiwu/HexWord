@@ -502,6 +502,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
     {
         if (dataInitialized)
         {           
+            overallRankData.CanIsLaunch = true;
             CommitGameData();
             StopTracking();
             AnalyticMgr.GameEnd();

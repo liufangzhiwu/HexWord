@@ -54,6 +54,12 @@ public class ChessStageProgressData
     
     public int GoldLeafCount { get; set; } // 🌟 新增：已得金叶数
     
+    public bool GoldGenerated = false;   // 本关金币是否已生成
+    public int CollectedGold = 0;        // 本关已收集金币数（用于结算展示）
+    public bool HasEvaluatedGold = false; // 是否已经判定过本关金币规则
+    public bool IsGoldLevel = false;      // 本关是否出金币
+    public bool IsGrandSlamGold = false;  // 本关是否为大满贯
+    public bool HasTriggeredIceBreakTip = false; // 本关是否已经触发过破冰提示
     #endregion
 
     public string SaveFileName;
@@ -84,6 +90,12 @@ public class ChessStageProgressData
         this.CurPickFlowerLeavesCount = 0;
         this.CurrPerfectCount = false;
         TotalCumulativeCombos = 0;
+        this.GoldGenerated = false;
+        this.CollectedGold = 0;
+        this.HasEvaluatedGold = false;
+        this.IsGoldLevel = false;
+        this.IsGrandSlamGold = false;
+        this.HasTriggeredIceBreakTip = false; 
     }
 
     public void InitializeFromExisting(ChessStageProgressData sourceData)
@@ -202,7 +214,12 @@ public class ChessStageProgressData
             new List<string>(sourceData.FoundTargetPuzzles) : new List<string>();
         
         this.IsPausedOrFailed = sourceData.IsPausedOrFailed;
-       
+        this.GoldGenerated = sourceData.GoldGenerated;
+        this.CollectedGold = sourceData.CollectedGold;
+        this.HasEvaluatedGold = sourceData.HasEvaluatedGold;
+        this.IsGoldLevel = sourceData.IsGoldLevel;
+        this.IsGrandSlamGold = sourceData.IsGrandSlamGold;
+        this.HasTriggeredIceBreakTip = sourceData.HasTriggeredIceBreakTip;
     }
     #endregion
 

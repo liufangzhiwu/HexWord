@@ -146,6 +146,12 @@ public sealed class GameCoreManager : MonoBehaviour
 
         // ③ 广告追踪激励：首启时在加载阶段同意了授权，奖励在进入主界面后补弹"领取金币"弹窗
         AdTrackingManager.EnsureInstance().TryShowPendingReward();
+
+        // 同步自 WT 1.9.8：保证玩家有默认昵称（WT 原位置在大厅特效方法末尾，此处放在启动流程末尾等价）
+        if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.UserName))
+        {
+            GameDataManager.Instance.UserData.UserName = FishInfoController.Instance.GeneratePlayerName();
+        }
     }
 
     public void UpdateMyPersonInfo()

@@ -68,12 +68,13 @@ public class UserData
     #endregion
 
     #region 系统设置数据
-
     public bool IsMusicOn = true; // 背景音乐开关
     public bool IsSoundOn = true; // 音效开关
     public bool IsVibrationOn =true;    // 震动反馈开关
     public bool IsPushRequested =false;    // 推送权限是否已经请求
     public bool IsAutoPush =false;    // 自动提醒是否开启
+    // 同步自 WT 1.9.8（emoji 开关）
+    public bool IsEmojiOn = true;      // emoji开关
     public bool HasUnclaimedUpdateJoin;       // 是否升级版本
     public string LanguageCode; // 当前语言代码
     public bool IsAgreePrivacy; // 同意用户隐私协议
@@ -258,7 +259,6 @@ public class UserData
     /// 头像框
     /// </summary>
     public List<int> _getHeadBorderIcons=new List<int>();
-    
     private static readonly Random _random = new Random();
     
     // ==== 广告赠礼相关 ====
@@ -280,6 +280,11 @@ public class UserData
     /// <summary>购买记录最多保留条数（超出自动截断最旧的）</summary>
     [JsonIgnore] public const int MAX_PURCHASE_RECORDS = 100;
 
+    #endregion
+    #region 新手奖励活动数据
+    public bool isBeginnerBonusTriggered = false; // 终身是否已触发过（确保仅开一次）
+    public bool isBeginnerBonusCompleted = false; // 是否已领奖/完成
+    public string beginnerBonusStartTime = "";    // 开启时间（ISO 8601 或 ToString）
     #endregion
 
     #region 文件路径管理
@@ -405,6 +410,9 @@ public class UserData
         isGetNewHeadBorderIcon = false;
         isGetNewHeadIcon = false;
         isJoinedZenRank = false;
+        // 同步自 WT 1.9.8
+        IsEmojiOn = true;
+
         // 游戏进度
         TutorialProgress = 0;
         ChessTutorialProgress = new Dictionary<int, bool>
@@ -539,6 +547,11 @@ public class UserData
         // ★ 促销角标消费截止时间（新号默认空字符串 = 未消费）
         shopEntryBadgeConsumedUntil = "";
 
+        // 同步自 WT 1.9.8：新手奖励
+        isBeginnerBonusTriggered = false;
+        isBeginnerBonusCompleted = false;
+        beginnerBonusStartTime = "";
+
         #endregion
     }
 
@@ -590,6 +603,7 @@ public class UserData
         isShowDiscountGift = user.isShowDiscountGift;
         unlimitedEnergyEndTime = user.unlimitedEnergyEndTime;
         charInfoPopupLastTime = user.charInfoPopupLastTime;
+        charInfoPopupCount = user.charInfoPopupCount;   // 同步自 WT 1.9.8：补齐弹窗次数拷贝
 
         // 👇 🌟 核心修复：通过时间戳是否存在，来精准判断是不是老玩家首次更新
         if (string.IsNullOrEmpty(user.LastEnergyUpdateTime))
@@ -607,6 +621,8 @@ public class UserData
 
         hasUsedFreeRevive = user.hasUsedFreeRevive;
         hasUsedGoldRevive = user.hasUsedGoldRevive;
+        // 同步自 WT 1.9.8（其余设置项 HexWord 侧已在上方拷贝）
+        IsEmojiOn = user.IsEmojiOn;
         GoldLeaf=user.GoldLeaf;
         
         ThemeSaveItems=user.ThemeSaveItems.Count<=0?new List<ThemeSaveItem>{
@@ -769,7 +785,6 @@ public class UserData
         _loadTimeIndexData = user._loadTimeIndexData?.Clone() ?? new LoadTimeIndex();
         _getAnimalsHeadIcons = user._getAnimalsHeadIcons;
         _getHeadBorderIcons = user._getHeadBorderIcons ?? new List<int>() { 0, 1, 2, 3 };
-        
         DayRewardVideoGiftCount=user.DayRewardVideoGiftCount;
         DayInterstitialGiftCount=user.DayInterstitialGiftCount;
         HasShownFirstAdGift=user.HasShownFirstAdGift;
@@ -782,6 +797,11 @@ public class UserData
 
         // ★ 促销角标消费截止时间（旧存档没有这个字段时为 null，统一兜底成空字符串）
         shopEntryBadgeConsumedUntil = user.shopEntryBadgeConsumedUntil ?? "";
+
+        // 同步自 WT 1.9.8：新手奖励状态
+        isBeginnerBonusTriggered = user.isBeginnerBonusTriggered;
+        isBeginnerBonusCompleted = user.isBeginnerBonusCompleted;
+        beginnerBonusStartTime = user.beginnerBonusStartTime;
         
         // 检查并初始化缺失的生命周期事件
         InitializeLifecycleEvents();

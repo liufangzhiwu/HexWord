@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine.UI;
 
 // ==========================================
 // 关卡枚举
@@ -96,6 +97,23 @@ public class FlowerConfig
     public Dictionary<int, int> Fixed;  // 固定关卡配置  {关卡id,级别degree}
     public List<Interval> CycleLevels;  // 循环关卡配置
 }
+/// <summary>
+/// 记忆扫描配置
+/// </summary>
+public class MemoryConfig
+{
+    public int FirstLevel;
+    public List<int> CycleLevels;
+}
+/// <summary>
+/// 金币盖住棋子关卡配置
+/// </summary>
+public class GoldCoverConfig
+{
+    public bool IsOpen;             // 是否开启
+    public int FirstLevel;          // 首次出现的关卡
+    public List<int> CycleLevels;   // 循环关卡配置（个位数匹配）
+}
 
 /// <summary>
 /// 答题环境上下文，用于正反馈判定
@@ -108,4 +126,31 @@ public struct PraiseContext
     public int WordsRemaining;      // 答对该词后，关卡还剩下的词数
     public int CurrentCombo;        // 当前连击数
     public int TotalErrorsInLevel; // 本关卡累计的总错误次数
+}
+/// <summary>
+/// 关前激励配置数据 (EnterStimulate)
+/// </summary>
+public class EnterStimulateConfig
+{
+    public int StimulateID;       // 激励ID
+    public int Priority;          // 触发判断优先级
+    public int LevelType;         // 关卡类型 (0:普通, 1:困难, 2:极难 等)
+    public int BannerType;        // 横幅类型
+    public int LifeDay;           // 生命周期第X天之后才能出现
+    public int LevelProgress;     // 通过填字第X关才能出现
+    public float Probability;     // 触发概率 (去掉%后的数值，如50表示50%)
+    public int TimeWindow;        // 时间窗口（秒）
+    public int IconPosition;      // 是否有图标及位置
+    public string[] Emojis;       // 图标文件名数组 (支持多个图标随机/轮播)
+    public string[] TextLoop;     // 循环激励文案Key
+}
+/// <summary>
+/// 交付给 UI 层的最终关前激励渲染数据
+/// </summary>
+public struct EnterStimulateResult
+{
+    public int LevelType;
+    public int BannerType;    // 横幅样式类型
+    public string Emoji;      // 最终决定展示的图标 (可能为空)
+    public string TextKey;    // 最终决定展示的多语言文案 Key
 }

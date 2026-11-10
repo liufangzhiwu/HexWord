@@ -52,7 +52,8 @@ public class StimulateRuleConfig
      * 标题文案
      */
     public string TitleKey;
-
+    public string[] TitleKeys;
+    
     /**
      * 激励语文案
      */
