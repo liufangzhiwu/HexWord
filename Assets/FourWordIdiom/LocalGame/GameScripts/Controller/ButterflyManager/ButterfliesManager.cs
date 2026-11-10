@@ -83,8 +83,9 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         {
             if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
 
-            // 条件 1：等级达标
-            bool isLevelReached = GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel;
+            // 条件 1：等级达标（HexWord 双模式：六边形 / 拼字任一达标即可）
+            bool isLevelReached = GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel
+                                  || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel;
 
             // 条件 2：老用户豁免（只要存档里记了已解锁，或者有蝴蝶/蝶蛹残留，说明他以前玩过）
             bool isLegacyUnlocked = GameDataManager.Instance.ButterflyData.butterflies.Count > 0 || 
