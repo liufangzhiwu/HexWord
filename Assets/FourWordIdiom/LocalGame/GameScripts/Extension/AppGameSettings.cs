@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 /// <summary>
 /// 游戏核心配置（修改版，避免被识别为重复应用）
@@ -47,37 +47,32 @@ public static class AppGameSettings
     // ===== 功能解锁关卡 =====
     public static class UnlockRequirements 
     {
-        public static int TimeLimitMode { get; } = 1;   
+        // ===== 数值已同步 WordTuanjie 1.9.8（完整套用 WT 的引导节奏）=====
+        public static int TimeLimitMode { get; } = 15;   
         public static int SignInRewards { get; } = 11;   
-        public static int DailyMissions { get; } = 16;   
-        //30关卡进入结算界面时开启(鲤鱼跃龙门活动)
-        public static int FishOpenLevel { get; } = 21;
-        //10关卡进入结算界面时开启（命名界面）
+        public static int DailyMissions { get; } = 31;   
+        //39关卡进入结算界面时开启(鲤鱼跃龙门活动)
+        public static int FishOpenLevel { get; } = 39;
+        //1关卡进入结算界面时开启（命名界面）
         public static int HeadOpenLevel { get; } = 1;
-        public static int ZenOpenLevel { get; } = 11; // 11关卡开启禅模式
-
-        // ===== 同步自 WordTuanjie 1.9.8：仅补充结构，数值沿用 HexWord 现有节奏 =====
-        // HexWord 当前未对蝴蝶花园做关卡限制，暂取 1（等价于不限制），如需限制请运营给值
-        public static int ButterflyGardenOpenLevel { get; } = 1;
-        // HexWord 当前未对主题界面做关卡限制，暂取 1（等价于不限制），如需限制请运营给值
-        public static int ThemeOpenLevel { get; } = 1;
+        public static int ZenOpenLevel { get; } = 26; // 26关卡开启禅模式
+        public static int ButterflyGardenOpenLevel { get; } = 12;
+        public static int ThemeOpenLevel { get; } = 6;
     }
 
     // ===== 功能显示关卡（同步自 WordTuanjie 1.9.8，数值对齐 HexWord 现有解锁节奏）=====
     public static class ShowRequirements 
     {
-        public static int TimeLimitShow { get; } = 1;
+        // ===== 数值已同步 WordTuanjie 1.9.8 =====
+        public static int TimeLimitShow { get; } = 10;
         public static int SignInRewards { get; } = 11;
-        // 提前 5 关显示入口（锁定态显示"第16关"），与 WT 的引导节奏一致；如需取消提前显示，改成与 UnlockRequirements 相同即可
-        public static int DailyMissionsShow { get; } = 11;
-        // 鲤鱼跃龙门活动显示门槛（解锁 21 关，提前 5 关露出锁定态）
-        public static int FishShowLevel { get; } = 16;
+        public static int DailyMissionsShow { get; } = 24;
+        // 鲤鱼跃龙门活动显示门槛（39 关解锁，34 关起露出锁定态）
+        public static int FishShowLevel { get; } = 34;
         public static int HeadOpenLevel { get; } = 1;
-        public static int ZenShowLevel { get; } = 11; // 11关卡显示禅模式
-        // HexWord 当前未对蝴蝶花园做显示限制，暂取 1
-        public static int ButterflyGardenShowLevel { get; } = 1;
-        // HexWord 当前未对主题界面做显示限制，暂取 1
-        public static int ThemeShowLevel { get; } = 1;
+        public static int ZenShowLevel { get; } = 21; // 21关卡显示禅模式
+        public static int ButterflyGardenShowLevel { get; } = 8;
+        public static int ThemeShowLevel { get; } = 3;
     }
 
 
