@@ -55,7 +55,30 @@ public static class AppGameSettings
         //10关卡进入结算界面时开启（命名界面）
         public static int HeadOpenLevel { get; } = 1;
         public static int ZenOpenLevel { get; } = 11; // 11关卡开启禅模式
+
+        // ===== 同步自 WordTuanjie 1.9.8：仅补充结构，数值沿用 HexWord 现有节奏 =====
+        // HexWord 当前未对蝴蝶花园做关卡限制，暂取 1（等价于不限制），如需限制请运营给值
+        public static int ButterflyGardenOpenLevel { get; } = 1;
+        // HexWord 当前未对主题界面做关卡限制，暂取 1（等价于不限制），如需限制请运营给值
+        public static int ThemeOpenLevel { get; } = 1;
     }
+
+    // ===== 功能显示关卡（同步自 WordTuanjie 1.9.8，数值对齐 HexWord 现有解锁节奏）=====
+    public static class ShowRequirements 
+    {
+        public static int TimeLimitShow { get; } = 1;
+        public static int SignInRewards { get; } = 11;
+        public static int DailyMissionsShow { get; } = 16;
+        // 鲤鱼跃龙门活动显示门槛
+        public static int FishShowLevel { get; } = 21;
+        public static int HeadOpenLevel { get; } = 1;
+        public static int ZenShowLevel { get; } = 11; // 11关卡显示禅模式
+        // HexWord 当前未对蝴蝶花园做显示限制，暂取 1
+        public static int ButterflyGardenShowLevel { get; } = 1;
+        // HexWord 当前未对主题界面做显示限制，暂取 1
+        public static int ThemeShowLevel { get; } = 1;
+    }
+
 
     // ===== 任务系统 =====
     //每日任务中无限使用蝴蝶道具时长（分钟）

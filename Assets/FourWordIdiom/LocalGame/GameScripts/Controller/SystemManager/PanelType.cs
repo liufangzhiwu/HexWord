@@ -45,6 +45,8 @@ public class PanelType  // Renamed class
     public const string OverallRankingNames = "OverallRankingNames";
     public const string OverallRankingHelp = "OverallRankingHelp";
     public const string OverallSettlementScreen = "OverallSettlementScreen";
+    // ===== 同步自 WordTuanjie 1.9.8 (新手奖励) =====
+    public const string BeginnerBonusPanel = "BeginnerBonusPanel";
     
     // 已注释的旧界面常量 (Legacy commented constants)
     public const string GetItemScreen = "GetItemScreen"; 
