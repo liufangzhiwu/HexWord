@@ -25,6 +25,7 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private Text _textDisplay;    // 文字显示
     [SerializeField] private GameObject _mesk;     // 蒙版覆盖
     [SerializeField] private Image _bg;     // 图片
+    [SerializeField] private Image _emojiDisplay;
     // 👇 新增：角标的UI组件
     [SerializeField] private GameObject _badgeGroup; // 角标的背景图(红色圆圈等)
     [SerializeField] private Text _badgeText;        // 角标里的数字Text
@@ -49,7 +50,6 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         _isGoldLeaf = active;
         bowl.isGoldLeaf = _isGoldLeaf;
-       
         UpdateBadge(); // 刷新角标显示
     }
     
@@ -57,14 +57,29 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         this.bowl = bowl;
         this._bowlGrid = bowlGrid;
-        _textDisplay.text = bowl.letter.ToString();
+        
+        bool isEmojiActive = bowl.isEmoji && GameDataManager.Instance.UserData.IsEmojiOn;
+        
+        if (isEmojiActive)
+        {
+            _textDisplay.gameObject.SetActive(false);
+            _emojiDisplay.gameObject.SetActive(true);
+            _emojiDisplay.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(bowl.letter);
+        }
+        else
+        {
+            _textDisplay.text = bowl.letter;
+            _textDisplay.gameObject.SetActive(true);
+            _emojiDisplay.gameObject.SetActive(false);
+        }
+        
         _mesk.SetActive(locked);
         _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("fill_bg");
         if(bowl.status == 2 )
         {
             gameObject.SetActive(false);
         }
-        // 👇 新增：初始化时更新角标
+        //初始化时更新角标
         UpdateBadge();
         
         if (bowl.isGoldLeaf)
@@ -77,7 +92,7 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         }
 
     }
-    // 👇 新增：更新角标的方法
+    // 更新角标的方法
     public void UpdateBadge()
     {
         if (_badgeGroup != null && _badgeText != null)
@@ -134,13 +149,37 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         {
             if (cloneView._badgeGroup != null) cloneView._badgeGroup.SetActive(false); 
             if (cloneView._mesk != null) cloneView._mesk.SetActive(false);
-            
-            // 复制文字内容和颜色，解决“看不到字”的问题
-            if (cloneView._textDisplay != null && this._textDisplay != null) 
+
+            bool isEmojiActive = this.bowl.isEmoji && GameDataManager.Instance.UserData.IsEmojiOn;
+            if (isEmojiActive)
             {
-                cloneView._textDisplay.text = this._textDisplay.text;
-                cloneView._textDisplay.color = this._textDisplay.color;
+                if (cloneView._textDisplay != null)
+                {
+                    cloneView._textDisplay.gameObject.SetActive(false);
+                }
+
+                if (cloneView._emojiDisplay != null && this._emojiDisplay != null)
+                {
+                    cloneView._emojiDisplay.gameObject.SetActive(true);
+                    cloneView._emojiDisplay.sprite = this._emojiDisplay.sprite;
+                    cloneView._emojiDisplay.color = this._emojiDisplay.color;
+                }
             }
+            else
+            {
+                if (cloneView._emojiDisplay != null)
+                {
+                    cloneView._emojiDisplay.gameObject.SetActive(false);
+                }
+                // 复制文字内容和颜色，解决“看不到字”的问题
+                if (cloneView._textDisplay != null && this._textDisplay != null) 
+                {
+                    cloneView._textDisplay.gameObject.SetActive(true);
+                    cloneView._textDisplay.text = this._textDisplay.text;
+                    cloneView._textDisplay.color = this._textDisplay.color;
+                }
+            }
+           
             
             // 复制初始底板图，解决“上次飞行被染绿/红后，下次起飞直接是绿/红”的问题
             if (transform.childCount > 0 && clone.transform.childCount > 0)

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using FourWordIdiom.LocalGame.GameScripts.Controller;
@@ -16,17 +16,17 @@ public partial class ChessPlayArea
         _hasTriggeredHintReminderThisLevel = false;
         _isStuckTimerRunning = false;
         _stuckTimer = 0f;
-
         //清理一下棋盘
         chessboardGrid.Clear();
         puzzleTileTable.Clear();
+        ResetIceBreakState();
         yield return new WaitForEndOfFrame();
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
         SetToolButtonsEnabled(false); // 强制禁用所有道具按钮
         chessboardGrid.IsBlockInput = true; // 强制锁死棋盘
         ChessBowlGrid.IsTutorialBlocking = true;
-        
         IsClickAuto = false;
+        
         // ==========================================
         // 先执行你原版的缩放和尺寸适配逻辑
         // ==========================================
@@ -146,16 +146,18 @@ public partial class ChessPlayArea
                 UsedPuzzles.Add(puzzle);
             }
         }
-
+        
         yield return null;
-        // 让棋盘开始显示出来
-        bool isAnimFinished = false;
-        PlayEnterAnimation(() =>
+        if (ChessStageController.Instance.IsFirstEnterStage)
         {
-            isAnimFinished = true; // 动画播完，标记设为 true
-        });
-        // 协程在这里暂停，直到 isAnimFinished 变成 true 才往下走
-        yield return new WaitUntil(() => isAnimFinished);
+            yield return PlayEnterStimulateFlow();
+        }
+        // 让棋盘开始显示出来
+        yield return PlayEnterAnimation();
+        
+        if(ChessStageController.Instance.CheckMemoryMechanic(CurrStageData.StageId, out _))
+            yield return StartRadarScanCoroutine();
+        
         _currentWordActiveSeconds = 0f;
         wordUserSeconds = 0;
         ResetTimeWarning();
@@ -278,6 +280,7 @@ public partial class ChessPlayArea
     public void HandleGamePlayCall(GameObject game, string source)
     {
         NotifyPlayerInteraction(); // 🌟 触发唤醒计时
+        HitsBtn.transform.GetChild(HitsBtn.transform.childCount - 1).gameObject.SetActive(false);
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessLearningGuide))
         {
             // 如果当前正在展示的是“撤回错字 (教程3)”引导，绝对不允许后台迟到的 SetChess 事件进来捣乱！
@@ -366,7 +369,7 @@ public partial class ChessPlayArea
             ChessGuideSystem.Instance.DisplayGuide();
             SetToolButtonsEnabled(true);
         }
-        else if (CurrStageData.StageId == 6 && !GameDataManager.Instance.UserData.ChessTutorialProgress[5])
+        else if (CurrStageData.StageId == 9 && !GameDataManager.Instance.UserData.ChessTutorialProgress[5])
         {
             ChessGuideSystem.Instance.currentTutorial = 5;
             ChessGuideSystem.Instance.activeToolObject = CompleteBtn.gameObject;
@@ -374,17 +377,11 @@ public partial class ChessPlayArea
             ChessGuideSystem.Instance.DisplayGuide();
             SetToolButtonsEnabled(true);
         }
-
-        // 👇 🌟 触发特殊玩法的新手引导
-        if (ChessStageController.Instance.IsFirstEnterStage)
-        {
-            int stageId = CurrStageData.StageId;
-
-            // 冰块新手引导
-            bool hasIceInBoard = chessboardGrid.GridList.Values.Any(v => v.chesspiece != null && v.chesspiece.hasIce);
-            if (hasIceInBoard && (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(6) ||
+        // 冰块新手引导
+        bool hasIceInBoard = chessboardGrid.GridList.Values.Any(v => v.chesspiece != null && v.chesspiece.hasIce);
+        if (hasIceInBoard && (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(6) ||
                                   !GameDataManager.Instance.UserData.ChessTutorialProgress[6]))
-            {
+        {
                 Debug.Log("🌟 [引导注入] 正式弹窗展示冰块新手引导");
                 // 寻找棋盘上第一个被冰块冻住的格子，作为小手指向的目标
                 var allIceTiles = chessboardGrid.GridList.Values.Where(v => v.chesspiece.hasIce).ToList();
@@ -395,7 +392,7 @@ public partial class ChessPlayArea
                 ChessGuideSystem.Instance.toolSourceName = "IceTutorial";
                 ChessGuideSystem.Instance.DisplayGuide();
                 return; // 强行拦截一维时间轴，一次只弹一个引导
-            }
+        }
 
             // 花朵新手引导
             bool hasFlowerInBoard =
@@ -459,6 +456,17 @@ public partial class ChessPlayArea
                 ChessGuideSystem.Instance.DisplayGuide();
                 return;
             }
+        if (ChessStageController.Instance.IsFirstEnterStage)
+        {
+            //  触发特殊玩法的新手引导
+            // Emoji 关卡气泡提示 (判定是否存在 Emoji 字块)
+            bool hasEmoji = CurrStageInfo != null && CurrStageInfo.Puzzles.Any(p => p.isEmoji);
+            if (hasEmoji && !GameDataManager.Instance.OverallRank.HasViewedEmojiTip)
+            {
+                Debug.Log("🌟 [引导注入] 展示 Emoji 关闭提示气泡");
+                GameDataManager.Instance.OverallRank.HasViewedEmojiTip = true; // 记录已展示
+                ShowEmojiTip();
+            }
         }
     }
 
@@ -478,6 +486,8 @@ public partial class ChessPlayArea
         // 注意：不重置 _hasTriggeredHintReminderThisLevel，保证每关只出一次特效
         _isStuckTimerRunning = false;
         _stuckTimer = 0f;
+        _noInitialStuckTimer = 0f;
+        _operatedStuckTimer = 0f;
 
         UsedPuzzles.Add(puzzle);
         UpdateLevelData(puzzle); // 打开词典按钮时填入
@@ -505,7 +515,20 @@ public partial class ChessPlayArea
     {
         wordErrorCount++;
         ComboErrorCount++;
-
+        // 精准记录特定词组的试错次数
+        string targetPhrase = GetCurrentSelectedPhrase(); // 获取玩家正在填的词
+        if (chessboardGrid.currentFailingPhrase == targetPhrase)
+        {
+            // 还是这个词，继续累加
+            chessboardGrid.currentPhraseConsecutiveErrors++;
+        }
+        else
+        {
+            // 玩家换目标了，或者第一次答错，重置并记录新词
+            chessboardGrid.currentFailingPhrase = targetPhrase;
+            chessboardGrid.currentPhraseConsecutiveErrors = 1;
+        }
+        
         if (!_hasTriggeredHintReminderThisLevel)
         {
             if (ComboErrorCount == 3)
@@ -518,12 +541,25 @@ public partial class ChessPlayArea
             {
                 // 时间达到了配置表的 X 秒，且玩家再次答错 -> 触发提醒
                 _hasTriggeredHintReminderThisLevel = true; // 锁定，本关不再触发
-                _isStuckTimerRunning = false;
+                _isStuckTimerRunning = false;              // 关闭没用的发呆计时器
                 StartCoroutine(PlayHintReminderEffectDelay());
             }
+            // if (ComboErrorCount == 2)
+            // {
+            //     // 刚达到连续2次错误，开始暗中倒计时
+            //     _isStuckTimerRunning = true;
+            //     _stuckTimer = 0f;
+            // }
+            // else if (ComboErrorCount > 2 && _isStuckTimerRunning && _stuckTimer >= PropRemindTime)
+            // {
+            //     // 时间达到了配置表的 X 秒，且玩家再次答错 -> 触发提醒
+            //     _hasTriggeredHintReminderThisLevel = true; // 锁定，本关不再触发
+            //     _isStuckTimerRunning = false;
+            //     StartCoroutine(PlayHintReminderEffectDelay());
+            // }
         }
 
-        // 👇 🌟 核心修改点：记录扣分前后的差值
+        // 核心修改点：记录扣分前后的差值
         int oldScore = ChessStageController.Instance.CurrentTotalScore;
 
         bool wasPunished = ChessStageController.Instance.OnUpdateRewardPuzzle(false, tileErrorCount);
@@ -538,7 +574,7 @@ public partial class ChessPlayArea
                 ShowBoardDeductionFloatingScore(tile.transform, scoreDiff);
             }
 
-            // 🌟 既然已经扣过分、飞过粒子了，这波错误就“翻篇”了，计数重置！
+            //  既然已经扣过分、飞过粒子了，这波错误就“翻篇”了，计数重置！
             chessboardGrid.TileErrorCounts[tile] = 0;
         }
 
@@ -550,21 +586,6 @@ public partial class ChessPlayArea
         if (chessboardGrid != null)
         {
             chessboardGrid.hasPlayedComboSoundThisChain = false;
-        }
-        
-        // 👇 新增：精准记录特定词组的试错次数
-        string targetPhrase = GetCurrentSelectedPhrase(); // 获取玩家正在填的词
-    
-        if (chessboardGrid.currentFailingPhrase == targetPhrase)
-        {
-            // 还是这个词，继续累加
-            chessboardGrid.currentPhraseConsecutiveErrors++;
-        }
-        else
-        {
-            // 玩家换目标了，或者第一次答错，重置并记录新词
-            chessboardGrid.currentFailingPhrase = targetPhrase;
-            chessboardGrid.currentPhraseConsecutiveErrors = 1;
         }
     }
 
@@ -611,12 +632,32 @@ public partial class ChessPlayArea
         {
             _comboScreenFX.SetActive(false);
         }
-
+        SettleStageGoldData("金币词获得");
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
         SetToolButtonsEnabled(false);
    
         StartCoroutine(HandleStageCompletion(isJump));
         if (!isJump) ShowGoldLeafAnim();
+        
+    }
+    
+    /// <summary>
+    /// 在退出或通关时，读取控制器数据，一次性下发金币奖励！
+    /// </summary>
+    public void SettleStageGoldData(string reason)
+    {
+        if (_isGoldSettled) return;
+        // 完全信任数据层的记录！
+        int totalGoldEarned = ChessStageController.Instance.CurrStageData.CollectedGold;
+        
+        if (totalGoldEarned > 0)
+        {
+            // 真实物理发奖，并上报打点
+            GameDataManager.Instance.UserData.UpdateGold(totalGoldEarned, false, false, reason);
+            Debug.Log($"<color=#FFD700>[金币统一下发]</color> 根据控制器记录，结算本局金币: {totalGoldEarned}，原因: {reason}");
+            
+            _isGoldSettled = true;
+        }
     }
 
     private void ShowGoldLeafAnim()
@@ -636,7 +677,8 @@ public partial class ChessPlayArea
     private IEnumerator HandleStageCompletion(bool isJump)
     {
         wordUserSeconds = 0;
-        // puzzleTileTable.transform.parent.gameObject.SetActive(false);
+        int timeBonusScore = Mathf.FloorToInt(_remainingTime / 10f) * 2;
+        ChessStageController.Instance.TimeBonusScore = timeBonusScore;
         ChessStageController.Instance.FinalizeStageData(isJump);
         yield return null;
         if (!isJump)
@@ -646,7 +688,12 @@ public partial class ChessPlayArea
             {
                 yield return StartCoroutine(PlayLeafRewardsFlyOutFlow());
             }
-
+            
+            // 👇 新增：2. 结算剩余时间兑换禅意分 (每10秒 = 2分)
+            if (timeBonusScore > 0 && CurrStageInfo.StageNumber > 1) 
+            {
+                yield return StartCoroutine(PlayTimeBonusToZenScoreFlow(timeBonusScore));
+            }
             bool isBannerFinished = false;
             // 4选1动态加载横幅预制体，内部带有 2.5 秒的展示时常生命周期
             StartCoroutine(PlayZenToCenterBannerFlow(() => isBannerFinished = true));
@@ -672,6 +719,7 @@ public partial class ChessPlayArea
     {
         _isTimerRunning = false;
 
+        SettleStageGoldData("金币词获得");
         // 🌟 核心：在此刻正式扣除体力！
         //    无限体力期间 ConsumeEnergy 内部会直接跳过扣除（返回 true 不扣），这里只负责把日志说清楚。
         bool unlimitedEnergy = GameDataManager.Instance.UserData.HasUnlimitedEnergy();

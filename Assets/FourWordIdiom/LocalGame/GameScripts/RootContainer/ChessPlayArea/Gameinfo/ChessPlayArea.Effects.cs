@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,11 +56,10 @@ public partial class ChessPlayArea
         }
     }
     
-      /// <summary>
+    /// <summary>
     /// 播放入场动画, 建议在面板打开/初始化完成时调用这个方法
     /// </summary> 
-    /// <param name="onComplete">动画播放完毕后的回调函数（可选）</param>
-    public void PlayEnterAnimation(Action onComplete = null)
+    private IEnumerator PlayEnterAnimation()
     {
         // 创建 DOTween 序列，编排入场节奏
         Sequence enterSeq = DOTween.Sequence();
@@ -77,7 +77,14 @@ public partial class ChessPlayArea
         {
             enterSeq.Insert(0.2f, zentable.transform.DOScale(Vector3.one, 0.4f).SetEase(Ease.OutBack));
         }
-        
+        if (pupaObj != null && pupaObj.activeSelf)
+        {
+            if (pupaObj.TryGetComponent<CanvasGroup>(out var pupaCg))
+            {
+                // 在 0.2 秒处开始，用 0.4 秒的时间平滑淡入
+                enterSeq.Insert(0.2f, pupaCg.DOFade(1f, 0.4f).SetEase(Ease.InOutSine));
+            }
+        }
         // --- 步骤 B：上方棋盘整体淡入 ---
         if (chessboardGrid != null && chessboardGrid.TryGetComponent<CanvasGroup>(out var gridCG))
         {
@@ -102,12 +109,15 @@ public partial class ChessPlayArea
             // 整个按钮组一起在 0.6 秒处平滑淡入
             enterSeq.Insert(0.6f, btnCG.DOFade(1f, 0.4f).SetEase(Ease.InOutSine));
         }
-        
-        enterSeq.OnComplete(() =>
+        if (MyThemeBtn != null && MyThemeBtn.TryGetComponent<CanvasGroup>(out var themeCg))
         {
-            // 如果传入了回调方法，就执行它
-            onComplete?.Invoke();
-        });
+            enterSeq.Insert(0.6f, themeCg.DOFade(1f, 0.4f).SetEase(Ease.InOutSine));
+        }
+        if (pauseBtn != null && pauseBtn.TryGetComponent<CanvasGroup>(out var pauseCg))
+        {
+            enterSeq.Insert(0.6f, pauseCg.DOFade(1f, 0.4f).SetEase(Ease.InOutSine));
+        }
+        yield return enterSeq.WaitForCompletion();
     }
       
     /// <summary>
@@ -144,6 +154,21 @@ public partial class ChessPlayArea
             if (btnGroupParent.TryGetComponent<CanvasGroup>(out var btnCG)) DOTween.Kill(btnCG);
         }
         if (zentable != null) DOTween.Kill(zentable.transform);
+        if (MyThemeBtn != null) 
+        {
+            DOTween.Kill(MyThemeBtn.transform);
+            if (MyThemeBtn.TryGetComponent<CanvasGroup>(out var cg)) DOTween.Kill(cg);
+        }
+        if (pauseBtn != null) 
+        {
+            DOTween.Kill(pauseBtn.transform);
+            if (pauseBtn.TryGetComponent<CanvasGroup>(out var cg)) DOTween.Kill(cg);
+        }
+        if (pupaObj != null) 
+        {
+            DOTween.Kill(pupaObj.transform);
+            if (pupaObj.TryGetComponent<CanvasGroup>(out var cg)) DOTween.Kill(cg);
+        }
         // ==========================================
         // 2. 强制初始状态 (隐藏)
         // ==========================================
@@ -176,6 +201,61 @@ public partial class ChessPlayArea
             if (puzzleParent.TryGetComponent<CanvasGroup>(out var tableCG)) tableCG.alpha = 0f;
         }
         if (zentable != null) zentable.transform.localScale = Vector3.zero;
+        if (radarRoot != null) radarRoot.SetActive(false);
+        if (radarMaskImage != null) radarMaskImage.gameObject.SetActive(false);
+        if (MyThemeBtn != null)
+        {
+            CanvasGroup cg = MyThemeBtn.GetComponent<CanvasGroup>();
+            if (cg == null) cg = MyThemeBtn.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+        }
+        if (pauseBtn != null)
+        {
+            CanvasGroup cg = pauseBtn.GetComponent<CanvasGroup>();
+            if (cg == null) cg = pauseBtn.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+        }
+        if (pupaObj != null)
+        {
+            CanvasGroup cg = pupaObj.GetComponent<CanvasGroup>();
+            if (cg == null) cg = pupaObj.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            
+            // 恢复一下缩放，防止它之前播放收集动效时停留在放大的状态
+            pupaObj.transform.localScale = Vector3.one; 
+        }
+        // ==========================================
+        // 🌟 金币收集栏：记录原坐标，并瞬间移动到屏幕外
+        // ==========================================
+        if (ColdTable != null)
+        {
+            RectTransform rt = ColdTable.GetComponent<RectTransform>();
+            // 获取或添加 CanvasGroup 用于控制透明度
+            CanvasGroup cg = ColdTable.GetComponent<CanvasGroup>();
+            if (cg == null) cg = ColdTable.AddComponent<CanvasGroup>();
+
+            // 1. 只在第一次打开时记录编辑器里的“完美坐标”
+            if (!_isColdTablePosRecorded)
+            {
+                _coldTableTargetPos = rt.anchoredPosition;
+            
+                // 2. 动态计算绝对安全的屏幕外坐标：
+                // 因为锚点在左侧，所以直接往左推 (自身的宽度 + 50像素的安全距离)
+                // 这样不管里面塞了多少子节点，都不可能走光
+                _coldTableOffScreenX = -rt.rect.width - 50f; 
+            
+                _isColdTablePosRecorded = true;
+            }
+
+            // 3. 杀掉可能残留的旧动画，防止快速重开游戏时动画抽搐
+            rt.DOKill();
+            cg.DOKill();
+
+            // 4. 瞬间就位到屏幕外，并设为全透明
+            rt.anchoredPosition = new Vector2(_coldTableOffScreenX, _coldTableTargetPos.y);
+            cg.alpha = 0f;
+        }
+        
     }
     /// <summary>
     /// 蝶蛹进度收集完成时的粒子发光散开特效
@@ -248,7 +328,7 @@ public partial class ChessPlayArea
             
             _bannerLiziCache.SetActive(true);
             effectPointTrans.gameObject.SetActive(true);
-             yield return new WaitForSeconds(1.5f);
+             yield return new WaitForSeconds(0.5f);
             AudioManager.Instance.PlaySoundEffect("result_chest_open",0,1);
             lightYeTrans.gameObject.SetActive(true);
             effectPointTrans.gameObject.SetActive(false);
@@ -335,21 +415,28 @@ public partial class ChessPlayArea
                 if (rule != null)
                 {
                     // 例：获取激励主标题与副标题
-                    string title = MultilingualManager.Instance.GetString(rule.TitleKey, "pingzi");
-                    string desc = MultilingualManager.Instance.GetString(rule.LongTextKey, "pingzi");
-                    
+                    string titleKey = ChessStageController.Instance.GetCurrentMatchedTitleKey();
+                    string title = MultilingualManager.Instance.GetString(titleKey, "pingzi");
+                    string percentStr = "";
+                    if (!string.IsNullOrEmpty(rule.LongTextKey))
+                    {
+                        string desc = MultilingualManager.Instance.GetString(rule.LongTextKey, "pingzi");
+                        // 写入百分比 (这里处理 0% 防护，大厂通常会做个假的最低限度)
+                        float displayPercent = ChessStageController.Instance.DisplayZenPercent;
+                        percentStr = string.Format(desc, displayPercent.ToString("F2"));
+                    }
+                    else if (!string.IsNullOrEmpty(rule.PhraseKey))
+                    {
+                        // 没有 LongTextKey 时，使用短文案填充
+                        percentStr = MultilingualManager.Instance.GetString(rule.PhraseKey, "pingzi");
+                    }
                     // 你需要根据预制体里的具体层级找 Text 组件，这里假设存在
                     Text titleText = activeBanner.transform.Find("Text01")?.GetComponent<Text>();
-                    
-                    // 写入百分比 (这里处理 0% 防护，大厂通常会做个假的最低限度)
-                    float displayPercent = ChessStageController.Instance.DisplayZenPercent;
-                    string percentStr = string.Format(desc, displayPercent.ToString("F2"));
                     Text percentText = activeBanner.transform.Find("Text02")?.GetComponent<Text>();
                     if (percentText != null)
                     {
                         percentText.text = percentStr;
                     }
-                    Debug.Log($"🌟 [横幅准备完毕] 标题: {title} | 鼓励词: {percentStr} | 超越: {displayPercent:F2}%");
                     // if (rule.ScatterFlowers) MessageSystem.Instance.ShowTip($"{title} \n {percentStr} \n 撒花！");
                     if (titleText != null)
                     {
@@ -383,7 +470,6 @@ public partial class ChessPlayArea
         {
             Debug.LogError($"🚨 横幅预制体实例化失败！缺少样式 {styleNumber}");
             // 兜底机制：就算预制体炸了，游戏也能正常玩下去
-            if (effectMask != null) effectMask.gameObject.SetActive(false);
             onComplete?.Invoke(); 
         }
     }
@@ -401,17 +487,52 @@ public partial class ChessPlayArea
         bool isButterflyTaskFinished = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining();
         
         // 获取终点坐标
-        Transform pauseBtnPos = pauseBtn.transform;        // 金币终点（关卡暂停时间按钮处）
+        Transform goldTargetPos = ColdTable.transform.GetChild(0);        // 金币终点（关卡暂停时间按钮处）
         Transform pupaPos = pupaProgressBar.transform;     // 蝶蛹终点
         Transform zenPos = _zenScoreText.transform;               // 禅意分/莲花终点
 
         // 1. 金币（2片叶子解锁）
         if (curLeaves >= 2 && leafGold != null)
         {
+            int leafGoldReward = 0;
+            List<LeafReward> earnedRewards = ChessStageController.Instance.GetAllLeafRewards(curLeaves);
+            foreach (var reward in earnedRewards) {
+                if (reward.Type == 0) leafGoldReward += reward.Value;
+            }
+            
             // Debug.Log("<color=#FF5500>[飞行排查] 3. 准备起飞：金币</color>");
             hasAnyFly = true;
-            // FlyRewardNodeToTarget(leafGold, pauseBtnPos, flyDuration);
-            CustomFlyInManager.Instance.FlyInGoldToTarget(leafGold.transform, pauseBtnPos);
+            // _visualEarnedGold = 0;
+            if (ColdTable != null)
+            {
+                ColdTable.SetActive(true);
+                SlideInColdTableAnim();
+            }
+            // 将真实奖励拆分成 3 份
+            int part1 = leafGoldReward / 3;
+            int part2 = leafGoldReward / 3;
+            int part3 = leafGoldReward - part1 - part2; // 确保总和一分不差
+            int[] parts = { part1, part2, part3 };
+            float startFlightDelay = 0.45f;
+            
+            for (int i = 0; i < 3; i++)
+            {
+                int goldToAdd = parts[i];
+                DOVirtual.DelayedCall(startFlightDelay + i * 0.2f, () =>
+                {
+                    CustomFlyInManager.Instance.FlyInGoldAdvanced(leafGold.transform, goldTargetPos, () =>
+                    {
+                        AddInLevelGoldWithAnim(goldToAdd);
+                    }, 0.7f); // <--- 在这里传入覆盖时间
+                });
+            }
+            // 播放完后稍作停留，再滑出屏幕
+            DOVirtual.DelayedCall(2f, () => 
+            {
+                // _visualEarnedGold = 0; // 重置防穿帮
+                SlideOutColdTableAnim();
+                GameDataManager.Instance.UserData.UpdateGold(leafGoldReward, false, false, "树叶收集结算获得");
+            });
         }
 
         // 2. 蝶蛹 或 禅意分（5片叶子解锁）
@@ -490,6 +611,168 @@ public partial class ChessPlayArea
             // 到达目标后彻底销毁克隆体
             Destroy(flyObj);
         });
+    }
+
+    /// <summary>
+    /// 剩余时间兑换禅意分表现流水线 
+    /// (1秒内清空时间 -> 原汁原味复刻 FlyToZenScore 的轨迹 -> 调用 UpdateZenScoreUI 结算)
+    /// </summary>
+    private IEnumerator PlayTimeBonusToZenScoreFlow(int bonusScore)
+    {
+        if (bonusScore <= 0) yield break;
+
+        Vector3 startPos = _timerText != null ? _timerText.transform.position : Vector3.zero;
+        Vector3 endPos = _zenScoreText.transform.position;
+
+        Transform timeUIRoot = _timerText != null ? _timerText.transform.parent : null;
+        Color originalBgColor = Color.white;
+        if (timeUIRoot != null)
+        {
+            // 杀掉旧动画，防止冲突
+            timeUIRoot.DOKill(true);
+            // 整个时间组件(底板+文字+边缘框)一起 Q 弹放大，保持完美的UI比例
+            timeUIRoot.DOScale(1.15f, 0.3f).SetEase(Ease.OutBack);
+        }
+        if (_timerText != null)
+        {
+            originalBgColor = _timerText.color;
+            // 将倒计时的文字变成显眼的金黄色！(相比纯黄 Color.yellow，这种带点橙的金色质感更好)
+            _timerText.color = new Color(1f, 0.85f, 0f, 1f); 
+        }
+        // if (gameTimeBg != null)
+        // {
+        //     originalBgColor = gameTimeBg.color; // 记录真实的初始颜色 (以备后患)
+        //     gameTimeBg.gameObject.SetActive(true);
+        //     
+        //     // 杀掉旧动画，防止与红色的倒数警告冲突
+        //     gameTimeBg.transform.DOKill();
+        //     gameTimeBg.DOKill();
+        //     // 将原本用来做红框警告的 gameTimeBg 变成常亮的黄色高亮框
+        //     Color yellowGlow = Color.yellow;
+        //     yellowGlow.a = 1f; 
+        //     gameTimeBg.color = yellowGlow;
+        // }
+        
+        // 1. 动画前摇：时间文本轻微闪烁
+        if (_timerText != null)
+        {
+            _timerText.transform.DOScale(1.2f, 0.15f).SetLoops(4, LoopType.Yoyo);
+        }
+        yield return new WaitForSeconds(0.3f);
+
+        // 动态计算粒子数量（防止分数太大导致粒子过多）
+        float initialTime = Mathf.Max(0, _remainingTime);
+        // 动态计算粒子数量：剩余时间越长，粒子越多，最多15个，最少2个
+        // 例：10秒=2个， 60秒(1分钟)=4个， 240秒(4分钟)=15个
+        int particleCount = Mathf.Clamp(Mathf.FloorToInt(initialTime / 15f), 2, 15);
+        
+        // 时间UI 滚动到 00:00 的总时长
+        float totalTimeRollDuration = Mathf.Clamp(initialTime / 100f, 1.0f, 1.5f);
+        float emitInterval = totalTimeRollDuration / particleCount;
+
+        int baseAdd = bonusScore / particleCount;
+        int remainder = bonusScore - baseAdd * particleCount;
+        int currentVisualScore = _lastZenScore;
+
+        Sequence mainSeq = DOTween.Sequence().SetLink(this.gameObject);
+        // 2. 时间 UI 在 1 秒内平滑滚动到 0
+        mainSeq.Insert(0, DOVirtual.Float(initialTime, 0f, totalTimeRollDuration, (v) => 
+        {
+            int m = Mathf.FloorToInt(v) / 60;
+            int s = Mathf.FloorToInt(v) % 60;
+            if (_timerText != null) _timerText.text = $"{m:00}:{s:00}";
+        }).SetEase(Ease.Linear));
+
+        float maxFlightDuration = 0f; // 记录整个飞行动画最长需要多久
+
+        // 3. 发射粒子（完全照抄 FlyToZenScore 的算法）
+        for (int i = 0; i < particleCount; i++)
+        {
+            int addThisStep = baseAdd + (i == particleCount - 1 ? remainder : 0);
+            int stepEndScore = currentVisualScore + addThisStep;
+            
+            float emitTime = i * emitInterval;
+            
+            mainSeq.InsertCallback(emitTime, () => 
+            {
+                GameObject particle = _zenCorrectTrailPool.GetObject();
+                if (particle != null)
+                {
+                    particle.SetActive(false);
+                    particle.transform.position = startPos;
+                    
+                    TrailRenderer[] trails = particle.GetComponentsInChildren<TrailRenderer>(true);
+                    foreach (var t in trails) t.Clear();
+                    ParticleSystem[] pss = particle.GetComponentsInChildren<ParticleSystem>(true);
+                    foreach (var p in pss) p.Clear();
+                    
+                    particle.transform.SetAsLastSibling();
+                    particle.SetActive(true);
+
+                    // 🎯 核心：完全复刻原版 FlyToZenScore 的飞行时间和左弯抛物线
+                    float distance = Vector3.Distance(startPos, endPos);
+                    float duration = Mathf.Clamp(distance * 0.5f, 0.7f, 1.1f);
+                    
+                    Vector3 midPos = (startPos + endPos) / 2f;
+                    // 在原版 0.3f 的基础上加一点点随机，让多颗粒子散开飞
+                    midPos.x += distance * UnityEngine.Random.Range(0.2f, 0.4f); 
+
+                    Vector3[] path = new Vector3[] { startPos, midPos, endPos };
+
+                    particle.transform.DOPath(path, duration, PathType.CatmullRom)
+                        .SetTarget(particle.transform)
+                        .SetEase(Ease.InQuad)
+                        .OnComplete(() =>
+                    {
+                        // 1. 回收粒子
+                        _zenCorrectTrailPool.ReturnObjectToPool(particle.GetComponent<PoolObject>());
+                        
+                        // 2. 🎯 核心：直接调用游戏原生的 UI 结算方法，完美执行老虎机滚动！
+                        UpdateZenScoreUI(stepEndScore, addThisStep, false);
+
+                        // 3. 补充：强制播放目标底座的莲花爆开粒子！
+                        // if (_lotusParticle != null)
+                        // {
+                        //     _lotusParticle.SetActive(false);
+                        //     _lotusParticle.SetActive(true);
+                        //     ParticleSystem ps = _lotusParticle.GetComponent<ParticleSystem>();
+                        //     if (ps != null) ps.Play();
+                        // }
+                    });
+                }
+            });
+            
+            currentVisualScore = stepEndScore;
+            
+            // 预测这颗粒子落地的时间点，找出整个循环里的最大值
+            float expectedDuration = Mathf.Clamp(Vector3.Distance(startPos, endPos) * 0.5f, 0.6f, 1.8f);
+            if (emitTime + expectedDuration > maxFlightDuration)
+            {
+                maxFlightDuration = emitTime + expectedDuration;
+            }
+        }
+        // 等待最晚到达的粒子飞完，再额外留 0.2 秒让老虎机动画滚完，然后再呼出横幅
+        yield return new WaitForSeconds(maxFlightDuration + 0.1f);
+        _remainingTime = 0f; 
+        if (_timerText != null) 
+        {
+            _timerText.text = "00:00"; 
+            // 🌟 动画结束，把文字颜色通过渐变恢复原样
+            _timerText.DOColor(originalBgColor, 0.3f);
+        }
+        if (timeUIRoot != null)
+        {
+            // 整个时间 UI 统一缩放回原样 1.0f
+            timeUIRoot.DOScale(1f, 0.3f).SetEase(Ease.InBack);
+        }
+        // if (gameTimeBg != null)
+        // {
+        //     // 渐隐消失
+        //     gameTimeBg.DOFade(0f, 0.3f).OnComplete(() => {
+        //         gameTimeBg.gameObject.SetActive(false);
+        //         gameTimeBg.color = originalBgColor; // 恢复初态，避免干扰正常的倒计时报警颜色
+        //     });
+        // }
     }
     
     /// <summary>
@@ -1074,7 +1357,7 @@ public partial class ChessPlayArea
     }
     
     /// <summary>
-    /// 🌟 规范重构：全面加强出入场清理（完美解决走光、非法状态与内存留存）
+    /// 规范重构：全面加强出入场清理（完美解决走光、非法状态与内存留存）
     /// </summary>
     private void ClearAndResetLeafSliderComponents()
     {
@@ -1380,8 +1663,17 @@ public partial class ChessPlayArea
             }
             // 2. 赋值当前文本
             string key = config.TextLoop[currentIndex];
-            string text = MultilingualManager.Instance.GetString(key, "pingzi");
-            textComp.text = text;
+            string rawText = MultilingualManager.Instance.GetString(key, "pingzi");
+            // 🌟 加入禁则处理
+            Vector3 oldScale = effectObj.transform.localScale;
+            effectObj.transform.localScale = Vector3.one;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(textComp.GetComponent<RectTransform>());
+            Canvas.ForceUpdateCanvases();
+            
+            textComp.horizontalOverflow = HorizontalWrapMode.Wrap;
+            textComp.text = UIUtilities.ApplyKinsokuShori(textComp, rawText);
+            
+            effectObj.transform.localScale = oldScale;
             // 3. 索引 +1，如果超过数组长度则回到 0，实现完美的循环播放
             _praiseTextIndexMap[config.FeedbackID] = (currentIndex + 1) % config.TextLoop.Length;
         }
@@ -1468,4 +1760,475 @@ public partial class ChessPlayArea
         yield return seq.WaitForCompletion();
     }
     #endregion
+
+    #region 开局游戏
+    /// <summary>
+    /// 播放关卡开局的激励横幅 (关前激励)
+    /// </summary>
+    private IEnumerator PlayEnterStimulateFlow()
+    {
+        // 1. 向 Controller 索要仲裁结果（拦截器会在内部自动判断是否为首次进入）
+        EnterStimulateResult? result = ChessStageController.Instance.GetValidEnterStimulate();
+        
+        // 如果没抽中、条件不满足、或者不是首次进入，直接结束协程，不耽误游戏流程
+        if (result == null || !result.HasValue) yield break;
+
+        var data = result.Value;
+
+        // 2. 从原有的对象池加载对应的预制体
+        // 假设美术提供的预制体命名规律为 UIEffect_EnterStimulate_1, UIEffect_EnterStimulate_2 等
+        string prefabName = $"UIEffect_EnterStimulate_{data.BannerType}";
+        GameObject bannerObj = GetFromStimulatePool(prefabName); 
+        
+        if (bannerObj == null) 
+        {
+            Debug.LogError($"[关前激励] 找不到预制体 {prefabName}");
+            yield break; 
+        }
+
+        // 2. 绑定 UI 引用 (建议使用上文提到的视图组件绑定，这里为了通用仍使用 GetComponent)
+        // 获取根节点的 CanvasGroup
+        CanvasGroup rootCg = bannerObj.GetComponent<CanvasGroup>();
+        if (rootCg == null) rootCg = bannerObj.AddComponent<CanvasGroup>();
+        // 尝试获取内容组的 CanvasGroup (假设美术把文字和Emoji包在了一个叫 ContentGroup 的节点下)
+        // 如果美术没有包一层，那就尝试获取根节点下的所有 Text 和 Image 自己做渐变
+        Transform contentTrans = bannerObj.transform.GetChild(0);
+        CanvasGroup contentCg = null;
+        if (contentTrans != null)
+        {
+            contentCg = contentTrans.GetComponent<CanvasGroup>();
+            if (contentCg == null) contentCg = contentTrans.gameObject.AddComponent<CanvasGroup>();
+        }
+        
+        if (data.LevelType is 6)
+        {
+            var sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("SpecialLevel1","UI_MainBase");
+            bannerObj.GetComponent<Image>().sprite = sprite;
+        }else if (data.LevelType is 8)
+        {
+            var sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("SpecialLevel2","UI_MainBase");
+            bannerObj.GetComponent<Image>().sprite = sprite;
+        }
+        // 3. 绑定 UI 数据 (文案与图标)
+        Text textComp = bannerObj.GetComponentInChildren<Text>(true);
+        if (textComp != null && !string.IsNullOrEmpty(data.TextKey))
+        {
+            string rawText = MultilingualManager.Instance.GetString(data.TextKey, "pingzi");
+            
+            // 🌟 移植过关横幅的禁则处理（标点换行修复）
+            // 1. 强行通电：先将父节点缩放恢复为 1，确保在正确的物理尺寸下计算排版
+            Vector3 oldScale = bannerObj.transform.localScale;
+            bannerObj.transform.localScale = Vector3.one;
+            
+            // 2. 强制重建 UI 布局
+            LayoutRebuilder.ForceRebuildLayoutImmediate(textComp.GetComponent<RectTransform>());
+            Canvas.ForceUpdateCanvases();
+            
+            // 3. 应用禁则计算，把换行符死死钉进字符串里
+            textComp.horizontalOverflow = HorizontalWrapMode.Wrap;
+            string processedText = UIUtilities.ApplyKinsokuShori(textComp, rawText);
+            
+            // 4. 恢复预制体缩放状态，交还给下面的 DOTween 继续播入场动画
+            bannerObj.transform.localScale = oldScale;
+            
+            textComp.text = processedText;
+        }
+
+        // 尝试寻找名为 "Emoji" 的 Image 节点并加载对应图标
+        Image emojiImg = bannerObj.GetComponentsInChildren<Image>(true)
+            .FirstOrDefault(img => img.gameObject != bannerObj);
+        if (emojiImg != null)
+        {
+            if (!string.IsNullOrEmpty(data.Emoji))
+            {
+                emojiImg.gameObject.SetActive(true);
+                emojiImg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(data.Emoji);
+                emojiImg.SetNativeSize(); // 保证图标比例不失真
+            }
+            else
+            {
+                emojiImg.gameObject.SetActive(false); // 没有配图标就隐藏
+            }
+        }
+
+        // 4. 编排丝滑的 Vita 风格 DOTween 出入场动画
+        bannerObj.SetActive(true);
+        bannerObj.transform.SetAsLastSibling(); // 保证显示在最上层
+
+        RectTransform rt = bannerObj.GetComponent<RectTransform>();
+        // --- 强制初始状态 ---
+        rt.DOKill();
+        rootCg.DOKill();
+        if (contentCg != null) contentCg.DOKill();
+        
+        // 策划要求：位置在中心，50% 尺寸，底图 20% 透明度
+        rt.anchoredPosition = new Vector2(0, 180f); // 假设展示位置在 Y=180
+        rt.localScale = Vector3.one * 0.5f;
+        rootCg.alpha = 0.2f;
+        // 文字和Emoji初始完全不可见
+        if (contentCg != null) contentCg.alpha = 0f;
+        // 4. 编排 Vita 风格时间轴
+        Sequence seq = DOTween.Sequence();
+
+        if (data.BannerType == 3)
+        {
+            // [入场阶段]：0.3秒内，整体缩放从 50% 膨胀到 100%，透明度从 20% 变 100%
+            // 使用 Ease.OutQuad 让膨胀感更平滑沉稳
+            seq.Append(rt.DOScale(1f, 0.3f).SetEase(Ease.OutQuad));
+            seq.Join(rootCg.DOFade(1f, 0.3f).SetEase(Ease.OutQuad));
+            // [内容显现阶段]：底板膨胀到位后，用 0.1 秒将内容(文字和图标)淡入
+            if (contentCg != null)
+            {
+                seq.Append(contentCg.DOFade(1f, 0.1f).SetEase(Ease.Linear));
+            }
+        
+            // [停留] 等待 2.0 秒供玩家阅读 (期间预制体自身的粒子动画会正常播放)
+            seq.AppendInterval(1.5f);
+
+            // [退场前摇阶段]：策划要求的退出前 0.1 秒略微放大效果 (蓄力感)
+            seq.Append(rt.DOScale(1.05f, 0.1f).SetEase(Ease.OutQuad));
+            // [退场消失阶段]：0.2秒原地缩小并渐隐 (去掉所有的 DOAnchorPosY 移动)
+            seq.Append(rt.DOScale(0.5f, 0.2f).SetEase(Ease.InQuad)); // 往回收到 50% 大小
+            seq.Join(rootCg.DOFade(0f, 0.2f));                       // 同时整体透明度归零
+
+        }
+        else
+        {
+            // --- 表现 B：从左侧滑动入场 ---
+            RectTransform canvasRect = GameBase.GetComponentInParent<Canvas>().GetComponent<RectTransform>();
+            float canvasWidth = canvasRect.rect.width;
+            float bannerWidth = rt.rect.width;
+            // 2. 计算绝对安全的屏幕外坐标 (屏幕一半宽 + 横幅一半宽 + 100像素容错边距)
+            float offScreenX = (canvasWidth / 2f) + (bannerWidth / 2f) + 100f;
+            
+            // 起始位置放置在屏幕极左侧绝对可视范围外
+            rt.anchoredPosition = new Vector2(-offScreenX, 180f);
+            rt.localScale = Vector3.one;
+            rootCg.alpha = 1f;
+            if (contentCg != null) contentCg.alpha = 1f; // 滑动入场时直接全显
+
+            // 0.5秒从左侧滑到屏幕中心，带少许回弹 (OutBack) 增加物理感
+            seq.Append(rt.DOAnchorPosX(0f, 0.5f).SetEase(Ease.OutBack, 1.1f));
+            
+            seq.AppendInterval(1.5f);
+            
+            // 0.4秒向右滑出屏幕并渐隐
+            seq.Append(rt.DOAnchorPosX(offScreenX, 0.4f).SetEase(Ease.InCubic));
+            seq.Join(rootCg.DOFade(0f, 0.4f));
+        }
+  
+        // 5. 挂起协程，等待整个序列播放完毕再放行
+        bool isDone = false;
+        seq.OnComplete(() =>
+        {
+            bannerObj.SetActive(false);
+            isDone = true;
+        });
+
+        AudioManager.Instance.PlaySoundEffect("BannerShow"); // 播放对应的弹出音效
+
+        yield return new WaitUntil(() => isDone);
+    }
+    
+    [Header("关前鼓励 (EnterStimulate) 状态管理")]
+    // 独立的预制体缓存池：Key 为预制体名称，Value 为实例化的 GameObject
+    private readonly Dictionary<string, GameObject> _enterStimulateCachePool = new Dictionary<string, GameObject>();
+    
+    /// <summary>
+    /// 从池子中获取或加载预制体 (通用封装)
+    /// </summary>
+    private GameObject GetFromStimulatePool(string prefabName)
+    {
+        if (_enterStimulateCachePool.TryGetValue(prefabName, out GameObject obj) && obj != null)
+        {
+            obj.SetActive(true);
+            return obj;
+        }
+
+        GameObject prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("chessitem", prefabName);
+        if (prefab != null)
+        {
+            obj = Instantiate(prefab, this.transform);
+            _enterStimulateCachePool[prefabName] = obj;
+            return obj;
+        }
+
+        Debug.LogError($"🚨 鼓励反馈预制体加载失败: {prefabName}");
+        return null;
+    }
+    #endregion
+    
+    private Tween _radarTween; // 缓存 DOTween 动画引用，方便随时停止
+    private static Material _radarWriterMat;
+    /// <summary>
+    /// 开启雷达扫描 (点击雷达道具时调用)
+    /// </summary>
+    private IEnumerator StartRadarScanCoroutine()
+    {
+        // 1. 初始化
+        radarRoot.SetActive(true);
+        radarMaskImage.gameObject.SetActive(true);
+        if (puzzleTileTable != null)
+        {
+            foreach (var bowlView in puzzleTileTable.GridList)
+            {
+                if (bowlView != null) 
+                {
+                    bowlView.Lock(); // 激活自带的 _mesk 蒙版
+                }
+            }
+            ChessBowlGrid.IsTutorialBlocking = true;
+        }
+        // 🌟 获取 CanvasGroup 并设为全透明
+        CanvasGroup rootCg = radarRoot.GetComponent<CanvasGroup>();
+        if (rootCg == null) rootCg = radarRoot.AddComponent<CanvasGroup>();
+        rootCg.alpha = 0f;
+        
+        // 文字缩放到 0，重置状态
+        radarScanText.transform.DOKill(true);
+        radarScanText.DOKill(true);
+        radarScanText.transform.localScale = Vector3.one;
+        Color initColor = radarScanText.color;
+        initColor.a = 1f;
+        radarScanText.color = initColor;
+        radarScanText.text = "";
+        
+        // 2. 动态生成“写遮罩”的材质，赋给扇形图
+        if (_radarWriterMat == null)
+        {
+            _radarWriterMat = new Material(Shader.Find("UI/Default"));
+            _radarWriterMat.SetInt("_Stencil", 1);
+            _radarWriterMat.SetInt("_StencilComp", 8); // 8=Always (永远写入)
+            _radarWriterMat.SetInt("_StencilOp", 2);   // 2=Replace (替换标记)
+            _radarWriterMat.SetInt("_ColorMask", 0);   // 0=隐身 (只留裁剪区，不画白图)
+            _radarWriterMat.SetFloat("_UseUIAlphaClip", 1.0f);
+            _radarWriterMat.EnableKeyword("UNITY_UI_ALPHACLIP");
+        }
+        radarMaskImage.material = _radarWriterMat;
+        radarMaskImage.maskable = false; // 防止被系统干扰
+        
+        // 3. 通知棋盘上所有还没答对的字块，换上 Stencil 遮罩材质准备被扫描
+        // (这里假定写在 ChessboardGrid.cs 中。如果写在别的脚本，请通过单例调用 GridList)
+        foreach (var cell in chessboardGrid.GridList.Values)
+        {
+            cell.EnableRadarPreview(); 
+        }
+     
+        yield return null;
+        radarMaskImage.rectTransform.localRotation = Quaternion.Euler(0, 0, 0);
+        radarVisualImage.rectTransform.localRotation = Quaternion.Euler(0, 0, 0);
+        
+        // 4. 重置扫描图的初始角度 (从正上方 0 度开始)
+        // 顺时针旋转 Z 轴是负数（-360度），RotateMode.FastBeyond360 允许突破 360 度限制
+        _radarTween?.Kill(); // 杀掉旧动画防止叠加跑马
+        Sequence mainSeq = DOTween.Sequence();
+        _radarTween = mainSeq;
+        
+        // 🎬 第一幕：通过 CanvasGroup，让父节点下的【光波】和【光柱】一次性完美淡入！
+        mainSeq.Append(rootCg.DOFade(1f, 0.3f).SetEase(Ease.InOutQuad));
+        // 🎬 第二幕：数字 "3" 弹出 (耗时 0.2 秒)
+        // (因为文字初始 Scale 为 0，所以在第一幕淡入时它是隐形的，此时弹出节奏刚好)
+        mainSeq.Append(radarScanText.transform.DOScale(1f, 0.2f).SetEase(Ease.OutBack));
+        // 🎬 第三幕：开始转动
+        Sequence rotateSeq = DOTween.Sequence();
+        // 1. 驱动遮罩旋转整整 3 秒
+        rotateSeq.Insert(0f, radarMaskImage.rectTransform.DORotate(new Vector3(0, 0, -360f), 3f, RotateMode.FastBeyond360).SetEase(Ease.Linear));
+        // 2. 实时让发光光柱同步跟着转
+        rotateSeq.OnUpdate(() => {
+            if (radarVisualImage != null && radarMaskImage != null)
+                radarVisualImage.rectTransform.localRotation = radarMaskImage.rectTransform.localRotation;
+        });
+        rotateSeq.InsertCallback(0.005f, () =>
+        {
+            radarScanText.text = "3";
+            radarScanText.transform.localScale = Vector3.one;
+            radarScanText.transform.DOScale(1.25f, 0.15f).SetLoops(2, LoopType.Yoyo);
+        });
+        // 3. 转到 120° 时 (第 1 秒)，跳动切换 "2"
+        rotateSeq.InsertCallback(1.0f, () => {
+            radarScanText.text = "2";
+            radarScanText.transform.DOKill(true);
+            radarScanText.transform.localScale = Vector3.one;
+            radarScanText.transform.DOScale(1.25f, 0.15f).SetLoops(2, LoopType.Yoyo);
+        });
+        // 4. 转到 240° 时 (第 2 秒)，跳动切换 "1"
+        rotateSeq.InsertCallback(2.0f, () => {
+            radarScanText.text = "1";
+            radarScanText.transform.DOKill(true);
+            radarScanText.transform.localScale = Vector3.one;
+            radarScanText.transform.DOScale(1.25f, 0.15f).SetLoops(2, LoopType.Yoyo);
+        });
+        // 将第三幕(旋转)拼接到主时间轴
+        mainSeq.Append(rotateSeq);
+        // 🎬 第四幕：转满 360° 回到终点，文字 PPT 砸碎式闪烁
+        mainSeq.AppendCallback(() => {
+            radarScanText.text = MultilingualManager.Instance.GetString("Begin","pingzi");
+            radarScanText.transform.DOKill(true);
+            radarScanText.transform.localScale = Vector3.one * 2.5f;
+            
+            Color c = radarScanText.color;
+            c.a = 0f;
+            radarScanText.color = c;
+        });
+        // 0.3秒内：同时执行“淡入显影”与“回弹缩小到正常尺寸”
+        // Join 保证透明度淡入和缩小砸向屏幕在 0.3 秒内同时发生，OutBack 赋予物理回弹感
+        mainSeq.Append(radarScanText.DOFade(1f, 0.2f).SetEase(Ease.OutQuad));
+        mainSeq.Join(radarScanText.transform.DOScale(1f, 0.3f).SetEase(Ease.OutBack));
+        
+        mainSeq.AppendInterval(0.4f);
+        mainSeq.Append(rootCg.DOFade(0f, 0.2f).SetEase(Ease.OutQuad));
+        //  阻塞等待这个唯一的动画播完
+        yield return mainSeq.WaitForCompletion();
+        StopRadarScan();
+    }
+    
+    /// <summary>
+    /// 关闭雷达扫描 (雷达时间结束时调用)
+    /// </summary>
+    private void StopRadarScan()
+    {
+        // 1. 停止旋转动画并清理缓存
+        _radarTween?.Kill();
+        // 2. 隐藏雷达父节点
+        radarRoot.SetActive(false);
+        radarMaskImage.gameObject.SetActive(false);
+        // 3. 通知棋盘上所有字块，卸载遮罩材质，恢复正常的物理隐身状态
+        foreach (var cell in chessboardGrid.GridList.Values)
+        {
+            cell.DisableRadarPreview();
+        }
+        _radarTween = null;
+        if (puzzleTileTable != null)
+        {
+            foreach (var bowlView in puzzleTileTable.GridList)
+            {
+                // 只有当这个字本身没有被填入棋盘消耗掉 (即 locked 为 false) 时，才给它恢复解锁
+                if (bowlView != null && !bowlView.locked) 
+                {
+                    bowlView.Unlock(); 
+                }
+            }
+            ChessBowlGrid.IsTutorialBlocking = false;
+        }
+    }
+
+    #region 金币收集
+    // 用于记录下一个金币允许播放到达动画和音效的绝对时间
+    private float _nextCoinArriveTime = 0f;
+    // 仅用于记录【视觉上】已经飞进收集栏的金币，纯粹为了让 UI 动画不穿帮
+    private int _visualEarnedGold = 0;
+    // 保证每局只结算一次的开关
+    private bool _isGoldSettled = false;
+    /// <summary>
+    /// 金币收集栏：从屏幕外华丽滑入并贴靠左边缘
+    /// 建议在 SetupGrid 协程的最后，或者确认是金币关卡后调用
+    /// </summary>
+    public void SlideInColdTableAnim()
+    {
+        // 只有当节点激活，且确实需要显示时才播动画
+        if (ColdTable != null && ColdTable.activeSelf)
+        {
+            RectTransform rt = ColdTable.GetComponent<RectTransform>();
+            CanvasGroup cg = ColdTable.GetComponent<CanvasGroup>();
+
+            // 使用 OutBack 带有物理回弹感，1.1f 是回弹强度，非常贴合 Vita 的高级手感
+            rt.DOAnchorPosX(_coldTableTargetPos.x, 0.6f).SetEase(Ease.OutBack, 1.1f);
+        
+            // 同时做一个淡入，让视觉更柔和
+            cg.DOFade(1f, 0.4f).SetEase(Ease.OutQuad);
+        }
+    }
+    
+    /// <summary>
+    /// 金币收集栏：游戏结束或过关时，干脆利落地滑出屏幕外
+    /// </summary>
+    public void SlideOutColdTableAnim()
+    {
+        if (ColdTable != null && ColdTable.activeSelf)
+        {
+            RectTransform rt = ColdTable.GetComponent<RectTransform>();
+            CanvasGroup cg = ColdTable.GetComponent<CanvasGroup>();
+
+            // 退场使用 InCubic，有种加速收回的干脆感
+            rt.DOAnchorPosX(_coldTableOffScreenX, 0.15f).SetEase(Ease.InCubic);
+            cg.DOFade(0f, 0.15f);
+        }
+    }
+    /// <summary>
+    /// 触发局内金币滚动增加动画
+    /// 配合飞入特效，在特效抵达终点时调用
+    /// </summary>
+    /// <param name="addAmount">本次飞入/收集的金币数量</param>
+    public void AddInLevelGoldWithAnim(int addAmount)
+    {
+        float currentTime = Time.time;
+        float delay = 0f;
+        
+        // 如果当前时间还没到“下一次允许播放”的时间，说明前方有金币在排队结算
+        if (currentTime < _nextCoinArriveTime)
+        {
+            delay = _nextCoinArriveTime - currentTime;
+            _nextCoinArriveTime += 0.05f; // 设定每个金币的连续结算间隔为 0.15 秒
+        }
+        else
+        {
+            // 如果队列是空的，立刻结算，并把下一次坑位推迟 0.15 秒
+            _nextCoinArriveTime = currentTime + 0.05f;
+        }
+
+        if (delay > 0)
+        {
+            // 把动画和音效推迟执行，形成连续的 叮-叮-叮
+            DOVirtual.DelayedCall(delay, () => ExecuteGoldAddSequence(addAmount), false);
+        }
+        else
+        {
+            ExecuteGoldAddSequence(addAmount);
+        }
+    }
+    /// <summary>
+    /// 真实的结算逻辑（单次文字跳动 + 单次收集音效）
+    /// </summary>
+    private void ExecuteGoldAddSequence(int addAmount)
+    {
+        if (coldNumberText == null) return;
+
+        int baseGold = GameDataManager.Instance.UserData.Gold;
+        // 如果处于过关结算期，底层其实已经提前把这局捡到的金币存进去了（baseGold已包含这笔钱）。
+        // 此时必须把这笔钱抠出来当基数，否则 UI 就会在已存入的金额上重复再加一次！
+        if (_isGoldSettled)
+        {
+            baseGold -= ChessStageController.Instance.CurrStageData.CollectedGold;
+        }
+        
+        int startValue = baseGold + _visualEarnedGold;
+        _visualEarnedGold += addAmount;
+        int targetValue = baseGold + _visualEarnedGold;
+        // userData.UpdateGold(addAmount, false, false, "金币词获得");
+
+        // 1. 杀掉旧动画，防止高速排队时动画乱套
+        coldNumberText.DOKill();
+        coldNumberText.transform.DOKill();
+
+        // 2. 视觉冲击：文字瞬间 Q 弹放大 (缩短时长 0.35 -> 0.15，以适应排队节奏)
+        coldNumberText.transform.localScale = Vector3.one;
+        coldNumberText.transform.DOPunchScale(new Vector3(0.4f, 0.4f, 0f), 0.08f, 5, 1f); 
+
+        // 3. 核心爽感：数字快速滚动
+        DOVirtual.Float(startValue, targetValue, 0.15f, (val) =>
+            {
+                coldNumberText.text = Mathf.RoundToInt(val).ToString();
+            })
+            .SetEase(Ease.OutQuad)
+            .OnComplete(() =>
+            {
+                // 兜底：动画结束时赋最终精确值
+                coldNumberText.text = targetValue.ToString();
+            });
+        
+        // 4. 播放排队到达的清脆“叮~”结算音效
+        AudioManager.Instance.PlaySoundEffect("ui_coin_add_eff", 0, 1);
+    }
+    #endregion
+    
 }

@@ -30,18 +30,23 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     [HideInInspector] public event SelectHandler OnSelectHandler;
     [Header("UI组件")]
     [SerializeField] private Text _textDisplay;    // 文字显示
+    [SerializeField] private Image _emojiDisplay;
+    [SerializeField] private GameObject _errorFrame; // 拖入你新建的红框节点
     [SerializeField] public Image _bg;            // 背景图
     [SerializeField] private GameObject _choose;   // 选择框
-    [SerializeField] private Text _tipText;  // 提示文本
+    [SerializeField] private Text _tipText;        // 提示文本
+    [SerializeField] private GameObject CoinObj;   // 金币图案
     [SerializeField] private GameObject _iceObj;   // 冰块节点 
     [SerializeField] private GameObject _flowerObj;  // 花朵节点
     [SerializeField] private GameObject _leafObj;    // 树叶节点
-    
-    [SerializeField] private Text _score; // 提示分数
     [SerializeField] ParticleSystem _successParticle;
     
-    [SerializeField] private GameObject _focusHaloObj; // 🌟 新增：聚焦光圈节点
-    
+    [SerializeField] private GameObject _focusHaloObj; // 聚焦光圈节点
+   
+    [Header("雷达扫描专属层")]
+    [SerializeField] private Image _radarBg;      // 拖入新增的 Radar_BG
+    [SerializeField] private Text _radarText;     // 拖入新增的 Radar_Text
+    [SerializeField] private Image _radarEmojiDisplay;  // 雷达扫描专属Emoji (与 _radarText 同级)
     // 错误动画配置
     private float shakeRadius   = 10f;      // 最大晃动半径（像素）
     private int   shakeSlices   = 16;      // 采样次数（越高越细腻）
@@ -84,6 +89,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     public void SetInit(Chesspiece pz)
     {
         _choose.SetActive(false);
+        _errorFrame.SetActive(false);
         _tipText.gameObject.SetActive(false);
         _isGoldLeaf = false;
         chesspiece = pz;
@@ -107,8 +113,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             _ => AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("Highlight_162")   // 更大也按最小格
         };
         //_choose.GetComponent<Image>().SetNativeSize();
-     
-        SetScore(0);
+        
         IsOK = false;
         UpdateTile();
         StopFocusAnim();
@@ -125,6 +130,61 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             UpdateTile();
         
         ChessStageController.Instance.ModifyChreepiece(chesspiece);
+    }
+    
+    /// <summary>
+    /// 统一切换文字或Emoji的渲染状态
+    /// </summary>
+    private void SetDisplayContent(string letter, bool isEmoji, Color textColor, bool isTip = false)
+    {
+        bool isEmojiActive = isEmoji && GameDataManager.Instance.UserData.IsEmojiOn;
+        
+        // 如果是提示模式（提示框逻辑单独处理）
+        if (isTip)
+        {
+            if (isEmojiActive)
+            {
+                if (_tipText != null) _tipText.gameObject.SetActive(false);
+                if (_emojiDisplay != null)
+                {
+                    _emojiDisplay.gameObject.SetActive(true);
+                    _emojiDisplay.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(letter);
+                }
+            }
+            else
+            {
+                if (_emojiDisplay != null) _emojiDisplay.gameObject.SetActive(false);
+                if (_tipText != null)
+                {
+                    _tipText.gameObject.SetActive(true);
+                    _tipText.text = letter;
+                }
+            }
+            return;
+        }
+
+        // 正式显示逻辑
+        if (isEmojiActive)
+        {
+            if (_textDisplay != null) _textDisplay.gameObject.SetActive(false);
+            if (_emojiDisplay != null)
+            {
+                _emojiDisplay.gameObject.SetActive(true);
+                _emojiDisplay.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(letter);
+                // 错误状态时，可以让图片稍微泛红，正常时为白色
+                _emojiDisplay.color = Color.white;
+            }
+        }
+        else
+        {
+            if (_emojiDisplay != null) _emojiDisplay.gameObject.SetActive(false);
+            if (_textDisplay != null)
+            {
+                _textDisplay.gameObject.SetActive(true);
+                _textDisplay.text = letter;
+                _textDisplay.color = textColor;
+            }
+        }
     }
 
     /// <summary>
@@ -161,48 +221,28 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     /// </summary>
     public void SetTipMessage()
     {
-        _tipText.text = Answer.ToString();
-        _tipText.gameObject.SetActive(true);
+        SetDisplayContent(Answer, chesspiece.isEmoji, Color.white, true);
         chesspiece.tip = true;
         ChessStageController.Instance.ModifyChreepiece(chesspiece);
         _bg.gameObject.SetActive(false);
     }
-
-    public void SetScore(float score)
-    {
-#if Unity_ShowLog || UNITY_EDITOR
-        if (score < 1f)
-        {
-            _score.text = "";
-            _score.gameObject.SetActive(false);
-        }
-        else
-        {
-            _score.text = score.ToString(CultureInfo.InvariantCulture);
-            _score.gameObject.SetActive(GameCoreManager.Instance.AutoLevelTalbe.activeSelf);
-        }
-#else
-    _score.gameObject.SetActive(false);
-#endif
-    }
+    
     /// <summary>
     /// 更新方块当前显示
     /// </summary>
     public void UpdateTile(bool lateChose = false)
     {
+        _errorFrame.SetActive(false);
         switch (CurrState)
         {
             case TileState.None:
-                _textDisplay.text = "";
-                _bg.gameObject.SetActive(false);
-                break;
             case TileState.Check:
                 _textDisplay.text = "";
+                _emojiDisplay.gameObject.SetActive(false);
                 _bg.gameObject.SetActive(false);
                 break;
             case TileState.Default:
-                _textDisplay.text = Answer.ToString();
-                _textDisplay.color = new Color32(100, 80, 66, 255);
+                SetDisplayContent(Answer, chesspiece.isEmoji, new Color32(100, 80, 66, 255));
                 if (_isGoldLeaf&&chesspiece.bowl!=null)
                 {
                     if (chesspiece.bowl.totalcount > 1)
@@ -230,8 +270,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             case TileState.Fill:
                 if (chesspiece.bowl != null)
                 {
-                    _textDisplay.text = chesspiece.bowl.letter;
-                    _textDisplay.color = new Color32(100,80,66,255);
+                    SetDisplayContent(chesspiece.bowl.letter, chesspiece.bowl.isEmoji, new Color32(100, 80, 66, 255));
                 }
                 if (_isGoldLeaf)
                 {
@@ -265,13 +304,23 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                 break;
             case TileState.Error:
                 //Debug.LogWarning($"更新词: {Answer} " + JsonUtility.ToJson(chesspiece));
-                 _textDisplay.text = chesspiece.bowl.letter;
-                 _textDisplay.color = Color.red;
+                SetDisplayContent(chesspiece.bowl.letter, chesspiece.bowl.isEmoji, Color.red);
                 _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
                 _bg.gameObject.SetActive(true);
+                _errorFrame.SetActive(true);
+                Canvas errCanvas = _errorFrame.GetComponent<Canvas>();
+                if (errCanvas == null) errCanvas = _errorFrame.AddComponent<Canvas>(); // 兜底：如果预制体没挂Canvas，代码自动挂载
+        
+                errCanvas.overrideSorting = true;
+                // 保持和光标在同一个 Layer
+                errCanvas.sortingLayerName = UIPanelLayer.BasePanel; 
+                // 设为 4 (你的光标 sortingOrder 是 5，这样当光标选中错误格子时，光标依然能盖在错误框上面)
+                errCanvas.sortingOrder = 4;
                 break;
             case TileState.Success:
-                _textDisplay.text = Answer.ToString();
+                Color successColor = (chesspiece.bowl != null && _isGoldLeaf && chesspiece.bowl.totalcount <= 1) 
+                    ? new Color32(100, 80, 66, 255) : Color.white;
+                SetDisplayContent(Answer, false, successColor);
                 if (chesspiece.bowl!=null)
                 {
                     if (_isGoldLeaf)
@@ -279,17 +328,15 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                         if (chesspiece.bowl.totalcount > 1)
                         {
                             _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
-                            _textDisplay.color = Color.white;
                             _bg.GetComponent<UIShiny>().enabled = false;
                             //chesspiece.bowl.isGoldLeaf = false;
                         }
                         else
                         {
                             _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("goldLeaf");
-                            _textDisplay.color = new Color32(100,80,66,255);
-
                             _bg.GetComponent<UIShiny>().enabled = true;
                             _bg.GetComponent<UIShiny>().Play();
+                            
                             chesspiece.bowl.isGoldLeaf = true;
                             chesspiece.isGoldLeaf=true;
                             ChessView tileView = ChessStageController.Instance.GoldLeafChessViews.Find(x=>x.Answer==chesspiece.bowl.letter);
@@ -303,17 +350,14 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                     else
                     {
                         _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
-                        _textDisplay.color = Color.white;
                     }
                     
                 }
                 else
                 {
                     _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("success_bg");
-                    _textDisplay.color = Color.white;
                 }
                 _bg.gameObject.SetActive(true);
-                _score.gameObject.SetActive(false);
                 break;
         }
         if (!lateChose) 
@@ -321,12 +365,30 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
 
         if(chesspiece.tip)
         {
-            _tipText.text = Answer.ToString();
-            _tipText.gameObject.SetActive(CurrState is TileState.Check or TileState.None);
+            SetDisplayContent(Answer, chesspiece.isEmoji, Color.white, true);
+            bool showTip = CurrState is TileState.Check or TileState.None;
+            if (_tipText != null) _tipText.gameObject.SetActive(showTip && !chesspiece.isEmoji);
+            if (_emojiDisplay != null) _emojiDisplay.gameObject.SetActive(showTip && chesspiece.isEmoji);
         }
         if (chesspiece.hasFlower)
         {
             _flowerObj.GetComponent<Image>().enabled = true;
+            // 利用关卡ID判断奇偶数，实现轮换 (1 或 2)
+            int stageId = ChessStageController.Instance.CurrStageData.StageId;
+            int flowerSkinIndex = ((stageId / 5) % 2 == 0) ? 1 : 2;
+            if (stageId == 62) flowerSkinIndex = 1;
+            if (stageId == 66) flowerSkinIndex = 1;
+            // 1. 替换静态 Image 贴图 (请确保图集里的名字叫 flower_skin_01 和 flower_skin_02)
+            Image flowerImg = _flowerObj.GetComponent<Image>();
+            if (flowerImg != null)
+            {
+                flowerImg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas($"flower_skin_0{flowerSkinIndex}");
+            }
+            // 2. 切换对应的粒子特效节点
+            Transform hua1 = _flowerObj.transform.Find("hua_01");
+            Transform hua2 = _flowerObj.transform.Find("hua_02");
+            if (hua1 != null) hua1.gameObject.SetActive(flowerSkinIndex == 1);
+            if (hua2 != null) hua2.gameObject.SetActive(flowerSkinIndex == 2);
             _textDisplay.text = Answer.ToString();
             Color c = _textDisplay.color;
             c.a = 0f;
@@ -349,7 +411,20 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             leafCG.alpha = hasText ? 0.35f : 1.0f; // 核心规则：有字半透明，无字全亮
         }else
         {
-            _leafObj.SetActive(false); // 🌟 核心防残留：不长叶子了就彻底关掉GameObject！
+            _leafObj.SetActive(false); // 不长叶子了就彻底关掉GameObject！
+        }
+        if (CoinObj != null)
+        {
+            // 规则：有金币 && 还没变绿 → 显示；Success 后隐藏
+            bool showCoin = chesspiece.hasGold;
+            CoinObj.SetActive(showCoin);
+            if (showCoin)
+            {
+                //  核心规则：如果有字（填入/报错/变绿），金币透明度设为半透明以看清底下文字
+                CanvasGroup cg = CoinObj.GetComponent<CanvasGroup>() ?? CoinObj.AddComponent<CanvasGroup>();
+                bool hasText = CurrState == TileState.Fill || CurrState == TileState.Error || CurrState == TileState.Success;
+                cg.alpha = hasText ? 0.35f : 1.0f;
+            }
         }
         if (CurrState == TileState.Success) StopFocusAnim();
     }
@@ -495,6 +570,12 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         _successParticle.gameObject.SetActive(false);
         if (_iceObj != null) _iceObj.transform.DOKill();
         if (_flowerObj != null) _flowerObj.transform.DOKill();
+        // 兜底：格子被对象池回收时，打断动画并强制归位
+        if (CoinObj != null)
+        {
+            CoinObj.transform.DOKill();
+            CoinObj.transform.localPosition = Vector3.zero; 
+        }
         UIShiny shiny = GetComponentInChildren<UIShiny>(true);
         if (shiny != null)
         {
@@ -504,7 +585,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     }
     
     /// <summary>
-    /// 🌟 重构：同步变色、放大、播放粒子（无波浪延迟）
+    /// 同步变色、放大、播放粒子（无波浪延迟）
     /// </summary>
     /// <param name="duration">特效持续总时长，保证和外框一模一样</param>
     /// <param name="onStart">瞬间变绿的回调</param>
@@ -561,9 +642,10 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         sequence.AppendCallback(() =>
         {
             SetTipMessage();
+            Transform activeTipTrans = chesspiece.isEmoji ? _emojiDisplay.transform : _tipText.transform;
             // 添加缩放动画
-            _tipText.transform.localScale = Vector3.zero;
-            _tipText.transform.DOScale(Vector3.one, 0.3f)
+            activeTipTrans.localScale = Vector3.zero;
+            activeTipTrans.DOScale(Vector3.one, 0.3f)
                 .SetEase(Ease.OutBack);
         });
 
@@ -604,7 +686,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         yield return new WaitForSeconds(1.2f);
         UpdateTile();
         _iceObj?.SetActive(false);
-        iceLogicBroken = false;   // 🌟 动画结束，清除逻辑标记
+        iceLogicBroken = false;   //  动画结束，清除逻辑标记
     }
     
     // 2. 花朵逻辑
@@ -614,23 +696,45 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         _flowerObj.GetComponent<Image>().enabled = false;
         // 播放花朵绽放、消失的动画
         // _flowerObj.transform.DOScale(1.2f, 0.3f).SetEase(Ease.OutBack);
-        _flowerObj.GetComponentInChildren<ParticleSystem>(true).Play();
-        yield return new WaitForSeconds(0.8f);
-        if (_textDisplay != null)
+        _flowerObj.GetComponentInChildren<ParticleSystem>(false).Play();
+        yield return new WaitForSeconds(0.25f);
+        if (chesspiece.isEmoji && _emojiDisplay != null)
+        {
+            Color imgCol = Color.white; 
+            imgCol.a = 0; 
+            _emojiDisplay.color = imgCol;
+            _emojiDisplay.gameObject.SetActive(true); 
+            _emojiDisplay.DOFade(1f, 0.4f).SetEase(Ease.OutQuad).OnComplete(() =>
+            {
+                UpdateTile(true); 
+                _flowerObj.SetActive(false);
+            });
+        }
+        else if (_textDisplay != null)
         {
             // 确保文字此时是激活状态且颜色 alpha 为 0
             Color textCol = new Color32(100, 80, 66, 0); 
             _textDisplay.color = textCol;
             
             // 使用 DOTween 让文字平滑淡入（耗时 0.4 秒，可自行调整）
-            _textDisplay.DOFade(1f, 1.2f).SetEase(Ease.OutQuad)
-                .OnComplete(() =>
-                {
-                    UpdateTile(true); 
-                    _flowerObj.SetActive(false);
-                });
+            if (CurrState == TileState.Success)
+            {
+                UpdateTile(true); 
+                _flowerObj.SetActive(false);
+            }
+            else
+            {
+                _textDisplay.DOFade(1f, 0.4f).SetEase(Ease.OutQuad)
+                    .OnComplete(() =>
+                    {
+                        UpdateTile(true); 
+                        _flowerObj.SetActive(false);
+                    });  
+            }
+           
         }
-        yield return new WaitForSeconds(0.4f);
+        // if(fadeTween != null) yield return fadeTween.WaitForCompletion();
+        yield return null;
         flowerLogicBroken = false;   // 🌟 动画结束，清除逻辑标记
     }
     
@@ -670,7 +774,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     }
     
     /// <summary>
-    /// 🌟 新增：树叶在整组填完失败时的“枯萎/缩小隐藏”失败动画
+    /// 树叶在整组填完失败时的“枯萎/缩小隐藏”失败动画
     /// </summary>
     public void PlayLeafFillFailedAnim()
     {
@@ -720,8 +824,8 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         }
     }
     
-    // <summary>
-    /// 🌟 播放最后词组的波浪聚焦动画
+    /// <summary>
+    ///  播放最后词组的波浪聚焦动画
     /// </summary>
     /// <param name="delay">延迟时间（用于制造波浪差）</param>
     public void PlayFocusWaveAnim(float delay)
@@ -765,5 +869,136 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
             if (cg != null) cg.DOFade(0f, 0.2f).OnComplete(() => _focusHaloObj.SetActive(false));
             else _focusHaloObj.SetActive(false);
         }
+    }
+    
+    private static Material _radarRevealMat;
+    // 开启雷达预览状态 (被道具触发时调用)
+    public void EnableRadarPreview()
+    {
+        if (CurrState == TileState.Success) return; // 已经填对的不用管
+        
+        // 1. 如果专属遮罩材质还没创建，动态创建它
+        if (_radarRevealMat == null)
+        {
+            _radarRevealMat = new Material(Shader.Find("UI/Default"));
+            // 强行写入 Stencil 参数：1 代表 ID，3 代表 Equal (只有在雷达扫过时才渲染)
+            _radarRevealMat.SetInt("_Stencil", 1);
+            _radarRevealMat.SetInt("_StencilComp", 3);
+        }
+        _radarBg.maskable = false;
+        _radarBg.gameObject.SetActive(true);
+        _radarBg.material = _radarRevealMat;
+        
+        bool isEmojiActive = chesspiece.isEmoji && GameDataManager.Instance.UserData.IsEmojiOn;
+        
+        if (isEmojiActive)
+        {
+            _radarText.gameObject.SetActive(false);
+            if (_radarEmojiDisplay != null)
+            {
+                _radarEmojiDisplay.gameObject.SetActive(true);
+                _radarEmojiDisplay.maskable = false;
+                _radarEmojiDisplay.material = _radarRevealMat;
+                _radarEmojiDisplay.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(Answer);
+            }
+        }
+        else
+        {
+            if (_radarEmojiDisplay != null) _radarEmojiDisplay.gameObject.SetActive(false);
+            if (_radarText != null)
+            {
+                _radarText.gameObject.SetActive(true);
+                _radarText.maskable = false;
+                _radarText.material = _radarRevealMat;
+                _radarText.text = Answer.ToString();
+            }
+        }
+    }
+    
+    // 关闭雷达预览 (扫描结束时调用)
+    public void DisableRadarPreview()
+    {
+        // 1. 恢复默认的 UI 材质 (传 null 即可恢复默认)
+        _radarBg.material = null;
+        _radarText.material = null;
+        _radarEmojiDisplay.material = null;
+        // 2. 恢复 Maskable 属性
+        _radarBg.maskable = true;
+        _radarText.maskable = true;
+        _radarEmojiDisplay.maskable = true;
+        
+        _radarEmojiDisplay.gameObject.SetActive(false);
+        _radarBg.gameObject.SetActive(false);
+        _radarText.gameObject.SetActive(false);
+        // 刷新回格子真实的逻辑状态
+        UpdateTile(); 
+    }
+    
+    /// <summary>
+    /// 独立的方法供棋盘在生成时调用
+    /// </summary>
+    public void ShowGold(bool show)
+    {
+        chesspiece.hasGold = show;
+        if (CoinObj != null)
+        {
+            CoinObj.SetActive(show);
+            if (show)
+            {
+                CoinObj.transform.localPosition = Vector3.zero;
+                CanvasGroup cg = CoinObj.GetComponent<CanvasGroup>() ?? CoinObj.AddComponent<CanvasGroup>();
+                bool hasText = CurrState == TileState.Fill || CurrState == TileState.Error || CurrState == TileState.Success;
+                cg.alpha = hasText ? 0.35f : 1.0f;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 播放金币被收集的Q弹消失动画
+    /// </summary>
+    public void PlayGoldCollectAnim(float offsetX, Action onComplete = null)
+    {
+        if (CoinObj == null || !CoinObj.activeSelf)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        CoinObj.transform.DOKill();
+        CoinObj.transform.localScale = Vector3.one;
+
+        Sequence seq = DOTween.Sequence();
+        seq.SetLink(gameObject);
+        // 恢复不透明度
+        CanvasGroup cg = CoinObj.GetComponent<CanvasGroup>();
+        if (cg != null) seq.Append(cg.DOFade(1f, 0.2f));
+        // 1. 向上跳起到词组上方 (使用 OutBack 带一点Q弹阻尼感)
+        seq.Join(CoinObj.transform.DOLocalMove(
+            new Vector3(CoinObj.transform.localPosition.x + offsetX, CoinObj.transform.localPosition.y + 140f, 0), 
+            0.25f)
+            .SetEase(Ease.OutBack));
+        // 2. 滞空停留 1 秒
+        seq.AppendInterval(0.15f);
+        
+        seq.OnComplete(() =>
+        {
+            onComplete?.Invoke();
+        });
+    }
+    
+    /// <summary>
+    /// 提供当前金币弹起后的真实坐标系位置
+    /// </summary>
+    public Transform GetCoinTransform()
+    {
+        return CoinObj != null ? CoinObj.transform : transform;
+    }
+
+    /// <summary>
+    /// 隐藏金币本体
+    /// </summary>
+    public void HideCoin()
+    {
+        if (CoinObj != null) CoinObj.SetActive(false);
     }
 }

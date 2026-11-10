@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +12,52 @@ using UnityEngine.UI;
  */
 public partial class ChessPlayArea 
 {
+    private int _cachedTutorialStageNumber = -1;
+    private bool _cachedHitsTutorial = false;
+    private bool _cachedCompleteTutorial = false;
+    
+    /// <summary>
+    /// 判断当前是否处于“提示”道具的新手引导阶段
+    /// </summary>
+    private bool IsHitsTutorialActive
+    {
+        get
+        {
+            if (CurrStageInfo == null) return false;
+            RefreshTutorialCacheIfNeed();
+            return _cachedTutorialStageNumber == 2 && _cachedHitsTutorial;
+        }
+    }
+    /// <summary>
+    /// 判断当前是否处于“自动完成”道具的新手引导阶段
+    /// </summary>
+    private bool IsCompleteTutorialActive
+    {
+        get
+        {
+            if (CurrStageInfo == null) return false;
+            RefreshTutorialCacheIfNeed();
+            return _cachedTutorialStageNumber == 9 && _cachedCompleteTutorial;
+        }
+    }
+    private void RefreshTutorialCacheIfNeed()
+    {
+        if (CurrStageInfo != null && _cachedTutorialStageNumber != CurrStageInfo.StageNumber)
+        {
+            _cachedTutorialStageNumber = CurrStageInfo.StageNumber;
+            
+            // 初始化当前关卡是否处于提示道具引导期
+            _cachedHitsTutorial = CurrStageInfo.StageNumber == 2 &&
+                                  (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(4) ||
+                                   !GameDataManager.Instance.UserData.ChessTutorialProgress[4]);
+                                   
+            // 初始化当前关卡是否处于自动完成道具引导期
+            _cachedCompleteTutorial = CurrStageInfo.StageNumber == 9 &&
+                                      (!GameDataManager.Instance.UserData.ChessTutorialProgress.ContainsKey(5) ||
+                                       !GameDataManager.Instance.UserData.ChessTutorialProgress[5]);
+        }
+    }
+    
     /// <summary>
     /// 更新道具按钮
     /// </summary>
@@ -80,10 +126,18 @@ public partial class ChessPlayArea
     
     private void OnClickMyThemeBtn()
     {
-        SystemManager.Instance.HidePanel(PanelType.ChessPlayArea,true, () =>
+        // SystemManager.Instance.HidePanel(PanelType.ChessPlayArea,true, () =>
+        // {
+        PauseGame(); 
+        // 视觉隐藏：将当前面板变透明并取消交互，但绝对不销毁生命周期！
+        CanvasGroup cg = GetComponent<CanvasGroup>();
+        if (cg != null)
         {
-            SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
-        });
+            cg.alpha = 0;
+            cg.blocksRaycasts = false;
+        }
+        SystemManager.Instance.ShowPanel(PanelType.MyThemeScreen);
+        // });
     }
     private void OnRedPointChanged(bool show)
     {
@@ -92,10 +146,13 @@ public partial class ChessPlayArea
     }
     private void OnPauseClicked()
     {
+        HideEmojiTip();
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea))
         {
             // 调用游戏内的暂停逻辑（里面包含了停住时间和弹出面板）
-            OnPauseClick(); 
+            PauseGame(); 
+            ChessStageController.Instance.CurrStageData.RemainingTime = _remainingTime;
+            SystemManager.Instance.ShowPanel(PanelType.PauseGameScreen);
         }
         else
         {
@@ -107,34 +164,34 @@ public partial class ChessPlayArea
     private void SetToolButtonsEnabled(bool enabled)
     {
         // 按钮可交互
-        if (CompleteBtn != null) CompleteBtn.interactable = enabled;
-        if (HitsBtn != null) HitsBtn.interactable = enabled;
-
-        // 禁用时的背景色：#C8C8C8 透明度 128
-        Color disabledColor = new Color(200f / 255f, 200f / 255f, 200f / 255f, 128f / 255f);
-        Color enabledColor = Color.white;
-
-        // 像 InitToolUI 一样动态获取 CompCount 和 HintCount
-        Transform compCount = CompleteBtn != null ? CompleteBtn.transform.GetChild(1) : null;
-        Transform hintCount = HitsBtn != null ? HitsBtn.transform.GetChild(1) : null;
-
-        // 设置自动完成数量背景
-        if (compCount != null)
-        {
-            Image compImg = compCount.GetComponent<Image>();
-            if (compImg != null) compImg.color = enabled ? enabledColor : disabledColor;
-        }
-
-        // 设置提示数量背景
-        if (hintCount != null)
-        {
-            Image hintImg = hintCount.GetComponent<Image>();
-            if (hintImg != null) hintImg.color = enabled ? enabledColor : disabledColor;
-        }
-        
+        CompleteBtn.interactable = enabled;
+        HitsBtn.interactable = enabled;
         pauseBtn.interactable = enabled;
         MyThemeBtn.interactable = enabled;
         PuzzleBtn.interactable = enabled;
+        // 禁用时的背景色：#C8C8C8 透明度 128
+        Color disabledColor = new Color(200f / 255f, 200f / 255f, 200f / 255f, 128f / 255f);
+        Color enabledColor = Color.white;
+        void TintBadgeNode(Transform badgeNode)
+        {
+            if (badgeNode == null) return;
+        
+            // 获取该节点及其所有子节点下的图形组件 (true代表包含隐藏节点)
+            Graphic[] graphics = badgeNode.GetComponentsInChildren<Graphic>(true);
+            foreach (var g in graphics)
+            {
+                g.color = enabled ? enabledColor : disabledColor;
+            }
+        }
+        // 像 InitToolUI 一样动态获取 CompCount 和 HintCount
+        Transform compCount = CompleteBtn != null ? CompleteBtn.transform.GetChild(1) : null;
+        Transform compFree = CompleteBtn != null ? CompleteBtn.transform.GetChild(2) : null;
+        Transform hintCount = HitsBtn != null ? HitsBtn.transform.GetChild(1) : null;
+        Transform hintFree = HitsBtn != null ? HitsBtn.transform.GetChild(2) : null;
+        TintBadgeNode(compCount);
+        TintBadgeNode(compFree);
+        TintBadgeNode(hintCount);
+        TintBadgeNode(hintFree);
     }
     public void UseComplete(bool isReset = false)
     {
@@ -162,17 +219,17 @@ public partial class ChessPlayArea
         {
             if (GameDataManager.Instance.UserData.ChessTutorialProgress[5])
             {
-                usetoolCount++;
+                GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
+                // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
+                SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
+                return;
             }
-            else
-            {
-                IsClickAuto = true;
-            }
+            usetoolCount++; // 计入真实道具使用
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用", GetCurrentSelectedPhrase());
+            InitToolUI();
         }
-        else
-        {
-            usetoolCount++;
-        }
+        else IsClickAuto = true;
+        
         chessboardGrid.IsBlockInput = true;
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用", GetCurrentSelectedPhrase());
@@ -182,7 +239,6 @@ public partial class ChessPlayArea
         AudioManager.Instance.PlaySoundEffect("ItemUSe02");
         // 实现业务
         StartCoroutine(chessboardGrid.CompletedPhrase());
-
         // 触发新手引导检查
         HandleGamePlayCall(CompleteBtn.gameObject, "UseComplete");
     }
@@ -277,17 +333,6 @@ public partial class ChessPlayArea
     {
         NotifyPlayerInteraction(); // 🌟 触发唤醒计时
         if (chessboardGrid.IsBlockInput || chessboardGrid.GameOver) return;
-        
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
-        if (toolInfo == null) return;
-        
-        if(toolInfo.count <= 0)
-        {
-            GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
-            // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
-            SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
-            return;
-        }
 
         // if (GameDataManager.Instance.UserData.Gold < toolInfo.cost&&toolInfo.count <= 0)
         // {
@@ -298,36 +343,70 @@ public partial class ChessPlayArea
         // 第二关新手引导 不计数
         if (CurrStageInfo.StageNumber == 2)
         {
-            if (GameDataManager.Instance.UserData.ChessTutorialProgress[4])
+            ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
+            if (toolInfo == null || toolInfo.count <= 0)
             {
-                usetoolCount++;
-                ChessStageController.Instance.UseTipToolCount++;
+                GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
+                SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
+                return;
             }
-        }
-        else
-        {
             usetoolCount++;
             ChessStageController.Instance.UseTipToolCount++;
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用",GetCurrentSelectedPhrase());
+            InitToolUI();
         }
+        
         chessboardGrid.IsBlockInput = true;
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
-        
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, -1, "关卡内使用",GetCurrentSelectedPhrase());
-        InitToolUI();
-        
-        // chessboardGrid.SetSelectTip();
-        
         AudioManager.Instance.PlaySoundEffect("ItemUSe01");
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseTipWordTool,1);
         StartCoroutine(FlyHintEffect(chessboardGrid.selecteTile));
         // 触发新手引导检查
-        if (CurrStageInfo.StageNumber == 2)
+        if (IsHitsTutorialActive)
         {
             BowlView hitBowl = puzzleTileTable.GridList
                 .FirstOrDefault(bowl => bowl.letter == chessboardGrid.selecteTile.chesspiece.letter);
             HandleGamePlayCall(hitBowl!.gameObject, "UseTips");
         }
-     
+    }
+    
+    /// <summary>
+    /// 卡关后延迟2秒播放道具提醒动画
+    /// </summary>
+    private IEnumerator PlayHintReminderEffectDelay()
+    {
+        // 1. 等待 2 秒钟
+        yield return new WaitForSeconds(2f);
+
+        // 2. 确认游戏还没结束，且提示按钮在界面上是开启状态
+        if (HitsBtn.gameObject.activeInHierarchy && !chessboardGrid.GameOver)
+        {
+            // 方案A：使用 DOTween 做一个强烈的视觉提示 (如：Q弹呼吸放大)
+            HitsBtn.transform.DOKill(true); // 杀掉旧动画防止冲突
+            HitsBtn.transform.localScale = Vector3.one;
+            HitsBtn.transform.GetChild(HitsBtn.transform.childCount - 1).gameObject.SetActive(true); 
+            
+            Sequence hintSeq = DOTween.Sequence().SetLink(HitsBtn.gameObject);
+            // 单次效果：变大(0.25s) -> 缩回原样(0.2s) -> 停顿(0.6s)
+            hintSeq.Append(HitsBtn.transform.DOScale(1.2f, 0.25f).SetEase(Ease.OutQuad));
+            hintSeq.Append(HitsBtn.transform.DOScale(1.0f, 0.2f).SetEase(Ease.InQuad));
+            hintSeq.AppendInterval(0.6f); // 每次放大缩回后的停顿时间
+            // 整体循环 3 次
+            hintSeq.SetLoops(3, LoopType.Restart)
+                .SetTarget(HitsBtn.transform)
+                .OnComplete(() =>
+                {
+                    HitsBtn.transform.localScale = Vector3.one; // 动画结束后复原
+                });
+           
+            
+            // 方案B：如果你有专门的流光/高亮特效预制体，可以直接在这里实例化
+            // GameObject hintFx = Instantiate(HintReminderPrefab, HitsBtn.transform);
+            
+            // 建议配合一个轻微的“叮”音效吸引注意力
+            // AudioManager.Instance.PlaySoundEffect("HintShowEffect");
+            
+        }
     }
     
     private IEnumerator FlyHintEffect(ChessView targetTile)

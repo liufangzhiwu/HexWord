@@ -37,6 +37,8 @@ public class Chesspiece: IEquatable<Chesspiece> //Chess piece
     public bool hasIce = false; // 是否被冰块覆盖
     public bool hasFlower = false; // 是否被花朵覆盖 (仅限 Default 初始字)
     public bool hasLeaf = false;   // 是否有树叶标记 (跟随光标移动)
+    public bool hasGold = false;   // 本格是否被金币覆盖
+    public bool isEmoji = false;   // 该字块是否为Emoji
     public bool Equals(Chesspiece other) => other != null && row == other.row && col == other.col;
     public override bool Equals(object obj) => Equals(obj as Chesspiece);
     public override int GetHashCode() => row * 1000 + col;
@@ -49,9 +51,10 @@ public class Bowl
     public int status;  
     public bool isUsed;  
     public bool isGoldLeaf; 
-    public int count = 1; // 👇 新增：记录该字块的数量，默认为1
-    public int totalcount = 1; // 👇 新增：记录该字块的数量，默认为1
-    public string pinyin;
+    public int count = 1; // 记录该字块的数量，默认为1
+    public int totalcount = 1; // 记录该字块的数量，默认为1
+    public bool isEmoji;      // 是否emoji字
+    public string pinyin;     // 排序字段
 }
 /// <summary>
 /// 关卡信息类 - 负责加载、解析和提供关卡数据
@@ -1065,6 +1068,17 @@ public class ChessStageInfo
         int minRow = int.MaxValue;
         int minCol = int.MaxValue;
       
+        // 提前解析 Emoji 字符串 ("一#字#千#金")，存入哈希表保证极速查询
+        HashSet<string> emojiSet = new HashSet<string>();
+        if (!string.IsNullOrEmpty(stageConf.emoji))
+        {
+            string[] emojis = stageConf.emoji.Split('#', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var e in emojis)
+            {
+                emojiSet.Add(e.Trim()); // 去除可能存在的空格
+            }
+        }
+        
         string[] chunks = stageConf.pass.Split('#');
 
         int chunkIndex = 0; // chunk 序号
@@ -1102,7 +1116,8 @@ public class ChessStageInfo
                     direction = direction,
                     letter = word,
                     state = show == 1 ? TileState.Default : TileState.None,
-                    isInitialFixed = (show == 1)
+                    isInitialFixed = (show == 1),
+                    isEmoji = emojiSet.Contains(word)
                 };
                 boardGame.chesspieces.Add(puzzle);
             }
@@ -1146,7 +1161,8 @@ public class ChessStageInfo
                     status = 0,
                     count = 1,
                     totalcount = 1,
-                    pinyin = WordVocabularyManager.Instance.GetCharPinyin(chessbowl)
+                    pinyin = WordVocabularyManager.Instance.GetCharPinyin(chessbowl),
+                    isEmoji = emojiSet.Contains(chessbowl)
                 });
             }
          

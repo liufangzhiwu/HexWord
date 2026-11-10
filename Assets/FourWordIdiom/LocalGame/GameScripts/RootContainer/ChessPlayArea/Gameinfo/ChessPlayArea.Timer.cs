@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
@@ -46,6 +46,7 @@ public partial class ChessPlayArea
     /// <summary>「时间到！」横幅实例（复活时需要提前收掉）</summary>
     private GameObject _timeUpBanner;
 
+    private Coroutine _emojiTipCoroutine;
     private int _lastDisplayedSeconds = -1;
     private Image _pupaIcon;
     private void Update()
@@ -126,6 +127,7 @@ public partial class ChessPlayArea
             }
             if (chessboardGrid != null) chessboardGrid.hasPlayedComboSoundThisChain = false;
         }
+        UpdateIceBreakTimer(dt);
     }
       
     #region 计时与生命周期更新
@@ -170,6 +172,7 @@ public partial class ChessPlayArea
         // 满足所有条件，正式启动计时！
         _isTimerRunning = true;
         // Debug.Log("🌟 玩家触发交互，倒计时正式开始！");
+        _hasPlayerOperatedThisLevel = true;
     }
     private void UpdateTimerUI()
     {
@@ -641,7 +644,7 @@ public partial class ChessPlayArea
         // 核心机制：如果总分超过了阈值(比如拿了150分，阈值60)，取余数得出30，让进度条循环显示！
         // 防止除以0报错，且保留当 currentScore 正好等于 threshold 时，视觉上呈现满环
         float targetFill = Mathf.Clamp01((float)currentScore / threshold);
-            
+      
         Text progressText = pupaObj.GetComponentInChildren<Text>(true);
         bool isJustCompleted = (targetFill >= 1f && pupaProgressBar.fillAmount < 1f);
         
@@ -704,6 +707,51 @@ public partial class ChessPlayArea
                 }
             });
         }
+    }
+    
+    /// <summary>
+    /// 显示 Emoji 关闭提示气泡
+    /// </summary>
+    private void ShowEmojiTip()
+    {
+        if (emojiTip == null) return;
+        emojiTip.SetActive(true);
+        Canvas canvas = emojiTip.GetComponent<Canvas>();
+        if (canvas == null) canvas = emojiTip.AddComponent<Canvas>();
+        canvas.overrideSorting = true;
+        canvas.sortingLayerName = UIPanelLayer.BasePanel; 
+        canvas.sortingOrder = 10;
+        
+        emojiTip.GetComponentInChildren<Text>().text =
+            MultilingualManager.Instance.GetString("EmojiOff", "pingzi");
+        // 动态确保气泡可以被点击关闭
+        Button tipBtn = emojiTip.GetComponent<Button>();
+        if (tipBtn == null) tipBtn = emojiTip.AddComponent<Button>();
+        tipBtn.onClick.RemoveAllListeners();
+        tipBtn.onClick.AddListener(HideEmojiTip);
+    
+        // 开启 10 秒倒计时自动关闭
+        if (_emojiTipCoroutine != null) StopCoroutine(_emojiTipCoroutine);
+        _emojiTipCoroutine = StartCoroutine(AutoHideEmojiTipDelay(10f));
+    }
+
+    /// <summary>
+    /// 隐藏 Emoji 关闭提示气泡
+    /// </summary>
+    private void HideEmojiTip()
+    {
+        if (emojiTip != null) emojiTip.SetActive(false);
+        if (_emojiTipCoroutine != null)
+        {
+            StopCoroutine(_emojiTipCoroutine);
+            _emojiTipCoroutine = null;
+        }
+    }
+
+    private IEnumerator AutoHideEmojiTipDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        HideEmojiTip();
     }
 
 }

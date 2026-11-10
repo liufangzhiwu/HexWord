@@ -53,7 +53,7 @@ public class ChessboardGrid : MonoBehaviour
     
     [HideInInspector] public string currentFailingPhrase = "";      // 当前正在连续答错的成语
     [HideInInspector] public int currentPhraseConsecutiveErrors = 0; // 该成语的连续答错次数
-    
+    private Coroutine _coldTableHideRoutine; // 用于管理金币栏缩回的协程
     public void Initialize(ChessPlayArea play)
     {
         if (PuzzleItemObj == null)
@@ -1266,6 +1266,7 @@ public class ChessboardGrid : MonoBehaviour
                 // 🌟 【重构点】：在能量爆发的高潮，触发周围的冰块碎裂和花朵绽放！
                 bool hasBloomingFlower = ProcessFlowerBlooming(viewsInGroup);
                 bool hasIceBroken = BreakAdjacentIce(viewsInGroup);
+                bool hasGoldCollected = CollectGoldFromGroup(viewsInGroup);
                 bool hasDeadlockIceBroken = false;
             
                 if (!hasIceBroken)
@@ -1275,7 +1276,7 @@ public class ChessboardGrid : MonoBehaviour
                 if (hasDeadlockIceBroken) hasIceBroken = true;
 
                 // 如果有冰块破碎或花朵绽放，稍微延长等待时间，让附加特效飞一会儿
-                if (hasBloomingFlower || hasIceBroken)
+                if (hasBloomingFlower || hasIceBroken || hasGoldCollected)
                 {
                     yield return new WaitForSeconds(0.25f); 
                 }
@@ -2148,6 +2149,14 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
         {
             UpdateDirectionOnManualClick(selecteTile);
         }
+     
+        if (!CurrStageData.GoldGenerated) 
+        {
+            GenerateGoldCoins();
+            CurrStageData.GoldGenerated = true;
+            CurrStageData.SaveToFile();
+        }
+        
         GenerateNextLevelLeaf();
         
         if (isAmin)
@@ -2926,5 +2935,135 @@ private void PreBreakFlowerLogic(List<List<ChessView>> completedGroupViews)
             // 可选：播放一个特殊的提示音效
             // AudioManager.Instance.PlaySoundEffect("LastWordFocus");
         }
+    }
+    
+    /// <summary>
+    /// 规则分配生成金币：普通(双组各一) / 大满贯(全盘皆是)
+    /// </summary>
+    public void GenerateGoldCoins()
+    {
+        bool isGoldLevel = ChessStageController.Instance.CheckGoldMechanic(ChessStageController.Instance.CurrentStage, out _, out bool isGrandSlam);
+        if (!isGoldLevel) return;
+
+        if (isGrandSlam)
+        {
+            // 大满贯：所有空格全部放上金币
+            foreach (var cell in GridList.Values)
+            {
+                if (cell.CurrState == TileState.None || cell.CurrState == TileState.Check)
+                {
+                    cell.ShowGold(true);
+                }
+            }
+        }
+        else
+        {
+            // 普通奖励：选取含空格最多的两个词组，每个词组随机选取1个空格
+            var validGroups = GamePlayArea.CurrStageInfo.PhraseGroups.Where(g => 
+                g.chesspieces.Any(p => GridList.TryGetValue((p.row, p.col), out var v) && (v.CurrState == TileState.None || v.CurrState == TileState.Check))
+            ).ToList();
+            Debug.Log($"[金币生成排查] 找到含有空格的词组数量: {validGroups.Count}");
+            var sortedGroups = validGroups.OrderByDescending(g => 
+                g.chesspieces.Count(p => GridList.TryGetValue((p.row, p.col), out var v) && (v.CurrState == TileState.None || v.CurrState == TileState.Check))
+            ).Take(2).ToList();
+
+            foreach (var group in sortedGroups)
+            {
+                var emptyCells = group.chesspieces.Select(p => GridList.GetValueOrDefault((p.row, p.col)))
+                    .Where(v => v != null && (v.CurrState == TileState.None || v.CurrState == TileState.Check)).ToList();
+                Debug.Log($"[金币生成排查] 选中词组 {group.id}，该组内可用的空格数量: {emptyCells.Count}");
+                foreach (var cell in emptyCells)
+                {
+                    cell.ShowGold(true);
+                }
+                // if (emptyCells.Count > 0)
+                // {
+                //     // 随机在一个格子上产生金币
+                //     emptyCells[UnityEngine.Random.Range(0, emptyCells.Count)].ShowGold(true);
+                // }
+            }
+        }
+    }
+    private float _lastCoinShowSoundTime = -1f;
+    /// <summary>
+    /// 处理被完成词组中的金币收集逻辑
+    /// </summary>
+    /// 
+    private bool CollectGoldFromGroup(List<ChessView> completedGroupViews)
+    {
+        bool hasCollected = false;
+
+        foreach (var v in completedGroupViews)
+        {
+            if (v.chesspiece != null && v.chesspiece.hasGold)
+            {
+                if (!hasCollected && (Time.time - _lastCoinShowSoundTime > 0.05f)) // 0.05秒防抖足以避免一帧内爆音
+                {
+                    AudioManager.Instance.PlaySoundEffect("ui_coin_show_eff"); 
+                    _lastCoinShowSoundTime = Time.time;
+                }
+                
+                v.chesspiece.hasGold = false; // 解除逻辑标记
+                ChessStageController.Instance.ModifyChreepiece(v.chesspiece);
+                ChessStageController.Instance.CurrStageData.CollectedGold++;
+                
+                // 金币飘起时，激活并让收集栏从屏幕外滑入
+                if (GamePlayArea.ColdTable != null)
+                {
+                    GamePlayArea.ColdTable.SetActive(true);
+                    GamePlayArea.SlideInColdTableAnim();
+                }
+                // 如果之前已经有在倒计时缩回的协程，先打断，防止连续消除时闪烁
+                if (_coldTableHideRoutine != null)
+                {
+                    GamePlayArea.StopCoroutine(_coldTableHideRoutine);
+                    _coldTableHideRoutine = null;
+                }
+                
+                // 判断右上角或左上角是否有格子挡住 (Col+1 为上方，Row+1 为右方)
+                bool topRightFree = !GridList.ContainsKey((v.Row + 1, v.Col + 1));
+                bool topLeftFree  = !GridList.ContainsKey((v.Row - 1, v.Col + 1));
+                
+                float offsetX = 0f;
+                if (topRightFree && !topLeftFree) offsetX = 70f;
+                else if (topLeftFree && !topRightFree) offsetX = -70f;
+                else if (topRightFree && topLeftFree) offsetX = Random.value > 0.5f ? 70f : -70f;
+                else offsetX = Random.Range(-20f, 20f); // 都被挡住时仅做微小随机偏移
+                
+                // 传入 Action 作为 1 秒滞空后的回调，飞往顶部 UI
+                v.PlayGoldCollectAnim(offsetX,() => 
+                {
+                    // 调用你现有的金币飞行管理工具，如：
+                    CustomFlyInManager.Instance.FlyInGoldAdvanced(v.GetCoinTransform(),
+                        GamePlayArea.ColdTable.transform.GetChild(0), () =>
+                        {
+                            // GamePlayArea.UpdateColdTableUI();
+                            GamePlayArea.AddInLevelGoldWithAnim(1);
+                            _coldTableHideRoutine = GamePlayArea.StartCoroutine(DelayedSlideOutColdTable());
+                        });
+                    DOVirtual.DelayedCall(0.08f, () => v?.HideCoin());
+                });
+                hasCollected = true;
+            }
+        }
+
+        if (hasCollected)
+        {
+            ChessStageController.Instance.CurrStageData.SaveToFile();
+        }
+        return hasCollected;
+    }
+    
+    /// <summary>
+    /// 延时缩回金币收集栏协程（让玩家看完数字跳动后再滑出屏幕）
+    /// </summary>
+    private IEnumerator DelayedSlideOutColdTable()
+    {
+        yield return new WaitForSeconds(1.2f); // 停留展示 1.2 秒
+        if (GamePlayArea != null)
+        {
+            GamePlayArea.SlideOutColdTableAnim(); // 滑出屏幕外
+        }
+        _coldTableHideRoutine = null;
     }
 }

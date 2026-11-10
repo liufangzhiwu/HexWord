@@ -8,21 +8,24 @@ using UnityEngine;
 
 public partial class ChessStageController
 {
-  
-
     #region 数据配置
     private readonly Dictionary<int, ComboConfig> _comboConfigDict = new Dictionary<int, ComboConfig>();
     private readonly Dictionary<int, ComboConfig> _reduceConfigDict = new Dictionary<int, ComboConfig>();
     public IceConfig IceConfig { get; private set; }          // 冰块
     public LeafConfig LeafConfig { get; private set; }        // 叶子
     public FlowerConfig FlowerConfig { get; private set; }    // 花朵
-    public readonly List<StimulateRuleConfig> StimulateRules = new List<StimulateRuleConfig>();   // 关卡鼓励词规则配置
+    public MemoryConfig MemoryConfig { get; private set; }    // 展示记忆功能
+    public GoldCoverConfig GoldCoverConfig { get; private set; }        // 金币盖住棋子机制功能
     
+    public readonly List<StimulateRuleConfig> StimulateRules = new List<StimulateRuleConfig>();   // 关卡鼓励词规则配置
     /// <summary>
     /// 局内正向反馈配置数据
     /// </summary>
     public readonly Dictionary<int, PraiseConfig> PraiseConfigDict = new Dictionary<int, PraiseConfig>();
-    
+    /// <summary>
+    /// 关前激励配置字典
+    /// </summary>
+    public readonly Dictionary<int, EnterStimulateConfig> EnterStimulateConfigDict = new Dictionary<int, EnterStimulateConfig>();
     #endregion
     // 🌟 新增：记录本关卡总共生成过几片叶子（用于皮肤循环切换）
     public int LeafGenCounter
@@ -196,7 +199,11 @@ public partial class ChessStageController
         {
             Debug.LogError("严重错误：关卡完成鼓励词配置（在线/本地）全部加载失败！");
         }
-
+        TextAsset enterStimulateCsvObj = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_EnterStimulate");
+        if (enterStimulateCsvObj != null)
+        {
+            LoadEnterStimulateConfig(enterStimulateCsvObj.text);
+        }
         yield return null;
         // 5. 组装完毕，拉起当前进度的关卡沙盒数据
         SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
@@ -495,6 +502,27 @@ public partial class ChessStageController
 
             Debug.Log("解析完成后的花朵配置: " + JsonConvert.SerializeObject(FlowerConfig));
         }
+        
+        if (cols.Length >= 12)
+        {
+            string first = cols[11].Trim();
+            string[] levels = cols[12].Split('_');
+            MemoryConfig = new MemoryConfig { FirstLevel = int.Parse(first), CycleLevels = levels.Select(int.Parse).ToList() };
+            Debug.Log("解析完成后的记忆雷达配置: " + JsonConvert.SerializeObject(MemoryConfig));
+        }
+        // 金币机制解析
+        if (cols.Length >= 14)
+        {
+            string first = cols[13].Trim();
+            string[] levels = cols[14].Split('_', StringSplitOptions.RemoveEmptyEntries);
+            GoldCoverConfig = new GoldCoverConfig 
+            { 
+                IsOpen = TryParseBool(opens, 4, true), // 默认给 true 兜底
+                FirstLevel = int.Parse(first), 
+                CycleLevels = levels.Select(int.Parse).ToList() 
+            };
+            Debug.Log("解析完成后的金币机制配置: " + JsonConvert.SerializeObject(GoldCoverConfig));
+        }
     }
 
     /// <summary>
@@ -547,6 +575,14 @@ public partial class ChessStageController
                 }
 
                 stimulateRule.TitleKey = fields[6];
+                if (!string.IsNullOrEmpty(fields[6]))
+                {
+                    stimulateRule.TitleKeys = fields[6].Split(new char[] { '_', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                }
+                else
+                {
+                    stimulateRule.TitleKeys = Array.Empty<string>();
+                }
                 stimulateRule.PhraseKey = fields[7];
                 stimulateRule.EmojiKey = fields[8];
                 stimulateRule.LongTextKey = fields[9];
@@ -599,5 +635,78 @@ public partial class ChessStageController
 
         list.Add(cur.ToString().Trim());
         return list.ToArray();
+    }
+    
+    /// <summary>
+    /// 解析 拼字玩法配置表 - EnterStimulate(关前激励).csv
+    /// </summary>
+    private void LoadEnterStimulateConfig(string csvText)
+    {
+    EnterStimulateConfigDict.Clear();
+
+    if (string.IsNullOrEmpty(csvText))
+    {
+        Debug.LogError("EnterStimulate (关前激励) 配置表内容为空！");
+        return;
+    }
+
+    // 借助现有工具类按行分割
+    List<string> lines = ToolUtil.SplitCsvLines(csvText);
+
+    // 索引 2 开始（跳过第0行中文说明，第1行英文变量名）
+    for (int i = 2; i < lines.Count; i++)
+    {
+        string[] fields = ParseCsvLineAndCleanQuotes(lines[i]);
+
+        // 健壮性防御：长度应至少覆盖到文本Key列 (索引10)
+        if (fields == null || fields.Length < 11 || string.IsNullOrEmpty(fields[0])) continue;
+
+        try
+        {
+            EnterStimulateConfig config = new EnterStimulateConfig();
+            
+            int.TryParse(fields[0], out config.StimulateID);
+            int.TryParse(fields[1], out config.Priority);
+            int.TryParse(fields[2], out config.LevelType);
+            int.TryParse(fields[3], out config.BannerType);
+            int.TryParse(fields[4], out config.LifeDay);
+            int.TryParse(fields[5], out config.LevelProgress);
+
+            // 处理包含 "%" 的概率字段 (如 "50%")
+            string probStr = fields[6].Replace("%", "").Trim();
+            float.TryParse(probStr, out config.Probability);
+
+            int.TryParse(fields[7], out config.TimeWindow);
+            int.TryParse(fields[8], out config.IconPosition);
+
+            // 解析可能存在多个的图标组 (利用 _ 拆分)
+            if (!string.IsNullOrEmpty(fields[9]))
+            {
+                config.Emojis = fields[9].Split(new char[] { '_', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+            else
+            {
+                config.Emojis = Array.Empty<string>();
+            }
+
+            // 解析本地化多语言Key文案组
+            if (!string.IsNullOrEmpty(fields[10]))
+            {
+                config.TextLoop = fields[10].Split(new char[] { '_', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+            else
+            {
+                config.TextLoop = Array.Empty<string>();
+            }
+
+            EnterStimulateConfigDict[config.StimulateID] = config;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"解析 关前激励表(EnterStimulate) 第 {i} 行时崩溃! 错误: {ex.Message}");
+        }
+    }
+
+    Debug.Log($"[配置加载] 关前激励表加载完毕，共解析 {EnterStimulateConfigDict.Count} 条规则。");
     }
 }

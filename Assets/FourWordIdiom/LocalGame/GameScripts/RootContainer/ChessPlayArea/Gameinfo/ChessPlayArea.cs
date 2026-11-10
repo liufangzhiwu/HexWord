@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,65 +18,82 @@ public partial class ChessPlayArea : UIWindow
 {
     public static ChessPlayArea Instance;
     [SerializeField] private GameObject GameBase;
+    [Header("关卡数据")]
+    [SerializeField] private GameObject _hardTagObj;      // “困难”标签节点
+    [SerializeField] private GameObject _extraHardTagObj; // “极难”标签节点
     [SerializeField] private Text Stagetxt;
-    [Header("游戏内专属：蝶蛹圆形进度条")]
+    [Tooltip("游戏内专属：蝶蛹圆形进度条")]
     public GameObject pupaObj;             // 进度条的总开关节点
     public Image pupaProgressBar;          // 你的圆形 Fill 进度条 (Image Type = Filled)
     public GameObject _pupaCompleteEffectNode;
-    
-    [Header("右侧按钮组")]
-    [SerializeField] private Button MyThemeBtn;
-    [SerializeField] private Button pauseBtn;
-    [SerializeField] private Image gameTimeBg;   // 时间的背景图组件
-    [SerializeField] private GameObject MyThemeRedPoint;
-    [Header("时间与控制")]
-    [SerializeField] private Text _timerText;    // 倒计时文本显示
-    
-    [SerializeField] public Button HitsBtn;      // 提示按钮
-    [SerializeField] public Button CompleteBtn;     // 完成按钮
-    [SerializeField] private Button PuzzleBtn;   //  关内词语按钮
-    [SerializeField] public GameObject butterflyPrefab; // 蝴蝶特效
-    [SerializeField] public GameObject butterflyObj;   // 蝴蝶节点
-    [SerializeField] public Image effectMask;  //蒙版
-    [Header("词语面板")]
-    // 字块矩阵面板
-    [SerializeField] public ChessboardGrid chessboardGrid;
-    [HideInInspector]public (float row, float col) startLocation = (0, 0);
-    // 待填入字块集面板
-    [SerializeField] public ChessBowlGrid puzzleTileTable;
-    [Header("关卡难度常驻标签")]
-    [SerializeField] private GameObject _hardTagObj;      // “困难”标签节点
-    [SerializeField] private GameObject _extraHardTagObj; // “极难”标签节点
-    
+    [Header("金币收集点")] 
+    [SerializeField] public GameObject ColdTable;
+    [SerializeField] private Text coldNumberText;
     [Header("禅意分数展示")]
     [SerializeField] private GameObject zentable;
     [SerializeField] private Text _zenScoreText;        // 总分数展示文本 (图里的 "188")
     [SerializeField] private Image _scoreBorder;        // 分数牌的边框 (用于闪红/闪黄)
     [SerializeField] private GameObject _floatingScoreOriginalPos;          // 记录飘字的初始坐标
     [SerializeField] private GameObject _lotusParticle; // 莲花图标周围的光点粒子节点
-    [Header("分数 UI 对象池预制体")]
-    private GameObject _rollingScorePrefab; // 拖入老虎机滚出的旧分数预制体
-    private GameObject _floatingScorePrefab; // 拖入飘字预制体
+    [Header("皮肤按钮")]
+    [SerializeField] private Button MyThemeBtn;
+    [SerializeField] private GameObject MyThemeRedPoint;
+    [Header("时间与控制")]
+    [SerializeField] private Button pauseBtn;
+    [SerializeField] private Image gameTimeBg;   // 时间的背景图组件
+    [SerializeField] private Text _timerText;    // 倒计时文本显示
+    [SerializeField] private GameObject emojiTip; // emoji关卡提示气泡
+    [Header("道具按钮")]
+    [SerializeField] public Button HitsBtn;      // 提示按钮
+    [SerializeField] public Button CompleteBtn;     // 完成按钮
+    [SerializeField] private Button PuzzleBtn;   //  关内词语按钮
+    [SerializeField] public GameObject butterflyPrefab; // 蝴蝶特效
+    [SerializeField] public GameObject butterflyObj;   // 蝴蝶节点
+    [Header("词语面板")]
+    // 字块矩阵面板
+    [SerializeField] public ChessboardGrid chessboardGrid;
+    [HideInInspector]public (float row, float col) startLocation = (0, 0);
+    // 待填入字块集面板
+    [SerializeField] public ChessBowlGrid puzzleTileTable;
 
+    [Header("记忆雷达")] 
+    [SerializeField] private GameObject radarRoot;  // 雷达父类
+    [SerializeField] private Image radarMaskImage;   // 拖入：移到 CoreStage 上方的雷达隐形 Mask
+    [SerializeField] private Image radarVisualImage; // 拖入：放在最底部的发光 point
+    [SerializeField] private Text radarScanText;  // 时间文本
     [Header("树叶进度控制")] 
     [SerializeField] private Slider leafSlider;     // 树叶进度条
     [SerializeField] private GameObject leafFlyPoint;  // 叶子飞入点
     [SerializeField] private GameObject leafGold;    // 叶子金币奖励图标
     [SerializeField] private GameObject leafPupa;    //  叶子蝶蛹奖励图标
     [SerializeField] private GameObject leafLotus;    // 叶子莲花奖励
-    [SerializeField] private GameObject leafZenReplacement;  
+    [SerializeField] private GameObject leafZenReplacement;
+    [Header("冰块破冰广告物体")]
+    [SerializeField] private Button IceBreakTable;   // 破冰广告点，放在树叶进度的位置, 树叶隐藏,冰块关卡显示
+    [SerializeField] private GameObject IceHammerObj;
+    [SerializeField] private Text IceBreakText;
+    [SerializeField] private GameObject iceFreeObj;
+    [SerializeField] private GameObject iceAdsObj;
+    [SerializeField] private Slider  iceTimerSlider;
     [Header("Combo 特效")]
     [SerializeField] private GameObject _comboScreenFX; // 拖入你挂在面板下的特效物体
     [Header("飞行特效预制体与对象池")]
     [SerializeField] private GameObject _pupaTrailPrefab;       // 飞向蝶蛹的拖尾粒子
     [SerializeField] private GameObject _zenCorrectTrailPrefab; // 飞向禅意分的黄色拖尾粒子
     [SerializeField] private GameObject _zenWrongTrailPrefab;   // 飞向禅意分的红色拖尾粒子
+    [Header("分数 UI 对象池预制体")]
+    private GameObject _rollingScorePrefab; // 拖入老虎机滚出的旧分数预制体
+    private GameObject _floatingScorePrefab; // 拖入飘字预制体
     [Header("卡关道具提醒 (新增)")]
     private bool _hasTriggeredHintReminderThisLevel = false; // 本关是否已经触发过特效
     private bool _isStuckTimerRunning = false;               // 卡关计时器是否在跑
     private float _stuckTimer = 0f;                          // 卡关计时(秒)
+    [Header("金币栏动画控制")]
+    private Vector2 _coldTableTargetPos;      // 记录编辑器中的完美坐标（包含X和Y）
+    private float _coldTableOffScreenX;       // 动态计算出的屏幕外X坐标
+    private bool _isColdTablePosRecorded = false; // 是否已记录
     // 假设这是你从配置表读取的数据，请替换为你实际的配置表读取代码，如 GameDataManager.Instance.Config.PropRemindTime
-    private float PropRemindTime => 15f;
+    private static float PropRemindTime => 15f;
     
     private ObjectPool _pupaTrailPool;
     private ObjectPool _zenCorrectTrailPool;
@@ -97,8 +114,21 @@ public partial class ChessPlayArea : UIWindow
     
     #region 计时系统数据
     private float _remainingTime = 300f;            // 剩余时间 (初始 300 秒 = 5 分钟)
-    private bool _isTimerRunning = false;           // 计时器开关
     private bool _isWarningTriggered = false;       // 是否已经触发过警告特效
+    private bool _internalTimerRunning = false;
+    private bool _isTimerRunning // 计时器开关
+    {
+        get { return _internalTimerRunning; }
+        set
+        {
+            _internalTimerRunning = value;
+            // 只要任何逻辑（比如从皮肤、暂停界面返回）将时间启动，就强制视为玩家已交互！
+            if (value == true)
+            {
+                _hasPlayerOperatedThisLevel = true;
+            }
+        }
+    }
     #endregion
     
     private int usetoolCount;     // 所有道具使用
@@ -238,6 +268,7 @@ public partial class ChessPlayArea : UIWindow
     {
         lightParticlePrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("useritems", "ShowTipTuowei");
         _lightParticlePool = new ObjectPool(lightParticlePrefab, ObjectPool.CreatePoolContainer(transform, "LightParticlePool"), 4, PoolBehaviour.GameObject);
+        HitsBtn.transform.GetChild(HitsBtn.transform.childCount - 1).GetComponentInChildren<Text>(true).text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
     }
     
     // 初始化所有池子（在 BoardInitialize 或 Start 中调用）
@@ -256,7 +287,9 @@ public partial class ChessPlayArea : UIWindow
         base.OnEnable();
         PrepareForAnimation();
         UpdateUI();
-       
+        _isGoldSettled = false;
+        _visualEarnedGold = 0; // 重新开局，视觉缓存归零
+        _nextCoinArriveTime = 0f;
         _remainingTime = CurrStageData.RemainingTime;
         GameCoreManager.Instance.PanelState = PanelState.GamePingPanel;
        
@@ -267,6 +300,7 @@ public partial class ChessPlayArea : UIWindow
         EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
         ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
         EventDispatcher.instance.OnHighlightHeaderUI += HighlightPupaUI;
+        EventDispatcher.instance.OnEmojiStateChanged += RefreshAllEmojiDisplay;
         
         _lastZenScore = ChessStageController.Instance.CurrentTotalScore;
         _zenScoreText.text = _lastZenScore.ToString();
@@ -303,32 +337,18 @@ public partial class ChessPlayArea : UIWindow
         }
         // 1. 设置关卡文字
         Stagetxt.text = MultilingualManager.Instance.GetString("Level")+ " " + CurrStageInfo.StageNumber;
+        _lastZenScore = ChessStageController.Instance.CurrentTotalScore;
+        _zenScoreText.text = _lastZenScore.ToString();
+        IceBreakText.text = MultilingualManager.Instance.GetString("IceBreak","pingzi");
+        iceFreeObj.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Free","pingzi");
+     
         // ==========================================
-        // 🌟 2. 新增：判断并显示关卡难度常驻小标签
-        // ==========================================
-        // 先默认把两个标签都隐藏
-        if (_hardTagObj != null) _hardTagObj.SetActive(false);
-        if (_extraHardTagObj != null) _extraHardTagObj.SetActive(false);
-
-        // 获取当前关卡的难度
-        LevelModes currentMode = ChessStageController.Instance.GetLevelDifficultyMode(CurrStageData.StageId);
-        
-        // 根据难度开启对应的常驻小标签
-        if (currentMode == LevelModes.Hard)
-        {
-             _hardTagObj.SetActive(true);
-             _hardTagObj.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Hard");
-        }
-        else if (currentMode == LevelModes.ExtraHard)
-        {
-             _extraHardTagObj.SetActive(true);
-             _extraHardTagObj.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("VeryHard");
-        }
-        // ==========================================
+        HitsBtn.transform.GetChild(HitsBtn.transform.childCount - 1).gameObject.SetActive(false);
         HitsBtn.gameObject.SetActive(CurrStageData.StageId >= 2);
-        CompleteBtn.gameObject.SetActive(CurrStageData.StageId >= 6);
+        CompleteBtn.gameObject.SetActive(CurrStageData.StageId >= 9);
         
         pauseBtn.gameObject.SetActive(ChessStageController.Instance.CurrentStage>1);
+        if (emojiTip != null) emojiTip.SetActive(false);
         
         // 刷新蝶蛹进度
         bool showPupaProgress = ButterfliesManager.Instance.CanShowPupaProgressBarThisLevel(ChessStageController.Instance.OptimalTotalScore);
@@ -336,6 +356,17 @@ public partial class ChessPlayArea : UIWindow
         UpdatePupaProgress(ChessStageController.Instance.CurrentTotalScore, true);
         OnRedPointChanged(ThemeManager.Instance.IsSkinRedPointActive);
         InitToolUI();
+        
+        bool isGoldLevel = ChessStageController.Instance.CheckGoldMechanic(ChessStageController.Instance.CurrentStage, out _, out _);
+        if (isGoldLevel)
+        {
+            ColdTable.SetActive(true);
+            Canvas cans = ColdTable.GetComponent<Canvas>();
+            if (cans != null) cans.sortingLayerName = UIPanelLayer.BasePanel;
+            coldNumberText.text = GameDataManager.Instance.UserData.Gold.ToString();
+            
+        }else ColdTable.SetActive(false);
+        
     }
 
     #endregion
@@ -389,8 +420,12 @@ public partial class ChessPlayArea : UIWindow
     }
     protected override  void OnDisable()
     {
+        SettleStageGoldData("金币词获得");
         chessboardGrid.Clear();
         puzzleTileTable.Clear();
+        _cachedTutorialStageNumber = -1;
+        _cachedHitsTutorial = false;
+        _cachedCompleteTutorial = false;
         
         EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
         EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
@@ -398,6 +433,7 @@ public partial class ChessPlayArea : UIWindow
         EventDispatcher.instance.OnChessScoreChanged -= OnChessScoreChanged;
         ThemeManager.Instance.OnSkinRedPointChanged -= OnRedPointChanged;
         EventDispatcher.instance.OnHighlightHeaderUI -= HighlightPupaUI;
+        EventDispatcher.instance.OnEmojiStateChanged -= RefreshAllEmojiDisplay;
         
         if (EffectButterFlays.Count > 0)
         {
@@ -426,9 +462,11 @@ public partial class ChessPlayArea : UIWindow
         _zenScoreText.rectTransform.DOKill(true);
         _zenScoreText.transform.localScale = Vector3.one;
         _scoreBorder.gameObject.SetActive(false);
+        if(_radarTween != null) StopRadarScan();
         
         ClearAndResetLeafSliderComponents();
         GameCoreManager.Instance.SetBackgroundImage(Color.white);
+        HideEmojiTip();
         base.OnDisable();
     }
  
@@ -496,10 +534,9 @@ public partial class ChessPlayArea : UIWindow
     /// <summary>
     /// 暂停/恢复 切换
     /// </summary>
-    private void OnPauseClick()
+    private void PauseGame()
     {
         _isTimerRunning = !_isTimerRunning;
-        SystemManager.Instance.ShowPanel(PanelType.PauseGameScreen);
     }
     
     /// <summary>
@@ -508,8 +545,24 @@ public partial class ChessPlayArea : UIWindow
     public void ResumeGame()
     {
         _isTimerRunning = true; // 恢复时间流逝
+        Debug.LogError("是否进入了" + _isTimerRunning);
     }
-    
+    /// <summary>
+    /// 从皮肤、词典等半透明覆盖层返回时调用
+    /// </summary>
+    public void RestoreFromSubPanel()
+    {
+        // 1. 视觉恢复：把游戏面板重新显示出来
+        CanvasGroup cg = GetComponent<CanvasGroup>();
+        if (cg != null)
+        {
+            cg.alpha = 1;
+            cg.blocksRaycasts = true;
+        }
+        
+        // 2. 唤醒时间（借助之前的拦截器，自动点亮操作标记）
+        _isTimerRunning = true; 
+    }
     /// <summary>
     /// 时间耗尽：先播「红色呼吸 + 闹钟 + 时间到横幅」，再弹失败/复活界面
     /// </summary>
@@ -580,6 +633,36 @@ public partial class ChessPlayArea : UIWindow
 
         // 7. 返回结果
         onCaptured?.Invoke(snapshotSprite);
+    }
+    
+    /// <summary>
+    /// 开关切换后，重绘当前棋盘与待填字盘中的 Emoji / 文字
+    /// </summary>
+    private void RefreshAllEmojiDisplay(bool isEmojiOn)
+    {
+        // 1. 刷新棋盘所有存活格子
+        if (chessboardGrid != null && chessboardGrid.GridList != null)
+        {
+            foreach (var tile in chessboardGrid.GridList.Values)
+            {
+                if (tile != null)
+                {
+                    tile.UpdateTile();
+                }
+            }
+        }
+
+        // 2. 刷新下方所有待填字块
+        if (puzzleTileTable != null && puzzleTileTable.GridList != null)
+        {
+            foreach (var bowl in puzzleTileTable.GridList)
+            {
+                if (bowl != null && bowl.bowl != null)
+                {
+                    bowl.Setup(bowl.bowl, puzzleTileTable);
+                }
+            }
+        }
     }
     
 }
