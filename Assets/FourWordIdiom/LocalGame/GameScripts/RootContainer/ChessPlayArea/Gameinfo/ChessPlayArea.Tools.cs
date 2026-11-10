@@ -370,44 +370,6 @@ public partial class ChessPlayArea
         }
     }
     
-    /// <summary>
-    /// 卡关后延迟2秒播放道具提醒动画
-    /// </summary>
-    private IEnumerator PlayHintReminderEffectDelay()
-    {
-        // 1. 等待 2 秒钟
-        yield return new WaitForSeconds(2f);
-
-        // 2. 确认游戏还没结束，且提示按钮在界面上是开启状态
-        if (HitsBtn.gameObject.activeInHierarchy && !chessboardGrid.GameOver)
-        {
-            // 方案A：使用 DOTween 做一个强烈的视觉提示 (如：Q弹呼吸放大)
-            HitsBtn.transform.DOKill(true); // 杀掉旧动画防止冲突
-            HitsBtn.transform.localScale = Vector3.one;
-            HitsBtn.transform.GetChild(HitsBtn.transform.childCount - 1).gameObject.SetActive(true); 
-            
-            Sequence hintSeq = DOTween.Sequence().SetLink(HitsBtn.gameObject);
-            // 单次效果：变大(0.25s) -> 缩回原样(0.2s) -> 停顿(0.6s)
-            hintSeq.Append(HitsBtn.transform.DOScale(1.2f, 0.25f).SetEase(Ease.OutQuad));
-            hintSeq.Append(HitsBtn.transform.DOScale(1.0f, 0.2f).SetEase(Ease.InQuad));
-            hintSeq.AppendInterval(0.6f); // 每次放大缩回后的停顿时间
-            // 整体循环 3 次
-            hintSeq.SetLoops(3, LoopType.Restart)
-                .SetTarget(HitsBtn.transform)
-                .OnComplete(() =>
-                {
-                    HitsBtn.transform.localScale = Vector3.one; // 动画结束后复原
-                });
-           
-            
-            // 方案B：如果你有专门的流光/高亮特效预制体，可以直接在这里实例化
-            // GameObject hintFx = Instantiate(HintReminderPrefab, HitsBtn.transform);
-            
-            // 建议配合一个轻微的“叮”音效吸引注意力
-            // AudioManager.Instance.PlaySoundEffect("HintShowEffect");
-            
-        }
-    }
     
     private IEnumerator FlyHintEffect(ChessView targetTile)
     {
