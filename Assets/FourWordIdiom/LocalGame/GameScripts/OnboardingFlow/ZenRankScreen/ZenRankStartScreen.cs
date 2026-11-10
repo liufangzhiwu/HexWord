@@ -52,9 +52,12 @@ public class ZenRankStartScreen : UIWindow
         startGameButton.AddClickAction(OnStartGameClicked);
         closeButton.AddClickAction(OnCloseClicked);
         avatarPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem","UserAvatar");
-        avatarPool = new ObjectPool(avatarPrefab, transform, 5);
+        if (avatarPrefab != null)
+            avatarPool = new ObjectPool(avatarPrefab, transform, 5);
+        else Debug.LogError("🚨 UserAvatar 预制体加载失败！");
         
-        _originalCircleSize = radarCircle.sizeDelta;
+        if (radarCircle != null)
+            _originalCircleSize = radarCircle.sizeDelta;
     }
     protected override void OnEnable()
     {
@@ -62,11 +65,13 @@ public class ZenRankStartScreen : UIWindow
         _isForcedMode = false;
         _returnTargetPanel = PanelType.PrimaryInterface;
         closeButton.gameObject.SetActive(true);
+        startGameButton.interactable = true;
         // 初始状态：显示阶段1，隐藏阶段2
         stage1Panel.SetActive(true);
         stage2Panel.SetActive(false);
         InitLanguageAndData();
         ResetRadarUI();
+        ClearAllAvatars();
         if (ZenRankManager.Instance != null)
         {
             ZenRankManager.Instance.OnRankTimerTick += UpdateTimerUI;
@@ -93,8 +98,16 @@ public class ZenRankStartScreen : UIWindow
         }
         radarLine?.DOKill();
         radarCircle?.DOKill();
+        foreach (var avatar in activeAvatars)
+        {
+            if (avatar != null)
+            {
+                avatar.transform.DOKill(); // 杀掉 DOTween 防止后台报错即可
+            }
+        }
+
         // 清理所有动态生成的头像，停止它们身上的 DOTween
-        ClearAllAvatars();
+        // ClearAllAvatars();
         base.OnDisable();
     }
     private void InitLanguageAndData()
@@ -161,6 +174,8 @@ public class ZenRankStartScreen : UIWindow
     // 点击开始游戏按钮
     private void OnStartGameClicked()
     {
+        startGameButton.interactable = false;
+        
         stage1Panel.SetActive(false);
         stage2Panel.SetActive(true);
         
@@ -188,7 +203,7 @@ public class ZenRankStartScreen : UIWindow
             radarCircle.sizeDelta = _originalCircleSize; // 确保开始时是原始尺寸
             
             // 使用 DOTween 的 Sequence 实现“等待然后变大”的过程
-            Sequence circleSeq = DOTween.Sequence();
+            Sequence circleSeq = DOTween.Sequence().SetLink(gameObject);
             circleSeq.AppendInterval(0.4f); // 等待配置的时间
             circleSeq.Append(radarCircle.DOSizeDelta(new Vector2(616,616), radarRotateDuration*2).SetEase(Ease.OutQuad)); // 慢慢变大
             // Sequence 执行完毕后自动停止，圆不再继续变大，而雷达线还在继续转
@@ -210,17 +225,51 @@ public class ZenRankStartScreen : UIWindow
         UpdateProgressUI(currentPlayerCount);
         ClearAllAvatars(); // 清理旧头像
         yield return new WaitForSeconds(0.5f);
-        StartCoroutine(GenerateAvatars(12));
-        WaitForSeconds wait =  new WaitForSeconds(0.08f);
+        
+        // ========== 2. 预先计算所有头像的触发时间点 ==========
+        // 在整个 [0, matchTotalDuration] 区间内随机撒点，再排序
+        List<float> avatarSpawnTimes = new List<float>();
+        for (int i = 0; i < 12; i++)
+        {
+            avatarSpawnTimes.Add(Random.Range(0f, radarRotateDuration));
+        }
+        avatarSpawnTimes.Sort();
+        
+        // ========== 3. 用一个循环统一驱动进度条和头像 ==========
+        float progressUpdateInterval = 0.05f;
+        float elapsed = 0f;
+        int nextAvatarIndex = 0;
+        float lastProgressUpdate = -progressUpdateInterval;
+       
         while (currentPlayerCount < targetPlayerCount)
         {
-            // 随机等待 0.2 到 0.8 秒模拟寻找玩家的过程
-            // yield return new WaitForSeconds(Random.Range(0.2f, 0.8f));
-            yield return wait;
-            currentPlayerCount++;
-            UpdateProgressUI(currentPlayerCount);
+            elapsed += Time.deltaTime;
+            // ---- 3.1 进度条推进 ----
+            if (elapsed - lastProgressUpdate >= progressUpdateInterval)
+            {
+                lastProgressUpdate = elapsed;
+                // 用缓动曲线让进度条从 1 平滑到 30（OutQuad 更自然，前快后慢）
+                float t = Mathf.Clamp01(elapsed / (radarRotateDuration * 1.5f));
+                float eased = 1f - (1f - t) * (1f - t); // OutQuad
+                currentPlayerCount = Mathf.RoundToInt(Mathf.Lerp(1, targetPlayerCount, eased));
+                UpdateProgressUI(currentPlayerCount);
+            }
+            // ---- 3.2 到点就生成头像 ----
+            // 注意：这里用 while 是为了防止一帧内跨过多个触发点
+            while (nextAvatarIndex < avatarSpawnTimes.Count 
+                   && elapsed >= avatarSpawnTimes[nextAvatarIndex])
+            {
+                SpawnRandomAvatar();
+                nextAvatarIndex++;
+            }
+            yield return null;
         }
-        
+        UpdateProgressUI(targetPlayerCount);
+        while (activeAvatars.Count < maxVisualAvatars)
+        {
+            SpawnRandomAvatar();
+            yield return new WaitForSeconds(0.05f);
+        }
         bool isSuccess = false;
         yield return StartCoroutine(ZenRankManager.Instance.RequestJoinZenRankRoutine((res) =>
         {
@@ -256,19 +305,7 @@ public class ZenRankStartScreen : UIWindow
             }); 
         }
     }
-    // 独立协程：慢慢生成指定数量的头像（同时最多显示4个）
-    private IEnumerator GenerateAvatars(int totalCount)
-    {
-        int generated = 0;
-        WaitForSeconds wait = new WaitForSeconds(Random.Range(0.4f, 0.6f));
-        while (generated < totalCount)
-        {
-            yield return wait;
-             // 控制生成节奏
-            SpawnRandomAvatar();
-            generated++;
-        }
-    }
+
     // 更新进度条和文字
     private void UpdateProgressUI(int count)
     {
@@ -285,7 +322,7 @@ public class ZenRankStartScreen : UIWindow
     // 在雷达图上随机位置生成头像
     private void SpawnRandomAvatar()
     {
-        if (avatarPrefab == null || radarCenter == null) return;
+        if (avatarPool  == null || radarCenter == null) return;
 
         // 【防拥挤逻辑】：如果当前显示的头像数量已经达到上限，则移除最旧的一个
         if (activeAvatars.Count >= maxVisualAvatars)
@@ -298,7 +335,7 @@ public class ZenRankStartScreen : UIWindow
             avatarPool.ReturnObjectToPool(oldestAvatar.GetComponent<PoolObject>());
         }
         Vector2 targetPos = Vector2.zero;
-        Vector2 myAvatarPos = stage2MyAvatar.rectTransform.anchoredPosition;
+        Vector2 myAvatarPos = radarCenter.InverseTransformPoint(stage2MyAvatar.transform.position);
 
         float randomRadius = 0f;
         bool foundValidPos = false;
@@ -322,7 +359,7 @@ public class ZenRankStartScreen : UIWindow
             foreach (var activeAvatar in activeAvatars)
             {
                 if (activeAvatar == null) continue;
-                Vector2 existingPos = activeAvatar.GetComponent<RectTransform>().anchoredPosition;
+                Vector2 existingPos = (activeAvatar.transform as RectTransform)!.anchoredPosition;
                 
                 // 如果两点之间的距离小于下限值（头像直径），说明重叠了
                 if (Vector2.Distance(targetPos, existingPos) < avatarMinDistance)
@@ -355,8 +392,8 @@ public class ZenRankStartScreen : UIWindow
             // 随机抽取一个 1 到 maxHeadIconId 之间的头像
             int randomHeadId = Random.Range(0, 24);
             int randomFrameId = Random.Range(0, 8);
-            frame.sprite = LoadheadIcon("AvatarFrameIcon" + randomFrameId);
-            avatarImage.sprite = LoadheadIcon("head" + randomHeadId);
+            frame.sprite = LoadheadIcon($"AvatarFrameIcon{randomFrameId}");
+            avatarImage.sprite = LoadheadIcon($"head{randomHeadId}");
         }
             
         float t = (randomRadius - minRadarRadius) / (maxRadarRadius - minRadarRadius); // 0~1，0=最内，1=最外
@@ -380,7 +417,7 @@ public class ZenRankStartScreen : UIWindow
             if (avatar != null)
             {
                 avatar.transform.DOKill(); // 必须 Kill，否则直接 Destroy 会导致 DOTween 报错
-                Destroy(avatar);
+                avatarPool.ReturnObjectToPool(avatar.GetComponent<PoolObject>());
             }
         }
         activeAvatars.Clear();

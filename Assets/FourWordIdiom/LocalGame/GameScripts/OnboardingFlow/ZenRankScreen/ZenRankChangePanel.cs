@@ -303,7 +303,7 @@ private void ResetUIForReplay()
                 }
             }
         }
-        Debug.LogError($"【结算调试】传给面板的分数 -> 旧分数:{oldScore}, 新分数:{newScore}, 差值:{newScore - oldScore}");
+        Debug.Log($"【结算调试】传给面板的分数 -> 旧分数:{oldScore}, 新分数:{newScore}, 差值:{newScore - oldScore}");
         // passedPlayers.Sort((a, b) => b.Score.CompareTo(a.Score));
         passedPlayers.Sort((a, b) => {
             int scoreComp = b.Score.CompareTo(a.Score);
@@ -650,7 +650,6 @@ private void ResetUIForReplay()
                 if (myRankItem.ScoreText != null) myRankItem.ScoreText.text = Mathf.RoundToInt(v).ToString();
             }).SetEase(Ease.OutCubic));
         }
-        Debug.LogWarning("是否排名不变" + isKeep);
         // ----------------------------------------------------
         // [阶段 2 & 3]: 自身变大飞起 -> 滚动覆盖
         // ----------------------------------------------------

@@ -58,7 +58,7 @@ public class NameInfoTable : MonoBehaviour
             GameDataManager.Instance.UserData.UserName = FishInfoController.Instance.GeneratePlayerName();
         }
         
-        firstLoginTimeText.text=String.Format(MultilingualManager.Instance.GetString("StartDate"), firstLoginDate.Year, firstLoginDate.Month);
+        firstLoginTimeText.text=String.Format(MultilingualManager.Instance.GetString("StartDate","hudie"), firstLoginDate.Year, firstLoginDate.Month);
         zanCountText.text = GameCoreManager.Instance.userProfile.likes_count.ToString();
         zenLevelText.text = OverallRankingManager.Instance.GetZenLevelByScore(GameDataManager.Instance.UserData.overallZenScore).ToString();
         zenScoreText.text=GameDataManager.Instance.UserData.overallZenScore.ToString();

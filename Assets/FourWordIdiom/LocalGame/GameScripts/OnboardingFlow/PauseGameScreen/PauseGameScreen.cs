@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using Middleware;
@@ -14,16 +14,18 @@ public class PauseGameScreen : UIWindow
     [SerializeField] private Toggle musicToggle; // 音乐开关
     [SerializeField] private Toggle soundsToggle; // 音效开关
     [SerializeField] private Toggle vibrateToggle; // 震动开关
-    
+    [SerializeField] private Toggle emojiToggle;   // emoji开关
     [SerializeField] private GameObject muHandle; // 音乐开关的视觉手柄
     [SerializeField] private GameObject soHandle; // 音效开关的视觉手柄
     [SerializeField] private GameObject viHandle; // 震动开关的视觉手柄
+    [SerializeField] private GameObject emojiHandle; // emoji开关的视觉手柄
     [SerializeField] private Text musicText; // 音乐文本显示
     [SerializeField] private Text soundText; // 音效文本显示
     [SerializeField] private Text vibrateText; // 震动文本显示
     
     [Header("主暂停界面按钮")]
     [SerializeField] private Text titleText;
+    [SerializeField] private Button closeBtn;
     [SerializeField] private Button jumpBtn;
     [SerializeField] private Button continueBtn;
     [SerializeField] private Button exitBtn;
@@ -49,7 +51,7 @@ public class PauseGameScreen : UIWindow
     // Start is called before the first frame update
     void Start()
     {
-        //closeBtn.AddClickAction(OnCloseClicked);
+        closeBtn.AddClickAction(OnCloseClicked);
         continueBtn.AddClickAction(OnCloseClicked);
         returnGame.AddClickAction(OnCloseClicked);
         jumpBtn.AddClickAction(OnJumpClicked);
@@ -58,10 +60,12 @@ public class PauseGameScreen : UIWindow
         
         musicText.text = MultilingualManager.Instance.GetString("Music").ToUpper(); // 音乐文本
         soundText.text = MultilingualManager.Instance.GetString("Sounds").ToUpper(); // 音效文本
+        vibrateText.text = MultilingualManager.Instance.GetString("Vibrate").ToUpper(); // 音效文本
         musicToggle.onValueChanged.AddListener(ToggleMusic); // 绑定音乐开关变更事件
         soundsToggle.onValueChanged.AddListener(ToggleSounds); // 绑定音效开关变更事件
         vibrateToggle.onValueChanged.AddListener(ToggleVibrate); // 绑定音效开关变更事件
-
+        emojiToggle.onValueChanged.AddListener(ToggleEmoji);
+        
         titleText.text = MultilingualManager.Instance.GetString("Pause");
         jumpBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("SkipLevel");
         continueBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Continue");
@@ -82,8 +86,9 @@ public class PauseGameScreen : UIWindow
         
         float rawTime = ChessStageController.Instance.CurrStageData.RemainingTime;
         float safeTime = Mathf.Max(0, rawTime);
-        int minutes = Mathf.FloorToInt(safeTime / 60F);
-        int seconds = Mathf.FloorToInt(safeTime % 60f);
+        int totalSeconds = Mathf.CeilToInt(safeTime);
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
         gameTimeText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
         gameTimeText.gameObject.SetActive(true);
         
@@ -92,6 +97,7 @@ public class PauseGameScreen : UIWindow
         musicToggle.isOn = GameDataManager.Instance.UserData.IsMusicOn; // 更新音乐开关状态
         soundsToggle.isOn = GameDataManager.Instance.UserData.IsSoundOn; // 更新音效开关状态
         vibrateToggle.isOn = GameDataManager.Instance.UserData.IsVibrationOn; // 更新音效开关状态
+        emojiToggle.isOn = GameDataManager.Instance.UserData.IsEmojiOn; // 替换为你 UserData 中的对应字段
         
         SetToggleVisuals(muHandle, musicToggle.isOn);
         SetToggleVisuals(soHandle, soundsToggle.isOn);
@@ -138,6 +144,15 @@ public class PauseGameScreen : UIWindow
         GameDataManager.Instance.UserData.IsVibrationOn = isOn; // 保存音效开关状态
         UpdateToggleVisuals(viHandle, isOn); // 更新音效手柄视觉
     }
+    private void ToggleEmoji(bool isOn)
+    {
+        GameDataManager.Instance.UserData.IsEmojiOn = isOn; // 保存状态到存档
+        UpdateToggleVisuals(emojiHandle, isOn); // 平滑移动手柄与切换精灵
+        AudioManager.Instance.TriggerVibration(40, 50);
+        
+        // 可选：如果局内棋盘或字块需要实时响应 Emoji 显隐切换，在此派发事件通知
+        EventDispatcher.instance.TriggerEmojiStateChanged(isOn);
+    }
     
     private void UpdateToggleVisuals(GameObject handle, bool isOn, float time = 0.2f)
     {
@@ -170,6 +185,9 @@ public class PauseGameScreen : UIWindow
     {
         if (isShow)
         {
+            // 🌟 记录本次跳关时间戳，启动 100 秒冷却
+            GameDataManager.Instance.OverallRank.LastSkipLevelTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            
             // ==========================================
             // 🌟 核心修改：跳过关卡，强行抹除一切临时收益
             // ==========================================

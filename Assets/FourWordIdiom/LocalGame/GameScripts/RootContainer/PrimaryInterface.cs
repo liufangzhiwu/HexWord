@@ -1,14 +1,9 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using Middleware;
 using System;
 using System.Collections;
-using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
-using Button = UnityEngine.UI.Button;
-using Image = UnityEngine.UI.Image;
-using Slider = UnityEngine.UI.Slider;
 
 /// <summary>
 /// 主界面控制器 - 处理游戏主界面的UI逻辑和交互
@@ -17,18 +12,17 @@ public class PrimaryInterface : UIWindow
 {
     [Header("lOGO")]
     [SerializeField] private Image logo;       // 文字类型组件
-    
     [Header("UI组件")]
-    [SerializeField] private Button GameStageBtn;          // 开始游戏按钮
-    [SerializeField] private Text Stagetxt;           // 关卡文本
-    [SerializeField] private GameObject hardStageTable;          // 困难模式
-    [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
-    [SerializeField] private Button ButterflyBtn;
-    [SerializeField] private Button ModeBtn;          // 模式选择按钮
-    [SerializeField] private Animator ModeIndicator;
-    [SerializeField] private Button OverallBtn; 
+    [SerializeField] private Button OverallBtn;         // 名人堂入口
     [SerializeField] private Button ZenRankBtn;         // 禅意排名按钮
+    [Header("新手奖励活动")]
+    [SerializeField] private BeginnerBonusEntryBtn _beginnerBonusEntryBtn; // 结算页右侧的新手奖励入口按钮组件
     //[SerializeField] private Button HexaBtn;         // 层层消按钮
+    [Header("ButterflyGarden")]
+    [SerializeField] private Button ButterflyBtn;
+    [SerializeField] private GameObject ButterflyRedpoint;
+    [SerializeField] private GameObject ButterflyLock;
+    [SerializeField] private GameObject ButterflyUnlockText;
     [Header("UI LimitTime")]
     [SerializeField] private Button LimitTimeBtn;
     [SerializeField] private GameObject LimitTimeObj;
@@ -36,11 +30,14 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private GameObject Worddouble;
     [SerializeField] private Text timetxt;
     [SerializeField] private Image limitOver;
+    [SerializeField] private GameObject limitLock;
     [Header("UI Task")]
     [SerializeField] private GameObject TaskClaim;
     [SerializeField] private Button TasksBtn;
     [SerializeField] private Text tasktimetxt;
     [SerializeField] private Image taskOver;
+    [SerializeField] private GameObject taskLock;
+    
     [Header("UI Sign")]
     [SerializeField] private Button SevenSignBtn;
     [SerializeField] private Image notSign;
@@ -56,16 +53,30 @@ public class PrimaryInterface : UIWindow
     [Header("UI Butterfly")]
     [SerializeField] private GameObject ButterflyTime;
     public GameObject GoldLeafredpoint;
-    [SerializeField] private GameObject ButterflyRedpoint;
-    [SerializeField] private GameObject headRedpoint;
     [Header("UI Headers")]
     [SerializeField] private Button HeadBtn;
     [SerializeField] private Image headicon;
     [SerializeField] private Image headBorder;
-    [Header("底部按钮")]
+    [SerializeField] private GameObject headRedpoint;
     [SerializeField] private Button myThemeBtn; // 皮肤
+    [SerializeField] private GameObject themeGoldLeafredpoint;
+    [SerializeField] private GameObject themeLock;
+    [SerializeField] private GameObject themeLockText;
     [SerializeField] private Button Puzzlebook;  // 生词本
     [SerializeField] private Button SettingBtn;
+
+    // ===== 同步自 WT 1.9.8：开始关卡区 / 下一元素提示相关引用 =====
+    [Header("UI 开始关卡")]
+    [SerializeField] private Button GameStageBtn;          // 开始游戏按钮
+    [SerializeField] private Text Stagetxt;                // 关卡文本
+    [SerializeField] private GameObject hardStageTable;          // 困难模式
+    [SerializeField] private GameObject extrahardStageTable;     // 特别困难模式
+    [SerializeField] private Button ModeBtn;          // 模式选择按钮
+    [SerializeField] private Animator ModeIndicator;  // 模式按钮指示器
+    [SerializeField] private GameObject nextUnlockTip;    // 下一种游戏元素提示
+    [SerializeField] private Image nextStageImage;        // 下一种游戏图片
+    [SerializeField] private GameObject stageSpace;      // 有图片时占位
+
     [Header("配置参数")]
     [SerializeField] private float topPanelDelay = 0.01f; // 顶部面板显示延迟时间
 
@@ -137,6 +148,7 @@ public class PrimaryInterface : UIWindow
 
         InitUI();
         GameCoreManager.Instance.PanelState = PanelState.MainMenuPanel;
+        InitUI();
         //EnhancedVideoController.Instance.PlayVideo();
         LimitTimeManager.Instance.OnLimitTimeBtnUI += InitLimtBtnUI;
         DailyTaskManager.Instance.OnDailyTaskBtnUI += UpdateDailyTaskBtnUI;
@@ -144,18 +156,20 @@ public class PrimaryInterface : UIWindow
         EventDispatcher.instance.OnChangeHeadIconUpdateUI += UpdateHeadBtnUI;
         FishInfoController.Instance.OnFishTimeUpdated += UpdateFishTime;
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
-        
+        if (OverallRankingManager.Instance != null)
+        {
+            OverallRankingManager.Instance.OnAuditConfigLoaded += OnAuditConfigRefreshUI;
+        }
+    
         CheckButtonsIsOpen();
         StartCoroutine(ShowTopPanel());
-        UpdateTaskBtnUI();
         UpdateHeadBtnUI();
-        StartCoroutine(UpdateFishRankUI());
-        StartCoroutine(CheckZenRankBtn());
         StartCoroutine(CheckOverallRankBtn());
         Game.self.Ads?.HideBanner();
+        StartCoroutine(CheckZenRankBtn());
         
+        Game.Ads?.HideBanner();
         StartCoroutine(CheckLobbyPopupsRoutine());
-
         DailyTaskManager.Instance.UpdateMaxButterflyTime();
         
         ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
@@ -165,8 +179,7 @@ public class PrimaryInterface : UIWindow
         SevenSignBtn.gameObject.SetActive(StreakManager.Instance.UnlockStreak());
         
         ThemeManager.Instance.themeButton = myThemeBtn.gameObject;
-        ThemeManager.Instance.CheckAndUpdateSkinRedPoint();
-
+        
         GameCoreManager.Instance.UpdateMyPersonInfo();
         
         string numStr = GameDataManager.Instance.UserData.Zenlevel;
@@ -176,8 +189,8 @@ public class PrimaryInterface : UIWindow
     
     private void OnRedPointChanged(bool show)
     {
-        if (GoldLeafredpoint != null)
-            GoldLeafredpoint.SetActive(show);
+        if (themeGoldLeafredpoint != null)
+            themeGoldLeafredpoint.SetActive(show);
     }
     
     private void OnClickMyThemeBtn()
@@ -283,9 +296,7 @@ public class PrimaryInterface : UIWindow
     }
     private IEnumerator UpdateFishRankUI()
     {
-        CheckFishBtn();
         FishClaim.gameObject.SetActive(false);
-     
         // 提取重复使用的SaveData引用
         //var fishSave = GameDataManager.MainInstance.FishUserSave;
         FishInfoController.Instance.RoundResultFishRank();
@@ -307,14 +318,22 @@ public class PrimaryInterface : UIWindow
 
     private IEnumerator CheckZenRankBtn()
     {
-        ZenRankBtn.GetComponent<ZenRankButton>().CheckRankProgress();
+        ZenRankButton rankComp = ZenRankBtn.GetComponent<ZenRankButton>();
+        if (rankComp == null) yield break;
+        // 先执行一次初始化刷新
+        rankComp.CheckRankProgress();
+        
+        if (!ZenRankManager.Instance.IsOpen())
+            yield break;
+        
         WaitForSeconds waitTime = new WaitForSeconds(0.5f);
         while (ZenRankBtn.gameObject.activeSelf)
         {
             yield return waitTime;
-            ZenRankBtn.GetComponent<ZenRankButton>().CheckRankProgress();
+            rankComp.CheckRankProgress();
         }
     }
+    
     private IEnumerator CheckOverallRankBtn()
     {
         OverallBtn.GetComponent<OverallEntranceButton>().RefreshState();
@@ -325,22 +344,23 @@ public class PrimaryInterface : UIWindow
             OverallBtn.GetComponent<OverallEntranceButton>().RefreshState();
         }
     }
-    
-    private void CheckFishBtn()
+    private void OnAuditConfigRefreshUI()
     {
         if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             ||GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             || !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
        
         {
-            FishBtn.gameObject.transform.parent.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
+            var overallComp = OverallBtn.GetComponent<OverallEntranceButton>();
+            if (overallComp != null) overallComp.RefreshState();
         }
-        else
+
+        if (ZenRankBtn != null)
         {
-            FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
+            var zenComp = ZenRankBtn.GetComponent<ZenRankButton>();
+            if (zenComp != null) zenComp.CheckRankProgress();
         }
     }
-
     #region 功能按钮
     private void OnSetClick()
     {
@@ -422,6 +442,22 @@ public class PrimaryInterface : UIWindow
     
     private void UpdateFishRank()
     {
+        // 如果按钮未解锁，强制隐藏所有附属状态！
+        if (!FishBtn.interactable)
+        {
+            fishtimetext.gameObject.SetActive(true);
+            fishtimetext.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
+
+            if (fishtimetext.transform.parent != null)
+            {
+                Image bg = fishtimetext.transform.parent.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
+            }
+            fishrankimage.gameObject.SetActive(false);
+            FishClaim.gameObject.SetActive(false);
+            fishwifiimage.gameObject.SetActive(false);
+            return;
+        }
         if (GameCoreManager.Instance.IsNetworkActive)
         {
             fishwifiimage.gameObject.SetActive(false);
@@ -450,6 +486,12 @@ public class PrimaryInterface : UIWindow
                     fishtimetext.transform.parent.gameObject.SetActive(true);
                     fishrankimage.gameObject.SetActive(true);
                     fishrankcount.text = rank.ToString();
+                    fishtimetext.gameObject.SetActive(true);
+                    if (fishtimetext.transform.parent != null)
+                    {
+                        Image bg = fishtimetext.transform.parent.GetComponent<Image>();
+                        if (bg != null) bg.enabled = true;
+                    }
                 }
                 else
                 {
@@ -457,11 +499,23 @@ public class PrimaryInterface : UIWindow
                     //fishtimetext.transform.parent.gameObject.SetActive(false);
                     fishtimetext.text = "已结束";
                     fishrankimage.gameObject.SetActive(false);
+                    fishtimetext.gameObject.SetActive(false);
+                    if (fishtimetext.transform.parent != null)
+                    {
+                        Image bg = fishtimetext.transform.parent.GetComponent<Image>();
+                        if (bg != null) bg.enabled = false;
+                    }
                 }
             }
             else
             {
                 fishtimetext.transform.parent.gameObject.SetActive(true);
+                fishtimetext.gameObject.SetActive(true);
+                if (fishtimetext.transform.parent != null)
+                {
+                    Image bg = fishtimetext.transform.parent.GetComponent<Image>();
+                    if (bg != null) bg.enabled = true;
+                }
                 fishrankimage.gameObject.SetActive(false);
                 FishClaim.gameObject.SetActive(false);
             }
@@ -469,6 +523,12 @@ public class PrimaryInterface : UIWindow
         else
         {
             fishtimetext.transform.parent.gameObject.SetActive(true);
+            fishtimetext.gameObject.SetActive(true);
+            if (fishtimetext.transform.parent != null)
+            {
+                Image bg = fishtimetext.transform.parent.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
+            }
             fishrankimage.gameObject.SetActive(false);
             fishwifiimage.gameObject.SetActive(true);
             FishClaim.gameObject.SetActive(false);
@@ -497,18 +557,10 @@ public class PrimaryInterface : UIWindow
             headBorder.transform.gameObject.SetActive(false);
         }
     }
-    private void UpdateTaskBtnUI()
-    {
-        // if (LimitTimeManager.instance.IsComplete())
-        // {
-        //     TaskClaim.gameObject.SetActive(false);
-        // }
-        //TasksBtn.gameObject.SetActive(GameDataManager.MainInstance.UserData.CurrentStage >= AppGameSettings.UnlockRequirements.DailyMissions);
-        TaskClaim.GetComponentInChildren<Text>().text= MultilingualManager.Instance.GetString("ADPopReceive");
-    }
     
     private void UpdateDailyTaskBtnUI()
     {
+        if (!TasksBtn.interactable) return;
         if (!DailyTaskManager.Instance.IsAllComplete())
         {
             if (!DailyTaskManager.Instance.IsClaim())
@@ -554,6 +606,20 @@ public class PrimaryInterface : UIWindow
         bool isAllCollected = ButterfliesManager.Instance.IsAllButterfliesCollected();
         Slider pupaSlider = ButterflyBtn.GetComponentInChildren<Slider>(true);
         Text pupaText = ButterflyBtn.GetComponentInChildren<Text>(true);
+        // 3. 未解锁状态：隐藏进度条、文字和红点
+        if (isLocked)
+        {
+            ButterflyUnlockText.gameObject.SetActive(true);
+            ButterflyUnlockText.GetComponentInChildren<Text>().text = $"第{AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel}关";
+            if (pupaSlider != null) pupaSlider.gameObject.SetActive(false);
+            if (pupaText != null) pupaText.gameObject.SetActive(false);
+            ButterflyRedpoint.gameObject.SetActive(false);
+            return;
+        }
+        // 4. 已解锁状态：隐藏锁文本，处理正常的进度逻辑
+        if (ButterflyUnlockText != null) ButterflyUnlockText.gameObject.SetActive(false);
+        
+        bool isAllCollected = ButterfliesManager.Instance.IsAllButterfliesCollected();
         if (isAllCollected)
         {
             // 🎉 全收集满：关掉进度条和进度文字，给玩家一个干净清爽的满级蝴蝶按钮
@@ -566,31 +632,52 @@ public class PrimaryInterface : UIWindow
             if (pupaSlider != null) pupaSlider.gameObject.SetActive(true);
             if (pupaText != null) pupaText.gameObject.SetActive(true);
             ButterflyGrow butterflyGrow = ButterfliesManager.Instance.GetCurrentGrow();
+            int maxCount = butterflyGrow?.Count ?? 0;
+            int currPupa = GameDataManager.Instance.ButterflyData.currPupa;
+            
             if (pupaText != null) 
             {
-                pupaText.text =  $"{GameDataManager.Instance.ButterflyData.currPupa} / {butterflyGrow?.Count.ToString() ?? "&"}"; 
+                pupaText.text = $"{currPupa} / {(maxCount > 0 ? maxCount.ToString() : "&")}";
             }
-            
-            float progressValue = 0f;
-            if (butterflyGrow != null && butterflyGrow.Count > 0)
-            { 
-                progressValue = Mathf.Clamp01((float)GameDataManager.Instance.ButterflyData.currPupa / butterflyGrow.Count);
+            if (pupaSlider != null)
+            {
+                pupaSlider.value = maxCount > 0 ? Mathf.Clamp01((float)currPupa / maxCount) : 0f;
             }
-            if (pupaSlider != null) pupaSlider.value = progressValue;
             
             ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
-            headRedpoint.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon);
         }
-       
     }
     
     private void UpdateTimeDisplay(string time)
     {
-        if (!string.IsNullOrEmpty(time))
+        if (!LimitTimeBtn.interactable)
         {
-            if (!LimitTimeManager.Instance.IsClaim())
+            timetxt.gameObject.SetActive(true);
+            timetxt.text = $"第{AppGameSettings.UnlockRequirements.TimeLimitMode}关";
+            
+            if (timetxt.transform.parent != null)
             {
-                timetxt.text = time; // 更新文本
+                Image bg = timetxt.transform.parent.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
+            }
+            return;
+        }
+        
+        bool shouldActivate = !string.IsNullOrEmpty(time) && 
+                              !LimitTimeManager.Instance.IsClaim() && 
+                              LimitTimeBtn.interactable;
+        
+        timetxt.gameObject.SetActive(shouldActivate);
+        if (shouldActivate) timetxt.text = time;
+        
+        // 🌟 核心修复：控制 LimitTimeObj 的黑色底板 Image
+        if (timetxt.transform.parent != null)
+        {
+            Image bg = timetxt.transform.parent.GetComponent<Image>();
+            if (bg != null) 
+            {
+                // 如果时间文字显示，或者处于已完成状态，底板才显示
+                bg.enabled = shouldActivate || limitOver.gameObject.activeSelf;
             }
         }
     }
@@ -612,24 +699,60 @@ public class PrimaryInterface : UIWindow
     
     private void UpdateDailyTaskTimeDisplay(string time)
     {
-        bool shouldActivate = !string.IsNullOrEmpty(time) && !DailyTaskManager.Instance.IsAllComplete()
-                                                          &&!DailyTaskManager.Instance.IsClaim();
-    
-        // 设置 tasktimetxt 的激活状态
-        if (tasktimetxt.gameObject.activeSelf != shouldActivate)
+        if (!TasksBtn.interactable)
         {
-            tasktimetxt.gameObject.SetActive(shouldActivate);
+            tasktimetxt.gameObject.SetActive(true);
+            tasktimetxt.text = $"第{AppGameSettings.UnlockRequirements.DailyMissions}关";
+            
+            if (tasktimetxt.transform.parent != null)
+            {
+                Image bg = tasktimetxt.transform.parent.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
+            }
+            return;
         }
+        bool shouldActivate = !string.IsNullOrEmpty(time) && !DailyTaskManager.Instance.IsAllComplete()
+                                                          &&!DailyTaskManager.Instance.IsClaim()
+                                                          && TasksBtn.interactable;
     
-        // 如果需要激活，则更新文本
-        if (shouldActivate)
+        tasktimetxt.gameObject.SetActive(shouldActivate);
+        if (shouldActivate) tasktimetxt.text = time;
+        
+        // 控制 TimeObj 的黑色底板 Image
+        if (tasktimetxt.transform.parent != null)
         {
-            tasktimetxt.text = time;
+            Image bg = tasktimetxt.transform.parent.GetComponent<Image>();
+            if (bg != null) 
+            {
+                // 如果时间文字显示，或者任务已完成状态，底板才显示
+                bg.enabled = shouldActivate || taskOver.gameObject.activeSelf;
+            }
         }
     }
 
     private void InitLimtBtnUI()
     {
+        if (!LimitTimeBtn.interactable)
+        {
+            LimitTimeObj.gameObject.SetActive(true);
+            timetxt.gameObject.SetActive(true);
+            timetxt.text = $"第{AppGameSettings.UnlockRequirements.TimeLimitMode}关";
+            
+            LimitClaim.gameObject.SetActive(false);
+            Worddouble.gameObject.SetActive(false);
+            limitOver.gameObject.SetActive(false);
+            
+            Image lockBg = LimitTimeObj.GetComponent<Image>();
+            if (lockBg != null) lockBg.enabled = true;
+            
+            if (timetxt.transform.parent != null)
+            {
+                Image parentBg = timetxt.transform.parent.GetComponent<Image>();
+                if (parentBg != null) parentBg.enabled = true;
+            }
+            return;
+        }
+        
         LimitTimeObj.gameObject.SetActive(!LimitTimeManager.Instance.IsClaim());
         LimitClaim.gameObject.SetActive(LimitTimeManager.Instance.IsClaim());
     
@@ -659,6 +782,12 @@ public class PrimaryInterface : UIWindow
             timetxt.gameObject.SetActive(false);
             LimitClaim.gameObject.SetActive(false);
             limitOver.gameObject.SetActive(true);
+        }
+        Image bg = LimitTimeObj.GetComponent<Image>();
+        if (bg != null) 
+        {
+            bg.enabled = (timetxt.gameObject.activeSelf && !string.IsNullOrEmpty(timetxt.text)) 
+                         || limitOver.gameObject.activeSelf;
         }
     }
     
@@ -721,7 +850,6 @@ public class PrimaryInterface : UIWindow
     /// </summary>
     protected override void OnDisable()
     {
-        base.OnDisable();
         //EventManager.OnChangeLanguageUpdateUI -= InitUI;
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         
@@ -730,7 +858,10 @@ public class PrimaryInterface : UIWindow
         DailyTaskManager.Instance.OnDailyButterflyTaskUI -= UpdateButterflyTime;
         EventDispatcher.instance.OnChangeHeadIconUpdateUI -= UpdateHeadBtnUI;
         FishInfoController.Instance.OnFishTimeUpdated -= UpdateFishTime;
-        
+        if (OverallRankingManager.Instance != null)
+        {
+            OverallRankingManager.Instance.OnAuditConfigLoaded -= OnAuditConfigRefreshUI;
+        }
         if (ThemeManager.Instance != null)
             ThemeManager.Instance.OnSkinRedPointChanged -= OnRedPointChanged;
  
@@ -743,7 +874,7 @@ public class PrimaryInterface : UIWindow
         {
             LimitTimeManager.Instance.OnDailyTimeUpdated -= UpdateDailyTaskTimeDisplay; // 订阅事件
         }
-     
+        base.OnDisable();
     }
 
     /// <summary>
@@ -753,10 +884,11 @@ public class PrimaryInterface : UIWindow
     {
         // 设置关卡文本
         int Stage = 0;
-        LevelModes levelmode = LevelModes.Normal;
+        LevelModes difficulty = LevelModes.Normal;
         // 设置模式图标
         Sprite sprite = null;
-        switch (GameDataManager.Instance.UserData.levelMode)
+        int currentPlayMode = GameDataManager.Instance.UserData.levelMode;
+        switch (currentPlayMode)
         {
             case 1:
             case 3:
@@ -771,35 +903,53 @@ public class PrimaryInterface : UIWindow
                     GameDataManager.Instance.UserData.CurrentChessStage : 1;
                 sprite = LoadCommonIcon("icon_pinzi");
                 ChessStageController.Instance.CurLevelMode = GetLevelDifficulty(Stage);
-                levelmode = ChessStageController.Instance.CurLevelMode;
+                difficulty = ChessStageController.Instance.CurLevelMode;
                 break;
         }
-        
-        Stage=Stage==0?1:Stage;
-        
-        switch (levelmode)
-        {
-            case LevelModes.Normal:
-                hardStageTable.gameObject.SetActive(false);
-                extrahardStageTable.gameObject.SetActive(false);
-                break;
-            case LevelModes.Hard:
-                hardStageTable.gameObject.SetActive(true);
-                extrahardStageTable.gameObject.SetActive(false);
-                break;
-            case LevelModes.ExtraHard:
-                hardStageTable.gameObject.SetActive(false);
-                extrahardStageTable.gameObject.SetActive(true);
-                break;
-        }
-        
-        Stagetxt.text = MultilingualManager.Instance.GetString("Level")+" " + Stage;
         if(sprite != null)
             ModeBtn.GetComponent<Image>().sprite = sprite;
-
-        UpdateWinTimes();
         
-        ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
+        Stage=Stage==0?1:Stage;
+        Stagetxt.text = MultilingualManager.Instance.GetString("Level")+" " + Stage;
+
+        if (currentPlayMode != 2)
+        {
+            // 1. 开启自身专属 UI
+            hardStageTable.gameObject.SetActive(difficulty == LevelModes.Hard);
+            extrahardStageTable.gameObject.SetActive(difficulty == LevelModes.ExtraHard);
+        
+            // 2. 强制关闭拼字模式专属 UI，防止残留
+            if (nextUnlockTip != null) nextUnlockTip.SetActive(false);
+            // 如果非拼字模式不需要展示底图和占位，可以在这里补上隐藏：
+            if (stageSpace != null) stageSpace.SetActive(false);
+        }
+        else
+        {
+            // 1. 强制关闭消消乐模式专属的难度 UI，防止残留
+            if (hardStageTable != null) hardStageTable.gameObject.SetActive(false);
+            if (extrahardStageTable != null) extrahardStageTable.gameObject.SetActive(false);
+            
+            int stageBgIndex = ChessStageController.Instance.GetLevelGameplayID(Stage);
+            nextStageImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
+            stageSpace.SetActive(stageBgIndex is not (0 or 4 or 5 or 6));
+            // var unlockHint = ChessStageController.Instance.GetNextMechanicUnlockHint(Stage);
+            // if (unlockHint.HasValue)
+            // {
+            //     nextUnlockTip.SetActive(true);
+            //     // 从多语言表获取原始文案，例如 "还差{a}关解锁花朵"
+            //     string rawText = MultilingualManager.Instance.GetString(unlockHint.Value.textKey,"pingzi");
+            //     // 替换占位符并赋值给 UI Text
+            //     nextUnlockTip.GetComponentInChildren<Text>().text = rawText.Replace("{a}", unlockHint.Value.remainCount.ToString());
+            // }
+            // else
+            // {
+            //     // 没有要预告的机制，隐藏提示气泡
+            //     nextUnlockTip.SetActive(false);
+            // }
+        }
+        
+        UpdateWinTimes();
+        // ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
         headRedpoint.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon);
     }
     
@@ -842,6 +992,18 @@ public class PrimaryInterface : UIWindow
 
         yield return new WaitForSeconds(_fastEnterThisShow ? TopPanelRevealGapFast : TopPanelRevealGap);
         EventDispatcher.instance.TriggerUpdateLayerCoin(false,true,false);
+        
+        yield return new WaitForSeconds(0.1f);
+        // 刷新新手奖励入口显示，并置顶到右侧最高优先级
+        if (_beginnerBonusEntryBtn != null)
+        {
+            _beginnerBonusEntryBtn.RefreshVisibility();
+            if (_beginnerBonusEntryBtn.gameObject.activeSelf)
+            {
+                _beginnerBonusEntryBtn.transform.SetAsFirstSibling();
+                _beginnerBonusEntryBtn.SetPreviousBorderProgress(); // 先钉在旧刻度上
+            }
+        }
         //AdsManager.Instance.HideBannerAd();
     }
     

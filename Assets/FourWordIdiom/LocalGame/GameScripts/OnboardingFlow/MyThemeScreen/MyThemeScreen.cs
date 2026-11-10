@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -272,8 +272,9 @@ public class MyThemeScreen : UIWindow
         }
         else if (GameCoreManager.Instance.PanelState == PanelState.GamePingPanel)
         {
-            ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
-            SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
+            // ChessStageController.Instance.SetStageData(GameDataManager.Instance.UserData.CurrentChessStage);
+            // UIWindow chess = SystemManager.Instance.ShowPanel(PanelType.ChessPlayArea);
+            ChessPlayArea.Instance?.RestoreFromSubPanel();
         } 
         if (SystemManager.Instance.PanelIsShowing(PanelType.ZenRankScreen))
         {

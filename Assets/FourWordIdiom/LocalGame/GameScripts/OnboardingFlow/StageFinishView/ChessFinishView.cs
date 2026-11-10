@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +20,6 @@ public class ChessFinishView : UIWindow
     // [SerializeField]
     //[SerializeField] private Button _signBtn;
     [SerializeField] private LimitBtnTable _limitBtnTable;
-    [SerializeField] private Text reachLevelText;
     [SerializeField] private MatchFishTable _matchFishtable;
     [SerializeField] private TaskTable _tasktable;
     [SerializeField] private Button butterflyBtn;
@@ -31,25 +30,38 @@ public class ChessFinishView : UIWindow
     [SerializeField] private GameObject hardStageTable;          // 困难模式
     [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
 
+    
+    [Header("新手奖励活动")]
+    [SerializeField] private BeginnerBonusEntryBtn _beginnerBonusEntryBtn; // 结算页右侧的新手奖励入口按钮组件
+    
     [Header("禅意飞行特效")]
     [SerializeField] private Text zenScoreText;
-    [SerializeField] private ZenRankButton _zenRankBtn;    // 🌟 这里把类型改成具体的脚本类型
+    [SerializeField] private ZenRankButton _zenRankBtn;    // 段位榜入口按钮
     [SerializeField] private Image _centerLotusImage;     // 场景里中间那个荷花的 Image 组件
-    // [SerializeField] private Sprite _darkLotusSprite;     // 准备好的【暗荷花】图片
-    // [SerializeField] private Sprite _brightLotusSprite;   // 准备好的【亮荷花】图片
     
     [Space]
-    [Header("结算功能")]
-    [SerializeField] private Button Content;
-    [SerializeField] private Button nextBtn;
-    [SerializeField] private Slider progressSlider;
+    [Header("下一关按钮")]
+    [SerializeField] private Button nextStageBtn;
     [SerializeField] private Text levelText;
-    [SerializeField] private Text progressText;
+    [SerializeField] private GameObject stageSpace;
+    [SerializeField] private Image nextStageImage;
+    [SerializeField] private GameObject nextUnlockTip;
     [SerializeField] private GameObject _butterflyTimerDisplay;
+    
+    [Header("蝶园按钮")]
+    [SerializeField] private GameObject ButterflyRedpoint;
+    [SerializeField] private GameObject ButterflyLock;
+    [SerializeField] private GameObject ButterflyLockText;
+    
+    [Space]
+    [Header("限时活动")]
+    [SerializeField] private Button Content;
+    [SerializeField] private Slider progressSlider;
+    [SerializeField] private Text progressText;
+    [SerializeField] private Text reachLevelText;
     [SerializeField] private GameObject Showlimiticon;
     [SerializeField] private GameObject Enlimiticon;
-    [SerializeField] private GameObject ButterflyRedpoint;
-   
+    
     [Space]
     [Header("横幅鼓励提示 UI (新增)")]
     [Header("结算页激励文案UI节点 (需手动挂载)")]
@@ -67,9 +79,9 @@ public class ChessFinishView : UIWindow
 
     private float sliderProgress;
 
-    // 🌟 新增：防御数据双重累加的标记
+    // 防御数据双重累加的标记
     private bool _isWordsExtracted = false;
-// 标记是否已经播放过本局的奖励和动画
+    // 标记是否已经播放过本局的奖励和动画
     private bool _hasPlayedRewardSequence = false;
     private bool isTriggerFirstWin;
     private bool isShowWinSign;
@@ -92,9 +104,12 @@ public class ChessFinishView : UIWindow
     /// <summary>禅意分滚动期间循环播放的音源，滚动结束后需停止回收</summary>
     private AudioSource _zenRollSfx = null;
     
+    // 记录当前UI显示的蝶蛹数量，供动画依次递增，防止跳跃
+    private int _currentVisualPupa = -1;
+    
     protected override void InitializeUIComponents()
     {
-        nextBtn.AddVibraClickAction(OnNextButtonClick);
+        nextStageBtn.AddVibraClickAction(OnNextButtonClick);
         _limitBtnTable._limitTimeEventButton.AddClickAction(OnLimitTimeEventButtonClicked);
        
         Content.onClick.AddListener(() =>
@@ -129,8 +144,8 @@ public class ChessFinishView : UIWindow
         GameObject prefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "lotus_icon");
         lotusInstance = Instantiate(prefab, _centerLotusImage.transform, false);
         _pupaPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "Pupa");
-        _pupaPool = new ObjectPool(_pupaPrefab, transform, 2,PoolBehaviour.GameObject);
-        CustomFlyInManager.Instance.finishlevelBtnObj=nextBtn.gameObject;
+        _pupaPool = new ObjectPool(_pupaPrefab, transform, 2, PoolBehaviour.GameObject);
+        CustomFlyInManager.Instance.finishlevelBtnObj = nextStageBtn.gameObject;
     }
 
     private IEnumerator FetchLeaderboardDataMod(string leaderboardName)
@@ -142,8 +157,8 @@ public class ChessFinishView : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
-        SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
         GameCoreManager.Instance.PanelState = PanelState.FinishPingPanel;
+        SystemManager.Instance.ShowPanel(PanelType.HeaderSection);
         // 强制先刷新按钮状态
         if (_zenRankBtn != null)
             _zenRankBtn.GetComponent<ZenRankButton>().CheckRankProgress();
@@ -161,9 +176,12 @@ public class ChessFinishView : UIWindow
         {
             _hasPlayedRewardSequence = false;
         }
+        // 锁定当前的视觉蝶蛹数量，作为所有动画的基础起始点
+        int oldPupaCount = GameDataManager.Instance.ButterflyData.currPupa -
+                           ChessStageController.Instance.EarnedPupaThisLevel;
+        _currentVisualPupa = Mathf.Max(0, oldPupaCount);
         InitializeUI();
         UnlockBtnsUI();
-        
         GameDataManager.Instance.UserData.curIsEnter = false;
         LimitTimeManager.Instance.OnDailyTimeUpdated += UpdateTimeDisplay;
         LimitTimeManager.Instance.OnLimitTimeBtnUI += UpdateSliderProgress;
@@ -189,9 +207,6 @@ public class ChessFinishView : UIWindow
 
             AnalyticMgr.ThemeUse(GameDataManager.Instance.UserData.userthemeid, times);
         }
-      
-        StartCoroutine(CheckZenRankBtn());
-        
         isShowWinSign = StreakManager.Instance.IsCanShowWinSign();
         CheckFishiTable();
 
@@ -534,17 +549,64 @@ public class ChessFinishView : UIWindow
 
         ShopManager.shopManager.OpenSettlementGiftPopup();
     }
-
-    public void CheckFishiTable()
+    
+    /// <summary>
+    /// 统一处理活动按钮的三态：未到展示等级隐藏 -> 达到展示未到解锁显示+上锁 -> 达到解锁完全放开
+    /// </summary>
+    private void SetupActivityButton(Button btn, GameObject lockObj, int showLevel, bool isLegacyOpened)
     {
-        _matchFishtable.FishBtn.gameObject.transform.parent.gameObject.SetActive(false);
+        if (btn == null) return;
+
+        int curStage = GameDataManager.Instance.UserData.CurrentChessStage;
+
+        // 1. 显隐控制：未达到展示等级，直接隐藏
+        bool isShow = curStage > showLevel || isLegacyOpened;
+        btn.gameObject.SetActive(isShow);
+        if (!isShow) return;
+
+        // 2. 解锁控制：是否未解锁
+        bool isLocked = !isLegacyOpened;
+
+        // 3. 锁头物体显隐
+        if (lockObj != null) 
+        {
+            lockObj.SetActive(isLocked);
+        }
+
+        // 4. 交互处理：
+        // 如果想要按钮变灰/无法点击，设为 !isLocked；
+        // 如果想要玩家点击时弹出“X关解锁”提示，可保持 interactable=true，在点击事件前置拦截。
+        btn.interactable = !isLocked;
+        if (btn.transform.childCount > 0)
+        {
+            Image icon = btn.transform.GetChild(0).GetComponent<Image>();
+            if (icon != null)
+            {
+                Color c = icon.color;
+                c.a = isLocked ? 0.5f : 1f; // 上锁半透明，解锁恢复100%
+                icon.color = c;
+            }
+        }
+    }
+    private void RefreshButterflyButtonState()
+    {
+        if (butterflyBtn == null) return;
+
+        int curStage = GameDataManager.Instance.UserData.CurrentChessStage;
+        bool isLegacyOpened = ButterfliesManager.Instance.IsOpen;
+        bool isShow = curStage > AppGameSettings.ShowRequirements.ButterflyGardenShowLevel || isLegacyOpened;
+        butterflyBtn.gameObject.SetActive(isShow);
+        if (!isShow) return;
         
         if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
         {
-            _matchFishtable.CheckFishBtn();
+            if (slider != null) slider.gameObject.SetActive(true);
+            if (pupaText != null) pupaText.gameObject.SetActive(true);
+            UpdateButterflyProgressUI(_currentVisualPupa, true);
         }
     }
+    
     
     private void CheckReturnFirstWinScreen()
     {
@@ -575,7 +637,7 @@ public class ChessFinishView : UIWindow
 
         if (LimitTimeManager.Instance == null || LimitTimeManager.Instance.CurlimitData == null)
             return;
-        if (!_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
+        if (!_limitBtnTable._limitTimeEventButton.gameObject.activeSelf || !_limitBtnTable._limitTimeEventButton.interactable)    
             return;
         int pendingWords = _isWordsExtracted ? 0 : ChessStageController.Instance.LimitPuzzleCount;
         int totalDone = GetCompletedWordCount() + pendingWords; // 现在是总词数
@@ -633,7 +695,7 @@ public class ChessFinishView : UIWindow
 
     private void InitializeUI()
     {
-        _isWordsExtracted = false; // 🌟 每次打开面板，重置提取标记
+        _isWordsExtracted = false; //  每次打开面板，重置提取标记
         // _centerLotusImage.gameObject.SetActive(true);
         if (progressText != null) progressText.gameObject.SetActive(false);
         _centerLotusImage.color = new Color32(255, 255, 255, 0);
@@ -652,32 +714,32 @@ public class ChessFinishView : UIWindow
             progressSlider.transform.parent.gameObject.SetActive(true);
 
         // 设置关卡文本
-        int Stage = GameDataManager.Instance.UserData.CurrentChessStage;
-        ChessStageController.Instance.CurLevelMode = ChessStageController.Instance.GetLevelDifficultyMode(Stage);
-
-        switch (ChessStageController.Instance.CurLevelMode)
+        int stage = GameDataManager.Instance.UserData.CurrentChessStage;
+        int stageBgIndex = ChessStageController.Instance.GetLevelGameplayID(stage);
+        nextStageImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
+        stageSpace.SetActive(stageBgIndex is not (0 or 4 or 5 or 6));
+        levelText.text = MultilingualManager.Instance.GetString("Level") + " " + stage;
+        var unlockHint = ChessStageController.Instance.GetNextMechanicUnlockHint(stage);
+        if (unlockHint.HasValue)
         {
-            case LevelModes.Normal:
-                hardStageTable.gameObject.SetActive(false);
-                extrahardStageTable.gameObject.SetActive(false);
-                break;
-            case LevelModes.Hard:
-                hardStageTable.gameObject.SetActive(true);
-                extrahardStageTable.gameObject.SetActive(false);
-                break;
-            case LevelModes.ExtraHard:
-                hardStageTable.gameObject.SetActive(false);
-                extrahardStageTable.gameObject.SetActive(true);
-                break;
+            nextUnlockTip.SetActive(true);
+            // 从多语言表获取原始文案，例如 "还差{a}关解锁花朵"
+            string rawText = MultilingualManager.Instance.GetString(unlockHint.Value.textKey,"pingzi");
+            // 替换占位符并赋值给 UI Text
+            nextUnlockTip.GetComponentInChildren<Text>().text = rawText.Replace("{a}", unlockHint.Value.remainCount.ToString());
         }
-
-        levelText.text = MultilingualManager.Instance.GetString("Level") + " " + Stage;
+        else
+        {
+            // 没有要预告的机制，隐藏提示气泡
+            nextUnlockTip.SetActive(false);
+        }
         // 先设置原始分数 (注意防负数保护)
         int addZenCount = ChessStageController.Instance.CurrentTotalScore;
         int oldZenScore = Mathf.Max(0, GameDataManager.Instance.UserData.overallZenScore - addZenCount);
         zenScoreText.text = oldZenScore.ToString();
-     
-        if (!LimitTimeManager.Instance.IsComplete() && _limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
+        
+        bool isLimitUnlocked = LimitTimeManager.Instance.IsOpen();
+        if (!LimitTimeManager.Instance.IsComplete() && isLimitUnlocked)
         {
             Content.gameObject.SetActive(true);
             // StartCoroutine(UpdateProgress());
@@ -701,14 +763,14 @@ public class ChessFinishView : UIWindow
         if (!_hasPlayedRewardSequence)
         {
             _hasPlayedRewardSequence = true; // 标记为已播放
-            nextBtn.gameObject.SetActive(false); // 将隐藏逻辑移到这里：只有首次进入才先隐藏，等动画播完再显示
+            nextStageBtn.gameObject.SetActive(false); // 将隐藏逻辑移到这里：只有首次进入才先隐藏，等动画播完再显示
             StartCoroutine(PlayRewardSequence());
         }
         else
         {
             // 已经播放过了（从排行榜返回），直接把下一步按钮显示出来，防止界面卡死
-            nextBtn.gameObject.SetActive(true);
-            nextBtn.gameObject.GetComponent<CanvasGroup>().alpha = 1;
+            nextStageBtn.gameObject.SetActive(true);
+            nextStageBtn.gameObject.GetComponent<CanvasGroup>().alpha = 1;
 
             // 维持限时活动图标的状态
             if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf && LimitTimeManager.Instance != null &&
@@ -720,6 +782,16 @@ public class ChessFinishView : UIWindow
             if (GameCoreManager.Instance.IsTrueAuto)
             {
                 StartCoroutine(AutoClickNextDelay());
+            }
+        }
+        // 刷新新手奖励入口显示，并置顶到右侧最高优先级
+        if (_beginnerBonusEntryBtn != null)
+        {
+            _beginnerBonusEntryBtn.RefreshVisibility();
+            if (_beginnerBonusEntryBtn.gameObject.activeSelf)
+            {
+                _beginnerBonusEntryBtn.transform.SetAsFirstSibling();
+                _beginnerBonusEntryBtn.SetPreviousBorderProgress(); // 先钉在旧刻度上
             }
         }
         DailyTaskManager.Instance.UpdateMaxButterflyTime();
@@ -740,7 +812,7 @@ public class ChessFinishView : UIWindow
         // 兜底：先全部隐藏
         if (_encourageTitleRoot != null) _encourageTitleRoot.SetActive(false);
         if (_encouragePhraseRoot != null) _encouragePhraseRoot.SetActive(false);
-
+        
         if (rule == null) return;
 
         // 2. 扔骰子 (0-99)，根据你的配置表概率控制显示
@@ -748,51 +820,108 @@ public class ChessFinishView : UIWindow
         int rollPhrase = UnityEngine.Random.Range(0, 100);
 
         // 3. 处理位置5（顶部标题）
-        if (rule.Type != 5 && rule.TitleRate > 0 && rollTitle < rule.TitleRate)
+        if (ChessStageController.Instance.CurrentStage-1 > 1 && rule.TitleRate > 0 && rollTitle < rule.TitleRate)
         {
-            if (_encourageTitleRoot != null)
-            {
-                _encourageTitleRoot.SetActive(true);
-                _encourageTitleText.text = MultilingualManager.Instance.GetString(rule.TitleKey, "pingzi");
-                // 进场小动画（可选）
-                _encourageTitleRoot.transform.DOPunchScale(Vector3.one * 0.1f, 0.4f);
-            }
+            _encourageTitleRoot.SetActive(true);
+            string titleKey = ChessStageController.Instance.GetCurrentMatchedTitleKey();
+            _encourageTitleText.text = MultilingualManager.Instance.GetString(titleKey, "pingzi");
+            // 进场小动画
+            _encourageTitleRoot.transform.DOPunchScale(Vector3.one * 0.1f, 0.4f);
+            
         }
 
         // 4. 处理位置6（结算页长文案及图标）
         if (rule.StimulateRate > 0 && rollPhrase < rule.StimulateRate)
         {
-            if (_encouragePhraseRoot != null)
+            _encouragePhraseRoot.SetActive(true);
+            // 🌟 核心修复：Type 7 专属的双参数文本解析！
+            if (rule.Type == 7)
             {
-                _encouragePhraseRoot.SetActive(true);
+                // 获取配置文案 (兼容配在 PhraseKey 或 LongTextKey 里的情况)
+                string targetText = MultilingualManager.Instance.GetString(rule.PhraseKey, "pingzi");
+                if (!string.IsNullOrEmpty(rule.LongTextKey))
+                {
+                    targetText = MultilingualManager.Instance.GetString(rule.LongTextKey, "pingzi");
+                }
 
+                // 准备数据：{0}=本局谜题数，{1}=超越百分比
+                // int puzzleCount = ChessStageController.Instance.CurrStageInfo.PhraseGroups.Count;
+                int puzzleCount = ChessStageController.Instance.CurrStageInfo.StageNumber;
+                string zenPercentStr = ChessStageController.Instance.DisplayZenPercent.ToString("F2");
+                    
+                try 
+                {
+                    // 注入双参数，彻底解决 FormatException 崩溃问题！
+                    _encouragePhraseText.text = "\ud83c\udf1f" + string.Format(targetText, puzzleCount, zenPercentStr);
+                }
+                catch (Exception e)
+                {
+                    // 终极护盾：万一策划改配表了，捕获异常并直接显示原文，绝不卡死游戏！
+                    _encouragePhraseText.text = "\ud83c\udf1f" + targetText;
+                    Debug.LogError($"[文案格式化错误] Type 7 文本解析异常: {e.Message}");
+                }
+            }
+            else
+            {
+                // 其他常规类型 (Type 0~6) 的原版逻辑保持不动
                 // 组装文本（优先读长文案，没有长文案读短文案）
-                string rawText = MultilingualManager.Instance.GetString(rule.LongTextKey, "pingzi");
                 string phraseText = MultilingualManager.Instance.GetString(rule.PhraseKey, "pingzi");
-                float formattedX = ChessStageController.Instance.DisplayZenPercent;
-                _encouragePhraseText.text =
-                    "\ud83c\udf1f" + string.Format(rawText, formattedX.ToString("F2")) + phraseText;
+                if (!string.IsNullOrEmpty(rule.LongTextKey))
+                {
+                    string rawText = MultilingualManager.Instance.GetString(rule.LongTextKey, "pingzi");
+                    float formattedX = ChessStageController.Instance.DisplayZenPercent;
+                    _encouragePhraseText.text = "\ud83c\udf1f" + string.Format(rawText, formattedX.ToString("F2")) + phraseText;
+                }
+                else
+                {
+                    _encouragePhraseText.text = "\ud83c\udf1f" + phraseText;
+                }
+            }
                 // 加载表情 Emoji
                 // if (_encourageEmojiIcon != null && !string.IsNullOrEmpty(rule.EmojiKey))
                 // {
                 //     var emojiSprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("commonitem", rule.EmojiKey);
                 //     if (emojiSprite != null) _encourageEmojiIcon.sprite = emojiSprite;
                 // }
-            }
         }
 
         if (bannerStyle != 1 && bannerStyle != 2)
         {
             Debug.Log($"当前横幅类型为 {bannerStyle}，不满足结算页文案展示条件 (需为 1 或 2)，强制隐藏。");
             _encouragePhraseRoot.SetActive(false);
-            return;
         }
     }
 
     private void UpdateTimeDisplay(string time)
     {
-        if (!string.IsNullOrEmpty(time))
+        if (!_tasktable.TaskBtn.interactable)
+        {
+            _tasktable.taskTime.gameObject.SetActive(true);
+            _tasktable.taskTime.text = $"第{AppGameSettings.UnlockRequirements.DailyMissions}关";
+            if (_tasktable.taskTime.transform.parent != null)
+            {
+                Image bg = _tasktable.taskTime.transform.parent.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
+            }
+            return;
+        }
+
+        bool shouldActivate = !string.IsNullOrEmpty(time);
+        _tasktable.taskTime.gameObject.SetActive(shouldActivate);
+        
+        if (shouldActivate) 
             _tasktable.taskTime.text = time;
+
+        //  3. 核心修复：只控制底板的 Image 显隐
+        if (_tasktable.taskTime.transform.parent != null)
+        {
+            Image bg = _tasktable.taskTime.transform.parent.GetComponent<Image>();
+            if (bg != null) 
+            {
+                // 因为我没看到你的 TaskTable 结构，如果有 taskOver 节点，这里可以加上 || _tasktable.taskOver.activeSelf
+                bg.enabled = shouldActivate; 
+            }
+        }
     }
 
     private void UpdateButterflyTime(string time = "")
@@ -832,7 +961,7 @@ public class ChessFinishView : UIWindow
 
         // 2. 获取目标配置
         ButterflyGrow butterflyGrow = ButterfliesManager.Instance.GetCurrentGrow();
-        int displayCount = targetCount >= 0 ? targetCount : GameDataManager.Instance.ButterflyData.currPupa;
+        int displayCount = targetCount >= 0 ? targetCount : Mathf.Max(0, _currentVisualPupa);
 
         // 3. 计算进度比例 (0.0f ~ 1.0f)
         float progressValue = 0f;
@@ -891,7 +1020,7 @@ public class ChessFinishView : UIWindow
             UpdateLimitEventText();
             return;
         }
-        // 🌟 核心动画逻辑
+        
         progressSlider.DOKill(); // 清理旧动画
         Sequence seq = DOTween.Sequence();
         seq.AppendInterval(0.5f);
@@ -934,9 +1063,9 @@ public class ChessFinishView : UIWindow
         
         if (isShowWinSign||isTriggerFirstWin)
         {
-            nextBtn.gameObject.GetComponent<CanvasGroup>().alpha = 0;
-            nextBtn.gameObject.SetActive(true);
-            nextBtn.gameObject.GetComponent<CanvasGroup>().DOFade(1, 0.3f);
+            nextStageBtn.gameObject.GetComponent<CanvasGroup>().alpha = 0;
+            nextStageBtn.gameObject.SetActive(true);
+            nextStageBtn.gameObject.GetComponent<CanvasGroup>().DOFade(1, 0.3f);
             
             yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.SignWinScreen)
                                              &&!SystemManager.Instance.PanelIsShowing(PanelType.SevenSignScreen)
@@ -944,22 +1073,10 @@ public class ChessFinishView : UIWindow
         }
         
         // ==========================================
-        // 🌟 队列首位：全权交由专属协程处理禅修榜的三种状态
+        // 队列首位：全权交由专属协程处理禅修榜的三种状态
         // ==========================================
         yield return StartCoroutine(HandleZenRankFlowRoutine());
         
-        AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
-        {
-            if (issuccess)
-            {
-                AnalyticMgr.InsetAdSuccess("关卡插屏");
-                GameDataManager.Instance.UserData.totalInsetSeeAds++;
-            }
-            else
-            {
-                AnalyticMgr.InsetAdFail("关卡插屏");
-            }
-        });
         int cachedLimitCount = ChessStageController.Instance.LimitPuzzleCount;
         int leafCollected = ChessStageController.Instance.CurrStageData.CollectedLeaves;
         if (leafCollected > 0)
@@ -967,9 +1084,9 @@ public class ChessFinishView : UIWindow
             EventDispatcher.instance.TriggerUpdateLayerCoin(true, false, false);
         }
         // =========================================
-        // 🌟 队列第二位：限时活动逻辑及面板
+        //  队列第二位：限时活动逻辑及面板
         // =========================================
-        if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
+        if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf && _limitBtnTable._limitTimeEventButton.interactable)
         {
             _limitBtnTable.CheckAndShowLimitedTimeEvent(Enlimiticon.transform);
             _isWordsExtracted = true; // 锁住预判文案
@@ -996,19 +1113,60 @@ public class ChessFinishView : UIWindow
             {
                 Showlimiticon.SetActive(false);
             }
-
-            nextBtn.gameObject.GetComponent<CanvasGroup>().alpha = 0;
-            nextBtn.gameObject.SetActive(true);
-            nextBtn.gameObject.GetComponent<CanvasGroup>().DOFade(1, 0.3f);
-
-            if (!isShowWinSign)
+        }
+        AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
+        {
+            if (issuccess)
             {
-                nextBtn.gameObject.GetComponent<CanvasGroup>().alpha = 0;
-                nextBtn.gameObject.SetActive(true);
-                nextBtn.gameObject.GetComponent<CanvasGroup>().DOFade(1, 0.3f);
+                AnalyticMgr.InsetAdSuccess("关卡插屏");
+                GameDataManager.Instance.UserData.totalInsetSeeAds++;
+            }
+            else
+            {
+                AnalyticMgr.InsetAdFail("关卡插屏");
+            }
+            Debug.Log($"[AdRule] 调用广告插屏 {issuccess}");
+        });
+        // 将按钮显示逻辑提出来，并加一个安全判定。确保流程走到这里时，必定会展示按钮
+        if (!nextStageBtn.gameObject.activeSelf)
+        {
+            nextStageBtn.gameObject.SetActive(true);
+            
+            CanvasGroup btnCanvasGroup = nextStageBtn.gameObject.GetComponent<CanvasGroup>();
+            if (btnCanvasGroup != null)
+            {
+                btnCanvasGroup.alpha = 0;
+                btnCanvasGroup.DOFade(1, 0.3f);
             }
         }
-        
+        // ==========================================
+        // 🌟【新时序接入】：检查并弹出【新手奖励】
+        // ==========================================
+        int clearedStage = GameDataManager.Instance.UserData.CurrentChessStage - 1;
+        if (BeginnerBonusManager.Instance.CheckStageCleared(clearedStage, isJump))
+        {
+            // 等待新手奖励弹窗关闭（玩家点关闭回结算页，或点“立即参与”直接进下一关）
+            yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.BeginnerBonusPanel));
+            
+            // 刷新入口显隐状态
+            if (_beginnerBonusEntryBtn != null)
+            {
+                _beginnerBonusEntryBtn.RefreshVisibility();
+            }
+
+            // 如果玩家在新手奖励里点了“立即参与”，结算页已被关闭，安全跳出协程
+            if (!SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
+            {
+                yield break;
+            }
+        }
+        // ==========================================
+        // 平滑涨满本关新增的外边框刻度
+        // ==========================================
+        if (_beginnerBonusEntryBtn != null && _beginnerBonusEntryBtn.gameObject.activeSelf)
+        {
+            _beginnerBonusEntryBtn.UpdateBorderProgress(true); // 传入 true，播放 0.5s 平滑填满动画
+        }
         if(!isJump)
             AchievementManager.Instance.InitFinishAchieveTable(transform);
         
@@ -1064,7 +1222,7 @@ public class ChessFinishView : UIWindow
             yield return StartCoroutine(PlayPupaFlyAnim(ChessStageController.Instance.EarnedPupaThisLevel,Vector3.zero, false));
         }
 
-        // 🌟 步骤三：树叶额外金币起飞（从中央飞向 Header 金币槽）
+        //  步骤三：树叶额外金币起飞（从中央飞向 Header 金币槽）
         // ==========================================
         var leafReward = ChessStageController.Instance.GetAllLeafRewards(leafCollected);
         if (leafReward != null && leafReward.Count > 0)
@@ -1085,7 +1243,9 @@ public class ChessFinishView : UIWindow
         }
 
         ChessStageController.Instance.LimitPuzzleCount = 0;
-        if (FishInfoController.Instance.IsShowFishProgressAnim() && _matchFishtable.FishBtn.gameObject.activeSelf)
+        if (FishInfoController.Instance.IsOpen() &&
+            FishInfoController.Instance.IsShowFishProgressAnim() && 
+            _matchFishtable.FishBtn.gameObject.activeSelf)
         {
             _matchFishtable.ShowFishWordAnim();
             StartCoroutine(UpdateFishRankUI());
@@ -1120,11 +1280,15 @@ public class ChessFinishView : UIWindow
 
     private IEnumerator CheckZenRankBtn()
     {
+        if (!ZenRankManager.Instance.IsOpen())
+            yield break;
+        
+        ZenRankButton rankComp = _zenRankBtn.GetComponent<ZenRankButton>();
         WaitForSeconds waitTime = new WaitForSeconds(0.5f);
         while (_zenRankBtn.gameObject.activeSelf)
         {
             yield return waitTime;
-            _zenRankBtn.GetComponent<ZenRankButton>().CheckRankProgress();
+            rankComp.CheckRankProgress();
         }
     }
 
@@ -1148,11 +1312,83 @@ public class ChessFinishView : UIWindow
 
     private void UnlockBtnsUI()
     {
-        UnlockButton(_tasktable.TaskBtn, AppGameSettings.UnlockRequirements.DailyMissions, PanelType.DailyTasksScreen,
-            GameDataManager.Instance.FishUserSave.opentime);
-        UnlockButton(_limitBtnTable._limitTimeEventButton, AppGameSettings.UnlockRequirements.TimeLimitMode,
-            PanelType.LimitTimeScreen,
-            GameDataManager.Instance.UserData.limitOpenTime);
+        int curStage = GameDataManager.Instance.UserData.CurrentChessStage;
+
+        // 1. 蝶园入口
+        RefreshButterflyButtonState();
+        // 2. 禅修榜入口（委托给组件自身的 CheckRankProgress 处理三态）
+        StartCoroutine(CheckZenRankBtn());
+        // 3. 每日任务按钮
+        SetupActivityButton(
+            _tasktable.TaskBtn, 
+            _tasktable.LockObj, // 若预制体上有锁图标节点可在此传入
+            AppGameSettings.ShowRequirements.DailyMissionsShow, // 若有专属展示等级换成 ShowRequirements
+            DailyTaskManager.Instance.IsOpen()
+        );
+
+        // 4. 限时活动按钮
+        SetupActivityButton(
+            _limitBtnTable._limitTimeEventButton, 
+            _limitBtnTable.LockObj,
+            AppGameSettings.ShowRequirements.TimeLimitShow,
+            LimitTimeManager.Instance.IsOpen()
+        );
+        _limitBtnTable.InitLimtBtnUI();
+        
+        bool isLimitUnlocked = _limitBtnTable._limitTimeEventButton.gameObject.activeSelf && 
+                               _limitBtnTable._limitTimeEventButton.interactable;
+        
+        if (isLimitUnlocked && !LimitTimeManager.Instance.IsComplete())
+        {
+            Content.gameObject.SetActive(true);
+            DailyTaskManager.Instance.UpateButterflyTaskUI();
+        }
+        else
+        {
+            Content.gameObject.SetActive(false);
+        }
+
+        // 5. 捕鱼对战入口
+        if (_matchFishtable != null && _matchFishtable.FishBtn != null)
+        {
+            bool isLegacyOpened = FishInfoController.Instance.IsOpen();
+            bool openTime = FishInfoController.Instance.GetOpenFishFunction();
+            
+            bool isShow = (curStage > AppGameSettings.ShowRequirements.FishShowLevel || isLegacyOpened) && openTime;
+            _matchFishtable.FishBtn.transform.parent.gameObject.SetActive(isShow);
+            if (isShow)
+            {
+                bool isLocked = !isLegacyOpened;
+                _matchFishtable.FishBtn.interactable = !isLocked;
+                _matchFishtable.LockObj.SetActive(isLocked);
+                
+                Image fishIcon = _matchFishtable.FishBtn.transform.GetChild(0).GetComponent<Image>();
+                if (fishIcon != null)
+                {
+                    Color c = fishIcon.color;
+                    c.a = isLocked ? 0.5f : 1f;
+                    fishIcon.color = c;
+                }
+                
+                if (!isLocked)
+                {
+                    _matchFishtable.CheckFishBtn();
+                    StartCoroutine(UpdateFishRankUI());
+                }
+                else
+                {
+                    // 寻找鱼活动的锁底下的Text赋值
+                    Text lockText = _matchFishtable.LockObj.GetComponentInChildren<Text>(true);
+                    if (lockText != null) lockText.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
+                }
+            }
+        }
+
+        // 6. 新手奖励入口
+        if (_beginnerBonusEntryBtn != null)
+        {
+            _beginnerBonusEntryBtn.RefreshVisibility();
+        }
     }
 
     private void UnlockButton(Button button, int unlockLevel, string panelName, string openTime)
@@ -1305,7 +1541,6 @@ public class ChessFinishView : UIWindow
         // 如果本局获得了蝶蛹，才播放动画
         if (earnedPupa > 0 && butterflyBtn != null)
         {
-            int initialPupa = GameDataManager.Instance.ButterflyData.currPupa - earnedPupa;
             int completedCount = 0;
             bool allDone = false;
             // 循环生成蝶蛹 (获得几个就飞几次)
@@ -1342,8 +1577,8 @@ public class ChessFinishView : UIWindow
                 {
                     AudioManager.Instance.PlaySoundEffect("getPupa"); // 播放获得音效
                     completedCount++;
-                    int currentVisualPupa = initialPupa + completedCount;
-                    UpdateButterflyProgressUI(currentVisualPupa); // 触发 UI 更新动画
+                    _currentVisualPupa++;
+                    UpdateButterflyProgressUI(_currentVisualPupa); // 触发 UI 更新动画
 
                     // 可选：让按钮有个被击中的弹跳反馈
                     butterflyBtn.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 10, 1);
@@ -1401,7 +1636,7 @@ public class ChessFinishView : UIWindow
         }
         // 正常首次解锁的条件（已经包含 !isJoinedZenRank）
         bool isFirstUnlockZen = !userData.isJoinedZenRank &&
-                                userData.CurrentChessStage == AppGameSettings.UnlockRequirements.ZenOpenLevel;
+                                userData.CurrentChessStage == ZenRankManager.Instance.GetUnlockStageCondition();
         // 升级更新触发的条件，必须要求玩家当前【不在榜单内】
         bool isUpdateUnlockZen = !userData.isJoinedZenRank && userData.HasUnclaimedUpdateJoin;
         

@@ -55,17 +55,17 @@ public class HistoryDataPanel : UIWindow
         // 绑定按钮事件
         discardButton.AddClickAction(OnDiscardClicked);
         applyButton.AddClickAction(OnApplyClicked);
-        title.text = MultilingualManager.Instance.GetString("HistoricalData");
-        tipText.text = MultilingualManager.Instance.GetString("DataEffect");
-        zenLevelName.text = MultilingualManager.Instance.GetString("ZenLevel");
-        zenScoreName.text = MultilingualManager.Instance.GetString("ZenScore");
-        maxStreakDaysText.text = MultilingualManager.Instance.GetString("LongestWinDay");
-        // coinName.text = MultilingualManager.Instance.GetString("CoinName");
-        crosswordProgressName.text = MultilingualManager.Instance.GetString("LevelProgress");
-        // registerDateName.text = MultilingualManager.Instance.GetString("RegisterDate");
+        title.text = MultilingualManager.Instance.GetString("HistoricalData","hudie");
+        tipText.text = MultilingualManager.Instance.GetString("DataEffect","hudie");
+        zenLevelName.text = MultilingualManager.Instance.GetString("ZenLevel","hudie");
+        zenScoreName.text = MultilingualManager.Instance.GetString("ZenScore","hudie");
+        maxStreakDaysText.text = MultilingualManager.Instance.GetString("LongestWinDay","hudie");
+        // coinName.text = MultilingualManager.Instance.GetString("CoinName","hudie");
+        crosswordProgressName.text = MultilingualManager.Instance.GetString("LevelProgress","hudie");
+        // registerDateName.text = MultilingualManager.Instance.GetString("RegisterDate","hudie");
         
-        discardButton.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("GiveUp");
-        applyButton.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Use");
+        discardButton.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("GiveUp","hudie");
+        applyButton.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Use","hudie");
     }
 
     /// <summary>

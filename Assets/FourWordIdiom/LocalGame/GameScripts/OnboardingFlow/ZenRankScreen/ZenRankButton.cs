@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +15,7 @@ public class ZenRankButton : MonoBehaviour
     public GameObject wifi;
     public GameObject rank;
     public Text rankText;
+    public GameObject zenLock;
     
     // public GameObject effect;
     
@@ -32,7 +33,7 @@ public class ZenRankButton : MonoBehaviour
         
         if(zenLevelText == null)
             zenLevelText = GetComponentInChildren<Text>();
-        
+        CheckRankProgress();
     }
 
     private void OnEnable()
@@ -46,6 +47,10 @@ public class ZenRankButton : MonoBehaviour
         if (ZenRankManager.Instance != null)
         {
             ZenRankManager.Instance.OnRankTimerTick += OnTimerTick;
+        }
+        if (OverallRankingManager.Instance != null)
+        {
+            OverallRankingManager.Instance.OnAuditConfigLoaded += CheckRankProgress;
         }
     }
 
@@ -169,13 +174,35 @@ public class ZenRankButton : MonoBehaviour
     
     public void CheckRankProgress()
     {
-        bool isShow =
-            GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.ZenOpenLevel ||
-            GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ZenOpenLevel;
+        int showStage = ZenRankManager.Instance.GetShowStageCondition();
+        int unlockStage = ZenRankManager.Instance.GetUnlockStageCondition();
         
-        rankBtn.transform.parent.gameObject.SetActive(isShow);
+        bool isLegacyOpened = ZenRankManager.Instance.IsOpen();
+        // 1. 达到展示等级才显示按钮
+        int currentStage = GameDataManager.Instance.UserData.CurrentChessStage;
+        bool isShow = currentStage > showStage || isLegacyOpened;
+        if (rankBtn.transform.parent != null)
+            rankBtn.transform.parent.gameObject.SetActive(isShow);
         rankBtn.gameObject.SetActive(isShow);
 
+        if (!isShow) return;
+        // 2. 判定是否未解锁（当前关卡 < 解锁要求）
+        bool isLock = !isLegacyOpened;
+        zenLock.SetActive(isLock);
+        rankBtn.interactable = !isLock;
+        
+        // 3. 锁定状态下，隐藏段位详情、榜单角标和网络提示
+        if (isLock)
+        {
+            zenLevelText.transform.parent.gameObject.SetActive(true);
+            zenLevelText.text = $"第{unlockStage}关";
+            rank.SetActive(false);
+            wifi.SetActive(false);
+            return;
+        }
+        
+        // 4. 已解锁状态下，正常显示段位名称
+        zenLevelText.transform.parent.gameObject.SetActive(true);
         string zenName = MultilingualManager.Instance.GetString(GameDataManager.Instance.UserData.Zenlevel);
         zenLevelText.text = zenName;
 
@@ -206,7 +233,7 @@ public class ZenRankButton : MonoBehaviour
             rank.SetActive(false);
         }
     }
-    // 🌟 新增：从 Manager 缓存直接恢复文字，避免显示 "..."
+    // 从 Manager 缓存直接恢复文字，避免显示 "..."
     public void SyncTextFromCache()
     {
         if (!GameCoreManager.Instance.IsNetworkActive) return;
@@ -325,7 +352,7 @@ public class ZenRankButton : MonoBehaviour
     }
     
     // ==========================================
-    // 🌟 外部调用此方法，告诉按钮“你接收到了新的禅意”
+    // 外部调用此方法，告诉按钮“你接收到了新的禅意”
     // ==========================================
     public void PlayAbsorbEffect(int addZenCount)
     {
@@ -350,6 +377,11 @@ public class ZenRankButton : MonoBehaviour
         if (ZenRankManager.Instance != null)
         {
             ZenRankManager.Instance.OnRankTimerTick -= OnTimerTick;
+        }
+        
+        if (OverallRankingManager.Instance != null)
+        {
+            OverallRankingManager.Instance.OnAuditConfigLoaded -= CheckRankProgress;
         }
     }
 }

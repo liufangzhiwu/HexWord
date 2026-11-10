@@ -17,6 +17,7 @@ public class OverallEntranceButton : MonoBehaviour
     private void Awake()
     {
         entranceButton.AddVibraClickAction(OnEntranceClicked);
+        RefreshState();
     }
 
     // Start is called before the first frame update
@@ -27,6 +28,15 @@ public class OverallEntranceButton : MonoBehaviour
 
     public void RefreshState()
     {
+        if (OverallRankingManager.Instance == null || 
+            OverallRankingManager.Instance.AuditConfig == null || 
+            (OverallRankingManager.Instance.AuditConfig.TotalSwitch &&
+            !OverallRankingManager.Instance.AuditConfig.ZenSwitch)) // ZenSwitch 为 0 时直接隐藏并拦截
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+        
         int myScore = GameDataManager.Instance.UserData.overallZenScore;
         
         // 1. 解锁控制：禅意值不为0时解锁
