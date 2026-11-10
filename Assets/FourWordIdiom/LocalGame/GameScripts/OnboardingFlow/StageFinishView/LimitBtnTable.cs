@@ -9,7 +9,7 @@ public class LimitBtnTable : MonoBehaviour
     
     [Header("UI LimitBtn")]
     public Button _limitTimeEventButton;
-    public GameObject LockObj; // 锁图标节点（同步自 WT 1.9.8，预制体未挂则为空）
+    public GameObject LockObj; //挂载锁头物体
     [SerializeField] private Image limitOver;
     [SerializeField] private Image lantern;
     [SerializeField] private Text txtwordprogress;
@@ -18,6 +18,7 @@ public class LimitBtnTable : MonoBehaviour
     [SerializeField] private GameObject TimeObj;
     [SerializeField] private Text AddCount;
     [SerializeField] private GameObject Effect;
+    [SerializeField] private GameObject lightAnim;
 
 
     public void InitUI()
@@ -31,10 +32,30 @@ public class LimitBtnTable : MonoBehaviour
     /// </summary>
     public void CheckAndShowLimitedTimeEvent(Transform parent)
     {
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
-            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
-            ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime))
+        InitLimtBtnUI();
+        
+        if (!_limitTimeEventButton.interactable) return;
+        
+        bool isJustUnlocked = false;
+        
+        if (GameDataManager.Instance.UserData.levelMode == 2) 
         {
+            int playedStage = ChessStageController.Instance.CurrStageData.StageId; // 刚打完的关卡
+            int unlockStage = AppGameSettings.UnlockRequirements.TimeLimitMode;    // 解锁要求的关卡
+            
+            // 如果玩家刚好打完门槛前一关，且底层进度刚好迈入了解锁关卡
+            if (playedStage == unlockStage - 1 && GameDataManager.Instance.UserData.CurrentChessStage == unlockStage)
+            {
+                isJustUnlocked = true;
+                Debug.Log($"[限时活动防蹭分] 刚打完第{playedStage}关新鲜解锁限时活动，绝不将本局进度白送给活动！");
+            }
+        }
+        // 如果是被抓包的新鲜解锁玩家，直接 return，只亮图标展示解锁状态，绝不加分！
+        if (isJustUnlocked)
+        {
+            return; 
+        }
+        
             // 限时活动逻辑
             LimitTimeManager.Instance.OnLimitTimeBtnUI += InitLimtBtnUI;                
             _limitTimeEventButton.gameObject.SetActive(true);
@@ -45,15 +66,12 @@ public class LimitBtnTable : MonoBehaviour
             {
                 case LevelType.BlockWord:
                     wordcount=StageHexController.Instance.LimitPuzzlecount;
-                    StageHexController.Instance.LimitPuzzlecount = 0; // 提取后立刻清零！
                     break;
                 case LevelType.ChessWord:
                     wordcount=ChessStageController.Instance.GetDoubleRewardedPuzzleCount();
-                    ChessStageController.Instance.LimitPuzzleCount = 0; // 提取后立刻清零！
                     break;
                 case LevelType.HexWord:
                     wordcount=StageHexController.Instance.LimitPuzzlecount;//立刻清零
-                    StageHexController.Instance.LimitPuzzlecount = 0; // 提取后立刻清零！
                     break;
             }
             
@@ -70,36 +88,53 @@ public class LimitBtnTable : MonoBehaviour
                 }
                 LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
             }
-            
-            if(GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.TimeLimitMode
-               || GameDataManager.Instance.UserData.CurrentChessStage > AppGameSettings.UnlockRequirements.TimeLimitMode
-               ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime))
+            else
             {
-                if (LimitTimeManager.Instance.IsComplete())
-                {
-                    txtwordprogress.gameObject.SetActive(false);
-                    LimitClaim.gameObject.SetActive(false);
-                    Worddouble.gameObject.SetActive(false);
-                    limitOver.gameObject.SetActive(true);
-                    Effect.gameObject.SetActive(false);
-                }
+                txtwordprogress.gameObject.SetActive(false);
+                LimitClaim.gameObject.SetActive(false);
+                Worddouble.gameObject.SetActive(false);
+                limitOver.gameObject.SetActive(true);
+                Effect.gameObject.SetActive(false);
             }
-        }
-        else
-        {
-            _limitTimeEventButton.gameObject.SetActive(false);
-        }
     }
     
     public void InitLimtBtnUI()
     {
+        bool isLocked = !LimitTimeManager.Instance.IsOpen();
+        if (isLocked)
+        {
+            // 强制显示底板和文本
+            TimeObj.gameObject.SetActive(true);
+            txtwordprogress.gameObject.SetActive(true);
+            txtwordprogress.text = $"第{AppGameSettings.UnlockRequirements.TimeLimitMode}关";
+            
+            Worddouble.gameObject.SetActive(false);
+            LimitClaim.gameObject.SetActive(false);
+            limitOver.gameObject.SetActive(false);
+            
+            if (lightAnim != null) lightAnim.gameObject.SetActive(false);
+            // 确保底板 Image 是开启的
+            Image lockBg = TimeObj.GetComponent<Image>();
+            if (lockBg != null) lockBg.enabled = true;
+            
+            if (txtwordprogress.transform.parent != null)
+            {
+                Image parentBg = txtwordprogress.transform.parent.GetComponent<Image>();
+                if (parentBg != null) parentBg.enabled = true;
+            }
+            return;
+        }
+        
         TimeObj.gameObject.SetActive(!LimitTimeManager.Instance.IsClaim());
         if (!LimitTimeManager.Instance.IsComplete())
         {
+            if (lightAnim != null) lightAnim.gameObject.SetActive(true);
+            
             if (!LimitTimeManager.Instance.IsClaim())
             {
                 Worddouble.gameObject.SetActive(LimitTimeManager.Instance.LimitTimeCanShow());
                 int wordcount = LimitTimeManager.Instance.GetCurWordCount();
+                txtwordprogress.gameObject.SetActive(true); // 确保文本是开启的
                 txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
                 if (LimitClaim.activeSelf)
                 {
@@ -121,6 +156,12 @@ public class LimitBtnTable : MonoBehaviour
             LimitClaim.gameObject.SetActive(false);
             Worddouble.gameObject.SetActive(false);
             limitOver.gameObject.SetActive(true);
+        }
+        Image bg = TimeObj.GetComponent<Image>();
+        if (bg != null) 
+        {
+            bg.enabled = (txtwordprogress.gameObject.activeSelf && !string.IsNullOrEmpty(txtwordprogress.text)) 
+                         || limitOver.gameObject.activeSelf;
         }
     }
     
@@ -165,7 +206,6 @@ public class LimitBtnTable : MonoBehaviour
                 AudioManager.Instance.PlaySoundEffect("levelOverLimitwordAward");
                 lantern.transform.DOScale(new Vector3(1.2f,1.15f,1.15f), 0.3f).OnComplete(() =>
                 {
-                    Effect.gameObject.SetActive(false);
                     AddCount.DOColor(Color.white,0.2f);
                     AddCount.transform.DOLocalMoveY(130, 1.3f).OnComplete(() =>
                     {
@@ -183,13 +223,9 @@ public class LimitBtnTable : MonoBehaviour
 
     private void OnDisable()
     {
-        if (GameDataManager.Instance != null)
+        if (LimitTimeManager.Instance != null)
         {
-            if(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode 
-               || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode)
-            {
-                LimitTimeManager.Instance.OnLimitTimeBtnUI -= InitLimtBtnUI;
-            }
+            LimitTimeManager.Instance.OnLimitTimeBtnUI -= InitLimtBtnUI;
         }
     }
 }

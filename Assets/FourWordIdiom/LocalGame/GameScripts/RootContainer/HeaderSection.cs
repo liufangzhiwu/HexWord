@@ -92,7 +92,9 @@ public class HeaderSection : UIWindow
         }
         
         // 红点（进店消费入口角标）
-        redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
+        // 同步自 WT 1.9.8：总榜未就绪（CanIsLaunch=false）时先不亮商店红点，避免启动瞬间闪一下
+        redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint
+                           && GameDataManager.Instance.OverallRank.CanIsLaunch);
 
         // ★ 节日/周末礼包角标：有活动礼包时 sale 显示并展示礼包标签
         RefreshActivityBadge();

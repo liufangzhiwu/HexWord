@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections;
 using DG.Tweening;
+using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class TaskTable : MonoBehaviour
 {
     public Button TaskBtn;
-    public GameObject LockObj; // 锁图标节点（同步自 WT 1.9.8，预制体未挂则为空）
+    public GameObject LockObj; //挂载锁头物体
     [SerializeField] private Image TaskOver;
     public GameObject taskEffect;
     public Text taskTime;
@@ -27,19 +28,41 @@ public class TaskTable : MonoBehaviour
     private void OnTaskClick()
     {
         SystemManager.Instance.ShowPanel(PanelType.DailyTasksScreen);
+        
         AchievementManager.Instance.DisableFinishAchieveTable();
     }
     
     public void CheckTasksScreen()
     {
+        if (!DailyTaskManager.Instance.IsOpen()) return;
         
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions
-            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.DailyMissions
-            ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
-        {
             DailyTaskManager.Instance.OnDailyTaskBtnUI += InitTaskBtnUI;                
             TaskBtn.gameObject.SetActive(true);
+            // ==============================
+            // 👉 新增：每日任务的精准防蹭分逻辑 (与限时、捕鱼保持绝对一致)
+            // ==============================
+            bool isJustUnlocked = false;
+        
+            // 针对拼字模式 (levelMode == 2) 进行防蹭分
+            if (GameDataManager.Instance.UserData.levelMode == 2) 
+            {
+                int playedStage = ChessStageController.Instance.CurrStageData.StageId; // 刚打完的关卡
+                int unlockStage = AppGameSettings.UnlockRequirements.DailyMissions;    // 每日任务解锁关卡
             
+                // 判定逻辑：只有当玩家刚好打完门槛前一关，且底层进度刚好迈入了解锁关卡，才是“刚解锁的新手”
+                if (playedStage == unlockStage - 1 && GameDataManager.Instance.UserData.CurrentChessStage == unlockStage)
+                {
+                    isJustUnlocked = true;
+                    Debug.Log($"[每日任务防蹭分] 刚打完第{playedStage}关新鲜解锁每日任务，绝不将本局进度带入！");
+                }
+            }
+        
+            // 如果是被抓包的新鲜解锁玩家，只刷新UI，直接 return 绝不加分！
+            if (isJustUnlocked)
+            {
+                InitTaskBtnUI(); 
+                return;
+            }
             if (GameDataManager.Instance.UserData.levelMode == 1)
             {
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedFindWord,StageHexController.Instance.LimitPuzzlecount);
@@ -57,8 +80,6 @@ public class TaskTable : MonoBehaviour
             
             if(DailyTaskManager.Instance.UpdatetaskItem.Count > 0)
                 StartCoroutine(ShowTaskWordAnim());
-          
-        }
     }
     
     /// <summary>
@@ -66,8 +87,7 @@ public class TaskTable : MonoBehaviour
     /// </summary>
     IEnumerator ShowTaskWordAnim()
     { 
-        // 原为 1 秒盲等，纯空转；改为短衔接，避免结算页在这里卡住
-        yield return new WaitForSeconds(FinishFlowTiming.TaskAnimLead);
+        yield return new WaitForSeconds(1f);
         GameObject taskye = Instantiate(taskyezi.gameObject,taskyezi.transform);
         taskye.transform.localScale=new Vector3(0.8f,0.8f,0.8f);
         taskye.transform.SetAsLastSibling();
@@ -105,6 +125,22 @@ public class TaskTable : MonoBehaviour
     
     private void InitTaskBtnUI()
     {
+        if (!DailyTaskManager.Instance.IsOpen())
+        {
+            taskTime.gameObject.SetActive(true);
+            taskTime.text = $"第{AppGameSettings.UnlockRequirements.DailyMissions}关";
+            
+            if (taskTime.transform.parent != null)
+            {
+                Image bg = taskTime.transform.parent.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
+            }
+            
+            TaskClaim.gameObject.SetActive(false);
+            TaskOver.gameObject.SetActive(false);
+            return;
+        }
+        
         if (!DailyTaskManager.Instance.IsAllComplete())
         {
             if (!DailyTaskManager.Instance.IsClaim())
@@ -138,17 +174,4 @@ public class TaskTable : MonoBehaviour
         }
     }
 
-    private void OnDisable()
-    {
-        if (GameDataManager.Instance == null)
-        {
-            return;
-        }
-        
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions)
-        {
-            DailyTaskManager.Instance.OnDailyTaskBtnUI -= InitTaskBtnUI;              
-           
-        }
-    }
 }

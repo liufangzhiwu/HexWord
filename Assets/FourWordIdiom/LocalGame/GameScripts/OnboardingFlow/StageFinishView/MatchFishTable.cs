@@ -1,13 +1,12 @@
 ﻿using System;
 using DG.Tweening;
-using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class MatchFishTable : MonoBehaviour
 {
     public Button FishBtn;
-    public GameObject LockObj; // 锁图标节点（同步自 WT 1.9.8，预制体未挂则为空）
+    public GameObject LockObj; // 挂载锁头物体
     public Animator animator;
     public GameObject matchEffect;
     [SerializeField] private Text fishTime;
@@ -26,7 +25,7 @@ public class MatchFishTable : MonoBehaviour
     
     public void OnFishClick()
     {
-        if (Game.IsNetworkActive)
+        if (GameCoreManager.Instance.IsNetworkActive)
         {
             if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
             {
@@ -35,7 +34,6 @@ public class MatchFishTable : MonoBehaviour
             else
             {
                 SystemManager.Instance.ShowPanel(PanelType.DashCompetition);
-                AchievementManager.Instance.DisableFinishAchieveTable();
             }
         }
         else
@@ -47,9 +45,8 @@ public class MatchFishTable : MonoBehaviour
     public void CheckFishBtn()
     {
         claimObj.gameObject.SetActive(false);
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
-            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
-        {
+        if (!FishBtn.interactable) return;
+        
             if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
             {
                 DateTime openTime = DateTime.Now;
@@ -78,37 +75,87 @@ public class MatchFishTable : MonoBehaviour
                 FishBtn.gameObject.SetActive(fishOpen);
                 FishBtn.gameObject.transform.parent.gameObject.SetActive(fishOpen);
                 
-                if (GameDataManager.Instance.UserData.CurrentHexStage > AppGameSettings.UnlockRequirements.FishOpenLevel
-                    || GameDataManager.Instance.UserData.CurrentChessStage > AppGameSettings.UnlockRequirements.FishOpenLevel
-                    ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
+                if (FishInfoController.Instance.IsOpen())
                 {
-                    if(GameDataManager.Instance.UserData.levelMode == 3)
+                    bool isJustUnlocked = false;
+                    // 主要针对模式2（拼字玩法）进行防蹭分拦截
+                    if (GameDataManager.Instance.UserData.levelMode == 2) 
+                    {
+                        int playedStage = ChessStageController.Instance.CurrStageData.StageId; // 刚打完的关卡
+                        int unlockStage = AppGameSettings.UnlockRequirements.FishOpenLevel;    // 解锁关卡
+                    
+                        if (playedStage == unlockStage - 1 && GameDataManager.Instance.UserData.CurrentChessStage == unlockStage)
+                        {
+                            isJustUnlocked = true;
+                            Debug.Log($"[捕鱼防蹭分] 刚打完第{playedStage}关新鲜解锁捕鱼，绝不将本局进度白送给比赛！");
+                        }
+                    }
+                    
+                    if (isJustUnlocked) return; 
+                    if(GameDataManager.Instance.UserData.levelMode == 1)
                         GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageHexController.Instance.LimitPuzzlecount);
                     else if(GameDataManager.Instance.UserData.levelMode == 2)
-                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(ChessStageController.Instance.LimitPuzzleCount);
+                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(ChessStageController.Instance.CurrStageInfo.PhraseGroups.Count);
+                    else if(GameDataManager.Instance.UserData.levelMode == 3)
+                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageHexController.Instance.LimitPuzzlecount); // HexWord 六边形模式补回
                 }
             }
-        }
-        else
-        {
-            FishBtn.gameObject.SetActive(false);
-        }
+        
     }
     
 
     public void UpdateFishTime(string time="")
     {
-        fishTime.text = time;
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
-            ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
+        //  1. 拦截未解锁状态
+        if (!FishInfoController.Instance.IsOpen())
+        {
+            // 假设你的时间文本叫 fishtimetext
+            fishTime.gameObject.SetActive(true);
+            fishTime.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
+            if (fishTime.transform.parent != null)
+            {
+                Image bg = fishTime.transform.parent.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
+            }
+            rankimage.gameObject.SetActive(false);
+            return; 
+        }
+        //  2. 正常更新时间，控制自身显隐与底板 Image
+        bool shouldActivate = !string.IsNullOrEmpty(time);
+        fishTime.gameObject.SetActive(shouldActivate);
+        if (shouldActivate) fishTime.text = time;
+
+        if (fishTime.transform.parent != null)
+        {
+            Image bg = fishTime.transform.parent.GetComponent<Image>();
+            if (bg != null) bg.enabled = shouldActivate;
+        }
+
+        if (FishInfoController.Instance.IsOpen())
         {
             FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
-        }  
+        }
     }
     
     public void UpdateFishRank()
     {
-        if (Game.IsNetworkActive)
+        // 1. 核心拦截：如果未解锁，全面隐藏
+        if (!FishInfoController.Instance.IsOpen())
+        {
+            fishTime.gameObject.SetActive(true);
+            fishTime.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
+            if (fishTime.transform.parent != null)
+            {
+                Image bg = fishTime.transform.parent.GetComponent<Image>();
+                if (bg != null) bg.enabled = false;
+            }
+            rankimage.gameObject.SetActive(false);
+            claimObj.gameObject.SetActive(false);
+            fishwifiimage.gameObject.SetActive(false);
+            return;
+        }
+        
+         if (GameCoreManager.Instance.IsNetworkActive)
          {
              fishwifiimage.gameObject.SetActive(false);
              if (GameDataManager.Instance.FishUserSave.rank > 0&& !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime))
@@ -134,7 +181,13 @@ public class MatchFishTable : MonoBehaviour
 
                  if (!FishInfoController.Instance.RoundFishIsOver())
                  {
-                     fishTime.transform.parent.gameObject.SetActive(true);
+                     fishTime.gameObject.SetActive(true);
+                     if (fishTime.transform.parent != null)
+                     {
+                         Image bg = fishTime.transform.parent.GetComponent<Image>();
+                         if (bg != null) bg.enabled = true;
+                     }
+                     fishTime.transform.parent.gameObject.SetActive(true); 
                      rankimage.gameObject.SetActive(true);
                      rankcount.text = rank.ToString();
                  }
@@ -143,6 +196,12 @@ public class MatchFishTable : MonoBehaviour
                      claimObj.gameObject.SetActive(true);
                      rankimage.gameObject.SetActive(false);
                      fishTime.transform.parent.gameObject.SetActive(false);
+                     fishTime.gameObject.SetActive(false);
+                     if (fishTime.transform.parent != null)
+                     {
+                         Image bg = fishTime.transform.parent.GetComponent<Image>();
+                         if (bg != null) bg.enabled = false;
+                     }
                  }
                 
              }
@@ -195,7 +254,6 @@ public class MatchFishTable : MonoBehaviour
                 AudioManager.Instance.PlaySoundEffect("levelOverLimitwordAward");
                 matchfishImage.transform.DOScale(new Vector3(1.2f,1.15f,1.15f), 0.3f).OnComplete(() =>
                 {
-                    matchEffect.gameObject.SetActive(false);
                     matchfishImage.transform.DOScale(Vector3.one, 0.2f);
                 });
             });
