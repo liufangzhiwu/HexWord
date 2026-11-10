@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -289,6 +289,8 @@ public class DailyTaskManager : MonoBehaviour
     {
         List<TaskSaveData> taskSaveDatas = GameDataManager.Instance.UserData.taskSaveDatas;
 
+        if (!IsOpen()) return taskSaveDatas;
+        
         if (GameDataManager.Instance.UserData.taskSaveDatas.Count <= 0 && !IsAllComplete())
         {
             // 获取所有满足解锁条件的任务
@@ -338,6 +340,8 @@ public class DailyTaskManager : MonoBehaviour
     
     public TaskSaveData GetSigleTaskSaveData(int taskid)
     {
+        if (!IsOpen()) return null;
+        
         List<TaskSaveData> taskSaveDatas = GameDataManager.Instance.UserData.taskSaveDatas;
         
         // 获取所有满足解锁条件的任务
@@ -440,7 +444,7 @@ public class DailyTaskManager : MonoBehaviour
     public bool IsAllComplete()
     {
         if(GameDataManager.Instance==null)  return false;
-        
+        if (!IsOpen()) return false;
         bool isallover = false;
         int count = 0;
         foreach (TaskDataItem dataItem in taskItems)
@@ -471,6 +475,7 @@ public class DailyTaskManager : MonoBehaviour
     /// <returns></returns>
     public bool IsClaim()
     {
+        if (!IsOpen()) return false;
         foreach (var taskSave in GameDataManager.Instance.UserData.taskSaveDatas)
         {
             if (taskSave.iscomplete&&!taskSave.iscliam)

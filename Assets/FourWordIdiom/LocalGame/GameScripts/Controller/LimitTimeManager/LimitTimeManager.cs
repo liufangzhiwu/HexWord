@@ -53,13 +53,32 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
         GameCoreManager.Instance.StartCoroutine(TickTime());
     }
     
+    /// <summary>
+    /// 系统是否已解锁
+    /// </summary>
+    public bool IsOpen()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+       
+        // 条件 1：等级达标（新版本的新用户）
+        bool isLevelReached = GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode;
+
+        // 条件 2：老用户豁免（只要他以前玩过限时活动，留下了时间戳或完成过轮次，就默认解锁）
+        bool isLegacyUnlocked = GameDataManager.Instance.UserData.timerePuzzleid > 0 || 
+                                GameDataManager.Instance.UserData.timePuzzlecount > 0;
+
+        return isLevelReached || isLegacyUnlocked;
+        
+    }
     
     IEnumerator TickTime()
     {
-
+        var wait = new WaitForSeconds(1f);
         while (true)
         {
-            yield return new WaitForSeconds(1f);
+            yield return wait;
+          
+            if (!IsOpen()) continue;
             
             // 假设 logoutTime 是用户的登出时间
             DateTime nDateTime = DateTime.Now;
@@ -158,6 +177,8 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     
     private void CheckLimtEvent()
     {
+        if (!IsOpen()) return;
+        
         if (GameDataManager.Instance.UserData.isDayEnterLimint)
         {      
             AnalyticMgr.ActivityBegin("限时活动");
@@ -180,6 +201,8 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     /// <returns></returns>
     public int GetCurWordCount()
     {
+        if (!IsOpen()) return 0;
+        
         int needword = 0;
         for (int i = 0; i <= GameDataManager.Instance.UserData.timerePuzzleid; i++)
         {
@@ -280,6 +303,8 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     /// <returns></returns>
     public bool IsComplete()
     {
+        if (!IsOpen()) return false;
+        
         if(GameDataManager.Instance==null) return false;
         
         return GameDataManager.Instance.UserData.timerePuzzleid>limitItems.Count;
@@ -291,6 +316,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     /// <returns></returns>
     public bool IsClaim()
     {
+        if (!IsOpen()) return false;
         int wordCount = GetCurWordCount();
         if (CurlimitData == null) return false;
         return wordCount>=CurlimitData.num;
@@ -321,6 +347,7 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
 
     public void UpdateLimitProgress(int value)
     {
+        if (!IsOpen()) return;
         GameDataManager.Instance.UserData.timePuzzlecount += value;
     }
     

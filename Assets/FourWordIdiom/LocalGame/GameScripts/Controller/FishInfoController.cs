@@ -266,6 +266,27 @@ public class FishInfoController : MonoBehaviour
     }
 
     /// <summary>
+    /// 竞速玩法是否已解锁（同步自 WT 1.9.8，补 HexWord 双模式判定）
+    /// 说明：仅新增"解锁"判定，活动周时间窗口仍沿用 HexWord 原有 GetOpenFishFunction 逻辑
+    /// </summary>
+    public bool IsOpen()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+
+        // 条件 1：等级达标（HexWord 双模式：六边形 / 拼字任一达标即可）
+        bool isLevelReached =
+            GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
+            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel;
+
+        // 条件 2：老用户豁免（存档里有参赛痕迹：生成过 AI 对手，或已有开赛时间）
+        bool isLegacyUnlocked = GameDataManager.Instance.FishUserSave != null &&
+                                (GameDataManager.Instance.FishUserSave.aiSaveDatas.Count > 0 ||
+                                 !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime));
+
+        return isLevelReached || isLegacyUnlocked;
+    }
+
+    /// <summary>
     /// 获取竞速功能是否开启
     /// </summary>
     /// <returns></returns>

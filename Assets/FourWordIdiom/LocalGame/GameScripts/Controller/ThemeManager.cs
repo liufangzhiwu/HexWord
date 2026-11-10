@@ -261,7 +261,23 @@ public class ThemeManager : Singleton<ThemeManager>
             OnSkinRedPointChanged?.Invoke(_isSkinRedPointActive);
         }
     }
-    
+    /// <summary>
+    /// 皮肤系统是否已解锁（包含老用户兼容）
+    /// </summary>
+    public bool IsOpen()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+
+        // 条件 1：等级达标
+        bool isLevelReached = GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ThemeOpenLevel;
+
+        // 条件 2：老用户豁免（只要拥有超过1个主题，或者身上曾经攒过金箔，说明他以前玩过皮肤系统）
+        // 假设默认初始有一个主题，所以 Count > 1；如果一开始啥都没有，那就是 Count > 0
+        bool isLegacyUnlocked = GameDataManager.Instance.UserData.ThemeSaveItems.Count > 2 || 
+                                GameDataManager.Instance.UserData.GoldLeaf > 0;
+
+        return isLevelReached || isLegacyUnlocked;
+    }
     /// <summary>
     /// 判断当前是否可以进行主题抽取
     /// </summary>
@@ -405,6 +421,8 @@ public class ThemeManager : Singleton<ThemeManager>
     /// <returns></returns>
     public bool CanShowGoldLeaf()
     {
+        if (!IsOpen()) return false;
+        
         bool isRightlevel=false;
         
         int curlevel=GameDataManager.Instance.UserData.CurrentChessStage;
@@ -413,8 +431,15 @@ public class ThemeManager : Singleton<ThemeManager>
         {
             isRightlevel = true;
         }
-        
-        return GameDataManager.Instance.UserData.CurrentChessStage >=golfFirstLevel&&isRightlevel;
+        bool isEmojiLevel = false;
+        ChessStageInfo currStageInfo = ChessStageController.Instance.CurrStageInfo;
+        if (currStageInfo != null && currStageInfo.StageNumber == curlevel)
+        {
+            // 通过判断当前关卡的词堆或棋盘中是否包含 Emoji 元素
+            // （如果你的 ChessStageInfo 有暴露单独的 Emoji 标识字段，也可以直接用那个字段）
+            isEmojiLevel = currStageInfo.Puzzles.Any(p => p.isEmoji); 
+        }
+        return GameDataManager.Instance.UserData.CurrentChessStage >=golfFirstLevel&&isRightlevel && !isEmojiLevel;
     }
     
     

@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
 using Middleware;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -78,7 +79,18 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     private float fadeDuration = 0.5f;
     public bool IsOpen
     {
-        get => GameDataManager.Instance.ButterflyData.IsOpenButterfly;
+        get
+        {
+            if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+
+            // 条件 1：等级达标
+            bool isLevelReached = GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel;
+
+            // 条件 2：老用户豁免（只要存档里记了已解锁，或者有蝴蝶/蝶蛹残留，说明他以前玩过）
+            bool isLegacyUnlocked = GameDataManager.Instance.ButterflyData.butterflies.Count > 0 || 
+                                    GameDataManager.Instance.ButterflyData.currPupa > 0;
+            return isLevelReached || isLegacyUnlocked;
+        }
     }
     
     private void Start()
@@ -202,6 +214,8 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
             pupaConfig.LaterPupa = getPupa2;
         if (int.TryParse(fields[3], out int timeLimit))
             pupaConfig.TimeLimit = timeLimit;
+        
+        Debug.Log("[ButterfliesManager] 配置解析成功！"+JsonConvert.SerializeObject(pupaConfig));
     }
     
     private void ParseProbabilityTable(string probabilityTableText)
@@ -402,15 +416,15 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     /// </summary>
     public int GetScoreThresholdForPupa()
     {
-        // 1. 获取当前正在玩的蝶园里的所有蝴蝶配置
-         List<ButterflyInfo> currentGardenButterflies = GetCurrentGardenButterflies();
-        
-         // 2. 检查玩家收集的蝴蝶列表里，是否包含了当前蝶园里的任意一只
-         bool hasUnlockedAnyInCurrentGarden = currentGardenButterflies.Any(b => 
-             GameDataManager.Instance.ButterflyData.butterflies.Contains(b.Id));
-        
-        // 3. 没解锁过就是 60 分，解锁过就是 120 分
-        return hasUnlockedAnyInCurrentGarden ? pupaConfig.LaterPupa : pupaConfig.FirstPupa;
+        // // 1. 获取当前正在玩的蝶园里的所有蝴蝶配置
+        //  List<ButterflyInfo> currentGardenButterflies = GetCurrentGardenButterflies();
+        //
+        //  // 2. 检查玩家收集的蝴蝶列表里，是否包含了当前蝶园里的任意一只
+        //  bool hasUnlockedAnyInCurrentGarden = currentGardenButterflies.Any(b => 
+        //      GameDataManager.Instance.ButterflyData.butterflies.Contains(b.Id));
+        bool hasUnlockedAnyButterfly = GameDataManager.Instance.ButterflyData.butterflies.Count > 0;
+        // // 3. 没解锁过就是 60 分，解锁过就是 120 分
+        return hasUnlockedAnyButterfly ? pupaConfig.LaterPupa : pupaConfig.FirstPupa;
     }
     /// <summary>
     /// 判断当前关卡是否有资格展示“圆形蝶蛹进度条”
@@ -420,8 +434,9 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
     {
         if (!IsOpen) return false;
         if (IsPupaSufficientForAllRemaining()) return false;
-        int threshold = GetScoreThresholdForPupa();
-        return optimalTotalScore >= threshold;
+        // int threshold = GetScoreThresholdForPupa();
+        // return optimalTotalScore >= threshold;
+        return true;
     }
     
     public int GetStageLimitTimer()
@@ -449,8 +464,8 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
                 levelId = GameDataManager.Instance.UserData.CurrentHexStage;
                 break;
         }
-        
-        if(levelId<3)
+
+        if (levelId < 10000) 
         {
             Debug.LogError("当前等级未到，不能展示蚕蛹");
             return false;

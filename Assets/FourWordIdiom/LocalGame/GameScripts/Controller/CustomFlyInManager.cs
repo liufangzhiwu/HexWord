@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -412,8 +412,8 @@ public class CustomFlyInManager : MonoBehaviour
         float distance = Vector3.Distance(start.position, endPosition);
         float speed = 20.0f; // 例如：每秒移动2个单位
         duration = distance / speed;
-        if(duration<0.45f) duration = 0.45f;
-        
+        if(duration<0.30f) duration = 0.30f;
+  
         // 根据距离计算移动时长
         Color color = Gold.GetComponent<Image>().color; // 获取当前颜色
         color.a = 0; // 设置透明度为 0
@@ -515,6 +515,88 @@ public class CustomFlyInManager : MonoBehaviour
        
        yield return new WaitForSeconds(5.0f);
        Destroy(Effect.gameObject);
+    }
+    
+    /// <summary>
+    /// 🌟 新增：专门用于棋盘金币收集的纯 DOTween 飞行方法（不影响任何老逻辑）
+    /// </summary>
+    /// <param name="start">起飞点</param>
+    /// <param name="target">目标点 (收集栏)</param>
+    /// <param name="onReachTarget">到达终点后的回调</param>
+    public void FlyInGoldAdvanced(Transform start, Transform target, Action onReachTarget, float durationOverride = -1f)
+    {
+        if (GoldPrefab == null) return;
+
+        // 1. 实例化克隆体，放在最顶层 UI 根节点，完全无视原有层级遮挡
+        GameObject goldClone = Instantiate(GoldPrefab, SystemManager.Instance._uiRoot);
+        goldClone.transform.position = start.position;
+        // 初始大小设为 0.8，防止比棋盘上的格子还大
+        goldClone.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
+        
+        Image img = goldClone.GetComponent<Image>();
+        if (img != null)
+        {
+            Color c = img.color;
+            c.a = 0; // 初始全透明
+            img.color = c;
+        }
+
+        // 2. 飞行参数计算
+        Vector3 startWorldPos = start.position;
+        Vector3 targetWorldPos = target.position;
+        float distance = Vector3.Distance(startWorldPos, targetWorldPos);
+        
+        // 根据屏幕距离动态计算飞行时间，最快 0.35 秒，最慢 0.8 秒，确保丝滑
+        // float duration = Mathf.Clamp(distance / 2000f, 0.35f, 0.8f);
+        float duration = durationOverride > 0 ? durationOverride : Mathf.Clamp(distance / 2000f, 0.35f, 0.8f);
+
+        // 3. 构建内置贝塞尔飞行路径 (智能判断防出界)
+        Vector3 midPos = (startWorldPos + targetWorldPos) / 2f;
+        
+        // 判断是“横向飞行”还是“纵向飞行”
+        if (Mathf.Abs(startWorldPos.x - targetWorldPos.x) > Mathf.Abs(startWorldPos.y - targetWorldPos.y))
+        {
+            // 【横向飞行】(例如树叶到收集栏)：跨越屏幕横向飞时，让Y轴向下或向上鼓起弧度
+            // 这里选择往下鼓起 ( -= )，弧线会像抛物线一样坠一下再进入钱袋，不仅不会出屏幕，手感还极佳
+            midPos.y -= distance * UnityEngine.Random.Range(0.15f, 0.3f); 
+        }
+        else
+        {
+            // 【纵向飞行】(例如棋盘底部到顶部收集栏)：上下飞时，让X轴随机左右鼓起防止连线
+            midPos.x += distance * UnityEngine.Random.Range(-0.25f, 0.25f);
+        }
+        Vector3[] path = new Vector3[] { startWorldPos, midPos, targetWorldPos };
+
+        // 4. 组装 DOTween 时间轴
+        Sequence seq = DOTween.Sequence();
+        seq.SetLink(goldClone); // 防报错护盾：如果场景切换导致克隆体销毁，动画自动安全停止
+        
+        // (1) 淡入显现
+        if (img != null) seq.Append(img.DOFade(1f, 0.25f));
+        
+        // (2) 沿弧线飞行
+        seq.Join(goldClone.transform.DOPath(path, duration, PathType.CatmullRom).SetEase(Ease.InQuad));
+        // (3) 飞行中伴随微缩，制造一种向远方/上方飞去的空间透视感
+        seq.Join(goldClone.transform.DOScale(new Vector3(0.55f, 0.55f, 0.55f), duration));
+        
+        // 5. 抵达终点后的处理
+        seq.OnComplete(() =>
+        {
+            if (img != null)
+            {
+                // 落地时花 0.1 秒快速淡出，然后销毁触发加分
+                img.DOFade(0f, 0.2f).OnComplete(() =>
+                {
+                    onReachTarget?.Invoke();
+                    Destroy(goldClone);
+                });
+            }
+            else
+            {
+                onReachTarget?.Invoke();
+                Destroy(goldClone);
+            }
+        });
     }
 }
 

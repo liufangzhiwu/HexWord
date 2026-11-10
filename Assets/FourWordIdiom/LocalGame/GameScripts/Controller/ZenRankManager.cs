@@ -136,6 +136,56 @@ public class ZenRankManager : MonoBehaviour
         CachedOldScore = 0;
         LastScoreUpdateTime = DateTime.MinValue;
     }
+    /// <summary>
+    /// 排行榜是否已解锁（包含老用户兼容）
+    /// </summary>
+    public bool IsOpen()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+
+        int unlockStage = GetUnlockStageCondition();
+        
+        // 条件 1：等级达标（新版本的新用户）
+        bool isLevelReached = GameDataManager.Instance.UserData.CurrentChessStage >= unlockStage;
+        // 条件 2：老用户豁免
+        // 因为 Zenlevel 建号就有默认值，所以改为判断 isJoinedZenRank。
+        // 只要他在老版本曾经成功加入过排位赛（向服务器确认过），就直接豁免解锁。
+        bool isAuditControlActive = OverallRankingManager.Instance != null && 
+                                    OverallRankingManager.Instance.AuditConfig != null && 
+                                    OverallRankingManager.Instance.AuditConfig.TotalSwitch && 
+                                    OverallRankingManager.Instance.AuditConfig.LotusHeartUnlockCondition > 0;
+
+        bool isLegacyUnlocked = !isAuditControlActive && GameDataManager.Instance.UserData.isJoinedZenRank;
+
+        return isLevelReached || isLegacyUnlocked;
+    }
+    
+    /// <summary>
+    /// 获取莲心榜【入口显示】所需关卡（优先使用服务器匹配的审核配置，否则回退默认设置）
+    /// </summary>
+    public int GetShowStageCondition()
+    {
+        var auditCfg = OverallRankingManager.Instance != null ? OverallRankingManager.Instance.AuditConfig : null;
+        // 如果服务器配置生效且配置了大于0的关卡数（如 1000_1005 中的 1000）
+        if (auditCfg != null && auditCfg.TotalSwitch && auditCfg.LotusHeartAppearCondition > 0)
+        {
+            return auditCfg.LotusHeartAppearCondition;
+        }
+        return AppGameSettings.ShowRequirements.ZenShowLevel;
+    }
+    /// <summary>
+    /// 获取莲心榜【功能解锁】所需关卡（优先使用服务器匹配的审核配置，否则回退默认设置）
+    /// </summary>
+    public int GetUnlockStageCondition()
+    {
+        var auditCfg = OverallRankingManager.Instance != null ? OverallRankingManager.Instance.AuditConfig : null;
+        // 如果服务器配置生效且配置了大于0的关卡数（如 1000_1005 中的 1005）
+        if (auditCfg != null && auditCfg.TotalSwitch && auditCfg.LotusHeartUnlockCondition > 0)
+        {
+            return auditCfg.LotusHeartUnlockCondition;
+        }
+        return AppGameSettings.UnlockRequirements.ZenOpenLevel;
+    }
     // ==========================================
     // 🌟 全局统一的排行榜数据请求接口
     // ==========================================
@@ -325,6 +375,12 @@ public class ZenRankManager : MonoBehaviour
     /// </summary>
     public IEnumerator CheckAndShowSettlementRoutine(string sourcePanel = null,System.Action<bool> onComplete = null)
     {
+        if (!IsOpen())
+        {
+            onComplete?.Invoke(false);
+            yield break;
+        }
+        
         bool isFetchFinished = false;
         bool hasSettlement = false;
         string oldLevelCode = "";

@@ -11,7 +11,6 @@ namespace Middleware
 {
     public class EditorTool
     {
-        [MenuItem("Tools/Test")]
         private static void Test()
         {
             var icon = "Assets/Middleware/Resource/icon.png";
