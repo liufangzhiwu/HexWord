@@ -179,7 +179,9 @@ public class ZenRankButton : MonoBehaviour
         
         bool isLegacyOpened = ZenRankManager.Instance.IsOpen();
         // 1. 达到展示等级才显示按钮
-        int currentStage = GameDataManager.Instance.UserData.CurrentChessStage;
+        // HexWord 双模式：取两种玩法里更靠前的进度，避免六边形玩家客户端看不到入口
+        int currentStage = Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage,
+                                     GameDataManager.Instance.UserData.CurrentChessStage);
         bool isShow = currentStage > showStage || isLegacyOpened;
         if (rankBtn.transform.parent != null)
             rankBtn.transform.parent.gameObject.SetActive(isShow);

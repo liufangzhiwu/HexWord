@@ -60,8 +60,9 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     {
         if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
        
-        // 条件 1：等级达标（新版本的新用户）
-        bool isLevelReached = GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode;
+        // 条件 1：等级达标（新版本的新用户）—— HexWord 双模式：六边形 / 拼字任一达标即可
+        bool isLevelReached = GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
+                              || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode;
 
         // 条件 2：老用户豁免（只要他以前玩过限时活动，留下了时间戳或完成过轮次，就默认解锁）
         bool isLegacyUnlocked = GameDataManager.Instance.UserData.timerePuzzleid > 0 || 

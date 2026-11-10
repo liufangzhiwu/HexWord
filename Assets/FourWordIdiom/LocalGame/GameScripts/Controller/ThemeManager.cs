@@ -268,8 +268,9 @@ public class ThemeManager : Singleton<ThemeManager>
     {
         if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
 
-        // 条件 1：等级达标
-        bool isLevelReached = GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ThemeOpenLevel;
+        // 条件 1：等级达标 —— HexWord 双模式：六边形 / 拼字任一达标即可
+        bool isLevelReached = GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.ThemeOpenLevel
+                              || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ThemeOpenLevel;
 
         // 条件 2：老用户豁免（只要拥有超过1个主题，或者身上曾经攒过金箔，说明他以前玩过皮肤系统）
         // 假设默认初始有一个主题，所以 Count > 1；如果一开始啥都没有，那就是 Count > 0
