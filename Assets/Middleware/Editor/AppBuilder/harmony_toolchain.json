@@ -3,5 +3,8 @@
   "signingKeystoreDir": "D:/GitFork/HexWordTemp/platform/Harmony",
   "outputDirName": "Harmony",
   "projectDirName": "project",
-  "buildAssetBundles": false
+  "buildAssetBundles": false,
+  "compileSdkVersion": "",
+  "targetSdkVersion": "",
+  "compatibleSdkVersion": ""
 }

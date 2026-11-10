@@ -146,6 +146,7 @@ namespace Middleware
         ///   ① Unity 导出 OpenHarmony 工程   —— BuildPipeline.BuildPlayer
         ///   ② 重放 ArkTS 加固补丁           —— 导出时工程被重建，手改 .ets 会被覆盖
         ///   ③ 注入签名配置                 —— 导出模板里 signingConfigs 恒为空数组
+        ///   ③.1 写入 SDK 版本               —— 导出模板不带 targetSdkVersion，target 会随本机 SDK 漂移
         ///   ④ ohpm install                 —— 新导出不带 oh_modules
         ///   ⑤ hvigor assembleHap           —— 产出 entry-default-signed.hap
         ///
@@ -251,6 +252,13 @@ namespace Middleware
             // ---------- ③ 签名配置 ----------
             Debug.Log("[Harmony] ③ 注入签名配置");
             if (!HarmonySigning.Inject(harProject, cfg, buildParam.IsBuildRelease, out error)) return null;
+
+            // ---------- ③.1 SDK 版本（compileSdk / targetSdk）----------
+            // 必须每次导出都重写：Unity 导出的 build-profile.json5 不带这两个字段，
+            // 不显式写死的话 target 会跟着本机 DevEco SDK 漂移，也不满足应用市场的目标 API 要求。
+            Debug.Log("[Harmony] ③.1 写入 compileSdkVersion / targetSdkVersion");
+            if (!HarmonySdkVersion.Apply(harProject, cfg, out error, out var sdkLog)) return null;
+            if (!string.IsNullOrEmpty(sdkLog)) Debug.Log("    " + sdkLog);
 
             // ---------- ④ ohpm install ----------
             // 必须每次都执行：Unity 重新导出会改写 oh-package.json5，
@@ -729,6 +737,23 @@ namespace Middleware
             /// <summary>打包前是否重新构建 AssetBundle（默认否，AB 已预构建）</summary>
             public bool buildAssetBundles = false;
 
+            /// <summary>
+            /// 写入 build-profile.json5 的 compileSdkVersion（如 "26.0.0" / "6.0.0(20)"）。
+            /// 留空 = 跟随 targetSdkVersion（约束：compile ≥ target ≥ compatible）。
+            /// </summary>
+            public string compileSdkVersion = "";
+            /// <summary>
+            /// 写入 build-profile.json5 的 targetSdkVersion（应用市场「目标 API 版本」）。
+            /// 留空 = 自动：本机 SDK ≥ 26.0.0 时对齐 SDK 版本，低于 26.0.0 则不写（保持导出默认）。
+            /// 填了但本机 SDK 版本不够 → 直接报错并提示升级 DevEco Studio。
+            /// </summary>
+            public string targetSdkVersion = "";
+            /// <summary>
+            /// 写入 build-profile.json5 的 compatibleSdkVersion（最低可安装版本）。
+            /// 留空 = 保持 Unity 导出的值（升级 target 时不要抬高它，否则老设备装不上）。
+            /// </summary>
+            public string compatibleSdkVersion = "";
+
             public string keystorePath(string fileName) => Path.Combine(signingKeystoreDir, fileName);
 
             public string certFileName(bool isRelease) => isRelease ? "hexa_release.cer" : "hexa_debug.cer";
@@ -888,6 +913,218 @@ namespace Middleware
                 File.WriteAllText(bp, text, new UTF8Encoding(false));
                 Debug.Log($"[Harmony] 签名配置已注入（cert={cert}）");
                 return true;
+            }
+        }
+
+        #endregion
+
+        #region SDK 版本注入
+
+        /// <summary>
+        /// 把 compileSdkVersion / targetSdkVersion 显式写进 build-profile.json5 的 products。
+        ///
+        /// 为什么必须显式写：
+        ///   · Unity(Tuanjie) 导出的 build-profile.json5 只带 compatibleSdkVersion，
+        ///     compileSdk / targetSdk 留空 —— hvigor 按本机 SDK 隐式取值，
+        ///     换一台 DevEco 产物就变（target 20 → 26 …），既不可复现，也不满足应用市场
+        ///     「目标 API 版本」的升级要求（平台已在提审/检测里提示 targetSdkVersion 升级至 26.0.0）。
+        ///   · 从 HarmonyOS 7.0(API 26.0.0) 起，三个版本字段统一成语义化字符串 "26.0.0"，
+        ///     之前的格式是 "6.0.0(20)"（X.Y.Z(API)），两种写法 hvigor 都认。
+        ///
+        /// 取值规则（harmony_toolchain.json，留空即默认）：
+        ///   · targetSdkVersion 留空 → 自动：本机 SDK 平台版本 ≥ 26.0.0 时显式对齐 SDK 版本；
+        ///                              低于 26.0.0 时不写入（保持导出默认，避免 hvigor 直接报错）
+        ///   · targetSdkVersion 指定 → 严格写入；本机 SDK 低于要求版本时直接失败并提示升级 DevEco
+        ///   · compileSdkVersion 留空 → 跟随 targetSdkVersion（约束：compile ≥ target ≥ compatible）
+        ///   · compatibleSdkVersion 留空 → 保持导出值（最低可安装版本，升 target 时不应抬高它）
+        /// </summary>
+        private static class HarmonySdkVersion
+        {
+            private static readonly Regex ProductsBlock =
+                new Regex("\"products\"\\s*:\\s*\\[(?<body>.*?)\\]", RegexOptions.Singleline);
+
+            private static readonly Regex ProductObject =
+                new Regex("\\{(?<body>[^{}]*)\\}", RegexOptions.Singleline);
+
+            /// <summary>compile/target 两个版本键（值可能是 "26.0.0" 或 "6.0.0(20)"），连同尾随逗号一起匹配。</summary>
+            private static readonly Regex SdkVersionKeys = new Regex(
+                "\"\\s*(?:compileSdkVersion|targetSdkVersion)\\s*\"\\s*:\\s*\"[^\"]*\"\\s*,?",
+                RegexOptions.Singleline);
+
+            /// <summary>compatibleSdkVersion 只有显式配置覆盖时才动，默认必须保留导出值（否则最低系统版本被抬高）。</summary>
+            private static readonly Regex CompatibleKey = new Regex(
+                "\"\\s*compatibleSdkVersion\\s*\"\\s*:\\s*\"[^\"]*\"\\s*,?",
+                RegexOptions.Singleline);
+
+            /// <summary>
+            /// 返回 false 表示流水线应中止（配置要求了 target，但本机 SDK 不满足）。
+            /// log 是给人看的执行说明，写进 Editor 日志。
+            /// </summary>
+            public static bool Apply(string exportDir, HarmonyToolchainConfig cfg, out string error, out string log)
+            {
+                error = null;
+                log = null;
+
+                var bp = Path.Combine(exportDir, "build-profile.json5");
+                if (!File.Exists(bp))
+                {
+                    error = "找不到 build-profile.json5，导出目录结构异常: " + exportDir;
+                    return false;
+                }
+
+                var wantTarget = (cfg.targetSdkVersion ?? "").Trim();
+                var wantCompile = (cfg.compileSdkVersion ?? "").Trim();
+                var wantCompatible = (cfg.compatibleSdkVersion ?? "").Trim();
+
+                var sdkKnown = TryReadInstalledSdk(cfg.devEcoHome, out var sdkPlatform, out var sdkApi);
+                var sdkDesc = sdkKnown ? $"{sdkPlatform}(API {sdkApi})" : "未知";
+
+                string compile, target;
+                if (string.IsNullOrEmpty(wantTarget))
+                {
+                    if (!sdkKnown)
+                    {
+                        log = "读不到本机 SDK 版本 → 不写入 compileSdk/targetSdk，target 由编译 SDK 决定";
+                        return true;
+                    }
+                    if (Major(sdkPlatform) < 26)
+                    {
+                        log = $"本机 SDK {sdkDesc} < 26.0.0 → 不写入 compileSdk/targetSdk（target 仍等于编译 SDK）。" +
+                              "平台已建议升级至 26.0.0，升级 DevEco Studio 后会自动生效";
+                        return true;
+                    }
+                    target = sdkPlatform;
+                    compile = wantCompile.Length > 0 ? wantCompile : sdkPlatform;
+                }
+                else
+                {
+                    target = wantTarget;
+                    compile = wantCompile.Length > 0 ? wantCompile : wantTarget;
+
+                    if (!sdkKnown)
+                    {
+                        error = $"harmony_toolchain.json 指定了 targetSdkVersion={target}，但读不到本机 SDK 版本。\n" +
+                                "请确认 devEcoHome 指向 DevEco Studio 安装目录（含 sdk/default/sdk-pkg.json）。";
+                        return false;
+                    }
+                    if (Major(sdkPlatform) < Major(target))
+                    {
+                        error = $"targetSdkVersion 要求 {target}，但本机 DevEco Studio 的 SDK 只有 {sdkDesc}。\n\n" +
+                                "请先升级 DevEco Studio 到 26.0.0（HarmonyOS 7.0 配套，从 6.0.0 起 IDE 已内置对应 SDK），" +
+                                "再重新出包；\n" +
+                                "或把 Assets/Middleware/Editor/AppBuilder/harmony_toolchain.json 的 " +
+                                "targetSdkVersion 置空，让 target 跟随本机 SDK。";
+                        return false;
+                    }
+                    if (Major(compile) < Major(target))
+                    {
+                        error = $"compileSdkVersion({compile}) 不能低于 targetSdkVersion({target})。\n" +
+                                "hvigor 要求 compile ≥ target ≥ compatible。";
+                        return false;
+                    }
+                }
+
+                var text = File.ReadAllText(bp);
+                var block = ProductsBlock.Match(text);
+                if (!block.Success)
+                {
+                    error = "build-profile.json5 里找不到 products 节点，无法写入 SDK 版本";
+                    return false;
+                }
+
+                var body = block.Groups["body"].Value;
+                var patched = ProductObject.Replace(body, mo => PatchProduct(mo.Groups["body"].Value, compile, target, wantCompatible));
+                if (patched == body)
+                {
+                    log = "products 为空，未写入 SDK 版本";
+                    return true;
+                }
+
+                var start = block.Groups["body"].Index;
+                text = text.Substring(0, start) + patched + text.Substring(start + body.Length);
+                File.WriteAllText(bp, text, new UTF8Encoding(false));
+
+                log = $"compileSdkVersion={compile}, targetSdkVersion={target}, " +
+                      (wantCompatible.Length > 0 ? $"compatibleSdkVersion={wantCompatible}" : "compatibleSdkVersion 保持导出值");
+                return true;
+            }
+
+            /// <summary>给单个 product 对象写入版本键（幂等：先删后插，重复执行结果一致）。</summary>
+            private static string PatchProduct(string body, string compile, string target, string compatible)
+            {
+                // 只删 compile/target（Unity 导出通常没有，手工改过/二次导出可能残留）；
+                // compatibleSdkVersion 是「最低可安装版本」，除非显式覆盖，否则必须保留导出值。
+                var core = SdkVersionKeys.Replace(body, "");
+                if (!string.IsNullOrEmpty(compatible))
+                    core = CompatibleKey.Replace(core, "");
+
+                core = core.Trim();
+                core = Regex.Replace(core, @",\s*$", "");
+                core = Regex.Replace(core, @"\n\s*\n", "\n");
+
+                var sb = new StringBuilder();
+                sb.Append("\n        \"compileSdkVersion\": \"").Append(compile).Append("\",");
+                sb.Append("\n        \"targetSdkVersion\": \"").Append(target).Append("\",");
+                if (!string.IsNullOrEmpty(compatible))
+                    sb.Append("\n        \"compatibleSdkVersion\": \"").Append(compatible).Append("\",");
+                sb.Append("\n        ").Append(core).Append("\n      ");
+                return sb.ToString();
+            }
+
+            /// <summary>读本机 DevEco SDK 版本；拿不到就当未知（不阻断默认流程）。</summary>
+            private static bool TryReadInstalledSdk(string devEcoHome, out string platformVersion, out string apiVersion)
+            {
+                platformVersion = null;
+                apiVersion = null;
+                if (string.IsNullOrEmpty(devEcoHome)) return false;
+
+                // sdk/default/sdk-pkg.json（DevEco 5.1+ / 6.0 起预置 SDK）：
+                //   {"data":{"apiVersion":"20","platformVersion":"6.0.0","version":"6.0.0.47",...}}
+                var pkg = Path.Combine(devEcoHome, "sdk", "default", "sdk-pkg.json");
+                if (File.Exists(pkg))
+                {
+                    var json = File.ReadAllText(pkg);
+                    apiVersion = Match(json, "apiVersion");
+                    var platform = Match(json, "platformVersion");
+                    platformVersion = string.IsNullOrEmpty(platform) ? ShortVersion(Match(json, "version")) : platform;
+                }
+
+                // 兜底：老版本 DevEco / Tuanjie 内置 SDK 只有 <api>/ets/oh-uni-package.json
+                if (string.IsNullOrEmpty(platformVersion))
+                {
+                    var uni = Path.Combine(devEcoHome, "sdk", "default", "openharmony", "ets", "oh-uni-package.json");
+                    if (File.Exists(uni))
+                    {
+                        var json = File.ReadAllText(uni);
+                        apiVersion = Match(json, "apiVersion");
+                        platformVersion = ShortVersion(Match(json, "version"));
+                    }
+                }
+
+                return !string.IsNullOrEmpty(platformVersion);
+            }
+
+            /// <summary>从 json 文本里取 "key": "value" 的字符串值（这些文件结构固定，不必完整反序列化）。</summary>
+            private static string Match(string json, string key)
+            {
+                var m = Regex.Match(json, "\"" + key + "\"\\s*:\\s*\"(?<v>[^\"]+)\"");
+                return m.Success ? m.Groups["v"].Value : null;
+            }
+
+            /// <summary>"6.0.0.47" → "6.0.0"；"26.0.0" 原样返回。</summary>
+            private static string ShortVersion(string full)
+            {
+                if (string.IsNullOrEmpty(full)) return "";
+                var parts = full.Split('.');
+                return parts.Length <= 3 ? full : string.Join(".", parts.Take(3));
+            }
+
+            /// <summary>取版本号里的第一段数字：'6.0.0(20)' → 6，'26.0.0' → 26。</summary>
+            private static int Major(string version)
+            {
+                if (string.IsNullOrEmpty(version)) return int.MaxValue;
+                var m = Regex.Match(version, "\\d+");
+                return m.Success && int.TryParse(m.Value, out var v) ? v : int.MaxValue;
             }
         }
 
