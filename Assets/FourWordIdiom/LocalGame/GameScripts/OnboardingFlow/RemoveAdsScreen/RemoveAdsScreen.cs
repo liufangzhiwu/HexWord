@@ -102,13 +102,9 @@ public class RemoveAdsScreen : UIWindow
 
     private string FormatRemain(double seconds)
     {
-        TimeSpan span = TimeSpan.FromSeconds(seconds);
-        int days = (int)span.TotalDays;
-        if (days > 0)
-            return $"{days}天 {span.Hours:00}:{span.Minutes:00}:{span.Seconds:00}";
-        if (span.Hours > 0)
-            return $"{span.Hours:00}:{span.Minutes:00}:{span.Seconds:00}";
-        return $"{span.Minutes:00}:{span.Seconds:00}";
+        // ★ 与复购礼包倒计时统一格式（X小时Y分，HourSymbol/MinuteSymbol 走多语言），
+        //   以前这里是「X天 HH:mm:ss / HH:mm:ss / mm:ss」，和礼包弹窗两种风格。
+        return UIUtilities.FormatTimeRemaining(TimeSpan.FromSeconds(Math.Max(0d, seconds)));
     }
 
     /// <summary>多语言取值，缺失时回退中文兜底。</summary>

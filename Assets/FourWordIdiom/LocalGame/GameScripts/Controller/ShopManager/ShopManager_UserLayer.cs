@@ -983,6 +983,14 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
+        // 条件3：结算页其它弹窗（插屏 / 七日胜利 / 灯明心悟 / 新手奖励进度 / 锦鲤竞速开始 等）
+        //   ★ 与复购同一口径：这些更优先的弹窗会弹时，破冰礼包不弹
+        if (IsSettlementOtherPopupShowing())
+        {
+            LogShop("TryShowBreakIcePopup 跳过: 结算页已有其它弹窗/插屏在展示");
+            return false;
+        }
+
         // 本地与云端均无去广告（永久去广告 / 限时去广告生效中都不弹）
         if (IsRemoveAdsOwned() || IsRemoveAdsActive())
         {
@@ -1458,6 +1466,13 @@ public partial class ShopManager : MonoBehaviour
     public void PlayPreparedSettlementGiftPopup()
     {
         if (!_settlementGiftPopupPending) return;
+
+        // ★ 到点前再确认一次：结算页已经被插屏 / 七日胜利 / 灯明心悟 / 锦鲤竞速等占住 → 礼包不弹（按钮保留）
+        if (IsSettlementOtherPopupShowing())
+        {
+            CancelPreparedSettlementGiftPopup("到点时有更优先的结算页弹窗/插屏在展示");
+            return;
+        }
 
         _settlementGiftPopupPending = false;
         LogShop($"[结算礼包] 预登记礼包到点弹窗: kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");

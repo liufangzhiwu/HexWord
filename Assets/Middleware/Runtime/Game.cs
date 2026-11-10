@@ -278,18 +278,24 @@ namespace Middleware
             // 归因初始化失败不能影响游戏主流程，单独兜底
             try
             {
-#if UNITY_HUAWEI
+#if UNITY_EDITOR
+                Attributes = new EmptyAttribution();
+                Attributes.Init(0.1f);
+#elif UNITY_HUAWEI
                 // 华为安卓：客户端查智能分包(channel/taskid/callback) + AGC 服务端事件回传
                 Attributes = new HuaWeiAttribution();
-#elif UNITY_OPENHARMONY
+                 Attributes.Init(0.1f);
+#elif UNITY_OPENHARMONY&&!UNITY_EDITOR
                 // 鸿蒙：客户端无渠道查询接口，走「应用归因服务」登记转化事件，
                 // 归因结果由华为回传服务端
                 Attributes = new HarmonyAttribution();
+                Attributes.Init(0.1f);
 #else
                 // iOS / 非华为安卓 / 编辑器：暂无归因实现
                 Attributes = new EmptyAttribution();
+                 Attributes.Init(0.1f);
 #endif
-                Attributes.Init(0.1f);
+               
                 // 便于在 hilog 里确认实际走的归因实现（排除"包没更新"的干扰）。
                 // 用 Warning 级：部分日志导出工具会过滤 Info 级。
                 Debug.LogWarning($"[Attr] 归因实现已就绪: {Attributes.GetType().Name}, delay=0.1s");

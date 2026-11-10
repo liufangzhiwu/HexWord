@@ -175,7 +175,7 @@ public class GiftItem : MonoBehaviour
     /// false：只填图标 sprite 与数量文字，其它表现全部交给 Prefab（AdsDiscountScreen 用）。
     /// </param>
     public void SetShopData(List<string> data, int itemid, Color color, string des = "", string pointdes = "",
-        bool applyStyle = true)
+        bool applyStyle = true, string coinIconName = null)
     {
         string spritename = "";
         shopid = itemid;
@@ -206,7 +206,8 @@ public class GiftItem : MonoBehaviour
         switch (int.Parse(data[0]))
         {
             case (int)LimitRewordType.Coins:
-                spritename = "gold2";
+                // 金币图默认 gold2；复购礼包的大额金币（≥5000）由调用方传 gold4
+                spritename = string.IsNullOrEmpty(coinIconName) ? "gold2" : coinIconName;
                 countText.text = data[1];
                 SetIconSize(new Vector2(280f, 350f));
                 SetIconAnchoredPosition(new Vector2(0f, -10f));
@@ -276,6 +277,13 @@ public class GiftItem : MonoBehaviour
         }
 
         Sprite sprite = LoadShopIcon(spritename);
+        if (sprite == null && !string.IsNullOrEmpty(coinIconName))
+        {
+            // 大额/中额金币图还没打进图集时兜底回默认金币图，避免图标空白或残留上一次的图
+            sprite = LoadShopIcon("gold2");
+            if (sprite != null)
+                Debug.LogWarning($"[GiftItem] 金币图 {coinIconName} 未在图集里，已回退 gold2");
+        }
         if (sprite != null)
         {
             shopIcon.sprite = sprite;
@@ -296,6 +304,115 @@ public class GiftItem : MonoBehaviour
     {
         if (bonusTag != null)
             bonusTag.SetActive(isBonus);
+    }
+
+    // ======================= 复购弹窗：奖励图标按资源类型定尺寸 =======================
+
+    /// <summary>Prefab 上 shopIcon 的默认尺寸 / 位置（复购图标覆盖前先还原，避免池子复用残留）</summary>
+    private Vector2 _defaultIconSize;
+    private Vector2 _defaultIconPos;
+    private bool _defaultIconCached;
+
+    private void CacheDefaultIconLayout()
+    {
+        if (_defaultIconCached || shopIcon == null) return;
+
+        RectTransform rt = shopIcon.rectTransform;
+        _defaultIconSize = rt.sizeDelta;
+        _defaultIconPos = rt.anchoredPosition;
+        _defaultIconCached = true;
+    }
+
+    /// <summary>
+    /// 复购弹窗专用：按奖励资源类型覆盖 shopIcon 的 x 坐标与宽高（y 保持当前值）。
+    /// 不走 _applyStyle 开关（弹窗调用 SetShopData 时传的是 applyStyle:false，但这套参数是运营口径）：
+    ///   体力 InfiniteEnergy(9) → 原图大小
+    ///   火箭 AutoComplete(3)   → x = -14，250 x 220
+    ///   灯泡 Tipstool(2)       → x = 0，  195 x 230
+    ///   复活 ReStartTool(8)    → x = 0，  135 x 190
+    ///   蝴蝶 Butterfly(1)      → x = 0，  160 x 220
+    ///   去广告 RemoveAds(6)/RemoveDayAds(7) → x = 0，175 x 150
+    ///   其它（金币等）         → 还原 Prefab 默认
+    /// </summary>
+    public void ApplyRepurchaseIconLayout(int type)
+    {
+        if (shopIcon == null) return;
+
+        CacheDefaultIconLayout();
+
+        RectTransform rt = shopIcon.rectTransform;
+
+        // 先还原 Prefab 默认，再按类型覆盖（同一个格子会被不同礼包复用）
+        rt.sizeDelta = _defaultIconSize;
+        rt.anchoredPosition = _defaultIconPos;
+
+        switch (type)
+        {
+            case (int)LimitRewordType.InfiniteEnergy:
+                if (shopIcon.sprite != null) shopIcon.SetNativeSize();
+                return;
+
+            case (int)LimitRewordType.AutoComplete:
+                SetIconLayoutRaw(-14f, 250f, 220f);
+                return;
+
+            case (int)LimitRewordType.Tipstool:
+                SetIconLayoutRaw(0f, 195f, 230f);
+                return;
+
+            case (int)LimitRewordType.ReStartTool:
+                SetIconLayoutRaw(0f, 135f, 190f);
+                return;
+
+            case (int)LimitRewordType.Butterfly:
+                SetIconLayoutRaw(0f, 160f, 220f);
+                return;
+
+            case (int)LimitRewordType.RemoveAds:
+            case (int)LimitRewordType.RemoveDayAds:
+                SetIconLayoutRaw(0f, 175f, 150f);
+                return;
+
+            default:
+                return;
+        }
+    }
+
+    /// <summary>解析奖励数据（"类型;数量"）后套用复购图标布局。</summary>
+    public void ApplyRepurchaseIconLayout(List<string> data)
+    {
+        if (data == null || data.Count < 1) return;
+
+        int type;
+        if (int.TryParse(data[0], out type))
+            ApplyRepurchaseIconLayout(type);
+    }
+
+    /// <summary>
+    /// 把 shopIcon 还原成 Prefab 默认的尺寸/位置。
+    /// 非复购弹窗（破冰 / 商店限时折扣）走这里，避免复用池子时残留上一次复购的图标尺寸。
+    /// </summary>
+    public void ResetIconLayout()
+    {
+        if (shopIcon == null) return;
+
+        CacheDefaultIconLayout();
+
+        RectTransform rt = shopIcon.rectTransform;
+        rt.sizeDelta = _defaultIconSize;
+        rt.anchoredPosition = _defaultIconPos;
+    }
+
+    /// <summary>只改 x（y 不动）+ 宽高，绕过 _applyStyle 开关。</summary>
+    private void SetIconLayoutRaw(float x, float width, float height)
+    {
+        if (shopIcon == null) return;
+
+        RectTransform rt = shopIcon.rectTransform;
+        Vector2 pos = rt.anchoredPosition;
+        pos.x = x;
+        rt.anchoredPosition = pos;
+        rt.sizeDelta = new Vector2(width, height);
     }
 
     // ======================= countText：giftHengItem 时不修改 =======================

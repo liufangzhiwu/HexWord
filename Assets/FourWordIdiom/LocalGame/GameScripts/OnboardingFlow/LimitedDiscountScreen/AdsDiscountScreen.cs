@@ -71,14 +71,29 @@ public class AdsDiscountScreen : UIWindow
     private const float BreakIceGridSpacingX = 80f;
 
     /// <summary>复购弹窗奖励容器的 GridLayoutGroup 左边距（Padding.Left）</summary>
-    private const int RepurchaseGridPaddingLeft = 20;
+    private const int RepurchaseGridPaddingLeft = 62;
     /// <summary>复购弹窗奖励网格的横向间距</summary>
     private const float RepurchaseGridSpacingX = 10f;
+
+    /// <summary>复购弹窗、奖励 = 7 个时奖励容器的左边距（Padding.Left）</summary>
+    private const int RepurchaseSevenGridPaddingLeft = 213;
+    /// <summary>复购弹窗、奖励 = 7 个时奖励网格的横向间距</summary>
+    private const float RepurchaseSevenGridSpacingX = -60f;
 
     /// <summary>圆满礼包（Box4）：与它共用背景图的礼包，标题描边统一用一套配色</summary>
     private const string YuanmanPackId = "Box4";
     /// <summary>与圆满礼包同背景图的礼包标题描边色：hsla(293, 100%, 25%, 1) ≈ #710080</summary>
     private static readonly Color HighPriceTitleOutline = new Color(0.4412f, 0f, 0.5f, 1f);
+
+    /// <summary>复购礼包里金币 ≥ 这个数时，奖励格的金币图标换成大额图 gold4</summary>
+    private const int HighValueCoinThreshold = 5000;
+    /// <summary>大额金币图标（图集 UI_Universal/ShopIcons）</summary>
+    private const string HighValueCoinIcon = "gold4";
+
+    /// <summary>复购礼包里金币 ∈ [1000, 5000) 时，金币图标换成 gold3</summary>
+    private const int MidValueCoinThreshold = 1000;
+    /// <summary>中额金币图标</summary>
+    private const string MidValueCoinIcon = "gold3";
 
     /// <summary>有折扣时价格文本的 y（相对原位置的上移量）</summary>
     private const float PriceYWithDiscount = -30f;
@@ -93,10 +108,19 @@ public class AdsDiscountScreen : UIWindow
     /// <summary>奖励数量 &gt; 3 时礼包大图的 y</summary>
     private const float GiftIconYLarge = 120f;
 
+    /// <summary>复购弹窗：奖励 &gt; 3 个时 RewardBg / giftItems 的高度</summary>
+    private const float RepurchaseRewardBgHeightLarge = 430f;
+    /// <summary>复购弹窗：奖励 &gt; 3 个时礼包大图的 y</summary>
+    private const float RepurchaseGiftIconYLarge = 50f;
+
     /// <summary>Prefab 上的默认礼包图（映射表里没有对应礼包时用它回填）</summary>
     private Sprite _defaultGiftIcon;
     private Sprite _defaultGiftBg;
     private bool _defaultGiftArtCached;
+
+    /// <summary>Prefab 上礼包大图的默认尺寸（复购 &gt;3 个时改成原图大小，其它情况要还原）</summary>
+    private Vector2 _defaultGiftIconSize;
+    private bool _defaultGiftIconSizeCached;
 
     /// <summary>奖励容器的默认排版（7 个奖励以外的数量用默认值）</summary>
     private bool _defaultRewardLayoutCached;
@@ -241,8 +265,9 @@ public class AdsDiscountScreen : UIWindow
         if (discountObj != null) discountObj.SetActive(hasDiscount);
         if (discountText != null) discountText.gameObject.SetActive(hasDiscount);
 
-        InitPriceText(hasDiscount);
-        ApplyPriceTextAnchor(hasDiscount);
+        // 划线原价是否真的显示（折扣文案解析失败 / 没配原价时会隐藏），价格文本的 y 跟着它走
+        bool discountShown = InitPriceText(hasDiscount);
+        ApplyPriceTextAnchor(discountShown);
 
         if (timeText != null)
             timeText.gameObject.SetActive(HasCountdown());
@@ -346,14 +371,17 @@ public class AdsDiscountScreen : UIWindow
         }
 
         bool chuxin = produceNameId == ChuxinPackId;
+        // ★ 复购弹窗里：和初心礼包（Box0）共用同一张背景图的礼包（当前 lowPricebg = Box0/Box1/Box2）
+        //   标题描边也用初心那套蓝色
+        bool sameBgAsChuxin = !chuxin && IsRepurchasePopup() && UsesSameBgAs(produceNameId, ChuxinPackId);
         bool breakIce = IsBreakIcePopup();
-        bool sameBgAsYuanman = UsesSameBgAsYuanman(produceNameId);
+        bool sameBgAsYuanman = UsesSameBgAs(produceNameId, YuanmanPackId);
 
         // 需要特殊描边的礼包配色；null = 用 Prefab 默认色
-        // 优先级：破冰（去广告周卡） > 初心 Box0 > 与圆满礼包同背景图的礼包
+        // 优先级：破冰（去广告周卡） > 初心 Box0 / 与初心同背景图 > 与圆满礼包同背景图的礼包
         Color? specialColor = breakIce
             ? BreakIceTitleOutline
-            : (chuxin
+            : ((chuxin || sameBgAsChuxin)
                 ? ChuxinTitleOutline
                 : (sameBgAsYuanman ? HighPriceTitleOutline : (Color?)null));
 
@@ -373,22 +401,25 @@ public class AdsDiscountScreen : UIWindow
             Debug.Log("[AdsDiscountScreen] 破冰礼包标题描边: hsla(268,94%,25%,1)");
         else if (chuxin)
             Debug.Log("[AdsDiscountScreen] 初心礼包标题描边: hsla(227,100%,33%,1)");
+        else if (sameBgAsChuxin)
+            Debug.Log($"[AdsDiscountScreen] 复购弹窗：{produceNameId} 与初心礼包同背景图 → 标题描边: hsla(227,100%,33%,1)");
         else if (sameBgAsYuanman)
             Debug.Log("[AdsDiscountScreen] 与圆满礼包同背景图 → 标题描边: hsla(293,100%,25%,1)");
     }
 
     /// <summary>
-    /// 该礼包是否和圆满礼包（Box4）共用同一张背景图。
-    /// 按「背景图 sprite 名」比较，映射表以后调整分组也能自动跟上（当前 highPricebg 分组 = Box3 / Box4）。
+    /// 该礼包是否和参照礼包（初心 Box0 / 圆满 Box4）共用同一张背景图。
+    /// 按「背景图 sprite 名」比较，映射表以后调整分组也能自动跟上
+    /// （当前 lowPricebg = Box0/Box1/Box2，highPricebg = Box3/Box4）。
     /// </summary>
-    private static bool UsesSameBgAsYuanman(string produceNameId)
+    private static bool UsesSameBgAs(string produceNameId, string referencePackId)
     {
-        if (string.IsNullOrEmpty(produceNameId)) return false;
+        if (string.IsNullOrEmpty(produceNameId) || string.IsNullOrEmpty(referencePackId)) return false;
 
-        string bg, yuanmanBg;
+        string bg, refBg;
         if (!GiftBgSprites.TryGetValue(produceNameId, out bg) || string.IsNullOrEmpty(bg)) return false;
-        if (!GiftBgSprites.TryGetValue(YuanmanPackId, out yuanmanBg) || string.IsNullOrEmpty(yuanmanBg)) return false;
-        return bg == yuanmanBg;
+        if (!GiftBgSprites.TryGetValue(referencePackId, out refBg) || string.IsNullOrEmpty(refBg)) return false;
+        return bg == refBg;
     }
 
     private string GetTitleText()
@@ -427,14 +458,60 @@ public class AdsDiscountScreen : UIWindow
         return _mode == ShopManager.GiftPopupMode.Repurchase;
     }
 
-    private void InitPriceText(bool needDiscount)
+    /// <summary>
+    /// 复购弹窗里的金币奖励按数量换图标（其它弹窗返回 null → GiftItem 默认 gold2）：
+    ///   ≥ 5000        → gold4
+    ///   1000 ~ 4999   → gold3
+    ///   &lt; 1000        → gold2（默认）
+    /// </summary>
+    private string GetCoinIconName(List<string> item)
+    {
+        if (item == null || item.Count < 2) return null;
+
+        int type, count;
+        if (!int.TryParse(item[0], out type) || type != (int)LimitRewordType.Coins) return null;
+        if (!int.TryParse(item[1], out count)) return null;
+
+        return GetCoinIconName(count);
+    }
+
+    private string GetCoinIconName(int coinCount)
+    {
+        if (!IsRepurchasePopup()) return null;
+
+        if (coinCount >= HighValueCoinThreshold) return HighValueCoinIcon;   // gold4
+        if (coinCount >= MidValueCoinThreshold) return MidValueCoinIcon;     // gold3
+        return null;                                                          // gold2（默认）
+    }
+
+    /// <summary>
+    /// 复购弹窗：奖励图标按资源类型调整 x / 宽高（体力按原图）。
+    /// 其它弹窗（破冰 / 商店限时折扣）还原 Prefab 的默认表现，避免复用池子残留上一次的尺寸。
+    /// </summary>
+    private void ApplyRepurchaseRewardIcon(GiftItem item, List<string> data)
+    {
+        if (item == null) return;
+
+        if (IsRepurchasePopup())
+            item.ApplyRepurchaseIconLayout(data);
+        else
+            item.ResetIconLayout();
+    }
+
+    /// <summary>
+    /// 价格区：现价 + 划线原价。
+    /// 返回「划线原价是否真的显示」——InitUI 据此决定价格文本的 y（有折扣时才下移）。
+    /// </summary>
+    private bool InitPriceText(bool needDiscount)
     {
         if (currentShopItem == null)
         {
             Debug.LogWarning("[AdsDiscountScreen] 当前商店项为空");
             ShowLoadingState(true);
-            return;
+            return false;
         }
+
+        bool discountShown = false;
 
         try
         {
@@ -446,32 +523,108 @@ public class AdsDiscountScreen : UIWindow
 
             if (needDiscount)
             {
-                if (float.TryParse(currentShopItem.discount.TrimEnd('%'), out float discountPercent))
+                decimal originalPrice;
+                if (TryGetOriginalPrice(currentShopItem, out originalPrice))
                 {
-                    discountPercent = Mathf.Abs(discountPercent);
-                    decimal discountRate = (decimal)(discountPercent / 100f);
-                    decimal originalPrice = (decimal)price / discountRate;
                     if (discountText != null)
                         discountText.text = UIUtilities.FormatCurrency(originalPrice, culture);
 
                     Text badgeText = discountObj != null ? discountObj.GetComponentInChildren<Text>() : null;
                     if (badgeText != null)
                         badgeText.text = $"{currentShopItem.discount}";
+
+                    discountShown = true;
+                    Debug.Log($"[AdsDiscountScreen] 划线原价: {originalPrice}（现价 {price}, 折扣文案={currentShopItem.discount}）");
                 }
                 else
                 {
-                    Debug.LogWarning($"[AdsDiscountScreen] 折扣格式无效: {currentShopItem.discount}");
-                    if (discountText != null) discountText.text = "N/A";
+                    // 折扣文案解析不出折率、配置表也没写划线原价 → 不显示这一行（不再出现 "N/A"）
+                    Debug.LogWarning($"[AdsDiscountScreen] 折扣价格算不出来，隐藏划线原价: " +
+                                     $"discount={currentShopItem.discount}, price={price}, originalPrice={currentShopItem.originalPrice}");
                 }
             }
 
             ShowLoadingState(false);
+
+            // ShowLoadingState 会把 discountText 重新点亮，所以隐藏动作放在它后面
+            if (needDiscount && !discountShown)
+                HideDiscountLine();
         }
         catch (Exception ex)
         {
             Debug.LogError($"[AdsDiscountScreen] 初始化价格文本出错: {ex.Message}");
             ShowLoadingState(true);
+            return false;
         }
+
+        return discountShown;
+    }
+
+    /// <summary>
+    /// 取「打折前原价」：
+    ///   1. 配置表 col7 里写了划线原价 → 直接用（如 RemoveAdsWeek 的 5）；
+    ///   2. 没写 → 按折扣文案反推：现价 / 折率。
+    /// 折扣文案支持：「2折」「2 折」「75折」「20%」「0.2」「50」。
+    /// </summary>
+    private bool TryGetOriginalPrice(ShopDataItem item, out decimal originalPrice)
+    {
+        originalPrice = 0m;
+        if (item == null) return false;
+
+        if (item.originalPrice > 0f)
+        {
+            originalPrice = (decimal)item.originalPrice;
+            return true;
+        }
+
+        float rate;
+        if (!TryParseDiscountRate(item.discount, out rate)) return false;
+
+        decimal computed = (decimal)item.price / (decimal)rate;
+        originalPrice = decimal.Round(computed, 2);
+        return originalPrice > 0m;
+    }
+
+    /// <summary>把折扣文案解析成折率（0~1）：2折 → 0.2；20% → 0.2；0.2 → 0.2；50 → 0.5。</summary>
+    private static bool TryParseDiscountRate(string discount, out float rate)
+    {
+        rate = 0f;
+        if (string.IsNullOrEmpty(discount)) return false;
+
+        string s = discount.Replace(" ", "").Trim();
+
+        // 中文「折」：2折 = 20%，7.5折 = 75%
+        if (s.Contains("折"))
+        {
+            string num = s.Replace("折", "");
+            float zhe;
+            if (!float.TryParse(num, out zhe) || zhe <= 0f || zhe >= 10f) return false;
+            rate = zhe / 10f;
+            return true;
+        }
+
+        // 百分号：20%
+        if (s.Contains("%"))
+        {
+            string num = s.Replace("%", "");
+            float pct;
+            if (!float.TryParse(num, out pct) || pct <= 0f || pct >= 100f) return false;
+            rate = pct / 100f;
+            return true;
+        }
+
+        // 纯数字：≥1 当百分数（50 → 0.5），<1 当折率（0.2 → 0.2）
+        float v;
+        if (!float.TryParse(s, out v) || v <= 0f) return false;
+        rate = v >= 1f ? v / 100f : v;
+        return rate > 0f && rate < 1f;
+    }
+
+    /// <summary>隐藏折扣行（划线原价 + 折扣角标），并让价格文本回到无折扣的位置。</summary>
+    private void HideDiscountLine()
+    {
+        if (discountText != null) discountText.gameObject.SetActive(false);
+        if (discountObj != null) discountObj.SetActive(false);
     }
 
     private void ShowLoadingState(bool isLoading)
@@ -523,14 +676,16 @@ public class AdsDiscountScreen : UIWindow
             {
                 GiftItem giftItem = GiftItems[shown];
                 giftItem.SetShopData(itemdata, currentShopItem.id, Color.white, currentShopItem.pointDes,
-                    applyStyle: false);
+                    applyStyle: false, coinIconName: GetCoinIconName(itemdata));
+                ApplyRepurchaseRewardIcon(giftItem, itemdata);
                 giftItem.gameObject.SetActive(true);
             }
             else
             {
                 GiftItem giftItem = objectPool.GetObject<GiftItem>(parent);
                 giftItem.SetShopData(itemdata, currentShopItem.id, Color.white, currentShopItem.pointDes,
-                    applyStyle: false);
+                    applyStyle: false, coinIconName: GetCoinIconName(itemdata));
+                ApplyRepurchaseRewardIcon(giftItem, itemdata);
                 GiftItems.Add(giftItem);
             }
             shown++;
@@ -594,7 +749,9 @@ public class AdsDiscountScreen : UIWindow
             return false;
         }
 
-        goldItem.SetShopData(contents[goldIndex], currentShopItem.id, Color.white, string.Empty, applyStyle: false);
+        goldItem.SetShopData(contents[goldIndex], currentShopItem.id, Color.white, string.Empty,
+            applyStyle: false, coinIconName: GetCoinIconName(contents[goldIndex]));
+        ApplyRepurchaseRewardIcon(goldItem, contents[goldIndex]);
         return true;
     }
 
@@ -625,6 +782,8 @@ public class AdsDiscountScreen : UIWindow
         // 破冰礼包固定 2 个奖励（一周去广告 + 金币）；7 个奖励时仍按 7 个的专属排版走，避免间距 80 溢出
         bool breakIce = IsBreakIcePopup() && !sevenRewards;
         bool repurchase = !breakIce && IsRepurchasePopup();
+        // 复购 + 7 个奖励：单独一套（LeftPadding 213 / 间距 -60）
+        bool repurchaseSeven = repurchase && sevenRewards;
 
         float parentX = _defaultParentX;
         Vector2 spacing = _defaultGridSpacing;
@@ -634,6 +793,11 @@ public class AdsDiscountScreen : UIWindow
         {
             paddingLeft = BreakIceGridPaddingLeft;
             spacing.x = BreakIceGridSpacingX;
+        }
+        else if (repurchaseSeven)
+        {
+            paddingLeft = RepurchaseSevenGridPaddingLeft;
+            spacing.x = RepurchaseSevenGridSpacingX;
         }
         else if (repurchase)
         {
@@ -669,7 +833,9 @@ public class AdsDiscountScreen : UIWindow
         if (parentRt != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(parentRt);
 
-        string variant = breakIce ? "破冰礼包" : (repurchase ? "复购弹窗" : (sevenRewards ? "7 奖励" : "默认"));
+        string variant = breakIce ? "破冰礼包"
+            : (repurchaseSeven ? "复购弹窗-7奖励"
+            : (repurchase ? "复购弹窗" : (sevenRewards ? "7 奖励" : "默认")));
         Debug.Log($"[AdsDiscountScreen] 奖励网格排版: {variant}, 奖励数={rewardCount}, " +
                   $"parentX={(parentRt != null ? parentRt.anchoredPosition.x : 0)}, " +
                   $"paddingLeft={(grid != null ? grid.padding.left : 0)}, " +
@@ -728,9 +894,11 @@ public class AdsDiscountScreen : UIWindow
             return;
         }
 
-        giftAddItem.SetShopData(
-            new List<string> { ((int)LimitRewordType.Coins).ToString(), bonusGold.ToString() },
-            currentShopItem.id, Color.white, string.Empty, applyStyle: false);
+        List<string> bonusData = new List<string> { ((int)LimitRewordType.Coins).ToString(), bonusGold.ToString() };
+        giftAddItem.SetShopData(bonusData,
+            currentShopItem.id, Color.white, string.Empty, applyStyle: false,
+            coinIconName: GetCoinIconName(bonusGold));
+        ApplyRepurchaseRewardIcon(giftAddItem, bonusData);
         giftAddItem.SetBonus(true);
 
         Debug.Log($"[AdsDiscountScreen] 加赠奖励项显示: 金币 {bonusGold}, 礼包={currentShopItem.produceNameId}");
@@ -757,7 +925,16 @@ public class AdsDiscountScreen : UIWindow
     private void ApplyRewardLayout(int rewardCount)
     {
         bool large = rewardCount > 3;
-        float height = large ? RewardBgHeightLarge : RewardBgHeightSmall;
+        // ★ 复购弹窗奖励 > 3 个时单独一套尺寸：RewardBg / giftItems 高 430、大图 y=50 且用原图大小
+        bool repurchaseLarge = large && IsRepurchasePopup();
+
+        float height = large
+            ? (repurchaseLarge ? RepurchaseRewardBgHeightLarge : RewardBgHeightLarge)
+            : RewardBgHeightSmall;
+
+        float iconY = large
+            ? (repurchaseLarge ? RepurchaseGiftIconYLarge : GiftIconYLarge)
+            : GiftIconYSmall;
 
         if (rewardBg == null)
         {
@@ -793,13 +970,27 @@ public class AdsDiscountScreen : UIWindow
         if (giftIcon != null)
         {
             RectTransform iconRt = giftIcon.rectTransform;
+
+            // 第一次改尺寸前，把 Prefab 上的原始尺寸记下来（非复购 >3 的情况要能还原）
+            if (!_defaultGiftIconSizeCached)
+            {
+                _defaultGiftIconSize = iconRt.sizeDelta;
+                _defaultGiftIconSizeCached = true;
+            }
+
             Vector2 iconPos = iconRt.anchoredPosition;
-            iconPos.y = large ? GiftIconYLarge : GiftIconYSmall;
+            iconPos.y = iconY;
             iconRt.anchoredPosition = iconPos;
+
+            if (repurchaseLarge && giftIcon.sprite != null)
+                giftIcon.SetNativeSize();       // 原图大小
+            else
+                iconRt.sizeDelta = _defaultGiftIconSize;
         }
 
-        Debug.Log($"[AdsDiscountScreen] 奖励区布局: 奖励数={rewardCount} → RewardBg/奖励容器高度={height}, " +
-                  $"大图 y={(large ? GiftIconYLarge : GiftIconYSmall)}");
+        Debug.Log($"[AdsDiscountScreen] 奖励区布局: 奖励数={rewardCount}{(repurchaseLarge ? "(复购)" : "")} → " +
+                  $"RewardBg/奖励容器高度={height}, 大图 y={iconY}" +
+                  $"{(repurchaseLarge ? ", 大图=原图大小" : "")}");
     }
 
     private void OnBuyButtonClicked()

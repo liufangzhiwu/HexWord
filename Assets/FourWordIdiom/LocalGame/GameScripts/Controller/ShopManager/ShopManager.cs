@@ -335,6 +335,25 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>预登记结束后，是否还有一个礼包弹窗等着被弹出来</summary>
     private bool _settlementGiftPopupPending;
 
+    /// <summary>
+    /// 结算礼包弹窗是否还在「等待弹出」阶段（预登记完成、等结算页展示一小会儿后才真正弹）。
+    /// 结算页的排行榜等后续弹窗用它来让礼包弹窗优先。
+    /// </summary>
+    public bool IsSettlementGiftPopupPending => _settlementGiftPopupPending;
+
+    /// <summary>
+    /// 取消「待弹出」的结算礼包弹窗，但<b>保留</b>结算页按钮的登记（玩家仍可手动点开）。
+    /// 用于结算页要弹更优先的弹窗（插屏 / 七日胜利 / 灯明心悟 / 锦鲤竞速…）时。
+    /// </summary>
+    public void CancelPreparedSettlementGiftPopup(string reason)
+    {
+        if (!_settlementGiftPopupPending) return;
+
+        _settlementGiftPopupPending = false;
+        LogShop($"[结算礼包] 取消本次礼包弹窗（{reason}），结算页按钮保留: " +
+                $"kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
+    }
+
     /// <summary>结算页是否指定类型（破冰 / 复购）的礼包可售。</summary>
     public bool HasSettlementGift(SettlementGiftKind kind)
     {

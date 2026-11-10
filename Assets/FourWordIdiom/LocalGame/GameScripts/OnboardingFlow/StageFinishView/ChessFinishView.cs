@@ -290,24 +290,12 @@ public class ChessFinishView : UIWindow
     }
 
     /// <summary>
-    /// 剩余时间格式化：
-    ///  - >= 1 天：X天 HH:mm:ss
-    ///  - >= 1 小时：HH:mm:ss
-    ///  - < 1 小时：mm:ss
+    /// 剩余时间格式化：与复购礼包 / AdsDiscountScreen 的倒计时统一（X小时Y分，走多语言符号）。
+    /// 以前这里是「X天 HH:mm:ss / HH:mm:ss / mm:ss」。
     /// </summary>
     private string FormatRemoveAdsRemainTime(double remainSeconds)
     {
-        int total = Mathf.Max(0, Mathf.FloorToInt((float)remainSeconds));
-        int days = total / 86400;
-        int hours = (total % 86400) / 3600;
-        int mins = (total % 3600) / 60;
-        int secs = total % 60;
-
-        if (days > 0)
-            return $"{days}天 {hours:00}:{mins:00}:{secs:00}";
-        if (hours > 0)
-            return $"{hours:00}:{mins:00}:{secs:00}";
-        return $"{mins:00}:{secs:00}";
+        return UIUtilities.FormatTimeRemaining(TimeSpan.FromSeconds(Math.Max(0d, remainSeconds)));
     }
 
     /// <summary>
@@ -940,6 +928,9 @@ public class ChessFinishView : UIWindow
         {
             CheckReturnFirstWinScreen();
         }
+
+        // ★ 结算页更优先的弹窗（插屏 / 七日胜利 / 灯明心悟 / 锦鲤竞速…）会弹时，破冰/复购礼包不弹（按钮保留）
+        CancelSettlementGiftIfBlocked();
         
         if (isShowWinSign||isTriggerFirstWin)
         {
@@ -1399,6 +1390,9 @@ public class ChessFinishView : UIWindow
         // 0. 前置检查：功能是否已经解锁？没解锁直接跳过
         bool isZenUnlocked = _zenRankBtn != null && _zenRankBtn.gameObject.activeSelf;
         if (!isZenUnlocked) yield break;
+
+        // ★ 礼包优先：破冰/复购弹窗先弹、弹完（或被关掉）之后，再走排行榜的开始界面 / 名次变化弹窗
+        yield return StartCoroutine(WaitSettlementGiftPopupClosed());
   
         var userData = GameDataManager.Instance.UserData;
         if (userData.isJoinedZenRank && userData.HasUnclaimedUpdateJoin)
@@ -1469,6 +1463,91 @@ public class ChessFinishView : UIWindow
         {
             yield return StartCoroutine(CheckAndShowZenRankChange(addZenCount));
         }
+    }
+
+    /// <summary>
+    /// 结算页会弹更优先的弹窗时，取消本次破冰/复购礼包弹窗（结算页的礼包按钮保留，玩家仍可手动点开）。
+    ///
+    /// 需求（破冰/复购「弹窗条件 3」）：当前结算页会弹以下任意一个 → 礼包不弹：
+    ///   1. 插屏（AdRuleManager.CanShowInterstitial 预判，本页稍后才真正播）
+    ///   2. 七日胜利弹窗（SignWinScreen）/ 七日签到（SevenSignScreen）
+    ///   3. 灯明心悟页面（LimitTimeScreen，达成进度会自动弹）
+    ///   4. 新手奖励活动进度弹窗 → 项目里暂无该活动
+    ///   5. 锦鲤竞速活动开始弹窗 → 只有玩家主动点「锦鲤竞速」按钮才会弹，不自动占用结算页，故不拦
+    /// </summary>
+    private void CancelSettlementGiftIfBlocked()
+    {
+        if (ShopManager.shopManager == null) return;
+        if (!ShopManager.shopManager.IsSettlementGiftPopupPending) return;
+
+        string reason = null;
+
+        // 2. 七日胜利 / 七日签到 / 回归首胜
+        if (isShowWinSign || isTriggerFirstWin)
+        {
+            reason = isShowWinSign ? "七日胜利弹窗" : "回归首胜弹窗";
+        }
+        else if (SystemManager.Instance != null
+                 && (SystemManager.Instance.PanelIsShowing(PanelType.SignWinScreen)
+                     || SystemManager.Instance.PanelIsShowing(PanelType.SignAwardScreen)
+                     || SystemManager.Instance.PanelIsShowing(PanelType.SevenSignScreen)))
+        {
+            reason = "七日胜利/签到弹窗";
+        }
+
+        // 1. 插屏（本页稍后 Rank 流程之后会尝试播，这里提前预判，避免礼包和插屏叠在一起）
+        if (reason == null && AdRuleManager.Instance != null && AdRuleManager.Instance.CanShowInterstitial())
+        {
+            reason = "插屏";
+        }
+
+        // 3. 灯明心悟（限时活动页达成条件会自动弹）
+        if (reason == null && WillAutoShowLimitTimePanel())
+        {
+            reason = "灯明心悟页面";
+        }
+
+        if (!string.IsNullOrEmpty(reason))
+            ShopManager.shopManager.CancelPreparedSettlementGiftPopup(reason);
+    }
+
+    /// <summary>本页是否会自动弹「灯明心悟」限时活动页（与 PlayRewardSequence 里的判定同口径）。</summary>
+    private bool WillAutoShowLimitTimePanel()
+    {
+        if (_limitBtnTable == null || _limitBtnTable._limitTimeEventButton == null) return false;
+        if (!_limitBtnTable._limitTimeEventButton.gameObject.activeSelf) return false;
+
+        LimitTimeManager limit = LimitTimeManager.Instance;
+        if (limit == null || limit.CurlimitData == null) return false;
+
+        return GetCompletedWordCount() >= limit.CurlimitData.num;
+    }
+
+    /// <summary>
+    /// 等结算礼包弹窗（破冰 / 复购）弹完并被关闭。
+    /// 礼包策略在结算页出现之前就已「预登记」，真正弹窗要等 1.2s，所以这里要同时等两个状态：
+    ///   1. 还有礼包等着弹（ShopManager.IsSettlementGiftPopupPending）；
+    ///   2. AdsDiscountScreen 正在展示。
+    /// 都没有 → 立即返回（没礼包时不影响原流程）；超过 maxWait 兜底放行，避免礼包链路异常卡死结算。
+    /// </summary>
+    private IEnumerator WaitSettlementGiftPopupClosed()
+    {
+        const float maxWait = 20f;
+        float waited = 0f;
+
+        while (waited < maxWait)
+        {
+            bool pending = ShopManager.shopManager != null && ShopManager.shopManager.IsSettlementGiftPopupPending;
+            bool showing = SystemManager.Instance != null
+                           && SystemManager.Instance.PanelIsShowing(PanelType.AdsDiscountScreen);
+
+            if (!pending && !showing) yield break;
+
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        Debug.LogWarning("[ChessFinishView] 等待结算礼包弹窗超过 20s，继续后续流程");
     }
 
     // ==========================================

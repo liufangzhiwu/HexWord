@@ -1,4 +1,4 @@
-#if !UNITY_HUAWEI && !UNITY_OPENHARMONY
+#if UNITY_EDITOR
 using UnityEngine;
 
 namespace Middleware

@@ -243,7 +243,7 @@ GameObject:
   - component: {fileID: 8798776360155582880}
   - component: {fileID: 4643280258962864863}
   m_Layer: 5
-  m_Name: icon
+  m_Name: time
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -265,7 +265,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -90, y: 0}
+  m_AnchoredPosition: {x: -111.47, y: 0}
   m_SizeDelta: {x: 60, y: 61}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8798776360155582880
@@ -417,6 +417,7 @@ MonoBehaviour:
   buyButton: {fileID: 8900234963238449573}
   titleText: {fileID: 109785021246504036}
   descriptionText: {fileID: 8419263530316368097}
+  energyIcon: {fileID: 7170511767150509270}
 --- !u!95 &139136043145030034
 Animator:
   serializedVersion: 5
@@ -780,8 +781,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 70.94153, y: 0}
-  m_SizeDelta: {x: -141.883, y: 0}
+  m_AnchoredPosition: {x: 49.398865, y: 0}
+  m_SizeDelta: {x: -98.7977, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &471316270028459472
 CanvasRenderer:
@@ -818,7 +819,7 @@ MonoBehaviour:
     m_BestFit: 1
     m_MinSize: 6
     m_MaxSize: 60
-    m_Alignment: 3
+    m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0

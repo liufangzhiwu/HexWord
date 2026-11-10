@@ -324,7 +324,6 @@ SpriteAtlas:
     - 3c666e6d87d845c4dbd46c176096b090: 21300000
     - e905d07d34533574b85f3fba2f3e8a44: 21300000
     - 8659277d313d1f6458aec0364abd9f8e: 21300000
-    - 2702a77d25c261e40908364f4f2cdd92: 21300000
     - fe7f57bd6ffa95546a1b6f56dfdafa5a: 21300000
     - 1e83aabd971fef14090c7ee4bba27d69: 21300000
     - fae8acbd71c6fb74da952a1534e65c4b: 21300000
@@ -332,7 +331,6 @@ SpriteAtlas:
     - 2165f7edfe36fa34d8c3ef74d5033598: 21300000
     - 6a3da8ed028405240b58e681e8cd6ba7: 21300000
     - 896e2bedbaa08ef45bffdc3f67ec60a2: 21300000
-    - a4107fed721e3774e8ecbce9bbebee11: 21300000
     - d34eb50e7c80b2441817a123993c6ac7: 21300000
     - f69fcd1e63ce607429e177262083884a: 21300000
     - bffaa63e09d348940af91192079a75a9: 21300000
@@ -614,7 +612,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 3c666e6d87d845c4dbd46c176096b090, type: 3}
   - {fileID: 21300000, guid: e905d07d34533574b85f3fba2f3e8a44, type: 3}
   - {fileID: 21300000, guid: 8659277d313d1f6458aec0364abd9f8e, type: 3}
-  - {fileID: 21300000, guid: 2702a77d25c261e40908364f4f2cdd92, type: 3}
   - {fileID: 21300000, guid: fe7f57bd6ffa95546a1b6f56dfdafa5a, type: 3}
   - {fileID: 21300000, guid: 1e83aabd971fef14090c7ee4bba27d69, type: 3}
   - {fileID: 21300000, guid: fae8acbd71c6fb74da952a1534e65c4b, type: 3}
@@ -622,7 +619,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 2165f7edfe36fa34d8c3ef74d5033598, type: 3}
   - {fileID: 21300000, guid: 6a3da8ed028405240b58e681e8cd6ba7, type: 3}
   - {fileID: 21300000, guid: 896e2bedbaa08ef45bffdc3f67ec60a2, type: 3}
-  - {fileID: 21300000, guid: a4107fed721e3774e8ecbce9bbebee11, type: 3}
   - {fileID: 21300000, guid: d34eb50e7c80b2441817a123993c6ac7, type: 3}
   - {fileID: 21300000, guid: f69fcd1e63ce607429e177262083884a, type: 3}
   - {fileID: 21300000, guid: bffaa63e09d348940af91192079a75a9, type: 3}
@@ -903,7 +899,6 @@ SpriteAtlas:
   - time_icon
   - collect_bg
   - gifttablebg
-  - "\u8FCE\u65B0\u793C\u5305\u5F39\u7A97"
   - right
   - ranklist_di
   - gold3
@@ -911,7 +906,6 @@ SpriteAtlas:
   - butterfly_ti
   - ui_dashTitle
   - rankend_title
-  - "\u7279\u60E0\u793C\u5305B\u5F39\u7A97"
   - none_bg
   - give_title
   - lockicon
