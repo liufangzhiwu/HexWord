@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -89,7 +89,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     public void SetInit(Chesspiece pz)
     {
         _choose.SetActive(false);
-        _errorFrame.SetActive(false);
+        if (_errorFrame != null) _errorFrame.SetActive(false);
         _tipText.gameObject.SetActive(false);
         _isGoldLeaf = false;
         chesspiece = pz;
@@ -232,13 +232,13 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     /// </summary>
     public void UpdateTile(bool lateChose = false)
     {
-        _errorFrame.SetActive(false);
+        if (_errorFrame != null) _errorFrame.SetActive(false);
         switch (CurrState)
         {
             case TileState.None:
             case TileState.Check:
                 _textDisplay.text = "";
-                _emojiDisplay.gameObject.SetActive(false);
+                if (_emojiDisplay != null) _emojiDisplay.gameObject.SetActive(false);
                 _bg.gameObject.SetActive(false);
                 break;
             case TileState.Default:
@@ -307,15 +307,19 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
                 SetDisplayContent(chesspiece.bowl.letter, chesspiece.bowl.isEmoji, Color.red);
                 _bg.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("error_bg");
                 _bg.gameObject.SetActive(true);
-                _errorFrame.SetActive(true);
-                Canvas errCanvas = _errorFrame.GetComponent<Canvas>();
-                if (errCanvas == null) errCanvas = _errorFrame.AddComponent<Canvas>(); // 兜底：如果预制体没挂Canvas，代码自动挂载
-        
-                errCanvas.overrideSorting = true;
-                // 保持和光标在同一个 Layer
-                errCanvas.sortingLayerName = UIPanelLayer.BasePanel; 
-                // 设为 4 (你的光标 sortingOrder 是 5，这样当光标选中错误格子时，光标依然能盖在错误框上面)
-                errCanvas.sortingOrder = 4;
+                // 红框节点是 WT 新增的，HexWord 的棋子预制体暂无该节点，需做空保护
+                if (_errorFrame != null)
+                {
+                    _errorFrame.SetActive(true);
+                    Canvas errCanvas = _errorFrame.GetComponent<Canvas>();
+                    if (errCanvas == null) errCanvas = _errorFrame.AddComponent<Canvas>(); // 兜底：如果预制体没挂Canvas，代码自动挂载
+
+                    errCanvas.overrideSorting = true;
+                    // 保持和光标在同一个 Layer
+                    errCanvas.sortingLayerName = UIPanelLayer.BasePanel;
+                    // 设为 4 (你的光标 sortingOrder 是 5，这样当光标选中错误格子时，光标依然能盖在错误框上面)
+                    errCanvas.sortingOrder = 4;
+                }
                 break;
             case TileState.Success:
                 Color successColor = (chesspiece.bowl != null && _isGoldLeaf && chesspiece.bowl.totalcount <= 1) 
@@ -642,7 +646,10 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         sequence.AppendCallback(() =>
         {
             SetTipMessage();
-            Transform activeTipTrans = chesspiece.isEmoji ? _emojiDisplay.transform : _tipText.transform;
+            // emoji 显示节点缺失时退回文字节点，避免空引用
+            Transform activeTipTrans = (chesspiece.isEmoji && _emojiDisplay != null)
+                ? _emojiDisplay.transform
+                : _tipText.transform;
             // 添加缩放动画
             activeTipTrans.localScale = Vector3.zero;
             activeTipTrans.DOScale(Vector3.one, 0.3f)
@@ -876,6 +883,8 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     public void EnableRadarPreview()
     {
         if (CurrState == TileState.Success) return; // 已经填对的不用管
+        // 雷达预览节点是 WT 新增的，HexWord 的棋子预制体暂无，缺节点时直接跳过
+        if (_radarBg == null) return;
         
         // 1. 如果专属遮罩材质还没创建，动态创建它
         if (_radarRevealMat == null)
@@ -893,7 +902,7 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
         
         if (isEmojiActive)
         {
-            _radarText.gameObject.SetActive(false);
+            if (_radarText != null) _radarText.gameObject.SetActive(false);
             if (_radarEmojiDisplay != null)
             {
                 _radarEmojiDisplay.gameObject.SetActive(true);
@@ -918,18 +927,24 @@ public class ChessView : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
     // 关闭雷达预览 (扫描结束时调用)
     public void DisableRadarPreview()
     {
+        if (_radarBg == null)
+        {
+            UpdateTile();
+            return;
+        }
+
         // 1. 恢复默认的 UI 材质 (传 null 即可恢复默认)
         _radarBg.material = null;
-        _radarText.material = null;
-        _radarEmojiDisplay.material = null;
+        if (_radarText != null) _radarText.material = null;
+        if (_radarEmojiDisplay != null) _radarEmojiDisplay.material = null;
         // 2. 恢复 Maskable 属性
         _radarBg.maskable = true;
-        _radarText.maskable = true;
-        _radarEmojiDisplay.maskable = true;
+        if (_radarText != null) _radarText.maskable = true;
+        if (_radarEmojiDisplay != null) _radarEmojiDisplay.maskable = true;
         
-        _radarEmojiDisplay.gameObject.SetActive(false);
+        if (_radarEmojiDisplay != null) _radarEmojiDisplay.gameObject.SetActive(false);
         _radarBg.gameObject.SetActive(false);
-        _radarText.gameObject.SetActive(false);
+        if (_radarText != null) _radarText.gameObject.SetActive(false);
         // 刷新回格子真实的逻辑状态
         UpdateTile(); 
     }

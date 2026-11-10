@@ -58,7 +58,8 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         this.bowl = bowl;
         this._bowlGrid = bowlGrid;
         
-        bool isEmojiActive = bowl.isEmoji && GameDataManager.Instance.UserData.IsEmojiOn;
+        // emoji 显示节点是 WT 新增的，HexWord 的字盘预制体暂无该节点，需做空保护
+        bool isEmojiActive = _emojiDisplay != null && bowl.isEmoji && GameDataManager.Instance.UserData.IsEmojiOn;
         
         if (isEmojiActive)
         {
@@ -70,7 +71,7 @@ public class BowlView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         {
             _textDisplay.text = bowl.letter;
             _textDisplay.gameObject.SetActive(true);
-            _emojiDisplay.gameObject.SetActive(false);
+            if (_emojiDisplay != null) _emojiDisplay.gameObject.SetActive(false);
         }
         
         _mesk.SetActive(locked);
