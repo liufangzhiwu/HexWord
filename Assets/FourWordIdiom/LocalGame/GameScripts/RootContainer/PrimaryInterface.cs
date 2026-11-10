@@ -2,8 +2,10 @@
 using Middleware;
 using System;
 using System.Collections;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// 主界面控制器 - 处理游戏主界面的UI逻辑和交互
@@ -168,7 +170,6 @@ public class PrimaryInterface : UIWindow
         Game.self.Ads?.HideBanner();
         StartCoroutine(CheckZenRankBtn());
         
-        Game.Ads?.HideBanner();
         StartCoroutine(CheckLobbyPopupsRoutine());
         DailyTaskManager.Instance.UpdateMaxButterflyTime();
         
@@ -607,6 +608,7 @@ public class PrimaryInterface : UIWindow
         Slider pupaSlider = ButterflyBtn.GetComponentInChildren<Slider>(true);
         Text pupaText = ButterflyBtn.GetComponentInChildren<Text>(true);
         // 3. 未解锁状态：隐藏进度条、文字和红点
+        bool isLocked = !ButterfliesManager.Instance.IsOpen;
         if (isLocked)
         {
             ButterflyUnlockText.gameObject.SetActive(true);
@@ -619,7 +621,6 @@ public class PrimaryInterface : UIWindow
         // 4. 已解锁状态：隐藏锁文本，处理正常的进度逻辑
         if (ButterflyUnlockText != null) ButterflyUnlockText.gameObject.SetActive(false);
         
-        bool isAllCollected = ButterfliesManager.Instance.IsAllButterfliesCollected();
         if (isAllCollected)
         {
             // 🎉 全收集满：关掉进度条和进度文字，给玩家一个干净清爽的满级蝴蝶按钮
@@ -896,7 +897,7 @@ public class PrimaryInterface : UIWindow
                     GameDataManager.Instance.UserData.CurrentHexStage : 1;
                 sprite = LoadCommonIcon("icon_xiao");
                 StageHexController.Instance.CurLevelMode = GetLevelDifficulty(Stage);
-                levelmode = StageHexController.Instance.CurLevelMode;
+                difficulty = StageHexController.Instance.CurLevelMode;
                 break;
             case 2:
                 Stage = GameDataManager.Instance.UserData.CurrentChessStage != 0 ? 

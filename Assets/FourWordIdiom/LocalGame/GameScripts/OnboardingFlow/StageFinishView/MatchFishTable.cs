@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using DG.Tweening;
 using Middleware;
 using UnityEngine;
@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class MatchFishTable : MonoBehaviour
 {
     public Button FishBtn;
+    public GameObject LockObj; // 锁图标节点（同步自 WT 1.9.8，预制体未挂则为空）
     public Animator animator;
     public GameObject matchEffect;
     [SerializeField] private Text fishTime;

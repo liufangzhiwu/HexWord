@@ -192,8 +192,7 @@ public class ChessFinishView : UIWindow
         StartCoroutine(UpdateFishRankUI());
         DailyTaskManager.Instance.UpateButterflyTaskUI();
         butterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
-        int oldPupaCount = GameDataManager.Instance.ButterflyData.currPupa -
-                           ChessStageController.Instance.EarnedPupaThisLevel;
+        // 去重：oldPupaCount 已在方法开头声明，这里直接复用（同步合并时重复引入）
         UpdateButterflyProgressUI(Mathf.Max(0, oldPupaCount), true);
 
         if (GameDataManager.Instance.UserData.ischangetheme)
@@ -208,7 +207,7 @@ public class ChessFinishView : UIWindow
             AnalyticMgr.ThemeUse(GameDataManager.Instance.UserData.userthemeid, times);
         }
         isShowWinSign = StreakManager.Instance.IsCanShowWinSign();
-        CheckFishiTable();
+        // 注：CheckFishiTable() 为旧版遗留调用，HexWord 已无该方法（捕鱼入口由 UnlockBtnsUI + MatchFishTable.CheckFishBtn 处理）
 
         // ======================= 刷新限时去广告 BUFF =======================
         RefreshRemoveAdsBuff();
@@ -601,6 +600,9 @@ public class ChessFinishView : UIWindow
         if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
         {
+            // 补齐局部引用（原代码直接使用未声明的 slider / pupaText）
+            Slider slider = butterflyBtn.GetComponentInChildren<Slider>(true);
+            Text pupaText = butterflyBtn.GetComponentInChildren<Text>(true);
             if (slider != null) slider.gameObject.SetActive(true);
             if (pupaText != null) pupaText.gameObject.SetActive(true);
             UpdateButterflyProgressUI(_currentVisualPupa, true);
@@ -1360,7 +1362,7 @@ public class ChessFinishView : UIWindow
             {
                 bool isLocked = !isLegacyOpened;
                 _matchFishtable.FishBtn.interactable = !isLocked;
-                _matchFishtable.LockObj.SetActive(isLocked);
+                if (_matchFishtable.LockObj != null) _matchFishtable.LockObj.SetActive(isLocked);
                 
                 Image fishIcon = _matchFishtable.FishBtn.transform.GetChild(0).GetComponent<Image>();
                 if (fishIcon != null)
@@ -1377,9 +1379,12 @@ public class ChessFinishView : UIWindow
                 }
                 else
                 {
-                    // 寻找鱼活动的锁底下的Text赋值
-                    Text lockText = _matchFishtable.LockObj.GetComponentInChildren<Text>(true);
-                    if (lockText != null) lockText.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
+                    // 寻找鱼活动的锁底下的Text赋值（预制体没挂锁节点时跳过）
+                    if (_matchFishtable.LockObj != null)
+                    {
+                        Text lockText = _matchFishtable.LockObj.GetComponentInChildren<Text>(true);
+                        if (lockText != null) lockText.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
+                    }
                 }
             }
         }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using DG.Tweening;
 using UnityEngine;
@@ -9,6 +9,7 @@ public class LimitBtnTable : MonoBehaviour
     
     [Header("UI LimitBtn")]
     public Button _limitTimeEventButton;
+    public GameObject LockObj; // 锁图标节点（同步自 WT 1.9.8，预制体未挂则为空）
     [SerializeField] private Image limitOver;
     [SerializeField] private Image lantern;
     [SerializeField] private Text txtwordprogress;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using DG.Tweening;
 using UnityEngine;
@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class TaskTable : MonoBehaviour
 {
     public Button TaskBtn;
+    public GameObject LockObj; // 锁图标节点（同步自 WT 1.9.8，预制体未挂则为空）
     [SerializeField] private Image TaskOver;
     public GameObject taskEffect;
     public Text taskTime;
