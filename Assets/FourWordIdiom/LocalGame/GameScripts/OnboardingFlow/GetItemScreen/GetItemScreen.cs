@@ -666,7 +666,17 @@ public class GetItemScreen : UIWindow
             yield break;
         }
 
-        AdRuleManager.Instance.TryShowTipToolRewardVideo(Define.AdKey.RewardAdIdStoreGold, UpdateAdsRewardUI);
+        // 同步自 WT 1.9.8：按道具类型走不同底层广告位
+        // 注：WT 侧 Tipstool 用的是 RewardAdIdItemGold，会切换线上广告位，这里保持 HexWord 现有 RewardAdIdStoreGold
+        if (limitRewordType == LimitRewordType.Tipstool)
+        {
+            AdRuleManager.Instance.TryShowTipToolRewardVideo(Define.AdKey.RewardAdIdStoreGold, UpdateAdsRewardUI);
+        }
+        else
+        {
+            // 其它免费获取道具（如火箭/自动完成）走普通激励视频位
+            AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold, UpdateAdsRewardUI);
+        }
     }
 
     private void ClickClaimGoldBtn()
