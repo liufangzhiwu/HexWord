@@ -186,6 +186,12 @@ MonoBehaviour:
     spriteAtlasName: OnboardingFlow
     prefab: {fileID: 4236006176551709113, guid: 777a3d5cdafc06e42b51a49c8d71e479,
       type: 3}
+  - panelName: BeginnerBonusPanel
+    panelLayer: PopPanel
+    bundleName: OnboardingFlow
+    spriteAtlasName: OnboardingFlow
+    prefab: {fileID: 117789329993680482, guid: 7bdac1fa34addf748a4c30cbf7851ae8,
+      type: 3}
   - panelName: ButterflyHome
     panelLayer: BasePanel
     bundleName: OnboardingFlow
