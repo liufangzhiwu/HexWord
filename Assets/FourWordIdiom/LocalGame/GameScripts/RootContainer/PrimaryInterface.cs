@@ -49,6 +49,7 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private Text fishtimetext;
     [SerializeField] private Image fishrankimage;
     [SerializeField] private Text fishrankcount;
+    [SerializeField] private GameObject fishLock;   // 捕鱼入口锁图标（WT 预留，未挂则为空）
  
     [Header("UI Butterfly")]
     [SerializeField] private GameObject ButterflyTime;
@@ -591,15 +592,175 @@ public class PrimaryInterface : UIWindow
         HeadBtn.gameObject.SetActive(
             GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.HeadOpenLevel
             || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.HeadOpenLevel);
-        
-        TasksBtn.transform.parent.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage>= AppGameSettings.UnlockRequirements.DailyMissions
-                                      ||GameDataManager.Instance.UserData.CurrentChessStage>= AppGameSettings.UnlockRequirements.DailyMissions
-        ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime));
-        
-        LimitTimeBtn.gameObject.SetActive(GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
-                                          ||GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
-        ||!string.IsNullOrEmpty(GameDataManager.Instance.UserData.limitOpenTime));
-  
+
+        // 同步自 WT 1.9.8：任务/限时/捕鱼/皮肤/蝶园 统一走「入口加锁」刷新
+        CheckFishBtnUI();
+        CheckTasksBtnUI();
+        CheckLimitBtnUI();
+        CheckThemeBtnUI();
+        CheckButterflyBtnUI();
+
+        if (headRedpoint != null)
+            headRedpoint.gameObject.SetActive(GameDataManager.Instance.UserData.isGetNewHeadIcon);
+    }
+
+    /// <summary>当前进度：HexWord 双模式取较大值，避免只认拼字关卡把六边形玩家误锁</summary>
+    private int CurrentProgressStage =>
+        Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage,
+                  GameDataManager.Instance.UserData.CurrentChessStage);
+
+    /// <summary>捕鱼入口：显隐 + 未解锁态（第X关文案 + 图标半透明）</summary>
+    private void CheckFishBtnUI()
+    {
+        bool isLegacyOpened = FishInfoController.Instance.IsOpen();
+        bool isShow = CurrentProgressStage > AppGameSettings.ShowRequirements.FishShowLevel || isLegacyOpened;
+        bool openTime = FishInfoController.Instance.GetOpenFishFunction(); // 是否在开启时间内
+        if (FishBtn.transform.parent != null)
+            FishBtn.transform.parent.gameObject.SetActive(isShow && openTime);
+        if (!isShow) return;
+
+        bool isLocked = !isLegacyOpened;
+        FishBtn.interactable = !isLocked;
+        if (fishLock != null) fishLock.SetActive(isLocked);
+
+        Image fish = FishBtn.transform.childCount > 0 ? FishBtn.transform.GetChild(0).GetComponent<Image>() : null;
+        if (isLocked)
+        {
+            if (fishtimetext != null)
+            {
+                fishtimetext.gameObject.SetActive(true);
+                fishtimetext.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
+                if (fishtimetext.transform.parent != null)
+                {
+                    Image bg = fishtimetext.transform.parent.GetComponent<Image>();
+                    if (bg != null) bg.enabled = true;
+                }
+            }
+            if (fish != null) fish.color = new Color(1, 1, 1, 0.5f);
+            // 隐藏其他活动状态相关的图标
+            if (fishrankimage != null) fishrankimage.gameObject.SetActive(false);
+            if (FishClaim != null) FishClaim.gameObject.SetActive(false);
+            if (fishwifiimage != null) fishwifiimage.gameObject.SetActive(false);
+            return;
+        }
+
+        if (fish != null) fish.color = Color.white;
+        StartCoroutine(UpdateFishRankUI());
+    }
+
+    /// <summary>每日任务入口：显隐 + 未解锁态</summary>
+    private void CheckTasksBtnUI()
+    {
+        bool isLegacyOpened = DailyTaskManager.Instance.IsOpen();
+        bool isShow = CurrentProgressStage > AppGameSettings.ShowRequirements.DailyMissionsShow || isLegacyOpened;
+        if (TasksBtn.transform.parent != null)
+            TasksBtn.transform.parent.gameObject.SetActive(isShow);
+        if (!isShow) return;
+
+        bool isLocked = !isLegacyOpened;
+        TasksBtn.interactable = !isLocked;
+        if (taskLock != null) taskLock.SetActive(isLocked);
+
+        Image taskIcon = TasksBtn.transform.childCount > 0 ? TasksBtn.transform.GetChild(0).GetComponent<Image>() : null;
+        if (isLocked)
+        {
+            if (tasktimetxt != null)
+            {
+                tasktimetxt.gameObject.SetActive(true);
+                tasktimetxt.text = $"第{AppGameSettings.UnlockRequirements.DailyMissions}关";
+                if (tasktimetxt.transform.parent != null)
+                {
+                    Image bg = tasktimetxt.transform.parent.GetComponent<Image>();
+                    if (bg != null) bg.enabled = true;
+                }
+            }
+            if (taskIcon != null) taskIcon.color = new Color(1, 1, 1, 0.5f);
+            if (TaskClaim != null) TaskClaim.gameObject.SetActive(false);
+            if (taskOver != null) taskOver.gameObject.SetActive(false);
+        }
+        else
+        {
+            if (taskIcon != null) taskIcon.color = Color.white;
+            if (TaskClaim != null)
+            {
+                Text claimTxt = TaskClaim.GetComponentInChildren<Text>();
+                if (claimTxt != null) claimTxt.text = MultilingualManager.Instance.GetString("ADPopReceive");
+            }
+        }
+    }
+
+    /// <summary>限时活动入口：显隐 + 未解锁态</summary>
+    private void CheckLimitBtnUI()
+    {
+        bool isLegacyOpened = LimitTimeManager.Instance.IsOpen();
+        bool isShow = CurrentProgressStage > AppGameSettings.ShowRequirements.TimeLimitShow || isLegacyOpened;
+        LimitTimeBtn.gameObject.SetActive(isShow);
+        if (!isShow) return;
+
+        bool isLocked = !isLegacyOpened;
+        LimitTimeBtn.interactable = !isLocked;
+        if (limitLock != null) limitLock.SetActive(isLocked);
+
+        Image deng = LimitTimeBtn.transform.childCount > 0 ? LimitTimeBtn.transform.GetChild(0).GetComponent<Image>() : null;
+        if (isLocked)
+        {
+            if (timetxt != null)
+            {
+                timetxt.gameObject.SetActive(true);
+                timetxt.text = $"第{AppGameSettings.UnlockRequirements.TimeLimitMode}关";
+                if (timetxt.transform.parent != null)
+                {
+                    Image parentBg = timetxt.transform.parent.GetComponent<Image>();
+                    if (parentBg != null) parentBg.enabled = true;
+                }
+            }
+            if (deng != null) deng.color = new Color(1, 1, 1, 0.5f);
+            if (LimitTimeBtn.transform.childCount > 1)
+                LimitTimeBtn.transform.GetChild(1).gameObject.SetActive(false);
+            if (LimitTimeObj != null)
+            {
+                LimitTimeObj.SetActive(true);
+                Image bg = LimitTimeObj.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
+            }
+        }
+        else
+        {
+            if (deng != null) deng.color = Color.white;
+            if (LimitTimeBtn.transform.childCount > 1)
+                LimitTimeBtn.transform.GetChild(1).gameObject.SetActive(true);
+        }
+    }
+
+    /// <summary>皮肤入口：显隐 + 未解锁态</summary>
+    private void CheckThemeBtnUI()
+    {
+        bool isLegacyOpened = ThemeManager.Instance.IsOpen();
+        bool isShow = CurrentProgressStage > AppGameSettings.ShowRequirements.ThemeShowLevel || isLegacyOpened;
+        myThemeBtn.gameObject.SetActive(isShow);
+        if (!isShow) return;
+
+        bool isLocked = !isLegacyOpened;
+        myThemeBtn.interactable = !isLocked;
+        if (themeLock != null) themeLock.SetActive(isLocked);
+        if (isLocked)
+        {
+            if (themeLockText != null)
+            {
+                themeLockText.SetActive(true);
+                Text lockText = themeLockText.GetComponentInChildren<Text>(true);
+                if (lockText != null) lockText.text = $"第{AppGameSettings.UnlockRequirements.ThemeOpenLevel}关";
+            }
+            if (themeGoldLeafredpoint != null) themeGoldLeafredpoint.SetActive(false);
+            return;
+        }
+        if (themeLockText != null) themeLockText.SetActive(false);
+        ThemeManager.Instance.CheckAndUpdateSkinRedPoint();
+    }
+
+    /// <summary>蝶园入口：显隐 + 未解锁态 + 进度渲染（保留 HexWord 原有实现）</summary>
+    private void CheckButterflyBtnUI()
+    {
         ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
         // 🌟 核心修改：全收集满后，隐藏按钮上的进度条和文字
         bool isAllCollected = ButterfliesManager.Instance.IsAllButterfliesCollected();
@@ -648,7 +809,8 @@ public class PrimaryInterface : UIWindow
                 pupaSlider.value = maxCount > 0 ? Mathf.Clamp01((float)currPupa / maxCount) : 0f;
             }
             
-            ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
+            if (ButterflyRedpoint != null)
+                ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
         }
     }
     

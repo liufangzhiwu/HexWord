@@ -68,9 +68,10 @@ public static class AppGameSettings
     {
         public static int TimeLimitShow { get; } = 1;
         public static int SignInRewards { get; } = 11;
-        public static int DailyMissionsShow { get; } = 16;
-        // 鲤鱼跃龙门活动显示门槛
-        public static int FishShowLevel { get; } = 21;
+        // 提前 5 关显示入口（锁定态显示"第16关"），与 WT 的引导节奏一致；如需取消提前显示，改成与 UnlockRequirements 相同即可
+        public static int DailyMissionsShow { get; } = 11;
+        // 鲤鱼跃龙门活动显示门槛（解锁 21 关，提前 5 关露出锁定态）
+        public static int FishShowLevel { get; } = 16;
         public static int HeadOpenLevel { get; } = 1;
         public static int ZenShowLevel { get; } = 11; // 11关卡显示禅模式
         // HexWord 当前未对蝴蝶花园做显示限制，暂取 1
