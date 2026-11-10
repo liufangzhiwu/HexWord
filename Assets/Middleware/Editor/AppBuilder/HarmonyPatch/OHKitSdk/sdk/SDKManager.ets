@@ -603,6 +603,25 @@ export class SDKManager {
 
 
   // ============================================================
+  // ★ 页面重新获得焦点（供 UI 组件的 onFocus 调用）
+  //
+  // 鸿蒙支付收银台 / 系统弹窗都是模态的 UIExtension，关闭后
+  // 主窗口不一定会再给 onForeground / windowStage RESUMED，
+  // 所以游戏侧既收不到「回到前台」，也可能收不到支付结果回调，
+  // 表现就是「从付款页返回游戏后整个界面卡住」。
+  // 页面 onFocus 是这种情况下唯一稳定能拿到的事件，这里把它转给游戏侧，
+  // 由商店层对"进行中的支付"做一次收口（见 Shop_harmony.OnWindowFocusGained）。
+  // ============================================================
+  static OnWindowFocusGained(): void {
+    try {
+      hilog.info(0x0000, 'SDKKit', '[Focus] 页面重新获得焦点，通知游戏侧收口');
+      Tuanjie.TuanjieSendMessage('PushMessageReceiver', 'OnWindowFocusGained', '1');
+    } catch (e) {
+      hilog.error(0x0000, 'SDKKit', `[Focus] TuanjieSendMessage 失败: ${JSON.stringify(e)}`);
+    }
+  }
+
+  // ============================================================
   // ★ 通知设置面板关闭（供 UI 组件的 onFocus 调用）
   // ============================================================
   static OnNotificationSettingsClosed(): void {

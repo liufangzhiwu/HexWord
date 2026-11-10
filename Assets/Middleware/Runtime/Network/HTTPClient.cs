@@ -205,7 +205,23 @@ public class HTTPClient
             }
             try
             {
-                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<T>>(response.DataAsText);
+                // 网关/测试服在路由不存在时会把错误信息当成一个「JSON 字符串」返回，
+                // 例如 "The route apiauth/device-login could not be found."。
+                // 这种内容能通过 JSON 校验，却不是 ApiResponse 结构，直接反序列化会抛
+                // JsonSerializationException 并刷一屏堆栈。这里先判类型，非对象一律当错误返回。
+                JToken token = JToken.Parse(response.DataAsText);
+                if (token.Type != JTokenType.Object)
+                {
+                    onError?.Invoke($"API 返回异常内容: {Abbreviate(token.ToString())}");
+                    return;
+                }
+
+                var apiResponse = token.ToObject<ApiResponse<T>>();
+                if (apiResponse == null)
+                {
+                    onError?.Invoke("API 返回空数据");
+                    return;
+                }
                 if (apiResponse.code == 200)
                 {
                     onSuccess?.Invoke(apiResponse.data);
@@ -217,7 +233,8 @@ public class HTTPClient
             }
             catch (Exception ex)
             {
-                onError?.Invoke($"API JSON Parsing Error: {ex}");
+                // 只输出简短原因，避免整段 Newtonsoft 堆栈糊满控制台
+                onError?.Invoke($"API JSON Parsing Error: {ex.Message}");
             }
         }
         else if(response != null)
@@ -242,6 +259,16 @@ public class HTTPClient
         {
             return false; // JSON 格式错误
         }
+    }
+
+    /// <summary>
+    /// 截断过长的响应文本，避免把整个报文/堆栈刷进控制台
+    /// </summary>
+    private static string Abbreviate(string text, int maxLength = 120)
+    {
+        if (string.IsNullOrEmpty(text)) return "<empty>";
+        text = text.Replace("\r", " ").Replace("\n", " ").Trim();
+        return text.Length <= maxLength ? text : text.Substring(0, maxLength) + "...";
     }
 
 }

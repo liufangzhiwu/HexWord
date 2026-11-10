@@ -346,14 +346,10 @@ public class PrimaryInterface : UIWindow
     }
     private void OnAuditConfigRefreshUI()
     {
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
-            ||GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
-            || !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
-       
-        {
-            var overallComp = OverallBtn.GetComponent<OverallEntranceButton>();
-            if (overallComp != null) overallComp.RefreshState();
-        }
+        // 审核配置是异步拉取的：进大厅时 AuditConfig 可能还是默认值，导致排行榜入口先被判成隐藏。
+        // 这里在配置就绪后无条件重算一次入口状态（原来只有「已开捕鱼」的玩家才会重算，等于低关卡玩家永远看不到入口）。
+        var overallComp = OverallBtn != null ? OverallBtn.GetComponent<OverallEntranceButton>() : null;
+        if (overallComp != null) overallComp.RefreshState();
 
         if (ZenRankBtn != null)
         {

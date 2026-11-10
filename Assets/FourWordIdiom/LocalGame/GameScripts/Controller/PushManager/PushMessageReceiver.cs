@@ -25,6 +25,27 @@ public class PushMessageReceiver : MonoBehaviour
     }
 
     // ============================================================
+    // ★ 由 ArkTS 侧 TuanjieSendMessage 调用（页面重新获得焦点）
+    //   ArkTS 侧：SDKManager.OnWindowFocusGained()
+    //             → TuanjieSendMessage('PushMessageReceiver', 'OnWindowFocusGained', '1')
+    //
+    //   为什么需要：鸿蒙的支付收银台是模态 UIExtension，关闭后主窗口不一定再给
+    //   onForeground / windowStage RESUMED，游戏既收不到「回到前台」，也可能收不到
+    //   支付结果回调 —— 界面就会一直停在「等待支付」的 loading 上（表现为卡住）。
+    //   页面 onFocus 是这种情况唯一稳定的信号，这里转给商店层收口。
+    // ============================================================
+    public void OnWindowFocusGained(string _)
+    {
+        Debug.Log("[PushMessageReceiver] OnWindowFocusGained 收到");
+#if UNITY_OPENHARMONY && !UNITY_EDITOR
+        if (Game.self != null && Game.self.Shop is Middleware.Shop_harmony shop)
+        {
+            shop.OnWindowFocusGained();
+        }
+#endif
+    }
+
+    // ============================================================
     // ★ 由 ArkTS 侧 TuanjieSendMessage 调用
     //   ArkTS 侧调用：
     //     Tuanjie.TuanjieSendMessage('PushMessageReceiver',

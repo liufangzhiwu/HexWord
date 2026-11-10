@@ -43,6 +43,8 @@ struct TuanjiePlayer {
         })
         .onFocus(() => {
           hilog.info(0x0000, 'SDKKit', '[UI] Stack onFocus');
+          // ★ 收银台/系统弹窗关闭后页面重新获得焦点：通知游戏侧收口（详见 SDKManager.OnWindowFocusGained）
+          SDKManager.OnWindowFocusGained();
           SDKManager.OnNotificationSettingsClosed();
         })
       }

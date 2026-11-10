@@ -179,6 +179,20 @@ namespace Middleware
         public Action<ProductItem> buySuccessAction;
         Action<string> buyFailedAction;
 
+        // ------------------------------------------------------------
+        //  支付兜底会话
+        //  ──────────────────────────────────────────────────────────
+        //  鸿蒙的支付收银台是 UIExtension 模态窗口，用户「取消/超时」返回时
+        //  平台回调有可能收不到（见 bug：进付款页静默一段时间再返回 → 卡住）。
+        //  因为发起支付时界面已经挂了全屏 loading，回调一丢就永远卡死。
+        //  这里用「会话号 + 看门狗」把每一轮支付强制收口：
+        //    · 正常回调 → EndPurchaseWatchdog 作废这一轮
+        //    · 超时无回调 → 按取消处理 + 主动查一次已购把可能成功的订单补回来
+        // ------------------------------------------------------------
+        private int _purchaseSession;
+        private Coroutine _purchaseWatchdog;
+        private const float PurchaseTimeoutSeconds = 120f;
+
         ProductItem productItem = new ProductItem();
 
         bool InitSucceed = false;
@@ -303,7 +317,7 @@ namespace Middleware
             if (product == null)
             {
                 Debug.LogError("[IAP] product not found in productData: " + productId);
-                buyFailedAction?.Invoke("product_not_found");
+                ClosePurchaseSessionAsFailed("product_not_found");
                 return;
             }
 
@@ -311,6 +325,118 @@ namespace Middleware
             purchaseParameter.productId   = product.id;
             purchaseParameter.productType = product.type;
             OHSDKKitManager.Instance.StartPurchase(purchaseParameter);
+
+            // ★ 发起后立刻挂看门狗：平台不回调也必须能在界面上收口
+            BeginPurchaseWatchdog();
+        }
+
+        // ------------------------------------------------------------
+        //  支付看门狗（回调丢失兜底）
+        // ------------------------------------------------------------
+        private void BeginPurchaseWatchdog()
+        {
+            EndPurchaseWatchdog();
+            int session = ++_purchaseSession;
+
+            if (Game.self == null)
+            {
+                Debug.LogWarning("[IAP] Game.self 为空，无法启动支付看门狗（仅日志告警）");
+                return;
+            }
+            _purchaseWatchdog = Game.self.StartCoroutine(CoPurchaseWatchdog(session));
+        }
+
+        /// <summary>作废当前这一轮（会话号自增，正在跑的协程会在下一帧退出）</summary>
+        private void EndPurchaseWatchdog()
+        {
+            _purchaseSession++;
+            if (_purchaseWatchdog != null && Game.self != null)
+            {
+                Game.self.StopCoroutine(_purchaseWatchdog);
+            }
+            _purchaseWatchdog = null;
+        }
+
+        private System.Collections.IEnumerator CoPurchaseWatchdog(int session)
+        {
+            float waited = 0f;
+            while (waited < PurchaseTimeoutSeconds)
+            {
+                if (session != _purchaseSession) yield break; // 已被正常回调收口
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (session != _purchaseSession) yield break;
+
+            _purchaseWatchdog = null;
+            Debug.LogError("[IAP] 支付回调 " + PurchaseTimeoutSeconds + "s 未返回，按取消处理，并主动核对订单");
+            ClosePurchaseSessionAsFailed("purchase_callback_timeout");
+
+            // 兜底核对：万一钱付了但回调丢了，靠平台已购查询把奖励补回来
+            ConfirmCheckPurchase(ProductType.CONSUMABLE);
+            ConfirmCheckPurchase(ProductType.NONCONSUMABLE);
+        }
+
+        /// <summary>
+        /// 本轮支付以失败/取消收口：清掉界面回调、作废看门狗，保证界面一定被释放。
+        /// 同时把 buySuccessAction 置空——万一平台回调姗姗来迟（钱已付），
+        /// GrantRewardIfNeeded 会自动改走「补单发货」，奖励不会丢。
+        /// </summary>
+        private void ClosePurchaseSessionAsFailed(string reason)
+        {
+            Action<string> failed = buyFailedAction;
+            buyFailedAction = null;
+            buySuccessAction = null;
+            EndPurchaseWatchdog();
+            failed?.Invoke(reason);
+        }
+
+        // ------------------------------------------------------------
+        //  页面重新获得焦点（ArkTS: Index.ets onFocus → PushMessageReceiver）
+        //
+        //  用户从支付收银台返回时，系统可能既不给 onForeground，也不给支付结果回调。
+        //  这里把「焦点回来了」当成「人已经离开收银台」：
+        //    1) 先等一小会儿，让压线到达的成功回调有机会先收口；
+        //    2) 仍无回调 → 按取消处理（界面立刻恢复，不再卡 loading），
+        //    3) 同时主动查一次已购：万一钱真的付了，走补单发货把奖励补回来。
+        // ------------------------------------------------------------
+        private Coroutine _focusReconcile;
+        private const float FocusReconcileDelay = 1.5f;
+
+        public void OnWindowFocusGained()
+        {
+            // 没有进行中的支付（没有回调 / 没有看门狗），什么都不做
+            if (buyFailedAction == null && buySuccessAction == null && _purchaseWatchdog == null) return;
+            if (Game.self == null) return;
+
+            if (_focusReconcile != null)
+            {
+                Game.self.StopCoroutine(_focusReconcile);
+                _focusReconcile = null;
+            }
+            _focusReconcile = Game.self.StartCoroutine(CoFocusReconcile(_purchaseSession));
+        }
+
+        private System.Collections.IEnumerator CoFocusReconcile(int session)
+        {
+            float waited = 0f;
+            while (waited < FocusReconcileDelay)
+            {
+                if (session != _purchaseSession) yield break; // 支付回调已经收口
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            _focusReconcile = null;
+            if (session != _purchaseSession) yield break;
+
+            Debug.LogWarning("[IAP] 返回游戏但支付回调仍未到达（code 1001860000 类取消场景），按取消处理并核对订单");
+            ClosePurchaseSessionAsFailed("purchase_canceled_no_callback");
+
+            // 兜底核对：钱已付但回调丢了的话，靠平台已购查询把奖励补回来
+            ConfirmCheckPurchase(ProductType.CONSUMABLE);
+            ConfirmCheckPurchase(ProductType.NONCONSUMABLE);
         }
 
         void IShop.Restore(Action<bool, ProductItem[]> restoreCallback)
@@ -465,12 +591,29 @@ namespace Middleware
             {
                 Debug.Log("[StartPurchase Error ] " + "\n "
                   + "Code : " + signal.code + " \n Message : " + signal.message + "\n");
-                buyFailedAction?.Invoke(signal.message);
+                // ★ 取消/失败一定要把本轮收口：以前这里只调 buyFailedAction，
+                //   如果平台回调压根没到（或 code 类型对不上被判成成功），界面就永久卡在 loading
+                ClosePurchaseSessionAsFailed(signal.message);
                 return;
             }
 
             IAP_PurchaseSignal targetSignal = (IAP_PurchaseSignal)signal;
             var payload = targetSignal.purchaseOrderPayload;
+
+            // ★ 平台错误 JSON 一旦被反序列化成「成功」（code 类型不匹配时会发生），
+            //   payload 就是空的：以前会直接 NRE 或按空订单号发奖，界面再也不收口。
+            //   这里统一按失败处理，宁可让玩家再点一次，也不能卡死或白送。
+            //   订单号缺失时退化用 purchaseToken（与已购查询链路的口径一致）。
+            string orderId = payload != null ? payload.purchaseOrderId : null;
+            if (string.IsNullOrEmpty(orderId) && payload != null) orderId = payload.purchaseToken;
+
+            if (payload == null || string.IsNullOrEmpty(orderId))
+            {
+                Debug.LogError("[IAP] 购买回调缺少订单号，按失败处理。productId=" + targetSignal.productId
+                               + " code=" + signal.code + " message=" + signal.message);
+                ClosePurchaseSessionAsFailed(string.IsNullOrEmpty(signal.message) ? "invalid_purchase_payload" : signal.message);
+                return;
+            }
 
             purchaseResult = "ProductToken " + payload.purchaseToken + "\n"
                              + "Product Order Id " + payload.purchaseOrderId + "\n";
@@ -480,7 +623,7 @@ namespace Middleware
             // ① 先落盘
             var pending = new PendingOrder
             {
-                orderId       = payload.purchaseOrderId,
+                orderId       = orderId,
                 productId     = payload.productId,
                 price         = payload.price.ToString(),
                 currency      = payload.currency,
@@ -493,7 +636,7 @@ namespace Middleware
             // 保留原来的 productItem 变量，兼容外部可能的引用
             productItem = new ProductItem
             {
-                order_id        = payload.purchaseOrderId,
+                order_id        = orderId,
                 IsoCurrencyCode = payload.currency,
                 ItemName        = payload.productId,
                 ProductId       = payload.productId,
@@ -509,6 +652,11 @@ namespace Middleware
 
             // ④ 通知平台消耗（非消耗型直接收尾，不调核销）
             FinishOrderAfterGrant(pending);
+
+            // ⑤ 本轮支付正常收口：停看门狗、清回调，避免下一单串到旧界面
+            EndPurchaseWatchdog();
+            buyFailedAction = null;
+            buySuccessAction = null;
         }
 
         public void OnStartSubscribeTrigger(SignalBase signal)
@@ -694,6 +842,13 @@ namespace Middleware
         private void GrantRewardIfNeeded(PendingOrder order, bool ignoreGrantedFlag = false)
         {
             if (order == null) return;
+
+            // ★ 订单号为空绝不放奖：空 key 无法幂等判重，会变成「每来一次回调就发一次」
+            if (string.IsNullOrEmpty(order.orderId))
+            {
+                Debug.LogError("[IAP] 订单号为空，跳过发奖（防止重复发放）");
+                return;
+            }
 
             if (!ignoreGrantedFlag && PendingOrderStore.IsGranted(order.orderId))
             {

@@ -76,8 +76,10 @@ export class SDKHandler {
         ret = this.concatJson(paramStr,productsStr);
         resolve(ret);
       }).catch((error: BusinessError) => {
-        let errorStr = JSON.stringify(error) ;
-        ret = this.concatJson(paramStr,errorStr);
+        hilog.error(0x0001, "SDKKit", 'query products err:' + JSON.stringify(error));
+        ret = this.concatJson(paramStr, this.buildIapError(
+          error && error.code !== undefined ? String(error.code) : "1001860004",
+          error && error.message ? String(error.message) : "query products failed"));
         resolve(ret);
       });
     });
@@ -90,6 +92,7 @@ export class SDKHandler {
 
     return new Promise((resolve) => {
       let ret: string = "{}";
+      let paramStr = JSON.stringify(param);
       iap.createPurchase(context as common.UIAbilityContext, param).then((res) => {
         hilog.info(0x0001, "SDKKit", 'purchase result is' + JSON.stringify(res))
         let jwsPurchaseOrder: string | undefined = (JSON.parse(res.purchaseData) as PurchaseData).jwsPurchaseOrder;
@@ -97,23 +100,36 @@ export class SDKHandler {
         {
           let purchaseStr = JWTUtil.decodeJwtObj(jwsPurchaseOrder);
           purchaseStr = purchaseStr.split('\\"').join('"');
-          let paramStr=JSON.stringify(param);
           let purchaseOrderPayloadStr="{\"purchaseOrderPayload\": " + purchaseStr + "}";
           ret = this.concatJson(paramStr,purchaseOrderPayloadStr);
           resolve(ret);
+          // ★ 成功分支必须 return：以前缺 return，会继续执行下面的失败兜底并再 resolve 一次
+          return;
         }
-        let paramStr=JSON.stringify(param);
-        let errStr="{\"code\":\"" + "1001860003" +"\",\"message\":\""+ "Invalid product information." +"\"}";
-        ret = this.concatJson(paramStr,errStr);
+        // 没有 jwsPurchaseOrder = 商品信息非法，按失败返回
+        ret = this.concatJson(paramStr,
+          this.buildIapError("1001860003", "Invalid product information."));
         resolve(ret);
       }).catch((err: BusinessError) => {
-        let errStr=JSON.stringify(err)
-        hilog.error(0x0001, "SDKKit", 'purchase err:' +errStr)
-        let paramStr=JSON.stringify(param)
-        ret = this.concatJson(paramStr,errStr);
+        hilog.error(0x0001, "SDKKit", 'purchase err:' + JSON.stringify(err))
+        // ★ 必须输出「字符串型 code」：C# 侧 SignalBase.code 是 string，
+        //   直接 JSON.stringify(err) 会得到 {"code":1001860000,...}（数字），
+        //   JsonUtility 反序列化对不上类型会抛异常/丢字段，
+        //   hasError() 判不出来 → 取消支付的分支永远走不到 → 界面卡在 loading。
+        let code: string = (err && err.code !== undefined && err.code !== null)
+          ? String(err.code) : "1001860004";
+        let message: string = (err && err.message) ? String(err.message) : "purchase failed";
+        ret = this.concatJson(paramStr, this.buildIapError(code, message));
         resolve(ret);
       });
     });
+  }
+
+  /**
+   * 统一的 IAP 错误 JSON：code 一律是字符串（与广告接口保持一致）。
+   */
+  private buildIapError(code: string, message: string): string {
+    return "{\"code\":\"" + code + "\",\"message\":" + JSON.stringify(message) + "}";
   }
 
 
@@ -127,8 +143,10 @@ export class SDKHandler {
       iap.finishPurchase(context as common.UIAbilityContext, finishPurchaseParam, (err) => {
         if (err) {
           hilog.error(0x0001, "SDKKit", `Iap consumePurchase: Error: ${err.code}`);
-          ret = JSON.stringify(err) ;
+          // ★ 同上：code 必须是字符串，否则 C# 侧会把「核销失败」当成成功，把本地待处理订单删掉
+          ret = this.buildIapError(String(err.code), err.message ? String(err.message) : "consume failed");
           resolve(ret);
+          return;
         }
         // 处理成功逻辑
         let paramStr=JSON.stringify(finishPurchaseParam)
@@ -168,8 +186,9 @@ export class SDKHandler {
         ret = this.concatJson(paramStr,purchaseListJson);
         resolve(ret);
       }).catch((error: BusinessError) => {
-        let errorStr=JSON.stringify(error)
-        ret = this.concatJson(paramStr,errorStr);
+        ret = this.concatJson(paramStr, this.buildIapError(
+          error && error.code !== undefined ? String(error.code) : "1001860004",
+          error && error.message ? String(error.message) : "query purchases failed"));
         hilog.error(0x0000, 'SDKKit', `check purchas info fail: ${ret}`);
         resolve(ret);
       })

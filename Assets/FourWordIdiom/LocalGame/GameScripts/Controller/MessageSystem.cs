@@ -130,11 +130,45 @@ public class MessageSystem : MonoBehaviour
     public void ShowLoadingAnimation()
     {
         loadingPanel.SetActive(true); // 显示加载动画Panel
+
+        // ★ 兜底：LoadingScreen 是 alpha 0.9 的全屏遮罩（raycast 全屏拦截），
+        //   任何一条链路只要漏掉 HideLoadingAnimation，玩家看到的就是「游戏卡住」。
+        //   这里加最长显示时间，超时自动隐藏并打日志，便于定位漏关的地方。
+        if (_loadingGuard != null) StopCoroutine(_loadingGuard);
+        _loadingGuard = StartCoroutine(CoLoadingGuard(LoadingMaxSeconds));
     }
 
     public void HideLoadingAnimation()
     {
+        if (_loadingGuard != null)
+        {
+            StopCoroutine(_loadingGuard);
+            _loadingGuard = null;
+        }
         loadingPanel.SetActive(false); // 隐藏加载动画Panel
+    }
+
+    /// <summary>loading 面板最长显示时间（秒），超过即强制隐藏</summary>
+    private const float LoadingMaxSeconds = 150f;
+
+    private Coroutine _loadingGuard;
+
+    private IEnumerator CoLoadingGuard(float seconds)
+    {
+        float waited = 0f;
+        while (waited < seconds)
+        {
+            if (loadingPanel == null || !loadingPanel.activeSelf) yield break;
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (loadingPanel != null && loadingPanel.activeSelf)
+        {
+            Debug.LogError($"[MessageSystem] loading 面板超过 {seconds:0}s 未关闭，强制隐藏（疑似回调丢失）");
+            loadingPanel.SetActive(false);
+        }
+        _loadingGuard = null;
     }
 
     #region 提示显示接口

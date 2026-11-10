@@ -718,19 +718,25 @@ public class ChessFinishView : UIWindow
         // 设置关卡文本
         int stage = GameDataManager.Instance.UserData.CurrentChessStage;
         int stageBgIndex = ChessStageController.Instance.GetLevelGameplayID(stage);
-        nextStageImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
-        stageSpace.SetActive(stageBgIndex is not (0 or 4 or 5 or 6));
+        // 说明：stageSpace / nextUnlockTip 是 WT 结算页独有的占位节点，HexWord 的 ChessFinishView.prefab 里没有这两个节点，
+        // 同步过来后必须做空保护，否则整段 OnEnable 会空引用中断，结算页直接出不来。
+        if (nextStageImage != null)
+            nextStageImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
+        if (stageSpace != null)
+            stageSpace.SetActive(stageBgIndex is not (0 or 4 or 5 or 6));
         levelText.text = MultilingualManager.Instance.GetString("Level") + " " + stage;
         var unlockHint = ChessStageController.Instance.GetNextMechanicUnlockHint(stage);
-        if (unlockHint.HasValue)
+        if (unlockHint.HasValue && nextUnlockTip != null)
         {
             nextUnlockTip.SetActive(true);
             // 从多语言表获取原始文案，例如 "还差{a}关解锁花朵"
             string rawText = MultilingualManager.Instance.GetString(unlockHint.Value.textKey,"pingzi");
             // 替换占位符并赋值给 UI Text
-            nextUnlockTip.GetComponentInChildren<Text>().text = rawText.Replace("{a}", unlockHint.Value.remainCount.ToString());
+            Text unlockTipText = nextUnlockTip.GetComponentInChildren<Text>(true);
+            if (unlockTipText != null)
+                unlockTipText.text = rawText.Replace("{a}", unlockHint.Value.remainCount.ToString());
         }
-        else
+        else if (nextUnlockTip != null)
         {
             // 没有要预告的机制，隐藏提示气泡
             nextUnlockTip.SetActive(false);

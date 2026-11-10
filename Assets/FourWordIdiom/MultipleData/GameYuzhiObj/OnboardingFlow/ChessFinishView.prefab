@@ -25885,7 +25885,8 @@ MonoBehaviour:
   _zenRankBtn: {fileID: 346179025094511857}
   _centerLotusImage: {fileID: 3164451396432359528}
   Content: {fileID: 5972038460822632039}
-  nextBtn: {fileID: 3550607149674913449}
+  nextStageBtn: {fileID: 3550607149674913449}
+  nextStageImage: {fileID: 4266902028892032307}
   progressSlider: {fileID: 974993057847591136}
   levelText: {fileID: 9124351989644415553}
   progressText: {fileID: 23880252975224322}
@@ -28873,6 +28874,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 2099210043984663466}
+    - targetCorrespondingSourceObject: {fileID: 1805336828898705782, guid: 2bef36291172ffa43b438f9f776fdaf8,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3097394961236934611}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bef36291172ffa43b438f9f776fdaf8, type: 3}
 --- !u!114 &3362653533599016471 stripped
