@@ -84,6 +84,10 @@ public class LogManager : MonoBehaviour
 
     private static void WriteShopLine(string line)
     {
+        // ★ 跟随全局日志总闸（GameCoreManager.Start 里按 Unity_ShowLog 宏设置）：
+        //   正式包把 Debug.unityLogger.logEnabled 关掉时，商店日志也不能绕过去继续写文件。
+        if (!Debug.unityLogger.logEnabled) return;
+
         LogManager mgr = Instance;
         if (mgr == null)
         {
