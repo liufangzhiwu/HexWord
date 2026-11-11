@@ -8,6 +8,8 @@ using UnityEngine.UI;
 
 public class PauseGameScreen : UIWindow
 {
+    private const int SKIP_COOLDOWN_SECONDS = 100; // 跳关冷却时长（秒）
+
     [Header("面板节点")]
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private GameObject continuePanel;
@@ -41,12 +43,15 @@ public class PauseGameScreen : UIWindow
     
     Sprite Opensprite;
     Sprite Closesprite;
+    private Text _jumpBtnText;                       // 跳关按钮文案（冷却倒计时会改写它）
+    private Coroutine _jumpCooldownCoroutine;        // 跳关冷却倒计时协程
 
     protected override void Awake()
     {
         base.Awake();
         Opensprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_OpenToggle");
         Closesprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
+        if (jumpBtn != null) _jumpBtnText = jumpBtn.GetComponentInChildren<Text>(true);
     }
 
     // Start is called before the first frame update
@@ -68,7 +73,7 @@ public class PauseGameScreen : UIWindow
         if (emojiToggle != null) emojiToggle.onValueChanged.AddListener(ToggleEmoji); // emoji 开关（预制体没挂节点时跳过）
         
         titleText.text = MultilingualManager.Instance.GetString("Pause");
-        jumpBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("SkipLevel");
+        if (_jumpBtnText != null) _jumpBtnText.text = MultilingualManager.Instance.GetString("SkipLevel");
         continueBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Continue");
         exitBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Exit");
         
@@ -76,6 +81,9 @@ public class PauseGameScreen : UIWindow
         conTipText.text = MultilingualManager.Instance.GetString("YouWillLose");
         realExitBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ConfirmExit");
         returnGame.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("LetMeThink");
+
+        // Start 在首次 OnEnable 之后执行，会覆盖掉 OnEnable 里写入的冷却文案，这里重新按时间戳刷一次
+        RefreshJumpButtonState();
     }
 
     protected override void OnEnable()
@@ -113,6 +121,9 @@ public class PauseGameScreen : UIWindow
         //   注意：这里【不能】把 IsPausedOrFailed 置 true —— 那个标记代表「在失败界面强退」，
         //   置 true 会让下次启动走防逃逸分支（清档 + 扣体力），表现就是「暂停后杀进程，进度全丢」。
         SaveCurrentLevelProgress();
+
+        // ★ 跳关冷却：每次打开暂停界面都按上次跳关时间戳重新判定，未冷却完则禁用按钮并走倒计时
+        RefreshJumpButtonState();
     }
 
     /// <summary>
@@ -129,6 +140,80 @@ public class PauseGameScreen : UIWindow
 
         Debug.Log($"[PauseGameScreen] 暂停存档检查点已写入：关卡 {ctrl.CurrStageData.StageId}，剩余 {ctrl.CurrStageData.RemainingTime:F1}s");
     }
+
+    #region 跳关冷却
+
+    /// <summary>
+    /// 距离下次可跳关还剩多少秒（0 表示已可跳关）。
+    /// 以 UTC 绝对时间戳计算，杀掉进程/重开游戏依然有效。
+    /// </summary>
+    private int GetSkipCooldownRemainSeconds()
+    {
+        var gm = GameDataManager.Instance;
+        if (gm == null || gm.OverallRank == null) return 0;
+
+        long lastTime = gm.OverallRank.LastSkipLevelTime;
+        long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        long elapsed = currentTime - lastTime;
+
+        // lastTime<=0：从未跳过；elapsed<0：玩家把手机时间往回调了，一律视为冷却结束，避免卡死
+        if (lastTime <= 0 || elapsed >= SKIP_COOLDOWN_SECONDS || elapsed < 0) return 0;
+
+        return (int)(SKIP_COOLDOWN_SECONDS - elapsed);
+    }
+
+    /// <summary>
+    /// 按冷却剩余时间刷新跳关按钮：冷却中禁用按钮并每秒刷新倒计时文案。
+    /// </summary>
+    private void RefreshJumpButtonState()
+    {
+        if (_jumpCooldownCoroutine != null)
+        {
+            StopCoroutine(_jumpCooldownCoroutine);
+            _jumpCooldownCoroutine = null;
+        }
+
+        int remain = GetSkipCooldownRemainSeconds();
+        if (remain <= 0)
+        {
+            ResetJumpButtonToReady();
+        }
+        else if (isActiveAndEnabled)
+        {
+            _jumpCooldownCoroutine = StartCoroutine(CoJumpCooldown(remain));
+        }
+    }
+
+    private IEnumerator CoJumpCooldown(int remainingSeconds)
+    {
+        if (jumpBtn != null) jumpBtn.interactable = false;
+        string originText = MultilingualManager.Instance.GetString("SkipLevel");
+
+        while (remainingSeconds > 0)
+        {
+            if (_jumpBtnText != null)
+            {
+                _jumpBtnText.text = $"{originText} ({remainingSeconds}s)";
+            }
+            // 用真实时间，暂停面板会改 timeScale，用 WaitForSeconds 会卡住
+            yield return new WaitForSecondsRealtime(1.0f);
+            remainingSeconds--;
+        }
+
+        ResetJumpButtonToReady();
+        _jumpCooldownCoroutine = null;
+    }
+
+    private void ResetJumpButtonToReady()
+    {
+        if (jumpBtn != null) jumpBtn.interactable = true;
+        if (_jumpBtnText != null)
+        {
+            _jumpBtnText.text = MultilingualManager.Instance.GetString("SkipLevel");
+        }
+    }
+
+    #endregion
     
     private void ToggleMusic(bool isOn)
     {
@@ -182,6 +267,13 @@ public class PauseGameScreen : UIWindow
 
     private void OnJumpClicked()
     {
+        // 双保险：冷却期内即便按钮状态被外部改回可点，也不重复拉广告
+        if (GetSkipCooldownRemainSeconds() > 0)
+        {
+            RefreshJumpButtonState();
+            return;
+        }
+
         AnalyticMgr.VideoAdClick("跳关广告");
         AdRuleManager.Instance.TryShowRewardVideo(Define.AdKey.RewardAdIdStoreGold,HandleVideoResult);
     }
@@ -192,6 +284,8 @@ public class PauseGameScreen : UIWindow
         {
             // 🌟 记录本次跳关时间戳，启动 100 秒冷却
             GameDataManager.Instance.OverallRank.LastSkipLevelTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            // 立即落盘：跳关后界面马上关闭，不能指望后续结算存档，避免杀进程后冷却被绕过
+            GameDataManager.Instance.OverallRank.SaveData();
             
             // ==========================================
             // 🌟 核心修改：跳过关卡，强行抹除一切临时收益
@@ -283,6 +377,13 @@ public class PauseGameScreen : UIWindow
     }
     protected override void OnDisable()
     {
+        // 停掉冷却倒计时，避免面板关闭后协程还在跑；下次 OnEnable 会按时间戳重新起算
+        if (_jumpCooldownCoroutine != null)
+        {
+            StopCoroutine(_jumpCooldownCoroutine);
+            _jumpCooldownCoroutine = null;
+        }
+
         // 🌟 界面关闭时，通知 HeaderSection 取消高亮
         EventDispatcher.instance.TriggerHighlightHeaderUI(false);
         base.OnDisable();

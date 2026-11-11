@@ -81,6 +81,8 @@ namespace FourWordIdiom.LocalGame.GameScripts.Controller.SaveSystem
             HasShowName = data.HasShowName;
             applauseBgCounter = data.applauseBgCounter == 0 ? 1 : data.applauseBgCounter;
             longBannerCounter = data.longBannerCounter == 0 ? 4 : data.longBannerCounter;
+            // 跳关冷却时间戳必须随存档回读，否则重启后冷却被清零（同步自 WT 1.9.8）
+            LastSkipLevelTime = data.LastSkipLevelTime;
             
             HasViewedTotalRankUnlock = data.HasViewedTotalRankUnlock;
             HasViewedMonthlyRankUnlock = data.HasViewedMonthlyRankUnlock;
