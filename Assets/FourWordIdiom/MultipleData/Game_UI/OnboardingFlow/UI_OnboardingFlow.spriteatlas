@@ -86,6 +86,7 @@ SpriteAtlas:
     - 9f60ba8082ec4a94585b04a8871e1319: 21300000
     - 80bf1290c1812d14d9d13ba23cc62d63: 21300000
     - e94e32b01463d794b9124791a81d926c: 21300000
+    - ecbabcc0987a8ae49838750ec6119eb4: 21300000
     - ca7ba5d0570629f48bd640ce97df92d6: 21300000
     - 5db30ae05243c5949a0e67a42018951e: 21300000
     - e25412010541b884999caa281b884404: 21300000
@@ -296,6 +297,7 @@ SpriteAtlas:
     - c3cf2bbbc8919ea4791d7a817f1507cc: 21300000
     - 7baa6cbbf44658c439c3250bd1c8a0c6: 21300000
     - e7f103db49c9b9d42b2bd09f5d13a1da: 21300000
+    - f28e4ddbb24aef343bf2b7757f4409ab: 21300000
     - d3ece0eb097334e4992554033cf085d5: 21300000
     - 23fb51ebe569b0048a5bc6fce854bf97: 21300000
     - 2eca600c44ffb06449a9fd1459c8e3a3: 21300000
@@ -383,6 +385,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 9f60ba8082ec4a94585b04a8871e1319, type: 3}
   - {fileID: 21300000, guid: 80bf1290c1812d14d9d13ba23cc62d63, type: 3}
   - {fileID: 21300000, guid: e94e32b01463d794b9124791a81d926c, type: 3}
+  - {fileID: 21300000, guid: ecbabcc0987a8ae49838750ec6119eb4, type: 3}
   - {fileID: 21300000, guid: ca7ba5d0570629f48bd640ce97df92d6, type: 3}
   - {fileID: 21300000, guid: 5db30ae05243c5949a0e67a42018951e, type: 3}
   - {fileID: 21300000, guid: e25412010541b884999caa281b884404, type: 3}
@@ -593,6 +596,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: c3cf2bbbc8919ea4791d7a817f1507cc, type: 3}
   - {fileID: 21300000, guid: 7baa6cbbf44658c439c3250bd1c8a0c6, type: 3}
   - {fileID: 21300000, guid: e7f103db49c9b9d42b2bd09f5d13a1da, type: 3}
+  - {fileID: 21300000, guid: f28e4ddbb24aef343bf2b7757f4409ab, type: 3}
   - {fileID: 21300000, guid: d3ece0eb097334e4992554033cf085d5, type: 3}
   - {fileID: 21300000, guid: 23fb51ebe569b0048a5bc6fce854bf97, type: 3}
   - {fileID: 21300000, guid: 2eca600c44ffb06449a9fd1459c8e3a3, type: 3}
@@ -679,6 +683,7 @@ SpriteAtlas:
   - arrow
   - scroll_bar_fill
   - minbg
+  - base_di
   - jd
   - wordbg
   - "\u56FE\u5C42 6"
@@ -863,7 +868,7 @@ SpriteAtlas:
   - namebg
   - "\u7EC4 4778"
   - info_bg
-  - removegift
+  - Beginner
   - line
   - UI_Icon_di
   - 6
@@ -889,6 +894,7 @@ SpriteAtlas:
   - bg_water_5
   - hehua_hp
   - nonet
+  - UI_gold_btndi
   - scroll_bg
   - tai
   - zi

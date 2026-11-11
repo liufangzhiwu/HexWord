@@ -27,8 +27,7 @@ public class ChessFinishView : UIWindow
     [SerializeField] private Button removeAdsGiftBtn; //破冰礼包按钮（去广告一周礼包）
     [SerializeField] private Button giftButton; //限时折扣礼包按钮（复购/升层）
     [SerializeField] private Text removeAds; //去广告限时文本
-    [SerializeField] private GameObject hardStageTable;          // 困难模式
-    [SerializeField] private GameObject extrahardStageTable;          // 特别困难模式
+    // 注：结算页「下一关」按钮上的困难/极难角标已按 WT 移除（hardTable / tehardTable 节点连同引用一并删掉）
 
     
     [Header("新手奖励活动")]
@@ -45,6 +44,7 @@ public class ChessFinishView : UIWindow
     [SerializeField] private Text levelText;
     [SerializeField] private GameObject stageSpace;
     [SerializeField] private Image nextStageImage;
+    [SerializeField] private GameObject specialStageContent; // 特殊关卡：content 里显示该关的图 + 关卡数
     [SerializeField] private GameObject nextUnlockTip;
     [SerializeField] private GameObject _butterflyTimerDisplay;
     
@@ -725,6 +725,25 @@ public class ChessFinishView : UIWindow
         if (stageSpace != null)
             stageSpace.SetActive(stageBgIndex is not (0 or 4 or 5 or 6));
         levelText.text = MultilingualManager.Instance.GetString("Level") + " " + stage;
+
+        // 普通关卡：用 levelImage 上的关卡文本；特殊关卡：改用 content 显示该关的图（stageBtnBg{index}）+ 关卡数
+        // 特殊关卡 = 困难(1)/极难(2)/记忆(3)/emoji(7)；冰块(4)/花朵(5)/树叶(6) 仍走普通关卡那套（levelImage 图集 + levelImage 上的文本）
+        bool isSpecialStage = stageBgIndex is not (0 or 4 or 5 or 6);
+        if (levelText != null)
+            levelText.gameObject.SetActive(!isSpecialStage);
+        if (specialStageContent != null)
+        {
+            specialStageContent.SetActive(isSpecialStage);
+            if (isSpecialStage)
+            {
+                Image specialImage = specialStageContent.GetComponent<Image>();
+                if (specialImage != null)
+                    specialImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
+                Text specialText = specialStageContent.GetComponentInChildren<Text>(true);
+                if (specialText != null)
+                    specialText.text = levelText != null ? levelText.text : MultilingualManager.Instance.GetString("Level") + " " + stage;
+            }
+        }
         var unlockHint = ChessStageController.Instance.GetNextMechanicUnlockHint(stage);
         if (unlockHint.HasValue && nextUnlockTip != null)
         {

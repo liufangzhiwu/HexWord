@@ -65,7 +65,7 @@ public class PauseGameScreen : UIWindow
         musicToggle.onValueChanged.AddListener(ToggleMusic); // 绑定音乐开关变更事件
         soundsToggle.onValueChanged.AddListener(ToggleSounds); // 绑定音效开关变更事件
         vibrateToggle.onValueChanged.AddListener(ToggleVibrate); // 绑定音效开关变更事件
-        emojiToggle.onValueChanged.AddListener(ToggleEmoji);
+        if (emojiToggle != null) emojiToggle.onValueChanged.AddListener(ToggleEmoji); // emoji 开关（预制体没挂节点时跳过）
         
         titleText.text = MultilingualManager.Instance.GetString("Pause");
         jumpBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("SkipLevel");
@@ -98,7 +98,11 @@ public class PauseGameScreen : UIWindow
         musicToggle.isOn = GameDataManager.Instance.UserData.IsMusicOn; // 更新音乐开关状态
         soundsToggle.isOn = GameDataManager.Instance.UserData.IsSoundOn; // 更新音效开关状态
         vibrateToggle.isOn = GameDataManager.Instance.UserData.IsVibrationOn; // 更新音效开关状态
-        emojiToggle.isOn = GameDataManager.Instance.UserData.IsEmojiOn; // 替换为你 UserData 中的对应字段
+        if (emojiToggle != null)
+        {
+            emojiToggle.isOn = GameDataManager.Instance.UserData.IsEmojiOn; // 同步 emoji 开关状态
+            SetToggleVisuals(emojiHandle, emojiToggle.isOn);                // 打开面板时先把手柄摆到正确位置
+        }
         
         SetToggleVisuals(muHandle, musicToggle.isOn);
         SetToggleVisuals(soHandle, soundsToggle.isOn);
@@ -148,10 +152,10 @@ public class PauseGameScreen : UIWindow
     private void ToggleEmoji(bool isOn)
     {
         GameDataManager.Instance.UserData.IsEmojiOn = isOn; // 保存状态到存档
-        UpdateToggleVisuals(emojiHandle, isOn); // 平滑移动手柄与切换精灵
+        if (emojiHandle != null) UpdateToggleVisuals(emojiHandle, isOn); // 平滑移动手柄与切换精灵
         AudioManager.Instance.TriggerVibration(40, 50);
         
-        // 可选：如果局内棋盘或字块需要实时响应 Emoji 显隐切换，在此派发事件通知
+        // 通知局内棋盘/字块实时切换 emoji 与文字显示
         EventDispatcher.instance.TriggerEmojiStateChanged(isOn);
     }
     

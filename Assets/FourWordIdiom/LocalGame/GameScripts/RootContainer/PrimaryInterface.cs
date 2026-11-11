@@ -77,6 +77,7 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private GameObject nextUnlockTip;    // 下一种游戏元素提示
     [SerializeField] private Image nextStageImage;        // 下一种游戏图片
     [SerializeField] private GameObject stageSpace;      // 有图片时占位
+    [SerializeField] private GameObject specialStageContent; // 特殊关卡：content 里显示该关的图 + 关卡数
 
     [Header("配置参数")]
     [SerializeField] private float topPanelDelay = 0.01f; // 顶部面板显示延迟时间
@@ -1086,6 +1087,8 @@ public class PrimaryInterface : UIWindow
             if (nextUnlockTip != null) nextUnlockTip.SetActive(false);
             // 如果非拼字模式不需要展示底图和占位，可以在这里补上隐藏：
             if (stageSpace != null) stageSpace.SetActive(false);
+            if (specialStageContent != null) specialStageContent.SetActive(false);
+            if (Stagetxt != null) Stagetxt.gameObject.SetActive(true);
         }
         else
         {
@@ -1098,6 +1101,25 @@ public class PrimaryInterface : UIWindow
                 nextStageImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
             if (stageSpace != null)
                 stageSpace.SetActive(stageBgIndex is not (0 or 4 or 5 or 6));
+
+            // 普通关卡：用 levelImage 上的关卡文本；特殊关卡：改用 content 显示该关的图（stageBtnBg{index}）+ 关卡数
+            // 特殊关卡 = 困难(1)/极难(2)/记忆(3)/emoji(7)；冰块(4)/花朵(5)/树叶(6) 仍走普通关卡那套（levelImage 图集 + levelImage 上的文本）
+            bool isSpecialStage = stageBgIndex is not (0 or 4 or 5 or 6);
+            if (Stagetxt != null)
+                Stagetxt.gameObject.SetActive(!isSpecialStage);
+            if (specialStageContent != null)
+            {
+                specialStageContent.SetActive(isSpecialStage);
+                if (isSpecialStage)
+                {
+                    Image specialImage = specialStageContent.GetComponent<Image>();
+                    if (specialImage != null)
+                        specialImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
+                    Text specialText = specialStageContent.GetComponentInChildren<Text>(true);
+                    if (specialText != null)
+                        specialText.text = Stagetxt != null ? Stagetxt.text : MultilingualManager.Instance.GetString("Level") + " " + Stage;
+                }
+            }
             // var unlockHint = ChessStageController.Instance.GetNextMechanicUnlockHint(Stage);
             // if (unlockHint.HasValue)
             // {

@@ -65,10 +65,10 @@ public partial class ChessPlayArea
     /// <param name="isfirst"></param>
     public void InitToolUI(int value =0, bool isfirst = false)
     {
-        // 火箭（自动完成 toolInfo[104]）→ CompleteBtn
-        UpdateToolCountUI(CompleteBtn, 104);
-        // 提示（toolInfo[102]）→ HitsBtn
-        UpdateToolCountUI(HitsBtn, 102);
+        // 火箭（自动完成 toolInfo[104]）→ CompleteBtn：引导关走「免费」角标，不显示数量
+        UpdateToolCountUI(CompleteBtn, 104, IsCompleteTutorialActive);
+        // 提示（toolInfo[102]）→ HitsBtn：新手引导关（第 2 关）走「免费」角标，不显示数量
+        UpdateToolCountUI(HitsBtn, 102, IsHitsTutorialActive);
     }
 
     /// <summary>
@@ -79,15 +79,35 @@ public partial class ChessPlayArea
     /// </summary>
     /// <param name="btn">道具按钮</param>
     /// <param name="toolId">道具 ID：104=火箭/自动完成，102=提示</param>
-    private void UpdateToolCountUI(Button btn, int toolId)
+    /// <param name="isTutorialFree">是否处于该道具的新手引导关（此时显示「免费」角标、不显示数量）</param>
+    private void UpdateToolCountUI(Button btn, int toolId, bool isTutorialFree)
     {
         if (btn == null) return;
+
+        // 免费角标（对应 WT 里按钮第 3 个子节点，这里按名字找更稳）
+        Transform freeBadge = btn.transform.Find("Free");
+        if (freeBadge != null)
+        {
+            freeBadge.gameObject.SetActive(isTutorialFree);
+            if (isTutorialFree)
+            {
+                Text freeText = freeBadge.GetComponentInChildren<Text>(true);
+                if (freeText != null) freeText.text = MultilingualManager.Instance.GetString("Free", "pingzi");
+            }
+        }
 
         // 优先按名字找，兼容层级变动；找不到再回退到第 2 个子节点（CountBg 的位置）
         Transform countBg = btn.transform.Find("CountBg");
         if (countBg == null && btn.transform.childCount > 1)
             countBg = btn.transform.GetChild(1);
         if (countBg == null) return;
+
+        // 引导关只显示「免费」，不显示数量
+        if (isTutorialFree)
+        {
+            countBg.gameObject.SetActive(false);
+            return;
+        }
 
         int count = 0;
         if (GameDataManager.Instance != null && GameDataManager.Instance.UserData != null)
@@ -205,27 +225,20 @@ public partial class ChessPlayArea
         NotifyPlayerInteraction(); // 🌟 触发唤醒计时
         
         if (chessboardGrid.IsBlockInput || chessboardGrid.GameOver) return;
-       
-        ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[104];
-        if(toolInfo == null) return;
-        
-        if(toolInfo.count <= 0)
+
+        // 新手引导关（火箭对应关卡）里火箭是「免费」的：不校验数量、不扣道具（与 WT 一致）
+        if (!IsCompleteTutorialActive)
         {
-            // if (GameDataManager.Instance.UserData.Gold < toolInfo.cost)
-            // {
-            //     ShopManager.shopManager.OpenDynamicStore();
-            //     return;
-            // }
-            GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
-            SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
-            return;
-        }
-        
-        
-        if (CurrStageInfo.StageNumber == 5)
-        {
-            if (GameDataManager.Instance.UserData.ChessTutorialProgress[5])
+            ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[104];
+            if (toolInfo == null) return;
+
+            if (toolInfo.count <= 0)
             {
+                // if (GameDataManager.Instance.UserData.Gold < toolInfo.cost)
+                // {
+                //     ShopManager.shopManager.OpenDynamicStore();
+                //     return;
+                // }
                 GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
                 // GetItemScreen.targetWord = GetCurrentSelectedPhrase(); // 🌟 赋值
                 SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
@@ -239,9 +252,7 @@ public partial class ChessPlayArea
         
         chessboardGrid.IsBlockInput = true;
         EventDispatcher.instance.TriggerChangeTopRaycast(false);
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, "关卡内使用", GetCurrentSelectedPhrase());
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
-        InitToolUI();
 
         AudioManager.Instance.PlaySoundEffect("ItemUSe02");
         // 实现业务
@@ -347,8 +358,8 @@ public partial class ChessPlayArea
         //     return;
         // }
 
-        // 第二关新手引导 不计数
-        if (CurrStageInfo.StageNumber == 2)
+        // 新手引导关（第 2 关）里提示灯是「免费」的：不校验数量、不扣道具（与 WT 一致）
+        if (!IsHitsTutorialActive)
         {
             ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
             if (toolInfo == null || toolInfo.count <= 0)

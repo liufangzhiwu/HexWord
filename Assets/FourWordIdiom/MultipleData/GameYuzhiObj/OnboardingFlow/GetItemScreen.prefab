@@ -1,18 +1,17 @@
 %YAML 1.1
-%TAG !u! tag:yousandi.cn,2023:
+%TAG !u! tag:unity3d.com,2011:
 --- !u!1 &55873349093628289
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5564261859386050127}
   - component: {fileID: 1838482304618558538}
   - component: {fileID: 6395350315532860371}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AddGiftTable (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -82,14 +81,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1829000792253614207}
   - component: {fileID: 5335611877684152429}
   - component: {fileID: 5916594869101994275}
   - component: {fileID: 653640082190608414}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Effect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -173,14 +171,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4642495873508850331}
   - component: {fileID: 1695392849805676156}
   - component: {fileID: 6668146267995670619}
   - component: {fileID: 2334367583190005996}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: GiftLeftTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -283,7 +280,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2286153264720266197}
   - component: {fileID: 6595362100359758168}
@@ -292,7 +289,6 @@ GameObject:
   - component: {fileID: 3959580597044211956}
   - component: {fileID: 5969148134240048923}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: discountText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -411,13 +407,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3098948865479581543}
   - component: {fileID: 2196652676019655130}
   - component: {fileID: 6330732173526958949}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: limitCountObj
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -488,7 +483,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2840240769970358668}
   - component: {fileID: 5919298509365229227}
@@ -496,7 +491,6 @@ GameObject:
   - component: {fileID: 6964557430607680824}
   - component: {fileID: 1631901465943030574}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Icons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -581,7 +575,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: -1357356475
-  m_SortingOrder: 25
+  m_SortingOrder: 5
   m_TargetDisplay: 0
 --- !u!114 &1631901465943030574
 MonoBehaviour:
@@ -606,13 +600,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3599789565990547902}
   - component: {fileID: 3768533581784727499}
   - component: {fileID: 7145000676743541336}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: adsDes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -686,14 +679,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4312994654167281420}
   - component: {fileID: 6200714544666463316}
   - component: {fileID: 7055087339921392496}
   - component: {fileID: 6883549103323788088}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: itenbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -791,12 +783,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 645392698739956524}
   - component: {fileID: 5736749202375274434}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: UIBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -854,12 +845,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2576641360719586913}
   - component: {fileID: 6004189378848743942}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AddGiftTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -901,13 +891,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3864705914575064526}
   - component: {fileID: 2062529654629043457}
   - component: {fileID: 3338851290262627575}
   m_Layer: 0
-  m_HasEditorInfo: 1
   m_Name: Particle System (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5670,9 +5659,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -5696,7 +5682,7 @@ ParticleSystemRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1357356475
   m_SortingLayer: 7
-  m_SortingOrder: 14
+  m_SortingOrder: 4
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -5735,7 +5721,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 9108798745284708290}
   - component: {fileID: 8468647485677644474}
@@ -5743,7 +5729,6 @@ GameObject:
   - component: {fileID: 690722730528775387}
   - component: {fileID: 3838406134402270860}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CountText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5845,14 +5830,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4012542231400200647}
   - component: {fileID: 5576478743142535553}
   - component: {fileID: 6533503625005638397}
   - component: {fileID: 219862868448251620}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: BuyBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5968,14 +5952,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1592811840992224041}
   - component: {fileID: 271702363293096977}
   - component: {fileID: 6957446064154168966}
   - component: {fileID: 7244914413087738706}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ClaimGoldBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6091,13 +6074,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4748523048237190903}
   - component: {fileID: 4329282876867288457}
   - component: {fileID: 3992876147573486303}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: oldprice
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6172,13 +6154,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 9006069228680722704}
   - component: {fileID: 1864099487333516455}
   - component: {fileID: 6573449560391280706}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: limitCountObj
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6249,13 +6230,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3229481333137225765}
   - component: {fileID: 618723983109466096}
   - component: {fileID: 2042018036788367402}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: gold
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6325,7 +6305,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5389933205536695028}
   - component: {fileID: 9118394315617173672}
@@ -6337,7 +6317,6 @@ GameObject:
   - component: {fileID: 957571754255354104}
   - component: {fileID: 215206298638838415}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: GiftName
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6499,11 +6478,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1561396045870922962}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AdsCanUseTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6537,13 +6515,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1806577418320674792}
   - component: {fileID: 4634779379431447518}
   - component: {fileID: 1210613822359116437}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Bg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6613,7 +6590,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3348149280488444271}
   - component: {fileID: 8280429790780138894}
@@ -6622,7 +6599,6 @@ GameObject:
   - component: {fileID: 1666292927205201055}
   - component: {fileID: 4295046434642863834}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: GetItemScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6680,7 +6656,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: -1357356475
-  m_SortingOrder: 10
+  m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!114 &5780311666598182103
 MonoBehaviour:
@@ -6701,7 +6677,7 @@ MonoBehaviour:
     m_Bits: 4294967295
 --- !u!95 &1666292927205201055
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -6712,8 +6688,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: db91225133a5abe42863d7d24b7902ad, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -6765,14 +6739,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5371211989063481673}
   - component: {fileID: 5390360085888836619}
   - component: {fileID: 5425714023037158137}
   - component: {fileID: 8805764953036740256}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: GiftTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6873,13 +6846,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7312267890421133837}
   - component: {fileID: 5755161515255179202}
   - component: {fileID: 6567299117018034483}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AddGiftTable (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6949,13 +6921,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1378316945124929627}
   - component: {fileID: 5555474265389240407}
   - component: {fileID: 1617852895465061983}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: oldprice
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7030,14 +7001,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2318111407537498180}
   - component: {fileID: 8698492821671977435}
   - component: {fileID: 102592955958340702}
   - component: {fileID: 4190137822097155904}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: PointBtn (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7152,14 +7122,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6758687246408085037}
   - component: {fileID: 4101914575001008508}
   - component: {fileID: 6043342328112555402}
   - component: {fileID: 4024886413001663278}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: CloseBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7274,13 +7243,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6704185788006293510}
   - component: {fileID: 6194814577954561699}
   - component: {fileID: 975102396254340497}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Background (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7350,13 +7318,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7278120923154054899}
   - component: {fileID: 8586265950936532883}
   - component: {fileID: 2113727162586929688}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: price
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7430,13 +7397,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6530715061308650562}
   - component: {fileID: 2274908683292774314}
   - component: {fileID: 2953972868603041173}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7506,13 +7472,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1852880913674911114}
   - component: {fileID: 2223714879790585075}
   - component: {fileID: 7798134353704657920}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ads
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7582,12 +7547,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2432971136354186995}
   - component: {fileID: 8227790014613211471}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: buttons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7647,14 +7611,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5896986949956978149}
   - component: {fileID: 7059412312996547667}
   - component: {fileID: 4930152427728137478}
   - component: {fileID: 3317558791981893794}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: ClaimAdsBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7771,13 +7734,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4152195520569493555}
   - component: {fileID: 207488076595304128}
   - component: {fileID: 3004865867714030147}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7847,11 +7809,10 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7577042340231416046}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Sliding Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7884,14 +7845,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8505086215225756034}
   - component: {fileID: 8749426515035534147}
   - component: {fileID: 3331049994159181390}
   - component: {fileID: 3904694345336186623}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Viewport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7975,7 +7935,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4731098443109769868}
   - component: {fileID: 6260053583808900120}
@@ -7984,7 +7944,6 @@ GameObject:
   - component: {fileID: 1437017841118589289}
   - component: {fileID: 2114316982181064109}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8101,13 +8060,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6094342940332082969}
   - component: {fileID: 2109863706372808602}
   - component: {fileID: 697965865697275362}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Handle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8177,13 +8135,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6230750982031530117}
   - component: {fileID: 4147736965715026285}
   - component: {fileID: 8738557302364134348}
   m_Layer: 0
-  m_HasEditorInfo: 1
   m_Name: Particle System (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12946,9 +12903,6 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
-  m_virtualGeometry: 0
-  m_virtualGeometryShadow: 0
-  m_ShadingRate: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -12972,7 +12926,7 @@ ParticleSystemRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1357356475
   m_SortingLayer: 7
-  m_SortingOrder: 13
+  m_SortingOrder: 3
   m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
@@ -13011,7 +12965,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3367573825858338491}
   - component: {fileID: 119410170242859786}
@@ -13020,7 +12974,6 @@ GameObject:
   - component: {fileID: 5977602952727769771}
   - component: {fileID: 7689011449804043428}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: discountText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13139,7 +13092,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3034834502236850975}
   - component: {fileID: 8955108062743075856}
@@ -13148,7 +13101,6 @@ GameObject:
   - component: {fileID: 3086804802266460442}
   - component: {fileID: 6508536520303559617}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13265,7 +13217,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8582580260879011766}
   - component: {fileID: 7825862464689920391}
@@ -13274,7 +13226,6 @@ GameObject:
   - component: {fileID: 1806184246564100304}
   - component: {fileID: 8970898979010600890}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: tips
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13388,13 +13339,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 8415013590604165442}
   - component: {fileID: 8526028170734904666}
   - component: {fileID: 8705304949321063232}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Tagbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13465,7 +13415,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2870668369047887709}
   - component: {fileID: 2673124248001980414}
@@ -13473,7 +13423,6 @@ GameObject:
   - component: {fileID: 1807264831344312431}
   - component: {fileID: 7988716689290005616}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Count
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13558,7 +13507,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: -1357356475
-  m_SortingOrder: 35
+  m_SortingOrder: 6
   m_TargetDisplay: 0
 --- !u!114 &7988716689290005616
 MonoBehaviour:
@@ -13583,14 +13532,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2566086025135985156}
   - component: {fileID: 7991062989337304822}
   - component: {fileID: 1075858679989983023}
   - component: {fileID: 4222384635200873926}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: circle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13656,7 +13604,7 @@ MonoBehaviour:
   m_PixelsPerUnitMultiplier: 1
 --- !u!95 &4222384635200873926
 Animator:
-  serializedVersion: 6
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -13667,8 +13615,6 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 458f03ed8f827f04a98dd971d4ea0fe2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_UpdateFrequencyMode: 0
-  m_UpdateFrequency: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -13683,13 +13629,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5560562302841849925}
   - component: {fileID: 4833080320156554456}
   - component: {fileID: 5822588219293353054}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: discountobj
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13760,13 +13705,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2961325568114004179}
   - component: {fileID: 4440486686287171077}
   - component: {fileID: 2406221538329010250}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AddGiftTable (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13836,13 +13780,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3702703262614849509}
   - component: {fileID: 2924456056999368090}
   - component: {fileID: 3480384128832347823}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Tagbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13913,13 +13856,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7001925554956420355}
   - component: {fileID: 3184942937741489174}
   - component: {fileID: 1071212698325826243}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: discountobj
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13990,13 +13932,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3647205207161371645}
   - component: {fileID: 1873474274196113594}
   - component: {fileID: 7180948956096028583}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Content
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14066,13 +14007,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3920490285337118061}
   - component: {fileID: 4327028040325155506}
   - component: {fileID: 5307629875894305269}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: price
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14146,14 +14086,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4732236008137627396}
   - component: {fileID: 9214518235255494064}
   - component: {fileID: 1148434828853107369}
   - component: {fileID: 2179453143264678324}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Effect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14237,7 +14176,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4420310134267839563}
   - component: {fileID: 5241254857139940018}
@@ -14245,7 +14184,6 @@ GameObject:
   - component: {fileID: 258507927710467835}
   - component: {fileID: 6765912766152644797}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: HeaderText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14347,13 +14285,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4454236157551206563}
   - component: {fileID: 2547702562493788601}
   - component: {fileID: 5630192877518882952}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14423,13 +14360,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6901231199279278910}
   - component: {fileID: 1636138961978376311}
   - component: {fileID: 8108015436165827489}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AddGiftTable (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14499,14 +14435,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5098763790561129921}
   - component: {fileID: 4885460542787845812}
   - component: {fileID: 7821754713581088533}
   - component: {fileID: 5869732912555115960}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Text (Legacy)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14595,13 +14530,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 381594942274896232}
   - component: {fileID: 30136743355414630}
   - component: {fileID: 172613071460992329}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14671,7 +14605,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6370925215427784702}
   - component: {fileID: 1633591483803094263}
@@ -14679,7 +14613,6 @@ GameObject:
   - component: {fileID: 4950762857192394883}
   - component: {fileID: 8484015308023431049}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: TagText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14781,13 +14714,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6564950474199811963}
   - component: {fileID: 1182354084691964343}
   - component: {fileID: 1174847973340018412}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14857,14 +14789,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4024844605267426711}
   - component: {fileID: 7142253425836878180}
   - component: {fileID: 2958885537756803592}
   - component: {fileID: 5839964607590163026}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: itenbg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14964,14 +14895,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 9215051111222093588}
   - component: {fileID: 533193407787262602}
   - component: {fileID: 4553759264233680281}
   - component: {fileID: 4349693064983132927}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: PointBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15086,14 +15016,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5450012283292835537}
   - component: {fileID: 1371773660223604180}
   - component: {fileID: 1768939016133575871}
   - component: {fileID: 7676729043182941124}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Scrollbar Horizontal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15213,7 +15142,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 2624299672765549619}
   - component: {fileID: 2172120878233837457}
@@ -15221,7 +15150,6 @@ GameObject:
   - component: {fileID: 8290105218263690722}
   - component: {fileID: 427945867840818044}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: TagText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15323,14 +15251,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 330010197323162970}
   - component: {fileID: 2499681751593147375}
   - component: {fileID: 34869707867921008}
   - component: {fileID: 2436129901085465545}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Scroll View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15432,13 +15359,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3401704181529419230}
   - component: {fileID: 311560222854605553}
   - component: {fileID: 1934378908766260074}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: PointButtons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15513,7 +15439,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 7424879833064077437}
   - component: {fileID: 6034717752746630156}
@@ -15525,7 +15451,6 @@ GameObject:
   - component: {fileID: 7461030492434429650}
   - component: {fileID: 3401916601409660843}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: GiftName
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15687,13 +15612,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4561312127327613510}
   - component: {fileID: 4666048570201491924}
   - component: {fileID: 4379725526663980533}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15763,14 +15687,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4507602128718557252}
   - component: {fileID: 754253609011259657}
   - component: {fileID: 914042727065818757}
   - component: {fileID: 5738763265687859796}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: BuyBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15886,12 +15809,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 3829530502358062104}
   - component: {fileID: 2764603559929953390}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: AddGiftTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15933,13 +15855,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 1610715733661362204}
   - component: {fileID: 5471242254922045215}
   - component: {fileID: 713924877228852109}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: adsDes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16013,13 +15934,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 6453196844709240192}
   - component: {fileID: 2461592234997261348}
   - component: {fileID: 6275954121574453435}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16089,14 +16009,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 7
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 5892113989965611065}
   - component: {fileID: 438889717105217061}
   - component: {fileID: 2693624797911511718}
   - component: {fileID: 5396669187972201623}
   m_Layer: 5
-  m_HasEditorInfo: 1
   m_Name: PointBtn (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16481,7 +16400,7 @@ PrefabInstance:
     - target: {fileID: 1147769711998637836, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
       propertyPath: m_SortingOrder
-      value: 12
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1147769711998637836, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
@@ -16637,7 +16556,7 @@ PrefabInstance:
     - target: {fileID: 4087203286935423506, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
       propertyPath: m_SortingOrder
-      value: 20
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4087203286935423506, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
@@ -16677,7 +16596,7 @@ PrefabInstance:
     - target: {fileID: 5516687393023945660, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
       propertyPath: m_SortingOrder
-      value: 13
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5516687393023945660, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
@@ -17333,7 +17252,7 @@ PrefabInstance:
     - target: {fileID: 1147769711998637836, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
       propertyPath: m_SortingOrder
-      value: 12
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1147769711998637836, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
@@ -17489,7 +17408,7 @@ PrefabInstance:
     - target: {fileID: 4087203286935423506, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
       propertyPath: m_SortingOrder
-      value: 20
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 4087203286935423506, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
@@ -17529,7 +17448,7 @@ PrefabInstance:
     - target: {fileID: 5516687393023945660, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}
       propertyPath: m_SortingOrder
-      value: 13
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5516687393023945660, guid: d6b75726848c39b4f831918e467a02aa,
         type: 3}

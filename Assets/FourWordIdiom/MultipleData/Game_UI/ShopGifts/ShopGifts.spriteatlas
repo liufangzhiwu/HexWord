@@ -62,7 +62,6 @@ SpriteAtlas:
     - f4ced4d88696cc64bab9e12937ed84b2: 21300000
     - baabfe99bdd545344b94b4b001a0cdb7: 21300000
     - b9b6926a71e4a284b84afe38e1c33ab3: 21300000
-    - 7eecc38a8a829794fb820493486ffb93: 21300000
     - 6a88c13bf80dd6548a40a7ec5f94391c: 21300000
     - 1df3417fc20fbf04384500e20b95ae4c: 21300000
   m_MasterAtlas: {fileID: 0}
@@ -79,7 +78,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: f4ced4d88696cc64bab9e12937ed84b2, type: 3}
   - {fileID: 21300000, guid: baabfe99bdd545344b94b4b001a0cdb7, type: 3}
   - {fileID: 21300000, guid: b9b6926a71e4a284b84afe38e1c33ab3, type: 3}
-  - {fileID: 21300000, guid: 7eecc38a8a829794fb820493486ffb93, type: 3}
   - {fileID: 21300000, guid: 6a88c13bf80dd6548a40a7ec5f94391c, type: 3}
   - {fileID: 21300000, guid: 1df3417fc20fbf04384500e20b95ae4c, type: 3}
   m_PackedSpriteNamesToIndex:
@@ -95,7 +93,6 @@ SpriteAtlas:
   - chuxingGift
   - tehuiGiftA
   - xiwuGift
-  - "\u5173\u5361\u56FE\u6807 \u526F\u672C"
   - removeAdsbg
   - mingxingGift
   m_RenderDataMap: {}

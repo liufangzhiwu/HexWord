@@ -255,6 +255,7 @@ SpriteAtlas:
     - a0d8fc4e9759d0a4897699c85676f3cf: 21300000
     - baf7285ee6144fd45b99e5655d6bc561: 21300000
     - 6e7b1e5ee7760f842a53b245800b11bd: 21300000
+    - 496c907edca461543ae03ce9f9d601c5: 21300000
     - aa2cb17eca47ea248ba926891a161e5d: 21300000
     - f6dee7aea5e140345aa47c6e3d97b7b3: 21300000
     - 400471be92fa74449aa9a5af9c4c7dd6: 21300000
@@ -466,6 +467,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: a0d8fc4e9759d0a4897699c85676f3cf, type: 3}
   - {fileID: 21300000, guid: baf7285ee6144fd45b99e5655d6bc561, type: 3}
   - {fileID: 21300000, guid: 6e7b1e5ee7760f842a53b245800b11bd, type: 3}
+  - {fileID: 21300000, guid: 496c907edca461543ae03ce9f9d601c5, type: 3}
   - {fileID: 21300000, guid: aa2cb17eca47ea248ba926891a161e5d, type: 3}
   - {fileID: 21300000, guid: f6dee7aea5e140345aa47c6e3d97b7b3, type: 3}
   - {fileID: 21300000, guid: 400471be92fa74449aa9a5af9c4c7dd6, type: 3}
@@ -676,6 +678,7 @@ SpriteAtlas:
   - "\u672A\u70B9\u8D5E"
   - "\u70B9\u8D5E"
   - UI_btn_pupa
+  - btn_free_di
   - focusHalo
   - timer_red
   - deng
