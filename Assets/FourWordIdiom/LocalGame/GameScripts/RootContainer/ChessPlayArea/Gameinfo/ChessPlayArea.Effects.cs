@@ -302,59 +302,59 @@ public partial class ChessPlayArea
         Vector3 endLocal = transform.position;
         if (_bannerLiziCache != null)
         {
+             _bannerLiziCache.SetActive(true);
+            // _bannerLiziCache.transform.SetAsLastSibling();
+            //
+            // // Transform effectLightTrans = _bannerLiziCache.transform.Find("EffectLight");
+            // Transform lightYeTrans = _bannerLiziCache.transform.Find("EffectLight/Light_ye");
+            // Transform effectPointTrans = _bannerLiziCache.transform.Find("EffectPoint"); // ✨ 新增：找到 EffectPoint
+            // // ParticleSystem lightYePs = lightYeTrans != null ? lightYeTrans.GetComponent<ParticleSystem>() : null;
+            // if (lightYeTrans != null) 
+            // {
+            //     lightYeTrans.gameObject.SetActive(false);  // ✨ 核心修复：前 0.5 秒强制它隐藏！绝对不准发光！
+            // }
+            //
+            // RectTransform liziRect = _bannerLiziCache.GetComponent<RectTransform>();
+            // Vector3 startWorld = zentable != null ? zentable.transform.position : transform.position;
+            // Vector3 startLocal = transform.InverseTransformPoint(startWorld);
+            // startLocal.z = 0f; // 强行抹平 Z 轴，防止受相机深度影响乱飞
+            // liziRect.localPosition = startLocal;
+            //
+            // // 净化物理残留
+            // var trails = _bannerLiziCache.GetComponentsInChildren<TrailRenderer>(true);
+            // foreach (var t in trails) t.Clear();
+            // var pss = _bannerLiziCache.GetComponentsInChildren<ParticleSystem>(true);
+            // foreach (var p in pss) { p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); }
+            //
             // _bannerLiziCache.SetActive(true);
-            _bannerLiziCache.transform.SetAsLastSibling();
-            
-            // Transform effectLightTrans = _bannerLiziCache.transform.Find("EffectLight");
-            Transform lightYeTrans = _bannerLiziCache.transform.Find("EffectLight/Light_ye");
-            Transform effectPointTrans = _bannerLiziCache.transform.Find("EffectPoint"); // ✨ 新增：找到 EffectPoint
-            // ParticleSystem lightYePs = lightYeTrans != null ? lightYeTrans.GetComponent<ParticleSystem>() : null;
-            if (lightYeTrans != null) 
-            {
-                lightYeTrans.gameObject.SetActive(false);  // ✨ 核心修复：前 0.5 秒强制它隐藏！绝对不准发光！
-            }
-            
-            RectTransform liziRect = _bannerLiziCache.GetComponent<RectTransform>();
-            Vector3 startWorld = zentable != null ? zentable.transform.position : transform.position;
-            Vector3 startLocal = transform.InverseTransformPoint(startWorld);
-            startLocal.z = 0f; // 强行抹平 Z 轴，防止受相机深度影响乱飞
-            liziRect.localPosition = startLocal;
-            
-            // 净化物理残留
-            var trails = _bannerLiziCache.GetComponentsInChildren<TrailRenderer>(true);
-            foreach (var t in trails) t.Clear();
-            var pss = _bannerLiziCache.GetComponentsInChildren<ParticleSystem>(true);
-            foreach (var p in pss) { p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); }
-            
-            _bannerLiziCache.SetActive(true);
-            effectPointTrans.gameObject.SetActive(true);
+            // effectPointTrans.gameObject.SetActive(true);
              yield return new WaitForSeconds(0.5f);
             AudioManager.Instance.PlaySoundEffect("result_chest_open",0,1);
-            lightYeTrans.gameObject.SetActive(true);
-            effectPointTrans.gameObject.SetActive(false);
-            
-            RectTransform gridRect = chessboardGrid.GetComponent<RectTransform>();
-            Vector3[] corners = new Vector3[4];
-            gridRect.GetWorldCorners(corners);
-            Vector3 endWorld = (corners[0] + corners[3]) / 2f;
-            endLocal = transform.InverseTransformPoint(endWorld);
-            endLocal.z = 0f; // 再次抹平 Z 轴防抖
-            // float yOffset = 80f; 
-            endLocal.y += 155f;
-            bool isFlyDone = false;
-            // 飞行动画：平滑向中心聚拢
-            liziRect.DOLocalMove(endLocal, 0.75f).SetEase(Ease.InOutSine).OnComplete(() => {
-                isFlyDone = true;
-            });
-            
-            yield return new WaitUntil(() => isFlyDone);
-            DOVirtual.DelayedCall(0.5f, () => 
-            {
-                if (_bannerLiziCache != null) 
-                {
-                    _bannerLiziCache.SetActive(false);
-                }
-            });
+            // lightYeTrans.gameObject.SetActive(true);
+            // effectPointTrans.gameObject.SetActive(false);
+            //
+            // RectTransform gridRect = chessboardGrid.GetComponent<RectTransform>();
+            // Vector3[] corners = new Vector3[4];
+            // gridRect.GetWorldCorners(corners);
+            // Vector3 endWorld = (corners[0] + corners[3]) / 2f;
+            // endLocal = transform.InverseTransformPoint(endWorld);
+            // endLocal.z = 0f; // 再次抹平 Z 轴防抖
+            // // float yOffset = 80f; 
+            // endLocal.y += 155f;
+            // bool isFlyDone = false;
+            // // 飞行动画：平滑向中心聚拢
+            // liziRect.DOLocalMove(endLocal, 0.75f).SetEase(Ease.InOutSine).OnComplete(() => {
+            //     isFlyDone = true;
+            // });
+            yield return new WaitForSeconds(1.2f);
+            // yield return new WaitUntil(() => isFlyDone);
+            // DOVirtual.DelayedCall(0.5f, () => 
+            // {
+            //     if (_bannerLiziCache != null) 
+            //     {
+            //         _bannerLiziCache.SetActive(false);
+            //     }
+            // });
             _bannerLiziCache.SetActive(false); // 抵达中心瞬间彻底消失
         }
 
