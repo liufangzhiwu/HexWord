@@ -181,12 +181,23 @@ public static class UIUtilities
         return $"{hoursText}{HourSymbol}{minutesText}{MinuteSymbol}";
     }
 
+    /// <summary>默认货币文化（ja-JP）。缓存成静态对象：原来每个商品都要 CreateSpecificCulture 一次。</summary>
+    private static readonly CultureInfo DefaultCurrencyCulture = CultureInfo.CreateSpecificCulture("ja-JP");
+
+    /// <summary>按货币代码缓存 CultureInfo（避免每次格式化都遍历一次全量文化列表）</summary>
+    private static readonly System.Collections.Generic.Dictionary<string, CultureInfo> CurrencyCultureCache
+        = new System.Collections.Generic.Dictionary<string, CultureInfo>();
+
     public static CultureInfo GetCultureForCurrency(string currencyCode)
     {
         if (string.IsNullOrEmpty(currencyCode))
         {
-            return CultureInfo.CreateSpecificCulture("ja-JP");
+            return DefaultCurrencyCulture;
         }
+
+        CultureInfo cached;
+        if (CurrencyCultureCache.TryGetValue(currencyCode, out cached) && cached != null)
+            return cached;
 
         try
         {
@@ -203,11 +214,14 @@ public static class UIUtilities
                     }
                 });
 
-            return matchingCulture ?? CultureInfo.CreateSpecificCulture("ja-JP");
+            CultureInfo result = matchingCulture ?? DefaultCurrencyCulture;
+            CurrencyCultureCache[currencyCode] = result;
+            return result;
         }
         catch
         {
-            return CultureInfo.CreateSpecificCulture("ja-JP");
+            CurrencyCultureCache[currencyCode] = DefaultCurrencyCulture;
+            return DefaultCurrencyCulture;
         }
     }
 

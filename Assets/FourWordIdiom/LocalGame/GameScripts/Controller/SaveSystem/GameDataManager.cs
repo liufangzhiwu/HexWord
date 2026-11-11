@@ -338,6 +338,9 @@ public class GameDataManager : SingletonMono<GameDataManager>
         {
             ChessLevelProgressDict[chessCurrentLevelId].SaveToFile();
         }
+
+        // 本次已经真正落盘，清掉延迟提交的待办
+        ClearPendingCommit();
         
         if (!dataInitialized)
         {
@@ -358,6 +361,64 @@ public class GameDataManager : SingletonMono<GameDataManager>
         }
         StartCoroutine(PushServerData());
     }
+
+    #region 延迟合并提交
+
+    private Coroutine _delayedCommitRoutine;
+    private bool _hasPendingCommit;
+
+    /// <summary>当前是否有还没落盘的数据（延迟提交用）。</summary>
+    public bool HasPendingCommit { get { return _hasPendingCommit; } }
+
+    /// <summary>
+    /// 延迟合并提交：先标记脏数据，过 delay 秒再统一落盘。
+    ///
+    /// 用途：像「进商店」这种不改数值、只记录一个状态的地方，没必要在打开界面的那一帧就做
+    /// 「7 份 JSON 序列化 + AES 加密 + 写文件 + 2 份关卡进度写盘」——那是主线程 IO 尖峰。
+    /// 切后台 / 退出 / 真正改数值的地方仍然走 <see cref="CommitGameData"/>，不会丢数据。
+    /// </summary>
+    public void CommitGameDataDelayed(float delay = 1.5f)
+    {
+        _hasPendingCommit = true;
+
+        if (!isActiveAndEnabled)
+        {
+            // 不能起协程（对象未激活/即将销毁）→ 直接存
+            CommitGameData();
+            return;
+        }
+
+        if (_delayedCommitRoutine != null)
+            StopCoroutine(_delayedCommitRoutine);
+
+        _delayedCommitRoutine = StartCoroutine(DelayedCommitRoutine(delay));
+    }
+
+    private IEnumerator DelayedCommitRoutine(float delay)
+    {
+        // 至少错开一帧，避开界面打开 / 切页的那一帧
+        yield return null;
+        if (delay > 0f)
+            yield return new WaitForSecondsRealtime(delay);
+
+        _delayedCommitRoutine = null;
+        if (!_hasPendingCommit) yield break;
+
+        CommitGameData();
+    }
+
+    /// <summary>清掉延迟提交待办（已经真正落盘时调用）。</summary>
+    private void ClearPendingCommit()
+    {
+        _hasPendingCommit = false;
+        if (_delayedCommitRoutine != null)
+        {
+            StopCoroutine(_delayedCommitRoutine);
+            _delayedCommitRoutine = null;
+        }
+    }
+
+    #endregion
   
     private IEnumerator PushServerData()
     {

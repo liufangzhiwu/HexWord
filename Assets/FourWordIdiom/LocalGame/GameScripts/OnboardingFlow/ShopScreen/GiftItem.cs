@@ -28,6 +28,48 @@ public class GiftItem : MonoBehaviour
     private Button tipbtn;
     private int shopid;
 
+    // ======================= ★ 池复用：样式复位 =======================
+
+    /// <summary>Prefab 上 countText 的默认字号（池复用时用来复位，避免上一个资源的大小残留）</summary>
+    private int _defaultFontSize;
+    private bool _defaultFontSizeCached;
+
+    /// <summary>Prefab 上 shopIcon 的默认图（池复用时兜底，避免残留上一个资源的图标）</summary>
+    private Sprite _defaultIconSprite;
+    private bool _defaultIconSpriteCached;
+
+    /// <summary>hengIconSize / hengIconAnchoredPosition 的默认值（与字段初始值保持一致）</summary>
+    private static readonly Vector2 DefaultHengIconSize = new Vector2(120f, 130f);
+    private static readonly Vector2 DefaultHengIconPosition = Vector2.zero;
+
+    /// <summary>
+    /// 池复用前的样式复位：
+    /// 原来每个礼包子项都是新建的（天然是 Prefab 默认样式），改成对象池后必须显式复位，
+    /// 否则上一个资源改过的字号 / 横向图标尺寸会残留到下一个资源上。
+    /// </summary>
+    private void ResetStyleForReuse()
+    {
+        if (countText != null)
+        {
+            if (!_defaultFontSizeCached)
+            {
+                _defaultFontSize = countText.fontSize;
+                _defaultFontSizeCached = true;
+            }
+            countText.fontSize = _defaultFontSize;
+        }
+
+        // 记下 Prefab 上的默认图标，池复用时遇到「取不到图」的资源要还原，避免残留上一个资源的图
+        if (shopIcon != null && !_defaultIconSpriteCached)
+        {
+            _defaultIconSprite = shopIcon.sprite;
+            _defaultIconSpriteCached = true;
+        }
+
+        hengIconSize = DefaultHengIconSize;
+        hengIconAnchoredPosition = DefaultHengIconPosition;
+    }
+
     /// <summary>
     /// 本次 SetShopData 是否需要改图标 / 文字的表现（尺寸、位置、字号、描边色）。
     /// AdsDiscountScreen 的 DiscountItem 预制体已经排好版（icon 与 countText 的大小、位置、描边都在 Prefab 里定死），
@@ -61,6 +103,10 @@ public class GiftItem : MonoBehaviour
     {
         string spritename = "";
         shopid = itemid;
+
+        // ★ 池复用：先复位样式 + 藏掉上一次的提示按钮（需要时再由下面各分支重新显示）
+        ResetStyleForReuse();
+        HideTipsBtn();
 
         if (des != "")
         {
@@ -181,6 +227,10 @@ public class GiftItem : MonoBehaviour
         shopid = itemid;
         _applyStyle = applyStyle;
 
+        // ★ 池复用：先复位上一个资源的样式，并藏掉上一次的提示按钮（需要时再由下面各分支重新显示）
+        ResetStyleForReuse();
+        HideTipsBtn();
+
         if (des != "")
         {
             SetCountFontSize(70);
@@ -276,18 +326,24 @@ public class GiftItem : MonoBehaviour
                 break;
         }
 
-        Sprite sprite = LoadShopIcon(spritename);
+        Sprite sprite = string.IsNullOrEmpty(spritename) ? null : LoadShopIcon(spritename);
         if (sprite == null && !string.IsNullOrEmpty(coinIconName))
         {
             // 大额/中额金币图还没打进图集时兜底回默认金币图，避免图标空白或残留上一次的图
             sprite = LoadShopIcon("gold2");
             if (sprite != null)
-                Debug.LogWarning($"[GiftItem] 金币图 {coinIconName} 未在图集里，已回退 gold2");
+                LogManager.ShopLogDetail($"[GiftItem] 金币图 {coinIconName} 未在图集里，已回退 gold2");
         }
+
+        // ★ 池复用：取不到图时必须还原 Prefab 默认图，否则会残留上一个资源的图标
         if (sprite != null)
         {
             shopIcon.sprite = sprite;
             //shopIcon.SetNativeSize();
+        }
+        else if (shopIcon != null && _defaultIconSpriteCached)
+        {
+            shopIcon.sprite = _defaultIconSprite;
         }
 
         // 描边色也归「表现」：AdsDiscountScreen 的 DiscountItem 在 Prefab 里定好描边，脚本不再改
@@ -463,21 +519,54 @@ public class GiftItem : MonoBehaviour
 
     private void CreateTipsBtn(string tips)
     {
-        if (string.IsNullOrEmpty(tips)) return;
+        // ★ 对象池会复用同一个 GiftItem：没说明时要把上一次留下的提示按钮藏掉，
+        //   有说明时复用已有按钮（不能每次再 Instantiate 一个，否则会越叠越多）
+        if (string.IsNullOrEmpty(tips))
+        {
+            HideTipsBtn();
+            return;
+        }
 
         SetCountFontSize(45);
         if (tipBtnPrefab == null)
             tipBtnPrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("commonitem", "Shop_tipbtn").GetComponent<Button>();
-        tipbtn = Instantiate(tipBtnPrefab, countText.transform).GetComponent<Button>();
+        if (tipBtnPrefab == null) return;
+
+        if (tipbtn == null)
+            tipbtn = Instantiate(tipBtnPrefab, countText.transform).GetComponent<Button>();
+        if (tipbtn == null) return;
+
+        tipbtn.gameObject.SetActive(true);
+
         GameObject tippanel = tipbtn.transform.GetChild(0).gameObject;
         tippanel.gameObject.SetActive(false);
-        tippanel.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString(tips);
+
+        var tipText = tippanel.GetComponentInChildren<Text>();
+        if (tipText != null)
+            tipText.text = MultilingualManager.Instance.GetString(tips);
+
+        tipbtn.onClick.RemoveAllListeners();
         tipbtn.onClick.AddListener(() => ClickShopItemtipBtn(tippanel));
+    }
+
+    /// <summary>隐藏提示按钮（池复用 / 该资源没有说明时调用）。</summary>
+    private void HideTipsBtn()
+    {
+        if (tipbtn == null) return;
+
+        if (tipbtn.transform.childCount > 0)
+        {
+            var tippanel = tipbtn.transform.GetChild(0).gameObject;
+            if (tippanel != null) tippanel.SetActive(false);
+        }
+
+        tipbtn.gameObject.SetActive(false);
     }
 
     private Sprite LoadShopIcon(string showIcon)
     {
-        return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas(showIcon);
+        // 用 Try 版本：缺图不算错误（外层有兜底），否则每张卡每次刷新都会刷一条 Error
+        return AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(showIcon);
     }
 
     private void ClickShopItemtipBtn(GameObject tippanel)

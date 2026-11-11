@@ -71,6 +71,19 @@ public class ShopScreen : UIWindow
     private ObjectPool giftobjectPool;  // 礼包
     private ObjectPool adsObjectPool;   // 广告/去广告类
 
+    // ======================= 分帧创建 =======================
+
+    /// <summary>
+    /// 每帧最多「新建」多少张商品卡。
+    /// 原来 15 张卡 + 32 个礼包子项在打开界面的同一帧全部实例化，是进店卡顿的主要来源。
+    /// </summary>
+    private const int ItemsPerFrame = 3;
+
+    /// <summary>当前正在跑的「铺列表」协程</summary>
+    private Coroutine _buildRoutine;
+
+    private bool _fontPreheated;
+
     // ======================= 商品缓存 =======================
 
     // 固定商店 + 动态商店共用商品缓存（统一用 ShopItemBase）
@@ -88,10 +101,10 @@ public class ShopScreen : UIWindow
     {
         InitPool();
 
-        // 固定商店：Start 阶段直接创建商品列表
-        shopallDataItems = ShopManager.shopManager.GetShopItems();
-        if (ShopManager.shopManager.shopMode == ShopMode.FixedStore)
-            ShowFixedStore();
+        // ★ 商品配置只缓存一次。
+        //   原来 OnEnable 里取一次、Start 里再取一次并又跑一遍 ShowFixedStore，
+        //   等于首次进店的推荐位计算 + 日志 + 卡片创建全都做了两遍。
+        EnsureShopDataItems();
 
         // ★ 顶部资源飞入目标（金币 / 提示灯 / 火箭 / 蝴蝶 / 复活道具）
         CustomFlyInManager.Instance.ShopAutoObj = AutoIcon.gameObject;
@@ -106,6 +119,8 @@ public class ShopScreen : UIWindow
         base.OnEnable();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
         InitPool();
+        // 字体先烤一次，避免铺卡片时多个字号轮番触发字体图集重建
+        PreheatFonts();
         InitUI();
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
 
@@ -129,15 +144,15 @@ public class ShopScreen : UIWindow
         if (ShopManager.shopManager.shopMode == ShopMode.DynamicStore)
         {
             OnPanelClosed();
-            ShowCollapsedState();
-
             freeItemTable.gameObject.SetActive(false);
         }
         else
         {
-            ShowFixedStore();
             freeItemTable.gameObject.SetActive(true);
         }
+
+        // ★ 商品列表改为分帧创建：界面先出来，卡片逐帧铺，避免打开那一帧卡住
+        StartBuildStore();
 
         moreChoiceBtn.gameObject.SetActive(ShopManager.shopManager.shopMode == ShopMode.DynamicStore);
         shopScrollView.enabled = ShopManager.shopManager.shopMode != ShopMode.DynamicStore;
@@ -151,12 +166,19 @@ public class ShopScreen : UIWindow
         // 进入商店消费入口角标（需求：进店消失）
         ShopManager.shopManager.OnShopEntered();
 
-        // 重置滚动位置到顶部
-        shopScrollView.normalizedPosition = new Vector2(0, 1);
+        // 滚动位置在铺列表结束后复位（这里不再直接设 normalizedPosition，
+        // 否则内容还没布局完成就定位，会被迫多跑一次布局重建）
     }
 
     protected override void OnDisable()
     {
+        // 界面关掉时停掉还在跑的铺列表协程，避免下次进店两个协程同时往同一个列表里塞卡片
+        if (_buildRoutine != null)
+        {
+            StopCoroutine(_buildRoutine);
+            _buildRoutine = null;
+        }
+
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         EventDispatcher.instance.OnAwardClaimed -= OnAwardClaimed;
         EventDispatcher.instance.OnAwardScreenClosed -= OnAwardScreenClosed;
@@ -201,22 +223,24 @@ public class ShopScreen : UIWindow
         }
         
         // 初始化对象池
+        // ★ initcount 传 0：按需创建。原来在这里预生成 6+3+3 = 12 张卡（约 240 个 GameObject），
+        //   全压在进店的第一帧；现在由铺列表协程按每帧 3 张的节奏创建。
         if (objectPool == null && ShopItemPrefab != null)
         {
             objectPool = new ObjectPool(ShopItemPrefab.gameObject,
-                ObjectPool.CreatePoolContainer(transform, "ShopItemPool"), 6);
+                ObjectPool.CreatePoolContainer(transform, "ShopItemPool"), 0);
         }
 
         if (giftobjectPool == null && ShopGiftItemPrefab != null)
         {
             giftobjectPool = new ObjectPool(ShopGiftItemPrefab.gameObject,
-                ObjectPool.CreatePoolContainer(transform, "ShopGiftItemPool"));
+                ObjectPool.CreatePoolContainer(transform, "ShopGiftItemPool"), 0);
         }
 
         if (adsObjectPool == null && ShopAdsItemPrefab != null)
         {
             adsObjectPool = new ObjectPool(ShopAdsItemPrefab.gameObject,
-                ObjectPool.CreatePoolContainer(transform, "ShopAdsItemPool"));
+                ObjectPool.CreatePoolContainer(transform, "ShopAdsItemPool"), 0);
         }
     }
 
@@ -398,14 +422,23 @@ public class ShopScreen : UIWindow
 
     // ======================= 固定商店：商品创建 =======================
 
-    private void CrateShopItem(List<ShopDataItem> shopDataItems)
+    /// <summary>
+    /// 商品卡片创建（分帧版）。
+    /// 每「新建」perFrame 张卡就 yield 一次：进店时界面先出来，卡片逐帧铺，
+    /// 把原来「一帧实例化 15 张卡 + 32 个礼包子项」的尖峰摊到几帧里。
+    /// </summary>
+    private IEnumerator CrateShopItemRoutine(List<ShopDataItem> shopDataItems, int perFrame)
     {
+        if (shopDataItems == null) yield break;
+
         var targetDict = shopallItems;
         ShopItemBase adsShopItem = null;
+        int createdThisFrame = 0;
 
         for (int i = 0; i < shopDataItems.Count; i++)
         {
             ShopDataItem shopDataItem = shopDataItems[i];
+            if (shopDataItem == null) continue;
 
             if (shopDataItem.type != 0 && shopDataItem.type != 1 && shopDataItem.type != 2)
                 continue;
@@ -422,14 +455,14 @@ public class ShopScreen : UIWindow
                 itemparent = parent;
             }
 
-            if (targetDict.TryGetValue(shopDataItem.id, out var shopItem))
+            if (targetDict.TryGetValue(shopDataItem.id, out var shopItem) && shopItem != null)
             {
                 if (shopDataItem.type == 1)
                 {
                     adsShopItem = shopItem;
                 }
 
-                shopItem.transform.SetSiblingIndex(i);
+                SetSiblingIndexIfNeeded(shopItem.transform, i);
                 shopItem.gameObject.SetActive(true);
                 shopItem.UpdateUI();
             }
@@ -447,40 +480,136 @@ public class ShopScreen : UIWindow
                 {
                     adsShopItem = shopItem;
                 }
-                shopItem.transform.SetSiblingIndex(i);
+                SetSiblingIndexIfNeeded(shopItem.transform, i);
 
                 targetDict.TryAdd(shopDataItem.id, shopItem);
+                shopallItems.TryAdd(shopDataItem.id, shopItem);
 
-                if (!shopallItems.ContainsKey(shopDataItem.id))
+                // ★ 只有「新建」这一步才是重的，按帧预算让出主线程
+                if (++createdThisFrame >= perFrame)
                 {
-                    shopallItems.TryAdd(shopDataItem.id, shopItem);
+                    createdThisFrame = 0;
+                    yield return null;
                 }
             }
         }
 
         if (adsShopItem != null) adsShopItem.transform.SetAsLastSibling();
+        ApplyStoreTailOrder();
+    }
+
+    /// <summary>商品列表尾部节点顺序（广告位 / 免费位 / 金币档置底）。</summary>
+    private void ApplyStoreTailOrder()
+    {
         if (freeItemTable != null) freeItemTable.transform.SetAsLastSibling();
         if (goldItemTable != null) goldItemTable.transform.SetAsLastSibling();
         if (goldItemTable2 != null) goldItemTable2.transform.SetAsLastSibling();
     }
 
-    /// <summary>固定商店：展开全部商品 + 一号位推荐</summary>
-    private void ShowFixedStore()
+    /// <summary>
+    /// 只有顺序真的变了才 SetSiblingIndex。
+    /// SetSiblingIndex 每次都会把父节点标记为需要重新布局，进店时 15 张卡逐个调用会白跑一轮布局重建。
+    /// </summary>
+    private static void SetSiblingIndexIfNeeded(Transform target, int index)
     {
-        if (ShopManager.shopManager.shopMode != ShopMode.FixedStore) return;
+        if (target == null) return;
+        if (target.GetSiblingIndex() == index) return;
+        target.SetSiblingIndex(index);
+    }
+
+    /// <summary>开始铺商品列表（同一时间只保留一个铺列表协程）。</summary>
+    private void StartBuildStore()
+    {
+        if (ShopManager.shopManager == null) return;
+
+        if (_buildRoutine != null)
+        {
+            StopCoroutine(_buildRoutine);
+            _buildRoutine = null;
+        }
+
+        if (!isActiveAndEnabled) return;
+
+        _buildRoutine = ShopManager.shopManager.shopMode == ShopMode.DynamicStore
+            ? StartCoroutine(ShowCollapsedStateRoutine())
+            : StartCoroutine(ShowFixedStoreRoutine());
+    }
+
+    /// <summary>固定商店：展开全部商品 + 一号位推荐（分帧）</summary>
+    private IEnumerator ShowFixedStoreRoutine()
+    {
+        if (ShopManager.shopManager == null || ShopManager.shopManager.shopMode != ShopMode.FixedStore)
+        {
+            _buildRoutine = null;
+            yield break;
+        }
+
+        EnsureShopDataItems();
 
         // 1. 固定商店收起状态商品（内部处理一号位兜底）
         List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetFixedStoreExpandedItems();
 
         // 2. 按列表顺序填充一号位（siblingIndex = i，保证列表第 0 个显示在最前，如迎新礼包）
+        int createdThisFrame = 0;
         for (int i = 0; i < collapsedItems.Count; i++)
         {
             ShopDataItem data = collapsedItems[i];
             if (data == null) continue;
-            CreateDynamicItem(data, parent, i);
+
+            if (CreateDynamicItem(data, parent, i) && ++createdThisFrame >= ItemsPerFrame)
+            {
+                createdThisFrame = 0;
+                yield return null;
+            }
         }
 
-        CrateShopItem(shopallDataItems);
+        // 3. 全部商品（金币档 / 礼包 / 去广告）分帧补齐
+        yield return CrateShopItemRoutine(shopallDataItems, ItemsPerFrame);
+
+        // 4. 等布局跑完再复位滚动位置（提前设会被后续布局冲掉，还要多跑一轮重建）
+        yield return null;
+        ResetScrollToTop();
+
+        _buildRoutine = null;
+    }
+
+    /// <summary>把商店滚动位置复位到顶部。</summary>
+    private void ResetScrollToTop()
+    {
+        if (shopScrollView == null) return;
+        if (!shopScrollView.enabled) return;
+
+        shopScrollView.StopMovement();
+        shopScrollView.normalizedPosition = new Vector2(0f, 1f);
+    }
+
+    /// <summary>缓存商店商品配置（只取一次）。</summary>
+    private void EnsureShopDataItems()
+    {
+        if (shopallDataItems != null && shopallDataItems.Count > 0) return;
+        if (ShopManager.shopManager == null) return;
+        shopallDataItems = ShopManager.shopManager.GetShopItems();
+    }
+
+    /// <summary>
+    /// 预烤字体：商品卡里会用到 45 / 60 / 70 等多档字号，
+    /// 首次出现时 Unity 要重建字体图集并让所有 Text 重生成网格，这里提前一次性请求掉。
+    /// </summary>
+    private void PreheatFonts()
+    {
+        if (_fontPreheated) return;
+        _fontPreheated = true;
+
+        Font font = GoldText != null ? GoldText.font : null;
+        if (font == null && HeaderText != null) font = HeaderText.font;
+        if (font == null) return;
+
+        const string chars = "0123456789×x时光天日永久仅限次已售空免费";
+        int[] sizes = { 30, 36, 40, 45, 60, 70 };
+        for (int i = 0; i < sizes.Length; i++)
+        {
+            font.RequestCharactersInTexture(chars, sizes[i], FontStyle.Normal);
+        }
     }
 
     /// <summary>刷新固定商店：购买后重新排版（已购买的迎新礼包不再展示）。</summary>
@@ -488,7 +617,7 @@ public class ShopScreen : UIWindow
     {
         if (ShopManager.shopManager == null) return;
         if (ShopManager.shopManager.shopMode != ShopMode.FixedStore) return;
-        ShowFixedStore();
+        StartBuildStore();
     }
 
     /// <summary>
@@ -507,7 +636,7 @@ public class ShopScreen : UIWindow
             return;
         }
 
-        Debug.Log("[Shop] 动态商店礼包售罄，已隐藏该条目（重新进店后按推荐重新排布）");
+        LogManager.ShopLog("动态商店礼包售罄，已隐藏该条目（重新进店后按推荐重新排布）");
     }
 
     /// <summary>
@@ -524,16 +653,20 @@ public class ShopScreen : UIWindow
         if (shopallItems != null && shopallItems.TryGetValue(data.id, out var exist) && exist != null)
             exist.gameObject.SetActive(false);
 
-        Debug.Log($"[Shop] 限购次数已用完，跳过礼包: {data.produceNameId}(id={data.id}, 限购={data.limited})");
+        LogManager.ShopLogDetail($"限购次数已用完，跳过礼包: {data.produceNameId}(id={data.id}, 限购={data.limited})");
         return true;
     }
 
     // ======================= 动态商店：收起 / 展开 =======================
 
-    /// <summary>收起状态：一号推荐位 + 二号推荐位 + 金币档 + “更多选择”</summary>
-    private void ShowCollapsedState()
+    /// <summary>收起状态：一号推荐位 + 二号推荐位 + 金币档 + “更多选择”（分帧）</summary>
+    private IEnumerator ShowCollapsedStateRoutine()
     {
-        if (ShopManager.shopManager.shopMode != ShopMode.DynamicStore) return;
+        if (ShopManager.shopManager == null || ShopManager.shopManager.shopMode != ShopMode.DynamicStore)
+        {
+            _buildRoutine = null;
+            yield break;
+        }
 
         _isExpanded = false;
 
@@ -542,12 +675,18 @@ public class ShopScreen : UIWindow
 
         // 2. 按顺序填充一号位、二号位
         int slotIndex = 0;
+        int createdThisFrame = 0;
         for (int i = 0; i < collapsedItems.Count; i++)
         {
             ShopDataItem data = collapsedItems[i];
             if (data == null) continue;
             slotIndex = i;
-            CreateDynamicItem(data, parent, slotIndex);
+
+            if (CreateDynamicItem(data, parent, slotIndex) && ++createdThisFrame >= ItemsPerFrame)
+            {
+                createdThisFrame = 0;
+                yield return null;
+            }
         }
 
         // 3. 兜底：即使推荐位为空，也展示配置中的金币档
@@ -561,20 +700,30 @@ public class ShopScreen : UIWindow
         foreach (var gold in goldItems)
         {
             if (gold == null) continue;
-            if (!_dynamicItems.ContainsKey(gold.id))
+            if (_dynamicItems.ContainsKey(gold.id)) continue;
+
+            Transform goldParent = goldItemTable.transform;
+
+            if (gold.id >= 5 && gold.type == 0)
             {
-                Transform transform = goldItemTable.transform;
+                if (slotIndex >= 1) break;
 
-                if (gold.id >= 5 && gold.type == 0)
-                {
-                    if (slotIndex >= 1) break;
+                goldParent = goldItemTable2.transform;
+            }
 
-                    transform = goldItemTable2.transform;
-                }
-
-                CreateDynamicItem(gold, transform, -1);
+            if (CreateDynamicItem(gold, goldParent, -1) && ++createdThisFrame >= ItemsPerFrame)
+            {
+                createdThisFrame = 0;
+                yield return null;
             }
         }
+
+        ApplyStoreTailOrder();
+
+        yield return null;
+        ResetScrollToTop();
+
+        _buildRoutine = null;
     }
 
     /// <summary>展开“更多选择”：所有礼包 + 去广告 + 免费金币 + 金币商品 + 单一道具 + 六个金币，按价格从低到高</summary>
@@ -585,20 +734,22 @@ public class ShopScreen : UIWindow
         _isExpanded = true;
 
         // 1. 动态商店收起状态商品 + 全部商店商品
+        EnsureShopDataItems();
+
         List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetDynamicStoreCollapsedItems();
         List<ShopDataItem> allDataItems = new List<ShopDataItem>();
         List<ShopDataItem> allTempDataItems = new List<ShopDataItem>();
-        
+
         if (AuditConfig.IsAuditOpen)
         {
-            allTempDataItems.AddRange(shopallDataItems.FindAll(item => 
-                item.produceNameId != ShopManager.shopManager.ProductSpecialPackageA&&item.produceNameId != ShopManager.shopManager.ProductSpecialPackageB));
+            allTempDataItems.AddRange(shopallDataItems.FindAll(item =>
+                item.produceNameId != ShopManager.shopManager.ProductSpecialPackageA && item.produceNameId != ShopManager.shopManager.ProductSpecialPackageB));
         }
         else
         {
             allTempDataItems.AddRange(shopallDataItems);
         }
-        
+
         allDataItems.AddRange(allTempDataItems);
         allDataItems.AddRange(collapsedItems);
 
@@ -608,30 +759,48 @@ public class ShopScreen : UIWindow
             .OrderBy(x => x.price)
             .ToList();
 
-        CrateShopItem(allDataItems);
+        // ★ 展开也是一次性多出十几张卡，同样分帧铺，避免点“更多选择”卡一下
+        if (_buildRoutine != null)
+        {
+            StopCoroutine(_buildRoutine);
+            _buildRoutine = null;
+        }
+        if (isActiveAndEnabled)
+            _buildRoutine = StartCoroutine(ExpandMoreChoicesRoutine(allDataItems));
+    }
+
+    private IEnumerator ExpandMoreChoicesRoutine(List<ShopDataItem> allDataItems)
+    {
+        yield return CrateShopItemRoutine(allDataItems, ItemsPerFrame);
 
         freeItemTable.gameObject.SetActive(true);
         moreChoiceBtn.gameObject.SetActive(false);
         shopScrollView.enabled = true;
+
+        yield return null;
+        ResetScrollToTop();
+
+        _buildRoutine = null;
     }
 
-    private void CreateDynamicItem(ShopDataItem data, Transform parent, int siblingIndex)
+    /// <summary>
+    /// 创建（或复用）一张动态商店商品卡。
+    /// 返回 true 表示本次「新建」了一张卡（调用方据此做分帧预算）。
+    /// </summary>
+    private bool CreateDynamicItem(ShopDataItem data, Transform parent, int siblingIndex)
     {
-        if (data == null || parent == null) return;
+        if (data == null || parent == null) return false;
 
         // ★ 限购次数已用完 → 不展示（含已缓存的池对象）
-        if (SkipSoldOutLimitedItem(data)) return;
+        if (SkipSoldOutLimitedItem(data)) return false;
 
         var targetDict = shopallItems;
 
-        if (targetDict.TryGetValue(data.id, out var shopItem))
+        if (targetDict.TryGetValue(data.id, out var shopItem) && shopItem != null)
         {
-            if (shopItem != null)
-            {
-                if (siblingIndex >= 0) shopItem.transform.SetSiblingIndex(siblingIndex);
-                shopItem.gameObject.SetActive(true);
-                return;
-            }
+            if (siblingIndex >= 0) SetSiblingIndexIfNeeded(shopItem.transform, siblingIndex);
+            shopItem.gameObject.SetActive(true);
+            return false;
         }
 
         ObjectPool pool = objectPool;
@@ -641,7 +810,7 @@ public class ShopScreen : UIWindow
         ShopItemBase item = pool.GetObject<ShopItemBase>(parent);
         item.SetShopData(data);
 
-        if (siblingIndex >= 0) item.transform.SetSiblingIndex(siblingIndex);
+        if (siblingIndex >= 0) SetSiblingIndexIfNeeded(item.transform, siblingIndex);
         item.gameObject.SetActive(true);
 
         targetDict.TryAdd(data.id, item);
@@ -650,6 +819,8 @@ public class ShopScreen : UIWindow
             _dynamicItems.Add(data.id, item);
 
         _dynamicActiveItems.Add(item);
+
+        return true;
     }
 
     private void ClearDynamicItems()
@@ -697,7 +868,7 @@ public class ShopScreen : UIWindow
             restartCount = restartInfo.count;
         }
 
-        Debug.Log($"[Shop] 复活道具按钮点击, 当前数量={restartCount}");
+        LogManager.ShopLog($"复活道具按钮点击, 当前数量={restartCount}");
 
         // TODO: 根据产品需求跳转到复活道具说明/购买/GetItemScreen 等
         // 例如：
@@ -713,7 +884,7 @@ public class ShopScreen : UIWindow
         SystemManager.Instance.ShowPanel(PanelType.BuyListScreen);
         var records = ShopManager.shopManager.GetPurchaseRecords();
         // TODO: 打开购买记录弹窗（礼包名称、价格、礼包内容、购买时间）
-        Debug.Log("[DynamicShop] 购买记录：" + (records != null ? string.Join("\n", records) : "空"));
+        LogManager.ShopLogDetail("[DynamicShop] 购买记录：" + (records != null ? string.Join("\n", records) : "空"));
     }
 
     private void OnRestoreBtn()

@@ -605,9 +605,13 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 日志 =======================
 
+    /// <summary>
+    /// 商店日志（关键事件：进店、推荐位决策、购买、售罄、限购）。
+    /// 开关在 LogManager 上（enableShopLog，默认开启）；落盘策略见 LogManager.ShopLog。
+    /// </summary>
     private void LogShop(string message)
     {
-        Debug.Log($"[Shop] {message}");
+        LogManager.ShopLog(message);
     }
 
     // ======================= 审核配置加载与解析 =======================

@@ -50,6 +50,9 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     protected Button tipBtn;                                // 道具说明按钮实例
     protected Color _color = Color.white;                   // 描边/内容颜色（子类可覆盖）
 
+    /// <summary>限时倒计时协程句柄（用于去重，避免重复 StartCoroutine 叠出多条常驻协程）</summary>
+    private Coroutine _timeCoroutine;
+
     // ======================= 缩放参数 =======================
 
     [Header("缩放设置")]
@@ -71,11 +74,27 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     // ======================= 日志 =======================
 
-    /// <summary>[Shop] 标签日志</summary>
+    /// <summary>[Shop] 标签日志（关键事件，默认开启）</summary>
     protected void LogShopItem(string message)
     {
+        if (!LogManager.EnableShopLog) return;
+        LogManager.ShopLog(BuildShopItemLog(message));
+    }
+
+    /// <summary>
+    /// [Shop] 逐卡细节日志（价格布局 / 描边 / 限购次数 / 礼包内容逐项）。
+    /// 默认关闭（LogManager.enableShopVerboseLog）：这类日志每次刷新每张卡都会打，量很大。
+    /// </summary>
+    protected void LogShopItemDetail(string message)
+    {
+        if (!LogManager.EnableShopVerboseLog) return;
+        LogManager.ShopLogDetail(BuildShopItemLog(message));
+    }
+
+    private string BuildShopItemLog(string message)
+    {
         string tag = shopDataItem != null ? $"{shopDataItem.produceNameId}(id={shopDataItem.id})" : "null";
-        Debug.Log($"[Shop][ShopItem] [{tag}] {message}");
+        return $"[ShopItem] [{tag}] {message}";
     }
 
     // ======================= Unity 生命周期 =======================
@@ -94,20 +113,25 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     protected virtual void Update()
     {
-        if (!isTransformCached) return;
+        if (!isTransformCached || rectTransform == null) return;
 
         // 按下缩放
-        Vector3 targetScale = originalScale;
-        if (isPressed)
-        {
-            targetScale = originalScale * pressedScale;
-        }
-        rectTransform.localScale = Vector3.Lerp(
-            rectTransform.localScale,
-            targetScale,
-            Time.deltaTime * scaleSpeed
-        );
+        Vector3 targetScale = isPressed ? originalScale * pressedScale : originalScale;
+        Vector3 currentScale = rectTransform.localScale;
+
+        // ★ 已经到位就直接返回：原来这里每帧都写一次 localScale，
+        //   15 张卡 × 每帧一次 Transform 写入，属于纯浪费（还会持续把层级标脏）。
+        if ((targetScale - currentScale).sqrMagnitude <= ScaleEpsilon) return;
+
+        Vector3 nextScale = Vector3.Lerp(currentScale, targetScale, Time.deltaTime * scaleSpeed);
+        // 逼近到阈值内直接吸附到目标，避免无限逼近导致「每帧都在写」
+        if ((targetScale - nextScale).sqrMagnitude <= ScaleEpsilon) nextScale = targetScale;
+
+        rectTransform.localScale = nextScale;
     }
+
+    /// <summary>缩放收敛阈值（平方比较，避免开根号）</summary>
+    private const float ScaleEpsilon = 0.000001f;
 
     protected virtual void OnDisable()
     {
@@ -157,7 +181,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         if (IsRemoveAdsOwnedProduct(shopDataItem))
         {
-            LogShopItem("永久去广告已购买，拦截点击");
+            LogShopItemDetail("永久去广告已购买，拦截点击");
             return;
         }
 
@@ -259,10 +283,18 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         if (isTimeActive)
         {
             timebg.gameObject.SetActive(true);
-            StartCoroutine(UpdateTime());
+            // ★ 去重：刷新（SetShopData / UpdateUI）会被反复调用，
+            //   原来每次都会再起一条 while(true) 的倒计时协程，条数越叠越多
+            if (_timeCoroutine != null) StopCoroutine(_timeCoroutine);
+            _timeCoroutine = StartCoroutine(UpdateTime());
         }
         else
         {
+            if (_timeCoroutine != null)
+            {
+                StopCoroutine(_timeCoroutine);
+                _timeCoroutine = null;
+            }
             timebg.gameObject.SetActive(false);
         }
 
@@ -375,7 +407,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     {
         if (shopPriceText == null) return;
 
-        LogShopItem($"获取商品内购名称: {data.GetProduceName()}");
+        LogShopItemDetail($"获取商品内购名称: {data.GetProduceName()}");
 
         try
         {
@@ -383,7 +415,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             {
                 shopPriceText.text = "已购买";
                 ShowPriceLoadingState(false);
-                LogShopItem("永久去广告已购买，显示'已购买'");
+                LogShopItemDetail("永久去广告已购买，显示'已购买'");
                 return;
             }
 
@@ -460,7 +492,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         {
             shopPriceText.text = "已购买";
             ShowPriceLoadingState(false);
-            LogShopItem("永久去广告已购买，按钮置灰并显示'已购买'");
+            LogShopItemDetail("永久去广告已购买，按钮置灰并显示'已购买'");
         }
     }
 
@@ -935,6 +967,13 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     // ======================= 工具方法 =======================
 
+    /// <summary>
+    /// 已提示过「图标缺失」的名字。
+    /// 缺图不会影响功能（有兜底），但原来每张卡每次刷新都会打一条 Warning，
+    /// 而 Warning 会立刻落盘 —— 这里做去重，同一个图名一个会话只提示一次。
+    /// </summary>
+    private static readonly HashSet<string> _reportedMissingIcons = new HashSet<string>();
+
     protected Sprite LoadShopIcon(string showIcon)
     {
         if (string.IsNullOrEmpty(showIcon)) return null;
@@ -950,18 +989,24 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             sprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(baseName);
             if (sprite != null)
             {
-                Debug.Log($"[Shop] 图标 {showIcon} 缺失，回退使用 {baseName}");
+                LogShopItemDetail($"图标 {showIcon} 缺失，回退使用 {baseName}");
             }
             else
             {
-                Debug.LogWarning($"[Shop] 图标 {showIcon} / {baseName} 都不存在，保留预制体默认图");
+                WarnIconMissingOnce(showIcon, $"{showIcon} / {baseName} 都不存在，保留预制体默认图");
             }
         }
         else
         {
-            Debug.LogWarning($"[Shop] 图标 {showIcon} 不存在，保留预制体默认图");
+            WarnIconMissingOnce(showIcon, $"{showIcon} 不存在，保留预制体默认图");
         }
 
         return sprite;
+    }
+
+    private static void WarnIconMissingOnce(string key, string message)
+    {
+        if (!_reportedMissingIcons.Add(key)) return;
+        Debug.LogWarning($"[Shop] 图标{message}");
     }
 }

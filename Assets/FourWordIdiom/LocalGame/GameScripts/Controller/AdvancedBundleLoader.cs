@@ -125,7 +125,20 @@ public sealed class AdvancedBundleLoader
         if (!_loadedBundles.ContainsKey(bundleName))
         {
             byte[] rawData = LoadRawBundleData(bundleName);
+            if (rawData == null || rawData.Length == 0)
+            {
+                // ★ 不把 null 写进字典：否则后续所有加载都拿到 null 且不再重试
+                Debug.LogError($"资源包读取失败(空数据): {bundleName}");
+                return null;
+            }
+
             AssetBundle bundle = LoadDecryptedBundle(rawData);
+            if (bundle == null)
+            {
+                Debug.LogError($"资源包加载失败: {bundleName}");
+                return null;
+            }
+
             _loadedBundles[bundleName] = bundle;
         }
         return _loadedBundles[bundleName];
@@ -191,19 +204,29 @@ public sealed class AdvancedBundleLoader
     /// </summary>
     public SpriteAtlas LoadAtlas(string bundleName, string atlasName)
     {
+        // ★ 已加载过直接返回：原来即使命中缓存也会重新走一遍 bundle 查找
+        SpriteAtlas cachedAtlas;
+        if (_spriteAtlasCache.TryGetValue(atlasName, out cachedAtlas) && cachedAtlas != null)
+            return cachedAtlas;
+
         Debug.Log($"正在加载图集: {atlasName} | 资源包: {bundleName}");
         var go = LoadFromEditorAsset<SpriteAtlas>(bundleName, atlasName);
         if (go)
         {
-            if (!_spriteAtlasCache.ContainsKey(atlasName))
-                _spriteAtlasCache.TryAdd(atlasName, go);
+            _spriteAtlasCache[atlasName] = go;
             return go;
         }
         
         var bundle = LoadBundleInternal(bundleName);
         var atlas = bundle?.LoadAsset<SpriteAtlas>(atlasName);
-        if (!_spriteAtlasCache.ContainsKey(atlasName))
-            _spriteAtlasCache.TryAdd(atlasName, atlas);
+
+        // ★ 只有真正拿到才写缓存：原来加载失败会把 null 写进去，
+        //   之后 TryGetSpriteFromAtlas 命中 null 会直接空引用
+        if (atlas != null)
+            _spriteAtlasCache[atlasName] = atlas;
+        else
+            Debug.LogError($"图集加载失败: {atlasName} @ {bundleName}");
+
         return atlas;
     }
 

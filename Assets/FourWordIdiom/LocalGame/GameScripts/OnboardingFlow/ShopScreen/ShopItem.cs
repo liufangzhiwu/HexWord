@@ -55,26 +55,34 @@ public class ShopItem : ShopItemBase
         base.Update();
 
         // 广告 Icon 轻微晃动
-        if (isAdStateActive && btnTagicon != null)
-        {
-            shakeTimer += Time.unscaledDeltaTime;
-            float currentCycleTime = shakeTimer % (shakeInterval + shakeDuration);
+        if (!isAdStateActive || btnTagicon == null) return;
 
-            if (currentCycleTime < shakeDuration)
-            {
-                float shakeZ = Mathf.Sin(currentCycleTime * shakeSpeed) * shakeAmplitude;
-                btnTagicon.transform.localEulerAngles = new Vector3(
-                    originalIconAngles.x,
-                    originalIconAngles.y,
-                    originalIconAngles.z + shakeZ
-                );
-            }
-            else
-            {
-                btnTagicon.transform.localEulerAngles = originalIconAngles;
-            }
+        shakeTimer += Time.unscaledDeltaTime;
+        float currentCycleTime = shakeTimer % (shakeInterval + shakeDuration);
+
+        if (currentCycleTime < shakeDuration)
+        {
+            float shakeZ = Mathf.Sin(currentCycleTime * shakeSpeed) * shakeAmplitude;
+
+            // ★ 只有角度真的变了才写 Transform：原来每帧无条件写一次，15 张卡 × 每帧都是白做
+            if (Mathf.Abs(shakeZ - _lastShakeZ) < 0.01f) return;
+
+            _lastShakeZ = shakeZ;
+            btnTagicon.transform.localEulerAngles = new Vector3(
+                originalIconAngles.x,
+                originalIconAngles.y,
+                originalIconAngles.z + shakeZ
+            );
+        }
+        else if (_lastShakeZ != 0f)
+        {
+            _lastShakeZ = 0f;
+            btnTagicon.transform.localEulerAngles = originalIconAngles;
         }
     }
+
+    /// <summary>上一帧实际写入的抖动角度（避免每帧重复写 Transform）</summary>
+    private float _lastShakeZ;
 
     // ======================= 内容展示（单物品：x count） =======================
 
@@ -308,6 +316,7 @@ public class ShopItem : ShopItemBase
         else
         {
             isAdStateActive = false;
+            _lastShakeZ = 0f;
             if (adsShiny != null) adsShiny.enabled = false;
 
             if (isTransformCached)

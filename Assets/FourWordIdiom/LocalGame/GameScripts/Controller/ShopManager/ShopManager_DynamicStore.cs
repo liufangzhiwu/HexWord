@@ -188,7 +188,8 @@ public partial class ShopManager : MonoBehaviour
         if (string.IsNullOrEmpty(userData.shopEntryBadgeConsumedUntil)) return;
 
         userData.shopEntryBadgeConsumedUntil = "";
-        GameDataManager.Instance.CommitGameData();
+        // ★ 进店路径上的写盘改成延迟合并提交：跨过打开界面的那一帧，避免主线程 IO 尖峰
+        GameDataManager.Instance.CommitGameDataDelayed();
     }
 
     private bool IsBadgeConsumed()
@@ -352,7 +353,9 @@ public partial class ShopManager : MonoBehaviour
         }
 
         userData.shopEntryBadgeConsumedUntil = holidayEnd.ToString("yyyy-MM-dd HH:mm:ss");
-        GameDataManager.Instance.CommitGameData();
+        // ★ 进店写盘改为延迟合并提交（原来这里同步做 7 份 JSON 序列化 + 加密 + 写文件，是进店卡顿的元凶之一）。
+        //   切后台 / 退出 / 购买等真正改数值的地方仍然是立即 CommitGameData，不会丢数据。
+        GameDataManager.Instance.CommitGameDataDelayed();
 
         LogShop($"OnShopEntered: 促销角标已消费, 本次节日/周末结束={userData.shopEntryBadgeConsumedUntil}");
     }
