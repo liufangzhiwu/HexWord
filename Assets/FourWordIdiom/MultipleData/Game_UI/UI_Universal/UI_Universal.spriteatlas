@@ -92,7 +92,6 @@ SpriteAtlas:
     - 59ea3691fbe1c5e4fbad3b5aa8a3f6fc: 21300000
     - 5f0145c1f6cccdd42934c58fd1b9568c: 21300000
     - 1daf83d140a1f984d8bd9e971856c6cb: 21300000
-    - 01dd45d1ece5ddb4997a1bd7fc8f6baf: 21300000
     - 41c697d19e1fc8f4992531e9ddfb7228: 21300000
     - db1978d1e957448a19675ec66420c620: 21300000
     - 045c1ef1c414127408d3fcae42b3bba5: 21300000
@@ -189,6 +188,7 @@ SpriteAtlas:
     - 4b4f94e6dc9609d4cac5f30c2bf15126: 21300000
     - ea750007acfa1294fb3b00a0ea24d9d2: 21300000
     - e4c8811793cb9e64d91a8b107dae1dbc: 21300000
+    - c18a8717dea1444b8adaba1049c66bfe: 21300000
     - b4f63a17af99ed24cbe0d7c2d8b9c01f: 21300000
     - 4956fa17fd7f6364199502e458c253ff: 21300000
     - 51203d17bd18e124e9fdc2e370fa94fd: 21300000
@@ -398,7 +398,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 59ea3691fbe1c5e4fbad3b5aa8a3f6fc, type: 3}
   - {fileID: 21300000, guid: 5f0145c1f6cccdd42934c58fd1b9568c, type: 3}
   - {fileID: 21300000, guid: 1daf83d140a1f984d8bd9e971856c6cb, type: 3}
-  - {fileID: 21300000, guid: 01dd45d1ece5ddb4997a1bd7fc8f6baf, type: 3}
   - {fileID: 21300000, guid: 41c697d19e1fc8f4992531e9ddfb7228, type: 3}
   - {fileID: 21300000, guid: db1978d1e957448a19675ec66420c620, type: 3}
   - {fileID: 21300000, guid: 045c1ef1c414127408d3fcae42b3bba5, type: 3}
@@ -495,6 +494,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 4b4f94e6dc9609d4cac5f30c2bf15126, type: 3}
   - {fileID: 21300000, guid: ea750007acfa1294fb3b00a0ea24d9d2, type: 3}
   - {fileID: 21300000, guid: e4c8811793cb9e64d91a8b107dae1dbc, type: 3}
+  - {fileID: 21300000, guid: c18a8717dea1444b8adaba1049c66bfe, type: 3}
   - {fileID: 21300000, guid: b4f63a17af99ed24cbe0d7c2d8b9c01f, type: 3}
   - {fileID: 21300000, guid: 4956fa17fd7f6364199502e458c253ff, type: 3}
   - {fileID: 21300000, guid: 51203d17bd18e124e9fdc2e370fa94fd, type: 3}
@@ -703,7 +703,6 @@ SpriteAtlas:
   - UI_Icon_PingTipWord
   - UI_button_Bg
   - Coin2
-  - shopGifLing_Icon
   - xiaobing
   - targetgrey
   - OverRankBox2
@@ -800,6 +799,7 @@ SpriteAtlas:
   - "\u5305"
   - shopGiftXiao
   - rank_item_di
+  - shopGifLing_Icon
   - shopGiftTeB
   - ICON6
   - hehua_2

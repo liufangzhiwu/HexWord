@@ -25,15 +25,69 @@ public class ZenRankButton : MonoBehaviour
     
     private void Awake()
     {
-        if (rankBtn == null)
-            rankBtn = GetComponent<Button>();
-        
-        if(rankImage == null)
-            rankImage = GetComponentInChildren<Image>();
-        
-        if(zenLevelText == null)
-            zenLevelText = GetComponentInChildren<Text>();
+        ResolveReferences();
         CheckRankProgress();
+    }
+
+    /// <summary>
+    /// 兜底解析 Inspector 引用。
+    /// 旧版 ZenRank 预制体没有 lock 节点 / 缺少 zenLock 绑定，直接访问会抛
+    /// UnassignedReferenceException 并打断整条 UI 刷新链，这里按名字自动找回。
+    /// </summary>
+    private void ResolveReferences()
+    {
+        if (rankBtn == null)
+            rankBtn = GetComponent<Button>() ?? GetComponentInChildren<Button>(true);
+
+        if (rankImage == null)
+            rankImage = GetComponentInChildren<Image>(true);
+
+        if (zenLevelText == null)
+            zenLevelText = GetComponentInChildren<Text>(true);
+
+        if (zenLock == null)
+            zenLock = FindNode("zenLock", "lock");
+
+        if (rank == null)
+            rank = FindNode("Rank");
+
+        if (wifi == null)
+            wifi = FindNode("Zenwifi");
+
+        if (rankText == null && rank != null)
+            rankText = rank.GetComponentInChildren<Text>(true);
+    }
+
+    /// <summary>
+    /// 先在自身子树里按名字找节点，再在父节点下找同级兄弟（lock 节点挂在 ZenRank 根上，与按钮同级）。
+    /// </summary>
+    private GameObject FindNode(params string[] names)
+    {
+        GameObject found = MatchNode(GetComponentsInChildren<Transform>(true), names);
+        if (found != null) return found;
+
+        Transform parent = transform.parent;
+        if (parent == null) return null;
+
+        var siblings = new List<Transform>();
+        for (int i = 0; i < parent.childCount; i++)
+            siblings.Add(parent.GetChild(i));
+        return MatchNode(siblings, names);
+    }
+
+    private GameObject MatchNode(IList<Transform> transforms, string[] names)
+    {
+        for (int i = 0; i < transforms.Count; i++)
+        {
+            Transform t = transforms[i];
+            if (t == null || t == transform) continue;
+            for (int j = 0; j < names.Length; j++)
+            {
+                if (string.Equals(t.name, names[j], StringComparison.OrdinalIgnoreCase))
+                    return t.gameObject;
+            }
+        }
+        return null;
     }
 
     private void OnEnable()
@@ -56,7 +110,8 @@ public class ZenRankButton : MonoBehaviour
 
     void Start()
     {
-        rankBtn.AddClickAction(OnRankButtonClick);
+        if (rankBtn != null)
+            rankBtn.AddClickAction(OnRankButtonClick);
     }
     
     // 👇=== 监听倒计时状态 ===👇
@@ -66,7 +121,7 @@ public class ZenRankButton : MonoBehaviour
 
         if (seconds <= 0 && rankText != null)
         {
-            rank.SetActive(true);
+            if (rank != null) rank.SetActive(true);
             rankText.text = MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中";
         }
     }
@@ -174,6 +229,14 @@ public class ZenRankButton : MonoBehaviour
     
     public void CheckRankProgress()
     {
+        if (ZenRankManager.Instance == null || GameDataManager.Instance == null)
+            return;
+
+        if (rankBtn == null)
+            ResolveReferences();
+        // 引用缺失时直接退出，避免空引用打断调用方的 UI 刷新链
+        if (rankBtn == null) return;
+
         int showStage = ZenRankManager.Instance.GetShowStageCondition();
         int unlockStage = ZenRankManager.Instance.GetUnlockStageCondition();
         
@@ -190,50 +253,56 @@ public class ZenRankButton : MonoBehaviour
         if (!isShow) return;
         // 2. 判定是否未解锁（当前关卡 < 解锁要求）
         bool isLock = !isLegacyOpened;
-        zenLock.SetActive(isLock);
+        if (zenLock != null) zenLock.SetActive(isLock);
         rankBtn.interactable = !isLock;
         
         // 3. 锁定状态下，隐藏段位详情、榜单角标和网络提示
         if (isLock)
         {
-            zenLevelText.transform.parent.gameObject.SetActive(true);
-            zenLevelText.text = $"第{unlockStage}关";
-            rank.SetActive(false);
-            wifi.SetActive(false);
+            SetZenLevelRootActive(true);
+            if (zenLevelText != null) zenLevelText.text = $"第{unlockStage}关";
+            if (rank != null) rank.SetActive(false);
+            if (wifi != null) wifi.SetActive(false);
             return;
         }
         
         // 4. 已解锁状态下，正常显示段位名称
-        zenLevelText.transform.parent.gameObject.SetActive(true);
-        string zenName = MultilingualManager.Instance.GetString(GameDataManager.Instance.UserData.Zenlevel);
-        zenLevelText.text = zenName;
+        SetZenLevelRootActive(true);
+        if (zenLevelText != null)
+            zenLevelText.text = MultilingualManager.Instance.GetString(GameDataManager.Instance.UserData.Zenlevel);
 
         string zenLevel = UIUtilities.ExtractNumber(GameDataManager.Instance.UserData.Zenlevel);
         Sprite zenIcon = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("zenicon_"+zenLevel);
-        if(zenIcon != null)
+        if(zenIcon != null && rankImage != null)
             rankImage.sprite = zenIcon;
         
         bool isJoined = GameDataManager.Instance.UserData.isJoinedZenRank;
         
         if (GameCoreManager.Instance.IsNetworkActive)
         {
-            wifi.SetActive(false);
+            if (wifi != null) wifi.SetActive(false);
             if (!isJoined)
             {
-                rank.SetActive(false);
+                if (rank != null) rank.SetActive(false);
                 if (rankText != null) rankText.text = "";
             }
             else
             {
                 // 加入了榜单，才根据是否未上榜来显示角标
-                rank.SetActive(!isUnranked);
+                if (rank != null) rank.SetActive(!isUnranked);
             }
         }
         else
         {
-            wifi.SetActive(true);
-            rank.SetActive(false);
+            if (wifi != null) wifi.SetActive(true);
+            if (rank != null) rank.SetActive(false);
         }
+    }
+
+    private void SetZenLevelRootActive(bool active)
+    {
+        if (zenLevelText == null || zenLevelText.transform.parent == null) return;
+        zenLevelText.transform.parent.gameObject.SetActive(active);
     }
     // 从 Manager 缓存直接恢复文字，避免显示 "..."
     public void SyncTextFromCache()
@@ -258,7 +327,7 @@ public class ZenRankButton : MonoBehaviour
                 if (rank != null)
                 {
                     rank.SetActive(true);
-                    wifi.SetActive(false);
+                    if (wifi != null) wifi.SetActive(false);
                 }
                 if (rankText != null) rankText.text = MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中";
                 return;
@@ -272,7 +341,7 @@ public class ZenRankButton : MonoBehaviour
                 if (rank != null)
                 {
                     rank.SetActive(true);
-                    wifi.SetActive(false);
+                    if (wifi != null) wifi.SetActive(false);
                 }
                 if (rankText != null) rankText.text = "#" + myData.rank;
             }
@@ -327,28 +396,28 @@ public class ZenRankButton : MonoBehaviour
                 if (response.remaining_seconds <= 0)
                 {
                     isUnranked = false;
-                    rank.SetActive(true);
-                    wifi.SetActive(false);
-                    rankText.text = MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中";
+                    if (rank != null) rank.SetActive(true);
+                    if (wifi != null) wifi.SetActive(false);
+                    if (rankText != null) rankText.text = MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中";
                 }
                 else if (response.my != null && response.my.rank > 0)
                 {
                     isUnranked = false;
-                    rank.SetActive(true);
-                    wifi.SetActive(false);
-                    rankText.text = "#" + response.my.rank;
+                    if (rank != null) rank.SetActive(true);
+                    if (wifi != null) wifi.SetActive(false);
+                    if (rankText != null) rankText.text = "#" + response.my.rank;
                 }
                 else
                 {
                     isUnranked = true;
-                    rank.SetActive(false);
+                    if (rank != null) rank.SetActive(false);
                 }
             }
             else
             {
                 isUnranked = true;
                 if (rankText != null) rankText.text = "";
-                rank.SetActive(false);
+                if (rank != null) rank.SetActive(false);
             }
         }));
     }

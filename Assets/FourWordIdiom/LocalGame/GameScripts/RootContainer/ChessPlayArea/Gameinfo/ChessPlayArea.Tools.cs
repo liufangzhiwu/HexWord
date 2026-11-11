@@ -72,6 +72,22 @@ public partial class ChessPlayArea
     }
 
     /// <summary>
+    /// 提示按钮上的「道具说明」角标节点（WT 预制体里是末位子节点 TipTable）。
+    /// ⚠️ 不要用“末位子节点”兜底：HexWord 的提示按钮子节点顺序是
+    /// CostContainer / CountBg / Free，末位正是第 2 关要常显的「免费」角标，
+    /// 按末位取会把免费标识误关掉。找不到说明节点就直接返回 null。
+    /// </summary>
+    private Transform GetHitsTipNode()
+    {
+        if (HitsBtn == null) return null;
+
+        Transform tip = HitsBtn.transform.Find("TipTable");
+        if (tip != null) return tip;
+
+        return HitsBtn.transform.Find("ItemDes");
+    }
+
+    /// <summary>
     /// 刷新单个道具按钮的数量角标（子对象 CountBg）。
     /// - 数量充足（&gt; 0）：显示 CountBg，显示数量文本，隐藏「+」号
     /// - 数量不足（&lt;= 0）：显示 CountBg，隐藏数量文本，显示「+」号（提示可补充）
@@ -203,18 +219,18 @@ public partial class ChessPlayArea
                 g.color = enabled ? enabledColor : disabledColor;
             }
         }
-        // 像 InitToolUI 一样动态获取 CompCount 和 HintCount
-        // 注意：不同版本预制体的子节点数量不同，越界取子会抛 Transform child out of bounds，这里统一做安全取值
-        Transform SafeChild(Button btn, int index)
+        // 按名字取角标，避免不同版本预制体子节点顺序不一致时颜色刷到错误的节点上
+        Transform Badge(Button btn, string nodeName, int fallbackIndex)
         {
             if (btn == null) return null;
-            Transform t = btn.transform;
-            return index < t.childCount ? t.GetChild(index) : null;
+            Transform t = btn.transform.Find(nodeName);
+            if (t != null) return t;
+            return fallbackIndex < btn.transform.childCount ? btn.transform.GetChild(fallbackIndex) : null;
         }
-        Transform compCount = SafeChild(CompleteBtn, 1);
-        Transform compFree = SafeChild(CompleteBtn, 2);
-        Transform hintCount = SafeChild(HitsBtn, 1);
-        Transform hintFree = SafeChild(HitsBtn, 2);
+        Transform compCount = Badge(CompleteBtn, "CountBg", 1);
+        Transform compFree = Badge(CompleteBtn, "Free", 2);
+        Transform hintCount = Badge(HitsBtn, "CountBg", 1);
+        Transform hintFree = Badge(HitsBtn, "Free", 2);
         TintBadgeNode(compCount);
         TintBadgeNode(compFree);
         TintBadgeNode(hintCount);

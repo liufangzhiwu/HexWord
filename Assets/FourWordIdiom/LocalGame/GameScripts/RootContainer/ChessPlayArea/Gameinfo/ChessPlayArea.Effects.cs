@@ -1970,6 +1970,15 @@ public partial class ChessPlayArea
     /// </summary>
     private IEnumerator StartRadarScanCoroutine()
     {
+        // 0. 防御：雷达节点缺失时直接跳过，绝不能让开局协程中断（否则后面的计时/引导都不会跑）
+        if (radarRoot == null || radarMaskImage == null || radarVisualImage == null || radarScanText == null)
+        {
+            Debug.LogError($"[记忆雷达] 雷达节点未绑定完整，跳过扫描。" +
+                           $"radarRoot={radarRoot != null} mask={radarMaskImage != null} " +
+                           $"visual={radarVisualImage != null} text={radarScanText != null}");
+            yield break;
+        }
+
         // 1. 初始化
         radarRoot.SetActive(true);
         radarMaskImage.gameObject.SetActive(true);

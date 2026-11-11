@@ -39,7 +39,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 19.140137, y: 22}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2516330349576890103
 CanvasRenderer:
@@ -131,6 +131,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccec04f89299bc54a95a9e4fed37e00d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _openDuration: 0.3
+  _closeDuration: 0.3
   timerText: {fileID: 5822551098580690093}
   closeBtn: {fileID: 3378433417983234746}
   progressSlider: {fileID: 4311905618489971673}
@@ -498,7 +500,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -874}
+  m_AnchoredPosition: {x: 0, y: -890}
   m_SizeDelta: {x: 1024, y: 1033}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2255293287157355909

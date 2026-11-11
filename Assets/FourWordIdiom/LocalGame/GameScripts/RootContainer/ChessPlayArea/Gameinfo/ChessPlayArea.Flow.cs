@@ -265,7 +265,10 @@ public partial class ChessPlayArea
     public void HandleGamePlayCall(GameObject game, string source)
     {
         NotifyPlayerInteraction(); // 🌟 触发唤醒计时
-        HitsBtn.transform.GetChild(HitsBtn.transform.childCount - 1).gameObject.SetActive(false);
+        // 只隐藏「道具说明」角标，不能按末位子节点取——末位是「免费」角标（Free），
+        // 否则玩家第一次操作就会把第 2 关的「免费」标识一起关掉且不再恢复
+        Transform hitsTip = GetHitsTipNode();
+        if (hitsTip != null) hitsTip.gameObject.SetActive(false);
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessLearningGuide))
         {
             // 如果当前正在展示的是“撤回错字 (教程3)”引导，绝对不允许后台迟到的 SetChess 事件进来捣乱！

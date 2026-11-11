@@ -268,7 +268,15 @@ public partial class ChessPlayArea : UIWindow
     {
         lightParticlePrefab = AdvancedBundleLoader.SharedInstance.LoadGameObject("useritems", "ShowTipTuowei");
         _lightParticlePool = new ObjectPool(lightParticlePrefab, ObjectPool.CreatePoolContainer(transform, "LightParticlePool"), 4, PoolBehaviour.GameObject);
-        HitsBtn.transform.GetChild(HitsBtn.transform.childCount - 1).GetComponentInChildren<Text>(true).text = MultilingualManager.Instance.GetString("ItemDes01","pingzi");
+        // 只给「道具说明」角标设文案；HexWord 预制体没有这个节点，不能用末位子节点兜底
+        // （末位是「免费」角标 Free，误设会把第 2 关的「免费」文案冲掉）
+        Transform hitsTipNode = GetHitsTipNode();
+        if (hitsTipNode != null)
+        {
+            Text tipText = hitsTipNode.GetComponentInChildren<Text>(true);
+            if (tipText != null)
+                tipText.text = MultilingualManager.Instance.GetString("ItemDes01", "pingzi");
+        }
     }
     
     // 初始化所有池子（在 BoardInitialize 或 Start 中调用）
@@ -343,7 +351,9 @@ public partial class ChessPlayArea : UIWindow
         iceFreeObj.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Free","pingzi");
      
         // ==========================================
-        HitsBtn.transform.GetChild(HitsBtn.transform.childCount - 1).gameObject.SetActive(false);
+        // 只隐藏「道具说明」角标，不能按末位子节点取——末位是「免费」角标（Free）
+        Transform hitsTip = GetHitsTipNode();
+        if (hitsTip != null) hitsTip.gameObject.SetActive(false);
         HitsBtn.gameObject.SetActive(CurrStageData.StageId >= 2);
         CompleteBtn.gameObject.SetActive(CurrStageData.StageId >= 9);
         
