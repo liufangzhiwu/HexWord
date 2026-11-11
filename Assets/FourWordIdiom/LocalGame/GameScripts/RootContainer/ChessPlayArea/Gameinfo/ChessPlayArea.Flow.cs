@@ -173,24 +173,9 @@ public partial class ChessPlayArea
         
         if (ChessStageController.Instance.IsFirstEnterStage)
         {
+            // 记录本关难度模式（困难/极难的 HardView 提示面板已按需求移除，不再弹出）
             ChessStageController.Instance.CurLevelMode =
                 ChessStageController.Instance.GetLevelDifficultyMode(CurrStageData.StageId);
-
-            switch (ChessStageController.Instance.CurLevelMode)
-            {
-                case LevelModes.Normal:
-                    break;
-                case LevelModes.Hard:
-                    SystemManager.Instance.ShowPanel(PanelType.HardView);
-                    yield return new WaitForSeconds(0.8f);
-                    SystemManager.Instance.HidePanel(PanelType.HardView);
-                    break;
-                case LevelModes.ExtraHard:
-                    SystemManager.Instance.ShowPanel(PanelType.HardView);
-                    yield return new WaitForSeconds(0.8f);
-                    SystemManager.Instance.HidePanel(PanelType.HardView);
-                    break;
-            }
         }
 
         yield return null;

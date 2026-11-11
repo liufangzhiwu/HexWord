@@ -112,12 +112,16 @@ public class ChessFinishView : UIWindow
         nextStageBtn.AddVibraClickAction(OnNextButtonClick);
         _limitBtnTable._limitTimeEventButton.AddClickAction(OnLimitTimeEventButtonClicked);
        
-        Content.onClick.AddListener(() =>
+        // Content（限时活动入口）在预制体里可能未绑定，空引用会直接中断整个结算页 Awake
+        if (Content != null)
         {
-            SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
-            
-            AchievementManager.Instance.DisableFinishAchieveTable();
-        });
+            Content.onClick.AddListener(() =>
+            {
+                SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
+
+                AchievementManager.Instance.DisableFinishAchieveTable();
+            });
+        }
         butterflyBtn.AddClickAction(OnButterflyClick);
 
         // 去广告 BUFF 按钮点击事件
@@ -703,17 +707,20 @@ public class ChessFinishView : UIWindow
         _centerLotusImage.color = new Color32(255, 255, 255, 0);
         _currentProgressSegment = 0;
         // 面板刚打开时，底层还没加本局词数，直接拿旧进度设定起跑线
-        if (LimitTimeManager.Instance.CurlimitData != null)
+        if (progressSlider != null && LimitTimeManager.Instance.CurlimitData != null)
         {
             int oldWordCount = GetCompletedWordCount();
             progressSlider.value = Mathf.Clamp01((float)oldWordCount / LimitTimeManager.Instance.CurlimitData.num);
         }
         
         UpdateLimitEventText();
-        if (LimitTimeManager.Instance.IsComplete())
-            progressSlider.transform.parent.gameObject.SetActive(false);
-        else
-            progressSlider.transform.parent.gameObject.SetActive(true);
+        if (progressSlider != null)
+        {
+            if (LimitTimeManager.Instance.IsComplete())
+                progressSlider.transform.parent.gameObject.SetActive(false);
+            else
+                progressSlider.transform.parent.gameObject.SetActive(true);
+        }
 
         // 设置关卡文本
         int stage = GameDataManager.Instance.UserData.CurrentChessStage;
@@ -778,8 +785,8 @@ public class ChessFinishView : UIWindow
 
         if (ChessStageController.Instance.IsCurrentStageSkipped)
         {
-            _encourageTitleText.text = "";
-            _encouragePhraseText.text = "";
+            if (_encourageTitleText != null) _encourageTitleText.text = "";
+            if (_encouragePhraseText != null) _encouragePhraseText.text = "";
         }
         else
         {
@@ -833,6 +840,8 @@ public class ChessFinishView : UIWindow
     /// </summary>
     private void RenderEncouragementTexts()
     {
+        // 预制体未绑定鼓励文案节点时直接跳过（避免空引用中断结算页）
+        if (_encourageTitleRoot == null && _encouragePhraseRoot == null) return;
         // 1. 获取已经判定好的规则
         var rule = ChessStageController.Instance.CurrentMatchedRule;
         int bannerStyle = ChessStageController.Instance.CurrentBannerStyle;
@@ -953,6 +962,7 @@ public class ChessFinishView : UIWindow
 
     private void UpdateButterflyTime(string time = "")
     {
+        if (_butterflyTimerDisplay == null) return;
         bool shouldActivate = GameDataManager.Instance.UserData.butterflyTaskIsOpen;
         if (_butterflyTimerDisplay.activeSelf != shouldActivate)
         {
@@ -1027,12 +1037,14 @@ public class ChessFinishView : UIWindow
             }
         }
         bool canSynthesize = butterflyGrow != null && displayCount >= butterflyGrow.Count;
-        ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint || canSynthesize);
+        if (ButterflyRedpoint != null)
+            ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint || canSynthesize);
     }
     
     private void UpdateSliderProgress()
     {
         if (LimitTimeManager.Instance == null) return;
+        if (progressSlider == null || progressText == null) return;
         if (DOTween.IsTweening(progressSlider)) return;
         
         int wordCount = GetCompletedWordCount();

@@ -26271,19 +26271,19 @@ MonoBehaviour:
   nextStageBtn: {fileID: 3550607149674913449}
   levelText: {fileID: 9124351989644415553}
   stageSpace: {fileID: 0}
-  nextStageImage: {fileID: 0}
+  nextStageImage: {fileID: 4266902028892032307}
   specialStageContent: {fileID: 7602791281490488060}
-  nextUnlockTip: {fileID: 0}
+  nextUnlockTip: {fileID: 108708966929715984}
   _butterflyTimerDisplay: {fileID: 0}
   ButterflyRedpoint: {fileID: 0}
   ButterflyLock: {fileID: 0}
   ButterflyLockText: {fileID: 0}
-  Content: {fileID: 0}
+  Content: {fileID: 5972038460822632039}
   progressSlider: {fileID: 0}
   progressText: {fileID: 0}
-  reachLevelText: {fileID: 0}
-  Showlimiticon: {fileID: 0}
-  Enlimiticon: {fileID: 0}
+  reachLevelText: {fileID: 8694021914342429651}
+  Showlimiticon: {fileID: 4151830261865593168}
+  Enlimiticon: {fileID: 2380982487186063400}
   _encourageTitleRoot: {fileID: 0}
   _encourageTitleText: {fileID: 0}
   _encouragePhraseRoot: {fileID: 0}
