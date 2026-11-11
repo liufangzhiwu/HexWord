@@ -101,6 +101,8 @@ public class LimitBtnTable : MonoBehaviour
     public void InitLimtBtnUI()
     {
         bool isLocked = !LimitTimeManager.Instance.IsOpen();
+        // 锁定态在按钮右上角显示锁头（预制体上的 limitlock 节点）
+        if (LockObj != null) LockObj.SetActive(isLocked);
         if (isLocked)
         {
             // 强制显示底板和文本
