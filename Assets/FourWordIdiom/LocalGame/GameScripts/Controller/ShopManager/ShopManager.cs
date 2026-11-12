@@ -172,7 +172,15 @@ public partial class ShopManager : MonoBehaviour
     private const int PeakHourStart = 19;
     private const int PeakHourEnd = 23;
     private const int ChurnReturnDays = 7;
-    private const int ShopGoldVideoReward = 100;
+
+    /// <summary>
+    /// 商店金币（FreeGoods）当日首次「免广告」免费领取的金币数。
+    /// 当日首次领过之后，卡片转为激励视频领取，金额走配置表 shop.csv（当前 100，见 ShopGoldVideoReward）。
+    /// </summary>
+    public const int ShopGoldFreeReward = 50;
+
+    /// <summary>商店金币（FreeGoods）看完激励视频领取的金币数（配置表缺失时的兜底值）</summary>
+    public const int ShopGoldVideoReward = 100;
 
     // ======================= 审核配置加载状态 =======================
 
@@ -1075,6 +1083,85 @@ public partial class ShopManager : MonoBehaviour
             shoplimitDatas[item.id] = data;
 
         return data;
+    }
+
+    // ======================= ★ 道具购买埋点（按内购商品口径上报） =======================
+
+    /// <summary>
+    /// 提示灯 / 火箭 / 复活道具这三个「道具支付」行为，资源变动统一按【内购商品】口径上报：
+    ///   change_reason = 内购（ResReason.Iap）
+    ///   reason_index  = 该道具对应的礼包商品名（如「萤火礼盒」）
+    ///
+    /// 背景：这三个道具在 shop.csv 里没有单独的内购 SKU，只能通过礼包获得；
+    /// 但产品要求把「金币买道具」这一支付行为按内购口径统计，
+    /// 所以 reason_index 取该道具推荐位上的礼包商品名（也就是玩家在这个场景被推荐的礼包）。
+    ///
+    /// 兜底：取不到礼包时回退成道具名（「提示灯」「火箭」「复活道具」），
+    /// 保证 reason_index 不会落到 XXX，也不会因为推荐位为空就丢埋点。
+    /// </summary>
+    /// <param name="toolType">道具类型（Tipstool / AutoComplete / ReStartTool）</param>
+    /// <returns>用于 resource_change 的 (change_reason, reason_index)</returns>
+    public ResReason.Ctx GetToolPurchaseIapCtx(LimitRewordType toolType)
+    {
+        string productName = GetToolRecommendPackName(toolType);
+        if (string.IsNullOrEmpty(productName))
+        {
+            productName = GetToolFallbackReasonIndex(toolType);
+            LogShop($"[ToolIap] {toolType} 未取到推荐礼包，reason_index 回退为「{productName}」");
+        }
+        else
+        {
+            LogShop($"[ToolIap] {toolType} 按内购口径上报，reason_index=「{productName}」");
+        }
+
+        return ResReason.IapItem(productName);
+    }
+
+    /// <summary>
+    /// 取该道具在道具弹窗里被推荐的礼包商品名（name 列，如「萤火礼盒」）。
+    /// 推荐位映射：提示灯 → Bulb，火箭 → Rocket，复活道具 → Clock。
+    /// 取不到（未配置推荐位 / 全部售罄）时返回 null，由调用方兜底。
+    /// </summary>
+    private string GetToolRecommendPackName(LimitRewordType toolType)
+    {
+        RecommendSlot slot;
+        switch (toolType)
+        {
+            case LimitRewordType.Tipstool: slot = RecommendSlot.Bulb; break;
+            case LimitRewordType.AutoComplete: slot = RecommendSlot.Rocket; break;
+            case LimitRewordType.ReStartTool: slot = RecommendSlot.Clock; break;
+            default: return null;
+        }
+
+        try
+        {
+            List<ShopDataItem> packs = GetRecommendPacks(slot);
+            if (packs == null || packs.Count == 0) return null;
+
+            ShopDataItem first = packs[0];
+            if (first == null) return null;
+
+            // 优先用中文商品名（与内购埋点「商品名」列口径一致），没有则回退 produceNameId
+            if (!string.IsNullOrEmpty(first.name)) return first.name;
+            return string.IsNullOrEmpty(first.produceNameId) ? null : first.produceNameId;
+        }
+        catch (Exception e)
+        {
+            LogShop($"[ToolIap] GetToolRecommendPackName 异常({toolType}): {e.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>推荐礼包取不到时的 reason_index 兜底：直接用道具名。</summary>
+    private static string GetToolFallbackReasonIndex(LimitRewordType toolType)
+    {
+        switch (toolType)
+        {
+            case LimitRewordType.Tipstool: return "提示灯";
+            case LimitRewordType.AutoComplete: return "火箭";
+            case LimitRewordType.ReStartTool: return "复活道具";
+            default: return ResReason.IdxUnknown;
+        }
     }
 
     // ======================= 去广告 =======================
@@ -2362,10 +2449,21 @@ public partial class ShopManager : MonoBehaviour
     /// <param name="skipNonPositive">count ≤ 0 的项跳过（补发路径口径）</param>
     /// <returns>内容里是否发过 6/7（调用方据此决定要不要再按商品名兜底发去广告）</returns>
     private bool GrantProductContent(ShopDataItem item, string reason,
-                                     string logPrefix = "  发放奖励", bool skipNonPositive = false)
+                                     string logPrefix = "  发放奖励", bool skipNonPositive = false,
+                                     bool asIap = false)
     {
         bool removeAdsGranted = false;
         if (item == null || item.productContent == null) return false;
+
+        // ★ 内购口径：change_reason = 内购，reason_index = 商品名（shop.csv「商品名」列）。
+        //   原来这里只传一段自由文本 reason（如「萤火礼盒礼包购买」），ResReason.Resolve 认不出来，
+        //   reason_index 会落到 XXX。内购是明确的封闭场景，直接显式给值，不走文本推断。
+        string iapIndex = null;
+        if (asIap)
+        {
+            iapIndex = !string.IsNullOrEmpty(item.name) ? item.name : item.produceNameId;
+            if (string.IsNullOrEmpty(iapIndex)) iapIndex = ResReason.IdxUnknown;
+        }
 
         foreach (var dataitem in item.productContent)
         {
@@ -2384,7 +2482,8 @@ public partial class ShopManager : MonoBehaviour
             switch (type)
             {
                 case (int)LimitRewordType.Coins:
-                    GameDataManager.Instance.UserData.UpdateGold(count, false, false, reason);
+                    GameDataManager.Instance.UserData.UpdateGold(count, false, false, reason,
+                        asIap ? iapIndex : null, asIap ? ResReason.Iap : null);
                     break;
 
                 // 道具类：蝴蝶 / 提示 / 火箭 / 复活
@@ -2392,7 +2491,9 @@ public partial class ShopManager : MonoBehaviour
                 case (int)LimitRewordType.Tipstool:
                 case (int)LimitRewordType.AutoComplete:
                 case (int)LimitRewordType.ReStartTool:
-                    GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count, reason);
+                    GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count, reason,
+                        string.Empty,
+                        asIap ? iapIndex : null, asIap ? ResReason.Iap : null);
                     break;
 
                 case (int)LimitRewordType.RemoveAds:
@@ -2414,7 +2515,9 @@ public partial class ShopManager : MonoBehaviour
                     break;
 
                 case ReviveToolType:
-                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count, reason);
+                    GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, count, reason,
+                        string.Empty,
+                        asIap ? iapIndex : null, asIap ? ResReason.Iap : null);
                     Debug.LogWarning("[ShopManager] 旧复活类型 ReviveToolType=1002 按提示灯发放，请与道具系统确认");
                     break;
 
@@ -2439,7 +2542,9 @@ public partial class ShopManager : MonoBehaviour
                 $"type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
 
         // 内容统一发放（0/1/2/3/6/7/8/9 全类型）
-        bool removeAdsGrantedByContent = GrantProductContent(shopDataItem, shopDataItem.name + "礼包购买");
+        // ★ asIap: true —— 这是道具弹窗（GetItemScreen）里的礼包内购，资源变动按内购口径上报
+        bool removeAdsGrantedByContent = GrantProductContent(shopDataItem, shopDataItem.name + "礼包购买",
+            asIap: true);
 
         if (IsRemoveAdsProduct(shopDataItem.produceNameId) && !removeAdsGrantedByContent)
         {
@@ -2733,7 +2838,9 @@ public partial class ShopManager : MonoBehaviour
         // ★ 推送礼包（破冰 / 复购弹窗、结算页礼包按钮、广告失败页单道具）都走这里。
         //   以前这份 switch 缺 8 复活道具 / 9 无限体力，7 天去广告也只刷了 UI 没写存档 → 礼包奖励没到账；
         //   现在统一走 GrantProductContent（与礼包表购买、补发同一套逻辑）。
-        bool removeAdsGrantedByContent = GrantProductContent(shopDataItem, "商店购买" + item.ItemName);
+        // ★ asIap: true —— 商店内购成功，资源变动按内购口径上报（reason_index 取中文商品名）
+        bool removeAdsGrantedByContent = GrantProductContent(shopDataItem, "商店购买" + item.ItemName,
+            asIap: true);
 
         // 商品本身就是去广告 SKU（RemoveADS / RemoveAdsWeek）：内容里没写 6/7 时才按商品名兜底
         if (IsRemoveAdsProduct(shopDataItem.produceNameId) && !removeAdsGrantedByContent)

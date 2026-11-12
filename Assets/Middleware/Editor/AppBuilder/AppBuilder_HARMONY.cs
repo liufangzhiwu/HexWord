@@ -257,16 +257,39 @@ namespace Middleware
             // 必须每次导出都重写：Unity 导出的 build-profile.json5 不带这两个字段，
             // 不显式写死的话 target 会跟着本机 DevEco SDK 漂移，也不满足应用市场的目标 API 要求。
             Debug.Log("[Harmony] ③.1 写入 compileSdkVersion / targetSdkVersion");
-            if (!HarmonySdkVersion.Apply(harProject, cfg, out error, out var sdkLog)) return null;
-            if (!string.IsNullOrEmpty(sdkLog)) Debug.Log("    " + sdkLog);
+            if (!HarmonySdkVersion.Apply(harProject, cfg, out error, out var sdklog)) return null;
+            if (!string.IsNullOrEmpty(sdklog)) Debug.Log("    " + sdklog);
 
             // ---------- ④ ohpm install ----------
             // 必须每次都执行：Unity 重新导出会改写 oh-package.json5，
             // 而 oh_modules 目录还在旧状态，会导致 "Cannot find module '@thinkingdata/analytics'"。
             // 实测耗时约 3 秒，不值得为省这点时间而承担编译失败风险。
             var ohpm = Path.Combine(cfg.devEcoHome, "tools", "ohpm", "bin", "ohpm.bat");
+            var pmCli = Path.Combine(cfg.devEcoHome, "tools", "ohpm", "bin", "pm-cli.js");
+            var cliEnv = cfg.cliEnv();
+
+            // ★ ohpm.bat 的 node 探测是「PATH 里第一个能跑的 node.exe 直接用，才退回 NODE_HOME」，
+            //   而团结引擎会把自带的 node v18 注入进程 PATH → v18 抢先命中 → ERR_REQUIRE_ESM。
+            //   所以这里不调 ohpm.bat，改用 DevEco 自带的 node.exe 绝对路径直接跑 pm-cli.js，
+            //   从根上绕开 PATH 查找顺序。pm-cli.js 正是 ohpm.bat 最后执行的那条命令，行为等价。
+            if (!EnsureNodeExe(cliEnv, out var nodeExe, out var nodeVersion, out error)) return null;
+            Debug.Log($"[Harmony]    node: {nodeExe} ({nodeVersion})");
+
             Debug.Log("[Harmony] ④ ohpm install");
-            if (!RunCli(ohpm, "install", harProject, cfg.cliEnv(), out var ohpmOut, out var ohpmCode))
+            bool ohpmStarted;
+            string ohpmOut;
+            int ohpmCode;
+            if (File.Exists(pmCli) && File.Exists(nodeExe))
+            {
+                ohpmStarted = RunCli(nodeExe, "\"" + pmCli + "\" install", harProject, cliEnv,
+                    out ohpmOut, out ohpmCode);
+            }
+            else
+            {
+                // 兜底：极端情况下 pm-cli.js 不存在，仍走官方 bat
+                ohpmStarted = RunCli(ohpm, "install", harProject, cliEnv, out ohpmOut, out ohpmCode);
+            }
+            if (!ohpmStarted)
             {
                 error = "ohpm install 启动失败：" + ohpmOut;
                 return null;
@@ -286,13 +309,29 @@ namespace Middleware
             foreach (var line in sdkLog) Debug.Log("    " + line);
 
             // ---------- ⑤ hvigor assembleHap ----------
+            // 同样绕开 bat：hvigorw.bat 里的 NODE_EXE 恒为裸 `node.exe`，
+            // NODE_HOME 只用来校验存在性、不会替换执行路径 → 仍然会命中 PATH 里的 v18。
+            // 直接 `node.exe hvigorw.js <args>` 与 bat 内的最终命令等价（NODE_OPTS 只是 "--"）。
             var hvigor = Path.Combine(cfg.devEcoHome, "tools", "hvigor", "bin", "hvigorw.bat");
+            var hvigorJs = Path.Combine(cfg.devEcoHome, "tools", "hvigor", "bin", "hvigorw.js");
             var buildMode = buildParam.IsBuildRelease ? "release" : "debug";
             var hvigorArgs = $"--mode module -p product=default -p module=entry@default " +
                              $"-p buildMode={buildMode} assembleHap --no-daemon";
             Debug.Log("[Harmony] ⑤ hvigor assembleHap (" + buildMode + ")");
             var buildStartedAt = DateTime.Now;
-            if (!RunCli(hvigor, hvigorArgs, harProject, cfg.cliEnv(), out var hvOut, out var hvCode))
+            bool hvStarted;
+            string hvOut;
+            int hvCode;
+            if (File.Exists(hvigorJs) && File.Exists(nodeExe))
+            {
+                hvStarted = RunCli(nodeExe, "\"" + hvigorJs + "\" " + hvigorArgs, harProject, cliEnv,
+                    out hvOut, out hvCode);
+            }
+            else
+            {
+                hvStarted = RunCli(hvigor, hvigorArgs, harProject, cliEnv, out hvOut, out hvCode);
+            }
+            if (!hvStarted)
             {
                 error = "hvigor 启动失败：" + hvOut;
                 return null;
@@ -502,28 +541,51 @@ namespace Middleware
                 return false;
             }
 
-            // .bat 必须经 cmd.exe 执行；引号包住带空格的路径
-            var psi = new ProcessStartInfo("cmd.exe", "/c \"" + exePath + "\" " + args)
+            // .exe 直接起进程（不经 cmd，省掉引号转义的坑）；
+            // .bat / .cmd 必须经 cmd.exe 执行，引号包住带空格的路径。
+            var isExe = exePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
+            ProcessStartInfo psi;
+            if (isExe)
             {
-                WorkingDirectory = workingDir,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
+                psi = new ProcessStartInfo(exePath, args);
+            }
+            else
+            {
+                psi = new ProcessStartInfo("cmd.exe", "/c \"" + exePath + "\" " + args);
+            }
+            psi.WorkingDirectory = workingDir;
+            psi.UseShellExecute = false;
+            psi.CreateNoWindow = true;
+            psi.RedirectStandardOutput = true;
+            psi.RedirectStandardError = true;
             if (env != null)
             {
-                foreach (var kv in env) psi.EnvironmentVariables[kv.Key] = kv.Value;
+                foreach (var kv in env) SetEnvVar(psi, kv.Key, kv.Value);
             }
-            try
+
+            // ★ 兜底预检：ohpm / hvigor 的 .bat 都要找 node 才能跑。
+            //   这里必须校验 NODE_HOME 下的**绝对路径** node.exe：
+            //   `node --version` 这种走 PATH 的探测会命中团结引擎注入的 v18，
+            //   既会误判预检结果，ohpm.bat 也会真的用上那个 v18。
+            if (IsNodeDrivenBat(exePath) && env != null && !EnsureNodeExe(env, out _, out _, out var nodeError))
             {
-                // cmd 输出是 GBK；某些环境没有 936 编码页，失败则退回默认编码
-                psi.StandardOutputEncoding = Encoding.GetEncoding(936);
-                psi.StandardErrorEncoding = Encoding.GetEncoding(936);
+                output = nodeError;
+                return false;
             }
-            catch
+
+            // bat 经 cmd 执行，输出是 GBK；node/node.exe 直接起进程时输出是 UTF-8，
+            // 强设 936 会把中文（如 ohpm 的中文提示）弄成乱码，所以只对 cmd 路径设置。
+            if (!isExe)
             {
-                // ignore
+                try
+                {
+                    psi.StandardOutputEncoding = Encoding.GetEncoding(936);
+                    psi.StandardErrorEncoding = Encoding.GetEncoding(936);
+                }
+                catch
+                {
+                    // 某些环境没有 936 编码页，失败则退回默认编码
+                }
             }
 
             var buffer = new StringBuilder();
@@ -551,6 +613,142 @@ namespace Middleware
 
             lock (buffer) output = buffer.ToString();
             return true;
+        }
+
+        /// <summary>ohpm / hvigor 的启动脚本都是 .bat，内部靠 PATH 里的 node.exe 运行。</summary>
+        private static bool IsNodeDrivenBat(string exePath)
+        {
+            if (string.IsNullOrEmpty(exePath)) return false;
+            var name = Path.GetFileName(exePath).ToLowerInvariant();
+            return name == "ohpm.bat" || name == "hvigorw.bat";
+        }
+
+        /// <summary>
+        /// 取 NODE_HOME 下的 node.exe 绝对路径（不做任何 PATH 查找）。
+        ///
+        /// 为什么不查 PATH：团结引擎的 OpenHarmony 插件会把自带的
+        /// `<引擎>/Editor/Data/PlaybackEngines/OpenHarmonyPlayer/Nodejs/node-v18.14.1-win-x64`
+        /// 注入到 Unity 进程的 PATH 里。而 `ohpm.bat` 的探测顺序是
+        /// `node.exe --version`（PATH）→ 成功就直接用 → 才轮到 NODE_HOME，
+        /// 所以只要 PATH 里有 v18，ohpm 就一定会用 v18。
+        /// v18 无法 require ohpm 26.x 依赖的纯 ESM 包（uuid@14 / glob@10 / commander@13），
+        /// 必然抛 code: 'ERR_REQUIRE_ESM'。
+        /// </summary>
+        private static string ResolveNodeExe(IDictionary<string, string> env)
+        {
+            string nodeHome;
+            if (env == null || !env.TryGetValue("NODE_HOME", out nodeHome)) return null;
+            if (string.IsNullOrEmpty(nodeHome)) return null;
+
+            var exe = Path.Combine(nodeHome, "node.exe");
+            return File.Exists(exe) ? exe : null;
+        }
+
+        /// <summary>
+        /// 校验 DevEco Studio 自带 node 的版本（绝对路径，完全不经 PATH），
+        /// 通过则给出 node.exe 全路径与版本号，供后续直接调用。
+        /// 要求 major >= 20：ohpm 26.x 的 ESM 依赖在 Node 18 上加载不了。
+        /// </summary>
+        private static bool EnsureNodeExe(IDictionary<string, string> env,
+            out string nodeExe, out string version, out string error)
+        {
+            error = null;
+            version = null;
+            nodeExe = ResolveNodeExe(env);
+
+            if (nodeExe == null)
+            {
+                error = "找不到 DevEco Studio 自带的 node.exe（预期路径：<devEcoHome>/tools/node/node.exe）。\n" +
+                        "请确认 harmony_toolchain.json 里的 devEcoHome 指向正确的 DevEco Studio 安装目录，\n" +
+                        "且该目录下 tools/node/node.exe 存在（DevEco Studio 需要完整安装工具链）。";
+                return false;
+            }
+
+            var raw = RunAndCapture(nodeExe, "--version", null, env);
+            if (string.IsNullOrEmpty(raw) || raw[0] != 'v')
+            {
+                error = "无法执行 node.exe：" + nodeExe + "\n" +
+                        "（输出：" + (string.IsNullOrEmpty(raw) ? "<空>" : raw) + "）";
+                return false;
+            }
+            version = raw;
+
+            int major;
+            if (!int.TryParse(raw.Substring(1).Split('.')[0], out major))
+            {
+                error = "无法解析 node 版本：" + raw + "（" + nodeExe + "）";
+                return false;
+            }
+
+            if (major < 20)
+            {
+                error = $"DevEco Studio 自带的 node 版本过低：{raw}（ohpm 26.x 需要 Node.js 20+）。\n" +
+                        "路径：" + nodeExe + "\n" +
+                        "该版本无法 require ohpm 依赖的纯 ESM 包，会报 code: 'ERR_REQUIRE_ESM'。\n" +
+                        "处理：升级 / 重装 DevEco Studio，确保 tools/node 下是 Node.js 20 及以上。";
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>执行一个可执行文件并抓取其 stdout（用于探测版本，不刷 Console）。</summary>
+        private static string RunAndCapture(string exePath, string args, string workingDir,
+            IDictionary<string, string> env)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo(exePath, args)
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                if (!string.IsNullOrEmpty(workingDir) && Directory.Exists(workingDir))
+                    psi.WorkingDirectory = workingDir;
+                if (env != null)
+                {
+                    foreach (var kv in env) SetEnvVar(psi, kv.Key, kv.Value);
+                }
+
+                using (var proc = Process.Start(psi))
+                {
+                    if (proc == null) return null;
+                    var stdout = proc.StandardOutput.ReadToEnd();
+                    proc.StandardError.ReadToEnd();
+                    proc.WaitForExit(10000);
+                    return (stdout ?? "").Trim();
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Harmony] 执行失败 " + exePath + " " + args + "：" + e.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 写入子进程环境变量。
+        ///
+        /// Windows 的环境变量名不区分大小写，但 ProcessStartInfo.EnvironmentVariables 是
+        /// StringDictionary，部分 Mono 版本会保留 "Path" 与 "PATH" 两个 key。
+        /// 这时进程拿到的是先出现的那个（通常是从父进程继承的 "Path"，含团结引擎注入的 node v18），
+        /// 我们新写的 "PATH" 形同无效 —— 这也是「明明清过 PATH，ohpm 还是用了 v18」的原因。
+        /// 所以先删掉所有大小写变体，再写入目标值。
+        /// </summary>
+        private static void SetEnvVar(ProcessStartInfo psi, string key, string value)
+        {
+            var dict = psi.EnvironmentVariables;
+            var stale = new List<string>();
+            foreach (System.Collections.DictionaryEntry de in dict)
+            {
+                if (string.Equals((string)de.Key, key, StringComparison.OrdinalIgnoreCase))
+                    stale.Add((string)de.Key);
+            }
+            foreach (var k in stale) dict.Remove(k);
+
+            dict[key] = value;
         }
 
         #endregion
@@ -761,7 +959,20 @@ namespace Middleware
             public string profileFileName(bool isRelease) =>
                 isRelease ? "hexa_releaseRelease.p7b" : "hexa_debugDebug.p7b";
 
-            /// <summary>hvigor / ohpm 需要的环境变量。</summary>
+            /// <summary>
+            /// hvigor / ohpm 需要的环境变量。
+            ///
+            /// ★ 为什么要把 PATH 里的 node 彻底清干净（而不是只在最前面插一条）：
+            ///   ohpm.bat 的 node 探测逻辑是 `set NODE_EXE=node.exe` 后直接 `node.exe --version`，
+            ///   只要 PATH 里能找到一个能跑的 node 就直接用，**不看 NODE_HOME**。
+            ///   而团结引擎的 OpenHarmony 打包插件自带
+            ///   `Editor/Data/PlaybackEngines/OpenHarmonyPlayer/Nodejs/node-v18.14.1-win-x64/node.exe`，
+            ///   导出工程时可能被注入到进程 PATH 里。v18 太老，无法 require ohpm 依赖的纯 ESM 包
+            ///   （uuid@14 / glob@10 / commander@13 等），会报：
+            ///       code: 'ERR_REQUIRE_ESM'   Node.js v18.14.1
+            ///   所以这里把 PATH 里所有 node 目录剔除，只保留 DevEco 自带的 node（v24），
+            ///   保证 ohpm / hvigor 一定用对版本。
+            /// </summary>
             public Dictionary<string, string> cliEnv()
             {
                 var env = new Dictionary<string, string>();
@@ -769,9 +980,54 @@ namespace Middleware
                 var sdkHome = Path.Combine(devEcoHome, "sdk");
                 env["NODE_HOME"] = nodeHome;
                 env["DEVECO_SDK_HOME"] = sdkHome;
+
                 var path = Environment.GetEnvironmentVariable("PATH") ?? "";
-                env["PATH"] = nodeHome + ";" + path;
+                env["PATH"] = nodeHome + ";" + StripNodeDirsFromPath(path, nodeHome);
                 return env;
+            }
+
+            /// <summary>
+            /// 从 PATH 中剔除所有「自带 node.exe 的目录」，避免团结引擎注入的 node v18 抢先命中。
+            /// 保留 DevEco 自己的 node 目录（由调用方前置），其余非 node 目录原样保留。
+            /// </summary>
+            private static string StripNodeDirsFromPath(string path, string keepNodeHome)
+            {
+                if (string.IsNullOrEmpty(path)) return "";
+
+                var keep = NormalizeDir(keepNodeHome);
+                var result = new List<string>();
+
+                foreach (var raw in path.Split(';'))
+                {
+                    if (string.IsNullOrWhiteSpace(raw)) continue;
+
+                    var dir = raw.Trim().Trim('"');
+                    if (dir.Length == 0) continue;
+
+                    // DevEco 自己的 node 目录由调用方显式前置，这里跳过避免重复
+                    if (NormalizeDir(dir) == keep) continue;
+
+                    // 目录里带 node.exe → 视为 node 目录，剔除
+                    try
+                    {
+                        if (File.Exists(Path.Combine(dir, "node.exe"))) continue;
+                    }
+                    catch
+                    {
+                        // 非法路径（含通配符等）直接跳过，不要让它进 PATH
+                        continue;
+                    }
+
+                    result.Add(dir);
+                }
+
+                return string.Join(";", result);
+            }
+
+            private static string NormalizeDir(string dir)
+            {
+                if (string.IsNullOrEmpty(dir)) return "";
+                return dir.Trim().Trim('"').TrimEnd('\\', '/').Replace('/', '\\').ToLowerInvariant();
             }
         }
 
@@ -940,9 +1196,6 @@ namespace Middleware
         /// </summary>
         private static class HarmonySdkVersion
         {
-            private static readonly Regex ProductsBlock =
-                new Regex("\"products\"\\s*:\\s*\\[(?<body>.*?)\\]", RegexOptions.Singleline);
-
             private static readonly Regex ProductObject =
                 new Regex("\\{(?<body>[^{}]*)\\}", RegexOptions.Singleline);
 
@@ -1025,28 +1278,117 @@ namespace Middleware
                 }
 
                 var text = File.ReadAllText(bp);
-                var block = ProductsBlock.Match(text);
-                if (!block.Success)
+                int bodyStart, bodyLen;
+                if (!TryFindArrayBody(text, "\"products\"", out bodyStart, out bodyLen))
                 {
                     error = "build-profile.json5 里找不到 products 节点，无法写入 SDK 版本";
                     return false;
                 }
 
-                var body = block.Groups["body"].Value;
+                var body = text.Substring(bodyStart, bodyLen);
                 var patched = ProductObject.Replace(body, mo => PatchProduct(mo.Groups["body"].Value, compile, target, wantCompatible));
                 if (patched == body)
                 {
-                    log = "products 为空，未写入 SDK 版本";
+                    // 导出文件里可能是空 products，也可能已经是目标版本（重复执行 Apply 时）
+                    log = body.IndexOf("\"name\"", StringComparison.Ordinal) < 0
+                        ? "products 为空，未写入 SDK 版本"
+                        : $"products 已是目标版本（compileSdk={compile}, targetSdk={target}），无需改写";
                     return true;
                 }
 
-                var start = block.Groups["body"].Index;
-                text = text.Substring(0, start) + patched + text.Substring(start + body.Length);
-                File.WriteAllText(bp, text, new UTF8Encoding(false));
+                var updated = text.Substring(0, bodyStart) + patched + text.Substring(bodyStart + bodyLen);
+
+                // ★ 写回前必须自检：这里出过事故——PatchProduct 曾漏掉 object 的花括号，
+                //   把 build-profile.json5 写成 `"products": [ "compileSdkVersion": ... ]`，
+                //   hvigor 直到编译阶段才报 JSON5: invalid character ':'，很难定位。
+                //   宁可在这里报错，也不要把坏文件交给 hvigor。
+                if (!IsBalancedJson5(updated))
+                {
+                    error = "写入 SDK 版本后 build-profile.json5 结构失衡（花括号/方括号不匹配），已放弃写入。\n" +
+                            "文件：" + bp + "\n" +
+                            "请检查 HarmonySdkVersion.PatchProduct 的拼接结果，或改为手动维护该文件。";
+                    return false;
+                }
+
+                File.WriteAllText(bp, updated, new UTF8Encoding(false));
 
                 log = $"compileSdkVersion={compile}, targetSdkVersion={target}, " +
                       (wantCompatible.Length > 0 ? $"compatibleSdkVersion={wantCompatible}" : "compatibleSdkVersion 保持导出值");
                 return true;
+            }
+
+            /// <summary>
+            /// 定位 `<key> : [ ... ]` 中方括号内的正文区间。
+            /// 用逐字符扫描而不是正则 `.*?\]`：product 对象里可能嵌数组
+            /// （如 buildOption.napiLibFilterOption），非贪婪正则会在第一个 `]` 处截断，
+            /// 把只改一半的配置写回文件 → 同样是难定位的 JSON5 报错。
+            /// </summary>
+            private static bool TryFindArrayBody(string text, string keyLiteral, out int start, out int length)
+            {
+                start = -1;
+                length = 0;
+
+                var keyIdx = text.IndexOf(keyLiteral, StringComparison.Ordinal);
+                if (keyIdx < 0) return false;
+
+                var open = text.IndexOf('[', keyIdx + keyLiteral.Length);
+                if (open < 0) return false;
+
+                var depth = 0;
+                var inStr = false;
+                var esc = false;
+                for (var i = open; i < text.Length; i++)
+                {
+                    var c = text[i];
+                    if (inStr)
+                    {
+                        if (esc) esc = false;
+                        else if (c == '\\') esc = true;
+                        else if (c == '"') inStr = false;
+                        continue;
+                    }
+                    if (c == '"') { inStr = true; continue; }
+                    if (c == '[') depth++;
+                    else if (c == ']')
+                    {
+                        depth--;
+                        if (depth == 0)
+                        {
+                            start = open + 1;
+                            length = i - open - 1;
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            /// <summary>
+            /// JSON5 花括号 / 方括号平衡自检（跳过字符串内容）。
+            /// 只做结构级检查，不做完整语法解析——目的是拦住「漏写 { }」这类拼接事故。
+            /// </summary>
+            private static bool IsBalancedJson5(string text)
+            {
+                var braces = 0;
+                var brackets = 0;
+                var inStr = false;
+                var esc = false;
+                foreach (var c in text)
+                {
+                    if (inStr)
+                    {
+                        if (esc) esc = false;
+                        else if (c == '\\') esc = true;
+                        else if (c == '"') inStr = false;
+                        continue;
+                    }
+                    if (c == '"') { inStr = true; continue; }
+                    if (c == '{') braces++;
+                    else if (c == '}') { if (--braces < 0) return false; }
+                    else if (c == '[') brackets++;
+                    else if (c == ']') { if (--brackets < 0) return false; }
+                }
+                return braces == 0 && brackets == 0 && !inStr;
             }
 
             /// <summary>给单个 product 对象写入版本键（幂等：先删后插，重复执行结果一致）。</summary>
@@ -1063,11 +1405,17 @@ namespace Middleware
                 core = Regex.Replace(core, @"\n\s*\n", "\n");
 
                 var sb = new StringBuilder();
+                // ★ 必须自带花括号：ProductObject 正则匹配的是整段 `{...}`，
+                //   MatchEvaluator 的返回值会**整体替换**这段匹配（含花括号），
+                //   这里只返回内部内容的话会把 product 对象的花括号吃掉，
+                //   build-profile.json5 变成 `"products": [ "compileSdkVersion": ... ]`，
+                //   hvigor 直接报 JSON5: invalid character ':'。
+                sb.Append("{");
                 sb.Append("\n        \"compileSdkVersion\": \"").Append(compile).Append("\",");
                 sb.Append("\n        \"targetSdkVersion\": \"").Append(target).Append("\",");
                 if (!string.IsNullOrEmpty(compatible))
                     sb.Append("\n        \"compatibleSdkVersion\": \"").Append(compatible).Append("\",");
-                sb.Append("\n        ").Append(core).Append("\n      ");
+                sb.Append("\n        ").Append(core).Append("\n      }");
                 return sb.ToString();
             }
 

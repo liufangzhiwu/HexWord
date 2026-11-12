@@ -43,7 +43,8 @@ namespace ThinkingSDK.PC.Utils
         {
             if (ThinkingSDKPublicConfig.IsPrintLog())
             {
-                string dataStr = str + ThinkingSDKJSON.Serialize(data);
+                // ★ 日志用 keepUnicode: true —— 中文原样输出，避免控制台里看到 "\u5185\u8D2D"
+                string dataStr = str + ThinkingSDKJSON.Serialize(data, true);
                 Debug.Log("[ThinkingData] Info: " + dataStr);
                 if (logListener != null)
                 {
@@ -56,7 +57,8 @@ namespace ThinkingSDK.PC.Utils
         {
             if (ThinkingSDKPublicConfig.IsPrintLog())
             {
-                string dataStr = str + ThinkingSDKJSON.Serialize(data) + str1;
+                // ★ 日志用 keepUnicode: true —— 中文原样输出，避免控制台里看到 "\u5185\u8D2D"
+                string dataStr = str + ThinkingSDKJSON.Serialize(data, true) + str1;
                 Debug.Log("[ThinkingData] Info: " + dataStr);
                 if (logListener != null)
                 {

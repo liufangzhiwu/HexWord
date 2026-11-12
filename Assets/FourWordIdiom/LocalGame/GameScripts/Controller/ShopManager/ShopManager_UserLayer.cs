@@ -857,7 +857,9 @@ public partial class ShopManager : MonoBehaviour
     /// 商店金币视频正常观看成功后的发放入口。
     /// 若当前已超过 C 阈值，则拒绝发放（兜底：外部若遗漏了点击前的假失败拦截）。
     /// </summary>
-    public void OnShopGoldClaimed()
+    /// <param name="reward">本次发放金币数（默认取 ShopGoldVideoReward=100；商品侧会按配置表 shop.csv 传入）</param>
+    /// <returns>是否真的发放了金币</returns>
+    public bool OnShopGoldClaimed(int reward = ShopGoldVideoReward)
     {
         // ★ 关键修复：必须先按自然日归一化，再累加/判断阈值。
         //   原实现直接 _shopGoldUsedToday++，但从未写入日期；首次领取时日期为空，
@@ -869,16 +871,17 @@ public partial class ShopManager : MonoBehaviour
         if (p.enabled && p.shopGoldVideoLimit >= 0 && AdLimitData.shopGoldUsed >= p.shopGoldVideoLimit)
         {
             LogShop("OnShopGoldClaimed 跳过: 已达 C 阈值（不应发放金币）");
-            return;
+            return false;
         }
 
         AdLimitSaveData d = AdLimitData;
         d.shopGoldUsed++;
         PersistAdLimit();
 
-        GameDataManager.Instance.UserData.UpdateGold(ShopGoldVideoReward, false, false, "商店金币视频");
-        MessageSystem.Instance.ShowTip("+100 金币");
-        LogShop($"OnShopGoldClaimed: 今日已领={d.shopGoldUsed}, 阈值={p.shopGoldVideoLimit}");
+        GameDataManager.Instance.UserData.UpdateGold(reward, false, false, "商店金币视频");
+        MessageSystem.Instance.ShowTip($"+{reward} 金币");
+        LogShop($"OnShopGoldClaimed: 发放={reward}, 今日已领={d.shopGoldUsed}, 阈值={p.shopGoldVideoLimit}");
+        return true;
     }
 
     /// <summary>

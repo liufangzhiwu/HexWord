@@ -1062,11 +1062,28 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     {
         if (GetReviveToolCount() <= 0) return false;
 
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, -1, "复活消耗道具");
+        // ★ 复活道具的「支付/消耗」按【内购商品】口径上报：
+        //   change_reason = 内购，reason_index = 复活道具对应的礼包商品名。
+        ResReason.Ctx payCtx = GetReviveToolIapCtx();
+
+        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, -1, string.Empty,
+            string.Empty, payCtx.Index, payCtx.Category);
         LogFailGame($"消耗复活道具 x1 复活 60 秒，剩余 {GetReviveToolCount()}");
 
         RefreshGoldReviveButton();
         return true;
+    }
+
+    /// <summary>
+    /// 复活道具支付用的内购埋点口径（change_reason=内购，reason_index=复活道具推荐礼包商品名）。
+    /// ShopManager 不可用时回退成「复活道具」，保证不会丢埋点。
+    /// </summary>
+    private static ResReason.Ctx GetReviveToolIapCtx()
+    {
+        if (ShopManager.shopManager != null)
+            return ShopManager.shopManager.GetToolPurchaseIapCtx(LimitRewordType.ReStartTool);
+
+        return ResReason.IapItem("复活道具");
     }
 
     // ======================= 免费赠送蝴蝶道具（复活按钮触发） =======================
@@ -1168,7 +1185,10 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (isGold)
         {
             Debug.Log("使用金币复活！");
-            GameDataManager.Instance.UserData.UpdateGold(-60, true, true, "复活广告消耗金币");
+            // ★ 金币复活属于「复活道具支付」，同样按内购商品口径上报
+            ResReason.Ctx payCtx = GetReviveToolIapCtx();
+            GameDataManager.Instance.UserData.UpdateGold(-60, true, true, string.Empty,
+                payCtx.Index, payCtx.Category);
 
             // ★ 金币购买复活 + 蝴蝶数量≤0 + 免费蝴蝶提示显示中 → 赠送一个蝴蝶道具
             bool grantedButterfly = GrantFreeButterToolIfNeeded("金币复活");

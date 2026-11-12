@@ -430,10 +430,30 @@ namespace ThinkingSDK.PC.Utils
             return Serializer.Serialize(obj, func);
         }
 
+        /// <summary>
+        /// 序列化，并指定是否保留非 ASCII 字符（中文等）原样输出。
+        ///
+        /// ★ 为什么需要这个参数：
+        ///   默认序列化会把所有非 ASCII 字符转成 \uXXXX（见 SerializeString），
+        ///   这是为了上报兼容性；但日志里打印同样的 JSON 时，中文会变成
+        ///   "\u5185\u8D2D" 这种转义串，在 Unity 控制台里完全没法看。
+        ///   所以日志路径传 keepUnicode = true，上报路径保持默认 false，互不影响。
+        ///
+        /// 注意：keepUnicode = true 产出的仍是合法 JSON（UTF-8 中文是合法 JSON 字符串），
+        ///       只是不再做 ASCII 转义，因此**不要**用于上报，避免改变线上数据格式。
+        /// </summary>
+        public static string Serialize(object obj, bool keepUnicode, Func<DateTime, string> func = null)
+        {
+            return Serializer.Serialize(obj, func, keepUnicode);
+        }
+
         sealed class Serializer
         {
             StringBuilder builder;
             Func<DateTime, string> func;
+
+            /// <summary>true = 非 ASCII 字符原样输出（仅日志用）；false = 转成 \uXXXX（上报默认）</summary>
+            bool keepUnicode;
 
             Serializer()
             {
@@ -442,8 +462,14 @@ namespace ThinkingSDK.PC.Utils
 
             public static string Serialize(object obj, Func<DateTime, string> func)
             {
+                return Serialize(obj, func, false);
+            }
+
+            public static string Serialize(object obj, Func<DateTime, string> func, bool keepUnicode)
+            {
                 var instance = new Serializer();
                 instance.func = func;
+                instance.keepUnicode = keepUnicode;
 
                 instance.SerializeValue(obj);
 
@@ -565,6 +591,13 @@ namespace ThinkingSDK.PC.Utils
                             int codepoint = Convert.ToInt32(c);
                             if ((codepoint >= 32) && (codepoint <= 126))
                             {
+                                builder.Append(c);
+                            }
+                            else if (keepUnicode && codepoint > 126)
+                            {
+                                // 日志模式：中文等可打印的非 ASCII 字符原样输出，避免控制台里看到 \uXXXX。
+                                // 注意只放行 > 126 的字符：32 以下的控制字符（\u0000 等）仍走转义，
+                                // 否则会把日志行打断、甚至污染控制台显示。
                                 builder.Append(c);
                             }
                             else

@@ -99,6 +99,18 @@ public class ShopItem : ShopItemBase
 
         shopCountText.gameObject.SetActive(true);
 
+        // ★ 商店金币（FreeGoods）：卡面数量必须与「本次点击实际到手」一致
+        //   当日首次 = 免广告直发 ShopManager.ShopGoldFreeReward（50）；
+        //   领过之后 = 看激励视频领取配置表金额（当前 100）。
+        if (data.produceNameId == "FreeGoods")
+        {
+            int showGold = GameDataManager.Instance.UserData.isDayFreeGet
+                ? GetVideoGoldReward()
+                : ShopManager.ShopGoldFreeReward;
+            shopCountText.text = $"x {showGold}";
+            return;
+        }
+
         // 单物品：显示 "x count"
         if ((data.type == 0 || data.type == 5
              || (data.purchaseType == -1 && data.productContent != null && data.productContent.Count > 0))
@@ -167,7 +179,7 @@ public class ShopItem : ShopItemBase
         AdsCanUseTable.gameObject.SetActive(show);
     }
 
-    /// <summary>FreeGoods：看广告领取金币</summary>
+    /// <summary>FreeGoods：当日首次免广告直发 / 之后看广告领取</summary>
     private void HandleFreeGoodsClick()
     {
         // ★ 广告获取失败策略 C：在点击入口先做次数闸门。
@@ -181,15 +193,69 @@ public class ShopItem : ShopItemBase
             return;
         }
 
-        if (UIUtilities.isEditMode || !GameDataManager.Instance.UserData.isDayFreeGet)
+        // ★ 当日首次：不播广告，直接发 ShopGoldFreeReward（50）
+        bool isFreeClaim = !GameDataManager.Instance.UserData.isDayFreeGet;
+
+        // 编辑器下不播广告直接结账，但金额仍按「卡面显示的那一档」发，避免测试时对不上
+        if (UIUtilities.isEditMode)
         {
-            UpdateAdsRewardUI(true);
+            if (isFreeClaim) GrantFreeGoodsReward();
+            else UpdateAdsRewardUI(true);
+            return;
         }
-        else
+
+        if (isFreeClaim)
         {
-            AnalyticMgr.VideoAdClick("看广告领取商店金币");
-            StartCoroutine(ShowAdsRewardUI());
+            GrantFreeGoodsReward();
+            return;
         }
+
+        // ★ 之后：看激励视频，发配置表金额（100）
+        AnalyticMgr.VideoAdClick("看广告领取商店金币");
+        StartCoroutine(ShowAdsRewardUI());
+    }
+
+    /// <summary>
+    /// 当日首次「免广告」免费领取商店金币（50）。
+    /// 与看广告领取区分开：不消耗广告次数、不上报视频观看成功。
+    /// </summary>
+    private void GrantFreeGoodsReward()
+    {
+        int reward = ShopManager.ShopGoldFreeReward;
+
+        CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
+        GameDataManager.Instance.UserData.UpdateGold(reward, true, true, "商店免费领取金币");
+
+        GameDataManager.Instance.UserData.isDayFreeGet = true;
+        RefreshFreeGoodsUI();
+
+        LogShopItem($"免费商品直发（当日首次，免广告）: +{reward} 金币");
+    }
+
+    /// <summary>
+    /// 商店金币（FreeGoods）看视频的发放金额：取配置表 shop.csv 的商品内容（当前 100），
+    /// 取不到时回退 ShopManager.ShopGoldVideoReward。
+    /// </summary>
+    private int GetVideoGoldReward()
+    {
+        try
+        {
+            List<string> giftdata = shopDataItem.productContent[0];
+            if (int.TryParse(giftdata[1], out int gold) && gold > 0) return gold;
+        }
+        catch (Exception ex)
+        {
+            LogShopItem($"读取商店金币视频金额失败，回退 {ShopManager.ShopGoldVideoReward}: {ex.Message}");
+        }
+        return ShopManager.ShopGoldVideoReward;
+    }
+
+    /// <summary>领取后刷新本卡：广告角标/动画状态、卡面数量、剩余次数。</summary>
+    private void RefreshFreeGoodsUI()
+    {
+        CheckAdAnimationState();
+        if (shopDataItem != null) HandleProductContentDisplay(shopDataItem);
+        RefreshAdsUseCountUI();
     }
 
     /// <summary>GoldGoods：金币购买</summary>
@@ -268,27 +334,26 @@ public class ShopItem : ShopItemBase
         MessageSystem.Instance.HideLoadingAnimation();
         if (isShow)
         {
-            List<string> giftdata = shopDataItem.productContent[0];
+            int reward = GetVideoGoldReward();
 
             CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
 
-            // ★ 商店金币视频发放统一走 OnShopGoldClaimed（单次 100 金币 + 当日次数累计 + C 阈值兜底，C-STRAT-03）
-         
-            GameDataManager.Instance.UserData.UpdateGold(int.Parse(giftdata[1]), true, true, "看广告领取商店金币");
-
-            if (GameDataManager.Instance.UserData.isDayFreeGet)
-            {
-                if (ShopManager.shopManager != null)
-                    ShopManager.shopManager.OnShopGoldClaimed();
-                // ★ 刷新「剩余可用次数」显示
-                RefreshAdsUseCountUI();
-            }
+            // ★ 商店金币视频发放统一走 OnShopGoldClaimed（单次 100 金币 + 当日次数累计 + C 阈值兜底，C-STRAT-03）。
+            //   注意：这里不能再自己 UpdateGold 一次——原来两处都发，看一次视频实际到手 200。
+            if (ShopManager.shopManager != null)
+                ShopManager.shopManager.OnShopGoldClaimed(reward);
+            else
+                GameDataManager.Instance.UserData.UpdateGold(reward, true, true, "看广告领取商店金币");
 
             GameDataManager.Instance.UserData.isDayFreeGet = true;
             if (btnTagicon != null) btnTagicon.gameObject.SetActive(true);
 
+            RefreshFreeGoodsUI();
+
             AnalyticMgr.VideoAdSuccess("看广告领取商店金币");
             GameDataManager.Instance.UserData.totalSeeAds++;
+
+            LogShopItem($"免费商品看视频领取: +{reward} 金币");
         }
         else
         {

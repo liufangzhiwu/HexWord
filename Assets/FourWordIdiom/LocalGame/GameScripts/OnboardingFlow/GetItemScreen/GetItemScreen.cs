@@ -679,6 +679,34 @@ public class GetItemScreen : UIWindow
         }
     }
 
+    /// <summary>
+    /// 道具支付（金币买提示灯 / 火箭 / 复活道具）的埋点口径：内购 + 对应礼包商品名。
+    ///
+    /// 取商品名的顺序：
+    ///   ① 本界面已缓存的 shopDataItem（推荐位 1 号礼包，RefreshGiftTables 时赋值）—— 零开销；
+    ///   ② 缓存为空（推荐位全售罄等）→ 交给 ShopManager 按推荐位再取一次；
+    ///   ③ 仍取不到 → 回退道具名，保证 reason_index 不落到 XXX。
+    /// </summary>
+    private ResReason.Ctx ResolveToolPayCtx()
+    {
+        // ① 本界面缓存的主礼包
+        if (shopDataItem != null)
+        {
+            string cachedName = !string.IsNullOrEmpty(shopDataItem.name)
+                ? shopDataItem.name
+                : shopDataItem.produceNameId;
+
+            if (!string.IsNullOrEmpty(cachedName))
+                return ResReason.IapItem(cachedName);
+        }
+
+        // ② / ③ 交给 ShopManager（内部含兜底）
+        if (ShopManager.shopManager != null)
+            return ShopManager.shopManager.GetToolPurchaseIapCtx(limitRewordType);
+
+        return ResReason.IapItem(ResReason.IdxUnknown);
+    }
+
     private void ClickClaimGoldBtn()
     {
         ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[102];
@@ -698,16 +726,16 @@ public class GetItemScreen : UIWindow
             return;
         }
 
-        // 关卡内用金币买道具：reason_index 按道具类型细分（需求：金币购买道具灯泡/火箭/复活）
-        string buyItemIndex = limitRewordType == LimitRewordType.Tipstool ? ResReason.IdxBuyBulb
-            : limitRewordType == LimitRewordType.AutoComplete ? ResReason.IdxBuyRocket
-            : limitRewordType == LimitRewordType.ReStartTool ? ResReason.IdxBuyRevive
-            : ResReason.IdxUnknown;
+        // ★ 提示灯 / 火箭 / 复活道具的「道具支付」按【内购商品】口径上报：
+        //   change_reason = 内购，reason_index = 该道具对应的礼包商品名。
+        //   原来这里用的是「关卡内行为 / 金币购买道具灯泡」，产品要求统一改成内购口径。
+        //   优先用本界面已缓存的 shopDataItem（它就是推荐位 1 号礼包），避免再跑一次推荐计算。
+        ResReason.Ctx payCtx = ResolveToolPayCtx();
 
-        GameDataManager.Instance.UserData.UpdateTool(limitRewordType, 1, ResReason.InLevel, string.Empty,
-            buyItemIndex, ResReason.InLevel);
-        GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, true, true, ResReason.InLevel,
-            buyItemIndex, ResReason.InLevel);
+        GameDataManager.Instance.UserData.UpdateTool(limitRewordType, 1, string.Empty, string.Empty,
+            payCtx.Index, payCtx.Category);
+        GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost, true, true, string.Empty,
+            payCtx.Index, payCtx.Category);
 
         if (limitRewordType == LimitRewordType.Tipstool)
         {
