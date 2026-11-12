@@ -52,7 +52,8 @@ public struct AdFailedParams
 ///
 /// 分层依据（需求《用户标记及分层策略规则》）：
 ///   1. 广告追踪权限状态（PushMessageReceiver.OnOAIDClosedSignal 回调写入 UserData.adTrackingEnabled）；
-///   2. 活跃周期天数 N（UserData.activeDayCnt）；
+///   2. 活跃周期天数 N（调试宏 Unity_ShowLog 下用首次登录起算的 lifeDays，
+///      正式包 Unity_Release 下用累加型 UserData.activeDayCnt，详见 GetActiveDayCount）；
 ///   3. 付费状态（UserData.TotalPayTimes > 0）+ 单次付费最大金额 A + 付费累积次数。
 ///
 /// ★ IAA 层（未付费）分 6 层：
@@ -349,7 +350,7 @@ public partial class ShopManager : MonoBehaviour
 
         string basis = userData == null
             ? "UserData=null（走默认层）"
-            : $"adTrackingEnabled={userData.adTrackingEnabled}, activeDayCnt={userData.activeDayCnt}, " +
+            : $"adTrackingEnabled={userData.adTrackingEnabled}, 判定天数={GetActiveDayCount(userData)}, " +
               $"isPaid={userData.TotalPayTimes > 0}, MaxSinglePayAmount={userData.MaxSinglePayAmount:F2}, " +
               $"TotalPayTimes={userData.TotalPayTimes}";
 
@@ -372,11 +373,41 @@ public partial class ShopManager : MonoBehaviour
     // ======================= 获取当前用户分层（含配置刷新） =======================
 
     /// <summary>
+    /// 取「用于分层判定的天数」。两种口径按编译宏切换：
+    ///
+    /// 【Unity_ShowLog / UNITY_EDITOR】调试模式 → 用生命周期天数 lifeDays
+    ///   lifeDays = (今天 - 首次登录日期).Days + 1，按日期差实时计算。
+    ///   好处：改本地系统时间后立刻生效，方便验证各个分层档位。
+    ///
+    /// 【Unity_Release 等正式包】→ 用累加型活跃天数 activeDayCnt
+    ///   只在真正登录（GameStart(true)）时 +1，同一天多次登录不重复计。
+    ///   好处：不受用户改系统时间影响，避免刷分层。
+    /// </summary>
+    private int GetActiveDayCount(UserData userData)
+    {
+        if (userData == null) return 0;
+
+#if Unity_ShowLog || UNITY_EDITOR
+        // 调试：按首次登录日期实时算生命周期天数，改本地时间即可生效
+        if (!string.IsNullOrEmpty(userData.firstLoginTime) &&
+            DateTime.TryParse(userData.firstLoginTime, out var firstLogin))
+        {
+            int lifeDays = (DateTime.Now.Date - firstLogin.Date).Days + 1;
+            return lifeDays > 0 ? lifeDays : 1;
+        }
+        // 首次登录时间缺失时回退累加值
+        return userData.activeDayCnt;
+#else
+        return userData.activeDayCnt;
+#endif
+    }
+
+    /// <summary>
     /// 获取当前用户分层，并同时按分层刷新 _layerConfig。
     ///
     /// 分层依据（需求《用户标记及分层策略规则》）：
     ///   1. 广告追踪权限状态：UserData.adTrackingEnabled；
-    ///   2. 活跃周期天数 N：UserData.activeDayCnt；
+    ///   2. 活跃周期天数 N：调试模式用 lifeDays，正式包用 UserData.activeDayCnt（见 GetActiveDayCount）；
     ///   3. 付费状态：UserData.TotalPayTimes > 0 → IAP 层；
     ///      付费金额 / 次数细分：
     ///        - 单次付费最大金额 A ≥ 25         → IAP14
@@ -395,7 +426,7 @@ public partial class ShopManager : MonoBehaviour
         }
 
         bool hasAdTracking = userData.adTrackingEnabled == "1";   // 若为 string 请改为 == "1"
-        int activeDayCnt = userData.activeDayCnt;
+        int activeDayCnt = GetActiveDayCount(userData);
         bool isPaid = userData.TotalPayTimes > 0;
 
         string layer;

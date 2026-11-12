@@ -664,9 +664,12 @@ public partial class ChessPlayArea
 
         // 动态计算粒子数量（防止分数太大导致粒子过多）
         float initialTime = Mathf.Max(0, _remainingTime);
-        // 动态计算粒子数量：剩余时间越长，粒子越多，最多15个，最少2个
-        // 例：10秒=2个， 60秒(1分钟)=4个， 240秒(4分钟)=15个
-        int particleCount = Mathf.Clamp(Mathf.FloorToInt(initialTime / 15f), 2, 15);
+        // 动态计算粒子数量：剩余时间越长，粒子越多。
+        // ★ 上限从 15 降到 6：每个 huaEffect 实例内部有 2 个主粒子系统 + 1 个 TrailRenderer，
+        //   15 个实例同时飞 = 30 个粒子系统并发，是结算瞬间卡顿的主要来源。
+        //   6 个实例已经足够铺满整条飞行弧线，观感几乎无差别。
+        // 例：10秒=2个， 60秒(1分钟)=4个， 240秒(4分钟)=6个
+        int particleCount = Mathf.Clamp(Mathf.FloorToInt(initialTime / 15f), 2, 6);
         
         // 时间UI 滚动到 00:00 的总时长
         float totalTimeRollDuration = Mathf.Clamp(initialTime / 100f, 1.0f, 1.5f);
@@ -706,27 +709,47 @@ public partial class ChessPlayArea
                     TrailRenderer[] trails = particle.GetComponentsInChildren<TrailRenderer>(true);
                     foreach (var t in trails) t.Clear();
                     ParticleSystem[] pss = particle.GetComponentsInChildren<ParticleSystem>(true);
-                    foreach (var p in pss) p.Clear();
+                    // ★ 先 Stop(StopEmittingAndClear) 再 Play：只 Clear 会留下发射器状态，
+                    //   池对象复用时可能带着上一轮残余的发射计时，导致刚激活就喷一堆。
+                    foreach (var p in pss)
+                    {
+                        p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                        p.Play();
+                    }
                     
                     particle.transform.SetAsLastSibling();
                     particle.SetActive(true);
 
-                    // 🎯 核心：完全复刻原版 FlyToZenScore 的飞行时间和左弯抛物线
+                    // ★ 飞入路径：先朝目标方向斜向上冲，再落到目标点（目标在倒计时左上方）。
+                    //   注意不能用"起点正上方"做控制点：终点在左上，纯垂直上冲会把粒子带出屏幕。
                     float distance = Vector3.Distance(startPos, endPos);
                     float duration = Mathf.Clamp(distance * 0.5f, 0.7f, 1.1f);
-                    
-                    Vector3 midPos = (startPos + endPos) / 2f;
-                    // 在原版 0.3f 的基础上加一点点随机，让多颗粒子散开飞
-                    midPos.x += distance * UnityEngine.Random.Range(0.2f, 0.4f); 
 
-                    Vector3[] path = new Vector3[] { startPos, midPos, endPos };
+                    // 控制点 = 起点朝目标方向推进 55%，再整体抬高（抬高量按距离比例，避免出屏）
+                    Vector3 toTarget = endPos - startPos;
+                    Vector3 liftPos = startPos + toTarget * 0.55f + Vector3.up * (distance * 0.18f);
+                    // 极小横向抖动，让多颗粒子不完全重叠（幅度受控，不会跑偏）
+                    liftPos.x += UnityEngine.Random.Range(-distance * 0.03f, distance * 0.03f);
+
+                    Vector3[] path = new Vector3[] { startPos, liftPos, endPos };
+
+                    // ★ 让特效物体的 up 轴对准飞行方向：
+                    //   光柱系统是 Stretched Billboard，沿粒子速度方向拉伸，
+                    //   而速度方向取的是物体局部 up，所以必须把物体转过来，光柱才会顺着飞行方向。
+                    Vector3 flyDir = (endPos - startPos).normalized;
+                    if (flyDir.sqrMagnitude > 0.0001f)
+                        particle.transform.rotation = Quaternion.FromToRotation(Vector3.up, flyDir);
 
                     particle.transform.DOPath(path, duration, PathType.CatmullRom)
                         .SetTarget(particle.transform)
-                        .SetEase(Ease.InQuad)
+                        .SetEase(Ease.OutQuad)
                         .OnComplete(() =>
                     {
                         // 1. 回收粒子
+                        // ★ 回收前先彻底停掉粒子与拖尾：否则池对象虽然 SetActive(false)，
+                        //   粒子系统仍会保留发射状态，下次复用时第一帧就喷出一大团，
+                        //   倒计时连续发射时越积越多，是结算卡顿的另一半原因。
+                        StopParticleCompletely(particle);
                         _zenCorrectTrailPool.ReturnObjectToPool(particle.GetComponent<PoolObject>());
                         
                         // 2. 🎯 核心：直接调用游戏原生的 UI 结算方法，完美执行老虎机滚动！
@@ -1227,7 +1250,12 @@ public partial class ChessPlayArea
         TrailRenderer[] trails = particle.GetComponentsInChildren<TrailRenderer>(true);
         foreach (var t in trails) t.Clear();
         ParticleSystem[] pss = particle.GetComponentsInChildren<ParticleSystem>(true);
-        foreach (var p in pss) p.Clear();
+        // ★ 先 Stop(StopEmittingAndClear) 再 Play，避免带上一轮残余状态
+        foreach (var p in pss)
+        {
+            p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            p.Play();
+        }
         particle.transform.SetAsLastSibling();
         particle.SetActive(true);
         
@@ -1240,18 +1268,51 @@ public partial class ChessPlayArea
         // 限制最快不低于 0.4 秒，最慢不超过 1.2 秒
         float duration = Mathf.Clamp(distance * 0.5f, 1.4f, 2.2f); 
 
-        Vector3 midPos = (startPos + endPos) / 2f;
-        midPos.x += distance * 0.3f; // 向左侧弯曲弧线
+        // ★ 飞入路径：朝目标方向斜向上冲，再落到目标点（不要用纯垂直，目标在斜上方时会出屏）
+        Vector3 toTarget = endPos - startPos;
+        Vector3 liftPos = startPos + toTarget * 0.55f + Vector3.up * (distance * 0.18f);
+        liftPos.x += UnityEngine.Random.Range(-distance * 0.03f, distance * 0.03f);
 
-        Vector3[] path = new Vector3[] { startPos, midPos, endPos };
+        Vector3[] path = new Vector3[] { startPos, liftPos, endPos };
+
+        // ★ 让特效物体的 up 轴对准飞行方向，光柱（Stretched Billboard）才会顺着飞行方向拉伸
+        Vector3 flyDir = (endPos - startPos).normalized;
+        if (flyDir.sqrMagnitude > 0.0001f)
+            particle.transform.rotation = Quaternion.FromToRotation(Vector3.up, flyDir);
 
         // 飞行 0.6 秒
-        particle.transform.DOPath(path, duration, PathType.CatmullRom).SetEase(Ease.InQuad).OnComplete(() => 
+        particle.transform.DOPath(path, duration, PathType.CatmullRom).SetEase(Ease.OutQuad).OnComplete(() => 
         {
+            // ★ 回收前彻底停掉粒子与拖尾，避免池对象残留发射
+            StopParticleCompletely(particle);
             pool.ReturnObjectToPool(particle.GetComponent<PoolObject>());
             // 🌟 命中！执行禅意分的UI跳动和飘字特效
             UpdateZenScoreUI(targetScore, scoreDiff, isDeduction);
         });
+    }
+
+    /// <summary>
+    /// 彻底停止一个特效实例上的所有粒子与拖尾。
+    /// 用于对象回收前：池对象只 SetActive(false) 的话，粒子系统会保留发射状态，
+    /// 下次复用时第一帧就喷出一大团，连续发射时会不断累积。
+    /// </summary>
+    private static void StopParticleCompletely(GameObject effect)
+    {
+        if (effect == null) return;
+
+        var pss = effect.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < pss.Length; i++)
+        {
+            var ps = pss[i];
+            if (ps == null) continue;
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+
+        var trails = effect.GetComponentsInChildren<TrailRenderer>(true);
+        for (int i = 0; i < trails.Length; i++)
+        {
+            if (trails[i] != null) trails[i].Clear();
+        }
     }
 
     
