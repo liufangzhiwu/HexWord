@@ -80,6 +80,65 @@ public class ShopGiftItem : ShopItemBase
     /// <summary>本次已生成的 GiftItem 列表（用于回收，避免对象池复用时旧子物体残留）</summary>
     private readonly List<GiftItem> _spawnedGiftItems = new List<GiftItem>();
 
+    // ======================= ★ 关店时立即隐藏：粒子 + 数量文本 =======================
+
+    /// <summary>礼包卡上的粒子（Particle System (2) / FX_LightSpin 实例），首次用到时缓存。</summary>
+    private ParticleSystem[] _giftParticles;
+
+    /// <summary>粒子缓存是否已初始化（含"确实没有粒子"的情况，避免重复查找）。</summary>
+    private bool _giftParticlesCached;
+
+    /// <summary>
+    /// 关店时立即隐藏礼包卡上的「粒子 + 数量文本」。
+    /// 只做隐藏，不改任何层级。
+    /// </summary>
+    public void HideDecorationImmediately()
+    {
+        if (!_giftParticlesCached)
+        {
+            _giftParticlesCached = true;
+            // includeInactive: true —— 卡片可能刚 SetActive、子节点尚未完全激活，
+            // 用 false 会缓存成空数组
+            _giftParticles = GetComponentsInChildren<ParticleSystem>(true);
+        }
+
+        if (_giftParticles != null)
+        {
+            for (int i = 0; i < _giftParticles.Length; i++)
+            {
+                var ps = _giftParticles[i];
+                if (ps == null) continue;
+
+                // StopEmittingAndClear：清掉已在飞的粒子，不留残影
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                ps.gameObject.SetActive(false);
+            }
+        }
+
+        if (shopCountText != null) shopCountText.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 下次进店时恢复「粒子 + 数量文本」。
+    /// 数量文本交给 HandleProductContentDisplay，按商品数据重新决定显示/隐藏和内容。
+    /// </summary>
+    public void RestoreDecoration()
+    {
+        if (_giftParticles != null)
+        {
+            for (int i = 0; i < _giftParticles.Length; i++)
+            {
+                var ps = _giftParticles[i];
+                if (ps == null) continue;
+
+                if (!ps.gameObject.activeSelf) ps.gameObject.SetActive(true);
+                ps.Play();
+            }
+        }
+
+        if (shopDataItem != null) HandleProductContentDisplay(shopDataItem);
+    }
+
     // ======================= ★ 礼包子项对象池 =======================
 
     /// <summary>
@@ -264,6 +323,16 @@ public class ShopGiftItem : ShopItemBase
     }
 
     // ======================= 显示：礼包名 + 底图 + （type=2）金币数量 =======================
+
+    /// <summary>
+    /// 卡片刷新（进店 / 购买后）时恢复关店隐藏的粒子与数量文本。
+    /// 基类 UpdateUI 不会重跑 HandleProductContentDisplay，所以这里显式恢复一次。
+    /// </summary>
+    public override void UpdateUI()
+    {
+        base.UpdateUI();
+        RestoreDecoration();
+    }
 
     protected override void HandleProductContentDisplay(ShopDataItem data)
     {

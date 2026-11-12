@@ -800,6 +800,8 @@ public class ShopScreen : UIWindow
         {
             if (siblingIndex >= 0) SetSiblingIndexIfNeeded(shopItem.transform, siblingIndex);
             shopItem.gameObject.SetActive(true);
+            // 复用缓存卡片不走 UpdateUI，这里补一次恢复（关店时隐藏的粒子/数量文本）
+            if (shopItem is ShopGiftItem cachedGift) cachedGift.RestoreDecoration();
             return false;
         }
 
@@ -902,6 +904,8 @@ public class ShopScreen : UIWindow
     private void OnCloseBtn()
     {
         EventDispatcher.instance.TriggerChangeGoldUI(0, false);
+        // 关店：礼包卡上的粒子和数量文本立即隐藏
+        HideGiftDecorationImmediately();
 
         base.Close();
 
@@ -950,5 +954,20 @@ public class ShopScreen : UIWindow
         }
 
         ClearDynamicItems();
+    }
+
+    /// <summary>
+    /// 关店时立即隐藏所有礼包卡上的「粒子 + 数量文本」。
+    /// 只隐藏，不改层级。
+    /// </summary>
+    private void HideGiftDecorationImmediately()
+    {
+        if (shopallItems == null) return;
+
+        foreach (var kv in shopallItems)
+        {
+            if (kv.Value is ShopGiftItem gift)
+                gift.HideDecorationImmediately();
+        }
     }
 }
