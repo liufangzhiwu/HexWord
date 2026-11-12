@@ -601,7 +601,7 @@ public partial class ChessStageController
         if (ShopManager.shopManager != null)
         {
             ShopManager.shopManager.PrepareSettlementGift(
-                AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCountThisSession : 0);
+                AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCount : 0);
         }
 
         SystemManager.Instance.ShowPanel(PanelType.ChessFinishView);

@@ -124,6 +124,13 @@ public class UserData
 
     public long LastInterstitialTimeTicks; // 上次看插屏的时间 (G5)
 
+    /// <summary>
+    /// 已成功播放的插屏广告累计次数（跨启动累加，重启不清零）。
+    /// 破冰礼包条件之一：插屏 &gt; 3（需求 C-STRAT-08）；也作为结算礼包调度的次数入参。
+    /// 由 AdRuleManager.AddOneInterAdsCount 累加、AdRuleManager.SetInterAdsCount（GM）直接赋值。
+    /// </summary>
+    public int interAdsTotalCount;
+
     public int HighestZenScore = 0; // 历史最高禅意分
     public Dictionary<int, float> BestClearTimes = new Dictionary<int, float>(); // 极速通关记录字典
 
@@ -525,6 +532,7 @@ public class UserData
         LastPayTimeTicks = 0;
         LastRewardAdTimeTicks = 0;
         LastInterstitialTimeTicks = 0;
+        interAdsTotalCount = 0;
         isDayFirstLevelAdChecked = false;
         isDayFirstLevelAdAllowed = false;
 
@@ -775,6 +783,8 @@ public class UserData
         LastPayTimeTicks = user.LastPayTimeTicks;
         LastRewardAdTimeTicks = user.LastRewardAdTimeTicks;
         LastInterstitialTimeTicks = user.LastInterstitialTimeTicks;
+        // ★ 插屏累计次数：旧存档没有该字段时默认 0（Json 反序列化即 0），负值兜底成 0
+        interAdsTotalCount = user.interAdsTotalCount > 0 ? user.interAdsTotalCount : 0;
         isDayFirstLevelAdChecked = user.isDayFirstLevelAdChecked;
         isDayFirstLevelAdAllowed = user.isDayFirstLevelAdAllowed;
 

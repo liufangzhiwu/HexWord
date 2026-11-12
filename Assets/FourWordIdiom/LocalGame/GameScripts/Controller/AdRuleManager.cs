@@ -48,22 +48,73 @@ public class AdRuleManager : MonoBehaviour
     /// <summary>所有分层配置：UserLayer → 配置行</summary>
     private Dictionary<string, AdGeneralConfigRow> _adConfigRows = new Dictionary<string, AdGeneralConfigRow>();
 
-    /// <summary>本次启动已成功播放的插屏次数（破冰礼包条件之一：> 3，需求 C-STRAT-08）</summary>
-    public int InterAdsCountThisSession { get; private set; }
+    /// <summary>
+    /// 已成功播放的插屏次数（累计值）。
+    /// ★ 持久化在 UserData.interAdsTotalCount 里，跟随存档落盘，重启游戏不清零。
+    /// 破冰礼包条件之一（&gt; 3，需求 C-STRAT-08）、结算礼包调度的次数入参都用它。
+    /// </summary>
+    public int InterAdsCount
+    {
+        get
+        {
+            UserData userData = GetUserData();
+            return userData != null ? userData.interAdsTotalCount : _interAdsCountFallback;
+        }
+    }
 
     /// <summary>
-    /// GM/调试：自定义「本次启动插屏展示次数」。
-    /// 依赖该计数的逻辑（如破冰礼包要求本 session 插屏 > 3、结算礼包调度的入参）会立即按新值生效；
-    /// 只改内存计数，不写存档，重启后从 0 重新累计。
+    /// UserData 还没就绪时（极早期调用）的兜底计数，等存档可用后以存档为准。
+    /// </summary>
+    private int _interAdsCountFallback;
+
+    private static UserData GetUserData()
+    {
+        return GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+    }
+
+    /// <summary>
+    /// 插屏播放成功：累计次数 +1 并立即落盘（避免进程被杀导致计数丢失）。
+    /// </summary>
+    private void AddOneInterAdsCount()
+    {
+        UserData userData = GetUserData();
+        if (userData != null)
+        {
+            userData.interAdsTotalCount = Mathf.Max(0, userData.interAdsTotalCount) + 1;
+            GameDataManager.Instance.CommitGameData();
+            Debug.Log($"[AdRule] 插屏播放成功，累计={userData.interAdsTotalCount}");
+            return;
+        }
+
+        _interAdsCountFallback++;
+        Debug.Log($"[AdRule] 插屏播放成功，累计={_interAdsCountFallback}（存档未就绪，仅内存）");
+    }
+
+    /// <summary>
+    /// GM/调试：自定义「插屏展示次数」。
+    /// 依赖该计数的逻辑（如破冰礼包要求插屏 &gt; 3、结算礼包调度的入参）会立即按新值生效；
+    /// 该值已写入存档，重启游戏后依然生效（可用同入口改回 0 重置）。
     /// </summary>
     /// <param name="count">目标次数（小于 0 按 0 处理）</param>
     /// <returns>设置后的实际次数</returns>
-    public int SetInterAdsCountThisSession(int count)
+    public int SetInterAdsCount(int count)
     {
-        int old = InterAdsCountThisSession;
-        InterAdsCountThisSession = Mathf.Max(0, count);
-        Debug.Log($"[AdRule] [GM] 自定义插屏展示次数：{old} → {InterAdsCountThisSession}");
-        return InterAdsCountThisSession;
+        int old = InterAdsCount;
+        int value = Mathf.Max(0, count);
+
+        UserData userData = GetUserData();
+        if (userData != null)
+        {
+            userData.interAdsTotalCount = value;
+            GameDataManager.Instance.CommitGameData(); // 立即落盘，重启后保持
+        }
+        else
+        {
+            _interAdsCountFallback = value;
+        }
+
+        Debug.Log($"[AdRule] [GM] 自定义插屏展示次数：{old} → {value}（已写入存档）");
+        return value;
     }
 
     /// <summary>默认分层 Key（adv 表中"标准"行对应的 UserLayer 值）</summary>
@@ -408,9 +459,8 @@ public class AdRuleManager : MonoBehaviour
             {
                 ReportAdShown(Define.AdType.Interstitial);
 
-                // ★ 本次启动插屏播放次数（破冰礼包要求 > 3，C-STRAT-08）
-                InterAdsCountThisSession++;
-                Debug.Log($"[AdRule] 插屏播放成功，本次累计={InterAdsCountThisSession}");
+                // ★ 插屏播放次数（破冰礼包要求 > 3，C-STRAT-08）：持久化累加
+                AddOneInterAdsCount();
             }
 
             onComplete?.Invoke(success);

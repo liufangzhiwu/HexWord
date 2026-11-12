@@ -1068,7 +1068,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, -1, string.Empty,
             string.Empty, payCtx.Index, payCtx.Category);
-        LogFailGame($"消耗复活道具 x1 复活 60 秒，剩余 {GetReviveToolCount()}");
+        LogFailGame($"消耗复活道具 x1 复活（不限时），剩余 {GetReviveToolCount()}");
 
         RefreshGoldReviveButton();
         return true;
@@ -1171,7 +1171,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
     private void OnGoldReviveClicked()
     {
-        // ★ 持有复活道具 → 直接消耗 1 个道具复活 60 秒，不再走金币购买逻辑
+        // ★ 持有复活道具 → 直接消耗 1 个道具复活（不限时），不再走金币购买逻辑
         if (TryConsumeReviveTool())
         {
             // ★ 消耗复活道具复活同样适用「免费赠送蝴蝶道具」规则
@@ -1248,6 +1248,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
     /// <summary>
     /// 执行复活并关闭失败弹窗。
+    /// ★ 复活后为「不限时」：不再倒计时、界面不显示倒计时，也不会再因时间耗尽失败；
+    ///   退出关卡仍按原逻辑（扣体力 + 清档），不限时只在当前这一局有效。
     /// </summary>
     /// <param name="autoUseGrantedButterfly">
     /// 本次复活是否刚赠送了蝴蝶。为 true 时交给 ChessPlayArea.ReviveGame 判断
@@ -1258,7 +1260,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         SystemManager.Instance.HidePanel(PanelType.FailGameScreen);
         ChessStageController.Instance.CurrStageData.IsPausedOrFailed = false;
         GameDataManager.Instance.CommitGameData();
-        ChessPlayArea.Instance.ReviveGame(60f, autoUseGrantedButterfly);
+        ChessPlayArea.Instance.ReviveGame(60f, autoUseGrantedButterfly); // 60f 只作为内部兜底秒数，界面已改为不限时
         
         EventDispatcher.instance.TriggerUpdateLayerCoin(false, false,false,true);
     }

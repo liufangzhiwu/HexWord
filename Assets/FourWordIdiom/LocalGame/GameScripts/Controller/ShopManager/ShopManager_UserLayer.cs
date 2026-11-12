@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -982,7 +982,7 @@ public partial class ShopManager : MonoBehaviour
         }
     }
 
-    public bool TryShowBreakIcePopup(int interAdsCountThisSession)
+    public bool TryShowBreakIcePopup(int interAdsCount)
     {
         string[] bi = _layerConfig.brokenIce.Split('_');
         if (bi.Length < 1 || bi[0] != "1")
@@ -995,9 +995,9 @@ public partial class ShopManager : MonoBehaviour
             LogShop("TryShowBreakIcePopup 跳过: 非 IAA 层");
             return false;
         }
-        if (interAdsCountThisSession <= 3)
+        if (interAdsCount <= 3)
         {
-            LogShop($"TryShowBreakIcePopup 跳过: 本次插屏={interAdsCountThisSession} <= 3");
+            LogShop($"TryShowBreakIcePopup 跳过: 累计插屏={interAdsCount} <= 3");
             return false;
         }
 
@@ -1453,19 +1453,19 @@ public partial class ShopManager : MonoBehaviour
     /// 结算页统一入口：按 破冰 → 复购 顺序尝试弹出礼包弹窗（需求 C-STRAT-12）。
     /// 两者互斥，任一弹出即返回 true；调用方无需关心内部策略。
     /// </summary>
-    /// <param name="interAdsCountThisSession">本次启动已播放插屏次数（破冰要求 > 3）</param>
-    public bool TryShowSettlementGiftPopup(int interAdsCountThisSession)
+    /// <param name="interAdsCount">已成功播放的插屏累计次数（存档持久化，破冰要求 > 3）</param>
+    public bool TryShowSettlementGiftPopup(int interAdsCount)
     {
         if (ShopManager.shopManager == null) return false;
 
         // 每次结算重新决定：先清掉上一次结算遗留的礼包登记（结算页按钮据此显示）
         ClearSettlementGift("新的结算开始");
 
-        LogShop($"[结算礼包] 开始调度: 本次插屏={interAdsCountThisSession}, 分层={GetCurrentUserLayer()}, " +
+        LogShop($"[结算礼包] 开始调度: 累计插屏={interAdsCount}, 分层={GetCurrentUserLayer()}, " +
                 $"金币={GetPlayerGold()}, 周末/节假日={IsHolidayOrWeekend()}, " +
                 $"上次复购倒计时结束={GetRepurchaseLastPopupEndTime():yyyy-MM-dd HH:mm}");
 
-        if (TryShowBreakIcePopup(interAdsCountThisSession))
+        if (TryShowBreakIcePopup(interAdsCount))
             return true;
 
         // 礼包A 由 TryShowRepurchasePopup 内部从本地记录取（跨进程保留），这里不用再传
@@ -1477,14 +1477,14 @@ public partial class ShopManager : MonoBehaviour
     /// 之后再调 PlayPreparedSettlementGiftPopup() 才真正弹 AdsDiscountScreen。
     /// 用于拼字结算页：以前是结算页出来 1.2s 后才判定，按钮「啪」地晚一步冒出来，很突兀。
     /// </summary>
-    public bool PrepareSettlementGift(int interAdsCountThisSession)
+    public bool PrepareSettlementGift(int interAdsCount)
     {
         if (ShopManager.shopManager == null) return false;
 
         _suspendGiftPopup = true;
         try
         {
-            TryShowSettlementGiftPopup(interAdsCountThisSession);
+            TryShowSettlementGiftPopup(interAdsCount);
         }
         finally
         {

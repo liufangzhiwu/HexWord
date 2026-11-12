@@ -49,6 +49,18 @@ public partial class ChessPlayArea
     private Coroutine _emojiTipCoroutine;
     private int _lastDisplayedSeconds = -1;
     private Image _pupaIcon;
+
+    /// <summary>
+    /// 是否处于「不限时」状态（复活后开启）：
+    /// 开启后时间不再流逝、不弹 1 分钟/10 秒提醒、也不会再因时间耗尽失败；
+    /// 只在当前这一局内有效，退出关卡 / 重新进关 / 重开游戏都回到原来的倒计时逻辑。
+    /// </summary>
+    private bool _isUnlimitedTime;
+    /// <summary>外部（暂停界面等）查询当前是否处于不限时状态</summary>
+    public bool IsUnlimitedTime => _isUnlimitedTime;
+    /// <summary>不限时状态下的展示文案（复活弹窗、暂停界面共用）</summary>
+    public const string UnlimitedTimeText = "不限时";
+
     private void Update()
     {
         // 防抖：限制单帧最大时间流逝为 0.5 秒，防止切后台回来瞬间蒸发大量时间
@@ -65,6 +77,29 @@ public partial class ChessPlayArea
             }
             return; // 结束执行，倒计时绝对不走！
         }
+
+        // ==========================================
+        // 🌟 1.5 不限时（复活后）：不倒数、不提醒、不超时，
+        //      但连击判定、破冰等其它局内逻辑照常跑
+        // ==========================================
+        if (_isUnlimitedTime)
+        {
+            // 通关 / 结算阶段计时器会被置为停止，此时局内逻辑（连击、破冰）也一起停
+            if (!_isTimerRunning) return;
+
+            // 时间不流逝，但活跃时长 / 卡关时长这些上报与统计照常累加
+            CurrStageData.TotalActiveSeconds += dt;
+            _currentWordActiveSeconds += dt;
+            if (_isStuckTimerRunning && !_hasTriggeredHintReminderThisLevel)
+            {
+                _stuckTimer += dt;
+            }
+
+            UpdateComboState();
+            UpdateIceBreakTimer(dt);
+            return;
+        }
+
         // 2. 常规的开关检查 只有在计时器运行，且时间大于0时才倒计时
         if (!_isTimerRunning || _remainingTime <= 0) return;
         
@@ -109,6 +144,15 @@ public partial class ChessPlayArea
         UpdateTimerUI();
         
         // 5. 连击进度条检查
+        UpdateComboState();
+        UpdateIceBreakTimer(dt);
+    }
+
+    /// <summary>
+    /// 连击进度条检查（倒计时正常 / 不限时两种状态都要跑，所以抽出来）
+    /// </summary>
+    private void UpdateComboState()
+    {
         if (ChessStageController.Instance.PuzzleComboCount > 0)
         {
             ChessStageController.Instance.CheckAndResetComboOnIdle();
@@ -127,7 +171,6 @@ public partial class ChessPlayArea
             }
             if (chessboardGrid != null) chessboardGrid.hasPlayedComboSoundThisChain = false;
         }
-        UpdateIceBreakTimer(dt);
     }
       
     #region 计时与生命周期更新
@@ -177,6 +220,8 @@ public partial class ChessPlayArea
     private void UpdateTimerUI()
     {
         if (_timerText == null) return;
+        // 不限时状态下界面不显示倒计时，不需要刷新文本
+        if (_isUnlimitedTime) return;
         
         float safeTime = Mathf.Max(0, _remainingTime);
         int totalSeconds = Mathf.CeilToInt(safeTime);
@@ -573,16 +618,22 @@ public partial class ChessPlayArea
     #endregion
     
     /// <summary>
-    /// 复活接口：看完广告后调用此方法重新开始
+    /// 复活接口：看完广告后调用此方法重新开始。
+    /// ★ 复活后进入「不限时」状态：不再倒计时、界面不显示倒计时，也不会再因时间耗尽失败。
     /// </summary>
-    /// <param name="addSeconds">复活额外给的秒数，默认给 60 秒</param>
+    /// <param name="fallbackSeconds">
+    /// 内部保留的兜底秒数（默认 60 秒）。仅用于存档 / 防逃逸判定 / 暂停存档，
+    /// 界面上不显示也不会流逝 —— 复活后不会再触发时间到。
+    /// </param>
     /// <param name="autoUseGrantedButterfly">
     /// 本次复活是否赠送了蝴蝶（FailGameScreen.GrantFreeButterToolIfNeeded 的结果）。
     /// 为 true 且场上空位 &gt; 5 时，立刻把这只蝴蝶飞出去提示（bug47）。
     /// </param>
-    public void ReviveGame(float addSeconds = 60f, bool autoUseGrantedButterfly = false)
+    public void ReviveGame(float fallbackSeconds = 60f, bool autoUseGrantedButterfly = false)
     {
-        _remainingTime += addSeconds;
+        // ★ 不限时：内部仍留一份有限的剩余时间，保证存档 / 暂停 / 防逃逸判定还走原来的逻辑
+        //   （退出关卡依旧扣体力 + 清档；暂停时存档也不会被写成 0 而误判成"失败界面强退"）
+        _remainingTime += fallbackSeconds;
         CurrStageData.RemainingTime = _remainingTime;
         _isWarningTriggered = false;
         _isDangerTriggered = false;
@@ -597,13 +648,48 @@ public partial class ChessPlayArea
         ResetTimeWarning();
         ResetTimeUpRedScreen();   // 复活时清掉时间到的红屏
         DestroyTimeUpBanner();    // 复活时收掉可能还在显示的「时间到！」横幅
-        UpdateTimerUI();
-        _isTimerRunning = true; // 重新跑秒
+
+        // ★ 进入不限时：关掉倒计时显示，后续 Update 不再扣时间
+        SetUnlimitedTime(true);
+
+        _isTimerRunning = true; // 计时标记保持"运行中"，其它依赖该状态的逻辑（连击/破冰）不受影响
         EventDispatcher.instance.TriggerChangeTopRaycast(true); // 解除屏幕屏蔽
 
         // ★ bug47：复活后如果背包里有蝴蝶、且场上空位 > 5，立刻飞出去提示一次
         //   （复活赠送的蝴蝶就是在这条链路上发的；这里不区分复活方式，避免漏掉广告/免费复活）
         TryAutoUseButterflyAfterRevive(autoUseGrantedButterfly);
+    }
+
+    /// <summary>
+    /// 切换「不限时」状态：开启时不显示倒计时组件（底板 + 时间文字），关闭时恢复显示。
+    /// 重新进关 / 重新开局时由 SetupGameData 调回 false，所以不限时只在复活的这一局内有效。
+    /// </summary>
+    private void SetUnlimitedTime(bool unlimited)
+    {
+        _isUnlimitedTime = unlimited;
+        SetTimerUIVisible(!unlimited);
+
+        if (unlimited)
+        {
+            // 不限时就不该再出现「时间到」的红屏/横幅残留
+            ResetTimeUpRedScreen();
+            DestroyTimeUpBanner();
+        }
+    }
+
+    /// <summary>整体显隐倒计时组件（timerBg：时间底板 + 倒计时文字）</summary>
+    private void SetTimerUIVisible(bool visible)
+    {
+        Transform timerRoot = _timerText != null ? _timerText.transform.parent : null;
+        if (timerRoot != null)
+        {
+            if (timerRoot.gameObject.activeSelf != visible)
+                timerRoot.gameObject.SetActive(visible);
+            return;
+        }
+
+        if (_timerText != null && _timerText.gameObject.activeSelf != visible)
+            _timerText.gameObject.SetActive(visible);
     }
     
     /// <summary>

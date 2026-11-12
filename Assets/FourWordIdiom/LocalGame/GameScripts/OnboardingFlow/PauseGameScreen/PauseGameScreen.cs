@@ -93,13 +93,21 @@ public class PauseGameScreen : UIWindow
         continuePanel.SetActive(false);
         AnalyticMgr.VideoAdShow("跳关广告");
         
-        float rawTime = ChessStageController.Instance.CurrStageData.RemainingTime;
-        float safeTime = Mathf.Max(0, rawTime);
-        int totalSeconds = Mathf.CeilToInt(safeTime);
-        int minutes = totalSeconds / 60;
-        int seconds = totalSeconds % 60;
-        gameTimeText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
-        gameTimeText.gameObject.SetActive(true);
+        // ★ 复活后是「不限时」状态：暂停界面不显示倒计时，时间位置直接隐藏（不显示文案）
+        if (ChessPlayArea.Instance != null && ChessPlayArea.Instance.IsUnlimitedTime)
+        {
+            gameTimeText.gameObject.SetActive(false);
+        }
+        else
+        {
+            float rawTime = ChessStageController.Instance.CurrStageData.RemainingTime;
+            float safeTime = Mathf.Max(0, rawTime);
+            int totalSeconds = Mathf.CeilToInt(safeTime);
+            int minutes = totalSeconds / 60;
+            int seconds = totalSeconds % 60;
+            gameTimeText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+            gameTimeText.gameObject.SetActive(true);
+        }
         
         RefreshPupaIconVisibility();
         

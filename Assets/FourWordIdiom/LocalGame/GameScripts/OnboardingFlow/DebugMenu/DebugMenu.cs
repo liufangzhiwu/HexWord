@@ -215,9 +215,9 @@ public class DebugMenu : UIWindow
     
     /// <summary>
     /// 自定义插屏展示次数（SetInsertAdsBtn）。
-    /// 生效对象是 AdRuleManager.InterAdsCountThisSession（本次启动已成功播放的插屏次数）：
-    /// 依赖它的逻辑会立刻按新值走 —— 破冰礼包「本 session 插屏 &gt; 3」、结算礼包调度的次数入参等。
-    /// 只改内存计数，不写存档，重启后从 0 重新累计。
+    /// 生效对象是 AdRuleManager.InterAdsCount（已成功播放的插屏累计次数，持久化在存档里）：
+    /// 依赖它的逻辑会立刻按新值走 —— 破冰礼包「插屏 &gt; 3」、结算礼包调度的次数入参等。
+    /// 该值会写入存档，重启游戏后依然生效；改回 0 即可重置。
     /// </summary>
     private void OnSetInsertAdsClick()
     {
@@ -234,13 +234,13 @@ public class DebugMenu : UIWindow
             return;
         }
 
-        int current = AdRuleManager.Instance.SetInterAdsCountThisSession(value);
+        int current = AdRuleManager.Instance.SetInterAdsCount(value);
         numText.text = current.ToString();
-        MessageSystem.Instance.ShowTip($"插屏展示次数已设为 {current}");
+        MessageSystem.Instance.ShowTip($"插屏展示次数已设为 {current}（已存档）");
     }
 
     /// <summary>
-    /// 「设置插屏次数」输入框初始化：默认填当前本次启动已累计的插屏次数。
+    /// 「设置插屏次数」输入框初始化：默认填当前已累计的插屏次数（存档值）。
     /// </summary>
     private void InitInsertAdsBtnData()
     {
@@ -249,7 +249,7 @@ public class DebugMenu : UIWindow
         InputField numText = SetInsertAdsBtn.GetComponentInChildren<InputField>();
         if (numText == null) return;
 
-        int current = AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCountThisSession : 0;
+        int current = AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCount : 0;
         numText.text = current.ToString();
     }
 

@@ -353,7 +353,7 @@ public class StageHexController
         yield return new WaitForSeconds(1.2f);
         if (ShopManager.shopManager != null)
             ShopManager.shopManager.TryShowSettlementGiftPopup(
-                AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCountThisSession : 0);
+                AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCount : 0);
     }
     
     /// <summary>

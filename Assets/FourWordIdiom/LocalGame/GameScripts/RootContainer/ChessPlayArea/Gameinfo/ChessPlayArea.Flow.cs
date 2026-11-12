@@ -162,6 +162,8 @@ public partial class ChessPlayArea
         wordUserSeconds = 0;
         ResetTimeWarning();
         _remainingTime = CurrStageData.RemainingTime;
+        // ★ 新一局（含退出重进 / 换关 / 重开游戏）回到正常倒计时：不限时只在复活的这一局内有效
+        SetUnlimitedTime(false);
         _isTimerRunning = false;
         UpdateTimerUI();
         
