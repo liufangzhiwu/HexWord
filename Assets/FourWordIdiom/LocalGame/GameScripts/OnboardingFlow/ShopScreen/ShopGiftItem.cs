@@ -15,6 +15,7 @@ using UnityEngine.UI;
 ///  - SetShopIcon：图标 = showIcon + "_Icon"；
 ///  - HandleSpecialTypeItems：空实现，阻止基类把 type=1 按"单物品道具"展示；
 ///  - HandleProductContentDisplay：礼包名 + 礼包底图 + （type=2）金币数量；
+///      ★ 礼包底图（dibg）：特惠礼包B 且【已购买永久去广告】→ shopGiftTeB2，其它情况 → showIcon；
 ///  - HandleMultiProductContent / InitGiftItems：创建多个 GiftItem
 ///      ★ 实际需要创建的数量 > 4 时用 giftHengItemPrefab（横向布局，父节点 giftsHengParent），否则用 giftItemPrefab（父节点 giftsParent）；
 ///      ★ 广告 / 体力类资源（RemoveAds / RemoveDayAds / InfiniteEnergy）优先挂到 itemEnergyList（若配置）；
@@ -26,6 +27,9 @@ using UnityEngine.UI;
 ///      ★ itemEnergyList 的排版微调（对象池复用，每次刷新都重算）：
 ///         - GridLayoutGroup.padding.left：特惠礼包B → -70，其它礼包 → 0；
 ///         - 只有 1 个 GiftItem 时：图标 anchoredPosition.y = 40、宽 = 186.3、高 = 230；
+///      ★ itemHengList（ItemHengList）的排版微调（对象池复用，每次刷新都重算）：
+///         - 特惠礼包B 且【未购买永久去广告】→ GridLayoutGroup.padding.left = -60、spacing.x = 30；
+///         - 其它情况（其它礼包 / 已购买永久去广告）→ 复位为 Prefab 默认值（left = -5、spacing.x = 10）；
 ///      ★ InitGiftItems 开头清理 giftsParent / giftsHengParent / itemEnergyList 下的旧 GiftItem 子物体（对象池复用必须清理）；
 ///      ★ type=2 跳过金币；type=1 金币也走 GiftItem；
 ///  - IsContentSkippedOnPurchase：已拥有永久去广告 → 购买时跳过 RemoveAds / RemoveDayAds 的发放；
@@ -45,12 +49,13 @@ using UnityEngine.UI;
 ///   Box3             hsla(225, 95%, 30%, 1)
 ///   Box4             hsla(9, 100%, 35%, 1)
 ///
-/// 注意：itemEnergyList / giftsParent / giftsHengParent / giftItemPrefab / giftHengItemPrefab 由本类自己声明（基类已移除）。
+/// 注意：itemEnergyList / itemHengList / giftsParent / giftsHengParent / giftItemPrefab / giftHengItemPrefab 由本类自己声明（基类已移除）。
 /// </summary>
 public class ShopGiftItem : ShopItemBase
 {
     [Header("礼包专用")]
     [SerializeField] protected Transform itemEnergyList;          // 广告 and 体力资源的父节点（RemoveAds / RemoveDayAds / InfiniteEnergy 等）
+    [SerializeField] protected Transform itemHengList;           // 横向礼包子项的父节点（Prefab 中的 ItemHengList），排版按礼包单独微调
     [SerializeField] protected Transform giftsParent;            // 礼包内容父节点（普通 GiftItem，实际数量 <= 4）
     [SerializeField] protected Transform giftsHengParent;        // 礼包内容父节点（横向 GiftHengItem，实际数量 > 4）
     [SerializeField] protected GiftItem giftItemPrefab;          // 礼包内容项 Prefab（实际数量 <= 4 时用；itemEnergyList 内只有 1 项或只有体力时也用它）
@@ -76,6 +81,25 @@ public class ShopGiftItem : ShopItemBase
     private const float SingleEnergyItemIconWidth = 186.3f;
     /// <summary>itemEnergyList 下只有 1 个子对象时：GiftItem 图标的高度（sizeDelta.y）</summary>
     private const float SingleEnergyItemIconHeight = 230f;
+
+    // ======================= ★ itemHengList 细节微调（按礼包 + 去广告状态区分） =======================
+
+    /// <summary>特惠礼包B（且未购买永久去广告）：itemHengList 上 GridLayoutGroup 的 padding.left</summary>
+    private const int SpecialPackageBHengPaddingLeft = -60;
+    /// <summary>特惠礼包B（且未购买永久去广告）：itemHengList 上 GridLayoutGroup 的 spacing.x</summary>
+    private const float SpecialPackageBHengSpacingX = 30f;
+    /// <summary>其它情况：itemHengList 上 GridLayoutGroup 的 padding.left（复位值，与 Prefab 默认一致）</summary>
+    private const int CommonHengPaddingLeft = -5;
+    /// <summary>其它情况：itemHengList 上 GridLayoutGroup 的 spacing.x（复位值，与 Prefab 默认一致）</summary>
+    private const float CommonHengSpacingX = 10f;
+
+    // ======================= ★ 礼包底图（按礼包 + 去广告状态区分） =======================
+
+    /// <summary>
+    /// 特惠礼包B 且【已购买永久去广告】时使用的礼包底图名（UI_Universal 图集里的精灵名）。
+    /// 未购买永久去广告时仍用 shop.csv 里配置的 showIcon（shopGiftTeB）。
+    /// </summary>
+    private const string SpecialPackageBOwnedAdsBackground = "shopGiftTeB2";
 
     /// <summary>本次已生成的 GiftItem 列表（用于回收，避免对象池复用时旧子物体残留）</summary>
     private readonly List<GiftItem> _spawnedGiftItems = new List<GiftItem>();
@@ -311,8 +335,7 @@ public class ShopGiftItem : ShopItemBase
     {
         if (!IsRemoveAdsRelatedType(giftType)) return false;
 
-        bool ownsPermanentRemoveAds =
-            ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+        bool ownsPermanentRemoveAds = IsPermanentRemoveAdsOwned();
 
         if (ownsPermanentRemoveAds)
         {
@@ -344,7 +367,12 @@ public class ShopGiftItem : ShopItemBase
 
         if (dibg != null)
         {
-            Sprite sprite = LoadShopIcon(data.showIcon);
+            // ★ 特惠礼包B 且【已购买永久去广告】→ 底图换为 shopGiftTeB2（去掉去广告项后的专属底图）；
+            //   其它情况（含未购买永久去广告的特惠礼包B）→ 仍用商品配置里的 showIcon。
+            //   注意：礼包卡走对象池复用，这里必须每次刷新都按当前状态重设，
+            //   否则「购买永久去广告后」或「复用给别的礼包」时会残留 shopGiftTeB2。
+            string bgIconName = ResolveGiftBackgroundIconName(data);
+            Sprite sprite = LoadShopIcon(bgIconName);
             if (sprite != null)
                 dibg.sprite = sprite;
         }
@@ -401,6 +429,10 @@ public class ShopGiftItem : ShopItemBase
 
         // ★ itemEnergyList 的 GridLayoutGroup.left 按礼包区分；对象池复用，必须每次刷新都重置
         ApplyItemEnergyListPadding(isSpecialPackageB);
+
+        // ★ itemHengList 的 GridLayoutGroup.left / spacing.x 按「礼包 + 是否已购买永久去广告」区分；
+        //   同样受对象池复用影响，每次刷新都重算（不能只在特惠礼包B 时设置，否则会残留到其它礼包）
+        ApplyItemHengListLayout(isSpecialPackageB);
 
         if (data.productContent == null || data.productContent.Count == 0) return;
 
@@ -525,6 +557,83 @@ public class ShopGiftItem : ShopItemBase
     }
 
     /// <summary>
+    /// ★ 设置 itemHengList（Prefab 中的 ItemHengList）上 GridLayoutGroup 的排版：
+    ///  - 特惠礼包B 且【未购买永久去广告】→ padding.left = -60、spacing.x = 30；
+    ///  - 其它情况（其它礼包 / 已购买永久去广告）→ 复位为 Prefab 默认值（left = -5、spacing.x = 10）。
+    ///
+    /// 为什么每次刷新都要重算：礼包卡走对象池复用，同一个 ShopGiftItem 实例会先后展示不同礼包，
+    /// 也会在「购买永久去广告前 / 后」被复用；只设不复位会把 -60 / 30 残留到别的礼包上。
+    /// 找不到 GridLayoutGroup 时只打日志，不影响其它逻辑。
+    /// </summary>
+    private void ApplyItemHengListLayout(bool isSpecialPackageB)
+    {
+        if (itemHengList == null) return;
+
+        GridLayoutGroup grid = itemHengList.GetComponent<GridLayoutGroup>();
+        if (grid == null)
+        {
+            LogShopItemDetail("ApplyItemHengListLayout: itemHengList 上未找到 GridLayoutGroup，跳过 padding.left / spacing.x 调整");
+            return;
+        }
+
+        // ★ 需求：只有「特惠礼包B」且「没有购买永久去广告」时才用 -60 / 30；
+        //   买了永久去广告后礼包里的去广告项会被跳过，排版回到默认值。
+        bool ownsPermanentRemoveAds = IsPermanentRemoveAdsOwned();
+
+        bool useSpecialLayout = isSpecialPackageB && !ownsPermanentRemoveAds;
+
+        int targetLeft = useSpecialLayout ? SpecialPackageBHengPaddingLeft : CommonHengPaddingLeft;
+        float targetSpacingX = useSpecialLayout ? SpecialPackageBHengSpacingX : CommonHengSpacingX;
+
+        // 1. padding.left（其余边保持 Prefab 上的值）
+        RectOffset padding = grid.padding;
+        if (padding == null || padding.left != targetLeft)
+        {
+            int right = padding != null ? padding.right : 0;
+            int top = padding != null ? padding.top : 0;
+            int bottom = padding != null ? padding.bottom : 0;
+            grid.padding = new RectOffset(targetLeft, right, top, bottom);
+        }
+
+        // 2. spacing.x（spacing.y 保持 Prefab 上的值）
+        Vector2 spacing = grid.spacing;
+        if (!Mathf.Approximately(spacing.x, targetSpacingX))
+        {
+            grid.spacing = new Vector2(targetSpacingX, spacing.y);
+        }
+
+        LogShopItemDetail($"ApplyItemHengListLayout: padding.left → {targetLeft}, spacing.x → {targetSpacingX} " +
+                          $"(isSpecialPackageB={isSpecialPackageB}, ownsPermanentRemoveAds={ownsPermanentRemoveAds})");
+    }
+
+    /// <summary>
+    /// ★ 解析礼包卡底图（dibg）应使用的精灵名：
+    ///  - 特惠礼包B 且【已购买永久去广告】→ shopGiftTeB2；
+    ///  - 其它情况 → 商品配置里的 showIcon（shop.csv 的「展示图」列）。
+    ///
+    /// 为什么按「已购买永久去广告」区分：买了永久去广告后，礼包里的去广告项会被跳过、
+    /// 内容排版也随之变化，底图需要用去掉去广告角标的版本。
+    /// </summary>
+    private string ResolveGiftBackgroundIconName(ShopDataItem data)
+    {
+        if (data == null) return null;
+
+        if (IsSpecialPackageB(data) && IsPermanentRemoveAdsOwned())
+        {
+            LogShopItemDetail($"礼包底图: 特惠礼包B 且已购买永久去广告 → {SpecialPackageBOwnedAdsBackground}");
+            return SpecialPackageBOwnedAdsBackground;
+        }
+
+        return data.showIcon;
+    }
+
+    /// <summary>是否已购买永久去广告（统一入口，避免各处重复判空）。</summary>
+    private bool IsPermanentRemoveAdsOwned()
+    {
+        return ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+    }
+
+    /// <summary>
     /// 计算实际需要创建的 GiftItem 数量（与 InitGiftItems 的跳过规则一致）：
     ///  - 跳过无效项（null 或 Count < 2）；
     ///  - type=2 跳过金币项（金币由 shopCountText 展示）；
@@ -534,8 +643,7 @@ public class ShopGiftItem : ShopItemBase
     {
         if (data == null || data.productContent == null) return 0;
 
-        bool ownsPermanentRemoveAds =
-            ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+        bool ownsPermanentRemoveAds = IsPermanentRemoveAdsOwned();
 
         int count = 0;
         foreach (var giftdata in data.productContent)
@@ -616,8 +724,7 @@ public class ShopGiftItem : ShopItemBase
     {
         if (itemEnergyList == null || data?.productContent == null) return false;
 
-        bool ownsPermanentRemoveAds =
-            ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+        bool ownsPermanentRemoveAds = IsPermanentRemoveAdsOwned();
 
         bool allEnergy = true;
         int energyItemCount = 0; // ★ 实际会挂到 itemEnergyList 的项数
@@ -745,8 +852,7 @@ public class ShopGiftItem : ShopItemBase
         // ★ 先清理旧子物体（对象池复用必须清理，三个父节点都要清）
         ClearGiftItems();
 
-        bool ownsPermanentRemoveAds =
-            ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+        bool ownsPermanentRemoveAds = IsPermanentRemoveAdsOwned();
 
         bool isHengPrefab = giftHengItemPrefab != null && prefab == giftHengItemPrefab;
         LogShopItemDetail($"InitGiftItems: prefab={prefab.name}, isHengPrefab={isHengPrefab}");
@@ -1066,8 +1172,7 @@ public class ShopGiftItem : ShopItemBase
             return;
         }
 
-        bool ownsPermanentRemoveAds =
-            ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+        bool ownsPermanentRemoveAds = IsPermanentRemoveAdsOwned();
 
         LogShopItem($"购买成功刷新礼包: 已拥有永久去广告={ownsPermanentRemoveAds}, " +
                     $"productContent.Count={(shopDataItem.productContent != null ? shopDataItem.productContent.Count : 0)}");

@@ -157,6 +157,11 @@ public class ShopScreen : UIWindow
         moreChoiceBtn.gameObject.SetActive(ShopManager.shopManager.shopMode == ShopMode.DynamicStore);
         shopScrollView.enabled = ShopManager.shopManager.shopMode != ShopMode.DynamicStore;
 
+        // ★ 需求：每次进入商店界面，滚动列表下的物品列表 y 轴必须为 0。
+        //   这里先同步归零一次（界面刚显示时就能看到正确位置），
+        //   铺列表结束后 ResetScrollToTop 还会再归零一次（防止布局把 y 顶偏）。
+        ResetContentScrollOnEnter();
+
         // ★ 复活道具按钮始终显示（展示数量 + 点击可查看说明）
         if (restartbtn != null)
         {
@@ -581,6 +586,48 @@ public class ShopScreen : UIWindow
 
         shopScrollView.StopMovement();
         shopScrollView.normalizedPosition = new Vector2(0f, 1f);
+
+        // ★ 需求：每次进入商店，滚动列表下的物品列表 y 轴必须为 0。
+        //   normalizedPosition 只保证「滚到顶部」，Content 自身的 anchoredPosition.y 仍可能残留
+        //   上一次进店/拖动后的偏移，这里显式把 Content 的 y 归零。
+        ResetContentAnchoredPositionY();
+    }
+
+    /// <summary>
+    /// ★ 进店时的滚动复位（不依赖 ScrollRect.enabled）：
+    /// 动态商店模式下 ScrollRect 是关闭的（靠「更多选择」展开后才启用），
+    /// 但物品列表的 y 轴同样要求每次进店为 0，所以这里单独做一次 Content 的 y 归零。
+    /// </summary>
+    private void ResetContentScrollOnEnter()
+    {
+        if (shopScrollView == null) return;
+
+        shopScrollView.StopMovement();
+        ResetContentAnchoredPositionY();
+    }
+
+    /// <summary>
+    /// ★ 把 ScrollRect Content 的 anchoredPosition.y 归零（x 保持不变）。
+    ///  - 进店时调用一次（<see cref="ResetContentScrollOnEnter"/>）；
+    ///  - 铺列表结束后再调一次（<see cref="ResetScrollToTop"/>），防止布局把 y 顶偏。
+    /// 注意：只改 y，不动 Content 的 pivot / 尺寸 / LayoutGroup 配置，
+    ///       否则 VerticalLayoutGroup + ContentSizeFitter 的排版会被打乱。
+    /// </summary>
+    private void ResetContentAnchoredPositionY()
+    {
+        if (shopScrollView == null) return;
+
+        RectTransform content = shopScrollView.content;
+        if (content == null) return;
+
+        Vector2 pos = content.anchoredPosition;
+        if (Mathf.Approximately(pos.y, 0f)) return;
+
+        float oldY = pos.y;
+        pos.y = 0f;
+        content.anchoredPosition = pos;
+
+        LogManager.ShopLog($"[ShopScroll] Content.anchoredPosition.y 复位为 0（原值 {oldY}）");
     }
 
     /// <summary>缓存商店商品配置（只取一次）。</summary>

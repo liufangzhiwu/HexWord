@@ -1315,6 +1315,7 @@ MonoBehaviour:
   pressedScale: 0.9
   scaleSpeed: 10
   itemEnergyList: {fileID: 8279227763836531128}
+  itemHengList: {fileID: 4983868342048506794}
   giftsParent: {fileID: 6146756297023697047}
   giftsHengParent: {fileID: 4983868342048506794}
   giftItemPrefab: {fileID: 1246010326682675952, guid: a37a1e50b9223714a92cfa657e7debbb,
