@@ -1335,9 +1335,9 @@ public class ChessFinishView : UIWindow
     {
         _hasPlayedRewardSequence = false; // 离开结算页去下一关时重置标记
 
-        // 离开结算页：结算礼包登记作废（下次结算重新决定）
-        ShopManager.shopManager?.ClearSettlementGift("离开结算页");
-
+        // ★ 离开结算页不清礼包登记：礼包按「限时截止时间」有效，
+        //   主页（PrimaryInterface）要用同一份登记显示入口按钮，玩家回大厅后仍可购买。
+        //   失效时机：礼包购买成功 / 限时结束 / 下一次结算重新判定（TryShowSettlementGiftPopup 内 Clear）。
         SystemManager.Instance.HidePanel(PanelType.HeaderSection, false, LoadNextStage);
         Close();
     }
@@ -1745,31 +1745,35 @@ public class ChessFinishView : UIWindow
     /// <summary>
     /// 结算页会弹更优先的弹窗时，取消本次破冰/复购礼包弹窗（结算页的礼包按钮保留，玩家仍可手动点开）。
     ///
-    /// 需求（破冰/复购「弹窗条件 3」）：当前结算页会弹以下任意一个 → 礼包不弹：
+    /// 需求（破冰/复购「弹窗条件 3」）：当前结算页会弹以下任意一个 → 礼包不弹，只留入口：
     ///   1. 插屏（AdRuleManager.CanShowInterstitial 预判，本页稍后才真正播）
-    ///   2. 七日胜利弹窗（SignWinScreen）/ 七日签到（SevenSignScreen）
-    ///   3. 灯明心悟页面（LimitTimeScreen，达成进度会自动弹）
-    ///   4. 新手奖励活动进度弹窗 → 项目里暂无该活动
-    ///   5. 锦鲤竞速活动开始弹窗 → 只有玩家主动点「锦鲤竞速」按钮才会弹，不自动占用结算页，故不拦
+    ///   2. 每日连胜 / 七日胜利弹窗（SignWinScreen）/ 七日签到（SevenSignScreen）
+    ///   3. 灯笼结算 / 灯明心悟页面（LimitTimeScreen，达成进度会自动弹）
+    ///   4. 新手奖励活动进度弹窗（BeginnerBonusPanel）
+    ///   5. 锦鲤竞速活动开始弹窗（CompetitionStart，玩家点捕鱼入口才弹；展示中会走 ShopManager 的实时拦截）
     /// </summary>
     private void CancelSettlementGiftIfBlocked()
     {
         if (ShopManager.shopManager == null) return;
-        if (!ShopManager.shopManager.IsSettlementGiftPopupPending) return;
+        if (ShopManager.shopManager.IsSettlementGiftPopupSuppressed) return;
 
         string reason = null;
 
-        // 2. 七日胜利 / 七日签到 / 回归首胜
+        // 2. 每日连胜 / 七日胜利 / 七日签到 / 回归首胜
         if (isShowWinSign || isTriggerFirstWin)
         {
-            reason = isShowWinSign ? "七日胜利弹窗" : "回归首胜弹窗";
+            reason = isShowWinSign ? "每日连胜签到弹窗" : "回归首胜弹窗";
+        }
+        else if (StreakManager.Instance != null && StreakManager.Instance.IsCanShowWinSign())
+        {
+            reason = "每日连胜签到弹窗";
         }
         else if (SystemManager.Instance != null
                  && (SystemManager.Instance.PanelIsShowing(PanelType.SignWinScreen)
                      || SystemManager.Instance.PanelIsShowing(PanelType.SignAwardScreen)
                      || SystemManager.Instance.PanelIsShowing(PanelType.SevenSignScreen)))
         {
-            reason = "七日胜利/签到弹窗";
+            reason = "每日连胜/签到弹窗";
         }
 
         // 1. 插屏（本页稍后 Rank 流程之后会尝试播，这里提前预判，避免礼包和插屏叠在一起）
@@ -1778,17 +1782,29 @@ public class ChessFinishView : UIWindow
             reason = "插屏";
         }
 
-        // 3. 灯明心悟（限时活动页达成条件会自动弹）
+        // 3. 灯笼结算 / 灯明心悟（限时活动页达成条件会自动弹）
         if (reason == null && WillAutoShowLimitTimePanel())
         {
-            reason = "灯明心悟页面";
+            reason = "灯笼（限时活动）结算页";
+        }
+
+        // 4. 新手奖励活动进度弹窗（本关到节点会弹）
+        if (reason == null && BeginnerBonusManager.Instance != null &&
+            BeginnerBonusManager.Instance.WillPopupOnStageCleared(
+                GameDataManager.Instance.UserData.CurrentChessStage - 1))
+        {
+            reason = "新手奖励活动进度弹窗";
         }
 
         if (!string.IsNullOrEmpty(reason))
-            ShopManager.shopManager.CancelPreparedSettlementGiftPopup(reason);
+            ShopManager.shopManager.SuppressSettlementGiftPopup(reason);
     }
 
-    /// <summary>本页是否会自动弹「灯明心悟」限时活动页（与 PlayRewardSequence 里的判定同口径）。</summary>
+    /// <summary>
+    /// 本页是否会自动弹「灯笼 / 灯明心悟」限时活动页（与 PlayRewardSequence 里的判定同口径）。
+    /// ★ 结算页的词数是在 PlayRewardSequence 里才加进 LimitTimeManager 的，
+    ///   这里要把「本局待加的词数」补上再比目标，否则会漏判（礼包先弹、灯笼后弹）。
+    /// </summary>
     private bool WillAutoShowLimitTimePanel()
     {
         if (_limitBtnTable == null || _limitBtnTable._limitTimeEventButton == null) return false;
@@ -1796,8 +1812,13 @@ public class ChessFinishView : UIWindow
 
         LimitTimeManager limit = LimitTimeManager.Instance;
         if (limit == null || limit.CurlimitData == null) return false;
+        if (limit.IsComplete()) return false;
 
-        return GetCompletedWordCount() >= limit.CurlimitData.num;
+        int pendingWords = 0;
+        if (ChessStageController.Instance != null)
+            pendingWords = Mathf.Max(0, ChessStageController.Instance.GetDoubleRewardedPuzzleCount());
+
+        return GetCompletedWordCount() + pendingWords >= limit.CurlimitData.num;
     }
 
     /// <summary>

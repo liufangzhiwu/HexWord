@@ -344,6 +344,30 @@ public partial class ShopManager : MonoBehaviour
     private bool _settlementGiftPopupPending;
 
     /// <summary>
+    /// 本次结算「只登记入口、不主动弹窗」。
+    /// 结算页会弹更优先的弹窗（每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 / 插屏）时置 true，
+    /// 礼包仍然登记（结束页和主页的入口按钮照常显示），只是不主动弹 AdsDiscountScreen。
+    /// </summary>
+    private bool _settlementGiftPopupSuppressed;
+
+    /// <summary>本次结算不弹窗的原因（仅用于日志）</summary>
+    private string _settlementGiftSuppressReason;
+
+    /// <summary>标记本次结算只登记不弹窗。</summary>
+    public void SuppressSettlementGiftPopup(string reason)
+    {
+        if (!_settlementGiftPopupSuppressed)
+            LogShop($"[结算礼包] 本次结算不主动弹窗：{reason}（只保留入口按钮）");
+
+        _settlementGiftPopupSuppressed = true;
+        _settlementGiftSuppressReason = reason;
+        _settlementGiftPopupPending = false;
+    }
+
+    /// <summary>本次结算是否只登记入口、不主动弹窗。</summary>
+    public bool IsSettlementGiftPopupSuppressed => _settlementGiftPopupSuppressed;
+
+    /// <summary>
     /// 结算礼包弹窗是否还在「等待弹出」阶段（预登记完成、等结算页展示一小会儿后才真正弹）。
     /// 结算页的排行榜等后续弹窗用它来让礼包弹窗优先。
     /// </summary>
@@ -380,6 +404,16 @@ public partial class ShopManager : MonoBehaviour
 
         if (CurrentSettlementGift == SettlementGiftKind.None) return;   // 登记失败（礼包为空）
 
+        // ★ 结算页会弹更优先的弹窗（每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 / 插屏…）：
+        //   只保留入口按钮，不主动弹礼包弹窗。
+        if (_settlementGiftPopupSuppressed)
+        {
+            _settlementGiftPopupPending = false;
+            LogShop($"[结算礼包] 本次结算不弹窗（{_settlementGiftSuppressReason}），只保留入口: " +
+                    $"kind={kind}, 礼包={displayItem.produceNameId}");
+            return;
+        }
+
         if (_suspendGiftPopup)
         {
             _settlementGiftPopupPending = true;
@@ -411,6 +445,19 @@ public partial class ShopManager : MonoBehaviour
 
         LogShop($"RegisterSettlementGift: 登记结算页礼包 kind={kind}, item={displayItem.produceNameId}, " +
                 $"endTime={(endTime == System.DateTime.MinValue ? "无限时" : endTime.ToString("yyyy-MM-dd HH:mm:ss"))}, 加赠={bonusGold}");
+
+        NotifySettlementGiftChanged();
+    }
+
+    /// <summary>
+    /// 结算页礼包登记变化事件（登记 / 清空 / 购买 / 过期）。
+    /// 结算页与主页的「破冰礼包 / 限时折扣礼包」入口都订阅它来刷新显隐。
+    /// </summary>
+    public event System.Action OnSettlementGiftChanged;
+
+    private void NotifySettlementGiftChanged()
+    {
+        OnSettlementGiftChanged?.Invoke();
     }
 
     /// <summary>
@@ -451,6 +498,8 @@ public partial class ShopManager : MonoBehaviour
         _settlementGiftBonusPackId = null;
 
         LogShop($"ClearSettlementGift: {reason}");
+
+        NotifySettlementGiftChanged();
     }
 
     /// <summary>

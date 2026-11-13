@@ -982,7 +982,15 @@ public partial class ShopManager : MonoBehaviour
         }
     }
 
-    public bool TryShowBreakIcePopup(int interAdsCount)
+    /// <summary>
+    /// 破冰礼包策略。
+    /// </summary>
+    /// <param name="interAdsCount">已成功播放的插屏累计次数（存档持久化）</param>
+    /// <param name="entryOnly">
+    /// true = 只登记入口按钮、不弹窗、不消耗弹窗次数与冷却（主页进场判定用）。
+    /// false = 结算页正常流程（登记 + 弹窗）。
+    /// </param>
+    public bool TryShowBreakIcePopup(int interAdsCount, bool entryOnly = false)
     {
         string[] bi = _layerConfig.brokenIce.Split('_');
         if (bi.Length < 1 || bi[0] != "1")
@@ -1011,18 +1019,19 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // 已有互斥弹窗在展示时不叠加（注意：结算页本身是 UpPopPanel，不能直接用 IsPanelTypeShowing）
-        if (IsExclusivePopupShowing())
+        // 主页「只登记入口」不弹窗，不需要看当前有没有别的弹窗
+        if (!entryOnly && IsExclusivePopupShowing())
         {
             LogShop("TryShowBreakIcePopup 跳过: 已有互斥弹窗在展示");
             return false;
         }
 
-        // 条件3：结算页其它弹窗（插屏 / 七日胜利 / 灯明心悟 / 新手奖励进度 / 锦鲤竞速开始 等）
-        //   ★ 与复购同一口径：这些更优先的弹窗会弹时，破冰礼包不弹
-        if (IsSettlementOtherPopupShowing())
+        // 条件3：结算页其它弹窗（插屏 / 每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 等）
+        //   ★ 这些更优先的弹窗会弹时：破冰礼包「不主动弹窗」，但**照常登记**，
+        //     这样结束页 / 主页的破冰入口按钮仍然显示，玩家可以自己点开。
+        if (!entryOnly && IsSettlementOtherPopupShowing())
         {
-            LogShop("TryShowBreakIcePopup 跳过: 结算页已有其它弹窗/插屏在展示");
-            return false;
+            SuppressSettlementGiftPopup("结算页会弹更优先的弹窗（破冰）");
         }
 
         // 本地与云端均无去广告（永久去广告 / 限时去广告生效中都不弹）
@@ -1082,13 +1091,36 @@ public partial class ShopManager : MonoBehaviour
             endTime = GetCurrentHolidayEndTime();
 
             // 新一轮：累计次数 +1，并记录本轮冷却起点（倒计时结束时间）
-            BreakIcePopupCount = BreakIcePopupCount + 1;
-            SaveBreakIcePopupState(endTime, BreakIcePopupCount);
-            _lastBreakIcePopupTime = DateTime.Now;
+            // ★ 本次结算只登记入口、不弹窗（被更优先的结算页弹窗占位）→ 不消耗弹窗次数/冷却，
+            //   等下一次没有抢占弹窗的结算再正常弹。
+            // ★ 主页「只登记入口」（entryOnly）同样不消耗：进主页不该把破冰的弹窗次数用掉。
+            if (entryOnly)
+            {
+                LogShop("TryShowBreakIcePopup: 主页只登记入口 → 不消耗弹窗次数与冷却");
+            }
+            else if (!_settlementGiftPopupSuppressed)
+            {
+                BreakIcePopupCount = BreakIcePopupCount + 1;
+                SaveBreakIcePopupState(endTime, BreakIcePopupCount);
+                _lastBreakIcePopupTime = DateTime.Now;
+            }
+            else
+            {
+                LogShop("TryShowBreakIcePopup: 本次结算不弹窗（被更优先弹窗占位）→ 不消耗弹窗次数与冷却");
+            }
         }
 
         // 登记到「结算页礼包」并弹窗：结算页的破冰礼包按钮据此显示，关掉弹窗也能再打开
-        ShowSettlementGift(SettlementGiftKind.BreakIce, pack, endTime);
+        if (entryOnly)
+        {
+            RegisterSettlementGift(SettlementGiftKind.BreakIce, pack, endTime);
+            LogShop($"TryShowBreakIcePopup: 主页只登记破冰入口 {pack.produceNameId}，" +
+                    $"限时截止={(endTime == DateTime.MinValue ? "无" : endTime.ToString("yyyy-MM-dd HH:mm"))}");
+        }
+        else
+        {
+            ShowSettlementGift(SettlementGiftKind.BreakIce, pack, endTime);
+        }
 
         LogShop($"TryShowBreakIcePopup: 展示破冰礼包 {pack.produceNameId}, 累计次数={BreakIcePopupCount}, " +
                 $"下次冷却={BreakIceCooldownBaseDays + BreakIcePopupCount * BreakIceCooldownStepDays}天" +
@@ -1131,7 +1163,11 @@ public partial class ShopManager : MonoBehaviour
     /// ★ bug54 根因：A / 调起次数 / 上次弹窗时间以前都是运行时字段，杀进程就丢 → 条件永远凑不齐；
     ///   且没有「周末或节假日」这一条、选了「升档礼包（giftType+1）」而不是策划要求的调起次数规则、限时也没设。
     /// </summary>
-    public bool TryShowRepurchasePopup(ShopDataItem lastPurchasedPack)
+    /// <param name="entryOnly">
+    /// true = 只登记入口按钮、不弹窗、不记「本活动期已弹过」（主页进场判定用）。
+    /// false = 结算页正常流程（登记 + 弹窗）。
+    /// </param>
+    public bool TryShowRepurchasePopup(ShopDataItem lastPurchasedPack, bool entryOnly = false)
     {
         LogShop("========== 复购礼包判定开始 ==========");
 
@@ -1172,11 +1208,12 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
-        // 条件3：结算页其它弹窗（插屏 / 七日胜利 / 灯明心悟 / 新手奖励进度 / 锦鲤竞速开始 等）
-        if (IsSettlementOtherPopupShowing())
+        // 条件3：结算页其它弹窗（插屏 / 每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 等）
+        //   ★ 这些更优先的弹窗会弹时：复购礼包「不主动弹窗」，但**照常登记**，
+        //     这样结束页 / 主页的限时折扣入口按钮仍然显示，玩家可以自己点开。
+        if (!entryOnly && IsSettlementOtherPopupShowing())
         {
-            LogShop("TryShowRepurchasePopup 跳过: 结算页已有其它弹窗/插屏在展示");
-            return false;
+            SuppressSettlementGiftPopup("结算页会弹更优先的弹窗（复购）");
         }
 
         // 条件5：弹窗冷却（策划口径：从「上次弹窗倒计时结束」开始算 7 天）
@@ -1225,6 +1262,15 @@ public partial class ShopManager : MonoBehaviour
 
         // 优惠款：加量不加价（额外金币 = 取整(礼包金币价值 V × 10%)）
         int bonusGold = Mathf.RoundToInt(chosen.coinValue * 0.1f);
+
+        if (entryOnly)
+        {
+            // 主页只登记入口：不弹窗、不记「本活动期已弹过」/冷却起点，玩家点入口时再打开弹窗
+            RegisterSettlementGift(SettlementGiftKind.Repurchase, chosen.DeepCopy(), endTime, bonusGold, chosen.produceNameId);
+            LogShop($"[复购] 主页只登记入口 chosen={chosen.produceNameId}, 加赠金币={bonusGold}, " +
+                    $"限时截止={endTime:yyyy-MM-dd HH:mm:ss}");
+            return true;
+        }
 
         ShowRepurchasePopup(chosen, a, bonusGold, endTime);
         return true;
@@ -1338,8 +1384,17 @@ public partial class ShopManager : MonoBehaviour
 
         // 记录「本次展示」：冷却从倒计时结束开始算（策划口径），并记住这款礼包，
         // 倒计时未结束时下次结算继续展示同一款。
-        SaveRepurchaseLastPopupTime(DateTime.Now);
-        SaveRepurchaseLastPopupEndTime(endTime, pack.produceNameId);
+        // ★ 本次结算只登记入口、不弹窗（被更优先的结算页弹窗占位）→ 不算「本活动期已弹过」，
+        //   下次没有抢占弹窗的结算仍然可以正常弹。
+        if (!_settlementGiftPopupSuppressed)
+        {
+            SaveRepurchaseLastPopupTime(DateTime.Now);
+            SaveRepurchaseLastPopupEndTime(endTime, pack.produceNameId);
+        }
+        else
+        {
+            LogShop("[复购] 本次结算不弹窗（被更优先弹窗占位）→ 不记「本活动期已弹过」");
+        }
 
         // 登记到「结算页礼包」（结算页的限时折扣礼包按钮据此显示），并弹出 AdsDiscountScreen
         // （展示用副本 + 加赠金币都由 ShowSettlementGift/OpenSettlementGiftPopup 写进 pending 数据）
@@ -1353,12 +1408,17 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>
     /// 结算页是否有「不能同时弹复购礼包」的其它界面。
     ///
-    /// 需求第 3 条（结算页不弹的 5 类）与本项目界面对应关系：
+    /// 需求第 3 条（结算页不弹的几类）与本项目界面对应关系：
     ///   1. 插屏                      → AdRuleManager.IsInterstitialShowing
-    ///   2. 七日胜利弹窗              → PanelType.SignWinScreen / SignAwardScreen / SevenSignScreen
-    ///   3. 灯明心悟页面              → PanelType.LimitTimeScreen（限时活动页，策划确认）
-    ///   4. 新手奖励活动进度弹窗      → 项目里暂无该活动（预留：以后加了把 PanelType 填进来即可）
+    ///   2. 每日连胜 / 七日胜利        → PanelType.SignWinScreen / SignAwardScreen / SevenSignScreen
+    ///   3. 灯笼结算（限时活动页）     → PanelType.LimitTimeScreen
+    ///   4. 新手奖励活动进度弹窗      → PanelType.BeginnerBonusPanel
     ///   5. 锦鲤竞速活动开始弹窗      → PanelType.CompetitionStart（同族 DashCompetition / MatchSuccess / CompetitionFail / CompetitionHelp）
+    ///
+    /// 判定分两层：
+    ///   A. 正在展示的界面（PanelIsShowing / 插屏状态）—— 兜底，任何调用方都拦得住；
+    ///   B. 本轮结算页「稍后会自动弹」的界面（预测）—— 因为礼包在结算页出来 1.2s 就弹，
+    ///      而上面这些弹窗往往在更后面才出，只靠 A 会来不及。
     ///
     /// 命中会打日志说明被谁挡住，方便按实际表现增删。
     /// </summary>
@@ -1369,7 +1429,7 @@ public partial class ShopManager : MonoBehaviour
         // 1. 插屏广告（不是 Panel，单独取广告规则状态）
         if (AdRuleManager.Instance != null && AdRuleManager.Instance.IsInterstitialShowing)
         {
-            LogShop("[复购] 被拦截：插屏正在展示");
+            LogShop("[结算礼包] 被拦截：插屏正在展示");
             return true;
         }
 
@@ -1378,13 +1438,16 @@ public partial class ShopManager : MonoBehaviour
 
         string[] others =
         {
-            // 3. 灯明心悟（限时活动页）
+            // 3. 灯笼结算 / 灯明心悟（限时活动页）
             PanelType.LimitTimeScreen,
 
-            // 2. 七日胜利弹窗 / 七日签到
+            // 2. 每日连胜 / 七日胜利弹窗 / 七日签到
             PanelType.SignWinScreen,
             PanelType.SignAwardScreen,
             PanelType.SevenSignScreen,
+
+            // 4. 新手奖励活动进度弹窗
+            PanelType.BeginnerBonusPanel,
 
             // 5. 锦鲤竞速（活动开始弹窗 + 同族结算/失败/说明）
             PanelType.CompetitionStart,
@@ -1393,23 +1456,113 @@ public partial class ShopManager : MonoBehaviour
             PanelType.CompetitionFail,
             PanelType.CompetitionHelp,
 
+            // 禅修榜 / 总榜结算与变动面板（结算页队列里排在礼包之后的串行弹窗）
+            PanelType.ZenSettlementScreen,
+            PanelType.OverallSettlementScreen,
+            PanelType.ZenRankStartScreen,
+            PanelType.ZenRankChangePanel,
+            PanelType.RewardNamePanel,
+
             // 其它可能挡在结算页上的弹窗
             PanelType.ReturnFirstWinScreen,   // 回归首胜
             PanelType.RateUsScreen,           // 评分
             PanelType.PolicyView,             // 隐私协议
-            PanelType.HardView                // 难度提示
+            PanelType.HardView,               // 难度提示
+            PanelType.ButterflyHome           // 蝴蝶花园（蝶蛹结算后跳转）
         };
 
         foreach (var p in others)
         {
             if (SystemManager.Instance.PanelIsShowing(p))
             {
-                LogShop($"[复购] 被拦截：{p} 正在展示");
+                LogShop($"[结算礼包] 被拦截：{p} 正在展示");
                 return true;
             }
         }
 
+        // ============================================================
+        // B. 预测：本轮结算页「稍后一定会自动弹」的更优先弹窗
+        //    礼包在结算页出来 1.2s 就弹，而下面这些弹窗要更后面才出，
+        //    只看「正在展示」会来不及，必须提前预判。
+        // ============================================================
+
+        // 每日连胜（每日胜利签到）：今天还没签 → 结算页立刻会弹 SignWinScreen
+        if (StreakManager.Instance != null && StreakManager.Instance.IsCanShowWinSign())
+        {
+            LogShop("[结算礼包] 被拦截（预测）：结算页会弹每日连胜签到");
+            return true;
+        }
+
+        // 新手奖励活动进度弹窗：本关通关后到节点会弹 BeginnerBonusPanel
+        if (WillBeginnerBonusPopupAtSettlement())
+        {
+            LogShop("[结算礼包] 被拦截（预测）：结算页会弹新手奖励活动进度");
+            return true;
+        }
+
+        // 灯笼结算（限时活动页）：本局词数够了会自动弹 LimitTimeScreen
+        if (WillAutoShowLimitTimePanelAtSettlement())
+        {
+            LogShop("[结算礼包] 被拦截（预测）：结算页会弹灯笼（限时活动）结算");
+            return true;
+        }
+
         return false;
+    }
+
+    /// <summary>本轮结算页是否会弹「新手奖励活动进度」弹窗（纯判定，不触发弹窗）。</summary>
+    private bool WillBeginnerBonusPopupAtSettlement()
+    {
+        if (BeginnerBonusManager.Instance == null) return false;
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+
+        return BeginnerBonusManager.Instance.WillPopupOnStageCleared(GetJustClearedStage());
+    }
+
+    /// <summary>刚打完（还没进下一关）的那一关关卡号；按当前展示的是哪个结算页来取。</summary>
+    private int GetJustClearedStage()
+    {
+        var user = GameDataManager.Instance.UserData;
+
+        // 拼字结算页 ChessFinishView 用 CurrentChessStage-1；六边形/词语消除结算页用 CurrentHexStage-1
+        bool isChessFinish = SystemManager.Instance != null
+                             && SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView);
+        if (isChessFinish) return user.CurrentChessStage - 1;
+
+        bool isHexFinish = SystemManager.Instance != null
+                           && SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView);
+        if (isHexFinish) return user.CurrentHexStage - 1;
+
+        // 兜底：按模式取（2 拼字 / 1、3 走六边形控制器）
+        return user.levelMode == (int)LevelType.ChessWord ? user.CurrentChessStage - 1 : user.CurrentHexStage - 1;
+    }
+
+    /// <summary>
+    /// 本轮结算页是否会自动弹「灯笼（限时活动）结算页」。
+    /// 与结算页 CheckAndShowLimitedTimeEvent 口径一致：进度 + 本局新增词数 ≥ 目标词数。
+    /// （结算页词数是在页面出来之后才加进 LimitTimeManager 的，这里要把本局待加的词补上）
+    /// </summary>
+    private bool WillAutoShowLimitTimePanelAtSettlement()
+    {
+        LimitTimeManager limit = LimitTimeManager.Instance;
+        if (limit == null || limit.CurlimitData == null) return false;
+        if (!limit.IsOpen() || limit.IsComplete()) return false;
+
+        int pendingWords = 0;
+        switch ((LevelType)GameDataManager.Instance.UserData.levelMode)
+        {
+            case LevelType.ChessWord:
+                if (ChessStageController.Instance != null)
+                    pendingWords = ChessStageController.Instance.GetDoubleRewardedPuzzleCount();
+                break;
+            default:
+                if (StageHexController.Instance != null)
+                    pendingWords = StageHexController.Instance.LimitPuzzlecount;
+                break;
+        }
+        if (pendingWords < 0) pendingWords = 0;
+
+        return limit.GetCurWordCount() + pendingWords >= limit.CurlimitData.num;
     }
 
     // ======================= 弹窗互斥 =======================
@@ -1450,6 +1603,43 @@ public partial class ShopManager : MonoBehaviour
     // ======================= 结算页弹窗调度（破冰 → 复购） =======================
 
     /// <summary>
+    /// 主页礼包入口登记：活动期间（周末/节假日）进入主页就保证入口按钮有数据可显示。
+    ///
+    /// 背景：结算页的礼包登记是内存态，杀进程/换场景就没了 → 以前只有「刚打完一局并结算」才看得到入口。
+    /// 现在进主页时按同一套策略重算一次，命中就<b>只登记不弹窗</b>（点入口才打开礼包弹窗），
+    /// 且不消耗破冰的弹窗次数/冷却、也不记复购「本活动期已弹过」，结算页的弹窗节奏完全不变。
+    ///
+    /// 判定口径与结算页一致：破冰看 IAA 层 + 累计插屏 &gt; 3 + 未拥有去广告 + 冷却；复购看 IAP 层 + 金币 &lt; 200 + 冷却。
+    /// 区别只有一条：主页不判「结算页其它弹窗会不会弹」——那是结算页特有的拦截条件。
+    /// </summary>
+    /// <returns>登记后主页是否应显示礼包入口</returns>
+    public bool TryEnsureHomeSettlementGiftEntry()
+    {
+        if (CurrentSettlementGift != SettlementGiftKind.None)
+            return true;    // 结算页带过来的登记还在，直接用
+
+        if (!IsHolidayOrWeekend())
+            return false;   // 活动期间之外，主页不显示礼包入口
+
+        int interAdsCount = AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCount : 0;
+
+        if (TryShowBreakIcePopup(interAdsCount, true))
+        {
+            LogShop("[主页礼包入口] 登记破冰礼包入口");
+            return true;
+        }
+
+        if (TryShowRepurchasePopup(null, true))
+        {
+            LogShop("[主页礼包入口] 登记限时折扣礼包入口");
+            return true;
+        }
+
+        LogShop("[主页礼包入口] 活动期间但条件未满足 → 不显示入口");
+        return false;
+    }
+
+    /// <summary>
     /// 结算页统一入口：按 破冰 → 复购 顺序尝试弹出礼包弹窗（需求 C-STRAT-12）。
     /// 两者互斥，任一弹出即返回 true；调用方无需关心内部策略。
     /// </summary>
@@ -1460,6 +1650,10 @@ public partial class ShopManager : MonoBehaviour
 
         // 每次结算重新决定：先清掉上一次结算遗留的礼包登记（结算页按钮据此显示）
         ClearSettlementGift("新的结算开始");
+
+        // 每次结算重新判定「能不能主动弹窗」（上一次结算的拦截标记不沿用）
+        _settlementGiftPopupSuppressed = false;
+        _settlementGiftSuppressReason = null;
 
         LogShop($"[结算礼包] 开始调度: 累计插屏={interAdsCount}, 分层={GetCurrentUserLayer()}, " +
                 $"金币={GetPlayerGold()}, 周末/节假日={IsHolidayOrWeekend()}, " +

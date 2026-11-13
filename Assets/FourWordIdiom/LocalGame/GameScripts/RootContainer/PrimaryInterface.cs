@@ -17,6 +17,10 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private Button ZenRankBtn;         // 禅意排名按钮
     [Header("新手奖励活动")]
     [SerializeField] private BeginnerBonusEntryBtn _beginnerBonusEntryBtn; // 结算页右侧的新手奖励入口按钮组件
+
+    [Header("礼包入口（破冰 / 限时折扣）")]
+    [SerializeField] private Button breakIceGiftBtn;     // 破冰礼包入口（与结算页同一份登记）
+    [SerializeField] private Button discountGiftBtn;     // 限时折扣/复购礼包入口
     //[SerializeField] private Button HexaBtn;         // 层层消按钮
     [Header("ButterflyGarden")]
     [SerializeField] private Button ButterflyBtn;
@@ -82,6 +86,16 @@ public class PrimaryInterface : UIWindow
     [Header("配置参数")]
     [SerializeField] private float topPanelDelay = 0.01f; // 顶部面板显示延迟时间
 
+    // ======================= 主页礼包入口（破冰 / 限时折扣） =======================
+    /// <summary>礼包入口按钮倒计时协程</summary>
+    private Coroutine _settlementGiftCoroutine;
+    private GameObject _breakIceTimeObj;
+    private Text _breakIceTimeText;
+    private GameObject _discountTimeObj;
+    private Text _discountTimeText;
+    /// <summary>刷新重入保护（ClearSettlementGift 会同步回调刷新事件）</summary>
+    private bool _refreshingGiftEntry;
+
     /// <summary>
     /// 大厅展示动画倍速：2 = 入场动画快一倍（MainShow 原约 0.97s → 约 0.49s）
     /// </summary>
@@ -131,6 +145,19 @@ public class PrimaryInterface : UIWindow
         myThemeBtn.AddVibraClickAction(OnClickMyThemeBtn);
         Puzzlebook.AddVibraClickAction(OnClickPuzzleVocabulary);
         SettingBtn.AddVibraClickAction(OnSetClick);
+
+        // ======================= 主页礼包入口（破冰 / 限时折扣） =======================
+        // 默认隐藏，由 RefreshSettlementGiftEntry 按 ShopManager 的结算礼包登记决定
+        if (breakIceGiftBtn != null)
+        {
+            breakIceGiftBtn.AddVibraClickAction(OnBreakIceGiftBtnClick);
+            breakIceGiftBtn.gameObject.SetActive(false);
+        }
+        if (discountGiftBtn != null)
+        {
+            discountGiftBtn.AddVibraClickAction(OnDiscountGiftBtnClick);
+            discountGiftBtn.gameObject.SetActive(false);
+        }
     }
     
     /// <summary>
@@ -186,6 +213,38 @@ public class PrimaryInterface : UIWindow
         string numStr = GameDataManager.Instance.UserData.Zenlevel;
         int zenLevel = int.Parse(numStr.Substring(numStr.Length - 2));
         AchievementManager.Instance.AddAvatarFrameItems(AvatarUnlockType.FlowerRank, zenLevel);
+
+        // 主页礼包入口：订阅登记变化 + 进场立刻按当前登记刷新一次
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnSettlementGiftChanged += RefreshSettlementGiftEntry;
+
+        // ★ 活动期间进主页就要看到入口：结算页登记是内存态，重启/换场景会丢，
+        //   所以进主页先按活动条件补登记一次（只登记不弹窗），再刷新显隐。
+        RefreshHomeGiftEntryOnEnter();
+        StartCoroutine(RefreshHomeGiftEntryDelayed());
+    }
+
+    /// <summary>进主页时补登记「破冰 / 限时折扣」入口并刷新显隐。</summary>
+    private void RefreshHomeGiftEntryOnEnter()
+    {
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.TryEnsureHomeSettlementGiftEntry();
+
+        RefreshSettlementGiftEntry();
+    }
+
+    /// <summary>
+    /// 兜底：极早期进主页时商店配置可能还没解析完（选包为空 → 登记不上），
+    /// 稍后再补判一次，避免「活动期间第一次进主页没有入口」。
+    /// </summary>
+    private IEnumerator RefreshHomeGiftEntryDelayed()
+    {
+        yield return new WaitForSeconds(0.8f);
+
+        if (ShopManager.shopManager == null || !isActiveAndEnabled) yield break;
+        if (ShopManager.shopManager.CurrentSettlementGift != ShopManager.SettlementGiftKind.None) yield break;
+
+        RefreshHomeGiftEntryOnEnter();
     }
     
     private void OnRedPointChanged(bool show)
@@ -1007,7 +1066,230 @@ public class PrimaryInterface : UIWindow
     }
     
     #endregion
-    
+
+    #region 主页礼包入口（破冰 / 限时折扣）
+
+    /// <summary>
+    /// 刷新主页的「破冰礼包 / 限时折扣礼包」入口按钮。
+    /// 数据源与结算页完全一致（ShopManager.CurrentSettlementGift）：
+    ///   - 结算页登记了破冰礼包 → 显示破冰入口；
+    ///   - 登记了复购/升层礼包 → 显示限时折扣入口；
+    ///   - 没有登记 / 已购买 / 已过期 → 两个都隐藏。
+    /// </summary>
+    public void RefreshSettlementGiftEntry()
+    {
+        // ClearSettlementGift 会回调 OnSettlementGiftChanged → 再次进入本方法，这里挡一下重入
+        if (_refreshingGiftEntry) return;
+        _refreshingGiftEntry = true;
+
+        ShopManager.SettlementGiftKind kind = ShopManager.shopManager != null
+            ? ShopManager.shopManager.CurrentSettlementGift
+            : ShopManager.SettlementGiftKind.None;
+
+        bool showBreakIce = kind == ShopManager.SettlementGiftKind.BreakIce;
+        bool showDiscount = kind == ShopManager.SettlementGiftKind.Repurchase;
+
+        // 登记还在但限时已经过了（比如玩家挂后台很久） → 收起入口并清掉登记，避免展示过期礼包
+        if ((showBreakIce || showDiscount) && ShopManager.shopManager != null)
+        {
+            DateTime endTime = ShopManager.shopManager.GetSettlementGiftEndTime();
+            if (endTime != DateTime.MinValue && DateTime.Now >= endTime)
+            {
+                ShopManager.shopManager.ClearSettlementGift("主页礼包入口已过期");
+                showBreakIce = false;
+                showDiscount = false;
+            }
+        }
+
+        SetGiftEntryVisible(breakIceGiftBtn, showBreakIce);
+        SetGiftEntryVisible(discountGiftBtn, showDiscount);
+
+        RefreshGiftEntryCountdown();
+
+        _refreshingGiftEntry = false;
+    }
+
+    /// <summary>入口按钮显隐：显示时淡入 + 轻微放大（与结算页礼包按钮一致）。</summary>
+    private void SetGiftEntryVisible(Button btn, bool visible)
+    {
+        if (btn == null) return;
+
+        GameObject go = btn.gameObject;
+        if (go.activeSelf == visible) return;
+
+        RectTransform rt = btn.transform as RectTransform;
+
+        if (!visible)
+        {
+            if (rt != null) rt.DOKill();
+            go.SetActive(false);
+            return;
+        }
+
+        go.SetActive(true);
+        if (rt == null) return;
+
+        CanvasGroup group = rt.GetComponent<CanvasGroup>();
+        if (group == null) group = go.AddComponent<CanvasGroup>();
+
+        rt.DOKill();
+        group.DOKill(false);
+
+        group.alpha = 0f;
+        rt.localScale = Vector3.one * 0.9f;
+
+        group.DOFade(1f, 0.18f).SetEase(Ease.OutQuad);
+        rt.DOScale(Vector3.one, 0.24f).SetEase(Ease.OutBack);
+    }
+
+    /// <summary>
+    /// 入口按钮上的限时倒计时：按登记的截止时间每秒刷新；归零后收起按钮并清掉登记。
+    /// 没有限时（截止时间为空）→ 只隐藏时间条，按钮保留。
+    /// </summary>
+    private void RefreshGiftEntryCountdown()
+    {
+        CacheGiftEntryTimeNodes();
+        StopSettlementGiftCountdown();
+
+        if (!IsGiftEntryVisible()) return;
+
+        DateTime endTime = ShopManager.shopManager != null
+            ? ShopManager.shopManager.GetSettlementGiftEndTime()
+            : DateTime.MinValue;
+
+        double remain = (endTime - DateTime.Now).TotalSeconds;
+        if (endTime == DateTime.MinValue || remain <= 0)
+        {
+            ApplyGiftEntryTime(false, 0);
+            return;
+        }
+
+        ApplyGiftEntryTime(true, remain);
+        if (isActiveAndEnabled)
+            _settlementGiftCoroutine = StartCoroutine(GiftEntryCountdownCoroutine());
+    }
+
+    private IEnumerator GiftEntryCountdownCoroutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(1f);
+
+        while (IsGiftEntryVisible())
+        {
+            DateTime endTime = ShopManager.shopManager != null
+                ? ShopManager.shopManager.GetSettlementGiftEndTime()
+                : DateTime.MinValue;
+
+            if (endTime == DateTime.MinValue)
+            {
+                ApplyGiftEntryTime(false, 0);
+                break;
+            }
+
+            double remain = (endTime - DateTime.Now).TotalSeconds;
+            if (remain <= 0)
+            {
+                ApplyGiftEntryTime(false, 0);
+                SetGiftEntryVisible(breakIceGiftBtn, false);
+                SetGiftEntryVisible(discountGiftBtn, false);
+                if (ShopManager.shopManager != null)
+                    ShopManager.shopManager.ClearSettlementGift("主页礼包入口限时结束");
+                Debug.Log("[PrimaryInterface] 礼包入口限时结束，按钮收起");
+                break;
+            }
+
+            ApplyGiftEntryTime(true, remain);
+            yield return wait;
+        }
+
+        _settlementGiftCoroutine = null;
+    }
+
+    private void StopSettlementGiftCountdown()
+    {
+        if (_settlementGiftCoroutine != null)
+        {
+            StopCoroutine(_settlementGiftCoroutine);
+            _settlementGiftCoroutine = null;
+        }
+    }
+
+    private bool IsGiftEntryVisible()
+    {
+        return (breakIceGiftBtn != null && breakIceGiftBtn.gameObject.activeSelf)
+            || (discountGiftBtn != null && discountGiftBtn.gameObject.activeSelf);
+    }
+
+    private void ApplyGiftEntryTime(bool show, double remainSeconds)
+    {
+        SetOneGiftEntryTime(breakIceGiftBtn, _breakIceTimeObj, _breakIceTimeText, show, remainSeconds);
+        SetOneGiftEntryTime(discountGiftBtn, _discountTimeObj, _discountTimeText, show, remainSeconds);
+    }
+
+    private void SetOneGiftEntryTime(Button btn, GameObject timeObj, Text timeText, bool show, double remainSeconds)
+    {
+        if (btn == null || !btn.gameObject.activeSelf) return;
+
+        bool visible = show && remainSeconds > 0;
+        if (timeObj != null && timeObj.activeSelf != visible) timeObj.SetActive(visible);
+
+        // 格式与结算页 / AdsDiscountScreen 保持一致（X小时Y分）
+        if (timeText != null && visible)
+            timeText.text = UIUtilities.FormatTimeRemaining(TimeSpan.FromSeconds(remainSeconds));
+    }
+
+    /// <summary>按钮下的倒计时节点（TimeObj/TimeText）没绑定时按路径自动查找。</summary>
+    private void CacheGiftEntryTimeNodes()
+    {
+        if (_breakIceTimeText == null && breakIceGiftBtn != null)
+            ResolveGiftEntryTimeNodes(breakIceGiftBtn.transform, out _breakIceTimeObj, out _breakIceTimeText);
+
+        if (_discountTimeText == null && discountGiftBtn != null)
+            ResolveGiftEntryTimeNodes(discountGiftBtn.transform, out _discountTimeObj, out _discountTimeText);
+    }
+
+    private static void ResolveGiftEntryTimeNodes(Transform btn, out GameObject timeObj, out Text timeText)
+    {
+        timeObj = null;
+        timeText = null;
+
+        Transform timeNode = btn.Find("TimeObj");
+        if (timeNode == null) return;
+
+        timeObj = timeNode.gameObject;
+        timeText = timeNode.GetComponentInChildren<Text>(true);
+    }
+
+    /// <summary>破冰礼包入口：打开破冰礼包弹窗。</summary>
+    private void OnBreakIceGiftBtnClick()
+    {
+        Debug.Log("[PrimaryInterface] 点击破冰礼包入口");
+
+        if (ShopManager.shopManager == null
+            || !ShopManager.shopManager.HasSettlementGift(ShopManager.SettlementGiftKind.BreakIce))
+        {
+            RefreshSettlementGiftEntry();
+            return;
+        }
+
+        ShopManager.shopManager.OpenSettlementGiftPopup();
+    }
+
+    /// <summary>限时折扣礼包入口（复购/升层）：打开限时折扣礼包弹窗。</summary>
+    private void OnDiscountGiftBtnClick()
+    {
+        Debug.Log("[PrimaryInterface] 点击限时折扣礼包入口");
+
+        if (ShopManager.shopManager == null
+            || !ShopManager.shopManager.HasSettlementGift(ShopManager.SettlementGiftKind.Repurchase))
+        {
+            RefreshSettlementGiftEntry();
+            return;
+        }
+
+        ShopManager.shopManager.OpenSettlementGiftPopup();
+    }
+
+    #endregion
     /// <summary>
     /// 当对象禁用时调用
     /// </summary>
@@ -1027,6 +1309,10 @@ public class PrimaryInterface : UIWindow
         }
         if (ThemeManager.Instance != null)
             ThemeManager.Instance.OnSkinRedPointChanged -= OnRedPointChanged;
+
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnSettlementGiftChanged -= RefreshSettlementGiftEntry;
+        StopSettlementGiftCountdown();
  
         if (!LimitTimeManager.Instance.IsComplete())
         {

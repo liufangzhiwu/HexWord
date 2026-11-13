@@ -177,7 +177,7 @@ public class BeginnerBonusManager
     /// <returns>是否拦截并弹窗展示</returns>
     public bool CheckStageCleared(int completedStage, bool isJump)
     {
-        var user = GameDataManager.Instance.UserData;
+        if (!WillPopupOnStageCleared(completedStage)) return false;
 
         // 1. 第5关通关（无论正常过关或跳关），触发终身首次开启
         if (completedStage == UNLOCK_STAGE)
@@ -186,22 +186,31 @@ public class BeginnerBonusManager
             SystemManager.Instance.ShowPanel(PanelType.BeginnerBonusPanel);
             return true;
         }
-        
-        // 2. 通关第30关（达成目标，且未领奖），必定弹出大奖领取面板！
-        if (completedStage >= TARGET_STAGE && !user.isBeginnerBonusCompleted && !IsExpired())
-        {
-            SystemManager.Instance.ShowPanel(PanelType.BeginnerBonusPanel);
-            return true;
-        }
-        
-        // 3. 活动期间内的特定进度节点弹窗
-        if (IsActivityAlive() && PopupStages.Contains(completedStage))
-        {
-            SystemManager.Instance.ShowPanel(PanelType.BeginnerBonusPanel);
-            return true;
-        }
 
-        return false;
+        // 2/3. 目标关（30）达标领奖 / 活动期内的进度节点
+        SystemManager.Instance.ShowPanel(PanelType.BeginnerBonusPanel);
+        return true;
+    }
+
+    /// <summary>
+    /// 【纯判定】通关 completedStage 这关后，结算页是否<b>会</b>弹新手奖励进度弹窗。
+    /// 与 CheckStageCleared 同口径，但<b>不弹窗、不开活动、不改存档</b>，
+    /// 供结算页礼包调度提前预判（礼包不与该弹窗同时出现）。
+    /// </summary>
+    public bool WillPopupOnStageCleared(int completedStage)
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+
+        var user = GameDataManager.Instance.UserData;
+
+        // 1. 第5关通关（无论正常过关或跳关），触发终身首次开启
+        if (completedStage == UNLOCK_STAGE) return true;
+
+        // 2. 通关第30关（达成目标，且未领奖），必定弹窗
+        if (completedStage >= TARGET_STAGE && !user.isBeginnerBonusCompleted && !IsExpired()) return true;
+
+        // 3. 活动期间内的特定进度节点弹窗
+        return IsActivityAlive() && PopupStages.Contains(completedStage);
     }
     
     /// <summary>
