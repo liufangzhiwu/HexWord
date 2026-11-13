@@ -13,7 +13,14 @@ using System;
 ///   - 商店金币视频（C）：按自然日统计，跨天自动刷新；
 ///   - 分享奖励（F）：按自然日统计，跨天自动刷新；
 ///   - 提示道具 / 复活道具视频（A / B）：按"关卡"统计，换关自动刷新；
+///   - 提示道具 / 复活道具「视频点」已用次数（PropVideoTimes 的 A / B 位）：
+///     按"关卡"统计，换关自动刷新（每关 X=a，看完一次激励视频 X-1）；
 ///   - T 秒冷却：跨所有视频入口共享，用 Ticks 存绝对值。
+///
+/// ★ 两套计数各管一件事：
+///   - *Used（已看完次数）：与分层表 AdFailed 的 A/B/C 比较，决定"从第几次之后开始弹假失败"；
+///   - *ClickUsed（视频点已用次数）：与 cypz_Mechanics 的 PropVideoTimes 比较，决定"本关还能点几次"。
+///   两者不等价：假失败那一次点击不占用视频点次数，只有真实广告播完才 ClickUsed+1。
 /// </summary>
 [Serializable]
 public class AdLimitSaveData
@@ -48,6 +55,34 @@ public class AdLimitSaveData
     /// <summary>当前关卡已正常观看的复活道具视频次数</summary>
     public int reviveUsed;
 
+    // ======================= 视频点次数（PropVideoTimes 上限）：按关卡（商店金币按自然日） =======================
+
+    /// <summary>本关灯泡（提示道具）视频点已用次数（= 本关已看完的激励视频数）</summary>
+    public int bulbClickUsed;
+
+    /// <summary>本关复活道具视频点已用次数（= 本关已看完的激励视频数）</summary>
+    public int reviveClickUsed;
+
+    /// <summary>当日商店金币视频点已用次数（含当日首次免费领取那一次）</summary>
+    public int shopGoldClickUsed;
+
+    // ======================= 假广告失败弹窗标记（每个入口每次只弹 1 次） =======================
+    //
+    // 口径：
+    //   达到分层表 A/B/C 阈值后，该入口只弹一次「假的广告获取失败弹窗」，同时开启 T 秒冷却；
+    //   冷却结束后恢复正常请求广告，不再假失败；假失败那次点击不占用视频点次数。
+    //   - 灯泡 / 复活：随"关卡"清零（与 A/B 阈值同口径）；
+    //   - 商店金币：随"自然日"清零（与 C 阈值同口径）。
+
+    /// <summary>本关灯泡（提示道具）是否已弹过假失败弹窗</summary>
+    public bool bulbFakeFailDone;
+
+    /// <summary>本关复活道具是否已弹过假失败弹窗</summary>
+    public bool reviveFakeFailDone;
+
+    /// <summary>当日商店金币视频是否已弹过假失败弹窗</summary>
+    public bool shopGoldFakeFailDone;
+
     // ======================= 广告失败弹窗冷却（T） =======================
 
     /// <summary>广告失败弹窗冷却截止时间（DateTime.Ticks；0 表示无冷却）</summary>
@@ -65,6 +100,12 @@ public class AdLimitSaveData
             toolLevelKey = toolLevelKey,
             bulbUsed = bulbUsed,
             reviveUsed = reviveUsed,
+            bulbClickUsed = bulbClickUsed,
+            reviveClickUsed = reviveClickUsed,
+            shopGoldClickUsed = shopGoldClickUsed,
+            bulbFakeFailDone = bulbFakeFailDone,
+            reviveFakeFailDone = reviveFakeFailDone,
+            shopGoldFakeFailDone = shopGoldFakeFailDone,
             adFailBlockedUntilTicks = adFailBlockedUntilTicks,
         };
     }

@@ -147,8 +147,9 @@ public class ShopItem : ShopItemBase
     // ======================= 广告可用次数显示 =======================
 
     /// <summary>
-    /// 绑定数据后刷新「广告剩余可用次数 / 总可用次数」显示（仅 FreeGoods 金币视频商品）。
-    /// AdsCanUseTable：策略干预（S=1 且 C>=0）时显示；AdsUseCountText：显示 "剩余/总"。
+    /// 绑定数据后刷新「视频剩余次数 / 每日上限」显示（仅 FreeGoods 金币视频商品），X/a 显示在按钮下方。
+    /// a = cypz_Mechanics 表 PropVideoTimes 第 3 位（如 5_3_5 里的 5，含当日首次免费）；
+    /// X=0 时视频按钮置灰、点击无效。
     /// </summary>
     public override void SetShopData(ShopDataItem data)
     {
@@ -158,25 +159,40 @@ public class ShopItem : ShopItemBase
 
     private void RefreshAdsUseCountUI()
     {
-        if (AdsCanUseTable == null) return;
+        if (shopDataItem == null || shopDataItem.produceNameId != "FreeGoods") return;
+        if (ShopManager.shopManager == null) return;
 
-        bool show = false;
+        int total = ShopManager.shopManager.GetShopGoldVideoTotalLimit();
+        int remain = ShopManager.shopManager.GetShopGoldVideoRemainCount();
 
-        if (ShopManager.shopManager != null
-            && shopDataItem != null
-            && shopDataItem.produceNameId == "FreeGoods")
+        if (AdsCanUseTable != null)
         {
-            AdFailedParams p = ShopManager.shopManager.GetAdFailedParams();
-            if (p.enabled && p.shopGoldVideoLimit >= 0)
-            {
-                int remain = ShopManager.shopManager.GetShopGoldVideoRemainCount();
-                if (AdsUseCountText != null)
-                    AdsUseCountText.text = $"{remain}/{p.shopGoldVideoLimit}";
-                show = true;
-            }
+            AdsCanUseTable.gameObject.SetActive(total >= 0);
+            if (total >= 0 && AdsUseCountText != null)
+                AdsUseCountText.text = $"{remain}/{total}";
         }
 
-        AdsCanUseTable.gameObject.SetActive(show);
+        // X=0 → 视频按钮置灰、点击无效
+        RefreshButtonInteractable();
+    }
+
+    /// <summary>
+    /// FreeGoods（商店金币视频）：当日视频点次数用满后按钮置灰、点击无效。
+    /// 覆盖基类，避免基类在 OnEnable/UpdateUI 时把按钮重新置为可点。
+    /// </summary>
+    protected override void RefreshButtonInteractable()
+    {
+        base.RefreshButtonInteractable();
+
+        if (shopDataItem == null || shopDataItem.produceNameId != "FreeGoods") return;
+        if (ShopManager.shopManager == null) return;
+
+        if (ShopManager.shopManager.IsShopGoldVideoExhausted())
+        {
+            Button btn = GetComponent<Button>();
+            if (btn != null) btn.interactable = false;
+            LogShopItemDetail("商店金币视频次数已用完，按钮置灰");
+        }
     }
 
     /// <summary>FreeGoods：当日首次免广告直发 / 之后看广告领取</summary>
@@ -217,7 +233,8 @@ public class ShopItem : ShopItemBase
 
     /// <summary>
     /// 当日首次「免广告」免费领取商店金币（50）。
-    /// 与看广告领取区分开：不消耗广告次数、不上报视频观看成功。
+    /// 与看广告领取区分开：不上报视频观看成功，但**占用一次视频点次数**
+    /// （PropVideoTimes 第 3 位 = 金币视频点 + 首次免费的合计上限）。
     /// </summary>
     private void GrantFreeGoodsReward()
     {
@@ -227,6 +244,10 @@ public class ShopItem : ShopItemBase
         GameDataManager.Instance.UserData.UpdateGold(reward, true, true, "商店免费领取金币");
 
         GameDataManager.Instance.UserData.isDayFreeGet = true;
+
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnShopGoldFreeClaimed();
+
         RefreshFreeGoodsUI();
 
         LogShopItem($"免费商品直发（当日首次，免广告）: +{reward} 金币");

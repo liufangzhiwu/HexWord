@@ -900,29 +900,39 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     /// </summary>
     private void RefreshAdsUseCountUI()
     {
-        RefreshAdsUseCountPanel(adsCanUseTable, adsUseCountText);
-        RefreshAdsUseCountPanel(adsCanUseTable2, adsUseCountText2);
+        RefreshAdsUseCountPanel(adsCanUseTable, adsUseCountText, adsAddTimeBtn);
+        RefreshAdsUseCountPanel(adsCanUseTable2, adsUseCountText2, adsAddTimeBtn2);
     }
 
-    private void RefreshAdsUseCountPanel(GameObject canUseTable, Text useCountText)
+    /// <summary>
+    /// 刷新复活视频「剩余次数 / 每关上限」显示（主失败页 + 二次确认页），X/a 显示在按钮下方。
+    /// a = cypz_Mechanics 表 PropVideoTimes 的复活位（每关初始 X=a，换关刷新）；X=0 时视频按钮与次数文本（X/a）一并隐藏，
+    /// 金币按钮由父级 HorizontalLayoutGroup 自动居中（与 GetItemScreen 灯泡口径一致）。
+    /// </summary>
+    private void RefreshAdsUseCountPanel(GameObject canUseTable, Text useCountText, Button adsBtn)
     {
-        if (canUseTable == null) return;
+        if (ShopManager.shopManager == null) return;
 
-        bool show = false;
+        int total = ShopManager.shopManager.GetToolVideoTotalLimit(LimitRewordType.ReStartTool);
+        int remain = ShopManager.shopManager.GetToolVideoRemainCount(LimitRewordType.ReStartTool);
+        bool exhausted = ShopManager.shopManager.IsToolVideoExhausted(LimitRewordType.ReStartTool);
 
-        if (ShopManager.shopManager != null)
+        // X=0 → 次数文本一并隐藏（不再显示 0/a）
+        if (canUseTable != null)
         {
-            AdFailedParams p = ShopManager.shopManager.GetAdFailedParams();
-            if (p.enabled && p.reviveVideoPerLevel >= 0)
-            {
-                int remain = ShopManager.shopManager.GetToolVideoRemainCount(LimitRewordType.ReStartTool);
-                if (useCountText != null)
-                    useCountText.text = $"{remain}/{p.reviveVideoPerLevel}";
-                show = true;
-            }
+            canUseTable.SetActive(total >= 0 && !exhausted);
+            if (total >= 0 && useCountText != null)
+                useCountText.text = $"{remain}/{total}";
         }
 
-        canUseTable.SetActive(show);
+        if (adsBtn != null)
+        {
+            // 首次免费复活不消耗视频点次数，按钮仍要保留
+            bool freeReviveAvailable = GameDataManager.Instance != null
+                                       && GameDataManager.Instance.UserData != null
+                                       && !GameDataManager.Instance.UserData.hasUsedFreeRevive;
+            adsBtn.gameObject.SetActive(!exhausted || freeReviveAvailable);
+        }
     }
 
     // ======================= ★ 金币复活按钮：持有复活道具时改成「消耗道具复活」 =======================

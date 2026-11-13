@@ -25,11 +25,15 @@ public class ShopLayerConfig
 ///   S = 开关（1 开 / 0 关）——关闭时全部"假广告失败弹窗"逻辑停用，正常请求广告；
 ///   F = 每天分享次数限制；
 ///   T = 限制时间（秒）——任意一次弹"广告失败弹窗"后，T 秒内点任意视频点都直接弹该弹窗；
-///   A = 当前关卡灯泡道具视频按钮，使用 A 次后，弹假的广告获取失败弹窗（引导付费）；-1 表示不干预；
-///   B = 当前关卡复活道具视频按钮，使用 B 次后，弹假的广告获取失败弹窗（引导付费）；-1 表示不干预；
-///   C = 商店金币视频按钮，使用 C 次后，弹假的广告获取失败弹窗（引导付费）；-1 表示不干预。
+///       T 结束后恢复正常请求广告（假失败每个入口只弹 1 次，不占用视频点次数）；
+///   A = 当前关卡灯泡道具视频按钮，看完 A 次广告后，弹假的广告获取失败弹窗（引导付费）；-1 表示不干预；
+///   B = 当前关卡复活道具视频按钮，看完 B 次广告后，弹假的广告获取失败弹窗（引导付费）；-1 表示不干预；
+///   C = 商店金币视频按钮，看完 C 次广告后，弹假的广告获取失败弹窗（引导付费）；-1 表示不干预。
 /// 注：
-///   - A/B 的计数按"当前关卡"统计（进入关卡时由 SyncToolVideoLevel 按关卡标识刷新）；
+///   ★ A / B / C 是"广告观看次数"阈值，**不是**视频按钮的使用上限。上限在
+///     cypz_Mechanics 表的 PropVideoTimes（格式 A_B_C，如 5_3_5），见 GetToolVideoTotalLimit。
+///   - A / B 的"已看完次数"按"当前关卡"统计（进入关卡时由 SyncToolVideoLevel 按关卡标识刷新）；
+///   - 视频点已用次数：灯泡 / 复活按"关卡"统计（换关清零），商店金币按"自然日"统计；
 ///   - C 与 F 的计数按"自然日"统计；
 ///   - 所有计数持久化在 UserData.adLimit，关闭游戏后仍继承；
 ///   - T 冷却跨所有视频入口共享（灯泡/复活/商店金币视频），同样持久化。
@@ -39,9 +43,9 @@ public struct AdFailedParams
     public bool enabled;                 // S：总开关（1 开 / 0 关）
     public int shareDailyLimit;          // F：每天分享次数上限
     public float tipFailCooldown;        // T：广告失败弹窗冷却（秒）
-    public int bulbVideoPerLevel;        // A：灯泡每关可正常看视频次数（-1 不干预）
-    public int reviveVideoPerLevel;      // B：复活每关可正常看视频次数（-1 不干预）
-    public int shopGoldVideoLimit;       // C：商店金币视频可正常看次数（-1 不干预）
+    public int bulbVideoPerLevel;        // A：灯泡看完 A 次广告后开始弹假失败（-1 不干预）
+    public int reviveVideoPerLevel;      // B：复活看完 B 次广告后开始弹假失败（-1 不干预）
+    public int shopGoldVideoLimit;       // C：商店金币看完 C 次广告后开始弹假失败（-1 不干预）
     public bool isCooldown;              // 运行状态：当前是否处于 T 秒冷却内
 }
 
@@ -144,6 +148,8 @@ public partial class ShopManager : MonoBehaviour
         {
             d.shopGoldDate = today;
             d.shopGoldUsed = 0;
+            d.shopGoldClickUsed = 0;
+            d.shopGoldFakeFailDone = false;
         }
     }
 
@@ -168,6 +174,164 @@ public partial class ShopManager : MonoBehaviour
     {
         if (type == LimitRewordType.ReStartTool) d.reviveUsed = value;
         else d.bulbUsed = value;
+    }
+
+    // ======================= 视频点次数上限：PropVideoTimes（cypz_Mechanics） =======================
+    //
+    // 2026-11-13 口径：
+    //   分层表 AdFailed 的 A/B/C 只是"广告观看次数"阈值（看完第 A 次之后的第一次点击弹假失败），
+    //   视频按钮**总共能用几次**由 cypz_Mechanics 表的 PropVideoTimes 决定，格式 "A_B_C"：
+    //     A = 灯泡每关视频点次数上限（每关 X=a，换关刷新）
+    //     B = 复活每关视频点次数上限（每关 X=a，换关刷新）
+    //     C = 商店金币每日视频点次数上限（含当日首次免费领取那一次）
+    //   假失败那次点击**不占用**视频点次数，且每个入口只弹 1 次；弹窗会开启 T 秒冷却，
+    //   冷却内点任何视频点都重弹弹窗，冷却结束后恢复真实广告。
+    //   例：5_3_5 + AdFailed 的 A=4 / B=-1 / C=3 →
+    //     灯泡：本关 5 次真广告额度；看完第 4 次后的下一次点击弹 1 次假失败（不扣额度），T 过后继续出广告；
+    //     复活：本关 3 次真广告额度，用满后视频按钮隐藏（B=-1 不弹假失败）；
+    //     金币：1 次免费 + 4 次真广告；满 C=3 次后的下一次点击弹 1 次假失败（不扣额度）。
+
+    /// <summary>PropVideoTimes 解析结果：[0]=灯泡 [1]=复活 [2]=商店金币（含首次免费）。</summary>
+    private int[] _propVideoTimes;
+
+    /// <summary>是否已经尝试过加载 PropVideoTimes（无论成功失败只读一次表）。</summary>
+    private bool _propVideoTimesLoaded;
+
+    /// <summary>配置缺失时的兜底值，与策划给的 5_3_5 一致。</summary>
+    private static readonly int[] PropVideoTimesFallback = { 5, 3, 5 };
+
+    /// <summary>
+    /// 惰性解析 cypz_Mechanics 表的 PropVideoTimes 列（"A_B_C"）。
+    /// 表结构：第 0 行中文说明、第 1 行备注、第 2 行字段名、第 3 行（最后一行）数据。
+    /// 解析失败（列不存在 / 内容为空）时退回 5_3_5，保证限次链路不会因为配表问题失效。
+    /// </summary>
+    private void EnsurePropVideoTimesLoaded()
+    {
+        if (_propVideoTimesLoaded) return;
+        _propVideoTimesLoaded = true;
+        _propVideoTimes = (int[])PropVideoTimesFallback.Clone();
+
+        TextAsset asset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_Mechanics");
+        if (asset == null || string.IsNullOrEmpty(asset.text))
+        {
+            LogShop("[PropVideoTimes] cypz_Mechanics 未加载到，使用兜底 5_3_5");
+            return;
+        }
+
+        string[] lines = asset.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        // 1. 找字段名行里的 PropVideoTimes 列号
+        int col = -1, headerRow = -1;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string[] cells = lines[i].Split(',');
+            int idx = Array.IndexOf(cells, "PropVideoTimes");
+            if (idx >= 0)
+            {
+                col = idx;
+                headerRow = i;
+                break;
+            }
+        }
+
+        if (col < 0)
+        {
+            LogShop("[PropVideoTimes] cypz_Mechanics 未找到 PropVideoTimes 列，使用兜底 5_3_5");
+            return;
+        }
+
+        // 2. 字段名行之后的第一条非空数据
+        for (int i = headerRow + 1; i < lines.Length; i++)
+        {
+            string[] cells = lines[i].Split(',');
+            if (cells.Length <= col) continue;
+
+            string raw = cells[col].Trim().Trim('"');
+            if (string.IsNullOrEmpty(raw)) continue;
+
+            string[] parts = raw.Split('_');
+            for (int k = 0; k < _propVideoTimes.Length && k < parts.Length; k++)
+            {
+                if (int.TryParse(parts[k], out int v)) _propVideoTimes[k] = v;
+            }
+
+            LogShop($"[PropVideoTimes] 解析成功: {raw} → 灯泡={_propVideoTimes[0]}, 复活={_propVideoTimes[1]}, 商店金币={_propVideoTimes[2]}");
+            return;
+        }
+
+        LogShop("[PropVideoTimes] PropVideoTimes 列没有数据，使用兜底 5_3_5");
+    }
+
+    /// <summary>灯泡（每关）/ 复活（每关）：视频点次数上限（&lt;0 表示不限制）。</summary>
+    public int GetToolVideoTotalLimit(LimitRewordType toolType)
+    {
+        EnsurePropVideoTimesLoaded();
+
+        if (toolType == LimitRewordType.Tipstool) return _propVideoTimes[0];
+        if (toolType == LimitRewordType.ReStartTool) return _propVideoTimes[1];
+        return -1;
+    }
+
+    /// <summary>商店金币视频：当日视频点次数上限（含首次免费；&lt;0 表示不限制）。</summary>
+    public int GetShopGoldVideoTotalLimit()
+    {
+        EnsurePropVideoTimesLoaded();
+        return _propVideoTimes[2];
+    }
+
+    /// <summary>
+    /// 灯泡/复活：本关已用掉的视频点次数（只有真实激励视频播完才 +1，假失败不占次数）。
+    /// 按"关卡"统计，换关清零；持久化在存档里，杀进程重进同一关仍然继承。
+    /// </summary>
+    public int GetToolVideoClickUsed(LimitRewordType toolType)
+    {
+        AdLimitSaveData d = AdLimitData;
+        return toolType == LimitRewordType.ReStartTool ? d.reviveClickUsed : d.bulbClickUsed;
+    }
+
+    private void IncreaseToolVideoClickUsed(LimitRewordType toolType)
+    {
+        AdLimitSaveData d = AdLimitData;
+        if (toolType == LimitRewordType.ReStartTool) d.reviveClickUsed++;
+        else d.bulbClickUsed++;
+        PersistAdLimit();
+    }
+
+    /// <summary>商店金币：当日已用掉的视频点次数（含首次免费领取）。</summary>
+    public int GetShopGoldVideoClickUsed()
+    {
+        EnsureShopGoldDay();
+        return AdLimitData.shopGoldClickUsed;
+    }
+
+    private void IncreaseShopGoldClickUsed()
+    {
+        EnsureShopGoldDay();
+        AdLimitSaveData d = AdLimitData;
+        d.shopGoldClickUsed++;
+        PersistAdLimit();
+    }
+
+    /// <summary>
+    /// 灯泡/复活：视频点次数是否已经用满（用满后视频按钮隐藏，金币按钮居中）。
+    /// 上限 &lt;0 视为不限制。
+    /// </summary>
+    public bool IsToolVideoExhausted(LimitRewordType toolType)
+    {
+        int total = GetToolVideoTotalLimit(toolType);
+        if (total < 0) return false;
+        return GetToolVideoClickUsed(toolType) >= total;
+    }
+
+    /// <summary>
+    /// 商店金币视频：当日视频点次数是否已经用满（用满后视频按钮置灰、点击无效）。
+    /// 上限 &lt;0 视为不限制。
+    /// </summary>
+    public bool IsShopGoldVideoExhausted()
+    {
+        int total = GetShopGoldVideoTotalLimit();
+        if (total < 0) return false;
+        return GetShopGoldVideoClickUsed() >= total;
     }
 
     /// <summary>构造关卡标识：isChess=true 用拼字关卡，否则用六边形/方块关卡。</summary>
@@ -205,8 +369,11 @@ public partial class ShopManager : MonoBehaviour
     public struct ShopGoldVideoState
     {
         public bool used;         // 当日是否已达到 C 阈值（再点将弹假的广告获取失败面板）
-        public int total;         // 当日已正常观看次数
-        public bool freeReady;    // 是否可以正常观看（= !used 或 S=0/C=-1 时始终为 true）
+        public int total;         // 当日已正常观看次数（不含首次免费）
+        public bool freeReady;    // 是否可以正常观看（= !used）
+        public int clickUsed;     // 当日视频点已用次数（含首次免费领取）
+        public int clickTotal;    // 当日视频点次数上限（PropVideoTimes 第 3 位）
+        public bool exhausted;    // 视频点次数是否用满（用满后按钮置灰、点击无效）
     }
 
     // ======================= 分层加载（缓存 CSV） =======================
@@ -547,13 +714,14 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>
     /// 解析广告失败策略参数（S_F_T_A_B_C），来源：用户分层表 AdFailed 列。
-    /// 解析规则（新语义）：
+    /// 解析规则：
     ///   S = 开关（1 开 / 0 关）
     ///   F = 每天分享次数上限
     ///   T = 冷却秒数（任意一次弹"广告失败弹窗"后 T 秒内，点任意视频点都直接弹该弹窗）
-    ///   A = 灯泡每关可正常看视频次数（-1 不干预）
-    ///   B = 复活每关可正常看视频次数（-1 不干预）
-    ///   C = 商店金币视频可正常观看次数（-1 不干预）
+    ///   A = 灯泡看完 A 次广告后开始弹假失败（-1 不干预）
+    ///   B = 复活看完 B 次广告后开始弹假失败（-1 不干预）
+    ///   C = 商店金币看完 C 次广告后开始弹假失败（-1 不干预）
+    /// ★ A/B/C 是"看完次数"阈值，视频按钮的总次数上限是 cypz_Mechanics 的 PropVideoTimes。
     /// </summary>
     public AdFailedParams GetAdFailedParams()
     {
@@ -595,9 +763,10 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 关卡进入时调用：只有"关卡标识变化"才清零提示/复活视频次数。
-    ///   - 换关（关卡号或模式变化）→ 清零，满足"每关刷新"；
-    ///   - 同一关重进 / 关掉游戏再打开继续本关 → 保留已用次数，满足"数据继承"。
+    /// 关卡进入时调用：只有"关卡标识变化"才清零提示/复活的道具视频计数。
+    ///   - 换关（关卡号或模式变化）→ 清零，满足"每关初始 X=a"；
+    ///   - 同一关重进 / 关掉游戏再打开继续本关 → 保留已用次数，满足"数据继承"；
+    ///   - 清零项：A/B 已看完次数、视频点已用次数（bulbClickUsed / reviveClickUsed）、假失败标记。
     /// 换关同时清掉「广告失败冷却 T」：冷却只约束"同一关内不要反复弹"，
     /// 否则上一关用完次数弹过 AdsFailScreen 后，T（90~150s）会压到下一关，
     /// 新关卡视频点还有可用次数却一点就弹「广告无法加载」。
@@ -613,13 +782,17 @@ public partial class ShopManager : MonoBehaviour
         d.toolLevelKey = key;
         d.bulbUsed = 0;
         d.reviveUsed = 0;
+        d.bulbClickUsed = 0;
+        d.reviveClickUsed = 0;
+        d.bulbFakeFailDone = false;
+        d.reviveFakeFailDone = false;
 
         // ★ 换关刷新广告失败冷却（T）：A/B 次数已按新关卡重置，冷却不应跨关生效。
         bool hadCooldown = d.adFailBlockedUntilTicks > 0 && DateTime.Now < GetAdFailBlockedUntil();
         d.adFailBlockedUntilTicks = 0;
 
         PersistAdLimit();
-        LogShop($"[AdFailed] 换关 → {key}，提示/复活视频次数已刷新" +
+        LogShop($"[AdFailed] 换关 → {key}，提示/复活视频次数与视频点次数已刷新" +
                 (hadCooldown ? "，上一关的广告失败冷却已清除" : string.Empty));
     }
 
@@ -632,8 +805,13 @@ public partial class ShopManager : MonoBehaviour
         AdLimitSaveData d = AdLimitData;
         d.bulbUsed = 0;
         d.reviveUsed = 0;
+        d.bulbClickUsed = 0;
+        d.reviveClickUsed = 0;
+        d.bulbFakeFailDone = false;
+        d.reviveFakeFailDone = false;
+        d.shopGoldFakeFailDone = false;
         PersistAdLimit();
-        LogShop("[AdFailed] 提示/复活视频使用次数已强制清零");
+        LogShop("[AdFailed] 提示/复活视频使用次数与视频点次数已强制清零");
     }
 
     /// <summary>
@@ -642,7 +820,9 @@ public partial class ShopManager : MonoBehaviour
     ///   1. S=0 → 不弹（关闭整个假失败逻辑）；
     ///   2. 处于 T 秒冷却中 → 弹；
     ///   3. A/B = -1 → 不弹；
-    ///   4. 当前关卡已用次数 >= A/B → 弹。
+    ///   4. 当前关卡已看完的广告次数 >= A/B → 弹；
+    ///   5. 该入口已经弹过一次假失败（灯泡/复活看本关，商店金币看当日）→ 不再弹（T 结束后恢复真实广告）。
+    /// 注意：视频点次数用满（PropVideoTimes）时不弹，由 IsToolVideoExhausted 负责隐藏按钮。
     /// </summary>
     public bool ShouldShowFakeAdFailed(LimitRewordType toolType)
     {
@@ -653,60 +833,128 @@ public partial class ShopManager : MonoBehaviour
         int limit = GetToolVideoLevelLimit(toolType);
         if (limit < 0) return false;
 
-        return GetToolVideoUsedCount(toolType) >= limit;
+        if (GetToolVideoUsedCount(toolType) < limit) return false;
+
+        // 已弹过假失败 → 冷却结束后恢复正常广告，不再弹
+        return !IsFakeFailDone(toolType);
+    }
+
+    /// <summary>该入口是否已经弹过假失败弹窗（灯泡/复活随关卡清零，商店金币随自然日清零）。</summary>
+    private bool IsFakeFailDone(LimitRewordType toolType)
+    {
+        AdLimitSaveData d = AdLimitData;
+        if (toolType == LimitRewordType.Tipstool) return d.bulbFakeFailDone;
+        if (toolType == LimitRewordType.ReStartTool) return d.reviveFakeFailDone;
+        EnsureShopGoldDay();
+        return d.shopGoldFakeFailDone;
+    }
+
+    /// <summary>标记该入口已弹过假失败弹窗。</summary>
+    private void MarkFakeFailDone(LimitRewordType toolType)
+    {
+        AdLimitSaveData d = AdLimitData;
+        if (toolType == LimitRewordType.Tipstool) d.bulbFakeFailDone = true;
+        else if (toolType == LimitRewordType.ReStartTool) d.reviveFakeFailDone = true;
+        else
+        {
+            EnsureShopGoldDay();
+            d.shopGoldFakeFailDone = true;
+        }
+        PersistAdLimit();
     }
 
     /// <summary>
     /// 灯泡/复活点击的便捷入口：
-    ///   - 返回 true  → 已弹出"假的广告获取失败面板"，调用方不要再去请求真实广告；
+    ///   - 返回 true  → 已拦截，调用方不要再去请求真实广告
+    ///                  （视频点已用满 / 假失败弹窗已弹出）；
     ///   - 返回 false → 调用方正常请求广告。
+    ///
+    /// 计数口径（2026-11-13 调整）：
+    ///   - 视频点次数已用满 → 只提示，不再计数（按钮本应已隐藏，这里兜底）；
+    ///   - T 秒冷却内重复点击 → 只重弹弹窗，不占用新的视频点次数、也不延长冷却；
+    ///   - 达到 A/B 阈值 → 弹假失败弹窗并开启 T 秒冷却，**不占用**视频点次数；
+    ///   - 该入口已弹过假失败 → 直接放行真实广告（T 结束后恢复正常）。
     /// </summary>
     public bool TryHandleToolClickAsFakeFail(LimitRewordType toolType)
     {
-        if (ShouldShowFakeAdFailed(toolType))
+        // ① 视频点次数用满：视频按钮应已隐藏，这里做兜底拦截
+        if (IsToolVideoExhausted(toolType))
         {
-            ShowAdFailedPanel(toolType);
+            LogShop($"[AdFailed] {toolType} 视频点次数已用完（{GetToolVideoClickUsed(toolType)}/{GetToolVideoTotalLimit(toolType)}），拦截点击");
+            MessageSystem.Instance.ShowTip("今日视频次数已用完");
             return true;
         }
+
+        AdFailedParams p = GetAdFailedParams();
+        if (!p.enabled) return false;
+
+        // ② T 秒冷却内：重弹弹窗，不扣次数、不刷新冷却
+        if (p.isCooldown)
+        {
+            ShowAdFailedPanel(toolType, false);
+            return true;
+        }
+
+        // ③ 达到 A/B 阈值且本关还没弹过：弹假失败弹窗（开启 T），不占用视频点次数
+        int limit = GetToolVideoLevelLimit(toolType);
+        if (limit >= 0
+            && GetToolVideoUsedCount(toolType) >= limit
+            && !IsFakeFailDone(toolType))
+        {
+            MarkFakeFailDone(toolType);
+            ShowAdFailedPanel(toolType, true);
+            return true;
+        }
+
+        // ④ 其余情况（含 T 结束后本关已弹过假失败）：正常请求广告
         return false;
     }
 
     /// <summary>
-    /// 能否请求真实广告（= !ShouldShowFakeAdFailed）。
+    /// 能否请求真实广告（= 视频点次数没用满 且 不该弹假失败）。
     /// 保留原方法名与签名，语义调整为"是否可以请求真实广告"。
     /// </summary>
     public bool CanPlayToolVideo(LimitRewordType toolType)
     {
+        if (IsToolVideoExhausted(toolType)) return false;
         return !ShouldShowFakeAdFailed(toolType);
     }
 
     /// <summary>
-    /// 展示"广告失败弹窗"（真实失败与假失败共用），并刷新 T 秒冷却。
-    /// 冷却内任意视频点都会走 ShouldShowFakeAdFailed 返回 true 的分支。
+    /// 展示"广告失败弹窗"（真实失败与假失败共用）。
     /// </summary>
-    public void ShowAdFailedPanel(LimitRewordType toolType)
+    /// <param name="refreshCooldown">
+    /// true = 同时刷新 T 秒冷却（真实广告加载失败时用）；
+    /// false = 不刷新冷却（假失败/冷却期内重弹，冷却已由第一次弹窗设定）。
+    /// </param>
+    public void ShowAdFailedPanel(LimitRewordType toolType, bool refreshCooldown = true)
     {
         AdFailedParams p = GetAdFailedParams();
-        if (p.tipFailCooldown > 0)
+        if (refreshCooldown && p.tipFailCooldown > 0)
             SetAdFailBlockedUntil(DateTime.Now.AddSeconds(p.tipFailCooldown));
 
         _lastAdFailedToolType = toolType;
-        LogShop($"ShowAdFailedPanel: toolType={toolType}, 冷却={p.tipFailCooldown}s, 截止={GetAdFailBlockedUntil():HH:mm:ss}");
+        LogShop($"ShowAdFailedPanel: toolType={toolType}, 刷新冷却={refreshCooldown}, 冷却={p.tipFailCooldown}s, " +
+                $"截止={GetAdFailBlockedUntil():HH:mm:ss}, 视频点={GetToolVideoClickUsed(toolType)}/{GetToolVideoTotalLimit(toolType)}");
         SystemManager.Instance.ShowPanel(PanelType.AdsFailScreen);
     }
 
     /// <summary>
     /// 通用"广告失败弹窗"（无具体道具类型时使用，例如商店金币视频的假失败）。
     /// </summary>
-    public void ShowAdFailedPanel()
+    /// <param name="refreshCooldown">
+    /// true = 同时开启 T 秒冷却（假失败首次弹出 / 真实广告加载失败）；
+    /// false = 冷却期内重弹，不延长冷却。
+    /// </param>
+    public void ShowAdFailedPanel(bool refreshCooldown = true)
     {
         AdFailedParams p = GetAdFailedParams();
-        // if (p.tipFailCooldown > 0)
-        //     SetAdFailBlockedUntil(DateTime.Now.AddSeconds(p.tipFailCooldown));
+        if (refreshCooldown && p.tipFailCooldown > 0)
+            SetAdFailBlockedUntil(DateTime.Now.AddSeconds(p.tipFailCooldown));
 
         _lastAdFailedToolType = LimitRewordType.Coins; // 通用入口 = 商店金币视频路径
-        //LogShop($"ShowAdFailedPanel (通用): 冷却={p.tipFailCooldown}s, 截止={GetAdFailBlockedUntil():HH:mm:ss}");
-        LogShop($"ShowAdFailedPanel (通用)");
+        LogShop($"ShowAdFailedPanel (通用): 开启冷却={refreshCooldown}, 冷却={p.tipFailCooldown}s, " +
+                $"截止={GetAdFailBlockedUntil():HH:mm:ss}");
         SystemManager.Instance.ShowPanel(PanelType.AdsFailScreen);
     }
 
@@ -744,54 +992,52 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 灯泡/复活视频成功观看后调用：累计当前关卡已看次数（用于 A/B 阈值判断）。
+    /// 灯泡/复活视频成功观看后调用：累计"当前关卡已看完次数"（A/B 假失败阈值判断）
+    /// 与"视频点已用次数"（PropVideoTimes 上限判断）。
     /// </summary>
     public void OnToolVideoWatched(LimitRewordType toolType)
     {
         IncreaseToolVideoUsed(toolType);
-        LogShop($"OnToolVideoWatched: toolType={toolType}, 本次已看={GetToolVideoUsedCount(toolType)}");
+        IncreaseToolVideoClickUsed(toolType);
+        LogShop($"OnToolVideoWatched: toolType={toolType}, 已看完={GetToolVideoUsedCount(toolType)}, " +
+                $"视频点={GetToolVideoClickUsed(toolType)}/{GetToolVideoTotalLimit(toolType)}");
     }
 
-    // ======================= 剩余可看次数（供 UI 显示） =======================
+    // ======================= 剩余可看次数（供 UI 显示 X/a） =======================
 
     /// <summary>
-    /// 获取指定道具视频在"当前关卡"的剩余可正常观看次数（A/B）。
-    /// 返回 -1 表示不干预（无限制）；S=0 关闭策略时同样返回 -1。
+    /// 灯泡/复活的剩余视频点次数 X（对应 UI 的「X/a」），a 取 PropVideoTimes。
+    /// 返回 -1 表示不限制（配置为 -1）。
     /// </summary>
     public int GetToolVideoRemainCount(LimitRewordType toolType)
     {
-        AdFailedParams p = GetAdFailedParams();
-        if (!p.enabled) return -1;
+        int total = GetToolVideoTotalLimit(toolType);
+        if (total < 0) return -1;
 
-        int limit = GetToolVideoLevelLimit(toolType);
-        if (limit < 0) return -1;
-
-        return Mathf.Max(0, limit - GetToolVideoUsedCount(toolType));
+        return Mathf.Max(0, total - GetToolVideoClickUsed(toolType));
     }
 
     /// <summary>
-    /// 商店金币视频当日剩余可正常观看次数（C）。
-    /// 返回 -1 表示不干预（无限制）。
+    /// 商店金币视频当日剩余视频点次数 X（对应 UI 的「X/a」），a 取 PropVideoTimes 第 3 位。
+    /// 返回 -1 表示不限制（配置为 -1）。
     /// </summary>
     public int GetShopGoldVideoRemainCount()
     {
-        AdFailedParams p = GetAdFailedParams();
-        if (!p.enabled) return -1;
-
-        int limit = p.shopGoldVideoLimit;
-        if (limit < 0) return -1;
+        int total = GetShopGoldVideoTotalLimit();
+        if (total < 0) return -1;
 
         EnsureShopGoldDay();
-        return Mathf.Max(0, limit - AdLimitData.shopGoldUsed);
+        return Mathf.Max(0, total - AdLimitData.shopGoldClickUsed);
     }
 
-    // ======================= 商店金币视频（S 开关 / C 次数阈值） =======================
+    // ======================= 商店金币视频（S 开关 / C 假失败阈值 / PropVideoTimes 上限） =======================
 
     /// <summary>
     /// 商店金币视频当前状态：
     ///   - used       = 当日是否已达到 C 阈值（再点将弹假的广告获取失败面板）；
-    ///   - total      = 当日已正常观看次数；
-    ///   - freeReady  = 是否可以正常观看（S=0 或 C=-1 时始终为 true）。
+    ///   - total      = 当日已正常观看次数（不含首次免费领取）；
+    ///   - freeReady  = 是否可以正常观看（已达 C 阈值后为 false）；
+    ///   - exhausted  = 当日视频点次数是否用满（含首次免费；用满后视频按钮置灰、点击无效）。
     /// </summary>
     public ShopGoldVideoState GetShopGoldVideoState()
     {
@@ -801,9 +1047,12 @@ public partial class ShopManager : MonoBehaviour
 
         AdFailedParams p = GetAdFailedParams();
         s.total = AdLimitData.shopGoldUsed;
+        s.clickUsed = AdLimitData.shopGoldClickUsed;
+        s.clickTotal = GetShopGoldVideoTotalLimit();
+        s.exhausted = IsShopGoldVideoExhausted();
 
-        // S 关闭或 C=-1 → 不干预，始终可正常观看
-        if (!p.enabled || p.shopGoldVideoLimit < 0)
+        // C=-1 → 不干预，始终可正常观看
+        if (p.shopGoldVideoLimit < 0)
         {
             s.used = false;
             s.freeReady = true;
@@ -823,7 +1072,9 @@ public partial class ShopManager : MonoBehaviour
     ///   1. S=0 → 不弹；
     ///   2. 处于 T 秒冷却中 → 弹；
     ///   3. C=-1 → 不弹；
-    ///   4. 当日已用次数 >= C → 弹。
+    ///   4. 当日已看完次数 >= C → 弹；
+    ///   5. 当日已弹过一次假失败 → 不再弹（T 结束后恢复真实广告）。
+    /// 注意：视频点次数用满（PropVideoTimes）时不弹，改由 IsShopGoldVideoExhausted 置灰按钮。
     /// </summary>
     public bool ShouldShowFakeAdFailedForShopGold()
     {
@@ -835,52 +1086,83 @@ public partial class ShopManager : MonoBehaviour
         if (limit < 0) return false;
 
         EnsureShopGoldDay();
-        return AdLimitData.shopGoldUsed >= limit;
+        if (AdLimitData.shopGoldUsed < limit) return false;
+
+        return !AdLimitData.shopGoldFakeFailDone;
     }
 
     /// <summary>
     /// 商店金币视频点击便捷入口：
-    ///   - 返回 true  → 已弹出"假的广告获取失败面板"，调用方不要再去请求真实广告；
+    ///   - 返回 true  → 已拦截，调用方不要再去请求真实广告
+    ///                  （视频点已用满 / 假失败弹窗已弹出）；
     ///   - 返回 false → 调用方正常请求广告。
+    /// 计数口径与灯泡/复活一致（2026-11-13 调整）：
+    ///   用满只提示；冷却内重点只重弹、不扣次数也不延长冷却；
+    ///   达到 C 阈值 → 弹假失败并开启 T，**不占用**视频点次数；当天已弹过则直接放行真实广告。
     /// </summary>
     public bool TryHandleShopGoldClickAsFakeFail()
     {
-        if (ShouldShowFakeAdFailedForShopGold())
+        // ① 视频点次数用满：按钮应已置灰，这里做兜底拦截
+        if (IsShopGoldVideoExhausted())
         {
-            ShowAdFailedPanel();
+            LogShop($"[AdFailed] 商店金币视频点次数已用完（{GetShopGoldVideoClickUsed()}/{GetShopGoldVideoTotalLimit()}），拦截点击");
+            MessageSystem.Instance.ShowTip("今日视频次数已用完");
             return true;
         }
+
+        AdFailedParams p = GetAdFailedParams();
+        if (!p.enabled) return false;
+
+        // ② T 秒冷却内：重弹弹窗，不扣次数、不刷新冷却
+        if (p.isCooldown)
+        {
+            ShowAdFailedPanel(false);
+            return true;
+        }
+
+        // ③ 达到 C 阈值且当天还没弹过：弹假失败弹窗（开启 T），不占用视频点次数
+        EnsureShopGoldDay();
+        int limit = p.shopGoldVideoLimit;
+        if (limit >= 0
+            && AdLimitData.shopGoldUsed >= limit
+            && !AdLimitData.shopGoldFakeFailDone)
+        {
+            MarkFakeFailDone(LimitRewordType.Coins);
+            ShowAdFailedPanel(true);
+            return true;
+        }
+
+        // ④ 其余情况（含 T 结束后当天已弹过假失败）：正常请求广告
         return false;
     }
 
     /// <summary>
-    /// 商店金币视频正常观看成功后的发放入口。
-    /// 若当前已超过 C 阈值，则拒绝发放（兜底：外部若遗漏了点击前的假失败拦截）。
+    /// 商店金币视频正常观看成功后的发放入口（广告已播完，必发奖 + 必扣一次视频点次数）。
+    ///
+    /// ★ 2026-11-13 修正：原实现里「达到 C 阈值就 return false」会把这一次广告白吞——
+    ///   既不发金币、也不扣视频点次数，表现为「冷却结束后看完广告，X/a 不减、卡片永远不置灰」。
+    ///   C 阈值只是"从第几次之后开始弹假失败引导付费"，拦截放在点击前
+    ///   （<see cref="TryHandleShopGoldClickAsFakeFail"/>），一旦广告真的播完就必须结算。
     /// </summary>
     /// <param name="reward">本次发放金币数（默认取 ShopGoldVideoReward=100；商品侧会按配置表 shop.csv 传入）</param>
     /// <returns>是否真的发放了金币</returns>
     public bool OnShopGoldClaimed(int reward = ShopGoldVideoReward)
     {
-        // ★ 关键修复：必须先按自然日归一化，再累加/判断阈值。
-        //   原实现直接 _shopGoldUsedToday++，但从未写入日期；首次领取时日期为空，
-        //   剩余次数计算里 used 恒为 0，表现为"每次看完广告，商店广告次数没有减"。
+        // 先按自然日归一化，再做累加：跨天后计数要从 0 开始
         EnsureShopGoldDay();
 
-        // 兜底只看"次数阈值"，不要看 T 冷却：广告已经播完，不能因为冷却把奖励吞掉。
         AdFailedParams p = GetAdFailedParams();
-        if (p.enabled && p.shopGoldVideoLimit >= 0 && AdLimitData.shopGoldUsed >= p.shopGoldVideoLimit)
-        {
-            LogShop("OnShopGoldClaimed 跳过: 已达 C 阈值（不应发放金币）");
-            return false;
-        }
-
         AdLimitSaveData d = AdLimitData;
+
+        // 广告已播完：无条件记账（已看完次数 + 视频点已用次数），保证 X/a 与置灰判断永远跟得上
         d.shopGoldUsed++;
+        d.shopGoldClickUsed++;
         PersistAdLimit();
 
         GameDataManager.Instance.UserData.UpdateGold(reward, false, false, "商店金币视频");
         MessageSystem.Instance.ShowTip($"+{reward} 金币");
-        LogShop($"OnShopGoldClaimed: 发放={reward}, 今日已领={d.shopGoldUsed}, 阈值={p.shopGoldVideoLimit}");
+        LogShop($"OnShopGoldClaimed: 发放={reward}, 今日已看完={d.shopGoldUsed}, C阈值={p.shopGoldVideoLimit}, " +
+                $"视频点={d.shopGoldClickUsed}/{GetShopGoldVideoTotalLimit()}, 已用满={IsShopGoldVideoExhausted()}");
         return true;
     }
 
@@ -894,8 +1176,20 @@ public partial class ShopManager : MonoBehaviour
 
         AdLimitSaveData d = AdLimitData;
         d.shopGoldUsed++;
+        d.shopGoldClickUsed++;
         PersistAdLimit();
-        LogShop($"RecordShopGoldVideoWatched: 今日已看={d.shopGoldUsed}, 阈值={GetAdFailedParams().shopGoldVideoLimit}");
+        LogShop($"RecordShopGoldVideoWatched: 今日已看完={d.shopGoldUsed}, C阈值={GetAdFailedParams().shopGoldVideoLimit}, " +
+                $"视频点={d.shopGoldClickUsed}/{GetShopGoldVideoTotalLimit()}");
+    }
+
+    /// <summary>
+    /// 商店金币视频「当日首次免费领取」：不播广告，但**占用一次视频点次数**
+    /// （PropVideoTimes 第 3 位是"金币视频点 + 首次免费"的合计上限）。
+    /// </summary>
+    public void OnShopGoldFreeClaimed()
+    {
+        IncreaseShopGoldClickUsed();
+        LogShop($"OnShopGoldFreeClaimed: 首次免费已占用视频点次数，剩余={GetShopGoldVideoRemainCount()}/{GetShopGoldVideoTotalLimit()}");
     }
 
     // ======================= 分享奖励（F：每天分享次数上限） =======================
@@ -906,8 +1200,26 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"OnShareClicked: {_shareClickedTime:HH:mm:ss}");
     }
 
-    /// <summary>分享返回结算：校验每日上限/间隔并发奖+toast「分享成功 +1灯泡 +1复活 +50金币」。返回是否真正发奖。</summary>
+    /// <summary>分享奖励数额：金币</summary>
+    public const int ShareGoldReward = 50;
+
+    /// <summary>分享奖励数额：提示道具 / 复活道具</summary>
+    public const int ShareToolReward = 1;
+
+    /// <summary>
+    /// 分享返回结算（按弹窗的触发来源发奖，2026-11-13 调整）：
+    ///   - 商店金币弹窗（Coins）        → 只发金币 50；
+    ///   - 提示道具弹窗（Tipstool）     → 只发提示道具 1；
+    ///   - 复活道具弹窗（ReStartTool）  → 只发复活道具 1。
+    /// 入口类型缺省取最近一次广告失败弹窗的来源（LastAdFailedToolType）。
+    /// </summary>
     public bool OnShareReturned(bool fromBackground)
+    {
+        return OnShareReturned(fromBackground, _lastAdFailedToolType);
+    }
+
+    /// <summary>分享返回结算：校验每日上限/间隔，按触发来源只发对应资源。返回是否真正发奖。</summary>
+    public bool OnShareReturned(bool fromBackground, LimitRewordType toolType)
     {
         EnsureShareDay();
         if (AdLimitData.shareUsed >= GetAdFailedParams().shareDailyLimit)
@@ -929,31 +1241,62 @@ public partial class ShopManager : MonoBehaviour
 
         AdLimitData.shareUsed++;
         PersistAdLimit();
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, 1, "分享奖励");     // 灯泡 +1
-        GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, 1, "分享奖励");  // 复活 +1（需求 C-STRAT-06：灯泡1/复活1/金币50）
-        GameDataManager.Instance.UserData.UpdateGold(50, false, false, "分享奖励");
+        GrantShareReward(toolType);
 
         // 奖励改用 AwardScreen 展示（替代原先的 Toast）
-        ShowShareAwardScreen();
+        ShowShareAwardScreen(toolType);
 
-        LogShop($"OnShareReturned: 分享成功, 今日次数={AdLimitData.shareUsed}");
+        LogShop($"OnShareReturned: 分享成功, 来源={toolType}, 今日次数={AdLimitData.shareUsed}");
         return true;
     }
 
     /// <summary>
-    /// 分享成功奖励弹窗：灯泡 1 / 复活 1 / 金币 50。
+    /// 按弹窗触发来源发放分享奖励（三选一，不叠加）：
+    ///   商店金币 → 金币；提示道具 → 提示道具；复活道具 → 复活道具。
+    /// </summary>
+    private void GrantShareReward(LimitRewordType toolType)
+    {
+        switch (toolType)
+        {
+            case LimitRewordType.Coins:
+                GameDataManager.Instance.UserData.UpdateGold(ShareGoldReward, false, false, "分享奖励");
+                break;
+
+            case LimitRewordType.ReStartTool:
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, ShareToolReward, "分享奖励");
+                break;
+
+            default: // 提示道具（含兜底）
+                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Tipstool, ShareToolReward, "分享奖励");
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 分享成功奖励弹窗：按触发来源只展示对应的一种资源
+    /// （商店金币→金币 50 / 提示道具→灯泡 1 / 复活道具→复活 1）。
     /// 通过 AwardScreen.OverrideRewards 展示，不复用商店商品数据。
     /// </summary>
-    private void ShowShareAwardScreen()
+    private void ShowShareAwardScreen(LimitRewordType toolType)
     {
-        AwardScreen.OverrideRewards = new List<RewardItem>
-        {
-            new RewardItem { type = (int)LimitRewordType.Tipstool,   amount = 1  },  // 灯泡
-            new RewardItem { type = (int)LimitRewordType.ReStartTool, amount = 1  }, // 复活
-            new RewardItem { type = (int)LimitRewordType.Coins,       amount = 50 },  // 金币
-        };
+        AwardScreen.OverrideRewards = new List<RewardItem>();
 
-        Debug.Log("[Shop] 分享成功，弹出 AwardScreen 展示奖励");
+        switch (toolType)
+        {
+            case LimitRewordType.Coins:
+                AwardScreen.OverrideRewards.Add(new RewardItem { type = (int)LimitRewordType.Coins, amount = ShareGoldReward });
+                break;
+
+            case LimitRewordType.ReStartTool:
+                AwardScreen.OverrideRewards.Add(new RewardItem { type = (int)LimitRewordType.ReStartTool, amount = ShareToolReward });
+                break;
+
+            default:
+                AwardScreen.OverrideRewards.Add(new RewardItem { type = (int)LimitRewordType.Tipstool, amount = ShareToolReward });
+                break;
+        }
+
+        Debug.Log($"[Shop] 分享成功（来源={toolType}），弹出 AwardScreen 展示奖励");
         SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
     }
 

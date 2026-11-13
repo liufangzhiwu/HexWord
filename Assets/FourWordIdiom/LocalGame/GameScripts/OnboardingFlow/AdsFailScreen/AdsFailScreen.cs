@@ -10,8 +10,9 @@ using UnityEngine.UI;
 /// ShopManager.ShowAdFailedPanel 弹出，提供两条转化路径：
 ///
 ///   1. 分享换奖励（需求 C-STRAT-06）：分享后切回前台且间隔 > 3 秒判成功，
-///      发灯泡1/复活1/金币50（ShopManager.OnShareReturned，toast
-///      「分享成功 +1灯泡 +1复活 +50金币」），成功后关闭本弹窗；
+///      按本次弹窗的触发来源**只发对应的一种资源**：
+///      商店金币弹窗→金币50、提示道具弹窗→提示道具1、复活道具弹窗→复活道具1
+///      （ShopManager.OnShareReturned(fromBackground, toolType)），成功后关闭本弹窗；
 ///      每天限 F 次，达限后隐藏分享按钮；
 ///      判定信号：OnApplicationFocus / OnApplicationPause（切出/切回）+
 ///      鸿蒙面板 dismiss 兜底（见 ShareHarmonyProxy.tslib），延时去抖；
@@ -166,8 +167,8 @@ public class AdsFailScreen : UIWindow
     }
 
     /// <summary>
-    /// 统一收口：成功发奖（OnShareReturned 弹「分享成功 +1灯泡 +1复活 +50金币」）后关闭本弹窗；
-    /// 失败弹「分享失败」并刷新按钮。
+    /// 统一收口：成功后由 OnShareReturned 按本次触发来源发奖（只发一种资源）并弹 AwardScreen，
+    /// 随后关闭本弹窗；失败弹「分享失败」并刷新按钮。
     /// </summary>
     private void ApplyShareResult(bool success)
     {
@@ -180,13 +181,18 @@ public class AdsFailScreen : UIWindow
         ResetHarmonyShareProxy();
 #endif
 
+        // 触发来源：灯泡 / 复活 / 商店金币（面板打开时由 ShopManager 记录）
+        LimitRewordType toolType = ShopManager.shopManager != null
+            ? ShopManager.shopManager.LastAdFailedToolType
+            : LimitRewordType.Tipstool;
+
         bool granted = false;
         if (ShopManager.shopManager != null)
-            granted = ShopManager.shopManager.OnShareReturned(success); // 内部校验每日上限/间隔并发奖+toast
+            granted = ShopManager.shopManager.OnShareReturned(success, toolType); // 内部校验每日上限/间隔，按来源发奖
 
         if (success && granted)
         {
-            Close(); // 成功：toast 已由 OnShareReturned 弹出，关闭 AdsFailScreen 弹窗
+            Close(); // 成功：奖励弹窗已由 OnShareReturned 弹出，关闭 AdsFailScreen
             return;
         }
 
@@ -750,7 +756,7 @@ public class AdsFailScreen : UIWindow
             case LimitRewordType.Butterfly: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
             case LimitRewordType.Tipstool: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
             case LimitRewordType.AutoComplete: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
-            case LimitRewordType.ReStartTool: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_3");
+            case LimitRewordType.ReStartTool: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("clock");
             case LimitRewordType.InfiniteEnergy: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("InfiniteEnergy");
             case LimitRewordType.RemoveDayAds: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("shopads");
             default: return null;

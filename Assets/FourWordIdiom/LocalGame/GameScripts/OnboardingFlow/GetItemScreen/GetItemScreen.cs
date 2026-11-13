@@ -317,29 +317,34 @@ public class GetItemScreen : UIWindow
     // ======================= 广告剩余可用次数显示 =======================
 
     /// <summary>
-    /// 刷新「广告剩余可用次数 / 总可用次数」显示（仅提示灯/灯泡道具）。
-    /// - AdsCanUseTable：策略干预（S=1 且 A>=0）时显示，否则隐藏；
-    /// - AdsUseCountText：显示 "剩余/总"（如 2/4）。
+    /// 刷新「视频剩余次数 / 每关上限」显示（仅提示灯/灯泡道具），X/a 显示在道具按钮下方。
+    /// - a = cypz_Mechanics 表 PropVideoTimes 的灯泡位（如 5_3_5 里的 5，每关初始 X=a，换关刷新）；
+    /// - X = a - 本关已看完的激励视频数（只有真广告播完才 -1，假失败不占次数，持久化在 UserData.adLimit）；
+    /// - X=0 时：视频按钮隐藏，次数文本（X/a）一并隐藏，金币按钮由父级 HorizontalLayoutGroup 自动居中。
     /// </summary>
     private void RefreshAdsUseCountUI()
     {
-        if (AdsCanUseTable == null) return;
-
-        bool show = false;
-
-        if (limitRewordType == LimitRewordType.Tipstool && ShopManager.shopManager != null)
+        if (limitRewordType != LimitRewordType.Tipstool || ShopManager.shopManager == null)
         {
-            AdFailedParams p = ShopManager.shopManager.GetAdFailedParams();
-            if (p.enabled && p.bulbVideoPerLevel >= 0)
-            {
-                int remain = ShopManager.shopManager.GetToolVideoRemainCount(LimitRewordType.Tipstool);
-                if (AdsUseCountText != null)
-                    AdsUseCountText.text = $"{remain}/{p.bulbVideoPerLevel}";
-                show = true;
-            }
+            if (AdsCanUseTable != null) AdsCanUseTable.gameObject.SetActive(false);
+            return;
         }
 
-        AdsCanUseTable.gameObject.SetActive(show);
+        int total = ShopManager.shopManager.GetToolVideoTotalLimit(LimitRewordType.Tipstool);
+        int remain = ShopManager.shopManager.GetToolVideoRemainCount(LimitRewordType.Tipstool);
+        bool exhausted = ShopManager.shopManager.IsToolVideoExhausted(LimitRewordType.Tipstool);
+
+        // X=0 → 次数文本一并隐藏（不再显示 0/a）
+        if (AdsCanUseTable != null)
+        {
+            AdsCanUseTable.gameObject.SetActive(total >= 0 && !exhausted);
+            if (total >= 0 && AdsUseCountText != null)
+                AdsUseCountText.text = $"{remain}/{total}";
+        }
+
+        // X=0 → 视频按钮隐藏（金币按钮居中由布局组负责）
+        if (ClaimAdsBtn != null)
+            ClaimAdsBtn.gameObject.SetActive(!exhausted);
     }
 
     // ======================= 礼包表生成 =======================
