@@ -112,6 +112,92 @@ public class GameDataManager : SingletonMono<GameDataManager>
         SessionLogoutTime = DateTime.TryParse(rawLogoutTime, out parsed) ? parsed : DateTime.MinValue;
     }
 
+    #region 本地存档归属账号（防跨账号互相覆盖）
+
+    /// <summary>设备级兜底记录：上一次真正落盘的存档属于哪个渠道账号（华为 OpenId）。</summary>
+    private const string PrefSaveOwnerId = "save_owner_openid";
+
+    /// <summary>
+    /// 本次启动时「本地存档归属账号」的快照。
+    /// ★ 必须在渠道登录把 UserData.UserId 覆写成当前账号之前抓取（LoadPlayerProfile 里），
+    ///   否则账号 A 的存档会被误认成账号 B 的。
+    /// 空字符串 = 无法判定（老存档没记录过账号，或当前是游客/无渠道账号）→ 交给老的进度比对逻辑。
+    /// </summary>
+    public static string LocalSaveOwnerId { get; private set; } = "";
+
+    /// <summary>抓取本地存档归属账号快照（LoadPlayerProfile 末尾调用，整次会话不再变化）。</summary>
+    public void CaptureLocalSaveOwner()
+    {
+        string fromSave = playerProfile != null ? playerProfile.UserId : null;
+        if (string.IsNullOrEmpty(fromSave))
+            fromSave = PlayerPrefs.GetString(PrefSaveOwnerId, "");
+
+        LocalSaveOwnerId = string.IsNullOrEmpty(fromSave) ? "" : fromSave;
+        Debug.Log($"[GameDataManager] 本地存档归属账号快照: {(IsLocalSaveOwnerKnown ? LocalSaveOwnerId : "<未记录>")}");
+    }
+
+    /// <summary>本地存档是否记录了归属账号（老存档/游客账号可能没有）。</summary>
+    public bool IsLocalSaveOwnerKnown { get { return !string.IsNullOrEmpty(LocalSaveOwnerId); } }
+
+    /// <summary>当前渠道账号 id（华为 = 登录返回的 OpenId/Pid）；取不到时返回空字符串。</summary>
+    public static string GetCurrentAccountId()
+    {
+        var accounts = (Game.self != null) ? Game.self.Accounts : null;
+        string id = accounts != null ? accounts.UserId : null;
+        return string.IsNullOrEmpty(id) ? "" : id;
+    }
+
+    /// <summary>
+    /// 本地存档是否属于「别的账号」。
+    /// 返回 true 时：本次启动必须放弃本地存档，直接用当前渠道账号的云端数据，
+    /// 否则本地（另一个账号的、进度可能更大的）存档会把云端数据顶掉，购买记录也会一起丢失。
+    /// </summary>
+    public bool IsLocalSaveFromOtherAccount(string currentAccountId)
+    {
+        if (string.IsNullOrEmpty(currentAccountId)) return false;   // 拿不到渠道账号 → 不判定，走老逻辑
+        if (!IsLocalSaveOwnerKnown) return false;                    // 老存档没记录 → 走老逻辑（并顺手认领）
+        return !string.Equals(LocalSaveOwnerId, currentAccountId, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// 绑定「本地存档归属账号」：确定使用哪份数据后调用，把归属写进存档与 PlayerPrefs。
+    /// 注意：只在选定数据之后调用，不要放进 CommitGameData —— 那里可能还没完成账号校验。
+    /// </summary>
+    public void BindLocalSaveOwner(string accountId)
+    {
+        if (string.IsNullOrEmpty(accountId)) return;
+
+        LocalSaveOwnerId = accountId;
+        PlayerPrefs.SetString(PrefSaveOwnerId, accountId);
+        PlayerPrefs.Save();
+        Debug.Log($"[GameDataManager] 本地存档已绑定归属账号: {accountId}");
+    }
+
+    /// <summary>
+    /// 本地存档属于别的账号、且当前账号的云端数据不可用时使用：
+    /// 把内存里的数据全部复位成新号数据（磁盘上的旧文件不主动删除，等新数据落盘时自然覆盖）。
+    /// </summary>
+    public void ResetLocalSaveForOtherAccount()
+    {
+        playerProfile.InitData();
+        CaptureSessionLogoutTime(playerProfile.logoutTime);
+
+        fishUserSave.InitData();
+        dynamicHard.InitData();
+        chessDynamicHard.InitData();
+        butterfly.InitData();
+        overallRankData.InitData();
+        achieveSaveDatas.InitData();
+
+        ClearAllLevelProgressFiles();
+
+        // 归属快照一并清掉：调用方随后会用当前账号重新绑定（BindLocalSaveOwner）
+        LocalSaveOwnerId = "";
+        Debug.LogWarning("[GameDataManager] 本地存档属于其它账号，已在内存中复位为新号数据");
+    }
+
+    #endregion
+
     public void LoadPlayerProfile()
     {
         playerProfile.LoadData();
@@ -124,6 +210,9 @@ public class GameDataManager : SingletonMono<GameDataManager>
 
         // ★ 立刻抓「上次离开时间」快照（此后 logoutTime 会被存档不断刷新）
         CaptureSessionLogoutTime(playerProfile.logoutTime);
+
+        // ★ 立刻抓「本地存档归属账号」快照：必须在渠道登录覆写 UserData.UserId 之前
+        CaptureLocalSaveOwner();
         
         if (string.IsNullOrEmpty(playerProfile.ABName))
         {
@@ -476,6 +565,9 @@ public class GameDataManager : SingletonMono<GameDataManager>
         }
 
         // 4. 标记当前会话已同步，避免无限弹窗
+        // ★ 服务器数据就是当前渠道账号的 → 重新绑定本地存档归属，避免下次启动把这份存档误判成"别人的"
+        BindLocalSaveOwner(GetCurrentAccountId());
+
         CommitGameData();
         HasSyncedThisSession = true;
         SetInitailized(true);

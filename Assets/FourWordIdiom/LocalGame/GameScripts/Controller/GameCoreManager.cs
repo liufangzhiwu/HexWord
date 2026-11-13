@@ -891,6 +891,22 @@ public sealed class GameCoreManager : MonoBehaviour
 
     private void ShowGlobalHistoryPanel(UserData serverUserData, ExtraDataDto serverExtraData, LoginResponse loginResponse)
     {
+        // ★ 账号切换保护：本地存档是别的账号的（华为账号被切换后重新登录/恢复网络），
+        //   不弹历史记录选择面板，直接让当前账号的云端数据覆盖本地，避免另一个账号的存档顶掉云端。
+        string currentAccountId = GameDataManager.GetCurrentAccountId();
+        if (GameDataManager.Instance.IsLocalSaveFromOtherAccount(currentAccountId))
+        {
+            Debug.LogWarning($"<color=orange>[GameCoreManager] 本地存档归属={GameDataManager.LocalSaveOwnerId}，" +
+                             $"当前账号={currentAccountId}，强制使用云端存档覆盖本地。</color>");
+            GameDataManager.Instance.IsWaitingForHistoryResolution = false;
+            GameDataManager.Instance.OverwriteLocalWithServerData(serverUserData, serverExtraData);
+
+            SystemManager.Instance.HidePanel(PanelType.HeaderSection);
+            SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
+            SceneManager.LoadScene(0);
+            return;
+        }
+
         if (serverUserData.overallZenScore <= GameDataManager.Instance.UserData.overallZenScore)
         {
             // 无变化

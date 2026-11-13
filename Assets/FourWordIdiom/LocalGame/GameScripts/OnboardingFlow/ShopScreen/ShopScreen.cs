@@ -700,7 +700,7 @@ public class ShopScreen : UIWindow
         if (shopallItems != null && shopallItems.TryGetValue(data.id, out var exist) && exist != null)
             exist.gameObject.SetActive(false);
 
-        LogManager.ShopLogDetail($"限购次数已用完，跳过礼包: {data.produceNameId}(id={data.id}, 限购={data.limited})");
+        LogManager.ShopLog($"限购次数已用完，跳过礼包: {data.produceNameId}(id={data.id}, 限购={data.limited})");
         return true;
     }
 
@@ -933,7 +933,7 @@ public class ShopScreen : UIWindow
         SystemManager.Instance.ShowPanel(PanelType.BuyListScreen);
         var records = ShopManager.shopManager.GetPurchaseRecords();
         // TODO: 打开购买记录弹窗（礼包名称、价格、礼包内容、购买时间）
-        LogManager.ShopLogDetail("[DynamicShop] 购买记录：" + (records != null ? string.Join("\n", records) : "空"));
+        LogManager.ShopLog("[DynamicShop] 购买记录：" + (records != null ? string.Join("\n", records) : "空"));
     }
 
     private void OnRestoreBtn()

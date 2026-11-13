@@ -332,7 +332,7 @@ public class GiftItem : MonoBehaviour
             // 大额/中额金币图还没打进图集时兜底回默认金币图，避免图标空白或残留上一次的图
             sprite = LoadShopIcon("gold2");
             if (sprite != null)
-                LogManager.ShopLogDetail($"[GiftItem] 金币图 {coinIconName} 未在图集里，已回退 gold2");
+                LogManager.ShopLog($"[GiftItem] 金币图 {coinIconName} 未在图集里，已回退 gold2");
         }
 
         // ★ 池复用：取不到图时必须还原 Prefab 默认图，否则会残留上一个资源的图标

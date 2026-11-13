@@ -80,7 +80,6 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     /// <summary>[Shop] 标签日志（关键事件，默认开启）</summary>
     protected void LogShopItem(string message)
     {
-        if (!LogManager.EnableShopLog) return;
         LogManager.ShopLog(BuildShopItemLog(message));
     }
 
@@ -90,8 +89,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     /// </summary>
     protected void LogShopItemDetail(string message)
     {
-        if (!LogManager.EnableShopVerboseLog) return;
-        LogManager.ShopLogDetail(BuildShopItemLog(message));
+        LogManager.ShopLog(BuildShopItemLog(message));
     }
 
     private string BuildShopItemLog(string message)

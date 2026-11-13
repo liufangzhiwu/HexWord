@@ -63,6 +63,9 @@ public class LoadingController : MonoBehaviour
 
     private bool IsLocalDataNull;// 本地数据是否为空
 
+    /// <summary>本地存档是否属于「别的渠道账号」（华为账号切换）→ 必须放弃本地，直接用云端数据。</summary>
+    private bool _accountSwitched;
+
     public float loginStart;
     public float loginTimeout;
 
@@ -223,10 +226,21 @@ public class LoadingController : MonoBehaviour
     // 加载数据
     private void LoadUserData(GameDataDto response)
     {
+        // ★ 先判定：本地存档归属账号（启动时抓的快照）是否就是当前华为账号
+        //   账号 A 买完去广告 → 切账号 B（进度更大）→ 再切回 A 时，本地是 B 的存档，
+        //   按"比进度取大"的老逻辑会用 B 的存档顶掉 A 的云端数据，A 的去广告记录一并丢失。
+        //   现在只要归属对不上，直接放弃本地，强制用当前账号的云端数据。
+        _accountSwitched = GameDataManager.Instance.IsLocalSaveFromOtherAccount(GameDataManager.GetCurrentAccountId());
+        if (_accountSwitched)
+        {
+            Debug.LogWarning($"<color=orange>[Loading] 检测到账号切换：本地存档归属={GameDataManager.LocalSaveOwnerId}，" +
+                             $"当前账号={GameDataManager.GetCurrentAccountId()}，将放弃本地存档并加载云端数据。</color>");
+        }
 
         if (response == null)
         {
             Debug.Log("获取数据接口错误！，使用默认数据");
+            if (_accountSwitched) DiscardLocalSaveOfOtherAccount();
             StartCoroutine(LoadingSequence());
             AnalyticMgr.Login();
             return;
@@ -234,6 +248,8 @@ public class LoadingController : MonoBehaviour
         if (string.IsNullOrEmpty(response.UserData))
         {
             Debug.Log("服务端主数据为空，视为新号或异常，使用本地初始化逻辑！");
+            // 本地是别的账号的存档：不能给这个新号继承，先在内存里复位成新号
+            if (_accountSwitched) DiscardLocalSaveOfOtherAccount();
             UserLocalData(); // 没数据就直接走本地逻辑
             return;
         }
@@ -263,6 +279,7 @@ public class LoadingController : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogError($"解析服务器数据失败: {ex.Message} {ex.ToString()} ，回退到本地数据");
+            if (_accountSwitched) DiscardLocalSaveOfOtherAccount();
             UserLocalData();
             return;
         }
@@ -271,10 +288,31 @@ public class LoadingController : MonoBehaviour
         CompareAndSelectData();
     }
 
+    /// <summary>
+    /// 本地存档属于别的账号、且当前账号的云端数据拿不到时：
+    /// 内存复位成新号 + 把归属改绑到当前账号（避免这份新数据下次又被当成别人的存档）。
+    /// </summary>
+    private void DiscardLocalSaveOfOtherAccount()
+    {
+        GameDataManager.Instance.ResetLocalSaveForOtherAccount();
+
+        string accountId = GameDataManager.GetCurrentAccountId();
+        if (!string.IsNullOrEmpty(accountId))
+            GameDataManager.Instance.BindLocalSaveOwner(accountId);
+    }
+
 
     // 抽离对比逻辑，保持代码整洁
     private void CompareAndSelectData()
     {
+        // ★ 账号切换优先于所有进度比较：本地存档是别的账号的，直接让云端数据覆盖本地
+        if (_accountSwitched)
+        {
+            UserServerData();
+            Debug.LogWarning("<color=green>[Loading] 本地存档属于其它账号，强制使用当前账号的云端数据（不做进度比较）。</color>");
+            return;
+        }
+
         if (IsLocalDataNull)
         {
             UserServerData();
@@ -332,6 +370,13 @@ public class LoadingController : MonoBehaviour
     {
         GameDataManager.Instance.SetInitailized(true);
         GameDataManager.HasSyncedThisSession = true;
+
+        // ★ 老存档没记录归属账号（升级后的第一次启动 / 游客）：认领为当前渠道账号，
+        //   之后真正发生账号切换时才能识别出来。
+        string accountId = GameDataManager.GetCurrentAccountId();
+        if (!string.IsNullOrEmpty(accountId) && !GameDataManager.Instance.IsLocalSaveOwnerKnown)
+            GameDataManager.Instance.BindLocalSaveOwner(accountId);
+
         ModifyUserWithABtest();
         StartCoroutine(LoadingSequence());
         AnalyticMgr.Login();
@@ -340,6 +385,11 @@ public class LoadingController : MonoBehaviour
     private void UserServerData()
     {
         GameDataManager.Instance.UserData.InitData(serverUserData);
+
+        // ★ 云端数据就是当前渠道账号的存档 → 绑定归属，避免下次启动被误判成"别人的存档"
+        string accountId = GameDataManager.GetCurrentAccountId();
+        if (!string.IsNullOrEmpty(accountId))
+            GameDataManager.Instance.BindLocalSaveOwner(accountId);
 
         // ★ 服务器存档覆盖了本地数据 → 「上次离开时间」快照要跟着更新
         //   （商店流失回归权重靠它判断"最近 7 天未登录"，而 logoutTime 随后会被自动存档刷成现在）
