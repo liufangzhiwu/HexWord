@@ -1352,10 +1352,20 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
+        // 破冰冷却：从「上次弹窗倒计时结束」起算（策划口径，与复购/升层一致）
+        //   - 倒计时还没结束 → 仍在本次限时展示期内，继续展示；
+        //   - 倒计时结束后 N 天内（N = 7/10/13 递增）→ 冷却中；
+        //   - 无倒计时（非周末/节假日弹出的情况）→ 退化为从弹窗那一刻算，保持原行为。
+        int cooldownDays = BreakIceCooldownBaseDays + BreakIcePopupCount * BreakIceCooldownStepDays;
+        DateTime lastCooldownStart = GetBreakIceCooldownStart();
+        bool inOfferCountdown = lastCooldownStart != DateTime.MinValue && DateTime.Now < lastCooldownStart;
+
         // 【弹窗条件 5】当前时间必须 ∈ 周末 或 节假日 —— 硬条件。
         // 旧逻辑是「非周末/节假日时 30% 随机放行」，导致 2026-11-09（周一）也弹了破冰礼包；
         // 策划口径是非周末/节假日不弹（周末/节假日的判定见 ShopManager_HolidayWeekend.IsHolidayOrWeekend）。
-        if (!IsHolidayOrWeekend())
+        // ★ 本活动限时还没结束（inOfferCountdown）时不看这条：破冰礼包在活动期间允许反复购买，
+        //   活动倒计时走完之前入口必须一直保留。
+        if (!inOfferCountdown && !IsHolidayOrWeekend())
         {
             LogShop($"TryShowBreakIcePopup 跳过: 今天({DateTime.Now:yyyy-MM-dd} {DateTime.Now.DayOfWeek})不是周末/节假日");
             return false;
@@ -1378,19 +1388,14 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // 本地与云端均无去广告（永久去广告 / 限时去广告生效中都不弹）
-        if (IsRemoveAdsOwned() || IsRemoveAdsActive())
+        // ★ 永久去广告仍然拦（周卡对它没有意义）；但「限时去广告生效中」在本次活动限时内不拦：
+        //   玩家买了破冰周卡后还能在同一个活动期里继续复购叠加时长，
+        //   否则买一次之后入口就直接消失，无法「活动期间反复购买」。
+        if (IsRemoveAdsOwned() || (!inOfferCountdown && IsRemoveAdsActive()))
         {
             LogShop($"TryShowBreakIcePopup 跳过: 已拥有去广告(永久={IsRemoveAdsOwned()}, 限时生效={IsRemoveAdsActive()})");
             return false;
         }
-
-        // 破冰冷却：从「上次弹窗倒计时结束」起算（策划口径，与复购/升层一致）
-        //   - 倒计时还没结束 → 仍在本次限时展示期内，继续展示；
-        //   - 倒计时结束后 N 天内（N = 7/10/13 递增）→ 冷却中；
-        //   - 无倒计时（非周末/节假日弹出的情况）→ 退化为从弹窗那一刻算，保持原行为。
-        int cooldownDays = BreakIceCooldownBaseDays + BreakIcePopupCount * BreakIceCooldownStepDays;
-        DateTime lastCooldownStart = GetBreakIceCooldownStart();
-        bool inOfferCountdown = lastCooldownStart != DateTime.MinValue && DateTime.Now < lastCooldownStart;
 
         if (!inOfferCountdown
             && lastCooldownStart != DateTime.MinValue

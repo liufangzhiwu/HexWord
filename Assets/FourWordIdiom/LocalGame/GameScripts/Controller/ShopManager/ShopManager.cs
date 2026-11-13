@@ -443,11 +443,22 @@ public partial class ShopManager : MonoBehaviour
         _settlementGiftBonusGold = bonusGold;
         _settlementGiftBonusPackId = bonusPackId;
 
+        // ★ 破冰 / 复购礼包在活动期间允许【反复购买】，所以这里不恢复任何「已购买」锁：
+        //   每关结算重新登记都可以再次打开弹窗购买，直到活动倒计时结束。
         LogShop($"RegisterSettlementGift: 登记结算页礼包 kind={kind}, item={displayItem.produceNameId}, " +
                 $"endTime={(endTime == System.DateTime.MinValue ? "无限时" : endTime.ToString("yyyy-MM-dd HH:mm:ss"))}, 加赠={bonusGold}");
 
         NotifySettlementGiftChanged();
     }
+
+    // ======================= 结算页礼包：活动期间可反复购买 =======================
+
+    /// <summary>
+    /// 结算页礼包「已成交」状态：破冰 / 复购礼包在活动期间<b>允许反复购买</b>，
+    /// 购买后入口按钮继续保留到活动倒计时结束（由 ClearSettlementGift 收起），点击可再次打开弹窗购买。
+    /// 保留该属性只是为了接口兼容，恒为 false。
+    /// </summary>
+    public bool IsSettlementGiftPurchased => false;
 
     /// <summary>
     /// 结算页礼包登记变化事件（登记 / 清空 / 购买 / 过期）。
@@ -471,6 +482,9 @@ public partial class ShopManager : MonoBehaviour
             return;
         }
 
+        // ★ 破冰 / 复购礼包在活动期间允许反复购买：这里不再做「已购买」拦截，也不弹「该礼包已购买」提示。
+        //   只要活动倒计时未结束（入口还在），点一次就以登记的数据重新打开弹窗，可以继续买。
+
         GiftPopupMode mode = CurrentSettlementGift == SettlementGiftKind.BreakIce
             ? GiftPopupMode.BreakIce
             : GiftPopupMode.Repurchase;
@@ -484,7 +498,7 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"OpenSettlementGiftPopup: kind={CurrentSettlementGift}, item={_settlementGiftItem.produceNameId}");
     }
 
-    /// <summary>清空结算页礼包登记（换结算 / 已购买 / 离开结算页）。</summary>
+    /// <summary>清空结算页礼包登记（换结算 / 离开结算页 / 活动限时结束）。</summary>
     public void ClearSettlementGift(string reason)
     {
         _settlementGiftPopupPending = false;
@@ -1989,6 +2003,19 @@ public partial class ShopManager : MonoBehaviour
     {
         LogShop($"    --- DecideWinner 开始: slot={slot}, 初始候选数={candidates.Count} ---");
 
+        // ★ 活动礼包粘性（需求）：本次节日/周末里已经胜出的活动礼包，
+        //   只要限时没结束、也没被买到限购上限，就一直占着这个推荐位，不被后续重算换掉。
+        ShopDataItem stickyPack = candidates
+            .Where(c => c != null && IsActivityPackActive(c))
+            .OrderByDescending(c => GetActivityPackEndTime(c))
+            .FirstOrDefault();
+        if (stickyPack != null)
+        {
+            LogShop($"    DecideWinner 活动礼包粘性: 继续展示 {stickyPack.produceNameId}" +
+                    $"（限时截止 {GetActivityPackEndTime(stickyPack):yyyy-MM-dd HH:mm}）");
+            return new List<ShopDataItem> { stickyPack };
+        }
+
         List<ShopDataItem> valid = candidates
             .Where(c => !IsLimitedOut(c) && GetCooldownCoefficient(c) > 0f)
             .ToList();
@@ -2677,7 +2704,10 @@ public partial class ShopManager : MonoBehaviour
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
-                        GameDataManager.Instance.UserData.UpdateGold(count, false, false, $"{source}补发 {item.ItemName}");
+                        // ★ bug65：以前 updateui=false，补单发生在主页已经显示之后，
+                        //   金币栏收不到刷新事件，必须切一次界面再回来才正常。
+                        //   这里改成同步刷新 UI。
+                        GameDataManager.Instance.UserData.UpdateGold(count, false, true, $"{source}补发 {item.ItemName}");
                         break;
                     case (int)LimitRewordType.Butterfly:
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, count, $"{source}补发 {item.ItemName}");
@@ -2729,6 +2759,10 @@ public partial class ShopManager : MonoBehaviour
 
         // ---------- 立刻落盘：下次启动才不会又补一遍 / 又丢一遍（bug51） ----------
         GameDataManager.Instance.CommitGameData();
+
+        // ★ bug65 兜底：补单拿到的道具 / 金币可能不是通过 UpdateGold 发的（或补单早于主页订阅），
+        //   这里统一广播一次「全量刷新」，让已经打开的金币栏 / 工具栏立刻同步，不用切界面。
+        EventDispatcher.instance?.TriggerChangeGoldUI(0, true);
 
         LogShop($"[补发] 发货完成并已落盘: {shopDataItem.produceNameId}, order={item.order_id}");
         return true;
@@ -2811,7 +2845,10 @@ public partial class ShopManager : MonoBehaviour
         ShopLimitData exist = GameDataManager.Instance.UserData.limitShopItems
             .Find(x => x.adstype == adstype);
 
-        if (exist != null && !exist.isoverdate)
+        // ★ bug64：同 adstype 的记录一律「续期」，不再区分是否 isoverdate。
+        //   以前 isoverdate 为 true 时会走 else 新建一条记录，把玩家还没用完的剩余时长直接丢掉，
+        //   还会留下多条同 adstype 的重复记录（Find 只取第一条，容易读到旧的那条）。
+        if (exist != null)
         {
             if (permanent)
             {
@@ -2823,6 +2860,7 @@ public partial class ShopManager : MonoBehaviour
             }
             else
             {
+                // 基准时间 = max(原结束时间, 当前时间)：剩余时长保留并叠加，绝不倒退
                 DateTime baseEnd = DateTime.Now;
                 DateTime oldEnd = exist.GetEndTime();
                 if (oldEnd != DateTime.MinValue && oldEnd > DateTime.Now) baseEnd = oldEnd;
@@ -2906,7 +2944,7 @@ public partial class ShopManager : MonoBehaviour
         // ★ bug54：复购礼包加赠金币（弹窗里卖出才有的那份）
         if (giftBonusGold > 0)
         {
-            GameDataManager.Instance.UserData.UpdateGold(giftBonusGold, false, false, "复购礼包加量不加价");
+            GameDataManager.Instance.UserData.UpdateGold(giftBonusGold, false, false, "复购礼包加量不加价","推送礼包加赠",ResReason.Iap);
             LogShop($"[复购] 已发放加赠金币 +{giftBonusGold}（{shopDataItem.produceNameId}）");
         }
 
@@ -3001,19 +3039,34 @@ public partial class ShopManager : MonoBehaviour
         LogShop($"HandleRemoveAdsPurchase: {shopDataItem.produceNameId}, permanent={permanent}, hours={hours}");
 
         ShopLimitData exist = GameDataManager.Instance.UserData.limitShopItems.Find(x => x.adstype == adstype);
-        if (exist != null && !exist.isoverdate)
+        // ★ bug64：同 adstype 一律续期（见 GrantRemoveAdsByContent 同款处理），避免剩余时长被覆盖 / 产生重复记录
+        if (exist != null)
         {
-            DateTime baseEnd = DateTime.Now;
-            DateTime oldEnd = exist.GetEndTime();
-            if (oldEnd != DateTime.MinValue && oldEnd > DateTime.Now)
-                baseEnd = oldEnd;
+            if (permanent)
+            {
+                // 永久去广告不该有结束时间（以前这里会把 endtime 写成「当前时间」，等于刚买就过期显示）
+                exist.endtime = "";
+                exist.isget = true;
+                exist.isopen = false;
+                exist.isoverdate = false;
+                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                LogShop($"  永久去广告续期: 记录已更新 (id={exist.id})");
+            }
+            else
+            {
+                DateTime baseEnd = DateTime.Now;
+                DateTime oldEnd = exist.GetEndTime();
+                if (oldEnd != DateTime.MinValue && oldEnd > DateTime.Now)
+                    baseEnd = oldEnd;
 
-            DateTime newEnd = baseEnd.AddHours(hours);
-            exist.SetEndTime(newEnd);
-            exist.isget = true;
-            exist.isopen = false;
-            exist.isoverdate = false;
-            LogShop($"  续期: 原结束={oldEnd}, 新结束={newEnd}");
+                DateTime newEnd = baseEnd.AddHours(hours);
+                exist.SetEndTime(newEnd);
+                exist.isget = true;
+                exist.isopen = false;
+                exist.isoverdate = false;
+                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                LogShop($"  续期: 原结束={oldEnd}, 新结束={newEnd}");
+            }
         }
         else
         {
@@ -3093,9 +3146,8 @@ public partial class ShopManager : MonoBehaviour
             SaveRepurchaseLastPack(shopDataItem);
         }
 
-        // 结算页登记的礼包已成交 → 清掉登记（结算页按钮随之收起，避免重复弹/重复买）
-        if (_settlementGiftItem != null && shopDataItem.produceNameId == _settlementGiftItem.produceNameId)
-            ClearSettlementGift($"结算页礼包已购买: {shopDataItem.produceNameId}");
+        // ★ 破冰 / 复购礼包在活动期间可反复购买：购买后【不加】任何「已购买」锁，
+        //   结算页入口照常保留到活动倒计时结束，玩家可以继续点开再次购买。
 
         ShopLimitData limit = GetOrCreateLimitData(shopDataItem);
 

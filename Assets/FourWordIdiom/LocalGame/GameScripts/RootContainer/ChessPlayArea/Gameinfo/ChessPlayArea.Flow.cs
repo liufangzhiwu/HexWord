@@ -190,8 +190,8 @@ public partial class ChessPlayArea
         yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.ChessLearningGuide));
         AdRuleManager.Instance.TryShowBanner();
         yield return new WaitForSeconds(0.1f);
-        // 飞蝴蝶道具
-        if (ChessStageController.Instance.IsFirstEnterStage && useButterflyCount <= 2)
+        // 飞蝴蝶道具（bug76：每关开局最多用 1 只，数量为 0 就不飞）
+        if (ChessStageController.Instance.IsFirstEnterStage && useButterflyCount > 0)
         {
             if (!new[] { 1, }.Contains(CurrStageData.StageId))
             {

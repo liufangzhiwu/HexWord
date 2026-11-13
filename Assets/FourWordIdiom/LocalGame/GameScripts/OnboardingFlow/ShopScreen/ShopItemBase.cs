@@ -53,6 +53,9 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     /// <summary>限时倒计时协程句柄（用于去重，避免重复 StartCoroutine 叠出多条常驻协程）</summary>
     private Coroutine _timeCoroutine;
 
+    /// <summary>当前这条倒计时是不是「活动礼包」的限时（到点后卡片保留、只收起限时与特惠标签）</summary>
+    private bool _timeCountdownIsActivity;
+
     // ======================= 缩放参数 =======================
 
     [Header("缩放设置")]
@@ -276,9 +279,16 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         _shopLimitData = GameDataManager.Instance.UserData.limitShopItems?
             .Find(item => item.nameid == data.produceNameId);
 
-        bool isTimeActive = _shopLimitData != null
-                            && !string.IsNullOrEmpty(_shopLimitData.endtime)
-                            && _shopLimitData.isopen;
+        // ★ 活动礼包（特惠礼包）：限时 = 本次节日/周末结束时间，不走权益 endtime
+        bool isActivityTime = ShopManager.shopManager != null
+                              && ShopManager.shopManager.IsActivityPackActive(data);
+
+        bool isTimeActive = isActivityTime
+                            || (_shopLimitData != null
+                                && !string.IsNullOrEmpty(_shopLimitData.endtime)
+                                && _shopLimitData.isopen);
+
+        _timeCountdownIsActivity = isActivityTime;
 
         if (isTimeActive)
         {
@@ -539,14 +549,40 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     // ======================= 限时倒计时 =======================
 
+    /// <summary>
+    /// 当前限时倒计时的截止时间：
+    ///  - 活动礼包 → 本次连续节日/周末的结束时间（需求：限时 = 活动截至时间 - 当前时间）；
+    ///  - 其它 → 权益/限时礼包自己的 endtime。
+    /// </summary>
+    private DateTime GetTimeLimitedEndTime()
+    {
+        if (shopDataItem != null
+            && ShopManager.shopManager != null
+            && ShopManager.shopManager.IsActivityPackActive(shopDataItem))
+        {
+            return ShopManager.shopManager.GetActivityPackEndTime(shopDataItem);
+        }
+
+        if (_shopLimitData == null || string.IsNullOrEmpty(_shopLimitData.endtime))
+            return DateTime.MinValue;
+
+        DateTime end;
+        return DateTime.TryParse(_shopLimitData.endtime, out end) ? end : DateTime.MinValue;
+    }
+
     private string Gettime()
     {
-        DateTime startTime = DateTime.Parse(_shopLimitData.endtime);
-        TimeSpan timeSpan = startTime.Subtract(DateTime.Now);
+        DateTime end = GetTimeLimitedEndTime();
+        if (end == DateTime.MinValue) return "";
 
-        if (timeSpan.TotalMinutes > 0 && timebg != null)
+        TimeSpan timeSpan = end.Subtract(DateTime.Now);
+        if (timeSpan.TotalSeconds <= 0) return "";
+
+        if (timebg != null)
         {
-            timebg.GetComponentInChildren<Text>().text = UIUtilities.FormatTimeRemaining(timeSpan);
+            Text timeText = timebg.GetComponentInChildren<Text>();
+            if (timeText != null)
+                timeText.text = UIUtilities.FormatTimeRemaining(timeSpan);
         }
 
         return timeSpan.TotalMinutes.ToString();
@@ -555,12 +591,22 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     private IEnumerator UpdateTime()
     {
         yield return new WaitForSeconds(0.2f);
-        string time = Gettime();
         while (true)
         {
-            time = Gettime();
+            string time = Gettime();
             if (string.IsNullOrEmpty(time))
             {
+                // ★ 活动礼包限时结束：卡片继续留在推荐位（退化成普通礼包），只收起限时与特惠标签
+                if (_timeCountdownIsActivity)
+                {
+                    _timeCountdownIsActivity = false;
+                    if (timebg != null) timebg.gameObject.SetActive(false);
+                    OnTimeLimitedStateChanged(false);
+                    if (shopDataItem != null) SetShopData(shopDataItem);
+                    LogShopItemDetail("活动礼包限时结束，退回普通礼包展示（名称/标签/限时已刷新）");
+                    break;
+                }
+
                 _shopLimitData.isopen = false;
                 transform.gameObject.SetActive(false);
                 break;
@@ -878,7 +924,9 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         ShopLimitData exist = GameDataManager.Instance.UserData.limitShopItems
             .Find(x => x.adstype == adstype);
 
-        if (exist != null && !exist.isoverdate)
+        // ★ bug64：同 adstype 一律续期（含已标记过期但 endtime 仍有效的记录），不再新建第二条，
+        //   否则剩余时长会被 Now + 时长 覆盖，且留下重复记录。
+        if (exist != null)
         {
             if (permanent)
             {

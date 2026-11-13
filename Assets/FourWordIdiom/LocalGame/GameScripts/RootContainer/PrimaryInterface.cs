@@ -1074,7 +1074,7 @@ public class PrimaryInterface : UIWindow
     /// 数据源与结算页完全一致（ShopManager.CurrentSettlementGift）：
     ///   - 结算页登记了破冰礼包 → 显示破冰入口；
     ///   - 登记了复购/升层礼包 → 显示限时折扣入口；
-    ///   - 没有登记 / 已购买 / 已过期 → 两个都隐藏。
+    ///   - 没有登记 / 活动限时已过 → 两个都隐藏（已购买不隐藏，保持到倒计时结束）。
     /// </summary>
     public void RefreshSettlementGiftEntry()
     {

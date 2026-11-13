@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -1022,6 +1022,9 @@ public class AdsDiscountScreen : UIWindow
     {
         _purchasing = false;
         Debug.Log($"[AdsDiscountScreen] 购买成功: {item?.ProductId}, mode={_mode}");
+        // 走 LogManager：正式包（无 Unity_ShowLog）也会写进手机日志文件
+        LogManager.ShopLog($"[GiftPopup] 购买成功: ProductId={item?.ProductId}, mode={_mode}, " +
+                           $"item={currentShopItem?.produceNameId}, price={item?.LocalizedPrice}");
 
         // 统一走商店的购买成功处理：发放内容 + 内购成功弹窗 + 购买记录 + 统计 + 失败分归零
         if (ShopManager.shopManager != null)
@@ -1035,6 +1038,7 @@ public class AdsDiscountScreen : UIWindow
     {
         _purchasing = false;
         Debug.Log($"[AdsDiscountScreen] 购买失败: {error}");
+        LogManager.ShopLog($"[GiftPopup] 购买失败: {error}, item={currentShopItem?.produceNameId}");
         AnalyticMgr.PurchaseFailed(currentShopItem?.GetProduceName(), error);
         MessageSystem.Instance.HideLoadingAnimation();
 
@@ -1060,7 +1064,7 @@ public class AdsDiscountScreen : UIWindow
         if (ShopManager.shopManager != null)
             ShopManager.shopManager.ClearPendingGiftPopup();
 
-        // 弹窗关闭后刷新结算页的礼包入口按钮（买过 → 按钮收起；没买 → 按钮保留，可再次打开）
+        // 弹窗关闭后刷新结算页的礼包入口按钮（活动倒计时未结束就保留，可反复点开购买）
         RefreshFinishViewGiftButtons();
     }
 

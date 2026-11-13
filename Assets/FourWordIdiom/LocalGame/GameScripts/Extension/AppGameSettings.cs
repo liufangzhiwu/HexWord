@@ -34,7 +34,10 @@ public static class AppGameSettings
 
     // ===== 游戏机制开关 =====
     public static bool EnableComboButterflies { get; } = false;
-    public static int MaxButterfliesPerLevel { get; } = 2;
+    /// <summary>
+    /// 每关开局最多可用的蝴蝶数量（bug76：蝴蝶改为「选一空格自动填入字块」，每关只给 1 只，以前是 2 只）。
+    /// </summary>
+    public static int MaxButterfliesPerLevel { get; } = 1;
     
     //每日任务中无限使用蝴蝶道具时长（分钟）
     public static int TaskButterflyUseTime { get; } = 60;     

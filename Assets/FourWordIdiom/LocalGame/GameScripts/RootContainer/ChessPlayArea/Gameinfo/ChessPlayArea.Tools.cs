@@ -470,104 +470,164 @@ public partial class ChessPlayArea
         }
         return path;
     }
+    /// <summary>
+    /// 使用蝴蝶道具。
+    ///
+    /// bug76：蝴蝶已改为和灯泡（提示道具）一致的行为 ——「选一个空格，自动把正确字块填进去」，
+    /// 不再像以前那样把随机几个格子「点亮（tip）」；
+    /// 同时每关开局最多只用 1 只（<see cref="AppGameSettings.MaxButterfliesPerLevel"/>，以前是 2 只），
+    /// 所以这里取消了「用完一只自动递归再用一只」的旧逻辑，一只蝴蝶只填一格。
+    /// </summary>
     private void UseButterfly()
     {
+        if (chessboardGrid == null || butterflyObj == null) return;
+
         // 用 TryGetValue：养成模式 / 老存档里可能没有 103 这个键，直接索引会 KeyNotFoundException
         ToolInfo toolInfo = null;
         GameDataManager.Instance.UserData.toolInfo.TryGetValue(103, out toolInfo);
-        
-        if ((toolInfo == null || toolInfo.count <= 0)&&!GameDataManager.Instance.UserData.butterflyTaskIsOpen)
+        bool taskOpen = GameDataManager.Instance.UserData.butterflyTaskIsOpen;
+
+        if ((toolInfo == null || toolInfo.count <= 0) && !taskOpen)
         {
             Debug.LogError("蝴蝶道具数据为空！");
-            // crossPuzzleGrid.SetPuzzleBoardState(true);
             butterflyObj.GetComponent<RectTransform>().DOAnchorPosX(-300, 0.3f);
             return;
         }
 
-        // ★ 先找落点：没有可提示的空位就直接收手【不消耗道具、不扣本关次数】，
-        //   避免旧代码里 selectView 为 null 时后面 selectView.transform 空引用，也避免白发一只蝴蝶
-        ChessView selectView = chessboardGrid.GetRandomNoneNonTipChess();
-        if (selectView == null)
+        // 本关的蝴蝶次数已用完（bug76：每关最多 1 只）
+        if (useButterflyCount <= 0)
         {
-            Debug.LogWarning("[蝴蝶] 没有可提示的空位，本次不使用蝴蝶（不消耗道具）");
+            LogButterfly("本关蝴蝶次数已用完，本次不使用");
+            butterflyObj.GetComponent<RectTransform>().DOAnchorPosX(-300, 0.3f);
+            return;
+        }
+
+        // 先找落点：与灯泡一致，优先填「当前选中的空格」，没选中就随机挑一个可填的空格；
+        // 找不到可填的格子直接收手【不消耗道具、不扣本关次数】，避免旧代码里 selectView 为 null 时后面空引用
+        ChessView targetTile = PickButterflyTargetTile();
+        if (targetTile == null)
+        {
+            LogButterfly("没有可填入的空位，本次不使用蝴蝶（不消耗道具）");
             butterflyObj.GetComponent<RectTransform>().DOAnchorPosX(-300, 0.3f);
             EventDispatcher.instance.TriggerChangeTopRaycast(true);
             return;
         }
 
-        if (!GameDataManager.Instance.UserData.butterflyTaskIsOpen)
+        if (!taskOpen)
         {
-            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, -1,"关卡内使用");
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.Butterfly, -1, "关卡内使用", targetTile.Answer);
         }
-     
-        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseButterflyTool,1);
+
+        DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseButterflyTool, 1);
         useButterflyCount--;
-        
-        GameObject Effect_Butterfly = EffectButterFlays[useButterflyCount];
-        butterflyObj.GetComponentInChildren<Text>().text = (useButterflyCount+1).ToString();
-        Effect_Butterfly.gameObject.SetActive(false);
-        
-        if(useButterflyCount==0)
-            AudioManager.Instance.PlaySoundEffect("showButterfly");
-        
-        butterChess.Add(selectView);
-        
-        // ChessView  selectNext  蝴蝶搜索的位置
-        // 播放起飞
-        butterflyObj.GetComponent<RectTransform>().DOAnchorPosX(0,0.3f).OnComplete(() =>
+
+        // 取本次蝴蝶对应的特效对象（数量在进关时按 useButterflyCount 创建；复活补发时列表可能为空，做一次兜底）
+        GameObject Effect_Butterfly = null;
+        if (EffectButterFlays.Count > 0)
         {
-           
-            Vector3[] MovePoints = GetButterflyPath(butterflyObj.transform,selectView.transform.position + new Vector3(3f, 0,0));
-       
+            Effect_Butterfly = EffectButterFlays[Mathf.Clamp(useButterflyCount, 0, EffectButterFlays.Count - 1)];
+        }
+
+        Text counterText = butterflyObj.GetComponentInChildren<Text>();
+        if (counterText != null) counterText.text = (useButterflyCount + 1).ToString();
+        if (Effect_Butterfly != null) Effect_Butterfly.SetActive(false);
+
+        if (useButterflyCount == 0)
+            AudioManager.Instance.PlaySoundEffect("showButterfly");
+
+        // 飞行期间锁输入，落点填字完成后再放开
+        chessboardGrid.IsBlockInput = true;
+        EventDispatcher.instance.TriggerChangeTopRaycast(false);
+
+        RectTransform butterflyRect = butterflyObj.GetComponent<RectTransform>();
+        butterflyRect.DOAnchorPosX(0, 0.3f).OnComplete(() =>
+        {
+            if (Effect_Butterfly == null)
+            {
+                // 没有特效对象也不影响功能：直接把字块填进去
+                StartCoroutine(CoButterflyFillThenFlyBack(null, targetTile));
+                return;
+            }
+
+            Vector3[] MovePoints = GetButterflyPath(butterflyObj.transform,
+                targetTile.transform.position + new Vector3(3f, 0, 0));
+
+            // 计数器动画（原有的「场上还剩几只」飘字流程，保持不变）
             Effect_Butterfly.transform.DOScale(new Vector3(50, 50, 50), 0.1f).OnComplete(() =>
             {
-                Effect_Butterfly.transform.DOLocalRotate(Vector3.zero,0f);
+                Effect_Butterfly.transform.DOLocalRotate(Vector3.zero, 0f);
                 Effect_Butterfly.gameObject.SetActive(true);
-                butterflyObj.GetComponentInChildren<Text>().text = useButterflyCount.ToString();
-                
-                selectView.chesspiece.tip = true;
+                if (counterText != null) counterText.text = useButterflyCount.ToString();
+
                 Effect_Butterfly.transform.DOScale(new Vector3(50, 50, 50), 0.25f).OnComplete(() =>
                 {
-                    // if(useButterflyCount>0)
-                    //     UseButterfly();
-                    // else
-                        butterflyObj.GetComponent<RectTransform>().DOAnchorPosX(-300, 0.3f);
-                }); 
-                if(useButterflyCount>0)
-                    UseButterfly();
+                    butterflyRect.DOAnchorPosX(-300, 0.3f);
+                });
             });
-            
+
             Effect_Butterfly.transform.DOPath(MovePoints, 1.2f).SetEase(Ease.Linear).OnComplete(() =>
             {
                 Effect_Butterfly.transform.DOLocalRotate(new Vector3(0f, 150f, 20f), 0f);
-                Effect_Butterfly.transform.DOScale(new Vector3(40, 40, 40),0.1f);
-                
-                Vector3 endWorld = selectView.TileTransform.TransformPoint(selectView.TileTransform.rect.center);
+                Effect_Butterfly.transform.DOScale(new Vector3(40, 40, 40), 0.1f);
+
+                Vector3 endWorld = targetTile.TileTransform.TransformPoint(targetTile.TileTransform.rect.center);
                 Vector3 endLocal = Effect_Butterfly.transform.parent.InverseTransformPoint(endWorld);
 
-                Effect_Butterfly.transform.DOLocalMove(endLocal, 0.85f).SetEase(Ease.Linear).OnComplete(
-                () => {
-                    selectView.SetTipMessage();
-                    Effect_Butterfly.transform.DOScale(new Vector3(40, 40, 40),0.4f).OnComplete(() =>
-                    {
-                        Effect_Butterfly.transform.DOLocalMoveY(1480, 0.7f);
-                        Effect_Butterfly.transform.DOLocalMoveX( - 300,0.7f).SetEase(Ease.Linear).OnComplete(() =>
-                        {
-                            Effect_Butterfly.transform.localPosition = new Vector3(-300f,0f,0f);
-                            Effect_Butterfly.gameObject.SetActive(false);
-                            Effect_Butterfly.transform.DOLocalRotate(Vector3.zero,0f);
-
-                            if (useButterflyCount < 1)
-                            {
-                                EventDispatcher.instance.TriggerChangeTopRaycast(true);
-                            }
-                        });
-                        
-                    });
+                Effect_Butterfly.transform.DOLocalMove(endLocal, 0.85f).SetEase(Ease.Linear).OnComplete(() =>
+                {
+                    // ★ 蝴蝶落定 → 自动填入字块（与灯泡同一条填字流水线）
+                    StartCoroutine(CoButterflyFillThenFlyBack(Effect_Butterfly, targetTile));
                 });
             });
-            
         });
+    }
+
+    /// <summary>
+    /// 蝴蝶落点：优先「当前选中的空格」（与灯泡一致），选中的格子不合法时随机挑一个可填的空格。
+    /// </summary>
+    private ChessView PickButterflyTargetTile()
+    {
+        if (chessboardGrid == null) return null;
+
+        ChessView selected = chessboardGrid.selecteTile;
+        if (selected != null
+            && selected.chesspiece != null
+            && selected.CurrState != TileState.Success
+            && selected.CurrState != TileState.Default)
+        {
+            return selected;
+        }
+
+        return chessboardGrid.GetRandomNoneNonTipChess();
+    }
+
+    /// <summary>
+    /// 蝴蝶落到格子上后：自动把正确字块填进去，再把蝴蝶收回屏幕外，并恢复输入。
+    /// </summary>
+    private IEnumerator CoButterflyFillThenFlyBack(GameObject effectButterfly, ChessView targetTile)
+    {
+        yield return StartCoroutine(chessboardGrid.ExecuteHintFillFlow(targetTile));
+
+        if (effectButterfly != null)
+        {
+            effectButterfly.transform.DOScale(new Vector3(40, 40, 40), 0.4f).OnComplete(() =>
+            {
+                effectButterfly.transform.DOLocalMoveY(1480, 0.7f);
+                effectButterfly.transform.DOLocalMoveX(-300, 0.7f).SetEase(Ease.Linear).OnComplete(() =>
+                {
+                    effectButterfly.transform.localPosition = new Vector3(-300f, 0f, 0f);
+                    effectButterfly.gameObject.SetActive(false);
+                    effectButterfly.transform.DOLocalRotate(Vector3.zero, 0f);
+                });
+            });
+        }
+
+        if (butterflyObj != null)
+            butterflyObj.GetComponent<RectTransform>().DOAnchorPosX(-300, 0.3f);
+
+        chessboardGrid.IsBlockInput = false;
+        EventDispatcher.instance.TriggerChangeTopRaycast(true);
+        LogButterfly($"蝴蝶填入完成：目标格 ({targetTile.Row},{targetTile.Col})，本关剩余 {useButterflyCount}");
     }
     private Vector3[] GetButterflyPath(Transform starttrans, Vector3 endPos)
     {

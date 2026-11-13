@@ -1035,13 +1035,31 @@ public class UserData
 
             if (shopdata.isget && shopdata.adstype == (int)LimitRewordType.RemoveDayAds)
             {
-                int hour = 24 * 7;
-                DateTime buyendTime = DateTime.Parse(shopdata.gettime).AddHours(hour);
-                TimeSpan timeSpan = buyendTime.Subtract(DateTime.Now);
-
-                if (timeSpan.TotalMinutes <= 0)
+                // ★ bug64 修复：以前固定用「gettime + 7 天」判过期，只要玩家买到的不是 7 天（或中途续过期），
+                //   就会被误标 isoverdate；重启补单时补单逻辑看到「已过期」就按 Now + 时长重新计时，
+                //   玩家剩余的去广告时长被直接覆盖。
+                //   现在一律以权益真实结束时间 endtime 为准；只有 endtime 缺失的老存档，才退回 gettime + 7 天（历史默认时长）。
+                DateTime adEndTime = shopdata.GetEndTime();
+                if (adEndTime == DateTime.MinValue && !string.IsNullOrEmpty(shopdata.gettime))
                 {
-                    shopdata.isoverdate = true;
+                    DateTime getTime = shopdata.GetGetTime();
+                    if (getTime != DateTime.MinValue)
+                        adEndTime = getTime.AddHours(24 * 7);
+                }
+
+                if (adEndTime != DateTime.MinValue)
+                {
+                    bool expired = (adEndTime - DateTime.Now).TotalMinutes <= 0;
+                    if (expired)
+                    {
+                        shopdata.isoverdate = true;
+                    }
+                    else if (shopdata.isoverdate)
+                    {
+                        // 未到期却带着过期标记（旧版本误标）→ 纠正回来，否则权益永远失效
+                        shopdata.isoverdate = false;
+                        Debug.Log($"[ShopLimit] 限时去广告过期标记纠正: 结束={adEndTime:yyyy-MM-dd HH:mm:ss}");
+                    }
                 }
             }
         }

@@ -14,6 +14,12 @@ public partial class ShopManager : MonoBehaviour
     private Dictionary<string, string> _holidayWeekendTable = new Dictionary<string, string>();
 
     /// <summary>
+    /// 节日/周末表的「固定文案标签」列（可选）：日期 → 活动礼包标签文案。
+    /// 策划在表里配了就用它当礼包状态标签（如「国庆狂欢」），没配则按 节日特惠 / 周末特惠 兜底。
+    /// </summary>
+    private Dictionary<string, string> _holidayFixedTagTable = new Dictionary<string, string>();
+
+    /// <summary>
     /// 加载节日/周末表（HolidayWeekend特殊节日&周末匹配表 202×20）。
     /// 列：日期 | 节日/周末。配置放本地（Bundle），表内最晚日期距当前不足 2 个月时告警提醒更新。
     /// </summary>
@@ -40,18 +46,46 @@ public partial class ShopManager : MonoBehaviour
     private void ParseHolidayWeekendTable(string data)
     {
         _holidayWeekendTable.Clear();
+        _holidayFixedTagTable.Clear();
         var records = SplitCsvLines(data);
+
+        // 表头列位：默认「日期 | 活动标签」，若表头能识别出「固定文案标签」列则一并读取
+        int dateCol = 0;
+        int labelCol = 1;
+        int fixedTagCol = -1;
+
+        for (int i = 0; i < Math.Min(records.Count, 3); i++)
+        {
+            var header = records[i];
+            for (int j = 0; j < header.Count; j++)
+            {
+                string h = (header[j] ?? "").Trim();
+                if (string.IsNullOrEmpty(h)) continue;
+                if (h == "日期" || h == "Date") dateCol = j;
+                else if (h == "活动标签" || h == "Label") labelCol = j;
+                else if (h == "固定文案标签" || h == "活动文案标签" || h == "标签文案" || h == "TagLabel") fixedTagCol = j;
+            }
+        }
+
         for (int i = 0; i < records.Count; i++)
         {
             var f = records[i];
             if (f.Count < 2) continue;
-            string dateStr = GetField(f, 0);
-            string label = GetField(f, 1);
-            if (dateStr == "日期" || string.IsNullOrEmpty(dateStr)) continue;
+            string dateStr = GetField(f, dateCol);
+            string label = GetField(f, labelCol);
+            if (dateStr == "日期" || dateStr == "Date" || string.IsNullOrEmpty(dateStr)) continue;
             DateTime date;
             if (DateTime.TryParse(dateStr, out date) && !string.IsNullOrEmpty(label))
             {
-                _holidayWeekendTable[date.ToString("yyyy-MM-dd")] = label;
+                string key = date.ToString("yyyy-MM-dd");
+                _holidayWeekendTable[key] = label;
+
+                if (fixedTagCol >= 0)
+                {
+                    string fixedTag = GetField(f, fixedTagCol);
+                    if (!string.IsNullOrEmpty(fixedTag))
+                        _holidayFixedTagTable[key] = fixedTag;
+                }
             }
         }
     }
@@ -133,6 +167,99 @@ public partial class ShopManager : MonoBehaviour
             cursor = cursor.AddDays(1);
         }
         return end;
+    }
+
+    // ======================= 活动礼包（特惠礼包）展示 =======================
+
+    /// <summary>特惠礼包命名用的本地化 key（文本形如「{0}特惠礼包」，{0}=节日名/周末）</summary>
+    public const string SpecialOfferNameKey = "SpecialOffer";
+
+    /// <summary>当前活动段的名称：节日名（如「国庆节」）／「周末」；非节日周末返回空串。</summary>
+    public string GetCurrentHolidayName()
+    {
+        return GetTodayHolidayLabel();
+    }
+
+    /// <summary>节日/周末表里当前活动段配置的固定文案标签（没配返回空串）。</summary>
+    public string GetCurrentHolidayFixedTag()
+    {
+        string tag;
+        string today = DateTime.Now.ToString("yyyy-MM-dd");
+        if (_holidayFixedTagTable.TryGetValue(today, out tag) && !string.IsNullOrEmpty(tag))
+            return tag;
+        return "";
+    }
+
+    /// <summary>
+    /// 该礼包当前是否仍是「活动礼包（特惠礼包）」：
+    /// 决策胜出时打过 isActivityPack 标记，且本次节日/周末限时未结束、还没被买完。
+    /// 限时一结束 / 售罄 → 立刻退回普通礼包（不再显示限时与特惠标签，也不再固定占推荐位）。
+    /// </summary>
+    public bool IsActivityPackActive(ShopDataItem item)
+    {
+        if (item == null) return false;
+
+        ShopLimitData limit = GetLimitData(item);
+        if (limit == null || !limit.isActivityPack) return false;
+
+        DateTime end = limit.GetLimitEndTime();
+        if (end == DateTime.MinValue || DateTime.Now >= end) return false;
+
+        return !IsLimitedOut(item);
+    }
+
+    /// <summary>活动礼包限时截止时间（= 本次连续节日/周末结束时间）；非活动礼包返回 MinValue。</summary>
+    public DateTime GetActivityPackEndTime(ShopDataItem item)
+    {
+        ShopLimitData limit = GetLimitData(item);
+        return limit != null ? limit.GetLimitEndTime() : DateTime.MinValue;
+    }
+
+    /// <summary>
+    /// 活动礼包的状态标签文案：
+    ///   1. 礼包自己配了固定标签（shop 表 LabelZh）→ 优先用它；
+    ///   2. 节日/周末表里配了「固定文案标签」→ 用它；
+    ///   3. 兜底：「周末特惠」/「节日特惠」。
+    /// 非活动礼包返回空串（不显示标签）。
+    /// </summary>
+    public string GetActivityPackTag(ShopDataItem item)
+    {
+        if (!IsActivityPackActive(item)) return "";
+
+        if (!string.IsNullOrEmpty(item.labelZh)) return item.labelZh;
+
+        string fixedTag = GetCurrentHolidayFixedTag();
+        if (!string.IsNullOrEmpty(fixedTag)) return fixedTag;
+
+        return GetTodayHolidayLabel() == "周末" ? "周末特惠" : "节日特惠";
+    }
+
+    /// <summary>
+    /// 礼包展示名：
+    ///  - 普通礼包 → 本地化文本；
+    ///  - 活动礼包（特惠礼包）→ 按本地化 key「SpecialOffer」（{0}特惠礼包）用当前节日名/「周末」填充，
+    ///    例如「国庆节特惠礼包」「周末特惠礼包」；本地化表没配该 key 时用同样的中文格式兜底。
+    /// </summary>
+    public string GetPackDisplayName(ShopDataItem item)
+    {
+        if (item == null) return "";
+
+        string raw = MultilingualManager.Instance != null
+            ? MultilingualManager.Instance.GetString(item.name)
+            : item.name;
+
+        if (!IsActivityPackActive(item)) return raw;
+
+        string label = GetCurrentHolidayName();
+        if (string.IsNullOrEmpty(label)) return raw;
+
+        if (!string.IsNullOrEmpty(raw) && raw.Contains("{0}"))
+            return string.Format(raw, label);
+
+        if (item.name == SpecialOfferNameKey)
+            return $"{label}特惠礼包";
+
+        return raw;
     }
 }
 //（注：内容由AI生成）

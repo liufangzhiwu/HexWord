@@ -378,10 +378,12 @@ public class OverallRankingScreen : UIWindow
         };
 
         // 如果是月榜，根据排名附带金币奖励信息（前三名是宝箱，不需要金币数值）
+        // bug74：以前这里写死 200，没有读取配置表；现在统一从 OverallZenContrl.RankBox 查表。
         if (isMonthly && entry.rank >= 4)
         {
-            // 这里为了演示写死 200，实际应从 OverallRankingManager.Instance.MonthlyRewards 查表获取
-            state.Reward = 200; 
+            state.Reward = OverallRankingManager.Instance != null
+                ? OverallRankingManager.Instance.GetMonthlyGoldReward(entry.rank)
+                : 0;
         }
 
         return state;

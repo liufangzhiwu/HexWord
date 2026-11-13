@@ -255,10 +255,21 @@ public class OverallSettlementScreen : UIWindow
         foreach (var kvp in _data.rewards)
         {
             if (kvp.Key == 0) gold += kvp.Value;
-            else
+            else if (IsToolRewardId(kvp.Key))
             {
                 LimitRewordType toolType = ConvertIdToToolType(kvp.Key);
-                GameDataManager.Instance.UserData.UpdateTool(toolType, kvp.Value, "月榜结算");
+                GameDataManager.Instance.UserData.UpdateTool(toolType, kvp.Value, "月榜结算",
+                    string.Empty, ResReason.IdxMonthRank, ResReason.SystemActivity);
+            }
+            else
+            {
+                // ★ bug73：奖牌（16/17/18）这类奖励在 toolInfo 里没有对应 id，
+                //   UpdateTool 会静默什么都不做 —— 既不发放也不埋点，月榜奖励在数据里整条丢失。
+                //   这里显式补一条「获得」上报，保证每种月榜奖励都有 resource_change。
+                string resName = GetMonthlyRewardResName(kvp.Key);
+                Debug.LogWarning($"[Settlement] 月榜奖励 id={kvp.Key} 不是道具类资源，仅上报不发放（资源名：{resName}）");
+                AnalyticMgr.ResourceGet(resName, kvp.Value, "月榜结算", string.Empty,
+                    ResReason.IdxMonthRank, ResReason.SystemActivity);
             }
         }
         if (gold > 0)
@@ -267,11 +278,48 @@ public class OverallSettlementScreen : UIWindow
             bool flyFinished = false;
             CustomFlyInManager.Instance.FlyInGold(step2ChestIcon, () =>
             {
-                GameDataManager.Instance.UserData.UpdateGold(gold, true, true, "月榜结算");
+                GameDataManager.Instance.UserData.UpdateGold(gold, true, true, "月榜结算",
+                    ResReason.IdxMonthRank, ResReason.SystemActivity);
                 GameDataManager.Instance.CommitGameData();
                 flyFinished = true;
             });
             yield return new WaitUntil(() => flyFinished);
+        }
+    }
+
+    /// <summary>奖励 id 是否对应一个真实存在的道具（toolInfo 里 102/103/104/105）。</summary>
+    private static bool IsToolRewardId(int id)
+    {
+        switch (id)
+        {
+            case 1:  // 蝴蝶道具 → 103
+            case 2:  // 提示道具 → 102
+            case 3:  // 火箭道具 → 104
+            case 4:  // 火箭道具（旧配置）→ 104
+            case 8:  // 复活道具 → 105
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>月榜奖励 id → 埋点用资源名（与 ResId.Normalize 的映射保持一致）。</summary>
+    private static string GetMonthlyRewardResName(int id)
+    {
+        switch (id)
+        {
+            case 0: return "金币";
+            case 1: return "蝴蝶道具";
+            case 2: return "提示道具";
+            case 3: return "火箭道具";
+            case 4: return "火箭道具";
+            case 8: return "复活道具";
+            case 11: return "蝶蛹";
+            case 12: return "禅意分";
+            case 16: return "月榜金奖牌";
+            case 17: return "月榜银奖牌";
+            case 18: return "月榜铜奖牌";
+            default: return $"月榜奖励{id}";
         }
     }
     // 以下两个直接从 ZenSettlementScreen 原样复制过来

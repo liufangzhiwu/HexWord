@@ -21,16 +21,16 @@ public static class ResId
     public const string Gold = "0";        // 金币
     public const string Fly = "1";         // 蝴蝶
     public const string Tip = "2";         // 提示道具
-    public const string Reset = "3";       // 重置道具
+    public const string Reset = "13";       // 重置道具
     public const string Double5Min = "4";  // 5min 双倍
     public const string Double15Min = "5"; // 15min 双倍
     public const string NoAd = "6";        // 去广告
     public const string NoAd7Day = "7";    // 7 天去广告
-    public const string Rocket = "8";      // 放大镜/火箭道具
+    public const string Rocket = "3";      // 放大镜/火箭道具
     public const string MagicWand = "9";   // 魔法棒（六边形玩法）
     public const string Pupa = "11";       // 蝶蛹
     public const string GoldLeaf = "12";   // 金箔
-    public const string Revive = "13";     // 复活道具
+    public const string Revive = "8";     // 复活道具
 
     // 规范未定义，待回填（回填前先按临时编码上报，便于先观察）
     public const string Energy = "14";     // 体力

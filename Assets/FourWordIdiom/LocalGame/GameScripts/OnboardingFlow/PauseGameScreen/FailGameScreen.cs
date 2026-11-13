@@ -1167,7 +1167,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (!ShouldShowFreeButterTool()) return false;
 
         var userData = GameDataManager.Instance.UserData;
-        userData.UpdateTool(LimitRewordType.Butterfly, 1, $"{source}赠送蝴蝶");
+        userData.UpdateTool(LimitRewordType.Butterfly, 1, $"{source}赠送蝴蝶",ResReason.InLevel, ResReason.IdxBuyRevive);
         userData.hasUsedGoldRevive = true;
 
         //MessageSystem.Instance.ShowTip("赠送蝴蝶道具 x1");
@@ -1195,10 +1195,17 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         if (isGold)
         {
             Debug.Log("使用金币复活！");
-            // ★ 金币复活属于「复活道具支付」，同样按内购商品口径上报
-            ResReason.Ctx payCtx = GetReviveToolIapCtx();
+            // ★ 金币复活属于金币购买道具复活
             GameDataManager.Instance.UserData.UpdateGold(-60, true, true, string.Empty,
-                payCtx.Index, payCtx.Category);
+                ResReason.InLevel, ResReason.IdxBuyRevive);
+
+            // ★ bug71：金币购买复活要和其它道具（灯泡/火箭）保持同一套上报逻辑 ——
+            //   先报「获得 复活道具 x1」（花金币买到），再报「消耗 复活道具 x1」（当场用掉），
+            //   以前只报了金币消耗，复活这条资源的获得/消耗在埋点里是完全缺失的。
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, 1, string.Empty,
+                string.Empty, ResReason.InLevel, ResReason.IdxBuyRevive);
+            GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.ReStartTool, -1, string.Empty,
+                string.Empty, ResReason.InLevel, ResReason.IdxBuyRevive);
 
             // ★ 金币购买复活 + 蝴蝶数量≤0 + 免费蝴蝶提示显示中 → 赠送一个蝴蝶道具
             bool grantedButterfly = GrantFreeButterToolIfNeeded("金币复活");

@@ -235,7 +235,6 @@ public class AwardScreen : UIWindow
 
     IEnumerator ShowRewardAnim()
     {
-        bool isneedFly = true;
         int pendingFlyCount = 0;
         int completedFlyCount = 0;
 
@@ -244,6 +243,8 @@ public class AwardScreen : UIWindow
             int rewardid = 0;
             foreach (var dataitem in Game.self.Shop.CurrentShopDataItem.productContent)
             {
+                // 每个奖励单独判定，避免上一项的「不飞」状态污染后续奖励
+                bool isneedFly = true;
                 Image icon = rewardList[rewardid].GetComponentInChildren<Image>();
                 GameObject endposObj = CustomFlyInManager.Instance.ShopGoldObj;
                 int count = int.Parse(dataitem[1]);
@@ -267,6 +268,7 @@ public class AwardScreen : UIWindow
                         break;
                     case (int)LimitRewordType.RemoveAds:
                     case (int)LimitRewordType.RemoveDayAds:
+                    case (int)LimitRewordType.InfiniteEnergy: //无限体力、去广告没有对应资源栏，不播飞入粒子
                         isneedFly = false;
                         break;
                 }

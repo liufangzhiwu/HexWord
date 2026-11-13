@@ -238,20 +238,57 @@ public class OverallRankingManager : MonoBehaviour
     private void ParseRankControlConfig(string csvText)
     {
         List<string> lines = Middleware.ToolUtil.SplitCsvLines(csvText);
-        if (lines.Count <= 2) return;
-
-        // 读取第三行数据 (索引为2)
-        string[] rawFields = Middleware.ToolUtil.ParseCsvLineKeepQuotes(lines[2]);
-        if (rawFields.Length < 2) return;
-        string[] fields = new string[rawFields.Length];
-        for (int j = 0; j < rawFields.Length; j++)
+        if (lines.Count == 0)
         {
-            fields[j] = rawFields[j].Trim('\"');
+            Debug.LogError("[OverallRanking] OverallZenContrl 为空，月榜奖励配置未加载");
+            return;
         }
+
+        // ★ bug74：以前写死读「第 3 行（索引 2）」当数据行。
+        //   只要策划改动表头注释（多/少一行说明），数据行下标就会整体偏移，
+        //   结果就是「没读到最新的配置表」：月榜奖励为空、解锁分数全是 0。
+        //   现在改成先定位表头行（第一列 = RankControl），再往下取第一条非空数据行。
+        int headerIndex = -1;
+        for (int i = 0; i < lines.Count; i++)
+        {
+            string[] headerFields = Middleware.ToolUtil.ParseCsvLineKeepQuotes(lines[i]);
+            if (headerFields.Length > 0
+                && headerFields[0].Trim().Trim('"').Trim().TrimStart('\uFEFF') == "RankControl")
+            {
+                headerIndex = i;
+                break;
+            }
+        }
+
+        if (headerIndex < 0)
+        {
+            Debug.LogError("[OverallRanking] OverallZenContrl 未找到 RankControl 表头，月榜奖励配置未加载");
+            return;
+        }
+
+        string[] dataFields = null;
+        for (int i = headerIndex + 1; i < lines.Count; i++)
+        {
+            if (string.IsNullOrWhiteSpace(lines[i])) continue;
+            string[] raw = Middleware.ToolUtil.ParseCsvLineKeepQuotes(lines[i]);
+            if (raw.Length >= 2 && !string.IsNullOrWhiteSpace(raw[0]) && !string.IsNullOrWhiteSpace(raw[1]))
+            {
+                dataFields = new string[raw.Length];
+                for (int j = 0; j < raw.Length; j++) dataFields[j] = raw[j].Trim('"').Trim();
+                break;
+            }
+        }
+
+        if (dataFields == null)
+        {
+            Debug.LogError("[OverallRanking] OverallZenContrl 表头下没有数据行，月榜奖励配置未加载");
+            return;
+        }
+
         try
         {
             // 解析 RankControl (如 "1_10000_2000")
-            string[] controlParams = fields[0].Split('_');
+            string[] controlParams = dataFields[0].Split('_');
             if (controlParams.Length >= 3)
             {
                 RankConfig.IsOpen = controlParams[0] == "1";
@@ -260,36 +297,69 @@ public class OverallRankingManager : MonoBehaviour
             }
 
             // 解析 RankBox 月榜奖励 (如 "16_1;0_200;1_3#17_1;0_150;1_2#18_1;0_100;1_2")
-            string[] rankGroups = fields[1].Split('#');
+            // 每次重解析先清空，避免热更 / 重复解析时奖励叠加
+            MonthlyRewards.Clear();
+            string[] rankGroups = dataFields[1].Split('#');
             for (int i = 0; i < rankGroups.Length; i++)
             {
                 MonthlyRewardConfig rewardConfig = new MonthlyRewardConfig { Rank = i + 1 };
                 string[] itemStrings = rankGroups[i].Split(';');
-                
+
                 foreach (var itemStr in itemStrings)
                 {
                     if (string.IsNullOrWhiteSpace(itemStr)) continue;
                     string[] itemParams = itemStr.Split('_');
-                    if (itemParams.Length >= 2)
+                    if (itemParams.Length < 2) continue;
+
+                    // 格式固定为 "ItemID_Count"，用 TryParse 兜住空值/脏数据，避免整张表解析中断
+                    if (!int.TryParse(itemParams[0], out int itemId) ||
+                        !int.TryParse(itemParams[1], out int itemCount))
                     {
-                        // 这里具体怎么解析取决于你的底层定义，假设格式是 "ItemID_Count" 或 "ItemID_Type_Count"
-                        // 为了兼容示例，假设为 ItemID_Count
-                        rewardConfig.Rewards.Add(new MonthlyRewardItem
-                        {
-                            ItemId = int.Parse(itemParams[0]),
-                            ItemCount = int.Parse(itemParams[1])
-                            // ItemType = ... 如果有第三个参数
-                        });
+                        Debug.LogWarning($"[OverallRanking] 月榜奖励配置项格式异常，已跳过：{itemStr}");
+                        continue;
                     }
+
+                    rewardConfig.Rewards.Add(new MonthlyRewardItem
+                    {
+                        ItemId = itemId,
+                        ItemCount = itemCount
+                    });
                 }
                 MonthlyRewards.Add(rewardConfig);
             }
-            Debug.Log($"[OverallRanking] 配置解析成功！总榜解锁分: {RankConfig.TotalRankUnlockScore}, 月榜解锁分: {RankConfig.MonthlyRankUnlockScore}");
+            Debug.Log($"[OverallRanking] 配置解析成功！总榜解锁分: {RankConfig.TotalRankUnlockScore}, " +
+                      $"月榜解锁分: {RankConfig.MonthlyRankUnlockScore}, 月榜奖励档位: {MonthlyRewards.Count}");
         }
         catch (Exception ex)
         {
             Debug.LogError($"[OverallRanking] Error parsing RankControlTable: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 按名次取月榜奖励（直接读配置表，界面展示与发奖都用它，避免各处写死数值 —— bug74）。
+    /// 没有配置返回空字典。
+    /// </summary>
+    public Dictionary<int, int> GetMonthlyRewards(int rank)
+    {
+        if (rank <= 0) return new Dictionary<int, int>();
+
+        MonthlyRewardConfig cfg = MonthlyRewards.FirstOrDefault(c => c.Rank == rank);
+        if (cfg == null || cfg.Rewards == null) return new Dictionary<int, int>();
+
+        var dict = new Dictionary<int, int>();
+        foreach (var item in cfg.Rewards)
+        {
+            if (item == null || item.ItemCount <= 0) continue;
+            dict[item.ItemId] = dict.TryGetValue(item.ItemId, out int old) ? old + item.ItemCount : item.ItemCount;
+        }
+        return dict;
+    }
+
+    /// <summary>按名次取月榜奖励里的金币数量（配置里 0 = 金币，如 "0_200"）。</summary>
+    public int GetMonthlyGoldReward(int rank)
+    {
+        return GetMonthlyRewards(rank).TryGetValue(0, out int gold) ? gold : 0;
     }
     
     #endregion
@@ -458,11 +528,13 @@ public class OverallRankingManager : MonoBehaviour
                 user_id = GameDataManager.Instance.UserData.GetPlayerIdInt()
             },
         };
-        // 2) 奖励按名次查本地配置 —— 必须放在初始化器外面
-        var rewardCfg = MonthlyRewards.FirstOrDefault(c => c.Rank == resp.my_rank);
-        data.rewards = rewardCfg?.Rewards?
-                           .ToDictionary(r => r.ItemId, r => r.ItemCount)
-                       ?? new Dictionary<int, int>();
+        // 2) 奖励按名次查本地配置 —— 必须放在初始化器外面（bug74：统一走配置表，不再各处写死）
+        data.rewards = GetMonthlyRewards(resp.my_rank);
+        if (data.rewards.Count == 0)
+        {
+            Debug.LogWarning($"[OverallRanking] 月榜第 {resp.my_rank} 名没有查到奖励配置（OverallZenContrl.RankBox），" +
+                             $"已解析档位 {MonthlyRewards.Count} 个，请检查配置表是否是最新版");
+        }
         
         // 打开弹窗
         UIWindow uiWindow = SystemManager.Instance.ShowPanel(PanelType.OverallSettlementScreen);

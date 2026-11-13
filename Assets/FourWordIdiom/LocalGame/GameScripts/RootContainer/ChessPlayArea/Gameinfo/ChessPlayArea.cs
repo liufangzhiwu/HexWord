@@ -323,7 +323,8 @@ public partial class ChessPlayArea : UIWindow
         }
         else
         {
-            useButterflyCount = toolInfo.count >= 2 ? AppGameSettings.MaxButterfliesPerLevel : toolInfo.count;
+            // bug76：每关开局最多 1 只（MaxButterfliesPerLevel），背包不足时按实际数量
+            useButterflyCount = Mathf.Min(toolInfo != null ? toolInfo.count : 0, AppGameSettings.MaxButterfliesPerLevel);
         }
         butterChess.Clear();
         UpdateTimerUI();

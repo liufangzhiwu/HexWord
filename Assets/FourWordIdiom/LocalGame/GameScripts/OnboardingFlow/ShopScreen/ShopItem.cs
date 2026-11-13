@@ -241,7 +241,7 @@ public class ShopItem : ShopItemBase
         int reward = ShopManager.ShopGoldFreeReward;
 
         CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
-        GameDataManager.Instance.UserData.UpdateGold(reward, true, true, "商店免费领取金币");
+        GameDataManager.Instance.UserData.UpdateGold(reward, true, true, "商店免费金币","商店免费金币");
 
         GameDataManager.Instance.UserData.isDayFreeGet = true;
 
@@ -295,16 +295,11 @@ public class ShopItem : ShopItemBase
             List<string> giftdata = shopDataItem.productContent[0];
             int count = int.Parse(giftdata[1]);
             int type = int.Parse(giftdata[0]);
-
-            // ★ bug42：原来金币扣除和道具发放都用的"看广告领取商店金币"，
-            //   那是上面 FreeGoods（看广告领金币）的原因，会导致商店金币消费被打成"激励视频"。
-            //   商店页金币购买道具与局内金币买道具是同一个行为，按道具类型细分 reason_index。
-            string reasonIndex = GetGoldBuyReasonIndex((LimitRewordType)type);
-
+          
             GameDataManager.Instance.UserData.UpdateGold(-needgold, true, true, string.Empty,
-                reasonIndex, ResReason.InLevel);
+                "GoldGoods", ResReason.Iap);
             GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count, string.Empty,
-                string.Empty, reasonIndex, ResReason.InLevel);
+                string.Empty, "GoldGoods", ResReason.Iap);
 
             EventDispatcher.instance.TriggerChangeGoldUI(0, true);
             GameDataManager.Instance.UserData.isDayGoldBuy = true;

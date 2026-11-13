@@ -362,7 +362,11 @@ public class ShopGiftItem : ShopItemBase
         if (nameText != null)
         {
             nameText.gameObject.SetActive(true);
-            nameText.text = MultilingualManager.Instance?.GetString(data.name) ?? data.name;
+            // ★ 活动礼包（特惠礼包）：名字按「{0}特惠礼包」用当前节日名/周末填充
+            //   （国庆节特惠礼包 / 周末特惠礼包），普通礼包仍走本地化文本
+            nameText.text = ShopManager.shopManager != null
+                ? ShopManager.shopManager.GetPackDisplayName(data)
+                : (MultilingualManager.Instance?.GetString(data.name) ?? data.name);
         }
 
         if (dibg != null)
@@ -1081,15 +1085,26 @@ public class ShopGiftItem : ShopItemBase
             ? tagText.transform.parent.gameObject
             : tagText.gameObject;
 
-        if (shopDataItem == null || string.IsNullOrEmpty(shopDataItem.labelZh))
+        // ★ 标签优先级：礼包自己配的固定标签（LabelZh）＞ 活动礼包标签（节日/周末表配的固定文案，
+        //   没配则「周末特惠 / 节日特惠」）＞ 不显示
+        string tag = null;
+        if (shopDataItem != null)
+        {
+            if (!string.IsNullOrEmpty(shopDataItem.labelZh))
+                tag = shopDataItem.labelZh;
+            else if (ShopManager.shopManager != null)
+                tag = ShopManager.shopManager.GetActivityPackTag(shopDataItem);
+        }
+
+        if (string.IsNullOrEmpty(tag))
         {
             root.SetActive(false);
             return;
         }
 
-        tagText.text = shopDataItem.labelZh;
+        tagText.text = tag;
         root.SetActive(true);
-        LogShopItemDetail($"礼包标签: {shopDataItem.labelZh}");
+        LogShopItemDetail($"礼包标签: {tag}");
     }
 
     // ======================= SetShopData：应用描边色 + 刷新限购 + 刷新标签 =======================

@@ -39,11 +39,11 @@ public class GiftTable : MonoBehaviour
 
     private Color color;
 
-    /// <summary>[Shop] 标签日志</summary>
+    /// <summary>[Shop] 标签日志（走 LogManager，正式包也会写进手机日志文件）</summary>
     private void LogShop(string message)
     {
         string tag = shopDataItem != null ? $"{shopDataItem.produceNameId}(id={shopDataItem.id})" : "null";
-        Debug.Log($"[Shop][GiftTable] [{tag}] {message}");
+        LogManager.ShopLog($"[GiftTable] [{tag}] {message}");
     }
 
     // ======================= 描边颜色配置（与 ShopGiftItem 保持一致） =======================
@@ -531,19 +531,16 @@ public class GiftTable : MonoBehaviour
 
     private bool IsActivityPackProduct(ShopDataItem item)
     {
-        if (item == null) return false;
-        ShopLimitData limitData = GameDataManager.Instance?.UserData?.limitShopItems?
-            .Find(x => x != null && x.nameid == item.produceNameId);
-        return limitData != null && limitData.isActivityPack;
+        // 统一口径：活动礼包标记 + 本次节日/周末限时未结束 + 未售罄
+        return ShopManager.shopManager != null && ShopManager.shopManager.IsActivityPackActive(item);
     }
 
     private string GetActivityPackTag()
     {
-        DayOfWeek dayOfWeek = DateTime.Now.DayOfWeek;
-        if (dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday)
-            return  "周末特惠";
-
-        return  "节日特惠";
+        // 固定文案（礼包 LabelZh ＞ 节日/周末表固定标签）优先，兜底「周末特惠 / 节日特惠」
+        return ShopManager.shopManager != null
+            ? ShopManager.shopManager.GetActivityPackTag(shopDataItem)
+            : "";
     }
 
     // ======================= 价格 =======================

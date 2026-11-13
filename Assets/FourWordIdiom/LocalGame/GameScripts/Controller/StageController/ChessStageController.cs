@@ -519,6 +519,24 @@ public partial class ChessStageController
                 if (EarnedPupaThisLevel > 0)
                 {
                     GameDataManager.Instance.ButterflyData.AddPupa(EarnedPupaThisLevel);
+
+                    // ★ bug72 / bug75：蝉蛹的「获得」事件以前完全没报，两个来源分别上报：
+                    //   ① 通关分数达标奖励 → 关卡内行为 / 通关结算
+                    //   ② 叶子收集奖励     → 关卡内行为 / 叶子收集
+                    if (basePupa > 0)
+                    {
+                        AnalyticMgr.ResourceGet("蝶蛹", basePupa, string.Empty, string.Empty,
+                            ResReason.IdxLevelSettle, ResReason.InLevel);
+                    }
+
+                    if (leafPupaReward > 0)
+                    {
+                        AnalyticMgr.ResourceGet("蝶蛹", leafPupaReward, string.Empty, string.Empty,
+                            ResReason.IdxLeafCollect, ResReason.InLevel);
+                    }
+
+                    Debug.Log($"[蝉蛹] 本关获得 {EarnedPupaThisLevel}（通关奖励 {basePupa} + 叶子收集 {leafPupaReward}），" +
+                              $"当前 {GameDataManager.Instance.ButterflyData.currPupa}");
                 }
             }
             else

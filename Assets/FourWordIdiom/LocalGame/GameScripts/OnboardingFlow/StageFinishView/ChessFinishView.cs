@@ -336,7 +336,9 @@ public class ChessFinishView : UIWindow
     /// 由结算策略决定后调用（ChessStageController 结算流程 + AdsDiscountScreen 关闭时）：
     ///   - 当前结算页登记的是破冰礼包 → 显示 removeAdsGiftBtn；
     ///   - 登记的是复购/升层礼包 → 显示 giftButton；
-    ///   - 没有登记（未命中策略 / 已购买）→ 两个都隐藏。
+    ///   - 没有登记（未命中策略 / 活动限时结束）→ 两个都隐藏；
+    ///   - 已购买但活动倒计时未结束 → 仍然显示，点击可再次打开弹窗<b>继续购买</b>
+    ///     （破冰 / 复购礼包在活动期间允许反复购买）。
     /// </summary>
     public void RefreshSettlementGiftButtons()
     {
@@ -530,7 +532,7 @@ public class ChessFinishView : UIWindow
         if (ShopManager.shopManager == null
             || !ShopManager.shopManager.HasSettlementGift(ShopManager.SettlementGiftKind.BreakIce))
         {
-            // 礼包已经买过 / 登记被清掉 → 直接收起按钮，避免点了没反应
+            // 登记被清掉（换结算 / 活动结束）→ 直接收起按钮，避免点了没反应
             RefreshSettlementGiftButtons();
             return;
         }
