@@ -1353,8 +1353,6 @@ public class ChessFinishView : UIWindow
 
     private void UnlockBtnsUI()
     {
-        int curStage = GameDataManager.Instance.UserData.CurrentChessStage;
-
         // 1. 蝶园入口
         RefreshButterflyButtonState();
         // 2. 禅修榜入口（委托给组件自身的 CheckRankProgress 处理三态）
@@ -1390,41 +1388,15 @@ public class ChessFinishView : UIWindow
         }
 
         // 5. 捕鱼对战入口
+        // 口径与首页 CheckFishBtnUI 一致：通关第 34 关后露出带锁入口（提示「第39关」），
+        // 通关第 38 关后解锁；未解锁态不受竞速周时间窗影响。三态逻辑统一收在 MatchFishTable.RefreshEntryState。
         if (_matchFishtable != null && _matchFishtable.FishBtn != null)
         {
-            bool isLegacyOpened = FishInfoController.Instance.IsOpen();
-            bool openTime = FishInfoController.Instance.GetOpenFishFunction();
-            
-            bool isShow = (curStage > AppGameSettings.ShowRequirements.FishShowLevel || isLegacyOpened) && openTime;
-            _matchFishtable.FishBtn.transform.parent.gameObject.SetActive(isShow);
-            if (isShow)
+            _matchFishtable.RefreshEntryState();
+            if (_matchFishtable.FishBtn.interactable &&
+                _matchFishtable.FishBtn.transform.parent.gameObject.activeSelf)
             {
-                bool isLocked = !isLegacyOpened;
-                _matchFishtable.FishBtn.interactable = !isLocked;
-                if (_matchFishtable.LockObj != null) _matchFishtable.LockObj.SetActive(isLocked);
-                
-                Image fishIcon = _matchFishtable.FishBtn.transform.GetChild(0).GetComponent<Image>();
-                if (fishIcon != null)
-                {
-                    Color c = fishIcon.color;
-                    c.a = isLocked ? 0.5f : 1f;
-                    fishIcon.color = c;
-                }
-                
-                if (!isLocked)
-                {
-                    _matchFishtable.CheckFishBtn();
-                    StartCoroutine(UpdateFishRankUI());
-                }
-                else
-                {
-                    // 寻找鱼活动的锁底下的Text赋值（预制体没挂锁节点时跳过）
-                    if (_matchFishtable.LockObj != null)
-                    {
-                        Text lockText = _matchFishtable.LockObj.GetComponentInChildren<Text>(true);
-                        if (lockText != null) lockText.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
-                    }
-                }
+                StartCoroutine(UpdateFishRankUI());
             }
         }
 

@@ -98,6 +98,7 @@ public static class ResReason
     public const string IdxMonthRank = "月榜";
     public const string IdxLimitReward = "限时奖励";
     public const string IdxCombo = "连胜";
+    public const string IdxNewPlayer = "新手奖励活动完成";
 
     // 关卡内行为
     public const string IdxLeafCollect = "叶子收集";
@@ -530,7 +531,7 @@ public partial class AnalyticMgr
             { "flyItem", flyCount },
             { "level_id", levelId },
             { "level_type", userData.GetLevelMode() },
-            { "game_package", userData.ABName ?? string.Empty },
+            { "game_package", userData.ABName ?? "-1" },
             { "active_day_event", userData.activeDayCnt },
             { "life_day_event", lifeDays },
         };

@@ -472,12 +472,14 @@ public class PrimaryInterface : UIWindow
     
     private void UpdateFishTime(string time="")
     {
+        // 未解锁态由 CheckFishBtnUI 统一渲染（锁图标 + 「第X关」文案），
+        // 这里不能被活动时间文本覆盖，否则锁态下会显示成时间串。
+        if (!FishBtn.interactable) return;
+
         if (!FishInfoController.Instance.RoundFishIsOver())
         {
             fishtimetext.text = time;
-            if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel||
-                GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel||
-                !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
+            if (FishInfoController.Instance.IsOpen())
             {
                 FishBtn.gameObject.SetActive(FishInfoController.Instance.GetOpenFishFunction());
             }
@@ -665,23 +667,39 @@ public class PrimaryInterface : UIWindow
         Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage,
                   GameDataManager.Instance.UserData.CurrentChessStage);
 
-    /// <summary>捕鱼入口：显隐 + 未解锁态（第X关文案 + 图标半透明）</summary>
+    /// <summary>
+    /// 捕鱼（锦鲤竞速）入口：显隐 + 未解锁态（锁图标 + 「第39关」文案 + 图标半透明）
+    /// 口径对齐限时灯笼 / 每日任务：
+    ///   1) 通关第 34 关后（进度变 35）就露出入口，此时是带锁态，提示文本「第39关」；
+    ///   2) 通关第 38 关后（进度变 39）解锁，锁去掉、按钮可点；
+    ///   3) 未解锁态的显示不受竞速周时间窗影响（时间窗只约束已解锁玩家的活动入口）。
+    /// </summary>
     private void CheckFishBtnUI()
     {
-        bool isLegacyOpened = FishInfoController.Instance.IsOpen();
-        bool isShow = CurrentProgressStage > AppGameSettings.ShowRequirements.FishShowLevel || isLegacyOpened;
-        bool openTime = FishInfoController.Instance.GetOpenFishFunction(); // 是否在开启时间内
+        bool isUnlocked = FishInfoController.Instance.IsOpen();
+        bool isShow = CurrentProgressStage > AppGameSettings.ShowRequirements.FishShowLevel || isUnlocked;
         if (FishBtn.transform.parent != null)
-            FishBtn.transform.parent.gameObject.SetActive(isShow && openTime);
+            FishBtn.transform.parent.gameObject.SetActive(isShow);
         if (!isShow) return;
 
-        bool isLocked = !isLegacyOpened;
+        // 已解锁：沿用活动时间窗；新玩家先进存档补一份时间窗，否则 GetOpenFishFunction() 恒 false
+        bool isVisible = isShow;
+        if (isUnlocked)
+        {
+            FishInfoController.Instance.EnsureFishTimeWindow();
+            isVisible = FishInfoController.Instance.GetOpenFishFunction();
+            if (FishBtn.transform.parent != null)
+                FishBtn.transform.parent.gameObject.SetActive(isVisible);
+        }
+
+        bool isLocked = !isUnlocked;
         FishBtn.interactable = !isLocked;
         if (fishLock != null) fishLock.SetActive(isLocked);
 
         Image fish = FishBtn.transform.childCount > 0 ? FishBtn.transform.GetChild(0).GetComponent<Image>() : null;
         if (isLocked)
         {
+            FishBtn.gameObject.SetActive(true);
             if (fishtimetext != null)
             {
                 fishtimetext.gameObject.SetActive(true);
@@ -701,6 +719,8 @@ public class PrimaryInterface : UIWindow
         }
 
         if (fish != null) fish.color = Color.white;
+        // 活动未开（入口已隐藏）时不再跑排名刷新协程，避免空转
+        if (!isVisible) return;
         StartCoroutine(UpdateFishRankUI());
     }
 

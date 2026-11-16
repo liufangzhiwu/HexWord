@@ -46,78 +46,123 @@ public class MatchFishTable : MonoBehaviour
     {
         claimObj.gameObject.SetActive(false);
         if (!FishBtn.interactable) return;
-        
-            if (string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
+
+        // 时间窗初始化统一交给 FishInfoController（首页/结算页共用一份，避免各写一套）
+        FishInfoController.Instance.EnsureFishTimeWindow();
+
+        bool fishOpen = FishInfoController.Instance.GetOpenFishFunction();
+        FishBtn.gameObject.SetActive(fishOpen);
+        FishBtn.gameObject.transform.parent.gameObject.SetActive(fishOpen);
+
+        if (!FishInfoController.Instance.IsOpen()) return;
+
+        bool isJustUnlocked = false;
+        // 主要针对模式2（拼字玩法）进行防蹭分拦截
+        if (GameDataManager.Instance.UserData.levelMode == 2)
+        {
+            int playedStage = ChessStageController.Instance.CurrStageData.StageId; // 刚打完的关卡
+            int unlockStage = AppGameSettings.UnlockRequirements.FishOpenLevel;    // 解锁关卡（通关第 38 关后，进度到 39）
+
+            // 进度语义：通关 N 关后 CurrentChessStage = N+1，
+            // 所以「刚打完 38 关、进度变 39」这一局就是新鲜解锁的结算局
+            if (playedStage == unlockStage - 1 && GameDataManager.Instance.UserData.CurrentChessStage == unlockStage)
             {
-                DateTime openTime = DateTime.Now;
-                //DateTime openTime = DateTime.Today.AddDays(1);
-                // 计算本周五的日期（如果今天已经过了周五，则计算下周五）
-                DateTime closeTime = DateTime.Today.AddDays((DayOfWeek.Friday - DateTime.Now.DayOfWeek + 7) % 7);
-                
-                DayOfWeek dayOfWeek = openTime.DayOfWeek;      // 获取星期几
-                // 如果是周五、周六或周日，则调整到下周一
-                if (dayOfWeek == DayOfWeek.Friday || dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday)
-                {
-                    // 计算到下周一的天数差
-                    int daysUntilMonday = ((int)DayOfWeek.Monday - (int)dayOfWeek + 7) % 7;
-                    closeTime = openTime.AddDays(daysUntilMonday);
-                }
-                
-                GameDataManager.Instance.FishUserSave.opentime = openTime.ToString();
-                GameDataManager.Instance.FishUserSave.cloestime = closeTime.ToString();
-                FishInfoController.Instance.UpdateFishTime();
-                FishBtn.gameObject.SetActive(true);
-                FishBtn.gameObject.transform.parent.gameObject.SetActive(true);
+                isJustUnlocked = true;
+                Debug.Log($"[捕鱼防蹭分] 刚打完第{playedStage}关新鲜解锁捕鱼，绝不将本局进度白送给比赛！");
             }
-            else
-            {
-                bool fishOpen = FishInfoController.Instance.GetOpenFishFunction();
-                FishBtn.gameObject.SetActive(fishOpen);
-                FishBtn.gameObject.transform.parent.gameObject.SetActive(fishOpen);
-                
-                if (FishInfoController.Instance.IsOpen())
-                {
-                    bool isJustUnlocked = false;
-                    // 主要针对模式2（拼字玩法）进行防蹭分拦截
-                    if (GameDataManager.Instance.UserData.levelMode == 2) 
-                    {
-                        int playedStage = ChessStageController.Instance.CurrStageData.StageId; // 刚打完的关卡
-                        int unlockStage = AppGameSettings.UnlockRequirements.FishOpenLevel;    // 解锁关卡
-                    
-                        if (playedStage == unlockStage - 1 && GameDataManager.Instance.UserData.CurrentChessStage == unlockStage)
-                        {
-                            isJustUnlocked = true;
-                            Debug.Log($"[捕鱼防蹭分] 刚打完第{playedStage}关新鲜解锁捕鱼，绝不将本局进度白送给比赛！");
-                        }
-                    }
-                    
-                    if (isJustUnlocked) return; 
-                    if(GameDataManager.Instance.UserData.levelMode == 1)
-                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageHexController.Instance.LimitPuzzlecount);
-                    else if(GameDataManager.Instance.UserData.levelMode == 2)
-                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(ChessStageController.Instance.CurrStageInfo.PhraseGroups.Count);
-                    else if(GameDataManager.Instance.UserData.levelMode == 3)
-                        GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageHexController.Instance.LimitPuzzlecount); // HexWord 六边形模式补回
-                }
-            }
-        
+        }
+
+        if (isJustUnlocked) return;
+        if (GameDataManager.Instance.UserData.levelMode == 1)
+            GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageHexController.Instance.LimitPuzzlecount);
+        else if (GameDataManager.Instance.UserData.levelMode == 2)
+            GameDataManager.Instance.FishUserSave.UpdateFishProgress(ChessStageController.Instance.CurrStageInfo.PhraseGroups.Count);
+        else if (GameDataManager.Instance.UserData.levelMode == 3)
+            GameDataManager.Instance.FishUserSave.UpdateFishProgress(StageHexController.Instance.LimitPuzzlecount); // HexWord 六边形模式补回
+    }
+
+    /// <summary>
+    /// 刷新结算页竞速入口三态：隐藏 / 带锁显示（「第X关」）+ 不可点 / 解锁显示。
+    /// 口径：通关第 34 关后（进度变 35）露出带锁入口；通关第 38 关后（进度变 39）解锁；
+    ///      未解锁态不受竞速周时间窗影响，已解锁态沿用活动时间窗。
+    /// 说明：拼字结算页（ChessFinishView）与六边形结算页（StageFinishView）共用这一份逻辑。
+    /// </summary>
+    public void RefreshEntryState()
+    {
+        if (FishBtn == null || GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return;
+
+        int progress = Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage,
+                                 GameDataManager.Instance.UserData.CurrentChessStage);
+        bool isUnlocked = FishInfoController.Instance.IsOpen();
+        bool isShow = progress > AppGameSettings.ShowRequirements.FishShowLevel || isUnlocked;
+
+        bool isVisible = isShow;
+        if (isShow && isUnlocked)
+        {
+            // 新玩家先补一份竞速时间窗，否则 GetOpenFishFunction() 恒 false → 入口永远不出现
+            FishInfoController.Instance.EnsureFishTimeWindow();
+            isVisible = FishInfoController.Instance.GetOpenFishFunction();
+        }
+
+        Transform parent = FishBtn.transform.parent;
+        if (parent != null) parent.gameObject.SetActive(isVisible);
+        if (!isVisible) return;
+
+        bool isLocked = !isUnlocked;
+        FishBtn.interactable = !isLocked;
+        if (LockObj != null) LockObj.SetActive(isLocked);
+
+        Image fishIcon = matchfishImage;
+        if (fishIcon != null)
+        {
+            Color c = fishIcon.color;
+            c.a = isLocked ? 0.5f : 1f;
+            fishIcon.color = c;
+        }
+
+        if (isLocked)
+        {
+            FishBtn.gameObject.SetActive(true);
+            ShowLockedState();
+        }
+        else CheckFishBtn();
+    }
+
+    /// <summary>
+    /// 未解锁态渲染：锁图标 + 「第X关」提示文案，并收起排名 / 领取 / 网络等状态。
+    /// 说明：fishTime 预制体默认带残留时间文本，锁态必须显式刷新，否则会显示成旧的时间串。
+    /// </summary>
+    /// <param name="showTimeBg">是否显示 fishTime 的底板 Image</param>
+    public void ShowLockedState(bool showTimeBg = true)
+    {
+        if (FishBtn != null) FishBtn.interactable = false;
+
+        string lockTip = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
+        if (fishTime != null)
+        {
+            fishTime.gameObject.SetActive(true);
+            fishTime.text = lockTip;
+        }
+
+        if (rankimage != null) rankimage.gameObject.SetActive(false);
+        if (claimObj != null) claimObj.gameObject.SetActive(false);
+        if (fishwifiimage != null) fishwifiimage.gameObject.SetActive(false);
+
+        if (LockObj != null)
+        {
+            LockObj.SetActive(true);
+            Text lockText = LockObj.GetComponentInChildren<Text>(true);
+            if (lockText != null) lockText.text = lockTip;
+        }
     }
     
 
     public void UpdateFishTime(string time="")
     {
-        //  1. 拦截未解锁状态
+        //  1. 拦截未解锁状态（锁图标 + 「第X关」文案）
         if (!FishInfoController.Instance.IsOpen())
         {
-            // 假设你的时间文本叫 fishtimetext
-            fishTime.gameObject.SetActive(true);
-            fishTime.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
-            if (fishTime.transform.parent != null)
-            {
-                Image bg = fishTime.transform.parent.GetComponent<Image>();
-                if (bg != null) bg.enabled = true;
-            }
-            rankimage.gameObject.SetActive(false);
+            ShowLockedState(true);
             return; 
         }
         //  2. 正常更新时间，控制自身显隐与底板 Image
@@ -139,19 +184,10 @@ public class MatchFishTable : MonoBehaviour
     
     public void UpdateFishRank()
     {
-        // 1. 核心拦截：如果未解锁，全面隐藏
+        // 1. 核心拦截：如果未解锁，全面隐藏（锁图标 + 「第X关」文案）
         if (!FishInfoController.Instance.IsOpen())
         {
-            fishTime.gameObject.SetActive(true);
-            fishTime.text = $"第{AppGameSettings.UnlockRequirements.FishOpenLevel}关";
-            if (fishTime.transform.parent != null)
-            {
-                Image bg = fishTime.transform.parent.GetComponent<Image>();
-                if (bg != null) bg.enabled = false;
-            }
-            rankimage.gameObject.SetActive(false);
-            claimObj.gameObject.SetActive(false);
-            fishwifiimage.gameObject.SetActive(false);
+            ShowLockedState(false);
             return;
         }
         

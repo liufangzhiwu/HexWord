@@ -274,6 +274,9 @@ public class FishInfoController : MonoBehaviour
         if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
 
         // 条件 1：等级达标（HexWord 双模式：六边形 / 拼字任一达标即可）
+        // 进度语义：CurrentXxxStage = 「当前待玩的关卡」，通关 N 关后变为 N+1。
+        // 解锁点：通关第 38 关后（进度到 39）解锁（= 39 关开始可玩竞速）；
+        // 露出点：通关第 34 关后（进度到 35）先显示带锁入口，提示「第39关」。
         bool isLevelReached =
             GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel;
@@ -284,6 +287,36 @@ public class FishInfoController : MonoBehaviour
                                  !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime));
 
         return isLevelReached || isLegacyUnlocked;
+    }
+
+    /// <summary>
+    /// 确保竞速周时间窗已初始化（存档里没有 opentime / cloestime 时补一份）。
+    /// 原来只有结算页 MatchFishTable.CheckFishBtn 会初始化，而入口显隐又依赖
+    /// GetOpenFishFunction()（cloestime 为空时恒 false）→ 新玩家解锁后入口永远不显示。
+    /// 现在首页/结算页在「已解锁」时都会先调这里，再判活动时间窗。
+    /// </summary>
+    public void EnsureFishTimeWindow()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.FishUserSave == null) return;
+
+        var save = GameDataManager.Instance.FishUserSave;
+        if (!string.IsNullOrEmpty(save.opentime) && !string.IsNullOrEmpty(save.cloestime)) return;
+
+        DateTime openTime = DateTime.Now;
+        // 计算本周五的日期（如果今天已经过了周五，则计算下周五）
+        DateTime closeTime = DateTime.Today.AddDays((DayOfWeek.Friday - DateTime.Now.DayOfWeek + 7) % 7);
+
+        DayOfWeek dayOfWeek = openTime.DayOfWeek;
+        // 如果是周五、周六或周日，则调整到下周一
+        if (dayOfWeek == DayOfWeek.Friday || dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday)
+        {
+            int daysUntilMonday = ((int)DayOfWeek.Monday - (int)dayOfWeek + 7) % 7;
+            closeTime = openTime.AddDays(daysUntilMonday);
+        }
+
+        save.opentime = openTime.ToString();
+        save.cloestime = closeTime.ToString();
+        UpdateFishTime();
     }
 
     /// <summary>

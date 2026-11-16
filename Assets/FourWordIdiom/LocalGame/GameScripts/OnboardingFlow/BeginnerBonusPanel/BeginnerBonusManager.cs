@@ -222,7 +222,7 @@ public class BeginnerBonusManager
         if (user.isBeginnerBonusCompleted) return;
 
         user.isBeginnerBonusCompleted = true;
-        user.UpdateGold(REWARD_GOLD, true, true, "新手奖励活动完成");
+        user.UpdateGold(REWARD_GOLD, true, true, "新手奖励活动完成",ResReason.IdxNewPlayer,ResReason.SystemActivity);
         GameDataManager.Instance.CommitGameData();
     }
 }

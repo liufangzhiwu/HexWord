@@ -83,7 +83,8 @@ public class StageFinishView : UIWindow
         if (FishInfoController.Instance != null)
             FishInfoController.Instance.OnFishTimeUpdated += _matchFishtable.UpdateFishTime;
 
-        _matchFishtable.CheckFishBtn();
+        // 竞速入口三态统一由 MatchFishTable 处理（通关 34 关后带锁露出、通关 38 关后解锁）
+        _matchFishtable.RefreshEntryState();
         AudioManager.Instance.PlaySoundEffect("StageFinish");
         StartCoroutine(CheckCompletedState());
         DailyTaskManager.Instance.UpateButterflyTaskUI();
@@ -333,7 +334,8 @@ public class StageFinishView : UIWindow
             yield return new WaitForSeconds(FinishFlowTiming.TaskPanelGap);
         }
 
-        if (FishInfoController.Instance != null && FishInfoController.Instance.IsShowFishProgressAnim() && _matchFishtable.FishBtn.gameObject.activeSelf)
+        if (FishInfoController.Instance != null && FishInfoController.Instance.IsShowFishProgressAnim() &&
+            _matchFishtable.FishBtn.interactable && _matchFishtable.FishBtn.gameObject.activeSelf)
         {
             _matchFishtable.ShowFishWordAnim();
             StartCoroutine(UpdateFishRankUI());
@@ -412,6 +414,13 @@ public class StageFinishView : UIWindow
     {
         if (FishInfoController.Instance != null)
         {
+            // 未解锁（带锁显示）时只需刷新锁态文案，不必每秒跑排名结算
+            if (!_matchFishtable.FishBtn.interactable)
+            {
+                _matchFishtable.ShowLockedState();
+                yield break;
+            }
+
             FishInfoController.Instance.RoundResultFishRank();
             _matchFishtable.UpdateFishRank();
 
