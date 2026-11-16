@@ -350,8 +350,7 @@ public class PauseGameScreen : UIWindow
         SystemManager.Instance.HidePanel(PanelType.HeaderSection,false);
         // 退出损失体力和连击分, 并清理当前关卡游戏状态
         ChessPlayArea.Instance.QuitGameAndDeductEnergy();
-        if (ChessStageController.Instance.CurrStageData != null && 
-            ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0)
+        if (ChessStageController.Instance.CurrStageData != null)
         {
             AnalyticMgr.LevelExit();
         }

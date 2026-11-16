@@ -905,8 +905,8 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
     }
 
     /// <summary>
-    /// 刷新复活视频「剩余次数 / 每关上限」显示（主失败页 + 二次确认页），X/a 显示在按钮下方。
-    /// a = cypz_Mechanics 表 PropVideoTimes 的复活位（每关初始 X=a，换关刷新）；X=0 时视频按钮与次数文本（X/a）一并隐藏，
+    /// 刷新复活视频「剩余次数 / 每日上限」显示（主失败页 + 二次确认页），X/a 显示在按钮下方。
+    /// a = cypz_Mechanics 表 PropVideoTimes 的复活位（每日初始 X=a，自然日刷新，换关不重置）；X=0 时视频按钮与次数文本（X/a）一并隐藏，
     /// 金币按钮由父级 HorizontalLayoutGroup 自动居中（与 GetItemScreen 灯泡口径一致）。
     /// </summary>
     private void RefreshAdsUseCountPanel(GameObject canUseTable, Text useCountText, Button adsBtn)
@@ -1296,8 +1296,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         SystemManager.Instance.HidePanel(PanelType.HeaderSection, false);
         ChessPlayArea.Instance.QuitGameAndDeductEnergy();
 
-        if (ChessStageController.Instance.CurrStageData != null &&
-            ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0)
+        if (ChessStageController.Instance.CurrStageData != null)
         {
             AnalyticMgr.LevelExit();
         }

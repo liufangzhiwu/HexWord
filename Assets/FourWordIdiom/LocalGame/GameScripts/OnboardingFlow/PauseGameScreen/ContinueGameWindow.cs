@@ -58,15 +58,13 @@ public class ContinueGameWindow : UIWindow, IPointerDownHandler, IPointerUpHandl
         // 二次确认：真的退出
         realQuitBtn.AddClickAction(() => 
         {
-           
             SystemManager.Instance.HidePanel(PanelType.ContinueGameWindow);
             SystemManager.Instance.HidePanel(PanelType.HeaderSection, true, () =>
             {
                 EventDispatcher.instance.TriggerHighlightHeaderUI(false);
                 _onQuit?.Invoke();
             });
-            if (ChessStageController.Instance.CurrStageData != null && 
-                ChessStageController.Instance.CurrStageData.FoundTargetPuzzles.Count > 0)
+            if (ChessStageController.Instance.CurrStageData != null)
             {
                 AnalyticMgr.LevelExit();
             }

@@ -50,6 +50,14 @@ public class ChessDynamicHardSave
     /// 新增：记录所有关卡的通关时长
     /// </summary>
     public Dictionary<int, float> LevelClearTimes = new Dictionary<int, float>();
+
+    /// <summary>
+    /// 付费保护到期时刻（格式 "yyyy-MM-dd HH:mm:ss"，空 = 从未付费 / 未开启保护）。
+    /// 口径见 LocalGameConfig 的 cypz_payProtect：
+    ///   任一内购支付成功 → 到期时刻 = 支付时刻 + D 天；已有未过期保护时取更晚的那个（不叠加）。
+    /// 只影响"进入关卡时读档位的偏移"，E 值、MaxEnergyLevel 都不因保护而改写。
+    /// </summary>
+    public string PayProtectEndTime;
     
     public string Getfilepath
     {
@@ -71,6 +79,7 @@ public class ChessDynamicHardSave
         PropsWordCount = 0f;
         IsDecrA = true;
         ReduceWord = 3;
+        PayProtectEndTime = string.Empty;
         LevelClearTimes.Clear();
        
     }
@@ -88,6 +97,7 @@ public class ChessDynamicHardSave
         PropsWordCount = dynamicHardSave.PropsWordCount;
         IsDecrA = dynamicHardSave.IsDecrA;
         ReduceWord = dynamicHardSave.ReduceWord;
+        PayProtectEndTime = dynamicHardSave.PayProtectEndTime;
         // 复制关卡通关时长字典
         LevelClearTimes.Clear();
         foreach (var kvp in dynamicHardSave.LevelClearTimes)
@@ -253,6 +263,45 @@ public class ChessDynamicHardSave
         // Debug.Log("关卡动态数据已保存: " + json);
     }
     
+    /// <summary>
+    /// 记录一次付费保护（cypz_payProtect）：到期时刻 = 支付时刻 + D 天。
+    /// 已有未过期的保护时取更晚的那个 —— 不叠加、不累加（连买 10 次也只有 D 天）。
+    /// </summary>
+    /// <param name="endTime">本次支付算出来的到期时刻</param>
+    /// <returns>true = 到期时刻被改写；false = 原有保护更晚，保持不变</returns>
+    public bool SetPayProtectEnd(DateTime endTime)
+    {
+        DateTime oldEnd;
+        if (!string.IsNullOrEmpty(PayProtectEndTime)
+            && DateTime.TryParse(PayProtectEndTime, out oldEnd)
+            && oldEnd >= endTime)
+        {
+            return false;
+        }
+
+        PayProtectEndTime = endTime.ToString("yyyy-MM-dd HH:mm:ss");
+        return true;
+    }
+
+    /// <summary>当前是否仍在付费保护期内（开关关闭 / 未付费 / 已过期 → false）</summary>
+    public bool IsPayProtectActive()
+    {
+        return GetPayProtectRemainDays() > 0f;
+    }
+
+    /// <summary>付费保护剩余天数（秒级精度，已过期返回 0）</summary>
+    public float GetPayProtectRemainDays()
+    {
+        if (!LocalGameConfig.PayProtectSwitch) return 0f;
+        if (string.IsNullOrEmpty(PayProtectEndTime)) return 0f;
+
+        DateTime endTime;
+        if (!DateTime.TryParse(PayProtectEndTime, out endTime)) return 0f;
+
+        double remain = (endTime - DateTime.Now).TotalDays;
+        return remain > 0 ? (float)remain : 0f;
+    }
+
     /// <summary>
     /// 检查并重置每日限时数据
     /// </summary>

@@ -33,7 +33,7 @@ public class ShopLayerConfig
 ///   ★ A / B / C 是"广告观看次数"阈值，**不是**视频按钮的使用上限。上限在
 ///     cypz_Mechanics 表的 PropVideoTimes（格式 A_B_C，如 5_3_5），见 GetToolVideoTotalLimit。
 ///   - A / B 的"已看完次数"按"当前关卡"统计（进入关卡时由 SyncToolVideoLevel 按关卡标识刷新）；
-///   - 视频点已用次数：灯泡 / 复活按"关卡"统计（换关清零），商店金币按"自然日"统计；
+///   - 视频点已用次数：灯泡按"关卡"统计（换关清零），复活 / 商店金币按"自然日"统计（跨天清零）；
 ///   - C 与 F 的计数按"自然日"统计；
 ///   - 所有计数持久化在 UserData.adLimit，关闭游戏后仍继承；
 ///   - T 冷却跨所有视频入口共享（灯泡/复活/商店金币视频），同样持久化。
@@ -165,6 +165,18 @@ public partial class ShopManager : MonoBehaviour
         }
     }
 
+    /// <summary>复活道具视频点（PropVideoTimes 的 B 位）：按自然日归一化，跨天清零（换关不再清零）。</summary>
+    private void EnsureReviveClickDay()
+    {
+        AdLimitSaveData d = AdLimitData;
+        string today = TodayString();
+        if (d.reviveClickDate != today)
+        {
+            d.reviveClickDate = today;
+            d.reviveClickUsed = 0;
+        }
+    }
+
     private static int GetToolUsed(AdLimitSaveData d, LimitRewordType type)
     {
         return type == LimitRewordType.ReStartTool ? d.reviveUsed : d.bulbUsed;
@@ -178,17 +190,17 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 视频点次数上限：PropVideoTimes（cypz_Mechanics） =======================
     //
-    // 2026-11-13 口径：
+    // 2026-11-16 口径：
     //   分层表 AdFailed 的 A/B/C 只是"广告观看次数"阈值（看完第 A 次之后的第一次点击弹假失败），
     //   视频按钮**总共能用几次**由 cypz_Mechanics 表的 PropVideoTimes 决定，格式 "A_B_C"：
     //     A = 灯泡每关视频点次数上限（每关 X=a，换关刷新）
-    //     B = 复活每关视频点次数上限（每关 X=a，换关刷新）
+    //     B = 复活每日视频点次数上限（每日 X=b，自然日刷新；换关不再清零）
     //     C = 商店金币每日视频点次数上限（含当日首次免费领取那一次）
     //   假失败那次点击**不占用**视频点次数，且每个入口只弹 1 次；弹窗会开启 T 秒冷却，
     //   冷却内点任何视频点都重弹弹窗，冷却结束后恢复真实广告。
     //   例：5_3_5 + AdFailed 的 A=4 / B=-1 / C=3 →
     //     灯泡：本关 5 次真广告额度；看完第 4 次后的下一次点击弹 1 次假失败（不扣额度），T 过后继续出广告；
-    //     复活：本关 3 次真广告额度，用满后视频按钮隐藏（B=-1 不弹假失败）；
+    //     复活：当日 3 次真广告额度（换关不重置，跨天才重置），用满后视频按钮隐藏（B=-1 不弹假失败）；
     //     金币：1 次免费 + 4 次真广告；满 C=3 次后的下一次点击弹 1 次假失败（不扣额度）。
 
     /// <summary>PropVideoTimes 解析结果：[0]=灯泡 [1]=复活 [2]=商店金币（含首次免费）。</summary>
@@ -262,7 +274,7 @@ public partial class ShopManager : MonoBehaviour
         LogShop("[PropVideoTimes] PropVideoTimes 列没有数据，使用兜底 5_3_5");
     }
 
-    /// <summary>灯泡（每关）/ 复活（每关）：视频点次数上限（&lt;0 表示不限制）。</summary>
+    /// <summary>灯泡（每关）/ 复活（每日）：视频点次数上限（&lt;0 表示不限制）。</summary>
     public int GetToolVideoTotalLimit(LimitRewordType toolType)
     {
         EnsurePropVideoTimesLoaded();
@@ -280,20 +292,33 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 灯泡/复活：本关已用掉的视频点次数（只有真实激励视频播完才 +1，假失败不占次数）。
-    /// 按"关卡"统计，换关清零；持久化在存档里，杀进程重进同一关仍然继承。
+    /// 灯泡/复活：已用掉的视频点次数（只有真实激励视频播完才 +1，假失败不占次数）。
+    /// 灯泡按"关卡"统计，换关清零；复活按"自然日"统计，跨天清零（换关不清），
+    /// 两者均持久化在存档里，杀进程重进仍然继承。
     /// </summary>
     public int GetToolVideoClickUsed(LimitRewordType toolType)
     {
         AdLimitSaveData d = AdLimitData;
-        return toolType == LimitRewordType.ReStartTool ? d.reviveClickUsed : d.bulbClickUsed;
+        if (toolType == LimitRewordType.ReStartTool)
+        {
+            EnsureReviveClickDay();
+            return d.reviveClickUsed;
+        }
+        return d.bulbClickUsed;
     }
 
     private void IncreaseToolVideoClickUsed(LimitRewordType toolType)
     {
         AdLimitSaveData d = AdLimitData;
-        if (toolType == LimitRewordType.ReStartTool) d.reviveClickUsed++;
-        else d.bulbClickUsed++;
+        if (toolType == LimitRewordType.ReStartTool)
+        {
+            EnsureReviveClickDay();
+            d.reviveClickUsed++;
+        }
+        else
+        {
+            d.bulbClickUsed++;
+        }
         PersistAdLimit();
     }
 
@@ -766,7 +791,9 @@ public partial class ShopManager : MonoBehaviour
     /// 关卡进入时调用：只有"关卡标识变化"才清零提示/复活的道具视频计数。
     ///   - 换关（关卡号或模式变化）→ 清零，满足"每关初始 X=a"；
     ///   - 同一关重进 / 关掉游戏再打开继续本关 → 保留已用次数，满足"数据继承"；
-    ///   - 清零项：A/B 已看完次数、视频点已用次数（bulbClickUsed / reviveClickUsed）、假失败标记。
+    ///   - 清零项：A/B 已看完次数、灯泡视频点已用次数（bulbClickUsed）、假失败标记。
+    ///     ★ 复活视频点已用次数（reviveClickUsed）**不在此清零**：它按自然日刷新，
+    ///       由 EnsureReviveClickDay 在跨天时重置（2026-11-16 需求变更：复活视频点上限改为每天刷新）。
     /// 换关同时清掉「广告失败冷却 T」：冷却只约束"同一关内不要反复弹"，
     /// 否则上一关用完次数弹过 AdsFailScreen 后，T（90~150s）会压到下一关，
     /// 新关卡视频点还有可用次数却一点就弹「广告无法加载」。
@@ -783,7 +810,6 @@ public partial class ShopManager : MonoBehaviour
         d.bulbUsed = 0;
         d.reviveUsed = 0;
         d.bulbClickUsed = 0;
-        d.reviveClickUsed = 0;
         d.bulbFakeFailDone = false;
         d.reviveFakeFailDone = false;
 
@@ -792,13 +818,15 @@ public partial class ShopManager : MonoBehaviour
         d.adFailBlockedUntilTicks = 0;
 
         PersistAdLimit();
-        LogShop($"[AdFailed] 换关 → {key}，提示/复活视频次数与视频点次数已刷新" +
+        LogShop($"[AdFailed] 换关 → {key}，提示/复活视频次数与灯泡视频点次数已刷新" +
+                $"（复活视频点按自然日：{d.reviveClickUsed}/{GetToolVideoTotalLimit(LimitRewordType.ReStartTool)} 保留）" +
                 (hadCooldown ? "，上一关的广告失败冷却已清除" : string.Empty));
     }
 
     /// <summary>
     /// 强制清空当前关卡的灯泡/复活使用计数（调试或特殊流程使用）。
     /// 常规关卡刷新请走 <see cref="SyncToolVideoLevel"/>，避免同关重进误清。
+    /// 复活视频点是按自然日计数的，这里一并清掉并把日期对齐到当天。
     /// </summary>
     public void ResetLevelVideoUsed()
     {
@@ -807,6 +835,7 @@ public partial class ShopManager : MonoBehaviour
         d.reviveUsed = 0;
         d.bulbClickUsed = 0;
         d.reviveClickUsed = 0;
+        d.reviveClickDate = TodayString();
         d.bulbFakeFailDone = false;
         d.reviveFakeFailDone = false;
         d.shopGoldFakeFailDone = false;

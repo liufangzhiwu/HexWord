@@ -311,7 +311,8 @@ public class ZenRankStartScreen : UIWindow
     {
         if (progressBar != null)
         {
-            progressBar.value = (float)count / targetPlayerCount;
+            float progress = (float)count / targetPlayerCount;
+            progressBar.DOValue(progress,0.1f);
         }
         if (stage2ProgressText != null)
         {

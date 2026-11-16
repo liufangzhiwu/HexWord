@@ -189,6 +189,8 @@ public class EnergyScreen : UIWindow
         {
             energyIcon.sprite = _defaultEnergyIconSprite;
         }
+        
+        energyIcon.transform.GetChild(0).gameObject.SetActive(unlimited);
     }
 
     /// <summary>

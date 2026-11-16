@@ -13,8 +13,10 @@ using System;
 ///   - 商店金币视频（C）：按自然日统计，跨天自动刷新；
 ///   - 分享奖励（F）：按自然日统计，跨天自动刷新；
 ///   - 提示道具 / 复活道具视频（A / B）：按"关卡"统计，换关自动刷新；
-///   - 提示道具 / 复活道具「视频点」已用次数（PropVideoTimes 的 A / B 位）：
-///     按"关卡"统计，换关自动刷新（每关 X=a，看完一次激励视频 X-1）；
+///   - 提示道具「视频点」已用次数（PropVideoTimes 的 A 位）：按"关卡"统计，换关自动刷新
+///     （每关 X=a，看完一次激励视频 X-1）；
+///   - 复活道具「视频点」已用次数（PropVideoTimes 的 B 位）：**按自然日**统计，跨天自动刷新
+///     （每日 X=b，看完一次激励视频 X-1；换关不再清零）；
 ///   - T 秒冷却：跨所有视频入口共享，用 Ticks 存绝对值。
 ///
 /// ★ 两套计数各管一件事：
@@ -55,12 +57,15 @@ public class AdLimitSaveData
     /// <summary>当前关卡已正常观看的复活道具视频次数</summary>
     public int reviveUsed;
 
-    // ======================= 视频点次数（PropVideoTimes 上限）：按关卡（商店金币按自然日） =======================
+    // ============ 视频点次数（PropVideoTimes 上限）：灯泡按关卡，复活 / 商店金币按自然日 ============
 
     /// <summary>本关灯泡（提示道具）视频点已用次数（= 本关已看完的激励视频数）</summary>
     public int bulbClickUsed;
 
-    /// <summary>本关复活道具视频点已用次数（= 本关已看完的激励视频数）</summary>
+    /// <summary>复活道具视频点计数所属日期（"yyyy-MM-dd"）</summary>
+    public string reviveClickDate = "";
+
+    /// <summary>当日复活道具视频点已用次数（= 当日已看完的激励视频数）</summary>
     public int reviveClickUsed;
 
     /// <summary>当日商店金币视频点已用次数（含当日首次免费领取那一次）</summary>
@@ -101,6 +106,7 @@ public class AdLimitSaveData
             bulbUsed = bulbUsed,
             reviveUsed = reviveUsed,
             bulbClickUsed = bulbClickUsed,
+            reviveClickDate = reviveClickDate,
             reviveClickUsed = reviveClickUsed,
             shopGoldClickUsed = shopGoldClickUsed,
             bulbFakeFailDone = bulbFakeFailDone,

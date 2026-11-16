@@ -2751,6 +2751,9 @@ public partial class ShopManager : MonoBehaviour
         if (item.LocalizedPrice > userData.MaxSinglePayAmount)
             userData.MaxSinglePayAmount = item.LocalizedPrice;
 
+        // ★ 付费保护（cypz_payProtect）：补单也代表这笔支付真实成功，按支付时刻续保护
+        ChessDynamicHardManager.RecordPayProtect("补单");
+
         // ---------- 购买记录（bug50） ----------
         AddPurchaseRecordForRestore(shopDataItem, item, source);
 
@@ -2958,6 +2961,9 @@ public partial class ShopManager : MonoBehaviour
         GameDataManager.Instance.UserData.TotalPayTimes++;
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy, 1);
+
+        // ★ 付费保护（cypz_payProtect）：内购成功 → 保护到期时刻 = 支付时刻 + D 天
+        ChessDynamicHardManager.RecordPayProtect("商店内购");
 
         LogShop($"支付统计: firstPay={firstPay}, TotalPayTimes={GameDataManager.Instance.UserData.TotalPayTimes}, TotalRevenue={GameDataManager.Instance.UserData.TotalRevenue}");
 

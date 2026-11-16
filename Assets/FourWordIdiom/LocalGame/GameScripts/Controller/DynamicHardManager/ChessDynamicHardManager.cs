@@ -129,6 +129,61 @@ public class ChessDynamicHardManager : MonoBehaviour
     {
         return DynamicHardIsOpen == 1;
     }
+
+    #region 付费保护（LoclalGameConfig 的 cypz_payProtect = X_D）
+
+    /// <summary>Egroup ≥ 该值 = 正在被加难度，付费保护才降档</summary>
+    public const int PayProtectGroupThreshold = 5;
+
+    /// <summary>保护期内实际使用的档位 = Egroup − 该值</summary>
+    public const int PayProtectGroupOffset = 2;
+
+    /// <summary>
+    /// ★ 任一内购支付成功时调用（4 条支付成功链路统一走这里）：
+    /// 到期时刻 = 支付时刻 + D 天；已有未过期保护时取更晚的那个（不叠加）。
+    /// 立即落盘，避免"买完杀进程"丢保护。
+    /// </summary>
+    /// <param name="source">调用来源，仅用于日志</param>
+    public static void RecordPayProtect(string source)
+    {
+        if (!LocalGameConfig.PayProtectSwitch)
+        {
+            Debug.Log($"<color=#00FFFF>[动态难度 付费保护]</color> 开关已关闭（cypz_payProtect X=0），不记录。来源:{source}");
+            return;
+        }
+
+        int days = LocalGameConfig.PayProtectDays;
+        if (days <= 0)
+        {
+            Debug.Log($"<color=#00FFFF>[动态难度 付费保护]</color> 保护天数为 {days}，不记录。来源:{source}");
+            return;
+        }
+
+        if (GameDataManager.Instance == null) return;
+
+        ChessDynamicHardSave save = GameDataManager.Instance.ChessDynamicHardSave;
+        if (save == null) return;
+
+        // 注意：日期按真实支付时刻算，不做跨天的 0 点归一化
+        DateTime endTime = DateTime.Now.AddDays(days);
+        bool changed = save.SetPayProtectEnd(endTime);
+        save.SaveData();
+
+        Debug.Log($"<color=#00FFFF>[动态难度 付费保护]</color> {source} 支付成功 → " +
+                  (changed
+                      ? $"保护到期时刻更新为 <b>{save.PayProtectEndTime}</b>（现在 + {days} 天）"
+                      : $"原保护 {save.PayProtectEndTime} 更晚，保持不变") +
+                  $" | 剩余 {save.GetPayProtectRemainDays():F2} 天");
+    }
+
+    /// <summary>当前是否处于付费保护期（含开关判断）</summary>
+    public bool IsPayProtectActive()
+    {
+        return GameDataManager.Instance != null
+               && GameDataManager.Instance.ChessDynamicHardSave.IsPayProtectActive();
+    }
+
+    #endregion
     /// <summary>
     /// 加载动态配置表
     /// </summary>
@@ -413,6 +468,20 @@ public class ChessDynamicHardManager : MonoBehaviour
     }
     
     /// <summary>
+    /// 按档位号（groupId / Egroup）取难度配置；找不到返回 null。
+    /// 用于付费保护的降档读取（档位 → 初始字 的映射全局固定，与关卡区间无关）。
+    /// </summary>
+    private LevelDifficultyData GetLevelDifficultyDataByGroupId(int groupId)
+    {
+        if (LevelDifficultyDatas == null) return null;
+        foreach (var data in LevelDifficultyDatas)
+        {
+            if (data != null && data.groupId == groupId) return data;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// 检查是否需要改变难度
     /// </summary>
     /// <param name="level">关卡</param>
@@ -440,6 +509,30 @@ public class ChessDynamicHardManager : MonoBehaviour
         }
         // 初始赋予正常的配置字数增减量
         change = levelDiff.wordChange;
+
+        // ---- 付费保护：只偏移"读取的档位"，E 值与存档里的 Egroup 都不动（保护到期自动恢复） ----
+        //   仍在保护期内，且 Egroup ≥ 5（正在被加难度）→ 实际使用的档位 = Egroup − 2
+        //   例：Egroup=7（-4 字）→ 用档位 5（-2 字）；Egroup=8（-5 字）→ 用档位 6（-3 字）
+        //   档位低于 5 / 不在保护期内 → 原样走
+        if (levelDiff.groupId >= PayProtectGroupThreshold && IsPayProtectActive())
+        {
+            int shiftedGroupId = levelDiff.groupId - PayProtectGroupOffset;
+            LevelDifficultyData shiftedDiff = GetLevelDifficultyDataByGroupId(shiftedGroupId);
+            if (shiftedDiff != null)
+            {
+                float remainDays = GameDataManager.Instance.ChessDynamicHardSave.GetPayProtectRemainDays();
+                Debug.Log($"<color=#00FFFF>[动态难度 付费保护-降档]</color> 关卡 <b>{level}</b> | E值 {playerEValue} | " +
+                          $"档位 {levelDiff.groupId} → <b>{shiftedGroupId}</b> | " +
+                          $"初始字变动 {levelDiff.wordChange} → <color=#FFD700>{shiftedDiff.wordChange}</color> | " +
+                          $"剩余 {remainDays:F2} 天（E值/存档档位不变）");
+                change = shiftedDiff.wordChange;
+            }
+            else
+            {
+                Debug.LogWarning($"<color=#FF4500>[付费保护-降档失败]</color> 未找到档位 {shiftedGroupId} 的配置，按原档位 {levelDiff.groupId} 执行");
+            }
+        }
+
         //  如果是新进入一个关卡（非重玩当前关卡），才进行每日减负特权判断
         if (level != GameDataManager.Instance.ChessDynamicHardSave.StageIndex)
         {

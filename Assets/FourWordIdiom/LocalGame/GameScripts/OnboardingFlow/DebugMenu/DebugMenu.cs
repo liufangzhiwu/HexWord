@@ -48,6 +48,7 @@ public class DebugMenu : UIWindow
     [SerializeField] private Button AddPickFlowerBtn;
     [SerializeField] private Button AddPerfectBtn;
     [SerializeField] private Button SetInsertAdsBtn;
+    [SerializeField] private Button SetStageTimeBtn; // 设置当前关卡倒计时剩余时间（秒）
 
     public InputField EmailText; 
     public Text FPSText; 
@@ -111,6 +112,9 @@ public class DebugMenu : UIWindow
         // 自定义插屏展示次数（输入框填目标次数，点按钮生效）
         if (SetInsertAdsBtn != null)
             SetInsertAdsBtn.AddClickAction(OnSetInsertAdsClick);
+        // 设置当前关卡倒计时剩余时间（输入框填秒数，点按钮生效）
+        if (SetStageTimeBtn != null)
+            SetStageTimeBtn.AddClickAction(OnSetStageTimeClick);
     }
 
     private void InitUIData()
@@ -135,6 +139,7 @@ public class DebugMenu : UIWindow
         InitBtnData(AddPerfectBtn, "10");
         // 插屏次数默认显示当前本次启动已累计的次数，方便直接改成想要的值
         InitInsertAdsBtnData();
+        InitStageTimeBtnData();
         ChessEBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue.ToString("0.00");
         ChessStageBtn.GetComponentInChildren<InputField>().text = GameDataManager.Instance.UserData.CurrentChessStage.ToString();
         
@@ -251,6 +256,72 @@ public class DebugMenu : UIWindow
 
         int current = AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCount : 0;
         numText.text = current.ToString();
+    }
+
+    /// <summary>
+    /// 「设置关卡剩余时间」输入框初始化：在关内就填当前实际剩余秒数，否则填待应用的预设值（没有则 300）。
+    /// </summary>
+    private void InitStageTimeBtnData()
+    {
+        if (SetStageTimeBtn == null) return;
+
+        InputField numText = SetStageTimeBtn.GetComponentInChildren<InputField>();
+        if (numText == null) return;
+
+        float seconds = 300f;
+        if (IsInChessLevel())
+        {
+            seconds = ChessPlayArea.Instance.DebugRemainingTime;
+        }
+        else if (ChessPlayArea.HasPendingDebugRemainingTime)
+        {
+            seconds = ChessPlayArea.PendingDebugRemainingTime;
+        }
+
+        numText.text = Mathf.CeilToInt(Mathf.Max(0f, seconds)).ToString();
+    }
+
+    /// <summary>当前是否正在拼字关卡内（只有拼字玩法有局内倒计时）</summary>
+    private static bool IsInChessLevel()
+    {
+        return ChessPlayArea.Instance != null
+               && SystemManager.Instance != null
+               && SystemManager.Instance.PanelIsShowing(PanelType.ChessPlayArea);
+    }
+
+    /// <summary>
+    /// 调试：设置当前关卡倒计时剩余时间（秒）。填 0 表示立刻走「时间到」流程。
+    ///
+    /// 两条路径（DebugMenu 只能从首页 GM 按钮打开，进关后 HeaderSection 会被隐藏）：
+    ///   1) 正在拼字关内 → 立刻改本关剩余时间（连击/破冰等其它逻辑不受影响）；
+    ///   2) 不在关内 → 记成预设值，由 ChessPlayArea.SetupGameData 在进关时消费一次，
+    ///      作为本关的初始剩余时间（只在这一次这一局生效，不改存档里的关卡进度）。
+    /// 六边形/方块玩法本身没有倒计时，此按钮对它无效。
+    /// </summary>
+    private void OnSetStageTimeClick()
+    {
+        InputField numText = SetStageTimeBtn != null ? SetStageTimeBtn.GetComponentInChildren<InputField>() : null;
+        if (numText == null || !float.TryParse(numText.text, out float seconds) || seconds < 0f)
+        {
+            MessageSystem.Instance.ShowTip("请输入有效的剩余秒数（≥0，0 = 立即超时）");
+            return;
+        }
+
+        if (IsInChessLevel())
+        {
+            ChessPlayArea.Instance.DebugSetRemainingTime(seconds);
+            numText.text = Mathf.CeilToInt(seconds).ToString();
+            MessageSystem.Instance.ShowTip(seconds <= 0f
+                ? "已设为立即超时，下一帧走「时间到」流程"
+                : $"当前关卡剩余时间已设为 {Mathf.CeilToInt(seconds)} 秒");
+            return;
+        }
+
+        ChessPlayArea.SetPendingDebugRemainingTime(seconds);
+        numText.text = Mathf.CeilToInt(seconds).ToString();
+        MessageSystem.Instance.ShowTip(seconds <= 0f
+            ? "当前不在拼字关卡内，已预设：进入下一关时立即超时"
+            : $"当前不在拼字关卡内，已预设：进入下一关时剩余 {Mathf.CeilToInt(seconds)} 秒");
     }
 
     private void OnAddZenCount()

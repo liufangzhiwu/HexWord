@@ -750,6 +750,9 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy, 1);
 
+        // ★ 付费保护（cypz_payProtect）：商店界面内购成功 → 保护到期时刻 = 支付时刻 + D 天
+        ChessDynamicHardManager.RecordPayProtect("商店购买");
+
         if (item.LocalizedPrice > GameDataManager.Instance.UserData.MaxSinglePayAmount)
         {
             GameDataManager.Instance.UserData.MaxSinglePayAmount = item.LocalizedPrice;

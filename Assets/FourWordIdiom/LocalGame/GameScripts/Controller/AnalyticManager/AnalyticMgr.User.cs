@@ -810,6 +810,7 @@ public partial class AnalyticMgr
         //var properties = new Dictionary<string, object> { };
         Game.self.Analytics.LogEvent("level_fail", Define.DataTarget.Think);
     }
+    
     public static void LevelExit()
     {
         //var properties = new Dictionary<string, object> { };

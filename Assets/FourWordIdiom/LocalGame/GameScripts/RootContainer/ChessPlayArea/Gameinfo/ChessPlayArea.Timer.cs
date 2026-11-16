@@ -61,6 +61,65 @@ public partial class ChessPlayArea
     /// <summary>不限时状态下的展示文案（复活弹窗、暂停界面共用）</summary>
     public const string UnlimitedTimeText = "不限时";
 
+    // ======================= 调试：DebugMenu 设置剩余时间 =======================
+    //
+    // DebugMenu 只能从首页的 GM 按钮打开（进关后 HeaderSection 被隐藏），
+    // 所以这里支持两条路径：
+    //   1) 局内调用 → 立刻改当前关卡的剩余时间（DebugSetRemainingTime）；
+    //   2) 不在关内 → 先记成"预设值"，进关时由 SetupGameData 消费一次，作为本关初始剩余时间。
+
+    /// <summary>待应用的预设剩余秒数（&lt;0 表示没有预设）</summary>
+    private static float _pendingDebugRemainingTime = -1f;
+
+    /// <summary>是否存在待应用的预设剩余时间</summary>
+    public static bool HasPendingDebugRemainingTime => _pendingDebugRemainingTime >= 0f;
+
+    /// <summary>待应用的预设剩余秒数（没有预设时返回 -1）</summary>
+    public static float PendingDebugRemainingTime => _pendingDebugRemainingTime;
+
+    /// <summary>记录一个"进关时生效"的预设剩余时间（调试用）</summary>
+    public static void SetPendingDebugRemainingTime(float seconds)
+    {
+        _pendingDebugRemainingTime = Mathf.Max(0f, seconds);
+    }
+
+    /// <summary>取走预设剩余时间（取过一次就清空；返回 -1 表示没有预设）</summary>
+    public static float ConsumePendingDebugRemainingTime()
+    {
+        float v = _pendingDebugRemainingTime;
+        _pendingDebugRemainingTime = -1f;
+        return v;
+    }
+
+    /// <summary>当前关卡剩余秒数（调试用只读）</summary>
+    public float DebugRemainingTime => _remainingTime;
+
+    /// <summary>
+    /// 调试：把当前关卡的倒计时剩余时间直接改成 seconds。
+    ///   - seconds &lt;= 0 时改成 0.01s，下一帧就会走「时间到」流程（方便测超时表现）；
+    ///   - 会清掉已触发的提醒标记与残留红屏 / 横幅，让 1 分钟、10 秒提醒能重新走一遍；
+    ///   - 复活后的「不限时」会被解除，否则时间不流逝、测不出效果。
+    /// 只对拼字玩法（ChessPlayArea）有效，六边形玩法本身没有倒计时。
+    /// </summary>
+    public void DebugSetRemainingTime(float seconds)
+    {
+        if (seconds <= 0f) seconds = 0.01f;
+
+        _remainingTime = seconds;
+        if (CurrStageData != null) CurrStageData.RemainingTime = seconds;
+
+        ResetTimeWarning();          // 清提醒标记 + 文字恢复白色
+        ResetTimeUpRedScreen();      // 清残留红屏
+        DestroyTimeUpBanner();       // 清残留「时间到！」横幅
+        SetUnlimitedTime(false);     // 从复活的「不限时」回到正常倒计时
+
+        _isTimerRunning = true;
+        _lastDisplayedSeconds = -1;  // 强制刷新一次时间文本
+        UpdateTimerUI();
+
+        Debug.Log($"[DebugMenu] 关卡 {CurrStageData?.StageId} 剩余时间已设为 {seconds:F2}s");
+    }
+
     private void Update()
     {
         // 防抖：限制单帧最大时间流逝为 0.5 秒，防止切后台回来瞬间蒸发大量时间

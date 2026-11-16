@@ -162,6 +162,16 @@ public partial class ChessPlayArea
         wordUserSeconds = 0;
         ResetTimeWarning();
         _remainingTime = CurrStageData.RemainingTime;
+
+        // ★ 调试（DebugMenu）：如果预先设过"进关时的剩余时间"，这里消费一次。
+        //   注意这是覆盖本关初始时间，不会写进存档的关卡进度，只在本次这一局生效。
+        if (HasPendingDebugRemainingTime)
+        {
+            float debugSeconds = ConsumePendingDebugRemainingTime();
+            _remainingTime = Mathf.Max(0.01f, debugSeconds);
+            CurrStageData.RemainingTime = _remainingTime;
+            Debug.Log($"[DebugMenu] 已应用预设剩余时间 {_remainingTime:F2}s（关 {CurrStageData.StageId}）");
+        }
         // ★ 新一局（含退出重进 / 换关 / 重开游戏）回到正常倒计时：不限时只在复活的这一局内有效
         SetUnlimitedTime(false);
         _isTimerRunning = false;

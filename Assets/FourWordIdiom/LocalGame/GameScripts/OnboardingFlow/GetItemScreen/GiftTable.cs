@@ -676,6 +676,9 @@ public class GiftTable : MonoBehaviour
         GameDataManager.Instance.UserData.TotalRevenue += item.LocalizedPrice;
         DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedShopBuy, 1);
 
+        // ★ 付费保护（cypz_payProtect）：礼包（复活 / 道具弹窗）购买成功同样续保护
+        ChessDynamicHardManager.RecordPayProtect("礼包购买");
+
         LogShop($"支付统计: firstPay={firstPay}, TotalPayTimes={GameDataManager.Instance.UserData.TotalPayTimes}, " +
                 $"TotalRevenue={GameDataManager.Instance.UserData.TotalRevenue}");
 
