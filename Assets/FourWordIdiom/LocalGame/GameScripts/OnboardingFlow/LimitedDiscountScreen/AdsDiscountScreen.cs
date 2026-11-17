@@ -1042,9 +1042,9 @@ public class AdsDiscountScreen : UIWindow
         AnalyticMgr.PurchaseFailed(currentShopItem?.GetProduceName(), error);
         MessageSystem.Instance.HideLoadingAnimation();
 
-        // 拉起系统支付后未完成购买（取消/失败），由商店统一弹「取消购买」弹窗
+        // 拉起系统支付后未完成购买（取消/失败），由商店统一弹购买未完成弹窗
         if (currentShopItem != null && ShopManager.shopManager != null)
-            ShopManager.shopManager.OnPurchaseCanceled(currentShopItem.produceNameId, true);
+            ShopManager.shopManager.OnPurchaseCanceled(currentShopItem.produceNameId, true, error);
     }
 
     private void OnCloseBtn()

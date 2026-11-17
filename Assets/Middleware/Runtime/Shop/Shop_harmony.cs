@@ -180,18 +180,52 @@ namespace Middleware
         Action<string> buyFailedAction;
 
         // ------------------------------------------------------------
-        //  支付兜底会话
+        //  支付会话（会话号 + 状态机）
         //  ──────────────────────────────────────────────────────────
-        //  鸿蒙的支付收银台是 UIExtension 模态窗口，用户「取消/超时」返回时
-        //  平台回调有可能收不到（见 bug：进付款页静默一段时间再返回 → 卡住）。
-        //  因为发起支付时界面已经挂了全屏 loading，回调一丢就永远卡死。
-        //  这里用「会话号 + 看门狗」把每一轮支付强制收口：
-        //    · 正常回调 → EndPurchaseWatchdog 作废这一轮
-        //    · 超时无回调 → 按取消处理 + 主动查一次已购把可能成功的订单补回来
+        //  鸿蒙的支付收银台是 UIExtension 模态窗口：
+        //    · 用户「取消 / 超时」返回时，平台回调可能收不到；
+        //    · 玩家在收银台里慢慢输密码时，游戏进程仍在跑。
+        //  历史上用「发起即计时 120s」判超时，导致钱还没付就被判失败 →
+        //  先弹「购买失败」、回调被清空，之后再买还会被平台侧未核销订单挡住。
+        //
+        //  现在的规则：
+        //    · 收银台开着 → 不计时（_cashierOpen）；
+        //    · 收到「已离开收银台」信号 → 等 CallbackGraceSeconds；
+        //    · 仍无回调 → 先主动核单，命中就按成功发货，未命中才按取消收口；
+        //    · 迟到回调不覆盖当前轮次（_purchaseInProgress + _pendingProductId 校验）。
         // ------------------------------------------------------------
         private int _purchaseSession;
         private Coroutine _purchaseWatchdog;
-        private const float PurchaseTimeoutSeconds = 120f;
+
+        /// <summary>本轮支付是否仍在进行（发起 → 收口）。同时用作并发互斥 + 迟到回调判定。</summary>
+        private bool _purchaseInProgress;
+
+        /// <summary>本轮发起支付的商品 id，用于识别「迟到回调属于哪一轮」，防止串单。</summary>
+        private string _pendingProductId;
+
+        /// <summary>
+        /// 收银台是否还在前台。为 true 时看门狗**不计时**——
+        /// 玩家可能正在慢慢输支付密码，这段时间既不能判失败、也不能弹任何提示。
+        /// </summary>
+        private bool _cashierOpen;
+
+        /// <summary>离开收银台后，等待平台支付回调的时间（秒）。</summary>
+        private const float CallbackGraceSeconds = 5f;
+
+        /// <summary>
+        /// 收银台从未关闭时的极端兜底（秒）：超过就静默收口（只放掉 loading，不判失败）。
+        /// 这是为了界面不能永远挂在 loading 上，而不是用来判支付结果。
+        /// </summary>
+        private const float CashierHardCapSeconds = 180f;
+
+        /// <summary>本轮是否正在主动核单（已购查询）中。</summary>
+        private bool _reconciling;
+
+        /// <summary>核单时两次已购查询（消耗型 / 非消耗型）还剩几个没回包。</summary>
+        private int _reconcileQueriesPending;
+
+        /// <summary>核销失败的重试次数（成功后归零）。</summary>
+        private int _consumeRetryAttempt;
 
         ProductItem productItem = new ProductItem();
 
@@ -310,6 +344,17 @@ namespace Middleware
                              Action<ProductItem> successAction,
                              Action<string> failedAction)
         {
+            // ★ 同一时间只允许一笔支付。
+            //   以前没有互斥：玩家连点会并发两笔，回调互相覆盖（buySuccessAction 被后一笔顶掉、
+            //   前一笔的奖励发到了后一笔的界面上），表现为「付了钱没反应 / 之后唤不起支付」。
+            if (_purchaseInProgress)
+            {
+                Debug.LogWarning("[IAP] 已有一笔支付进行中（" + _pendingProductId + "），忽略本次重复请求: " + productId);
+                // 调用方在点按钮时已经挂过全屏 loading，这里放掉，避免重复点击后界面卡住
+                MessageSystem.Instance?.HideLoadingAnimation();
+                return;
+            }
+
             buyFailedAction = failedAction;
             buySuccessAction = successAction;
 
@@ -321,21 +366,39 @@ namespace Middleware
                 return;
             }
 
+            _purchaseInProgress = true;
+            _pendingProductId = product.id;
+            _cashierOpen = true;   // 收银台即将打开：看门狗在它关掉之前不计时
+
             PurchaseParameter purchaseParameter = new PurchaseParameter();
             purchaseParameter.productId   = product.id;
             purchaseParameter.productType = product.type;
             OHSDKKitManager.Instance.StartPurchase(purchaseParameter);
 
-            // ★ 发起后立刻挂看门狗：平台不回调也必须能在界面上收口
+            // ★ 发起后挂看门狗：平台不回调也必须能在界面上收口
             BeginPurchaseWatchdog();
         }
 
         // ------------------------------------------------------------
-        //  支付看门狗（回调丢失兜底）
+        //  支付看门狗
+        //
+        //  ★ 不能用「墙上时间」判超时。
+        //    鸿蒙收银台是模态 UIExtension，玩家在里面慢慢输密码时游戏进程仍在跑，
+        //    旧实现 120s 一到就把这轮判死 → 钱付了却先弹「购买失败」，
+        //    回调被清空后再也发不出货，下一次购买还会被平台侧未核销订单挡住。
+        //
+        //  现在改成两段式：
+        //    ① 收银台还开着（_cashierOpen）→ 完全不计时，只等平台回调；
+        //       只有超过 CashierHardCapSeconds 这种极端情况才静默收口（只放 loading，不判失败）。
+        //    ② 收到「已离开收银台」信号（页面 onFocus / 回到前台 / 平台回调）后，
+        //       才开始等待 CallbackGraceSeconds；仍无回调 → 先主动查一次已购（查到就发货并收口），
+        //       查不到才按取消收口（这时弹「取消购买」才是准确的）。
         // ------------------------------------------------------------
         private void BeginPurchaseWatchdog()
         {
-            EndPurchaseWatchdog();
+            // ★ 不能重置 _cashierOpen：调用方（Purchase / OnWindowFocusGained）刚设好这个状态，
+            //   重置会让看门狗一启动就以为「收银台已关闭」，退化成旧的墙上时间判失败。
+            EndPurchaseWatchdog(resetCashier: false);
             int session = ++_purchaseSession;
 
             if (Game.self == null)
@@ -347,7 +410,7 @@ namespace Middleware
         }
 
         /// <summary>作废当前这一轮（会话号自增，正在跑的协程会在下一帧退出）</summary>
-        private void EndPurchaseWatchdog()
+        private void EndPurchaseWatchdog(bool resetCashier = true)
         {
             _purchaseSession++;
             if (_purchaseWatchdog != null && Game.self != null)
@@ -355,27 +418,122 @@ namespace Middleware
                 Game.self.StopCoroutine(_purchaseWatchdog);
             }
             _purchaseWatchdog = null;
+            if (resetCashier) _cashierOpen = false;
+            _reconciling = false;
+            _reconcileQueriesPending = 0;
         }
 
         private System.Collections.IEnumerator CoPurchaseWatchdog(int session)
         {
-            float waited = 0f;
-            while (waited < PurchaseTimeoutSeconds)
+            // ① 收银台开着：不计时（只保留一个极端兜底）
+            float cashierWaited = 0f;
+            while (_cashierOpen && session == _purchaseSession)
             {
-                if (session != _purchaseSession) yield break; // 已被正常回调收口
+                cashierWaited += Time.unscaledDeltaTime;
+                if (cashierWaited >= CashierHardCapSeconds)
+                {
+                    Debug.LogError("[IAP] 收银台打开 " + CashierHardCapSeconds
+                                   + "s 仍未关闭且无回调，静默收口（不判失败，只放掉 loading）");
+                    _purchaseWatchdog = null;
+                    ClosePurchaseSessionNeutral("cashier_hard_cap");
+                    yield break;
+                }
+                yield return null;
+            }
+
+            if (session != _purchaseSession) yield break;
+
+            // ② 已离开收银台：给平台回调留出 CallbackGraceSeconds
+            float waited = 0f;
+            while (waited < CallbackGraceSeconds)
+            {
+                if (session != _purchaseSession) yield break;
                 waited += Time.unscaledDeltaTime;
                 yield return null;
             }
 
             if (session != _purchaseSession) yield break;
 
+            // ③ 还没回调 → 先主动核单（钱可能已经付了，只是回调丢了）
             _purchaseWatchdog = null;
-            Debug.LogError("[IAP] 支付回调 " + PurchaseTimeoutSeconds + "s 未返回，按取消处理，并主动核对订单");
-            ClosePurchaseSessionAsFailed("purchase_callback_timeout");
+            Debug.LogWarning("[IAP] 离开收银台 " + CallbackGraceSeconds + "s 仍未收到支付回调，主动核对订单");
+            yield return CoReconcileByQuery(session);
 
-            // 兜底核对：万一钱付了但回调丢了，靠平台已购查询把奖励补回来
+            if (session != _purchaseSession) yield break;   // 核单命中，已经按成功收口
+
+            // ④ 核单也没有本次订单 → 按取消收口
+            Debug.LogWarning("[IAP] 核单未发现本次订单，按取消处理");
+            ClosePurchaseSessionAsFailed("purchase_canceled_no_callback");
+        }
+
+        /// <summary>
+        /// 主动核单：查一次已购（消耗型 + 非消耗型）。
+        /// 命中本商品的订单会走 GrantRewardIfNeeded 正常发货并收口（不给玩家弹失败）；
+        /// 查不到就交回看门狗按取消处理。
+        /// </summary>
+        private System.Collections.IEnumerator CoReconcileByQuery(int session)
+        {
+            if (session != _purchaseSession) yield break;
+
+            _reconciling = true;
+            _reconcileQueriesPending = 2;
             ConfirmCheckPurchase(ProductType.CONSUMABLE);
             ConfirmCheckPurchase(ProductType.NONCONSUMABLE);
+
+            float waited = 0f;
+            while (waited < 3f && _reconcileQueriesPending > 0 && session == _purchaseSession)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            _reconcileQueriesPending = 0;
+            _reconciling = false;
+        }
+
+        /// <summary>
+        /// 停掉看门狗但**保留本轮会话**（_purchaseInProgress 不清），
+        /// 用于「发起支付报错，准备先核单」的场景，避免看门狗和核单两条路径同时收口。
+        /// </summary>
+        private void StopWatchdogKeepSession()
+        {
+            _cashierOpen = false;
+            if (_purchaseWatchdog != null && Game.self != null)
+            {
+                Game.self.StopCoroutine(_purchaseWatchdog);
+            }
+            _purchaseWatchdog = null;
+            _purchaseSession++;   // 让正在跑的看门狗协程在下一帧退出
+        }
+
+        /// <summary>
+        /// 发起支付失败后的核单：查一次已购。
+        ///   · 命中本轮商品 → 说明钱其实付过了（回调丢了 / 订单未核销），按成功补发并核销；
+        ///   · 未命中 → 才把这次失败报给界面。
+        /// </summary>
+        private System.Collections.IEnumerator CoPurchaseErrorReconcile(int session, string errorMessage)
+        {
+            Debug.LogWarning("[IAP] 发起支付失败，先核单确认是否为上一笔未核销订单阻塞: " + errorMessage);
+
+            _reconciling = true;
+            _reconcileQueriesPending = 2;
+            ConfirmCheckPurchase(ProductType.CONSUMABLE);
+            ConfirmCheckPurchase(ProductType.NONCONSUMABLE);
+
+            float waited = 0f;
+            while (waited < 3f && _reconcileQueriesPending > 0 && session == _purchaseSession)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            _reconcileQueriesPending = 0;
+            _reconciling = false;
+
+            if (session != _purchaseSession) yield break;   // 核单命中，已按成功收口
+
+            Debug.LogWarning("[IAP] 核单未发现可补发订单，按失败处理: " + errorMessage);
+            ClosePurchaseSessionAsFailed(errorMessage);
         }
 
         /// <summary>
@@ -388,55 +546,72 @@ namespace Middleware
             Action<string> failed = buyFailedAction;
             buyFailedAction = null;
             buySuccessAction = null;
+
+            _purchaseInProgress = false;
+            _pendingProductId = null;
             EndPurchaseWatchdog();
+
             failed?.Invoke(reason);
+        }
+
+        /// <summary>
+        /// 正常成功收口：停看门狗、清回调（调用前必须已经发过奖）。
+        /// </summary>
+        private void ClosePurchaseSessionAsSuccess(string reason)
+        {
+            if (!_purchaseInProgress)
+            {
+                // 迟到回调：只补单，不动当前会话
+                return;
+            }
+
+            _purchaseInProgress = false;
+            _pendingProductId = null;
+            EndPurchaseWatchdog();
+            buyFailedAction = null;
+            buySuccessAction = null;
+
+            // 兜底放掉 loading：核单命中但奖励此前已发（IsGranted 命中被跳过）时，
+            // 界面拿不到成功回调，这里必须把全屏遮罩收掉，否则会一直卡着。
+            MessageSystem.Instance?.HideLoadingAnimation();
+
+            Debug.Log("[IAP] 本轮支付已正常收口: " + reason);
+        }
+
+        /// <summary>
+        /// 静默收口：只放掉界面 loading，**不弹任何失败提示**。
+        /// 用于「收银台超长打开」这种非玩家责任的场景，避免钱付了却提示失败。
+        /// </summary>
+        private void ClosePurchaseSessionNeutral(string reason)
+        {
+            bool hadSession = _purchaseInProgress;
+            _purchaseInProgress = false;
+            _pendingProductId = null;
+            buyFailedAction = null;
+            buySuccessAction = null;
+            EndPurchaseWatchdog();
+            MessageSystem.Instance?.HideLoadingAnimation();
+
+            if (hadSession) Debug.LogWarning("[IAP] 本轮支付静默收口（不弹失败）: " + reason);
         }
 
         // ------------------------------------------------------------
         //  页面重新获得焦点（ArkTS: Index.ets onFocus → PushMessageReceiver）
         //
-        //  用户从支付收银台返回时，系统可能既不给 onForeground，也不给支付结果回调。
-        //  这里把「焦点回来了」当成「人已经离开收银台」：
-        //    1) 先等一小会儿，让压线到达的成功回调有机会先收口；
-        //    2) 仍无回调 → 按取消处理（界面立刻恢复，不再卡 loading），
-        //    3) 同时主动查一次已购：万一钱真的付了，走补单发货把奖励补回来。
+        //  这是「玩家已经离开收银台」的唯一可靠信号：系统既可能不给 onForeground，
+        //  也可能不给支付结果回调。这里只做一件事——把收银台标记为已关闭，
+        //  让看门狗开始计时等待回调（旧实现是「焦点回来 1.5s 就判取消」，
+        //  网络回调晚到 2s 就会被误判成失败，钱付了却提示失败）。
         // ------------------------------------------------------------
-        private Coroutine _focusReconcile;
-        private const float FocusReconcileDelay = 1.5f;
-
         public void OnWindowFocusGained()
         {
-            // 没有进行中的支付（没有回调 / 没有看门狗），什么都不做
-            if (buyFailedAction == null && buySuccessAction == null && _purchaseWatchdog == null) return;
-            if (Game.self == null) return;
+            if (!_purchaseInProgress) return;
 
-            if (_focusReconcile != null)
-            {
-                Game.self.StopCoroutine(_focusReconcile);
-                _focusReconcile = null;
-            }
-            _focusReconcile = Game.self.StartCoroutine(CoFocusReconcile(_purchaseSession));
-        }
+            Debug.Log("[IAP] 页面重新获得焦点，收银台视为已关闭，开始等待支付回调");
+            _cashierOpen = false;
 
-        private System.Collections.IEnumerator CoFocusReconcile(int session)
-        {
-            float waited = 0f;
-            while (waited < FocusReconcileDelay)
-            {
-                if (session != _purchaseSession) yield break; // 支付回调已经收口
-                waited += Time.unscaledDeltaTime;
-                yield return null;
-            }
-
-            _focusReconcile = null;
-            if (session != _purchaseSession) yield break;
-
-            Debug.LogWarning("[IAP] 返回游戏但支付回调仍未到达（code 1001860000 类取消场景），按取消处理并核对订单");
-            ClosePurchaseSessionAsFailed("purchase_canceled_no_callback");
-
-            // 兜底核对：钱已付但回调丢了的话，靠平台已购查询把奖励补回来
-            ConfirmCheckPurchase(ProductType.CONSUMABLE);
-            ConfirmCheckPurchase(ProductType.NONCONSUMABLE);
+            // 看门狗可能因为极端兜底已经停了：这时补一个，保证这一轮最终一定会收口
+            if (_purchaseWatchdog == null && Game.self != null) BeginPurchaseWatchdog();
         }
 
         void IShop.Restore(Action<bool, ProductItem[]> restoreCallback)
@@ -593,7 +768,30 @@ namespace Middleware
                   + "Code : " + signal.code + " \n Message : " + signal.message + "\n");
                 // ★ 取消/失败一定要把本轮收口：以前这里只调 buyFailedAction，
                 //   如果平台回调压根没到（或 code 类型对不上被判成成功），界面就永久卡在 loading
-                ClosePurchaseSessionAsFailed(signal.message);
+                if (!_purchaseInProgress)
+                {
+                    // 本轮早已收口（典型：核单/取消之后平台才把错误码补回来），别再弹一次
+                    Debug.LogWarning("[IAP] 收到过期的支付错误回调，忽略: " + signal.message);
+                    return;
+                }
+
+                // 用户主动取消（1001860000）：直接按取消收口，不必核单
+                string codeText = signal.code + " " + signal.message;
+                bool isUserCancel = codeText.Contains("1001860000");
+
+                if (isUserCancel || Game.self == null)
+                {
+                    ClosePurchaseSessionAsFailed(signal.message);
+                    return;
+                }
+
+                // ★ 发起支付直接失败，很可能是「上一笔未核销订单」把平台挡住了
+                //   （真机表现：付过一次之后再也拉不起收银台，每次都弹购买失败）。
+                //   先核一次单：确认没有可补发的订单，再判失败；有就按成功补发。
+                //   ★ 失败原因带上平台错误码：弹窗要按原因展示「购买失败」的具体文案。
+                string failReason = string.IsNullOrWhiteSpace(codeText) ? "purchase_failed" : codeText.Trim();
+                StopWatchdogKeepSession();
+                Game.self.StartCoroutine(CoPurchaseErrorReconcile(_purchaseSession, failReason));
                 return;
             }
 
@@ -611,8 +809,25 @@ namespace Middleware
             {
                 Debug.LogError("[IAP] 购买回调缺少订单号，按失败处理。productId=" + targetSignal.productId
                                + " code=" + signal.code + " message=" + signal.message);
-                ClosePurchaseSessionAsFailed(string.IsNullOrEmpty(signal.message) ? "invalid_purchase_payload" : signal.message);
+                if (_purchaseInProgress)
+                    ClosePurchaseSessionAsFailed(string.IsNullOrEmpty(signal.message) ? "invalid_purchase_payload" : signal.message);
                 return;
+            }
+
+            // ★ 串单保护：判断这笔回调属不属于「当前这一轮」。
+            //   旧实现无条件 EndPurchaseWatchdog + 清空回调：一笔迟到的旧回调会把
+            //   「下一笔正在进行的支付」的看门狗和界面回调一起打掉，
+            //   于是下一笔即使付了钱也没有任何反馈 → 玩家感觉「之后唤不起支付」。
+            bool belongsToCurrentRound =
+                _purchaseInProgress &&
+                (string.IsNullOrEmpty(_pendingProductId) || payload.productId == _pendingProductId);
+
+            if (!belongsToCurrentRound)
+            {
+                Debug.LogWarning("[IAP] 收到不属于当前轮次的支付回调（可能上一笔迟到），只补单不改当前会话。"
+                                 + "payload.productId=" + payload.productId
+                                 + " 当前轮商品=" + (_pendingProductId ?? "无")
+                                 + " inProgress=" + _purchaseInProgress);
             }
 
             purchaseResult = "ProductToken " + payload.purchaseToken + "\n"
@@ -643,8 +858,9 @@ namespace Middleware
                 LocalizedPrice  = payload.price,
             };
 
-            // ② 立即发奖（幂等）
-            GrantRewardIfNeeded(pending);
+            // ② 立即发奖（幂等）。
+            //   只有属于本轮才交给界面回调发货；迟到回调走补单通道，避免发到错误的界面上。
+            GrantRewardIfNeeded(pending, deliverToUi: belongsToCurrentRound);
 
             // ③ 付费归因回传（应用归因服务：只登记转化事件，金额不上送）
             long actionTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -653,10 +869,8 @@ namespace Middleware
             // ④ 通知平台消耗（非消耗型直接收尾，不调核销）
             FinishOrderAfterGrant(pending);
 
-            // ⑤ 本轮支付正常收口：停看门狗、清回调，避免下一单串到旧界面
-            EndPurchaseWatchdog();
-            buyFailedAction = null;
-            buySuccessAction = null;
+            // ⑤ 只有属于本轮才收口（停看门狗、清回调），否则会打掉正在进行的那一轮
+            if (belongsToCurrentRound) ClosePurchaseSessionAsSuccess("callback_success");
         }
 
         public void OnStartSubscribeTrigger(SignalBase signal)
@@ -686,7 +900,10 @@ namespace Middleware
             {
                 Debug.Log("[ConsumePurchase Error ] " + "\n "
                  + "Code : " + signal.code + " \n Message : " + signal.message + "\n");
-                // 保留本地记录，下次启动会重试
+                // ★ 核销失败必须重试：鸿蒙 IAP 里「未核销」的消耗型订单会一直挡住下一笔购买，
+                //   真机表现就是「付过一次之后再点购买，收银台拉不起来，一直弹购买失败」。
+                //   旧实现只打一行日志等下次启动，玩家当场就再也买不了东西。
+                RetryConsumeAfterFailure(++_consumeRetryAttempt);
                 return;
             }
 
@@ -695,8 +912,52 @@ namespace Middleware
             Debug.Log("Consume Purchase Success. purchaseToken is "
                       + target.purchaseToken + " purchase type " + target.productType + "\n");
 
+            _consumeRetryAttempt = 0;
+
             // 平台侧已完成 -> 从本地待处理表移除
             PendingOrderStore.RemoveByToken(target.purchaseToken);
+        }
+
+        /// <summary>
+        /// 核销失败后的退避重试（5s / 15s / 45s，最多 3 次）。
+        /// 仍然失败就留在待处理表里，下次启动或下次已购查询会继续尝试。
+        /// </summary>
+        private void RetryConsumeAfterFailure(int attempt)
+        {
+            if (purchaseParam == null)
+            {
+                Debug.LogWarning("[IAP] 核销失败但没有可重试的订单参数，等下次启动补核销");
+                return;
+            }
+
+            if (attempt > 3)
+            {
+                Debug.LogError("[IAP] 核销重试 3 次仍失败，留待下次启动/下次已购查询重试: "
+                               + purchaseParam.purchaseOrderId);
+                return;
+            }
+
+            if (Game.self == null) return;
+
+            float delay = attempt == 1 ? 5f : (attempt == 2 ? 15f : 45f);
+            Debug.LogWarning("[IAP] 核销失败，将在 " + delay + "s 后重试第 " + attempt + " 次: "
+                             + purchaseParam.purchaseOrderId);
+            Game.self.StartCoroutine(CoRetryConsume(purchaseParam, attempt, delay));
+        }
+
+        private System.Collections.IEnumerator CoRetryConsume(FinishPurchaseParameter param, int attempt, float delay)
+        {
+            float waited = 0f;
+            while (waited < delay)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (param == null) yield break;
+
+            Debug.LogWarning("[IAP] 核销重试第 " + attempt + " 次: " + param.purchaseOrderId);
+            OHSDKKitManager.Instance.ConsumePurchase(param);
         }
 
         // ------------------------------------------------------------
@@ -710,6 +971,9 @@ namespace Middleware
             }
             finally
             {
+                // 核单链路：两次查询（消耗型 / 非消耗型）各算一次（Restore 的查询不算）
+                if (_reconciling && _reconcileQueriesPending > 0) _reconcileQueriesPending--;
+
                 // 一次查询（成功/失败/空结果）都算这次已购查询结束，Restore 靠它收口
                 NotifyRestoreQueryDone();
             }
@@ -749,9 +1013,6 @@ namespace Middleware
                 // 只要平台侧还查得到就算已购（bug51：以前这里被 finishStatus 过滤掉，永远补不回来）
                 bool isNonConsumable = purchaseData.productType == (int)ProductType.NONCONSUMABLE;
 
-                // 消耗型：只处理平台侧尚未完成的订单
-                if (!isNonConsumable && purchaseData.finishStatus != "2") continue;
-
                 // ★ 订单号是补发幂等的唯一 key（业务层按 PurchaseRecord.orderId 判重）。
                 //   有些渠道/场景会返回空 purchaseOrderId，此时 order_id 为空会让
                 //   HasPurchaseRecordForOrder("") 恒为 false → 每次启动都重新发一遍。
@@ -765,6 +1026,33 @@ namespace Middleware
 
                     Debug.LogWarning("[IAP] 平台未返回 purchaseOrderId，改用兜底 key 去重: " + orderId
                                      + " productId=" + purchaseData.productId);
+                }
+
+                // ★ 是否「已确认支付」：
+                //   · finishStatus == "2"  —— 平台明确给出已完成；
+                //   · 或者本地待处理表里已经有这笔订单 —— 说明成功回调到过，这是更硬的证据。
+                //   以前只看 finishStatus，一旦平台口径不是 "2"，玩家真金白银付过的那笔
+                //   就永远不会发货、也永远不会核销，之后同商品再也拉不起收银台（本 bug 的根因之一）。
+                bool knownPaid = !string.IsNullOrEmpty(purchaseData.purchaseToken)
+                                 && PendingOrderStore.Get(orderId) != null;
+                bool isPaid = purchaseData.finishStatus == "2" || knownPaid;
+
+                if (!isNonConsumable && !isPaid)
+                {
+                    // 没确认支付：绝不发货（防止白送），也不做核销（防止把玩家已付的订单核销掉却丢了货）。
+                    // 只把原始字段打全，便于按真机日志确认 finishStatus 的口径。
+                    Debug.LogError("[IAP][待核对] 消耗型订单未确认支付，本次不发货也不核销。"
+                                   + " finishStatus=" + purchaseData.finishStatus
+                                   + " productId=" + purchaseData.productId
+                                   + " orderId=" + orderId
+                                   + " token=" + purchaseData.purchaseToken);
+                    continue;
+                }
+
+                if (knownPaid && purchaseData.finishStatus != "2")
+                {
+                    Debug.LogWarning("[IAP] 该订单本地有成功回调记录（finishStatus=" + purchaseData.finishStatus
+                                     + "），按已支付处理并核销: " + orderId);
                 }
 
                 var pending = new PendingOrder
@@ -791,8 +1079,20 @@ namespace Middleware
                 // 先发奖（幂等，内部按购买记录 orderId 去重）-> 再收尾（消耗型核销 / 非消耗型清记录）
                 // 非消耗型：不受 pending 的 granted 标记限制，交给业务层按「购买记录」判重
                 //（老版本可能已经标记过 granted 但奖励丢了，这里要能自愈，bug51）
-                GrantRewardIfNeeded(pending, ignoreGrantedFlag: isNonConsumable);
+                bool isCurrentRoundProduct = _purchaseInProgress &&
+                    (string.IsNullOrEmpty(_pendingProductId) || purchaseData.productId == _pendingProductId);
+
+                GrantRewardIfNeeded(pending, ignoreGrantedFlag: isNonConsumable,
+                                    deliverToUi: isCurrentRoundProduct);
                 FinishOrderAfterGrant(pending);
+
+                // ★ 核单期间查到了本轮这笔订单：说明钱付了、只是回调丢了，
+                //   按成功收口（界面走的是正常成功回调，不弹失败）
+                if (_reconciling && isCurrentRoundProduct)
+                {
+                    Debug.Log("[IAP] 核单命中本轮订单，按支付成功收口: " + orderId);
+                    ClosePurchaseSessionAsSuccess("reconcile_query_hit");
+                }
             }
         }
 
@@ -839,7 +1139,7 @@ namespace Middleware
         // ------------------------------------------------------------
         //  内部辅助：发奖 & 消耗
         // ------------------------------------------------------------
-        private void GrantRewardIfNeeded(PendingOrder order, bool ignoreGrantedFlag = false)
+        private void GrantRewardIfNeeded(PendingOrder order, bool ignoreGrantedFlag = false, bool deliverToUi = true)
         {
             if (order == null) return;
 
@@ -868,10 +1168,10 @@ namespace Middleware
 
             try
             {
-                // 恢复购买 / 启动补单阶段一律走业务层的统一补发：
+                // 恢复购买 / 启动补单 / 迟到回调一律走业务层的统一补发：
                 // 这时候 buySuccessAction 可能是上一次购买残留的界面回调（界面早关了），
                 // 直接调它会把奖励发到错误的界面、而且漏掉体力/去广告/购买记录。
-                bool useRestoreDelivery = buySuccessAction == null || _restoreInProgress;
+                bool useRestoreDelivery = !deliverToUi || buySuccessAction == null || _restoreInProgress;
 
                 if (!useRestoreDelivery)
                 {

@@ -217,82 +217,109 @@ public class AwardScreen : UIWindow
         ClaimBtn.AddVibraClickAction(ClickClaimBtn); // 绑定关闭按钮事件
     }
 
+    /// <summary>领取中标记：防止连点导致两组飞入动画同时播、面板被关两次。</summary>
+    private bool _claiming;
+
     private void ClickClaimBtn()
     {
+        if (_claiming) return;
+        _claiming = true;
+
         // ★ 点领取：资源栏背景变实色，2 秒后渐隐回半透明
         EventDispatcher.instance.TriggerAwardClaimed();
 
-        if (SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen))
+        // ★ 2026-11-17：不再只在商店里播飞入。
+        //   落点交给 CustomFlyInManager 的落点注册表解析——
+        //     商店场景 → 商店顶部那排资源图标；
+        //     分享奖励等非商店场景 → 顶栏金币 / 玩法内的提示灯、火箭按钮。
+        //   解析不到落点时只刷新数值并关闭（不留"点完什么都没发生"的空档）。
+        StartCoroutine(ShowRewardAnim());
+    }
+
+    /// <summary>
+    /// 收集本次要展示/飞入的奖励，统一成 RewardItem：
+    ///   OverrideRewards（分享奖励等外部传入）优先，否则取当前商店商品内容。
+    /// </summary>
+    private List<RewardItem> CollectRewards()
+    {
+        List<RewardItem> list = new List<RewardItem>();
+
+        if (OverrideRewards != null)
         {
-            StartCoroutine(ShowRewardAnim());
+            list.AddRange(OverrideRewards);
+            return list;
         }
-        else
+
+        var shopItem = Game.self != null ? Game.self.Shop.CurrentShopDataItem : null;
+        if (shopItem != null && shopItem.productContent != null)
         {
-            EventDispatcher.instance.TriggerChangeGoldUI(0, false);
-            Close();
+            foreach (var dataitem in shopItem.productContent)
+            {
+                if (dataitem == null || dataitem.Count < 2) continue;
+                if (!int.TryParse(dataitem[0], out int type)) continue;
+                if (!int.TryParse(dataitem[1], out int amount)) continue;
+                list.Add(new RewardItem { type = type, amount = amount });
+            }
         }
+
+        return list;
+    }
+
+    /// <summary>没有对应资源栏的奖励（去广告 / 无限体力）不播飞入。</summary>
+    private static bool IsFlyableReward(LimitRewordType type)
+    {
+        return type != LimitRewordType.RemoveAds
+            && type != LimitRewordType.RemoveDayAds
+            && type != LimitRewordType.InfiniteEnergy;
     }
 
     IEnumerator ShowRewardAnim()
     {
+        List<RewardItem> rewards = CollectRewards();
         int pendingFlyCount = 0;
         int completedFlyCount = 0;
+        bool anyFlyLaunched = false;
 
-        if (Game.self.Shop.CurrentShopDataItem != null)
+        Action onFlyArrived = () =>
         {
-            int rewardid = 0;
-            foreach (var dataitem in Game.self.Shop.CurrentShopDataItem.productContent)
+            AudioManager.Instance.PlaySoundEffect("BtnUnlock");
+            completedFlyCount++;
+        };
+
+        for (int i = 0; i < rewards.Count && i < rewardList.Count; i++)
+        {
+            LimitRewordType type = (LimitRewordType)rewards[i].type;
+            if (!IsFlyableReward(type)) continue;
+
+            if (rewardList[i] == null || !rewardList[i].activeSelf) continue;
+            Image icon = rewardList[i].GetComponentInChildren<Image>();
+            if (icon == null) continue;
+
+            // ★ 落点解析放在 FlyAwardToResource 内部：注册表 → 商店图标 → 顶栏金币，
+            //   全都不可见时返回 false，这一项就不播（避免飞向隐藏对象后"凭空消失"）
+            if (CustomFlyInManager.Instance == null) continue;
+
+            pendingFlyCount++;
+            if (!CustomFlyInManager.Instance.FlyAwardToResource(type, icon.transform.position, icon.gameObject, onFlyArrived))
             {
-                // 每个奖励单独判定，避免上一项的「不飞」状态污染后续奖励
-                bool isneedFly = true;
-                Image icon = rewardList[rewardid].GetComponentInChildren<Image>();
-                GameObject endposObj = CustomFlyInManager.Instance.ShopGoldObj;
-                int count = int.Parse(dataitem[1]);
-                int type = int.Parse(dataitem[0]);
-                switch (type)
-                {
-                    case (int)LimitRewordType.Coins:
-                        endposObj = CustomFlyInManager.Instance.ShopGoldObj;
-                        break;
-                    case (int)LimitRewordType.Butterfly:
-                        endposObj = CustomFlyInManager.Instance.ShopButterflyObj;
-                        break;
-                    case (int)LimitRewordType.Tipstool: //放大镜道具，整个词语提示
-                        endposObj = CustomFlyInManager.Instance.ShopTipObj;
-                        break;
-                    case (int)LimitRewordType.AutoComplete: //提示灯道具，单个字符提示
-                        endposObj = CustomFlyInManager.Instance.ShopAutoObj;
-                        break;
-                    case (int)LimitRewordType.ReStartTool:
-                        endposObj = CustomFlyInManager.Instance.ShopRestartObj;
-                        break;
-                    case (int)LimitRewordType.RemoveAds:
-                    case (int)LimitRewordType.RemoveDayAds:
-                    case (int)LimitRewordType.InfiniteEnergy: //无限体力、去广告没有对应资源栏，不播飞入粒子
-                        isneedFly = false;
-                        break;
-                }
-
-                if (isneedFly)
-                {
-                    pendingFlyCount++;
-                    CustomFlyInManager.Instance.FlyAwardIn(icon.gameObject.transform.position, endposObj, icon.gameObject,
-                        () =>
-                        {
-                            AudioManager.Instance.PlaySoundEffect("BtnUnlock");
-                            completedFlyCount++;
-                        });
-                }
-
-                rewardid++;
-
-                yield return new WaitForSeconds(0.1f);
+                pendingFlyCount--;   // 没有落点，不计入等待
+                continue;
             }
+
+            anyFlyLaunched = true;
+            yield return new WaitForSeconds(0.1f);
         }
 
-        // ★ 等所有飞入动画完成后，再刷新资源数值
-        while (completedFlyCount < pendingFlyCount)
+        // ★ 等所有飞入动画完成后，再刷新资源数值（加超时兜底，避免回调丢失导致面板永不关闭）
+        float waited = 0f;
+        while (completedFlyCount < pendingFlyCount && waited < 3f)
+        {
+            waited += Time.unscaledDeltaTime;
             yield return null;
+        }
+
+        if (!anyFlyLaunched)
+             Debug.Log("[AwardScreen] 本次奖励没有可用的飞入落点，直接刷新数值并关闭");
 
         EventDispatcher.instance.TriggerChangeGoldUI(0, false);
 
@@ -314,6 +341,9 @@ public class AwardScreen : UIWindow
 
     protected override void OnDisable()
     {
+        // ★ 复位领取中标记，保证下次弹出还能正常点领取
+        _claiming = false;
+
         // ★ 复位 AdsTable 显隐，避免残留
         if (AdsTable != null && AdsTable.gameObject.activeSelf)
             AdsTable.gameObject.SetActive(false);

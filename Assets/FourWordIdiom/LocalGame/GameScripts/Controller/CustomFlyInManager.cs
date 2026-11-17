@@ -163,8 +163,7 @@ public class CustomFlyInManager : MonoBehaviour
     }
     
     public void FlyAwardIn(Vector3 start,GameObject endGameObject,GameObject effect,Action call)
-    {
-        GameObject effecttemp = Instantiate(effect, AwardRoot);
+    {        GameObject effecttemp = Instantiate(effect, AwardRoot);
 
         RectTransform rect = effecttemp.GetComponent<RectTransform>();
 
@@ -195,6 +194,86 @@ public class CustomFlyInManager : MonoBehaviour
         },0.55f));
     }
     
+    // ======================= 奖励飞入落点注册表（非商店场景） =======================
+    //
+    // 背景：AwardScreen 的飞入落点原先写死取商店顶部的资源图标（ShopGoldObj / ShopTipObj…），
+    //   而商店图标只在 ShopScreen 打开时才有意义。分享奖励等「非商店场景」弹的 AwardScreen
+    //   没有商店资源栏可落，飞入就整个不播（表现为点领取后奖励凭空到账）。
+    // 方案：谁在屏幕上显示某个资源的数量，谁就注册自己的图标；
+    //   AwardScreen 先问注册表，问不到再回退商店图标 / 顶栏金币。
+    //   注册时机放在面板 OnEnable、反注册放 OnDisable，保证只命中当前真正在显示的那个。
+
+    private readonly Dictionary<LimitRewordType, Transform> _awardTargets = new Dictionary<LimitRewordType, Transform>();
+
+    /// <summary>
+    /// 注册某类奖励的飞入落点（一般是屏幕上显示该资源数量的那个图标）。
+    /// 同一类型后注册的会覆盖先注册的（后显示的面板优先级更高）。
+    /// </summary>
+    public void RegisterAwardTarget(LimitRewordType type, Transform target)
+    {
+        if (target == null) return;
+        _awardTargets[type] = target;
+    }
+
+    /// <summary>
+    /// 反注册飞入落点。<paramref name="target"/> 传了则只在当前登记的仍是同一个对象时才清掉，
+    /// 避免 A 面板关掉时把 B 面板刚注册的落点一起误删。
+    /// </summary>
+    public void UnregisterAwardTarget(LimitRewordType type, Transform target = null)
+    {
+        if (!_awardTargets.TryGetValue(type, out Transform cur)) return;
+        if (target != null && cur != target) return;
+        _awardTargets.Remove(type);
+    }
+
+    /// <summary>
+    /// 解析某类奖励的飞入落点，按优先级取第一个**当前可见**的图标：
+    ///   1) 注册表（当前屏幕上真正显示该类资源的面板，后注册的优先）；
+    ///   2) 商店顶部资源图标（ShopScreen 打开时才有值）；
+    ///   3) 金币 → 顶栏金币图标（HeaderSection）。
+    /// 返回 null 表示屏幕上没有可落的图标，调用方应跳过飞入。
+    /// </summary>
+    public Transform ResolveAwardTarget(LimitRewordType type)
+    {
+        if (_awardTargets.TryGetValue(type, out Transform registered) && IsUsableTarget(registered))
+            return registered;
+
+        GameObject shopTarget = null;
+        switch (type)
+        {
+            case LimitRewordType.Coins:         shopTarget = ShopGoldObj != null ? ShopGoldObj : GoldObj; break;
+            case LimitRewordType.Butterfly:     shopTarget = ShopButterflyObj; break;
+            case LimitRewordType.Tipstool:      shopTarget = ShopTipObj; break;
+            case LimitRewordType.AutoComplete:  shopTarget = ShopAutoObj; break;
+            case LimitRewordType.ReStartTool:   shopTarget = ShopRestartObj; break;
+        }
+
+        return IsUsableTarget(shopTarget != null ? shopTarget.transform : null) ? shopTarget.transform : null;
+    }
+
+    /// <summary>落点是否可用：存在且处于显示状态（飞到隐藏对象上等于奖励凭空消失）。</summary>
+    private static bool IsUsableTarget(Transform target)
+    {
+        return target != null && target.gameObject.activeInHierarchy;
+    }
+
+    /// <summary>
+    /// 把奖励图标从 <paramref name="start"/> 飞向该类资源在屏幕上的落点。
+    /// 返回 false 表示当前没有可用落点（调用方跳过即可，不要留半截动画）。
+    /// </summary>
+    public bool FlyAwardToResource(LimitRewordType type, Vector3 start, GameObject effect, Action call)
+    {
+        Transform target = ResolveAwardTarget(type);
+        if (target == null)
+        {
+             Debug.Log($"[FlyIn] 奖励={type} 找不到可见落点，跳过飞入");
+            return false;
+        }
+
+        FlyAwardIn(start, target.gameObject, effect, call);
+        return true;
+    }
+
     private IEnumerator FlyAwardVectorToEnd(Vector3 start, GameObject endGameObject, GameObject gold, Vector3 left, Action call, float duration = 0.8f)
     {
         Vector3 endPos = endGameObject.transform.position;

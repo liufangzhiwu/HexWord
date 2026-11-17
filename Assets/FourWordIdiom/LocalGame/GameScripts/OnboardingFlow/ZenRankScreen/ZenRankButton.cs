@@ -121,7 +121,6 @@ public class ZenRankButton : MonoBehaviour
 
         if (seconds <= 0 && rankText != null)
         {
-            if (rank != null) rank.SetActive(true);
             rankText.text = MultilingualManager.Instance.GetString("LotusRankingEnd") ?? "结算中";
         }
     }

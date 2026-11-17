@@ -53,6 +53,11 @@ ShopTips01,购买成功
 ShopTips02,购买失败！
 CancelPurchase,取消购买
 CancelPurchaseDes,购买已被取消
+PurchaseFailed,购买失败
+PurchaseFailedDes,支付未完成，请稍后重试
+PurchaseFailedProduct,商品信息异常，请稍后重试
+PurchaseFailedOrder,支付结果异常，请稍后重试
+PurchaseFailedNetwork,网络异常，请稍后重试
 Close,关闭
 Get,获得
 Shop,商店

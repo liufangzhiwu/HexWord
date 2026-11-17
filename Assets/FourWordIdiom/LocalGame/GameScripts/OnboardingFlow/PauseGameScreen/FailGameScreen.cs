@@ -262,6 +262,10 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         // ★ 复位长按状态（防止上次被长按隐藏后没松手就关窗，导致下次打开是透明的）
         ResetLongPressState();
+
+        // ★ 复活道具的奖励飞入落点：本页的金币复活按钮（持有道具时会切成道具复活）
+        if (CustomFlyInManager.Instance != null && goldAddTimeBtn != null)
+            CustomFlyInManager.Instance.RegisterAwardTarget(LimitRewordType.ReStartTool, goldAddTimeBtn.transform);
     }
 
     protected override void OnDisable()
@@ -281,6 +285,10 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         // ★ 长按隐藏的透明度必须复位，否则下次打开弹窗会是全透明的
         ResetLongPressState();
+
+        // ★ 反注册复活道具飞入落点，避免页面关掉后奖励还往隐藏按钮上飞
+        if (CustomFlyInManager.Instance != null && goldAddTimeBtn != null)
+            CustomFlyInManager.Instance.UnregisterAwardTarget(LimitRewordType.ReStartTool, goldAddTimeBtn.transform);
 
         base.OnDisable();
     }
@@ -916,9 +924,14 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         int total = ShopManager.shopManager.GetToolVideoTotalLimit(LimitRewordType.ReStartTool);
         int remain = ShopManager.shopManager.GetToolVideoRemainCount(LimitRewordType.ReStartTool);
         bool exhausted = ShopManager.shopManager.IsToolVideoExhausted(LimitRewordType.ReStartTool);
+        
+        bool isFree = !GameDataManager.Instance.UserData.hasUsedFreeRevive;
+        
+        adsCanUseTable.gameObject.SetActive(!isFree);
+        adsCanUseTable2.gameObject.SetActive(!isFree);
 
         // X=0 → 次数文本一并隐藏（不再显示 0/a）
-        if (canUseTable != null)
+        if (canUseTable != null&&!isFree)
         {
             canUseTable.SetActive(total >= 0 && !exhausted);
             if (total >= 0 && useCountText != null)

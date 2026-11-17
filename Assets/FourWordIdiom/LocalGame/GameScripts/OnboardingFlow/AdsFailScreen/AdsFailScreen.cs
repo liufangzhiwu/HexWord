@@ -465,9 +465,9 @@ public class AdsFailScreen : UIWindow
         Debug.Log($"[AdsFail] 单道具购买失败/取消: {item?.produceNameId}, error={error}");
         AnalyticMgr.PurchaseFailed(item?.GetProduceName(), error);
 
-        // 拉起系统支付后未完成购买（取消/失败），由商店统一弹「取消购买」弹窗
+        // 拉起系统支付后未完成购买（取消/失败），由商店统一弹购买未完成弹窗
         if (item != null && ShopManager.shopManager != null)
-            ShopManager.shopManager.OnPurchaseCanceled(item.produceNameId, true);
+            ShopManager.shopManager.OnPurchaseCanceled(item.produceNameId, true, error);
     }
 
     /// <summary>点击分享：记录时刻 → 调起系统分享 → 等切回前台判定（OnApplicationFocus）。</summary>

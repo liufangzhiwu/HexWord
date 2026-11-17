@@ -112,6 +112,38 @@ public class ShopScreen : UIWindow
         CustomFlyInManager.Instance.ShopTipObj = TipIcon.gameObject;
         CustomFlyInManager.Instance.ShopButterflyObj = ButteryIcon.gameObject;
         CustomFlyInManager.Instance.ShopRestartObj = RestartIcon != null ? RestartIcon.gameObject : null;
+
+        RegisterAwardFlyTargets();
+    }
+
+    // ======================= 奖励飞入落点 =======================
+
+    /// <summary>
+    /// 把商店顶部资源图标登记到 CustomFlyInManager 的落点注册表。
+    /// 进店期间奖励（如分享奖励）飞到这里；出店要反注册，否则奖励会飞向已隐藏的商店图标。
+    /// </summary>
+    private void RegisterAwardFlyTargets()
+    {
+        var fly = CustomFlyInManager.Instance;
+        if (fly == null) return;
+
+        if (CoinIcon != null)      fly.RegisterAwardTarget(LimitRewordType.Coins, CoinIcon.transform);
+        if (TipIcon != null)       fly.RegisterAwardTarget(LimitRewordType.Tipstool, TipIcon.transform);
+        if (AutoIcon != null)      fly.RegisterAwardTarget(LimitRewordType.AutoComplete, AutoIcon.transform);
+        if (ButteryIcon != null)   fly.RegisterAwardTarget(LimitRewordType.Butterfly, ButteryIcon.transform);
+        if (RestartIcon != null)   fly.RegisterAwardTarget(LimitRewordType.ReStartTool, RestartIcon.transform);
+    }
+
+    private void UnregisterAwardFlyTargets()
+    {
+        var fly = CustomFlyInManager.Instance;
+        if (fly == null) return;
+
+        if (CoinIcon != null)      fly.UnregisterAwardTarget(LimitRewordType.Coins, CoinIcon.transform);
+        if (TipIcon != null)       fly.UnregisterAwardTarget(LimitRewordType.Tipstool, TipIcon.transform);
+        if (AutoIcon != null)      fly.UnregisterAwardTarget(LimitRewordType.AutoComplete, AutoIcon.transform);
+        if (ButteryIcon != null)   fly.UnregisterAwardTarget(LimitRewordType.Butterfly, ButteryIcon.transform);
+        if (RestartIcon != null)   fly.UnregisterAwardTarget(LimitRewordType.ReStartTool, RestartIcon.transform);
     }
 
     protected override void OnEnable()
@@ -134,6 +166,8 @@ public class ShopScreen : UIWindow
 
         BuyRemoveAdsEvent();
         CustomFlyInManager.Instance.GoldObj = CoinIcon.gameObject;
+        // ★ 每次进店都重新登记落点（反注册在 OnDisable，重进要能接上）
+        RegisterAwardFlyTargets();
 
         GameDataManager.Instance.UserData.CheckShopBuyData();
         GameDataManager.Instance.UserData.isHideShopRedPoint = true;
@@ -145,6 +179,7 @@ public class ShopScreen : UIWindow
         {
             OnPanelClosed();
             freeItemTable.gameObject.SetActive(false);
+            purchaseRecordBtn.transform.parent.gameObject.SetActive(false);
         }
         else
         {
@@ -187,6 +222,9 @@ public class ShopScreen : UIWindow
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         EventDispatcher.instance.OnAwardClaimed -= OnAwardClaimed;
         EventDispatcher.instance.OnAwardScreenClosed -= OnAwardScreenClosed;
+
+        // ★ 出店反注册飞入落点：商店图标已隐藏，奖励应改飞其它可见图标
+        UnregisterAwardFlyTargets();
 
         ShowBanner();
 
@@ -509,6 +547,8 @@ public class ShopScreen : UIWindow
         if (freeItemTable != null) freeItemTable.transform.SetAsLastSibling();
         if (goldItemTable != null) goldItemTable.transform.SetAsLastSibling();
         if (goldItemTable2 != null) goldItemTable2.transform.SetAsLastSibling();
+        
+        purchaseRecordBtn.transform.parent.SetAsLastSibling();
     }
 
     /// <summary>
@@ -820,8 +860,9 @@ public class ShopScreen : UIWindow
 
         freeItemTable.gameObject.SetActive(true);
         moreChoiceBtn.gameObject.SetActive(false);
+        purchaseRecordBtn.transform.parent.gameObject.SetActive(true);
         shopScrollView.enabled = true;
-
+        
         yield return null;
         ResetScrollToTop();
 

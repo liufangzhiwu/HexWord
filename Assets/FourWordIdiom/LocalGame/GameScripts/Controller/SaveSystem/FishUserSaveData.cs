@@ -266,7 +266,7 @@ public class FishUserSaveData
         string oldjson = JsonConvert.SerializeObject(this, Formatting.Indented); // 转换为 JSON 格式          
         string json = SecurityProvider.ProtectData(oldjson); //加密
         File.WriteAllText(filePath, json); // 写入文件
-        Debug.Log("用户竞速数据已保存: " + json);
+        //Debug.Log("用户竞速数据已保存: " + json);
         //PlayerPrefs.SetString(path, JsonMapper.ToJson(data));
     }
    

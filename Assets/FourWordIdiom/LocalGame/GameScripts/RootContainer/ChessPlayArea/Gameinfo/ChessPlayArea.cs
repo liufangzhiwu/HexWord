@@ -306,6 +306,10 @@ public partial class ChessPlayArea : UIWindow
         // 👇 新增：监听分数变化事件，并初始化当前分数
         EventDispatcher.instance.OnChessScoreChanged += OnChessScoreChanged;
         EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
+
+        // ★ 奖励飞入落点：本界面上的提示 / 自动完成按钮
+        //   （非商店场景弹的奖励面板靠注册表找到落点，否则奖励只能凭空到账）
+        RegisterAwardFlyTargets();
         ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
         EventDispatcher.instance.OnHighlightHeaderUI += HighlightPupaUI;
         EventDispatcher.instance.OnEmojiStateChanged += RefreshAllEmojiDisplay;
@@ -444,6 +448,9 @@ public partial class ChessPlayArea : UIWindow
         _cachedCompleteTutorial = false;
         
         EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
+
+        // ★ 反注册奖励飞入落点，避免界面关掉后奖励还往隐藏按钮上飞
+        UnregisterAwardFlyTargets();
         EventDispatcher.instance.OnCheckShowChessTutorial -= CheckShowChessTutorialEvent;
         EventDispatcher.instance.OnAutoPassLevel -= AutoPassLevel;
         EventDispatcher.instance.OnChessScoreChanged -= OnChessScoreChanged;

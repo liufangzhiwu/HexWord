@@ -71,6 +71,30 @@ public partial class ChessPlayArea
         UpdateToolCountUI(HitsBtn, 102, IsHitsTutorialActive);
     }
 
+    // ======================= 奖励飞入落点 =======================
+
+    /// <summary>
+    /// 把本界面上的「提示 / 自动完成」按钮登记为奖励飞入落点。
+    /// 谁在显示资源数量谁负责登记，奖励面板只管按类型取落点。
+    /// </summary>
+    private void RegisterAwardFlyTargets()
+    {
+        var fly = CustomFlyInManager.Instance;
+        if (fly == null) return;
+
+        // if (HitsBtn != null)     fly.RegisterAwardTarget(LimitRewordType.Tipstool, HitsBtn.transform);
+        // if (CompleteBtn != null) fly.RegisterAwardTarget(LimitRewordType.AutoComplete, CompleteBtn.transform);
+    }
+
+    private void UnregisterAwardFlyTargets()
+    {
+        var fly = CustomFlyInManager.Instance;
+        if (fly == null) return;
+
+        // if (HitsBtn != null)     fly.UnregisterAwardTarget(LimitRewordType.Tipstool, HitsBtn.transform);
+        // if (CompleteBtn != null) fly.UnregisterAwardTarget(LimitRewordType.AutoComplete, CompleteBtn.transform);
+    }
+
     /// <summary>
     /// 提示按钮上的「道具说明」角标节点（WT 预制体里是末位子节点 TipTable）。
     /// ⚠️ 不要用“末位子节点”兜底：HexWord 的提示按钮子节点顺序是

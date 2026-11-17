@@ -83,7 +83,7 @@ public class AudioManager : MonoBehaviour
             StopAllSoundEffects();
         }
 
-        Debug.Log($"[AudioManager] 音频{(suspend ? "已挂起" : "已恢复")}（来源: {source}）");
+        //Debug.Log($"[AudioManager] 音频{(suspend ? "已挂起" : "已恢复")}（来源: {source}）");
     }
 
     /// <summary>停止当前所有正在播放的音效（不影响背景音乐轨道）。</summary>
@@ -111,7 +111,7 @@ public class AudioManager : MonoBehaviour
                 if (clip != null)
                 {
                     soundClipCache[name] = clip;
-                    Debug.Log($"预加载音效: {name}, 长度: {clip.length:F2}s");
+                    //Debug.Log($"预加载音效: {name}, 长度: {clip.length:F2}s");
                 }
                 yield return null; // 每帧加载一个，避免卡顿
             }
@@ -259,7 +259,7 @@ public class AudioManager : MonoBehaviour
         string[] musicNames =
         {
             "music", "Button","ShowUI","Puzzle1","Puzzle2","Puzzle3" ,"Puzzle4","lianci",
-            "chongzhidaoju","EnterStage","PassStage","SignWater","ciright","xuanzhecuowu"
+            "chongzhidaoju","EnterStage","PassStage","ciright","xuanzhecuowu"
         }; // 替换为实际的音乐名称
         StartCoroutine(PreloadCommonSounds(musicNames));
         
@@ -457,7 +457,7 @@ public class AudioManager : MonoBehaviour
         if (!GameDataManager.Instance.UserData.IsVibrationOn) return;
 #if UNITY_EDITOR
         // 编辑器模式下的模拟逻辑
-        Debug.Log($"模拟震动：强度 {intensity}，持续时间 {milliseconds}ms");
+        //Debug.Log($"模拟震动：强度 {intensity}，持续时间 {milliseconds}ms");
 #elif UNITY_IOS
              // iOS 震动逻辑
                 TriggerVibrationWithStyle(1);

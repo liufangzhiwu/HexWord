@@ -22,7 +22,7 @@ namespace Middleware
         /// 菜单打包与命令行导出（HarmonyExportBuilder）都从这里取值，
         /// 避免出现「菜单是 A、命令行是 B」导致真机安装版本不一致的问题。
         /// </summary>
-        public const string HarmonyVersion = "1.3.4";
+        public const string HarmonyVersion = "1.3.6";
 
         #if UNITY_2022_3_55 || UNITY_2022_3_61
         [MenuItem("Tools/切换平台/Harmony", false, 101)]

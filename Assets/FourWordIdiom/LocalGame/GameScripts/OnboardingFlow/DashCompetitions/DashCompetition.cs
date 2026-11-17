@@ -42,6 +42,7 @@ public class DashCompetition : UIWindow
         objectPool = new ObjectPool(_fishItemPrefab.gameObject, ObjectPool.CreatePoolContainer(transform, "FishItemPool"));
        
         CrateFishAIItem();
+        
         InitButton();
     }
 
@@ -132,13 +133,12 @@ public class DashCompetition : UIWindow
         
         bool progressComplete=FishInfoController.Instance.RoundFishIsOver();
         
-        //
-        // if (progressComplete)
-        // {
-        //     // 优化动画触发条件
-        //     StartCoroutine(PlayerBoxFlyAnim(null));
-        //     yield break;
-        // }
+        if (progressComplete)
+        {
+            // 优化动画触发条件
+            StartCoroutine(PlayerBoxFlyAnim(null));
+            yield break;
+        }
 
         // 优化循环间隔为1秒，提升响应速度
         var waitInterval = new WaitForSeconds(2);

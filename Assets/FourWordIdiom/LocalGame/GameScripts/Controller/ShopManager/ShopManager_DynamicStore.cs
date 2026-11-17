@@ -66,8 +66,8 @@ public partial class ShopManager : MonoBehaviour
         if (newcomerAvailable)
             result.Insert(0, newcomer);
 
-         Debug.Log($"[Shop]GetFixedStoreExpandedItems: newcomerAvailable={newcomerAvailable}, " +
-                $"list=[{string.Join(",", result.Select(x => x.produceNameId))}]");
+         //Debug.Log($"[Shop]GetFixedStoreExpandedItems: newcomerAvailable={newcomerAvailable}, " +
+         //       $"list=[{string.Join(",", result.Select(x => x.produceNameId))}]");
 
         return result;
     }

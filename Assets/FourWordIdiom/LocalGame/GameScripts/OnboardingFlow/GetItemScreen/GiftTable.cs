@@ -781,8 +781,8 @@ public class GiftTable : MonoBehaviour
         AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(), error);
         MessageSystem.Instance.HideLoadingAnimation();
 
-        // 拉起系统支付后未完成购买（取消/失败），返回游戏时弹出「取消购买」弹窗
+        // 拉起系统支付后未完成购买（取消/失败），返回游戏时弹出购买未完成弹窗
         if (shopDataItem != null && ShopManager.shopManager != null)
-            ShopManager.shopManager.OnPurchaseCanceled(shopDataItem.produceNameId, true);
+            ShopManager.shopManager.OnPurchaseCanceled(shopDataItem.produceNameId, true, error);
     }
 }

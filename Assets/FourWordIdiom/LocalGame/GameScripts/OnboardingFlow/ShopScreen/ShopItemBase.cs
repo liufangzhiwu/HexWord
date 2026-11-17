@@ -406,7 +406,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     {
         if (shopPriceText == null) return;
 
-        Debug.Log($"获取商品内购名称: {data.GetProduceName()}");
+        //Debug.Log($"获取商品内购名称: {data.GetProduceName()}");
 
         try
         {
@@ -823,9 +823,10 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         AnalyticMgr.PurchaseFailed(shopDataItem.GetProduceName(), error);
         MessageSystem.Instance.HideLoadingAnimation();
 
-        // 拉起系统支付后未完成购买（取消/失败），返回游戏时弹出「取消购买」弹窗
+        // 拉起系统支付后未完成购买（取消/失败），返回游戏时弹出购买未完成弹窗
+        // ★ 把失败原因一并带上：弹窗据此区分「玩家取消」和「其它失败」，并展示具体原因
         if (shopDataItem != null && ShopManager.shopManager != null)
-            ShopManager.shopManager.OnPurchaseCanceled(shopDataItem.produceNameId, true);
+            ShopManager.shopManager.OnPurchaseCanceled(shopDataItem.produceNameId, true, error);
     }
 
     // ======================= ★ 购买记录写入 =======================

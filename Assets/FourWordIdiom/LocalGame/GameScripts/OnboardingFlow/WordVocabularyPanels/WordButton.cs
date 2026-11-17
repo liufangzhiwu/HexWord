@@ -57,7 +57,7 @@ public class WordButton : MonoBehaviour
             {
                 pinText.text = string.IsNullOrEmpty(entry.Pinyin)?"": entry.Pinyin;
             }
-            wordText.fontSize = wordData.CurPuzzle.Length>7 ? 42 : 50;
+            wordText.fontSize = wordData.CurPuzzle.Length>7 ? 80 : 80;
             //wordBtn.GetComponent<Image>().color = Color.white;
         }
         else
@@ -66,7 +66,7 @@ public class WordButton : MonoBehaviour
             {
                 pinText.text ="";
             }
-            wordText.fontSize = wordData.CurPuzzle.Length>7 ? 58 : 70;
+            wordText.fontSize = wordData.CurPuzzle.Length>7 ? 63 : 63;
             //wordBtn.GetComponent<Image>().color = Color.green;
         }
 

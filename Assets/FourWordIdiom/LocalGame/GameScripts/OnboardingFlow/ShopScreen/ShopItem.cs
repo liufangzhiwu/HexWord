@@ -148,7 +148,7 @@ public class ShopItem : ShopItemBase
 
     /// <summary>
     /// 绑定数据后刷新「视频剩余次数 / 每日上限」显示（仅 FreeGoods 金币视频商品），X/a 显示在按钮下方。
-    /// a = cypz_Mechanics 表 PropVideoTimes 第 3 位（如 5_3_5 里的 5，含当日首次免费）；
+    /// a = cypz_Mechanics 表 PropVideoTimes 第 3 位（如 5_3_5 里的 5，**不含当日首次免费**）；
     /// X=0 时视频按钮置灰、点击无效。
     /// </summary>
     public override void SetShopData(ShopDataItem data)
@@ -189,40 +189,47 @@ public class ShopItem : ShopItemBase
 
         if (ShopManager.shopManager.IsShopGoldVideoExhausted())
         {
-            Button btn = GetComponent<Button>();
-            if (btn != null) btn.interactable = false;
-            LogShopItem("商店金币视频次数已用完，按钮置灰");
+            adsShiny.enabled = false;
+            adsShiny.GetComponent<Image>().sprite = LoadShopIcon("NoCanAds");
+            transform.GetComponent<Button>().interactable = false;
+            btnTagicon.gameObject.SetActive(false);
+            shopPriceText.gameObject.SetActive(false);
+            
+        }
+        else
+        {
+            adsShiny.enabled = true;
+            adsShiny.GetComponent<Image>().sprite = LoadShopIcon("UI_button_Bg");
+            transform.GetComponent<Button>().interactable = true;
+            btnTagicon.gameObject.SetActive(true);
+            shopPriceText.gameObject.SetActive(true);
         }
     }
 
     /// <summary>FreeGoods：当日首次免广告直发 / 之后看广告领取</summary>
     private void HandleFreeGoodsClick()
     {
-        // ★ 广告获取失败策略 C：在点击入口先做次数闸门。
-        //   达到当日上限（或处于 T 冷却）时直接弹 AdsFailScreen；
-        //   若把判断只放在播放广告的协程里，下面两条提前返回的支路会绕过限次：
-        //     1) 编辑器直发（UIUtilities.isEditMode）；
-        //     2) 当日首次免费直发（!isDayFreeGet）。
+        // ★ 当日首次免费：不播广告，也**不占用视频点次数**（2026-11-17 口径变更），
+        //   因此不受广告限次/假失败弹窗约束，先于闸门直接直发。
+        bool isFreeClaim = !GameDataManager.Instance.UserData.isDayFreeGet;
+        if (isFreeClaim)
+        {
+            GrantFreeGoodsReward();
+            return;
+        }
+
+        // ★ 广告获取失败策略 C：走真实广告的路径才做次数闸门。
+        //   达到当日上限（或处于 T 冷却）时直接弹 AdsFailScreen。
         if (ShopManager.shopManager != null
             && ShopManager.shopManager.TryHandleShopGoldClickAsFakeFail())
         {
             return;
         }
 
-        // ★ 当日首次：不播广告，直接发 ShopGoldFreeReward（50）
-        bool isFreeClaim = !GameDataManager.Instance.UserData.isDayFreeGet;
-
         // 编辑器下不播广告直接结账，但金额仍按「卡面显示的那一档」发，避免测试时对不上
         if (UIUtilities.isEditMode)
         {
-            if (isFreeClaim) GrantFreeGoodsReward();
-            else UpdateAdsRewardUI(true);
-            return;
-        }
-
-        if (isFreeClaim)
-        {
-            GrantFreeGoodsReward();
+            UpdateAdsRewardUI(true);
             return;
         }
 
@@ -233,8 +240,8 @@ public class ShopItem : ShopItemBase
 
     /// <summary>
     /// 当日首次「免广告」免费领取商店金币（50）。
-    /// 与看广告领取区分开：不上报视频观看成功，但**占用一次视频点次数**
-    /// （PropVideoTimes 第 3 位 = 金币视频点 + 首次免费的合计上限）。
+    /// 与看广告领取区分开：不上报视频观看成功，且**不占用视频点次数**
+    /// （2026-11-17 口径变更：PropVideoTimes 第 3 位只统计看广告的次数，免费领取是额外赠送的一次）。
     /// </summary>
     private void GrantFreeGoodsReward()
     {
@@ -250,7 +257,7 @@ public class ShopItem : ShopItemBase
 
         RefreshFreeGoodsUI();
 
-        LogShopItem($"免费商品直发（当日首次，免广告）: +{reward} 金币");
+        //LogShopItem($"免费商品直发（当日首次，免广告）: +{reward} 金币");
     }
 
     /// <summary>
@@ -309,7 +316,7 @@ public class ShopItem : ShopItemBase
         }
         else
         {
-            MessageSystem.Instance.ShowTip("每日只能购买一次！");
+            //MessageSystem.Instance.ShowTip("每日只能购买一次！");
             shopPriceText.text = "已购买";
         }
     }
@@ -369,7 +376,7 @@ public class ShopItem : ShopItemBase
             AnalyticMgr.VideoAdSuccess("看广告领取商店金币");
             GameDataManager.Instance.UserData.totalSeeAds++;
 
-            LogShopItem($"免费商品看视频领取: +{reward} 金币");
+            //LogShopItem($"免费商品看视频领取: +{reward} 金币");
         }
         else
         {

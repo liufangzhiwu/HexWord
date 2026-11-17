@@ -167,6 +167,9 @@ public class HeaderSection : UIWindow
             GoldLeafredpoint.SetActive(ThemeManager.Instance.IsSkinRedPointActive);
         }
         CustomFlyInManager.Instance.GoldObj= GoldImage.gameObject;
+        // ★ 顶栏金币图标也作为奖励飞入落点登记：主页/结算页等没有商店资源栏的场景靠它收落
+        if (GoldImage != null)
+            CustomFlyInManager.Instance.RegisterAwardTarget(LimitRewordType.Coins, GoldImage.transform);
         ThemeManager.Instance.OnSkinRedPointChanged += OnRedPointChanged;
         EventDispatcher.instance.OnUpdateLayerCoin += UpdateCoinLayer;
         EventDispatcher.instance.OnChangeGoldUI += InitUI;
@@ -781,6 +784,10 @@ public class HeaderSection : UIWindow
         
         if (ThemeManager.Instance != null)
             ThemeManager.Instance.OnSkinRedPointChanged -= OnRedPointChanged;
+
+        // ★ 反注册顶栏金币飞入落点（避免界面隐藏后奖励还飞向它）
+        if (GoldImage != null && CustomFlyInManager.Instance != null)
+            CustomFlyInManager.Instance.UnregisterAwardTarget(LimitRewordType.Coins, GoldImage.transform);
         
         LevelPuzzleBtn.gameObject.SetActive(false);
         CancelInvoke(nameof(CheckLevelPuzzleVisibility));

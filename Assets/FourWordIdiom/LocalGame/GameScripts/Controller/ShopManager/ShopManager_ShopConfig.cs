@@ -188,7 +188,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (shopItems.Count > 0)
         {
-            Debug.Log("获取购买商品: " + _productId);
+            //Debug.Log("获取购买商品: " + _productId);
             return shopItems.Find((item) => item.produceNameId == _productId);
         }
         return null;
@@ -198,7 +198,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (allShopItems.Count > 0)
         {
-            Debug.Log("获取购买商品: " + _productId);
+            //Debug.Log("获取购买商品: " + _productId);
             return allShopItems.Find((item) => item.produceNameId == _productId);
         }
         return null;

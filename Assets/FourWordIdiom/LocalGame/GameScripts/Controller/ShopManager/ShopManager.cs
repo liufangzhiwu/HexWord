@@ -644,7 +644,7 @@ public partial class ShopManager : MonoBehaviour
         if (rec != null)
         {
             ParseRecommendConfigs(rec.text);
-             Debug.Log($"[Shop]LoadClockBoxConfig: 从 Bundle 加载 shop_clockbox");
+             //Debug.Log($"[Shop]LoadClockBoxConfig: 从 Bundle 加载 shop_clockbox");
         }
         else
         {
@@ -2220,7 +2220,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(nameId)) return;
         _shownNewcomer[slot] = nameId;
-         Debug.Log($"[Shop]MarkNewcomerShown: slot={slot}, nameId={nameId}");
+        // Debug.Log($"[Shop]MarkNewcomerShown: slot={slot}, nameId={nameId}");
     }
 
     public void ClearNewcomerShown()
@@ -3363,9 +3363,16 @@ public partial class ShopManager : MonoBehaviour
         _tierBuyCount[tier] = count;
     }
 
-    public void OnPurchaseCanceled(string productId, bool invokedSystemPay = true)
+    /// <summary>
+    /// 购买未完成（取消 / 失败）统一入口。
+    /// </summary>
+    /// <param name="productId">商品 id</param>
+    /// <param name="invokedSystemPay">是否真的拉起过系统收银台</param>
+    /// <param name="reason">失败原因：平台错误码/错误信息，或客户端内部 reason；为空按「玩家取消」处理</param>
+    public void OnPurchaseCanceled(string productId, bool invokedSystemPay = true, string reason = null)
     {
-         Debug.Log($"[Shop]OnPurchaseCanceled: productId={productId}, invokedSystemPay={invokedSystemPay}");
+        bool userCancel = BuyFailScreen.LooksLikeUserCancel(reason);
+         Debug.Log($"[Shop]OnPurchaseCanceled: productId={productId}, invokedSystemPay={invokedSystemPay}, userCancel={userCancel}, reason={reason}");
         ShopDataItem shopDataItem = GetProduct(productId);
         if (shopDataItem != null)
         {
@@ -3378,13 +3385,15 @@ public partial class ShopManager : MonoBehaviour
              Debug.Log($"[Shop]  未找到商品: {productId}");
         }
 
+        // ★ 弹窗文案按「玩家取消 / 其它失败」两态展示（取消：取消购买+继续；失败：购买失败+具体原因+关闭）
+        BuyFailScreen.SetFailure(reason, userCancel);
         SystemManager.Instance.ShowPanel(PanelType.BuyFailScreen);
     }
 
     public void OnPurchaseFailed(string productId, string error)
     {
          Debug.Log($"[Shop]OnPurchaseFailed: productId={productId}, error={error}");
-        OnPurchaseCanceled(productId, false);
+        OnPurchaseCanceled(productId, false, error);
     }
 
     public void RestorePurchases()
@@ -3676,14 +3685,14 @@ public partial class ShopManager : MonoBehaviour
     public void OpenFixedStore()
     {
         shopMode = ShopMode.FixedStore;
-         Debug.Log($"[Shop]OpenFixedStore: 打开固定商店");
+        // Debug.Log($"[Shop]OpenFixedStore: 打开固定商店");
         SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
     }
 
     public void OpenDynamicStore()
     {
         shopMode = ShopMode.DynamicStore;
-         Debug.Log($"[Shop]OpenDynamicStore: 打开动态商店");
+        // Debug.Log($"[Shop]OpenDynamicStore: 打开动态商店");
         SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
     }
 }

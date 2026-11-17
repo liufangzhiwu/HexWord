@@ -162,6 +162,10 @@ public class HexGamePlayArea : UIWindow
         
         StartTime = DateTime.Now;
         EventDispatcher.instance.OnChangeGoldUI += InitToolUI;
+
+        // ★ 奖励飞入落点：本界面上的提示灯 / 火箭按钮
+        //   （非商店场景弹的奖励面板靠注册表找到这两个落点，否则奖励只能凭空到账）
+        RegisterAwardFlyTargets();
         // 开始检测协程
         if (CurStageInfo.StageNumber <= 1)
         {
@@ -1017,6 +1021,30 @@ public class HexGamePlayArea : UIWindow
     }
 
 
+    // ======================= 奖励飞入落点 =======================
+
+    /// <summary>
+    /// 把本界面上的「提示灯 / 火箭」按钮登记为奖励飞入落点。
+    /// 谁在显示资源数量谁负责登记，奖励面板只管按类型取落点。
+    /// </summary>
+    private void RegisterAwardFlyTargets()
+    {
+        var fly = CustomFlyInManager.Instance;
+        if (fly == null) return;
+
+        if (TipsButton != null) fly.RegisterAwardTarget(LimitRewordType.Tipstool, TipsButton.transform);
+        if (AutoTipsBtn != null) fly.RegisterAwardTarget(LimitRewordType.AutoComplete, AutoTipsBtn.transform);
+    }
+
+    private void UnregisterAwardFlyTargets()
+    {
+        var fly = CustomFlyInManager.Instance;
+        if (fly == null) return;
+
+        if (TipsButton != null) fly.UnregisterAwardTarget(LimitRewordType.Tipstool, TipsButton.transform);
+        if (AutoTipsBtn != null) fly.UnregisterAwardTarget(LimitRewordType.AutoComplete, AutoTipsBtn.transform);
+    }
+
     protected override void OnDisable()
     {
         base.OnDisable();
@@ -1029,6 +1057,9 @@ public class HexGamePlayArea : UIWindow
         EventDispatcher.instance.OnChoicePuzzleSetStatus -= ChoicePuzzleSetStatus;
         EventDispatcher.instance.OnCheckShowTutorial -= CheackShowTotrialEvent;
         EventDispatcher.instance.OnChangeGoldUI -= InitToolUI;
+
+        // ★ 反注册奖励飞入落点，避免界面关掉后奖励还往隐藏按钮上飞
+        UnregisterAwardFlyTargets();
         Effect_Butterflys.Clear();
         StageOverObj.gameObject.SetActive(false);
         

@@ -151,6 +151,16 @@ public partial class ShopManager : MonoBehaviour
             d.shopGoldClickUsed = 0;
             d.shopGoldFakeFailDone = false;
         }
+
+        // ★ 存量存档迁移（2026-11-17 口径变更：视频点上限不再包含当日首次免费）：
+        //   新口径下"看广告次数"与"视频点已用次数"恒等（免费领取两边都不加），
+        //   旧存档里免费那次被多记了 1，这里按 shopGoldUsed 校正，避免更新当天白白少一次广告额度。
+        //   幂等：校正后两者相等，条件不再成立。
+        if (d.shopGoldClickUsed > d.shopGoldUsed)
+        {
+            d.shopGoldClickUsed = d.shopGoldUsed;
+            PersistAdLimit();
+        }
     }
 
     /// <summary>分享（F）：按自然日归一化，跨天清零。</summary>
@@ -195,15 +205,15 @@ public partial class ShopManager : MonoBehaviour
     //   视频按钮**总共能用几次**由 cypz_Mechanics 表的 PropVideoTimes 决定，格式 "A_B_C"：
     //     A = 灯泡每关视频点次数上限（每关 X=a，换关刷新）
     //     B = 复活每日视频点次数上限（每日 X=b，自然日刷新；换关不再清零）
-    //     C = 商店金币每日视频点次数上限（含当日首次免费领取那一次）
+    //     C = 商店金币每日**看广告**视频点次数上限（★2026-11-17 起不含当日首次免费）
     //   假失败那次点击**不占用**视频点次数，且每个入口只弹 1 次；弹窗会开启 T 秒冷却，
     //   冷却内点任何视频点都重弹弹窗，冷却结束后恢复真实广告。
     //   例：5_3_5 + AdFailed 的 A=4 / B=-1 / C=3 →
     //     灯泡：本关 5 次真广告额度；看完第 4 次后的下一次点击弹 1 次假失败（不扣额度），T 过后继续出广告；
     //     复活：当日 3 次真广告额度（换关不重置，跨天才重置），用满后视频按钮隐藏（B=-1 不弹假失败）；
-    //     金币：1 次免费 + 4 次真广告；满 C=3 次后的下一次点击弹 1 次假失败（不扣额度）。
+    //     金币：1 次免费（不占额度）+ 5 次真广告；满 C=3 次后的下一次点击弹 1 次假失败（不扣额度）。
 
-    /// <summary>PropVideoTimes 解析结果：[0]=灯泡 [1]=复活 [2]=商店金币（含首次免费）。</summary>
+    /// <summary>PropVideoTimes 解析结果：[0]=灯泡 [1]=复活 [2]=商店金币（仅看广告次数，不含首次免费）。</summary>
     private int[] _propVideoTimes;
 
     /// <summary>是否已经尝试过加载 PropVideoTimes（无论成功失败只读一次表）。</summary>
@@ -284,7 +294,7 @@ public partial class ShopManager : MonoBehaviour
         return -1;
     }
 
-    /// <summary>商店金币视频：当日视频点次数上限（含首次免费；&lt;0 表示不限制）。</summary>
+    /// <summary>商店金币视频：当日可看广告领取的视频点次数上限（不含当日首次免费；&lt;0 表示不限制）。</summary>
     public int GetShopGoldVideoTotalLimit()
     {
         EnsurePropVideoTimesLoaded();
@@ -322,19 +332,11 @@ public partial class ShopManager : MonoBehaviour
         PersistAdLimit();
     }
 
-    /// <summary>商店金币：当日已用掉的视频点次数（含首次免费领取）。</summary>
+    /// <summary>商店金币：当日已看广告用掉的视频点次数（不含当日首次免费领取）。</summary>
     public int GetShopGoldVideoClickUsed()
     {
         EnsureShopGoldDay();
         return AdLimitData.shopGoldClickUsed;
-    }
-
-    private void IncreaseShopGoldClickUsed()
-    {
-        EnsureShopGoldDay();
-        AdLimitSaveData d = AdLimitData;
-        d.shopGoldClickUsed++;
-        PersistAdLimit();
     }
 
     /// <summary>
@@ -349,7 +351,8 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 商店金币视频：当日视频点次数是否已经用满（用满后视频按钮置灰、点击无效）。
+    /// 商店金币视频：当日看广告机会是否已经用满（用满后视频按钮置灰、点击无效）。
+    /// ★ 只看"看广告"的次数，当日首次免费领取不占用额度，因此免费领完不影响这里。
     /// 上限 &lt;0 视为不限制。
     /// </summary>
     public bool IsShopGoldVideoExhausted()
@@ -396,8 +399,8 @@ public partial class ShopManager : MonoBehaviour
         public bool used;         // 当日是否已达到 C 阈值（再点将弹假的广告获取失败面板）
         public int total;         // 当日已正常观看次数（不含首次免费）
         public bool freeReady;    // 是否可以正常观看（= !used）
-        public int clickUsed;     // 当日视频点已用次数（含首次免费领取）
-        public int clickTotal;    // 当日视频点次数上限（PropVideoTimes 第 3 位）
+        public int clickUsed;     // 当日看广告已用的视频点次数（不含首次免费）
+        public int clickTotal;    // 当日看广告视频点次数上限（PropVideoTimes 第 3 位，不含首次免费）
         public bool exhausted;    // 视频点次数是否用满（用满后按钮置灰、点击无效）
     }
 
@@ -1048,6 +1051,7 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>
     /// 商店金币视频当日剩余视频点次数 X（对应 UI 的「X/a」），a 取 PropVideoTimes 第 3 位。
+    /// ★ 只统计看广告的次数，当日首次免费领取不占额度（2026-11-17 口径）。
     /// 返回 -1 表示不限制（配置为 -1）。
     /// </summary>
     public int GetShopGoldVideoRemainCount()
@@ -1066,7 +1070,7 @@ public partial class ShopManager : MonoBehaviour
     ///   - used       = 当日是否已达到 C 阈值（再点将弹假的广告获取失败面板）；
     ///   - total      = 当日已正常观看次数（不含首次免费领取）；
     ///   - freeReady  = 是否可以正常观看（已达 C 阈值后为 false）；
-    ///   - exhausted  = 当日视频点次数是否用满（含首次免费；用满后视频按钮置灰、点击无效）。
+    ///   - exhausted  = 当日看广告机会是否用满（不含首次免费；用满后视频按钮置灰、点击无效）。
     /// </summary>
     public ShopGoldVideoState GetShopGoldVideoState()
     {
@@ -1189,7 +1193,7 @@ public partial class ShopManager : MonoBehaviour
         PersistAdLimit();
 
         GameDataManager.Instance.UserData.UpdateGold(reward, false, false, "商店金币视频");
-        MessageSystem.Instance.ShowTip($"+{reward} 金币");
+        //MessageSystem.Instance.ShowTip($"+{reward} 金币");
          Debug.Log($"[Shop]OnShopGoldClaimed: 发放={reward}, 今日已看完={d.shopGoldUsed}, C阈值={p.shopGoldVideoLimit}, " +
                 $"视频点={d.shopGoldClickUsed}/{GetShopGoldVideoTotalLimit()}, 已用满={IsShopGoldVideoExhausted()}");
         return true;
@@ -1212,13 +1216,14 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 商店金币视频「当日首次免费领取」：不播广告，但**占用一次视频点次数**
-    /// （PropVideoTimes 第 3 位是"金币视频点 + 首次免费"的合计上限）。
+    /// 商店金币视频「当日首次免费领取」：不播广告，也不占用视频点次数。
+    /// ★ 2026-11-17 口径变更：PropVideoTimes 第 3 位只表示「每天可看广告领取的次数」，
+    ///   首次免费是额外赠送的一次，不参与限次（旧口径是"视频点 + 免费"的合计上限）。
     /// </summary>
     public void OnShopGoldFreeClaimed()
     {
-        IncreaseShopGoldClickUsed();
-         Debug.Log($"[Shop]OnShopGoldFreeClaimed: 首次免费已占用视频点次数，剩余={GetShopGoldVideoRemainCount()}/{GetShopGoldVideoTotalLimit()}");
+        EnsureShopGoldDay();
+        Debug.Log($"[Shop]OnShopGoldFreeClaimed: 首次免费不占用视频点次数，剩余={GetShopGoldVideoRemainCount()}/{GetShopGoldVideoTotalLimit()}");
     }
 
     // ======================= 分享奖励（F：每天分享次数上限） =======================
