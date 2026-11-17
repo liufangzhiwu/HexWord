@@ -626,8 +626,6 @@ public class ShopScreen : UIWindow
         float oldY = pos.y;
         pos.y = 0f;
         content.anchoredPosition = pos;
-
-        LogManager.ShopLog($"[Shop] Content.anchoredPosition.y 复位为 0（原值 {oldY}）");
     }
 
     /// <summary>缓存商店商品配置（只取一次）。</summary>

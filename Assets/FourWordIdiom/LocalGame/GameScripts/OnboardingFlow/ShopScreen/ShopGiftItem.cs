@@ -868,11 +868,6 @@ public class ShopGiftItem : ShopItemBase
             }
         }
 
-        if (itemEnergyList != null)
-        {
-            LogShopItem($"InitGiftItems: itemEnergyList 内 Prefab 规则 → energyUseHeng={energyUseHeng}, energyPrefab={energyPrefab.name}");
-        }
-
         foreach (List<string> giftdata in shopDataItem.productContent)
         {
             if (giftdata == null || giftdata.Count < 2)
@@ -904,7 +899,6 @@ public class ShopGiftItem : ShopItemBase
             Transform parent = GetParentForGiftType(giftType, prefab);
             if (parent == null)
             {
-                LogShopItem($"InitGiftItems: 目标父节点为空（giftType={giftType}），跳过本项。请检查 itemEnergyList / giftsParent / giftsHengParent 配置");
                 continue;
             }
 
@@ -916,7 +910,6 @@ public class ShopGiftItem : ShopItemBase
             GiftItem giftItem = GetPooledGiftItem(itemPrefab, parent);
             if (giftItem == null)
             {
-                LogShopItem($"InitGiftItems: prefab 上未挂 GiftItem 组件，跳过 (prefab={itemPrefab.name})");
                 continue;
             }
 

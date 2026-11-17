@@ -63,10 +63,26 @@ public static class BackGestureRouter
             || category == UIPanelLayer.RewardPanel;
     }
 
+    /// <summary>
+    /// 去抖窗口（秒）。鸿蒙上系统返回手势可能同时经「ArkTS onBackPress → TuanjieSendMessage」
+    /// 和「引擎合成的 KeyCode.Escape」两条通道到达，同一手势只能处理一次，否则会连着执行两步
+    /// （例如先关闭弹窗、又接着触发关卡的规则）。
+    /// </summary>
+    private const float HandleInterval = 0.25f;
+    private static float _lastHandleTime = -10f;
+
     /// <summary>侧滑入口。由 Middleware.Game.Update 在收到返回键/侧滑手势时调用。</summary>
     public static void HandleBackGesture()
     {
         if (SystemManager.Instance == null) return;
+
+        float now = Time.unscaledTime;
+        if (now - _lastHandleTime < HandleInterval)
+        {
+            Debug.Log("[BackGesture] 同一手势的重复信号，忽略");
+            return;
+        }
+        _lastHandleTime = now;
 
         // 1. 退出确认面板开着时，侧滑不处理（既不叠加新面板，也不代用户取消）
         if (QuitPanel.IsShowing)

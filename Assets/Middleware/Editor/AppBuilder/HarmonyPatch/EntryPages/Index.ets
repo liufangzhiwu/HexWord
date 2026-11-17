@@ -55,4 +55,18 @@ struct TuanjiePlayer {
     .backgroundColor('#ff000000')
   }
 
+  // ============================================================
+  // ★ 系统返回键 / 全面屏侧滑返回
+  //
+  // 返回 true 吃掉系统默认的「退出应用」，改为转发给 Unity，
+  // 由 BackGestureRouter 按当前界面分流（与安卓 KeyCode.Escape 同一套规则）：
+  //   退出确认面板 → 忽略 / 暂停界面 → 继续 / 弹窗 → 关闭 /
+  //   拼字关卡 → 暂停 / 六边形关卡 → 回主页 / Start、大厅 → 退出确认面板
+  // ============================================================
+  onBackPress(): boolean {
+    hilog.info(0x0000, 'SDKKit', '[UI] onBackPress（侧滑返回）');
+    // 桥接不可用时返回 false，把这次返回交回系统（例如引擎还没起来时允许用户退出）
+    return SDKManager.NotifyBackGesture();
+  }
+
 }

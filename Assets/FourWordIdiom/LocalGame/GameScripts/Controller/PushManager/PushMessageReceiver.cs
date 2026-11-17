@@ -46,6 +46,22 @@ public class PushMessageReceiver : MonoBehaviour
     }
 
     // ============================================================
+    // ★ 鸿蒙系统返回手势（返回键 / 全面屏侧滑）
+    //   ArkTS 侧调用：
+    //     entry/pages/Index.ets onBackPress()
+    //       → SDKManager.NotifyBackGesture()
+    //         → TuanjieSendMessage('PushMessageReceiver', 'OnBackGestureSignal', '1')
+    //
+    //   与安卓的 KeyCode.Escape 走同一个出口 BackGestureRouter.HandleBackGesture()，
+    //   保证两端分流规则完全一致（路由内部做了去抖，两条通道同时到达也只处理一次）。
+    // ============================================================
+    public void OnBackGestureSignal(string _)
+    {
+        Debug.Log("[PushMessageReceiver] OnBackGestureSignal 收到（鸿蒙侧滑返回）");
+        BackGestureRouter.HandleBackGesture();
+    }
+
+    // ============================================================
     // ★ 由 ArkTS 侧 TuanjieSendMessage 调用
     //   ArkTS 侧调用：
     //     Tuanjie.TuanjieSendMessage('PushMessageReceiver',

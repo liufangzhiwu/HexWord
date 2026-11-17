@@ -63,6 +63,10 @@ namespace Middleware
         {
             // 监听安卓系统返回键 (全面屏侧滑)：按「场景 / 关卡 / 弹窗」分别路由，
             // 规则见 BackGestureRouter（Start→退出面板；大厅/结算→去闯关；拼字关→暂停；六边形关→回主页；弹窗→关闭）
+            //
+            // 鸿蒙：系统返回手势由 entry/pages/Index.ets 的 onBackPress 拦截（吃掉系统默认退出），
+            //       经 SDKManager.NotifyBackGesture() → TuanjieSendMessage → PushMessageReceiver.OnBackGestureSignal
+            //       调同一个 BackGestureRouter.HandleBackGesture()。两条通道都开也无妨，路由内部做了去抖。
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 BackGestureRouter.HandleBackGesture();

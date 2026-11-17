@@ -622,6 +622,32 @@ export class SDKManager {
   }
 
   // ============================================================
+  // ★ 系统返回手势（侧滑返回 / 返回键）转发给 Unity
+  //
+  // 调用链：
+  //   entry/pages/Index.ets  TuanjiePlayer.onBackPress()
+  //     → SDKManager.NotifyBackGesture()
+  //       → TuanjieSendMessage('PushMessageReceiver', 'OnBackGestureSignal', '1')
+  //         → C# PushMessageReceiver.OnBackGestureSignal()
+  //           → BackGestureRouter.HandleBackGesture()（与安卓返回键同一套分流逻辑）
+  //
+  // 页面 onBackPress 返回 true，系统默认的「退出应用」被吃掉，
+  // 是否真的退出由游戏内的 QuitPanel 决定。
+  // ============================================================
+  // 返回 true 表示已成功交给 Unity（页面据此吃掉系统默认退出）；
+  // 返回 false 表示桥接不可用（例如引擎尚未启动），由页面交回系统处理，避免"侧滑完全无反应"。
+  static NotifyBackGesture(): boolean {
+    try {
+      hilog.info(0x0000, 'SDKKit', '[Back] 收到系统返回手势，转发给 Unity');
+      Tuanjie.TuanjieSendMessage('PushMessageReceiver', 'OnBackGestureSignal', '1');
+      return true;
+    } catch (e) {
+      hilog.error(0x0000, 'SDKKit', `[Back] TuanjieSendMessage 失败: ${JSON.stringify(e)}`);
+      return false;
+    }
+  }
+
+  // ============================================================
   // ★ 通知设置面板关闭（供 UI 组件的 onFocus 调用）
   // ============================================================
   static OnNotificationSettingsClosed(): void {
