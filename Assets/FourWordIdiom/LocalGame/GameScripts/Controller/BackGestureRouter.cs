@@ -6,6 +6,8 @@ using UnityEngine.SceneManagement;
 /// 侧滑返回（Android 系统返回键 / 全面屏侧滑手势）统一路由。
 ///
 /// 规则（按优先级从上到下，命中即返回）：
+///   0. 全屏广告播放中            → 不处理（广告窗口自己负责返回）
+///   0.1 输入框编辑中（软键盘开着）→ 只收起键盘，不关界面
 ///   1. 退出确认面板开着          → 不处理（面板只认按钮，侧滑直接吞掉）
 ///   2. 暂停界面开着              → 关掉并继续游戏（走 PauseGameScreen 自己的恢复逻辑）
 ///   3. 复活弹窗 / 断点续玩窗      → 各自界面内的按钮逻辑
@@ -91,6 +93,22 @@ public static class BackGestureRouter
         }
         _lastHandleTime = now;
 
+        // 0. 全屏广告播放中：侧滑不参与游戏内路由。
+        //    鸿蒙的激励/插屏是原生 UIExtension 全屏窗口，返回手势通常被广告窗口自己吃掉；
+        //    但引擎侧若也合成了一次返回，就会在广告还开着的时候把底下的界面关掉/暂停，
+        //    等广告回调回来时状态已经错位。这里兜一层。
+        if (IsFullScreenAdPlaying())
+        {
+            Debug.Log("[BackGesture] 全屏广告播放中，侧滑忽略");
+            return;
+        }
+
+        // 0.1 输入框正在编辑：侧滑只收键盘，不关界面。
+        //     改名面板（RewardNamePanel）这类界面，鸿蒙上软键盘是系统 UI，
+        //     返回手势可能被系统先消费掉、也可能直接传到引擎，两条路都可能出现
+        //     「键盘还在、面板被关掉」的半状态，统一在这里兜住。
+        if (TryExitInputEditing()) return;
+
         // 1. 退出确认面板开着时，侧滑不处理（既不叠加新面板，也不代用户取消）
         if (QuitPanel.IsShowing)
         {
@@ -133,6 +151,52 @@ public static class BackGestureRouter
     }
 
     #region 内部实现
+
+    /// <summary>全屏广告（激励/插屏）播放中返回 true。</summary>
+    private static bool IsFullScreenAdPlaying()
+    {
+        try
+        {
+            Middleware.Game game = Middleware.Game.self;
+            return game != null && game.Ads != null && game.Ads.IsPlaying;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 软键盘开着（正在输入）时，侧滑只做「收起键盘」并返回 true。
+    /// 鸿蒙/安卓的软键盘都是独立窗口，返回手势第一下通常被系统用来收键盘；
+    /// 但如果这一下也传到了引擎（鸿蒙走 ArkTS 通道时就会），就会把整个面板关掉，
+    /// 玩家刚输的名字直接丢。这里统一兜住：先收键盘，再滑一次才关界面。
+    /// </summary>
+    private static bool TryExitInputEditing()
+    {
+        if (!TouchScreenKeyboard.visible) return false;
+
+        var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+        if (eventSystem != null)
+        {
+            GameObject selected = eventSystem.currentSelectedGameObject;
+            UnityEngine.UI.InputField field = selected != null
+                ? selected.GetComponent<UnityEngine.UI.InputField>()
+                : null;
+
+            if (field != null && field.isFocused)
+            {
+                Debug.Log("[BackGesture] 输入框编辑中，侧滑先收起键盘");
+                field.DeactivateInputField();
+                eventSystem.SetSelectedGameObject(null);
+                return true;
+            }
+        }
+
+        // 兜底：键盘开着但没定位到具体 InputField（例如刚失焦），这一下滑掉不做事
+        Debug.Log("[BackGesture] 软键盘开着，侧滑先收起键盘");
+        return true;
+    }
 
     private static bool IsStartScene()
     {
