@@ -33,11 +33,11 @@ public partial class ShopManager : MonoBehaviour
         if (rec != null)
         {
             ParseRecommendConfigs(rec.text);
-            LogShop($"LoadDynamicStoreConfig: 从 Bundle 加载 shop_dynamicstore");
+             Debug.Log($"[Shop]LoadDynamicStoreConfig: 从 Bundle 加载 shop_dynamicstore");
         }
         else
         {
-            LogShop($"LoadDynamicStoreConfig: 未找到 shop_dynamicstore, 使用默认值");
+             Debug.Log($"[Shop]LoadDynamicStoreConfig: 未找到 shop_dynamicstore, 使用默认值");
         }
     }
 
@@ -66,7 +66,7 @@ public partial class ShopManager : MonoBehaviour
         if (newcomerAvailable)
             result.Insert(0, newcomer);
 
-        LogShop($"GetFixedStoreExpandedItems: newcomerAvailable={newcomerAvailable}, " +
+         Debug.Log($"[Shop]GetFixedStoreExpandedItems: newcomerAvailable={newcomerAvailable}, " +
                 $"list=[{string.Join(",", result.Select(x => x.produceNameId))}]");
 
         return result;
@@ -119,7 +119,7 @@ public partial class ShopManager : MonoBehaviour
             {
                 if (records[i] != null && records[i].produceNameId == item.produceNameId)
                 {
-                    LogShop($"IsNewcomerPurchased: 购买记录里已有 {item.produceNameId}，视为已购买");
+                     Debug.Log($"[Shop]IsNewcomerPurchased: 购买记录里已有 {item.produceNameId}，视为已购买");
                     return true;
                 }
             }
@@ -168,14 +168,14 @@ public partial class ShopManager : MonoBehaviour
         DateTime endTime;
         if (!DateTime.TryParse(until, out endTime))
         {
-            LogShop($"EnsureBadgeConsumedResetIfHolidayEnded: 结束时间格式错误('{until}')，清空标记");
+             Debug.Log($"[Shop]EnsureBadgeConsumedResetIfHolidayEnded: 结束时间格式错误('{until}')，清空标记");
             ClearBadgeConsumedUntil();
             return;
         }
 
         if (DateTime.Now >= endTime)
         {
-            LogShop($"EnsureBadgeConsumedResetIfHolidayEnded: 当前时间已过结束时间({endTime})，清空消费标记");
+             Debug.Log($"[Shop]EnsureBadgeConsumedResetIfHolidayEnded: 当前时间已过结束时间({endTime})，清空消费标记");
             ClearBadgeConsumedUntil();
         }
     }
@@ -218,7 +218,7 @@ public partial class ShopManager : MonoBehaviour
         if (IsBadgeConsumed())
         {
             var userData = GameDataManager.Instance?.UserData;
-            LogShop($"GetShopEntryBadge: 本次节日/周末已消费(截止={userData?.shopEntryBadgeConsumedUntil}), 不展示");
+             Debug.Log($"[Shop]GetShopEntryBadge: 本次节日/周末已消费(截止={userData?.shopEntryBadgeConsumedUntil}), 不展示");
             return new ShopEntryBadgeInfo { showBadge = false };
         }
 
@@ -235,7 +235,7 @@ public partial class ShopManager : MonoBehaviour
         if (IsBadgeConsumed())
         {
             var userData = GameDataManager.Instance?.UserData;
-            LogShop($"GetHeaderActivityBadge: 本次节日/周末已消费(截止={userData?.shopEntryBadgeConsumedUntil}), 不展示");
+             Debug.Log($"[Shop]GetHeaderActivityBadge: 本次节日/周末已消费(截止={userData?.shopEntryBadgeConsumedUntil}), 不展示");
             return new ShopEntryBadgeInfo { showBadge = false };
         }
 
@@ -246,7 +246,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (!IsHolidayOrWeekend())
         {
-            LogShop($"{caller}: 非节日/周末, 不展示");
+             Debug.Log($"[Shop]{caller}: 非节日/周末, 不展示");
             return new ShopEntryBadgeInfo { showBadge = false };
         }
 
@@ -272,7 +272,7 @@ public partial class ShopManager : MonoBehaviour
 
         if (activityPack == null)
         {
-            LogShop($"{caller}: 无可用活动礼包, 不展示");
+             Debug.Log($"[Shop]{caller}: 无可用活动礼包, 不展示");
             return new ShopEntryBadgeInfo { showBadge = false };
         }
 
@@ -284,7 +284,7 @@ public partial class ShopManager : MonoBehaviour
         }
 
         string text = GetActivityBadgeText(activityPack);
-        LogShop($"{caller}: 展示, pack={activityPack.produceNameId}, weight={bestWeight:F2}, text={text}");
+         Debug.Log($"[Shop]{caller}: 展示, pack={activityPack.produceNameId}, weight={bestWeight:F2}, text={text}");
 
         return new ShopEntryBadgeInfo
         {
@@ -357,7 +357,7 @@ public partial class ShopManager : MonoBehaviour
         //   切后台 / 退出 / 购买等真正改数值的地方仍然是立即 CommitGameData，不会丢数据。
         GameDataManager.Instance.CommitGameDataDelayed();
 
-        LogShop($"OnShopEntered: 促销角标已消费, 本次节日/周末结束={userData.shopEntryBadgeConsumedUntil}");
+         Debug.Log($"[Shop]OnShopEntered: 促销角标已消费, 本次节日/周末结束={userData.shopEntryBadgeConsumedUntil}");
     }
 
     private bool IsActivityPack(ShopDataItem item)

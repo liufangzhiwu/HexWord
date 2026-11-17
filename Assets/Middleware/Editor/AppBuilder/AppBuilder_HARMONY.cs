@@ -1572,7 +1572,7 @@ namespace Middleware
                 if (!SyncEntryCommonFiles(root, layout.Value, log, out error)) return false;
 
                 // 0.2) 覆盖 entry 的 Index.ets 为团队定制版
-                //      （OAID 页面：SDKManager 通知回调、退出确认弹窗、权限状态）
+                //      （OAID 页面：SDKManager 通知回调、权限状态；退出确认弹窗已移除）
                 if (!ApplyEntryIndexPage(root, log, out error)) return false;
 
                 // 0.3) 注入权限声明与权限说明字符串
@@ -1690,8 +1690,10 @@ namespace Middleware
                         File.Exists(Path.Combine(entryEtsDir, "common", "GlobalThisUtil.ts")),
                     "entry/common/GlobalThisUtil.ts 缺失（entry 的相对 import 无法解析）");
 
-                // 定制版 Index.ets：SDKManager 回调 + 退出确认弹窗
+                // 定制版 Index.ets：SDKManager 回调
                 // （import 形态随布局不同：双模块 from 'tuanjieLib'，单模块 from 'OHKitSdk'）
+                // 注：返回键「退出游戏」确认弹窗已按需求移除（onBackPress/exitGame 一并删掉），
+                //     故此处不再校验弹窗文案。
                 var indexText = File.Exists(Path.Combine(entryEtsDir, "pages", "Index.ets"))
                     ? File.ReadAllText(Path.Combine(entryEtsDir, "pages", "Index.ets"))
                     : "";
@@ -1700,7 +1702,6 @@ namespace Middleware
                     "entry/pages/Index.ets 不是定制版（缺 SDKManager import）");
                 Require(indexText.Contains("SDKManager.OnNotificationSettingsClosed()"),
                     "entry/pages/Index.ets 缺 onFocus 回调");
-                Require(indexText.Contains("你确定要退出游戏吗"), "entry/pages/Index.ets 缺退出确认弹窗");
 
                 // exported.ets 必须导出 SDKManager，否则 Index.ets 从 'tuanjieLib' 导入不到
                 var exportedPath = Path.Combine(root, "tuanjieLib", "exported.ets");

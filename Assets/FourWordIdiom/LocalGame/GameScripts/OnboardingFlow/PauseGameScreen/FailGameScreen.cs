@@ -1282,6 +1282,19 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         EventDispatcher.instance.TriggerUpdateLayerCoin(false, false,false,true);
     }
 
+    /// <summary>
+    /// 侧滑入口：等价于点击本界面当前的 CloseBtn。
+    /// 主失败页的 CloseBtn 就是「退出」按钮（进入二次确认页）；
+    /// 二次确认页的 CloseBtn 就是「确认退出」（真正结束本局）。两条路径与原按钮完全一致。
+    /// </summary>
+    public void CloseFromBackGesture()
+    {
+        if (continuePanel != null && continuePanel.activeSelf)
+            OnRealExitClicked();
+        else
+            SwitchPanel(false);
+    }
+
     private void OnRealExitClicked()
     {
         if (ChessPlayArea.Instance != null)

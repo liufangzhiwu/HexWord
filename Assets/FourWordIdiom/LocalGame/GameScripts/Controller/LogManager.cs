@@ -71,7 +71,7 @@ public class LogManager : MonoBehaviour
 
     public static void ShopLog(string msg)
     {
-        Debug.Log(msg);
+        Debug.Log("[Shop]"+msg);
     }
 
     void OnDestroy()

@@ -83,15 +83,6 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         LogManager.ShopLog(BuildShopItemLog(message));
     }
 
-    /// <summary>
-    /// [Shop] 逐卡细节日志（价格布局 / 描边 / 限购次数 / 礼包内容逐项）。
-    /// 默认关闭（LogManager.enableShopVerboseLog）：这类日志每次刷新每张卡都会打，量很大。
-    /// </summary>
-    protected void LogShopItemDetail(string message)
-    {
-        LogManager.ShopLog(BuildShopItemLog(message));
-    }
-
     private string BuildShopItemLog(string message)
     {
         string tag = shopDataItem != null ? $"{shopDataItem.produceNameId}(id={shopDataItem.id})" : "null";
@@ -182,7 +173,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         if (IsRemoveAdsOwnedProduct(shopDataItem))
         {
-            LogShopItemDetail("永久去广告已购买，拦截点击");
+            LogShopItem("永久去广告已购买，拦截点击");
             return;
         }
 
@@ -415,7 +406,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     {
         if (shopPriceText == null) return;
 
-        LogShopItemDetail($"获取商品内购名称: {data.GetProduceName()}");
+        Debug.Log($"获取商品内购名称: {data.GetProduceName()}");
 
         try
         {
@@ -423,7 +414,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             {
                 shopPriceText.text = "已购买";
                 ShowPriceLoadingState(false);
-                LogShopItemDetail("永久去广告已购买，显示'已购买'");
+                LogShopItem("永久去广告已购买，显示'已购买'");
                 return;
             }
 
@@ -500,7 +491,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         {
             shopPriceText.text = "已购买";
             ShowPriceLoadingState(false);
-            LogShopItemDetail("永久去广告已购买，按钮置灰并显示'已购买'");
+            LogShopItem("永久去广告已购买，按钮置灰并显示'已购买'");
         }
     }
 
@@ -601,7 +592,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                     if (timebg != null) timebg.gameObject.SetActive(false);
                     OnTimeLimitedStateChanged(false);
                     if (shopDataItem != null) SetShopData(shopDataItem);
-                    LogShopItemDetail("活动礼包限时结束，退回普通礼包展示（名称/标签/限时已刷新）");
+                    LogShopItem("活动礼包限时结束，退回普通礼包展示（名称/标签/限时已刷新）");
                     break;
                 }
 
@@ -1036,14 +1027,8 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         {
             string baseName = showIcon.Substring(0, showIcon.Length - "_Icon".Length);
             sprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(baseName);
-            if (sprite != null)
-            {
-                LogShopItemDetail($"图标 {showIcon} 缺失，回退使用 {baseName}");
-            }
-            else
-            {
+            if (sprite == null)
                 WarnIconMissingOnce(showIcon, $"{showIcon} / {baseName} 都不存在，保留预制体默认图");
-            }
         }
         else
         {

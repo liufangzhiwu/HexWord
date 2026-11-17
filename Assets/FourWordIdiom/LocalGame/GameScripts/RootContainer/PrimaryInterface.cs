@@ -1516,6 +1516,24 @@ public class PrimaryInterface : UIWindow
     
 
     /// <summary>
+    /// 侧滑面板点「去闯关」时调用：收起结算页/模式选择页，然后走和主页「开始」按钮完全一致的流程，
+    /// 进入当前模式（拼字 / 六边形 / 消消）的关卡界面。
+    /// </summary>
+    public void EnterStageFromBackGesture()
+    {
+        if (SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView))
+            SystemManager.Instance.HidePanel(PanelType.StageFinishView, false);
+
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
+            SystemManager.Instance.HidePanel(PanelType.ChessFinishView, false);
+
+        if (SystemManager.Instance.PanelIsShowing(PanelType.SelectMode))
+            SystemManager.Instance.HidePanel(PanelType.SelectMode, false);
+
+        OnPlayClick();
+    }
+
+    /// <summary>
     /// 点击开始游戏按钮
     /// </summary>
     public void OnPlayClick()

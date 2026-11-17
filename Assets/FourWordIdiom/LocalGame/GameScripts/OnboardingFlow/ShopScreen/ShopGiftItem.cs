@@ -446,7 +446,7 @@ public class ShopGiftItem : ShopItemBase
         if (actualCount <= 0)
         {
             // ★ 修复：全部项都被跳过时，也必须清理旧子物体，避免购买后残留旧的 RemoveAds 展示
-            LogShopItemDetail($"HandleMultiProductContent: 实际需要创建的 GiftItem 数量为 0，清理旧项（productContent.Count={data.productContent.Count}）");
+            Debug.Log($"HandleMultiProductContent: 实际需要创建的 GiftItem 数量为 0，清理旧项（productContent.Count={data.productContent.Count}）");
             ClearGiftItems();
             return;
         }
@@ -463,16 +463,16 @@ public class ShopGiftItem : ShopItemBase
                 if (prefab != null)
                 {
                     giftHengItemPrefab = prefab.GetComponent<GiftItem>();
-                    LogShopItemDetail($"HandleMultiProductContent: 从 Bundle 加载 GiftHengItem 成功 (actualCount={actualCount})");
+                    Debug.Log($"HandleMultiProductContent: 从 Bundle 加载 GiftHengItem 成功 (actualCount={actualCount})");
                 }
                 else
                 {
-                    LogShopItemDetail($"HandleMultiProductContent: Bundle 未找到 commonitem/GiftHengItem (actualCount={actualCount})");
+                    Debug.Log($"HandleMultiProductContent: Bundle 未找到 commonitem/GiftHengItem (actualCount={actualCount})");
                 }
             }
             else
             {
-                LogShopItemDetail("HandleMultiProductContent: AdvancedBundleLoader.SharedInstance 为空，无法加载 GiftHengItem");
+                Debug.Log("HandleMultiProductContent: AdvancedBundleLoader.SharedInstance 为空，无法加载 GiftHengItem");
             }
         }
 
@@ -484,16 +484,16 @@ public class ShopGiftItem : ShopItemBase
                 if (prefab != null)
                 {
                     giftItemPrefab = prefab.GetComponent<GiftItem>();
-                    LogShopItemDetail($"HandleMultiProductContent: 从 Bundle 加载 GiftItem 成功 (actualCount={actualCount})");
+                    Debug.Log($"HandleMultiProductContent: 从 Bundle 加载 GiftItem 成功 (actualCount={actualCount})");
                 }
                 else
                 {
-                    LogShopItemDetail($"HandleMultiProductContent: Bundle 未找到 commonitem/GiftItem (actualCount={actualCount})");
+                    Debug.Log($"HandleMultiProductContent: Bundle 未找到 commonitem/GiftItem (actualCount={actualCount})");
                 }
             }
             else
             {
-                LogShopItemDetail("HandleMultiProductContent: AdvancedBundleLoader.SharedInstance 为空，无法加载 GiftItem");
+                Debug.Log("HandleMultiProductContent: AdvancedBundleLoader.SharedInstance 为空，无法加载 GiftItem");
             }
         }
 
@@ -503,17 +503,14 @@ public class ShopGiftItem : ShopItemBase
         // 横向 Prefab 不可用 → 回退普通 GiftItem，保证内容至少能展示
         if (selectedPrefab == null && useHorizontal)
         {
-            LogShopItemDetail($"HandleMultiProductContent: 警告! giftHengItemPrefab 未配置且加载失败，回退 giftItemPrefab (actualCount={actualCount})。请检查 Inspector 或 Bundle 中是否存在 GiftHengItem Prefab。");
             selectedPrefab = giftItemPrefab;
         }
 
         if (selectedPrefab == null)
         {
-            LogShopItemDetail("HandleMultiProductContent: 无可用的 GiftItem Prefab，跳过礼包内容初始化");
             return;
         }
 
-        LogShopItemDetail($"HandleMultiProductContent: 实际数量={actualCount}, 使用={(selectedPrefab == giftHengItemPrefab ? "giftHengItemPrefab" : "giftItemPrefab")}");
         InitGiftItems(selectedPrefab);
     }
 
@@ -544,7 +541,6 @@ public class ShopGiftItem : ShopItemBase
         GridLayoutGroup grid = itemEnergyList.GetComponent<GridLayoutGroup>();
         if (grid == null)
         {
-            LogShopItemDetail("ApplyItemEnergyListPadding: itemEnergyList 上未找到 GridLayoutGroup，跳过 padding.left 调整");
             return;
         }
 
@@ -556,8 +552,6 @@ public class ShopGiftItem : ShopItemBase
         int top = padding != null ? padding.top : 0;
         int bottom = padding != null ? padding.bottom : 0;
         grid.padding = new RectOffset(targetLeft, right, top, bottom);
-
-        LogShopItemDetail($"ApplyItemEnergyListPadding: padding.left → {targetLeft} (isSpecialPackageB={isSpecialPackageB})");
     }
 
     /// <summary>
@@ -576,7 +570,6 @@ public class ShopGiftItem : ShopItemBase
         GridLayoutGroup grid = itemHengList.GetComponent<GridLayoutGroup>();
         if (grid == null)
         {
-            LogShopItemDetail("ApplyItemHengListLayout: itemHengList 上未找到 GridLayoutGroup，跳过 padding.left / spacing.x 调整");
             return;
         }
 
@@ -605,9 +598,6 @@ public class ShopGiftItem : ShopItemBase
         {
             grid.spacing = new Vector2(targetSpacingX, spacing.y);
         }
-
-        LogShopItemDetail($"ApplyItemHengListLayout: padding.left → {targetLeft}, spacing.x → {targetSpacingX} " +
-                          $"(isSpecialPackageB={isSpecialPackageB}, ownsPermanentRemoveAds={ownsPermanentRemoveAds})");
     }
 
     /// <summary>
@@ -624,7 +614,6 @@ public class ShopGiftItem : ShopItemBase
 
         if (IsSpecialPackageB(data) && IsPermanentRemoveAdsOwned())
         {
-            LogShopItemDetail($"礼包底图: 特惠礼包B 且已购买永久去广告 → {SpecialPackageBOwnedAdsBackground}");
             return SpecialPackageBOwnedAdsBackground;
         }
 
@@ -693,7 +682,6 @@ public class ShopGiftItem : ShopItemBase
         if (isHeng)
         {
             if (giftsHengParent != null) return giftsHengParent;
-            LogShopItemDetail("GetParentForPrefab: 使用 giftHengItemPrefab 但 giftsHengParent 未配置，回退 giftsParent");
             return giftsParent;
         }
         return giftsParent;
@@ -772,8 +760,6 @@ public class ShopGiftItem : ShopItemBase
             if (go != null)
             {
                 giftItemPrefab = go.GetComponent<GiftItem>();
-                if (giftItemPrefab != null)
-                    LogShopItemDetail("EnsureGiftItemPrefab: 从 Bundle 加载 GiftItem 成功（itemEnergyList 专用）");
             }
         }
 
@@ -793,8 +779,6 @@ public class ShopGiftItem : ShopItemBase
             if (go != null)
             {
                 giftHengItemPrefab = go.GetComponent<GiftItem>();
-                if (giftHengItemPrefab != null)
-                    LogShopItemDetail("EnsureGiftHengItemPrefab: 从 Bundle 加载 GiftHengItem 成功（itemEnergyList 专用）");
             }
         }
 
@@ -849,7 +833,7 @@ public class ShopGiftItem : ShopItemBase
     {
         if (prefab == null)
         {
-            LogShopItemDetail("InitGiftItems: prefab 为空，跳过");
+            LogShopItem("InitGiftItems: prefab 为空，跳过");
             return;
         }
 
@@ -859,7 +843,6 @@ public class ShopGiftItem : ShopItemBase
         bool ownsPermanentRemoveAds = IsPermanentRemoveAdsOwned();
 
         bool isHengPrefab = giftHengItemPrefab != null && prefab == giftHengItemPrefab;
-        LogShopItemDetail($"InitGiftItems: prefab={prefab.name}, isHengPrefab={isHengPrefab}");
 
         // ★ itemEnergyList 内 Prefab 规则（仅影响挂到 itemEnergyList 的项，不影响其他项）：
         //    - itemEnergyList 内【只有 1 项】→ 使用 giftItemPrefab（单个用横向 Prefab 会变形/留白）；
@@ -873,7 +856,6 @@ public class ShopGiftItem : ShopItemBase
             energyPrefab = EnsureGiftHengItemPrefab();
             if (energyPrefab == null)
             {
-                LogShopItemDetail("InitGiftItems: itemEnergyList 内应使用 GiftHengItem，但 giftHengItemPrefab 不可用，回退传入 prefab");
                 energyPrefab = prefab;
             }
         }
@@ -882,21 +864,20 @@ public class ShopGiftItem : ShopItemBase
             energyPrefab = EnsureGiftItemPrefab();
             if (energyPrefab == null)
             {
-                LogShopItemDetail("InitGiftItems: itemEnergyList 内应使用 GiftItem，但 giftItemPrefab 不可用，回退传入 prefab");
                 energyPrefab = prefab;
             }
         }
 
         if (itemEnergyList != null)
         {
-            LogShopItemDetail($"InitGiftItems: itemEnergyList 内 Prefab 规则 → energyUseHeng={energyUseHeng}, energyPrefab={energyPrefab.name}");
+            LogShopItem($"InitGiftItems: itemEnergyList 内 Prefab 规则 → energyUseHeng={energyUseHeng}, energyPrefab={energyPrefab.name}");
         }
 
         foreach (List<string> giftdata in shopDataItem.productContent)
         {
             if (giftdata == null || giftdata.Count < 2)
             {
-                LogShopItemDetail("InitGiftItems: productContent 项数据不合法，跳过");
+                LogShopItem("InitGiftItems: productContent 项数据不合法，跳过");
                 continue;
             }
 
@@ -907,14 +888,13 @@ public class ShopGiftItem : ShopItemBase
             //  - type=1 广告礼包：金币用 GiftItem 显示 → 不跳过。
             if (giftType == (int)LimitRewordType.Coins && shopDataItem.type != 1)
             {
-                LogShopItemDetail($"InitGiftItems: 金币项由 shopCountText 展示，跳过 GiftItem (count={giftdata[1]})");
                 continue;
             }
 
             // 已购买永久去广告 → 跳过礼包中的去广告物品
             if (ownsPermanentRemoveAds && IsRemoveAdsRelatedType(giftType))
             {
-                LogShopItemDetail($"已拥有永久去广告，跳过礼包中的去广告物品 (type={giftType})");
+                LogShopItem($"已拥有永久去广告，跳过礼包中的去广告物品 (type={giftType})");
                 continue;
             }
 
@@ -924,7 +904,7 @@ public class ShopGiftItem : ShopItemBase
             Transform parent = GetParentForGiftType(giftType, prefab);
             if (parent == null)
             {
-                LogShopItemDetail($"InitGiftItems: 目标父节点为空（giftType={giftType}），跳过本项。请检查 itemEnergyList / giftsParent / giftsHengParent 配置");
+                LogShopItem($"InitGiftItems: 目标父节点为空（giftType={giftType}），跳过本项。请检查 itemEnergyList / giftsParent / giftsHengParent 配置");
                 continue;
             }
 
@@ -936,7 +916,7 @@ public class ShopGiftItem : ShopItemBase
             GiftItem giftItem = GetPooledGiftItem(itemPrefab, parent);
             if (giftItem == null)
             {
-                LogShopItemDetail($"InitGiftItems: prefab 上未挂 GiftItem 组件，跳过 (prefab={itemPrefab.name})");
+                LogShopItem($"InitGiftItems: prefab 上未挂 GiftItem 组件，跳过 (prefab={itemPrefab.name})");
                 continue;
             }
 
@@ -957,8 +937,6 @@ public class ShopGiftItem : ShopItemBase
             giftItem.SetBonus(isBonus);
 
             _spawnedGiftItems.Add(giftItem);
-
-            LogShopItemDetail($"InitGiftItems: 礼包 {shopDataItem.produceNameId} (type={shopDataItem.type}) 内容 type={giftType}, isBonus={isBonus}, prefab={itemPrefab.name}, parent={parent.name}");
         }
 
         // ★ 全部创建完之后再统一处理「itemEnergyList 只有 1 个子对象」的图标微调（依赖真实子节点数量）
@@ -999,7 +977,7 @@ public class ShopGiftItem : ShopItemBase
 
         singleItem.SetIconAnchoredYAndSize(SingleEnergyItemIconY, SingleEnergyItemIconWidth, SingleEnergyItemIconHeight);
 
-        LogShopItemDetail($"ApplySingleEnergyItemIconLayout: itemEnergyList 只有 1 个子对象 → icon y={SingleEnergyItemIconY}, w={SingleEnergyItemIconWidth}, h={SingleEnergyItemIconHeight}");
+        //LogShopItemDetail($"ApplySingleEnergyItemIconLayout: itemEnergyList 只有 1 个子对象 → icon y={SingleEnergyItemIconY}, w={SingleEnergyItemIconWidth}, h={SingleEnergyItemIconHeight}");
     }
 
     private bool IsRemoveAdsRelatedType(int type)
@@ -1038,8 +1016,6 @@ public class ShopGiftItem : ShopItemBase
         Vector2 pos = rt.anchoredPosition;
         pos.y = hasDiscount ? -20f : 0f;
         rt.anchoredPosition = pos;
-
-        LogShopItemDetail($"价格布局: originalPrice={data?.originalPrice}, price={data?.price}, hasDiscount={hasDiscount}, priceY={pos.y}");
     }
 
     // ======================= 限购次数 =======================
@@ -1072,7 +1048,7 @@ public class ShopGiftItem : ShopItemBase
             limitCountText.text = $"仅限{UIUtilities.GetChineseNumber(remain)}次";
 
         root.SetActive(true);
-        LogShopItemDetail($"限购次数: limited={shopDataItem.limited}, buyCount={buyCount}, remain={remain}, 显示='{limitCountText.text}'");
+        LogShopItem($"限购次数: limited={shopDataItem.limited}, buyCount={buyCount}, remain={remain}, 显示='{limitCountText.text}'");
     }
 
     // ======================= 礼包标签 =======================
@@ -1104,7 +1080,6 @@ public class ShopGiftItem : ShopItemBase
 
         tagText.text = tag;
         root.SetActive(true);
-        LogShopItemDetail($"礼包标签: {tag}");
     }
 
     // ======================= SetShopData：应用描边色 + 刷新限购 + 刷新标签 =======================
@@ -1121,7 +1096,6 @@ public class ShopGiftItem : ShopItemBase
         if (hasConfig)
         {
             ApplyOutlineColor(outlineColor);
-            LogShopItemDetail($"描边颜色已应用: {data.produceNameId} → RGB({outlineColor.r:F3},{outlineColor.g:F3},{outlineColor.b:F3},{outlineColor.a:F2})");
         }
 
         RefreshLimitCount();
@@ -1183,7 +1157,7 @@ public class ShopGiftItem : ShopItemBase
     {
         if (shopDataItem == null)
         {
-            LogShopItemDetail("RefreshGiftContentAfterPurchase: shopDataItem 为空，跳过礼包刷新");
+            LogShopItem("RefreshGiftContentAfterPurchase: shopDataItem 为空，跳过礼包刷新");
             return;
         }
 

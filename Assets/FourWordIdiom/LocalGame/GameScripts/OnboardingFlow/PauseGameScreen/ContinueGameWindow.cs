@@ -47,38 +47,13 @@ public class ContinueGameWindow : UIWindow, IPointerDownHandler, IPointerUpHandl
         });
 
         // 主面板：点击放弃，弹出二次确认
-        quitBtn.AddClickAction(() => 
-        {
-            mainPanel.SetActive(false);
-            confirmPanel.SetActive(true);
-            timeText.gameObject.SetActive(false);
-            EventDispatcher.instance.TriggerHighlightHeaderUI(true);
-        });
+        quitBtn.AddClickAction(ShowConfirmPanel);
 
         // 二次确认：真的退出
-        realQuitBtn.AddClickAction(() => 
-        {
-            SystemManager.Instance.HidePanel(PanelType.ContinueGameWindow);
-            SystemManager.Instance.HidePanel(PanelType.HeaderSection, true, () =>
-            {
-                EventDispatcher.instance.TriggerHighlightHeaderUI(false);
-                _onQuit?.Invoke();
-            });
-            if (ChessStageController.Instance.CurrStageData != null)
-            {
-                AnalyticMgr.LevelExit();
-            }
-            ChessGuideSystem.Instance.CloseGuide();
-        });
+        realQuitBtn.AddClickAction(OnRealQuitClicked);
 
         // 二次确认：取消退出，退回主面板
-        cancelQuitBtn.AddVibraClickAction(() => 
-        {
-            mainPanel.SetActive(true);
-            confirmPanel.SetActive(false);
-            timeText.gameObject.SetActive(true);
-            EventDispatcher.instance.TriggerHighlightHeaderUI(false);
-        });
+        cancelQuitBtn.AddVibraClickAction(CancelQuit);
         
         titleText.text = MultilingualManager.Instance.GetString("ContinueLevel","pingzi");
         continueBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("Continue","pingzi");
@@ -89,6 +64,53 @@ public class ContinueGameWindow : UIWindow, IPointerDownHandler, IPointerUpHandl
         realQuitBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ContinueQuit","pingzi");
         cancelQuitBtn.GetComponentInChildren<Text>().text = MultilingualManager.Instance.GetString("ThinkAgain","pingzi");
     }
+    #region 关闭流程（按钮点击与侧滑共用）
+
+    /// <summary>主面板 → 二次确认页（等同点击「退出」按钮）。</summary>
+    private void ShowConfirmPanel()
+    {
+        mainPanel.SetActive(false);
+        confirmPanel.SetActive(true);
+        timeText.gameObject.SetActive(false);
+        EventDispatcher.instance.TriggerHighlightHeaderUI(true);
+    }
+
+    /// <summary>二次确认页 → 真正退出（等同点击「确认退出」按钮）。</summary>
+    private void OnRealQuitClicked()
+    {
+        SystemManager.Instance.HidePanel(PanelType.ContinueGameWindow);
+        SystemManager.Instance.HidePanel(PanelType.HeaderSection, true, () =>
+        {
+            EventDispatcher.instance.TriggerHighlightHeaderUI(false);
+            _onQuit?.Invoke();
+        });
+        if (ChessStageController.Instance.CurrStageData != null)
+        {
+            AnalyticMgr.LevelExit();
+        }
+        ChessGuideSystem.Instance.CloseGuide();
+    }
+
+    /// <summary>二次确认页 → 取消退出，退回主面板（等同点击「再想想」按钮）。</summary>
+    private void CancelQuit()
+    {
+        mainPanel.SetActive(true);
+        confirmPanel.SetActive(false);
+        timeText.gameObject.SetActive(true);
+        EventDispatcher.instance.TriggerHighlightHeaderUI(false);
+    }
+
+    /// <summary>
+    /// 侧滑入口：等价于点击二次确认页的「取消/再想想」按钮（cancelQuitBtn），
+    /// 即从二次确认页退回主面板，不会真的退出本局。
+    /// </summary>
+    public void CloseFromBackGesture()
+    {
+        CancelQuit();
+    }
+
+    #endregion
+
     protected override void OnEnable()
     {
         base.OnEnable();

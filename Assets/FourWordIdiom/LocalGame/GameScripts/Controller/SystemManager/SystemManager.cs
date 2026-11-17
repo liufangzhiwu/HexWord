@@ -164,6 +164,23 @@ public class SystemManager : MonoBehaviour
                _loadedPanels[panelName].IsWindowVisible;
     }
     /// <summary>
+    /// 获取当前所有可见面板（按 UI 根节点下的兄弟顺序，后面的更靠上层）。
+    /// 供侧滑返回等「找最上层可关闭界面」的逻辑使用。
+    /// </summary>
+    public List<UIWindow> GetVisiblePanels()
+    {
+        var visible = new List<UIWindow>();
+        foreach (var panel in _loadedPanels.Values)
+        {
+            if (panel != null && panel.IsWindowVisible)
+                visible.Add(panel);
+        }
+
+        visible.Sort((a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
+        return visible;
+    }
+
+    /// <summary>
     /// 获取指定的面板
     /// </summary>
     public UIWindow GetPanel(string panelName)

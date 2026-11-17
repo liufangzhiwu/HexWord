@@ -267,7 +267,7 @@ public partial class ShopManager : MonoBehaviour
                 if (int.TryParse(parts[k], out int v)) _propVideoTimes[k] = v;
             }
 
-            LogShop($"[PropVideoTimes] 解析成功: {raw} → 灯泡={_propVideoTimes[0]}, 复活={_propVideoTimes[1]}, 商店金币={_propVideoTimes[2]}");
+             Debug.Log($"[Shop][PropVideoTimes] 解析成功: {raw} → 灯泡={_propVideoTimes[0]}, 复活={_propVideoTimes[1]}, 商店金币={_propVideoTimes[2]}");
             return;
         }
 
@@ -458,7 +458,7 @@ public partial class ShopManager : MonoBehaviour
         }
 
         _layerDataStartRow = nameRow + 1;
-        LogShop($"CacheLayerCsv: CSV 已缓存, 记录数={_layerRecords.Count}, 数据起始行={_layerDataStartRow}, 列数={_layerColMap.Count}");
+         Debug.Log($"[Shop]CacheLayerCsv: CSV 已缓存, 记录数={_layerRecords.Count}, 数据起始行={_layerDataStartRow}, 列数={_layerColMap.Count}");
     }
 
     // ======================= 分层应用（按 layer 查表并填充 _layerConfig） =======================
@@ -506,14 +506,14 @@ public partial class ShopManager : MonoBehaviour
 
                 if (previousLayer != layer)
                 {
-                    LogShop($"[UserLayer] 分层切换: {previousLayer} → {layer} | " +
+                     Debug.Log($"[Shop][UserLayer] 分层切换: {previousLayer} → {layer} | " +
                             $"AdFailed={_layerConfig.adFailed}, BrokenIce={_layerConfig.brokenIce}, " +
                             $"InterAdsGroup={_layerConfig.interAdsGroup}, AdTrackingStimulate={_layerConfig.adTrackingStimulate}, " +
                             $"AllowSpecialPopup={_layerConfig.allowSpecialPopup}");
                 }
                 else
                 {
-                    LogShop($"[UserLayer] 应用分层配置: {layer} (首次) | " +
+                     Debug.Log($"[Shop][UserLayer] 应用分层配置: {layer} (首次) | " +
                             $"AdFailed={_layerConfig.adFailed}, BrokenIce={_layerConfig.brokenIce}, " +
                             $"InterAdsGroup={_layerConfig.interAdsGroup}, AdTrackingStimulate={_layerConfig.adTrackingStimulate}, " +
                             $"AllowSpecialPopup={_layerConfig.allowSpecialPopup}");
@@ -547,8 +547,8 @@ public partial class ShopManager : MonoBehaviour
               $"TotalPayTimes={userData.TotalPayTimes}";
 
         LogShop("[启动] ========== 用户分层与生效配置 ==========");
-        LogShop($"[启动] 当前用户分层={layer} | 分层依据: {basis}");
-        LogShop($"[启动] 执行的分层配置(shop_layer/{layer}): AdFailed={_layerConfig.adFailed}, " +
+         Debug.Log($"[Shop][启动] 当前用户分层={layer} | 分层依据: {basis}");
+         Debug.Log($"[Shop][启动] 执行的分层配置(shop_layer/{layer}): AdFailed={_layerConfig.adFailed}, " +
                 $"BrokenIce={_layerConfig.brokenIce}, InterAdsGroup={_layerConfig.interAdsGroup}, " +
                 $"AdTrackingStimulate={_layerConfig.adTrackingStimulate}, AllowSpecialPopup={_layerConfig.allowSpecialPopup}");
 
@@ -645,7 +645,7 @@ public partial class ShopManager : MonoBehaviour
                 layer = (payTimes > 1) ? "IAP12" : "IAP11";
             }
 
-            LogShop($"GetCurrentUserLayer 计算: isPaid=True, MaxSinglePayAmount={maxSinglePayAmount:F2},TotalPayAmount={totalPayAmount}, TotalPayTimes={payTimes} => layer={layer}");
+             Debug.Log($"[Shop]GetCurrentUserLayer 计算: isPaid=True, MaxSinglePayAmount={maxSinglePayAmount:F2},TotalPayAmount={totalPayAmount}, TotalPayTimes={payTimes} => layer={layer}");
         }
         else
         {
@@ -663,7 +663,7 @@ public partial class ShopManager : MonoBehaviour
                 else layer = "IAA02";
             }
 
-            LogShop($"GetCurrentUserLayer 计算: isPaid=False, hasAdTracking={hasAdTracking}, activeDayCnt={activeDayCnt} => layer={layer}");
+             Debug.Log($"[Shop]GetCurrentUserLayer 计算: isPaid=False, hasAdTracking={hasAdTracking}, activeDayCnt={activeDayCnt} => layer={layer}");
         }
 
         // ★ 计算完分层后立刻按分层刷新 _layerConfig
@@ -685,7 +685,7 @@ public partial class ShopManager : MonoBehaviour
         _layerConfigApplied = false;
         string layer = GetCurrentUserLayer();
 
-        LogShop($"[UserLayer] RefreshLayer 完成: 当前分层={layer}, " +
+         Debug.Log($"[Shop][UserLayer] RefreshLayer 完成: 当前分层={layer}, " +
                 $"AdFailed={_layerConfig.adFailed}, BrokenIce={_layerConfig.brokenIce}, " +
                 $"InterAdsGroup={_layerConfig.interAdsGroup}, AdTrackingStimulate={_layerConfig.adTrackingStimulate}, " +
                 $"AllowSpecialPopup={_layerConfig.allowSpecialPopup}");
@@ -818,7 +818,7 @@ public partial class ShopManager : MonoBehaviour
         d.adFailBlockedUntilTicks = 0;
 
         PersistAdLimit();
-        LogShop($"[AdFailed] 换关 → {key}，提示/复活视频次数与灯泡视频点次数已刷新" +
+         Debug.Log($"[Shop][AdFailed] 换关 → {key}，提示/复活视频次数与灯泡视频点次数已刷新" +
                 $"（复活视频点按自然日：{d.reviveClickUsed}/{GetToolVideoTotalLimit(LimitRewordType.ReStartTool)} 保留）" +
                 (hadCooldown ? "，上一关的广告失败冷却已清除" : string.Empty));
     }
@@ -909,7 +909,7 @@ public partial class ShopManager : MonoBehaviour
         // ① 视频点次数用满：视频按钮应已隐藏，这里做兜底拦截
         if (IsToolVideoExhausted(toolType))
         {
-            LogShop($"[AdFailed] {toolType} 视频点次数已用完（{GetToolVideoClickUsed(toolType)}/{GetToolVideoTotalLimit(toolType)}），拦截点击");
+             Debug.Log($"[Shop][AdFailed] {toolType} 视频点次数已用完（{GetToolVideoClickUsed(toolType)}/{GetToolVideoTotalLimit(toolType)}），拦截点击");
             MessageSystem.Instance.ShowTip("今日视频次数已用完");
             return true;
         }
@@ -963,7 +963,7 @@ public partial class ShopManager : MonoBehaviour
             SetAdFailBlockedUntil(DateTime.Now.AddSeconds(p.tipFailCooldown));
 
         _lastAdFailedToolType = toolType;
-        LogShop($"ShowAdFailedPanel: toolType={toolType}, 刷新冷却={refreshCooldown}, 冷却={p.tipFailCooldown}s, " +
+         Debug.Log($"[Shop]ShowAdFailedPanel: toolType={toolType}, 刷新冷却={refreshCooldown}, 冷却={p.tipFailCooldown}s, " +
                 $"截止={GetAdFailBlockedUntil():HH:mm:ss}, 视频点={GetToolVideoClickUsed(toolType)}/{GetToolVideoTotalLimit(toolType)}");
         SystemManager.Instance.ShowPanel(PanelType.AdsFailScreen);
     }
@@ -982,7 +982,7 @@ public partial class ShopManager : MonoBehaviour
             SetAdFailBlockedUntil(DateTime.Now.AddSeconds(p.tipFailCooldown));
 
         _lastAdFailedToolType = LimitRewordType.Coins; // 通用入口 = 商店金币视频路径
-        LogShop($"ShowAdFailedPanel (通用): 开启冷却={refreshCooldown}, 冷却={p.tipFailCooldown}s, " +
+         Debug.Log($"[Shop]ShowAdFailedPanel (通用): 开启冷却={refreshCooldown}, 冷却={p.tipFailCooldown}s, " +
                 $"截止={GetAdFailBlockedUntil():HH:mm:ss}");
         SystemManager.Instance.ShowPanel(PanelType.AdsFailScreen);
     }
@@ -1028,7 +1028,7 @@ public partial class ShopManager : MonoBehaviour
     {
         IncreaseToolVideoUsed(toolType);
         IncreaseToolVideoClickUsed(toolType);
-        LogShop($"OnToolVideoWatched: toolType={toolType}, 已看完={GetToolVideoUsedCount(toolType)}, " +
+         Debug.Log($"[Shop]OnToolVideoWatched: toolType={toolType}, 已看完={GetToolVideoUsedCount(toolType)}, " +
                 $"视频点={GetToolVideoClickUsed(toolType)}/{GetToolVideoTotalLimit(toolType)}");
     }
 
@@ -1134,7 +1134,7 @@ public partial class ShopManager : MonoBehaviour
         // ① 视频点次数用满：按钮应已置灰，这里做兜底拦截
         if (IsShopGoldVideoExhausted())
         {
-            LogShop($"[AdFailed] 商店金币视频点次数已用完（{GetShopGoldVideoClickUsed()}/{GetShopGoldVideoTotalLimit()}），拦截点击");
+             Debug.Log($"[Shop][AdFailed] 商店金币视频点次数已用完（{GetShopGoldVideoClickUsed()}/{GetShopGoldVideoTotalLimit()}），拦截点击");
             MessageSystem.Instance.ShowTip("今日视频次数已用完");
             return true;
         }
@@ -1190,7 +1190,7 @@ public partial class ShopManager : MonoBehaviour
 
         GameDataManager.Instance.UserData.UpdateGold(reward, false, false, "商店金币视频");
         MessageSystem.Instance.ShowTip($"+{reward} 金币");
-        LogShop($"OnShopGoldClaimed: 发放={reward}, 今日已看完={d.shopGoldUsed}, C阈值={p.shopGoldVideoLimit}, " +
+         Debug.Log($"[Shop]OnShopGoldClaimed: 发放={reward}, 今日已看完={d.shopGoldUsed}, C阈值={p.shopGoldVideoLimit}, " +
                 $"视频点={d.shopGoldClickUsed}/{GetShopGoldVideoTotalLimit()}, 已用满={IsShopGoldVideoExhausted()}");
         return true;
     }
@@ -1207,7 +1207,7 @@ public partial class ShopManager : MonoBehaviour
         d.shopGoldUsed++;
         d.shopGoldClickUsed++;
         PersistAdLimit();
-        LogShop($"RecordShopGoldVideoWatched: 今日已看完={d.shopGoldUsed}, C阈值={GetAdFailedParams().shopGoldVideoLimit}, " +
+         Debug.Log($"[Shop]RecordShopGoldVideoWatched: 今日已看完={d.shopGoldUsed}, C阈值={GetAdFailedParams().shopGoldVideoLimit}, " +
                 $"视频点={d.shopGoldClickUsed}/{GetShopGoldVideoTotalLimit()}");
     }
 
@@ -1218,7 +1218,7 @@ public partial class ShopManager : MonoBehaviour
     public void OnShopGoldFreeClaimed()
     {
         IncreaseShopGoldClickUsed();
-        LogShop($"OnShopGoldFreeClaimed: 首次免费已占用视频点次数，剩余={GetShopGoldVideoRemainCount()}/{GetShopGoldVideoTotalLimit()}");
+         Debug.Log($"[Shop]OnShopGoldFreeClaimed: 首次免费已占用视频点次数，剩余={GetShopGoldVideoRemainCount()}/{GetShopGoldVideoTotalLimit()}");
     }
 
     // ======================= 分享奖励（F：每天分享次数上限） =======================
@@ -1226,7 +1226,7 @@ public partial class ShopManager : MonoBehaviour
     public void OnShareClicked()
     {
         _shareClickedTime = DateTime.Now;
-        LogShop($"OnShareClicked: {_shareClickedTime:HH:mm:ss}");
+         Debug.Log($"[Shop]OnShareClicked: {_shareClickedTime:HH:mm:ss}");
     }
 
     /// <summary>分享奖励数额：金币</summary>
@@ -1275,7 +1275,7 @@ public partial class ShopManager : MonoBehaviour
         // 奖励改用 AwardScreen 展示（替代原先的 Toast）
         ShowShareAwardScreen(toolType);
 
-        LogShop($"OnShareReturned: 分享成功, 来源={toolType}, 今日次数={AdLimitData.shareUsed}");
+         Debug.Log($"[Shop]OnShareReturned: 分享成功, 来源={toolType}, 今日次数={AdLimitData.shareUsed}");
         return true;
     }
 
@@ -1377,7 +1377,7 @@ public partial class ShopManager : MonoBehaviour
         }
         if (interAdsCount <= 3)
         {
-            LogShop($"TryShowBreakIcePopup 跳过: 累计插屏={interAdsCount} <= 3");
+             Debug.Log($"[Shop]TryShowBreakIcePopup 跳过: 累计插屏={interAdsCount} <= 3");
             return false;
         }
 
@@ -1396,7 +1396,7 @@ public partial class ShopManager : MonoBehaviour
         //   活动倒计时走完之前入口必须一直保留。
         if (!inOfferCountdown && !IsHolidayOrWeekend())
         {
-            LogShop($"TryShowBreakIcePopup 跳过: 今天({DateTime.Now:yyyy-MM-dd} {DateTime.Now.DayOfWeek})不是周末/节假日");
+             Debug.Log($"[Shop]TryShowBreakIcePopup 跳过: 今天({DateTime.Now:yyyy-MM-dd} {DateTime.Now.DayOfWeek})不是周末/节假日");
             return false;
         }
 
@@ -1422,7 +1422,7 @@ public partial class ShopManager : MonoBehaviour
         //   否则买一次之后入口就直接消失，无法「活动期间反复购买」。
         if (IsRemoveAdsOwned() || (!inOfferCountdown && IsRemoveAdsActive()))
         {
-            LogShop($"TryShowBreakIcePopup 跳过: 已拥有去广告(永久={IsRemoveAdsOwned()}, 限时生效={IsRemoveAdsActive()})");
+             Debug.Log($"[Shop]TryShowBreakIcePopup 跳过: 已拥有去广告(永久={IsRemoveAdsOwned()}, 限时生效={IsRemoveAdsActive()})");
             return false;
         }
 
@@ -1430,7 +1430,7 @@ public partial class ShopManager : MonoBehaviour
             && lastCooldownStart != DateTime.MinValue
             && DateTime.Now.Subtract(lastCooldownStart).TotalDays < cooldownDays)
         {
-            LogShop($"TryShowBreakIcePopup 跳过: 冷却中（上次倒计时结束={lastCooldownStart:yyyy-MM-dd HH:mm}，" +
+             Debug.Log($"[Shop]TryShowBreakIcePopup 跳过: 冷却中（上次倒计时结束={lastCooldownStart:yyyy-MM-dd HH:mm}，" +
                     $"已过 {DateTime.Now.Subtract(lastCooldownStart).TotalDays:F1} 天，需满 {cooldownDays} 天）");
             return false;
         }
@@ -1446,12 +1446,12 @@ public partial class ShopManager : MonoBehaviour
                 .OrderBy(x => x.price)
                 .FirstOrDefault();
             if (pack != null)
-                LogShop($"TryShowBreakIcePopup: 未配置 {ProductRemoveAdsWeekly}，回退最低价礼包 {pack.produceNameId}");
+                 Debug.Log($"[Shop]TryShowBreakIcePopup: 未配置 {ProductRemoveAdsWeekly}，回退最低价礼包 {pack.produceNameId}");
         }
 
         if (pack == null)
         {
-            LogShop($"TryShowBreakIcePopup 跳过: 未找到 {ProductRemoveAdsWeekly} 且无可用回退礼包");
+             Debug.Log($"[Shop]TryShowBreakIcePopup 跳过: 未找到 {ProductRemoveAdsWeekly} 且无可用回退礼包");
             return false;
         }
 
@@ -1460,7 +1460,7 @@ public partial class ShopManager : MonoBehaviour
         if (inOfferCountdown)
         {
             endTime = lastCooldownStart;
-            LogShop($"TryShowBreakIcePopup: 上次弹窗倒计时未结束（截止 {lastCooldownStart:yyyy-MM-dd HH:mm}）→ 继续展示 {pack.produceNameId}");
+             Debug.Log($"[Shop]TryShowBreakIcePopup: 上次弹窗倒计时未结束（截止 {lastCooldownStart:yyyy-MM-dd HH:mm}）→ 继续展示 {pack.produceNameId}");
         }
         else
         {
@@ -1491,7 +1491,7 @@ public partial class ShopManager : MonoBehaviour
         if (entryOnly)
         {
             RegisterSettlementGift(SettlementGiftKind.BreakIce, pack, endTime);
-            LogShop($"TryShowBreakIcePopup: 主页只登记破冰入口 {pack.produceNameId}，" +
+             Debug.Log($"[Shop]TryShowBreakIcePopup: 主页只登记破冰入口 {pack.produceNameId}，" +
                     $"限时截止={(endTime == DateTime.MinValue ? "无" : endTime.ToString("yyyy-MM-dd HH:mm"))}");
         }
         else
@@ -1499,7 +1499,7 @@ public partial class ShopManager : MonoBehaviour
             ShowSettlementGift(SettlementGiftKind.BreakIce, pack, endTime);
         }
 
-        LogShop($"TryShowBreakIcePopup: 展示破冰礼包 {pack.produceNameId}, 累计次数={BreakIcePopupCount}, " +
+         Debug.Log($"[Shop]TryShowBreakIcePopup: 展示破冰礼包 {pack.produceNameId}, 累计次数={BreakIcePopupCount}, " +
                 $"下次冷却={BreakIceCooldownBaseDays + BreakIcePopupCount * BreakIceCooldownStepDays}天" +
                 $"（从倒计时结束 {(inOfferCountdown ? lastCooldownStart : endTime):yyyy-MM-dd HH:mm} 起算）, " +
                 $"限时截止={(endTime == DateTime.MinValue ? "无" : endTime.ToString("yyyy-MM-dd HH:mm"))}");
@@ -1554,14 +1554,14 @@ public partial class ShopManager : MonoBehaviour
         // 条件1：只对 IAP 层推（IAA 层走破冰礼包）
         if (IsIaaLayer())
         {
-            LogShop($"TryShowRepurchasePopup 跳过: 当前是 IAA 层（{GetCurrentUserLayer()}）");
+             Debug.Log($"[Shop]TryShowRepurchasePopup 跳过: 当前是 IAA 层（{GetCurrentUserLayer()}）");
             return false;
         }
 
         // 条件4：只在周末 / 节假日弹
         if (!IsHolidayOrWeekend())
         {
-            LogShop($"TryShowRepurchasePopup 跳过: 今天既不是周末也不是节假日（{DateTime.Now:yyyy-MM-dd dddd}）");
+             Debug.Log($"[Shop]TryShowRepurchasePopup 跳过: 今天既不是周末也不是节假日（{DateTime.Now:yyyy-MM-dd dddd}）");
             return false;
         }
 
@@ -1581,7 +1581,7 @@ public partial class ShopManager : MonoBehaviour
         long gold = GetPlayerGold();
         if (gold >= RepurchaseMaxGold)
         {
-            LogShop($"TryShowRepurchasePopup 跳过: 金币={gold} >= {RepurchaseMaxGold}");
+             Debug.Log($"[Shop]TryShowRepurchasePopup 跳过: 金币={gold} >= {RepurchaseMaxGold}");
             return false;
         }
 
@@ -1599,7 +1599,7 @@ public partial class ShopManager : MonoBehaviour
         if (lastPopupEndTime != DateTime.MinValue
             && DateTime.Now.Subtract(lastPopupEndTime).TotalDays < RepurchaseCooldownDays)
         {
-            LogShop($"TryShowRepurchasePopup 跳过: 冷却中（上次倒计时结束={lastPopupEndTime:yyyy-MM-dd HH:mm}，" +
+             Debug.Log($"[Shop]TryShowRepurchasePopup 跳过: 冷却中（上次倒计时结束={lastPopupEndTime:yyyy-MM-dd HH:mm}，" +
                     $"已过 {DateTime.Now.Subtract(lastPopupEndTime).TotalDays:F1} 天，需满 {RepurchaseCooldownDays} 天）");
             return false;
         }
@@ -1611,7 +1611,7 @@ public partial class ShopManager : MonoBehaviour
         // A 已经限购售罄 → 再弹它也买不了，退回调起次数规则
         if (a != null && IsLimitedOut(a))
         {
-            LogShop($"[复购] 礼包A={a.produceNameId} 已售罄 → 改走支付调起次数规则");
+             Debug.Log($"[Shop][复购] 礼包A={a.produceNameId} 已售罄 → 改走支付调起次数规则");
             a = null;
         }
 
@@ -1644,7 +1644,7 @@ public partial class ShopManager : MonoBehaviour
         {
             // 主页只登记入口：不弹窗、不记「本活动期已弹过」/冷却起点，玩家点入口时再打开弹窗
             RegisterSettlementGift(SettlementGiftKind.Repurchase, chosen.DeepCopy(), endTime, bonusGold, chosen.produceNameId);
-            LogShop($"[复购] 主页只登记入口 chosen={chosen.produceNameId}, 加赠金币={bonusGold}, " +
+             Debug.Log($"[Shop][复购] 主页只登记入口 chosen={chosen.produceNameId}, 加赠金币={bonusGold}, " +
                     $"限时截止={endTime:yyyy-MM-dd HH:mm:ss}");
             return true;
         }
@@ -1678,7 +1678,7 @@ public partial class ShopManager : MonoBehaviour
         ShopDataItem offer = GetRepurchaseLastOfferPack();
         if (offer != null && IsLimitedOut(offer))
         {
-            LogShop($"[复购] 上次展示的 {offer.produceNameId} 已售罄 → 换一款给结算页按钮（不弹窗）");
+             Debug.Log($"[Shop][复购] 上次展示的 {offer.produceNameId} 已售罄 → 换一款给结算页按钮（不弹窗）");
             offer = null;
         }
 
@@ -1705,7 +1705,7 @@ public partial class ShopManager : MonoBehaviour
         // ★ 只登记不弹窗（ShowSettlementGift 才会 OpenSettlementGiftPopup）
         RegisterSettlementGift(SettlementGiftKind.Repurchase, display, offerEndTime, bonusGold, offer.produceNameId);
 
-        LogShop($"[复购] 本活动已主动弹过 → 不再弹出，仅保留结算页按钮: {offer.produceNameId}, " +
+         Debug.Log($"[Shop][复购] 本活动已主动弹过 → 不再弹出，仅保留结算页按钮: {offer.produceNameId}, " +
                 $"加赠金币={bonusGold}, 限时截止={offerEndTime:yyyy-MM-dd HH:mm:ss}");
     }
 
@@ -1720,7 +1720,7 @@ public partial class ShopManager : MonoBehaviour
         // 1. 有成功购买的礼包 → 直接弹它的优惠款
         if (a != null)
         {
-            LogShop($"[复购] 优先弹最近一次成功购买礼包的优惠款：{a.produceNameId}(price={a.price})");
+             Debug.Log($"[Shop][复购] 优先弹最近一次成功购买礼包的优惠款：{a.produceNameId}(price={a.price})");
             return a;
         }
 
@@ -1746,7 +1746,7 @@ public partial class ShopManager : MonoBehaviour
             .OrderBy(x => x.price)
             .FirstOrDefault();
 
-        LogShop($"[复购] 无礼包A → 取调起次数最多({maxInvoke})的礼包：{picked?.produceNameId}");
+         Debug.Log($"[Shop][复购] 无礼包A → 取调起次数最多({maxInvoke})的礼包：{picked?.produceNameId}");
         return picked;
     }
 
@@ -1777,7 +1777,7 @@ public partial class ShopManager : MonoBehaviour
         // （展示用副本 + 加赠金币都由 ShowSettlementGift/OpenSettlementGiftPopup 写进 pending 数据）
         ShowSettlementGift(SettlementGiftKind.Repurchase, display, endTime, bonusGold, pack.produceNameId);
 
-        LogShop($"TryShowRepurchasePopup: 展示复购礼包 A={basePack?.produceNameId}, chosen={pack.produceNameId}, " +
+         Debug.Log($"[Shop]TryShowRepurchasePopup: 展示复购礼包 A={basePack?.produceNameId}, chosen={pack.produceNameId}, " +
                 $"price={pack.price}, 加赠金币={bonusGold}(coinValue={pack.coinValue}), " +
                 $"限时截止={endTime:yyyy-MM-dd HH:mm:ss}, 当前金币={GetPlayerGold()}");
     }
@@ -1852,7 +1852,7 @@ public partial class ShopManager : MonoBehaviour
         {
             if (SystemManager.Instance.PanelIsShowing(p))
             {
-                LogShop($"[结算礼包] 被拦截：{p} 正在展示");
+                 Debug.Log($"[Shop][结算礼包] 被拦截：{p} 正在展示");
                 return true;
             }
         }
@@ -1970,7 +1970,7 @@ public partial class ShopManager : MonoBehaviour
         {
             if (SystemManager.Instance.PanelIsShowing(p))
             {
-                LogShop($"IsExclusivePopupShowing=true: {p} 正在展示");
+                 Debug.Log($"[Shop]IsExclusivePopupShowing=true: {p} 正在展示");
                 return true;
             }
         }
@@ -2032,7 +2032,7 @@ public partial class ShopManager : MonoBehaviour
         _settlementGiftPopupSuppressed = false;
         _settlementGiftSuppressReason = null;
 
-        LogShop($"[结算礼包] 开始调度: 累计插屏={interAdsCount}, 分层={GetCurrentUserLayer()}, " +
+         Debug.Log($"[Shop][结算礼包] 开始调度: 累计插屏={interAdsCount}, 分层={GetCurrentUserLayer()}, " +
                 $"金币={GetPlayerGold()}, 周末/节假日={IsHolidayOrWeekend()}, " +
                 $"上次复购倒计时结束={GetRepurchaseLastPopupEndTime():yyyy-MM-dd HH:mm}");
 
@@ -2062,7 +2062,7 @@ public partial class ShopManager : MonoBehaviour
             _suspendGiftPopup = false;
         }
 
-        LogShop($"[结算礼包] 预登记完成: kind={CurrentSettlementGift}, 待弹窗={_settlementGiftPopupPending}, " +
+         Debug.Log($"[Shop][结算礼包] 预登记完成: kind={CurrentSettlementGift}, 待弹窗={_settlementGiftPopupPending}, " +
                 $"礼包={GetSettlementGiftPackId()}");
         return CurrentSettlementGift != SettlementGiftKind.None;
     }
@@ -2080,7 +2080,7 @@ public partial class ShopManager : MonoBehaviour
         }
 
         _settlementGiftPopupPending = false;
-        LogShop($"[结算礼包] 预登记礼包到点弹窗: kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
+         Debug.Log($"[Shop][结算礼包] 预登记礼包到点弹窗: kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
         OpenSettlementGiftPopup();
     }
 

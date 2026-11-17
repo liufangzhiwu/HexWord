@@ -223,7 +223,7 @@ public partial class ShopManager : MonoBehaviour
         pendingGiftPopupItem = item;
         pendingGiftPopupMode = mode;
         pendingGiftPopupEndTime = endTime;
-        LogShop($"SetPendingGiftPopup: mode={mode}, item={(item != null ? item.produceNameId : "null")}, endTime={(endTime == System.DateTime.MinValue ? "无限时" : endTime.ToString("yyyy-MM-dd HH:mm:ss"))}");
+         Debug.Log($"[Shop]SetPendingGiftPopup: mode={mode}, item={(item != null ? item.produceNameId : "null")}, endTime={(endTime == System.DateTime.MinValue ? "无限时" : endTime.ToString("yyyy-MM-dd HH:mm:ss"))}");
     }
 
     /// <summary>清空礼包弹窗数据（弹窗关闭时调用）。</summary>
@@ -255,7 +255,7 @@ public partial class ShopManager : MonoBehaviour
     {
         _pendingGiftBonusPackId = bonusGold > 0 ? packProduceNameId : null;
         _pendingGiftBonusGold = bonusGold > 0 ? bonusGold : 0;
-        LogShop($"SetPendingGiftBonus: pack={packProduceNameId}, bonusGold={bonusGold}");
+         Debug.Log($"[Shop]SetPendingGiftBonus: pack={packProduceNameId}, bonusGold={bonusGold}");
     }
 
     /// <summary>取出并清空该礼包的加赠金币（购买成功时用；不匹配返回 0）。</summary>
@@ -267,7 +267,7 @@ public partial class ShopManager : MonoBehaviour
         int bonus = _pendingGiftBonusGold;
         _pendingGiftBonusPackId = null;
         _pendingGiftBonusGold = 0;
-        LogShop($"ConsumePendingGiftBonus: pack={packProduceNameId}, +{bonus} 金币");
+         Debug.Log($"[Shop]ConsumePendingGiftBonus: pack={packProduceNameId}, +{bonus} 金币");
         return bonus;
     }
 
@@ -357,7 +357,7 @@ public partial class ShopManager : MonoBehaviour
     public void SuppressSettlementGiftPopup(string reason)
     {
         if (!_settlementGiftPopupSuppressed)
-            LogShop($"[结算礼包] 本次结算不主动弹窗：{reason}（只保留入口按钮）");
+             Debug.Log($"[Shop][结算礼包] 本次结算不主动弹窗：{reason}（只保留入口按钮）");
 
         _settlementGiftPopupSuppressed = true;
         _settlementGiftSuppressReason = reason;
@@ -382,7 +382,7 @@ public partial class ShopManager : MonoBehaviour
         if (!_settlementGiftPopupPending) return;
 
         _settlementGiftPopupPending = false;
-        LogShop($"[结算礼包] 取消本次礼包弹窗（{reason}），结算页按钮保留: " +
+         Debug.Log($"[Shop][结算礼包] 取消本次礼包弹窗（{reason}），结算页按钮保留: " +
                 $"kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
     }
 
@@ -409,7 +409,7 @@ public partial class ShopManager : MonoBehaviour
         if (_settlementGiftPopupSuppressed)
         {
             _settlementGiftPopupPending = false;
-            LogShop($"[结算礼包] 本次结算不弹窗（{_settlementGiftSuppressReason}），只保留入口: " +
+             Debug.Log($"[Shop][结算礼包] 本次结算不弹窗（{_settlementGiftSuppressReason}），只保留入口: " +
                     $"kind={kind}, 礼包={displayItem.produceNameId}");
             return;
         }
@@ -417,7 +417,7 @@ public partial class ShopManager : MonoBehaviour
         if (_suspendGiftPopup)
         {
             _settlementGiftPopupPending = true;
-            LogShop($"[结算礼包] 预登记（暂不弹窗）kind={kind}，等结算页展示后再弹");
+             Debug.Log($"[Shop][结算礼包] 预登记（暂不弹窗）kind={kind}，等结算页展示后再弹");
             return;
         }
 
@@ -433,7 +433,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (displayItem == null)
         {
-            LogShop($"RegisterSettlementGift 跳过: 礼包为空 (kind={kind})");
+             Debug.Log($"[Shop]RegisterSettlementGift 跳过: 礼包为空 (kind={kind})");
             return;
         }
 
@@ -445,7 +445,7 @@ public partial class ShopManager : MonoBehaviour
 
         // ★ 破冰 / 复购礼包在活动期间允许【反复购买】，所以这里不恢复任何「已购买」锁：
         //   每关结算重新登记都可以再次打开弹窗购买，直到活动倒计时结束。
-        LogShop($"RegisterSettlementGift: 登记结算页礼包 kind={kind}, item={displayItem.produceNameId}, " +
+         Debug.Log($"[Shop]RegisterSettlementGift: 登记结算页礼包 kind={kind}, item={displayItem.produceNameId}, " +
                 $"endTime={(endTime == System.DateTime.MinValue ? "无限时" : endTime.ToString("yyyy-MM-dd HH:mm:ss"))}, 加赠={bonusGold}");
 
         NotifySettlementGiftChanged();
@@ -495,7 +495,7 @@ public partial class ShopManager : MonoBehaviour
         if (SystemManager.Instance != null)
             SystemManager.Instance.ShowPanel(PanelType.AdsDiscountScreen);
 
-        LogShop($"OpenSettlementGiftPopup: kind={CurrentSettlementGift}, item={_settlementGiftItem.produceNameId}");
+         Debug.Log($"[Shop]OpenSettlementGiftPopup: kind={CurrentSettlementGift}, item={_settlementGiftItem.produceNameId}");
     }
 
     /// <summary>清空结算页礼包登记（换结算 / 离开结算页 / 活动限时结束）。</summary>
@@ -511,7 +511,7 @@ public partial class ShopManager : MonoBehaviour
         _settlementGiftBonusGold = 0;
         _settlementGiftBonusPackId = null;
 
-        LogShop($"ClearSettlementGift: {reason}");
+         Debug.Log($"[Shop]ClearSettlementGift: {reason}");
 
         NotifySettlementGiftChanged();
     }
@@ -598,7 +598,7 @@ public partial class ShopManager : MonoBehaviour
         if (data != null)
         {
             ParseShopItems(data.text);
-            LogShop($"Start: 商店商品解析完成, 商品总数={allShopItems.Count}, shopItems={shopItems.Count}");
+             Debug.Log($"[Shop]Start: 商店商品解析完成, 商品总数={allShopItems.Count}, shopItems={shopItems.Count}");
         }
         else
         {
@@ -619,7 +619,7 @@ public partial class ShopManager : MonoBehaviour
 
         Initialize();
 
-        LogShop($"Start 完成: shopMode={shopMode}, 推荐位配置数={_recommendConfigs.Count}, 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
+         Debug.Log($"[Shop]Start 完成: shopMode={shopMode}, 推荐位配置数={_recommendConfigs.Count}, 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
     }
 
     private void LoadRuntimeConfigs()
@@ -635,7 +635,7 @@ public partial class ShopManager : MonoBehaviour
         // ★ 启动审核配置拉取
         StartAuditStatusLoad();
 
-        LogShop($"LoadRuntimeConfigs 完成: 推荐位配置数={_recommendConfigs.Count}, 折扣开关={_discountConfig.enable}, 灯泡每日={_discountConfig.bulbDailyLimit}, 火箭每日={_discountConfig.rocketDailyLimit}, 间隔={_discountConfig.triggerInterval}s");
+         Debug.Log($"[Shop]LoadRuntimeConfigs 完成: 推荐位配置数={_recommendConfigs.Count}, 折扣开关={_discountConfig.enable}, 灯泡每日={_discountConfig.bulbDailyLimit}, 火箭每日={_discountConfig.rocketDailyLimit}, 间隔={_discountConfig.triggerInterval}s");
     }
 
     private void LoadClockBoxConfig()
@@ -644,11 +644,11 @@ public partial class ShopManager : MonoBehaviour
         if (rec != null)
         {
             ParseRecommendConfigs(rec.text);
-            LogShop($"LoadClockBoxConfig: 从 Bundle 加载 shop_clockbox");
+             Debug.Log($"[Shop]LoadClockBoxConfig: 从 Bundle 加载 shop_clockbox");
         }
         else
         {
-            LogShop($"LoadClockBoxConfig: 未找到 shop_clockbox, 使用默认值");
+             Debug.Log($"[Shop]LoadClockBoxConfig: 未找到 shop_clockbox, 使用默认值");
         }
     }
 
@@ -660,7 +660,7 @@ public partial class ShopManager : MonoBehaviour
             .ToDictionary(g => g.Key, g => g.First());
         _limitAdsGifts = GetLimitAdsGifts();
 
-        LogShop($"Initialize: 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
+         Debug.Log($"[Shop]Initialize: 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
     }
 
     public void RefreshLimitData()
@@ -671,7 +671,7 @@ public partial class ShopManager : MonoBehaviour
             .ToDictionary(g => g.Key, g => g.First());
         _limitAdsGifts = GetLimitAdsGifts();
 
-        LogShop($"RefreshLimitData: 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
+         Debug.Log($"[Shop]RefreshLimitData: 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
     }
 
     // ======================= 日志 =======================
@@ -759,7 +759,7 @@ public partial class ShopManager : MonoBehaviour
         IsAuditConfigReady = true;
         OnAuditConfigLoaded?.Invoke();
 
-        LogShop($"[Zen_AuditStatus_AZ] 审核配置就绪: IsAuditOpen={AuditConfig.IsAuditOpen}, " +
+         Debug.Log($"[Shop][Zen_AuditStatus_AZ] 审核配置就绪: IsAuditOpen={AuditConfig.IsAuditOpen}, " +
                 $"FixedWhitelist={AuditConfig.AuditFixedShopItemIds.Count}, " +
                 $"LampWhitelist={AuditConfig.GetPropShopItems(PropShopType.Lamp).Count}, " +
                 $"RocketWhitelist={AuditConfig.GetPropShopItems(PropShopType.Rocket).Count}, " +
@@ -811,7 +811,7 @@ public partial class ShopManager : MonoBehaviour
             FillAuditPropShopItems(fields, 7, PropShopType.Rocket);
             FillAuditPropShopItems(fields, 8, PropShopType.Revive);
 
-            LogShop($"[Zen_AuditStatus_AZ] 解析完成，来源【{source}】 | " +
+             Debug.Log($"[Shop][Zen_AuditStatus_AZ] 解析完成，来源【{source}】 | " +
                     $"AuditStatusSwitch={AuditConfig.IsAuditOpen}, " +
                     $"Gold6ReplaceVideoPos={AuditConfig.Gold6ReplaceVideoPos}, " +
                     $"RemoveAdsWeeklyUnlockHome={AuditConfig.RemoveAdsWeeklyUnlockHome}");
@@ -872,7 +872,7 @@ public partial class ShopManager : MonoBehaviour
             if (string.IsNullOrEmpty(id)) continue;
             ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == id);
             if (item != null) result.Add(item);
-            else LogShop($"[Audit] 商品ID无效或未配置: {id}");
+            else  Debug.Log($"[Shop][Audit] 商品ID无效或未配置: {id}");
         }
         return result;
     }
@@ -918,7 +918,7 @@ public partial class ShopManager : MonoBehaviour
         {
             result = BuildAuditFixedStoreBaseList();
 
-            LogShop($"[Audit] 商店审核固定礼包 {result.Count} 个: " +
+             Debug.Log($"[Shop][Audit] 商店审核固定礼包 {result.Count} 个: " +
                     $"[{string.Join(",", result.Select(x => x.produceNameId))}]");
         }
 
@@ -963,11 +963,11 @@ public partial class ShopManager : MonoBehaviour
         if (item != null)
         {
             list.Add(item);
-            LogShop($"[Audit] 补入审核固定商店礼包: {nameId}");
+             Debug.Log($"[Shop][Audit] 补入审核固定商店礼包: {nameId}");
         }
         else
         {
-            LogShop($"[Audit] 特惠礼包未在商店表找到，跳过: {nameId}");
+             Debug.Log($"[Shop][Audit] 特惠礼包未在商店表找到，跳过: {nameId}");
         }
     }
 
@@ -1050,7 +1050,7 @@ public partial class ShopManager : MonoBehaviour
         if(isSort)  
             result = result.OrderBy(x => x.price).ToList();
 
-        LogShop($"[Audit] slot={slot} 审核全量礼包 {result.Count} 个: [{string.Join(",", result.Select(x => x.produceNameId))}]");
+         Debug.Log($"[Shop][Audit] slot={slot} 审核全量礼包 {result.Count} 个: [{string.Join(",", result.Select(x => x.produceNameId))}]");
         return result;
     }
 
@@ -1073,7 +1073,7 @@ public partial class ShopManager : MonoBehaviour
         if (!ShouldReplaceCoinVideoSlotWithGold6()) return null;
         ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == ProductGold6);
         if (item == null)
-            LogShop($"[Audit] Gold6 商品未在商店表中找到: {ProductGold6}");
+             Debug.Log($"[Shop][Audit] Gold6 商品未在商店表中找到: {ProductGold6}");
         return item;
     }
 
@@ -1124,7 +1124,7 @@ public partial class ShopManager : MonoBehaviour
                 pushStateIndex = 1f,
             };
             GameDataManager.Instance.UserData.limitShopItems.Add(data);
-            LogShop($"GetOrCreateLimitData 新建跟踪数据: id={item.id}, nameid={item.produceNameId}");
+             Debug.Log($"[Shop]GetOrCreateLimitData 新建跟踪数据: id={item.id}, nameid={item.produceNameId}");
         }
 
         shoplimitDatas[item.id] = data;
@@ -1170,11 +1170,11 @@ public partial class ShopManager : MonoBehaviour
         if (string.IsNullOrEmpty(productName))
         {
             productName = GetToolFallbackReasonIndex(toolType);
-            LogShop($"[ToolIap] {toolType} 未取到推荐礼包，reason_index 回退为「{productName}」");
+             Debug.Log($"[Shop][ToolIap] {toolType} 未取到推荐礼包，reason_index 回退为「{productName}」");
         }
         else
         {
-            LogShop($"[ToolIap] {toolType} 按内购口径上报，reason_index=「{productName}」");
+             Debug.Log($"[Shop][ToolIap] {toolType} 按内购口径上报，reason_index=「{productName}」");
         }
 
         return ResReason.IapItem(productName);
@@ -1210,7 +1210,7 @@ public partial class ShopManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            LogShop($"[ToolIap] GetToolRecommendPackName 异常({toolType}): {e.Message}");
+             Debug.Log($"[Shop][ToolIap] GetToolRecommendPackName 异常({toolType}): {e.Message}");
             return null;
         }
     }
@@ -1303,7 +1303,7 @@ public partial class ShopManager : MonoBehaviour
         UserData user = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
         if (user == null || user.limitShopItems == null)
         {
-            LogShop($"[去广告] 清除永久去广告失败：UserData 未就绪（{reason}）");
+             Debug.Log($"[Shop][去广告] 清除永久去广告失败：UserData 未就绪（{reason}）");
             return 0;
         }
 
@@ -1326,7 +1326,7 @@ public partial class ShopManager : MonoBehaviour
 
         if (removed <= 0 && removedRecords <= 0)
         {
-            LogShop($"[去广告] 清除永久去广告：没有已生效的永久去广告记录 / 购买记录（{reason}）");
+             Debug.Log($"[Shop][去广告] 清除永久去广告：没有已生效的永久去广告记录 / 购买记录（{reason}）");
             return 0;
         }
 
@@ -1336,7 +1336,7 @@ public partial class ShopManager : MonoBehaviour
         // 通知外部（结算页/商店的去广告入口、广告规则）按"无去广告"刷新
         UpdateAdsBtnUI?.Invoke(null, false);
 
-        LogShop($"[去广告] 已清除永久去广告：状态记录 {removed} 条" +
+         Debug.Log($"[Shop][去广告] 已清除永久去广告：状态记录 {removed} 条" +
                 (clearPurchaseRecords ? $"、购买记录 {removedRecords} 条" : "") +
                 $"（{reason}），当前 IsRemoveAdsOwned={IsRemoveAdsOwned()}，" +
                 $"补单拦截={IsPermanentRemoveAdsRestoreBlocked()}");
@@ -1362,7 +1362,7 @@ public partial class ShopManager : MonoBehaviour
         else PlayerPrefs.DeleteKey(PrefRemoveAdsRestoreBlock);
 
         PlayerPrefs.Save();
-        LogShop($"[去广告] 补单拦截 {(blocked ? "已开启" : "已解除")}（{reason}）");
+         Debug.Log($"[Shop][去广告] 补单拦截 {(blocked ? "已开启" : "已解除")}（{reason}）");
     }
 
     /// <summary>
@@ -1470,7 +1470,7 @@ public partial class ShopManager : MonoBehaviour
             parsed++;
         }
 
-        LogShop($"ParseRecommendConfigs: 解析 {parsed} 条推荐位配置, 累计={_recommendConfigs.Count}");
+         Debug.Log($"[Shop]ParseRecommendConfigs: 解析 {parsed} 条推荐位配置, 累计={_recommendConfigs.Count}");
     }
 
     private void AddRecommend(string nameID, int giftType, int baseW, int maxW, int specialW, int peakW, int returnW, int featured)
@@ -1548,7 +1548,7 @@ public partial class ShopManager : MonoBehaviour
         {
             _slot1DecisionKey = BuildSlot1DecisionKey();
             _slot1Decision = newcomer;
-            LogShop($"  1号位共享决策: 迎新礼包固定置顶 {newcomer.produceNameId}（本次入口={slot}）");
+             Debug.Log($"[Shop]  1号位共享决策: 迎新礼包固定置顶 {newcomer.produceNameId}（本次入口={slot}）");
             return new List<ShopDataItem> { newcomer };
         }
 
@@ -1560,7 +1560,7 @@ public partial class ShopManager : MonoBehaviour
             && !IsExcludedPack(_slot1Decision, excludeIds)
             && candidates.Any(c => c != null && c.id == _slot1Decision.id))
         {
-            LogShop($"  1号位共享决策: 复用 {_slot1Decision.produceNameId}（本次入口={slot}）");
+             Debug.Log($"[Shop]  1号位共享决策: 复用 {_slot1Decision.produceNameId}（本次入口={slot}）");
             return new List<ShopDataItem> { _slot1Decision };
         }
 
@@ -1569,7 +1569,7 @@ public partial class ShopManager : MonoBehaviour
         {
             _slot1DecisionKey = key;
             _slot1Decision = winner[0];
-            LogShop($"  1号位共享决策: 新决策 {winner[0].produceNameId}（本次入口={slot}），后续两个商店共用");
+             Debug.Log($"[Shop]  1号位共享决策: 新决策 {winner[0].produceNameId}（本次入口={slot}），后续两个商店共用");
         }
 
         return winner;
@@ -1582,7 +1582,7 @@ public partial class ShopManager : MonoBehaviour
 
         _slot1Decision = null;
         _slot1DecisionKey = null;
-        LogShop($"  1号位共享决策已清空（{reason}）");
+         Debug.Log($"[Shop]  1号位共享决策已清空（{reason}）");
     }
 
     private List<ShopDataItem> GetSlotCandidates(RecommendSlot slot, int featured)
@@ -1647,7 +1647,7 @@ public partial class ShopManager : MonoBehaviour
         {
             _slotLastShownPack[key] = shownPack;
         }
-        LogShop($"LockSlot: {slot}, featured={featured}, shownPack={(shownPack != null ? shownPack.produceNameId : "null")}");
+         Debug.Log($"[Shop]LockSlot: {slot}, featured={featured}, shownPack={(shownPack != null ? shownPack.produceNameId : "null")}");
     }
 
     public ShopDataItem GetLastShownPack(RecommendSlot slot, int featured)
@@ -1686,7 +1686,7 @@ public partial class ShopManager : MonoBehaviour
                 float before = limit.conversionFailScore;
                 limit.conversionFailScore = 0f;
                 limit.SetLastFailScoreTime(DateTime.Now);
-                LogShop($"  [决策变化归零] {slot}_{featured}: {last.produceNameId} F {before:F1} → 0，新决策={newPack.produceNameId}");
+                 Debug.Log($"[Shop]  [决策变化归零] {slot}_{featured}: {last.produceNameId} F {before:F1} → 0，新决策={newPack.produceNameId}");
             }
         }
 
@@ -1726,7 +1726,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (item == null || cfg == null)
         {
-            LogShop($"计算决策权重(CalculateDecisionWeight) 跳过：礼包={(item == null ? "null" : item.produceNameId)}，" +
+             Debug.Log($"[Shop]计算决策权重(CalculateDecisionWeight) 跳过：礼包={(item == null ? "null" : item.produceNameId)}，" +
                     $"配置={(cfg == null ? "null" : cfg.nameID)}，推荐位={SlotNameCn(slot)}");
             return 0;
         }
@@ -1735,11 +1735,11 @@ public partial class ShopManager : MonoBehaviour
 
         if (!info.valid)
         {
-            LogShop($"计算决策权重(CalculateDecisionWeight) 跳过：{item.produceNameId} {info.skipReason}");
+             Debug.Log($"[Shop]计算决策权重(CalculateDecisionWeight) 跳过：{item.produceNameId} {info.skipReason}");
             return 0;
         }
 
-        LogShop($"计算决策权重(CalculateDecisionWeight) {item.produceNameId}（推荐位={SlotNameCn(slot)}）：" +
+         Debug.Log($"[Shop]计算决策权重(CalculateDecisionWeight) {item.produceNameId}（推荐位={SlotNameCn(slot)}）：" +
                 $"基础={info.baseWeight:F1}，付费倾向={info.payTendency:F1}，探价={info.exploreScore:F1}，失败分={info.failScore:F1}" +
                 $" → 礼包分={info.packWeight:F2}(封顶{info.cap:F0})；" +
                 $"节日周末={info.specialWeight:F2}，高峰={info.peakWeight:F2}，流失回归={info.returnWeight:F2}，" +
@@ -1840,7 +1840,7 @@ public partial class ShopManager : MonoBehaviour
         if (_lastChurnReturnLogged != isReturn)
         {
             _lastChurnReturnLogged = isReturn;
-            LogShop($"[权重] 流失回归: 启动前离开={FormatTime(snapshotLogout)}({snapshotDays:F1}天前), " +
+             Debug.Log($"[Shop][权重] 流失回归: 启动前离开={FormatTime(snapshotLogout)}({snapshotDays:F1}天前), " +
                     $"当前 logoutTime={FormatTime(currentLogout)}({currentDays:F1}天前), " +
                     $"阈值={ChurnReturnDays}天 → {isReturn}");
         }
@@ -1915,7 +1915,7 @@ public partial class ShopManager : MonoBehaviour
             }
         }
 
-        LogShop($"========== GetRecommendPacks 开始: slot={slot}, shopMode={shopMode}, 排除数={(excludeIds == null ? 0 : excludeIds.Count)}, 时间={DateTime.Now:HH:mm:ss} ==========");
+         Debug.Log($"[Shop]========== GetRecommendPacks 开始: slot={slot}, shopMode={shopMode}, 排除数={(excludeIds == null ? 0 : excludeIds.Count)}, 时间={DateTime.Now:HH:mm:ss} ==========");
 
         List<ShopDataItem> result = new List<ShopDataItem>();
         bool slot1Empty = false;
@@ -1928,17 +1928,17 @@ public partial class ShopManager : MonoBehaviour
                 if (lastShown != null && !IsLimitedOut(lastShown) && !IsExcludedPack(lastShown, excludeIds))
                 {
                     result.Add(lastShown);
-                    LogShop($"  featured={featured} 已锁定（本关该推荐位购买过），回显礼包: {lastShown.produceNameId}");
+                     Debug.Log($"[Shop]  featured={featured} 已锁定（本关该推荐位购买过），回显礼包: {lastShown.produceNameId}");
                 }
                 else
                 {
-                    LogShop($"  featured={featured} 已锁定，但回显礼包为空/已限购/已排除，跳过");
+                     Debug.Log($"[Shop]  featured={featured} 已锁定，但回显礼包为空/已限购/已排除，跳过");
                 }
                 continue;
             }
 
             List<ShopDataItem> candidates = FilterExcludedPacks(GetSlotCandidates(slot, featured), excludeIds);
-            LogShop($"  featured={featured}, 候选数={candidates.Count}, 候选=[{string.Join(",", candidates.Select(x => x.produceNameId))}]");
+             Debug.Log($"[Shop]  featured={featured}, 候选数={candidates.Count}, 候选=[{string.Join(",", candidates.Select(x => x.produceNameId))}]");
 
             if (candidates.Count == 0) continue;
 
@@ -1952,14 +1952,14 @@ public partial class ShopManager : MonoBehaviour
                 if (winners == null || winners.Count == 0)
                 {
                     slot1Empty = true;
-                    LogShop($"  {slot} 一号位无胜出礼包, 判定去广告补位, IsRemoveAdsOwned={IsRemoveAdsOwned()}");
+                     Debug.Log($"[Shop]  {slot} 一号位无胜出礼包, 判定去广告补位, IsRemoveAdsOwned={IsRemoveAdsOwned()}");
                     if (!IsRemoveAdsOwned())
                     {
                         ShopDataItem ad = allShopItems.FirstOrDefault(x => x.produceNameId == ProductRemoveAds);
                         if (ad != null)
                         {
                             result.Add(ad);
-                            LogShop($"  {slot} 一号位补位去广告: {ad.produceNameId}");
+                             Debug.Log($"[Shop]  {slot} 一号位补位去广告: {ad.produceNameId}");
                         }
                     }
                     continue;
@@ -1986,22 +1986,22 @@ public partial class ShopManager : MonoBehaviour
                 .OrderByDescending(x => CalculateDecisionWeight(x, GetCfg(x.produceNameId), slot))
                 .ThenBy(x => x.price)
                 .ToList();
-            LogShop($"  动态商店一号位空且去广告已拥有, 二号位放开: 候选数={secondSorted.Count}, 排序=[{string.Join(",", secondSorted.Select(x => x.produceNameId))}]");
+             Debug.Log($"[Shop]  动态商店一号位空且去广告已拥有, 二号位放开: 候选数={secondSorted.Count}, 排序=[{string.Join(",", secondSorted.Select(x => x.produceNameId))}]");
             for (int i = 0; i < Math.Min(2, secondSorted.Count); i++)
             {
                 result.Add(secondSorted[i]);
-                LogShop($"    二号位追加: {secondSorted[i].produceNameId}");
+                 Debug.Log($"[Shop]    二号位追加: {secondSorted[i].produceNameId}");
             }
         }
 
         var distinctResult = result.Distinct().ToList();
-        LogShop($"========== GetRecommendPacks 结果: slot={slot}, 数量={distinctResult.Count}, 商品=[{string.Join(",", distinctResult.Select(x => $"{x.produceNameId}(price={x.price},giftType={x.giftType})"))}] ==========");
+         Debug.Log($"[Shop]========== GetRecommendPacks 结果: slot={slot}, 数量={distinctResult.Count}, 商品=[{string.Join(",", distinctResult.Select(x => $"{x.produceNameId}(price={x.price},giftType={x.giftType})"))}] ==========");
         return distinctResult;
     }
 
     private List<ShopDataItem> DecideWinner(List<ShopDataItem> candidates, RecommendSlot slot)
     {
-        LogShop($"    --- DecideWinner 开始: slot={slot}, 初始候选数={candidates.Count} ---");
+         Debug.Log($"[Shop]    --- DecideWinner 开始: slot={slot}, 初始候选数={candidates.Count} ---");
 
         // ★ 活动礼包粘性（需求）：本次节日/周末里已经胜出的活动礼包，
         //   只要限时没结束、也没被买到限购上限，就一直占着这个推荐位，不被后续重算换掉。
@@ -2011,7 +2011,7 @@ public partial class ShopManager : MonoBehaviour
             .FirstOrDefault();
         if (stickyPack != null)
         {
-            LogShop($"    DecideWinner 活动礼包粘性: 继续展示 {stickyPack.produceNameId}" +
+             Debug.Log($"[Shop]    DecideWinner 活动礼包粘性: 继续展示 {stickyPack.produceNameId}" +
                     $"（限时截止 {GetActivityPackEndTime(stickyPack):yyyy-MM-dd HH:mm}）");
             return new List<ShopDataItem> { stickyPack };
         }
@@ -2020,10 +2020,10 @@ public partial class ShopManager : MonoBehaviour
             .Where(c => !IsLimitedOut(c) && GetCooldownCoefficient(c) > 0f)
             .ToList();
 
-        LogShop($"    过滤后有效候选数={valid.Count}, 有效=[{string.Join(",", valid.Select(x => x.produceNameId))}]");
+         Debug.Log($"[Shop]    过滤后有效候选数={valid.Count}, 有效=[{string.Join(",", valid.Select(x => x.produceNameId))}]");
         if (valid.Count == 0)
         {
-            LogShop($"    DecideWinner 结果: 无有效候选");
+             Debug.Log($"[Shop]    DecideWinner 结果: 无有效候选");
             return null;
         }
 
@@ -2032,13 +2032,13 @@ public partial class ShopManager : MonoBehaviour
         if (newcomers.Count > 0)
         {
             newcomerAllowed = CanShowNewcomerGift(slot);
-            LogShop($"    新人礼候选=[{string.Join(",", newcomers.Select(x => x.produceNameId))}], newcomerAllowed={newcomerAllowed}");
+             Debug.Log($"[Shop]    新人礼候选=[{string.Join(",", newcomers.Select(x => x.produceNameId))}], newcomerAllowed={newcomerAllowed}");
         }
 
         List<ShopDataItem> pool = newcomerAllowed ? valid : valid.Where(c => !IsNewcomerLabel(c.labelZh)).ToList();
         if (pool.Count == 0)
         {
-            LogShop($"    DecideWinner 结果: 新人礼互斥后无候选");
+             Debug.Log($"[Shop]    DecideWinner 结果: 新人礼互斥后无候选");
             return null;
         }
 
@@ -2050,7 +2050,7 @@ public partial class ShopManager : MonoBehaviour
         {
             var item = kv.Key;
             ShopLimitData limit = GetLimitData(item);
-            LogShop($"      候选明细 {item.produceNameId}: 权重={kv.Value:F2}, " +
+             Debug.Log($"[Shop]      候选明细 {item.produceNameId}: 权重={kv.Value:F2}, " +
                     $"giftType={item.giftType}, price={item.price}, " +
                     $"payTendency={limit?.payTendencyScore ?? 0f:F1}, explore={limit?.exploreScore ?? 0f:F1}, fail={limit?.conversionFailScore ?? 0f:F1}, " +
                     $"pushIndex={limit?.pushStateIndex ?? 1f:F2}, cooldown={GetCooldownCoefficient(item):F2}, label={item.labelZh}");
@@ -2064,7 +2064,7 @@ public partial class ShopManager : MonoBehaviour
         var cheapest = top.Where(x => Mathf.Approximately(x.Key.price, minPrice)).ToList();
         ShopDataItem winner = cheapest[UnityEngine.Random.Range(0, cheapest.Count)].Key;
         if (top.Count > 1)
-            LogShop($"    权重并列 {top.Count} 个(max={max:F2})，低价优先取 {winner.produceNameId}(price={winner.price})");
+             Debug.Log($"[Shop]    权重并列 {top.Count} 个(max={max:F2})，低价优先取 {winner.produceNameId}(price={winner.price})");
 
         ShopRecommendConfig cfg = GetCfg(winner.produceNameId);
         bool isActivity = cfg != null && cfg.specialWeight != 0 && IsHolidayOrWeekend();
@@ -2080,7 +2080,7 @@ public partial class ShopManager : MonoBehaviour
             winnerLimit.SetLimitEndTime(DateTime.MinValue);
         }
 
-        LogShop($"    --- DecideWinner 结果: 胜出={winner.produceNameId}, 权重={max:F2}, isActivityPack={isActivity}, isHolidayOrWeekend={IsHolidayOrWeekend()} ---");
+         Debug.Log($"[Shop]    --- DecideWinner 结果: 胜出={winner.produceNameId}, 权重={max:F2}, isActivityPack={isActivity}, isHolidayOrWeekend={IsHolidayOrWeekend()} ---");
 
         return new List<ShopDataItem> { winner };
     }
@@ -2117,21 +2117,21 @@ public partial class ShopManager : MonoBehaviour
 
         if (!_newcomerOwner.HasValue)
         {
-            LogShop($"CanShowNewcomerGift=false: 本关没有槽位被判定为新人礼归属槽，{slot} 不允许出");
+             Debug.Log($"[Shop]CanShowNewcomerGift=false: 本关没有槽位被判定为新人礼归属槽，{slot} 不允许出");
             return false;
         }
 
         // 本关只有决出的那个槽能出新人礼（全局唯一，避免三个槽同时出现）
         if (_newcomerOwner.Value != slot)
         {
-            LogShop($"CanShowNewcomerGift=false: 本关新人礼已归属 {_newcomerOwner.Value}，{slot} 不允许出");
+             Debug.Log($"[Shop]CanShowNewcomerGift=false: 本关新人礼已归属 {_newcomerOwner.Value}，{slot} 不允许出");
             return false;
         }
 
         // 同一关内已经出过一次就不再出
         if (_shownNewcomer.ContainsKey(slot))
         {
-            LogShop($"CanShowNewcomerGift=false: 本关 {slot} 已出过新人礼({_shownNewcomer[slot]})");
+             Debug.Log($"[Shop]CanShowNewcomerGift=false: 本关 {slot} 已出过新人礼({_shownNewcomer[slot]})");
             return false;
         }
 
@@ -2148,7 +2148,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (_newcomerResetStage == stageIndex && _newcomerOwnerResolved)
         {
-            LogShop($"[新人礼] 同一关({stageIndex})重进，保留本关新人礼状态");
+             Debug.Log($"[Shop][新人礼] 同一关({stageIndex})重进，保留本关新人礼状态");
             return;
         }
 
@@ -2182,7 +2182,7 @@ public partial class ShopManager : MonoBehaviour
             if (cand == null) continue;
 
             _newcomerOwner = slot;
-            LogShop($"[新人礼] 本关归属槽={slot}, 礼包={cand.produceNameId}(price={cand.price}, giftType={cand.giftType})");
+             Debug.Log($"[Shop][新人礼] 本关归属槽={slot}, 礼包={cand.produceNameId}(price={cand.price}, giftType={cand.giftType})");
             return;
         }
 
@@ -2220,7 +2220,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(nameId)) return;
         _shownNewcomer[slot] = nameId;
-        LogShop($"MarkNewcomerShown: slot={slot}, nameId={nameId}");
+         Debug.Log($"[Shop]MarkNewcomerShown: slot={slot}, nameId={nameId}");
     }
 
     public void ClearNewcomerShown()
@@ -2293,7 +2293,7 @@ public partial class ShopManager : MonoBehaviour
         ClearPendingGiftPopup();
         ResetSlot1Decision(reason);
 
-        LogShop($"[推广] 已清理复购/破冰本地数据与运行时状态: {reason}");
+         Debug.Log($"[Shop][推广] 已清理复购/破冰本地数据与运行时状态: {reason}");
     }
 
     /// <summary>
@@ -2315,7 +2315,7 @@ public partial class ShopManager : MonoBehaviour
         PlayerPrefs.Save();
 
         int cooldownDays = BreakIceCooldownBaseDays + popupCount * BreakIceCooldownStepDays;
-        LogShop($"[破冰] 记录本次展示: 次数={popupCount}, 冷却起点（倒计时结束）={cooldownStart:yyyy-MM-dd HH:mm:ss}，" +
+         Debug.Log($"[Shop][破冰] 记录本次展示: 次数={popupCount}, 冷却起点（倒计时结束）={cooldownStart:yyyy-MM-dd HH:mm:ss}，" +
                 $"下次需间隔 {cooldownDays} 天");
     }
 
@@ -2330,7 +2330,7 @@ public partial class ShopManager : MonoBehaviour
         PlayerPrefs.SetInt(PrefPayInvokePrefix + produceNameId, c);
         PlayerPrefs.Save();
 
-        LogShop($"[复购] 支付调起次数 {produceNameId} = {c}（已本地记录）");
+         Debug.Log($"[Shop][复购] 支付调起次数 {produceNameId} = {c}（已本地记录）");
     }
 
     public int GetPayInvokeCount(string produceNameId)
@@ -2354,18 +2354,18 @@ public partial class ShopManager : MonoBehaviour
         if (item == null) return;
         if (item.type != 2)
         {
-            LogShop($"[复购] 不记录为礼包A（非礼包商品）: {item.produceNameId}, type={item.type}");
+             Debug.Log($"[Shop][复购] 不记录为礼包A（非礼包商品）: {item.produceNameId}, type={item.type}");
             return;
         }
         if (IsRemoveAdsProduct(item.produceNameId))
         {
-            LogShop($"[复购] 不记录为礼包A（去广告商品）: {item.produceNameId}");
+             Debug.Log($"[Shop][复购] 不记录为礼包A（去广告商品）: {item.produceNameId}");
             return;
         }
 
         PlayerPrefs.SetString(PrefRepurchaseLastPack, item.produceNameId);
         PlayerPrefs.Save();
-        LogShop($"[复购] 记录礼包A={item.produceNameId}(price={item.price}, giftType={item.giftType})");
+         Debug.Log($"[Shop][复购] 记录礼包A={item.produceNameId}(price={item.price}, giftType={item.giftType})");
     }
 
     /// <summary>取「最近一次完成购买的礼包 A」（优先本地记录，回退运行时记录 / 购买记录，兼容老存档）。</summary>
@@ -2398,16 +2398,16 @@ public partial class ShopManager : MonoBehaviour
                     if (p == null || p.type != 2) continue;
 
                     item = p;
-                    LogShop($"[复购] 本地无记录，从购买记录回推礼包A={p.produceNameId}（{r.buyTime}）");
+                     Debug.Log($"[Shop][复购] 本地无记录，从购买记录回推礼包A={p.produceNameId}（{r.buyTime}）");
                     break;
                 }
             }
         }
 
         if (item == null)
-            LogShop($"[复购] 取礼包A失败：本地记录='{id}'，运行时记录={(_lastPurchasedPack != null ? _lastPurchasedPack.produceNameId : "null")}，购买记录也未命中");
+             Debug.Log($"[Shop][复购] 取礼包A失败：本地记录='{id}'，运行时记录={(_lastPurchasedPack != null ? _lastPurchasedPack.produceNameId : "null")}，购买记录也未命中");
         else
-            LogShop($"[复购] 礼包A={item.produceNameId}(price={item.price}, giftType={item.giftType})，本地记录='{id}'");
+             Debug.Log($"[Shop][复购] 礼包A={item.produceNameId}(price={item.price}, giftType={item.giftType})，本地记录='{id}'");
 
         return item;
     }
@@ -2425,7 +2425,7 @@ public partial class ShopManager : MonoBehaviour
     {
         PlayerPrefs.SetString(PrefRepurchaseLastPopupTime, time.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.Save();
-        LogShop($"[复购] 记录弹窗时间 {time:yyyy-MM-dd HH:mm:ss}");
+         Debug.Log($"[Shop][复购] 记录弹窗时间 {time:yyyy-MM-dd HH:mm:ss}");
     }
 
     // ---- 冷却口径：从「弹窗倒计时结束」开始算 7 天（策划口径） ----
@@ -2446,7 +2446,7 @@ public partial class ShopManager : MonoBehaviour
         PlayerPrefs.SetString(PrefRepurchaseLastPopupEnd, endTime.ToString("yyyy-MM-dd HH:mm:ss"));
         PlayerPrefs.SetString(PrefRepurchaseLastOfferPack, packProduceNameId ?? "");
         PlayerPrefs.Save();
-        LogShop($"[复购] 记录本次展示: 礼包={packProduceNameId}, 倒计时结束={endTime:yyyy-MM-dd HH:mm:ss}；" +
+         Debug.Log($"[Shop][复购] 记录本次展示: 礼包={packProduceNameId}, 倒计时结束={endTime:yyyy-MM-dd HH:mm:ss}；" +
                 $"该时间点之后需间隔 {RepurchaseCooldownDays} 天才有新弹窗");
     }
 
@@ -2466,7 +2466,7 @@ public partial class ShopManager : MonoBehaviour
     {
         PlayerPrefs.SetString(PrefRepurchaseLastOfferPack, packProduceNameId ?? "");
         PlayerPrefs.Save();
-        LogShop($"[复购] 更新本次展示的礼包(不弹窗) = {packProduceNameId}");
+         Debug.Log($"[Shop][复购] 更新本次展示的礼包(不弹窗) = {packProduceNameId}");
     }
 
     public void AddConversionFail(ShopDataItem item)
@@ -2474,7 +2474,7 @@ public partial class ShopManager : MonoBehaviour
         if (item == null) return;
         if (item.giftType <= 1)
         {
-            LogShop($"AddConversionFail 跳过: {item.produceNameId} giftType={item.giftType} <= 1");
+             Debug.Log($"[Shop]AddConversionFail 跳过: {item.produceNameId} giftType={item.giftType} <= 1");
             return;
         }
 
@@ -2483,13 +2483,13 @@ public partial class ShopManager : MonoBehaviour
 
         if (lastFail != DateTime.MinValue && (DateTime.Now - lastFail).TotalSeconds < FailScoreChangeInterval)
         {
-            LogShop($"AddConversionFail 跳过: {item.produceNameId} 距上次不足{FailScoreChangeInterval}s");
+             Debug.Log($"[Shop]AddConversionFail 跳过: {item.produceNameId} 距上次不足{FailScoreChangeInterval}s");
             return;
         }
 
         limit.conversionFailScore += 5;
         limit.SetLastFailScoreTime(DateTime.Now);
-        LogShop($"AddConversionFail: {item.produceNameId} 转化失败分={limit.conversionFailScore:F1}");
+         Debug.Log($"[Shop]AddConversionFail: {item.produceNameId} 转化失败分={limit.conversionFailScore:F1}");
     }
 
     public void ResetConversionFail(ShopDataItem item)
@@ -2545,7 +2545,7 @@ public partial class ShopManager : MonoBehaviour
         {
             if (dataitem == null || dataitem.Count < 2)
             {
-                LogShop($"{logPrefix} 跳过无效 productContent 项 (Count<2)");
+                 Debug.Log($"[Shop]{logPrefix} 跳过无效 productContent 项 (Count<2)");
                 continue;
             }
 
@@ -2553,7 +2553,7 @@ public partial class ShopManager : MonoBehaviour
             int type = GetInt(dataitem[0]);
             if (skipNonPositive && count <= 0) continue;
 
-            LogShop($"{logPrefix}: type={type}({(LimitRewordType)type}), count={count}, item={item.produceNameId}");
+             Debug.Log($"[Shop]{logPrefix}: type={type}({(LimitRewordType)type}), count={count}, item={item.produceNameId}");
 
             switch (type)
             {
@@ -2598,7 +2598,7 @@ public partial class ShopManager : MonoBehaviour
                     break;
 
                 default:
-                    LogShop($"{logPrefix} 未处理的商品类型: type={type}({(LimitRewordType)type}), count={count}（奖励未发放）");
+                     Debug.Log($"[Shop]{logPrefix} 未处理的商品类型: type={type}({(LimitRewordType)type}), count={count}（奖励未发放）");
                     break;
             }
         }
@@ -2614,7 +2614,7 @@ public partial class ShopManager : MonoBehaviour
             return;
         }
 
-        LogShop($"HandleGiftTablePurchaseRewards 开始: {shopDataItem.produceNameId}, " +
+         Debug.Log($"[Shop]HandleGiftTablePurchaseRewards 开始: {shopDataItem.produceNameId}, " +
                 $"type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
 
         // 内容统一发放（0/1/2/3/6/7/8/9 全类型）
@@ -2625,19 +2625,19 @@ public partial class ShopManager : MonoBehaviour
         if (IsRemoveAdsProduct(shopDataItem.produceNameId) && !removeAdsGrantedByContent)
         {
             // 商品本身就是去广告 SKU（RemoveADS / RemoveAdsWeek）：内容里没写 6/7 时按商品名兜底
-            LogShop($"  非消耗型: 去广告 {shopDataItem.produceNameId}");
+             Debug.Log($"[Shop]  非消耗型: 去广告 {shopDataItem.produceNameId}");
             HandleRemoveAdsPurchase(shopDataItem);
         }
 
         if (IsUnlimitedEnergyProduct(shopDataItem.produceNameId))
         {
-            LogShop($"  非消耗型: 无限体力 {shopDataItem.produceNameId}");
+             Debug.Log($"[Shop]  非消耗型: 无限体力 {shopDataItem.produceNameId}");
             HandleUnlimitedEnergyPurchase(shopDataItem);
         }
 
         OnPackPurchased(shopDataItem);
 
-        LogShop($"HandleGiftTablePurchaseRewards 结束: {shopDataItem.produceNameId}");
+         Debug.Log($"[Shop]HandleGiftTablePurchaseRewards 结束: {shopDataItem.produceNameId}");
     }
 
     // ======================= 补发 / 恢复购买（bug49 / bug50 / bug51） =======================
@@ -2667,7 +2667,7 @@ public partial class ShopManager : MonoBehaviour
 
         if (shopDataItem == null)
         {
-            LogShop($"[补发] 未找到商品配置: {productId}（source={source}），跳过");
+             Debug.Log($"[Shop][补发] 未找到商品配置: {productId}（source={source}），跳过");
             return false;
         }
 
@@ -2676,18 +2676,18 @@ public partial class ShopManager : MonoBehaviour
         //   玩家重新购买 / GM 重置存档 会解除该标记（见 GrantRemoveAdsByContent / ClearPromotionLocalData）。
         if (IsPermanentRemoveAdsProduct(shopDataItem) && IsPermanentRemoveAdsRestoreBlocked())
         {
-            LogShop($"[补发] 永久去广告补单已拦截（本地状态被手动清除过）: " +
+             Debug.Log($"[Shop][补发] 永久去广告补单已拦截（本地状态被手动清除过）: " +
                     $"order={item.order_id}, source={source}；如需恢复请重新购买或重置存档");
             return false;
         }
 
         if (HasPurchaseRecordForOrder(item.order_id))
         {
-            LogShop($"[补发] 订单 {item.order_id} 已有购买记录，视为已发货，跳过（source={source}）");
+             Debug.Log($"[Shop][补发] 订单 {item.order_id} 已有购买记录，视为已发货，跳过（source={source}）");
             return false;
         }
 
-        LogShop($"[补发] 开始发货: {shopDataItem.produceNameId}(id={shopDataItem.id}), " +
+         Debug.Log($"[Shop][补发] 开始发货: {shopDataItem.produceNameId}(id={shopDataItem.id}), " +
                 $"order={item.order_id}, price={item.LocalizedPrice}, currency={item.IsoCurrencyCode}, source={source}");
 
         if (shopDataItem.productContent != null)
@@ -2700,7 +2700,7 @@ public partial class ShopManager : MonoBehaviour
                 int count = GetInt(dataitem[1]);
                 if (count <= 0) continue;
 
-                LogShop($"[补发] 发放: type={type}, count={count}");
+                 Debug.Log($"[Shop][补发] 发放: type={type}, count={count}");
                 switch (type)
                 {
                     case (int)LimitRewordType.Coins:
@@ -2734,7 +2734,7 @@ public partial class ShopManager : MonoBehaviour
                         GrantRemoveAdsByContent((int)LimitRewordType.RemoveDayAds, count * 24, shopDataItem);
                         break;
                     default:
-                        LogShop($"[补发] 未处理的商品类型: type={type}, count={count}");
+                         Debug.Log($"[Shop][补发] 未处理的商品类型: type={type}, count={count}");
                         break;
                 }
             }
@@ -2767,7 +2767,7 @@ public partial class ShopManager : MonoBehaviour
         //   这里统一广播一次「全量刷新」，让已经打开的金币栏 / 工具栏立刻同步，不用切界面。
         EventDispatcher.instance?.TriggerChangeGoldUI(0, true);
 
-        LogShop($"[补发] 发货完成并已落盘: {shopDataItem.produceNameId}, order={item.order_id}");
+         Debug.Log($"[Shop][补发] 发货完成并已落盘: {shopDataItem.produceNameId}, order={item.order_id}");
         return true;
     }
 
@@ -2820,12 +2820,12 @@ public partial class ShopManager : MonoBehaviour
 
             GameDataManager.Instance?.UserData?.AddPurchaseRecord(record);
 
-            LogShop($"[补发] 购买记录已写入（{source}）: name={record.nameText}, order={record.orderId}, " +
+             Debug.Log($"[Shop][补发] 购买记录已写入（{source}）: name={record.nameText}, order={record.orderId}, " +
                     $"price={record.price}, contentCount={record.productContent.Count}");
         }
         catch (Exception ex)
         {
-            LogShop($"[补发] 购买记录写入异常: {ex.Message}");
+             Debug.Log($"[Shop][补发] 购买记录写入异常: {ex.Message}");
         }
     }
 
@@ -2843,7 +2843,7 @@ public partial class ShopManager : MonoBehaviour
         //   否则重装/换机时的正常补单会被误拦。
         if (permanent) SetPermanentRemoveAdsRestoreBlock(false, $"永久去广告重新发放（{source?.produceNameId}）");
 
-        LogShop($"[补发] 去广告发放: adstype={adstype}, permanent={permanent}, hours={hours}, item={source?.produceNameId}");
+         Debug.Log($"[Shop][补发] 去广告发放: adstype={adstype}, permanent={permanent}, hours={hours}, item={source?.produceNameId}");
 
         ShopLimitData exist = GameDataManager.Instance.UserData.limitShopItems
             .Find(x => x.adstype == adstype);
@@ -2874,7 +2874,7 @@ public partial class ShopManager : MonoBehaviour
                 exist.isopen = false;
                 exist.isoverdate = false;
                 exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                LogShop($"[补发] 限时去广告续期: 原结束={oldEnd:yyyy-MM-dd HH:mm:ss}, 新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
+                 Debug.Log($"[Shop][补发] 限时去广告续期: 原结束={oldEnd:yyyy-MM-dd HH:mm:ss}, 新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
             }
         }
         else
@@ -2891,7 +2891,7 @@ public partial class ShopManager : MonoBehaviour
                 isget = true,
                 isoverdate = false,
             });
-            LogShop($"[补发] 新增去广告记录: adstype={adstype}, permanent={permanent}, " +
+             Debug.Log($"[Shop][补发] 新增去广告记录: adstype={adstype}, permanent={permanent}, " +
                     $"endtime={(permanent ? "永久" : newEnd.ToString("yyyy-MM-dd HH:mm:ss"))}");
         }
 
@@ -2903,16 +2903,16 @@ public partial class ShopManager : MonoBehaviour
 
     public void OnPurchaseSuccess(ProductItem item)
     {
-        LogShop($"========== OnPurchaseSuccess 开始: ProductId={item?.ProductId}, ItemName={item?.ItemName}, LocalizedPrice={item?.LocalizedPrice} ==========");
+         Debug.Log($"[Shop]========== OnPurchaseSuccess 开始: ProductId={item?.ProductId}, ItemName={item?.ItemName}, LocalizedPrice={item?.LocalizedPrice} ==========");
 
         ShopDataItem shopDataItem = GetProduct(item.ProductId);
         if (shopDataItem == null)
         {
-            LogShop($"购买成功但商店未找到该商品: {item.ProductId}");
+             Debug.Log($"[Shop]购买成功但商店未找到该商品: {item.ProductId}");
             return;
         }
 
-        LogShop($"匹配到商店商品: id={shopDataItem.id}, produceNameId={shopDataItem.produceNameId}, type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}, label={shopDataItem.labelZh}");
+         Debug.Log($"[Shop]匹配到商店商品: id={shopDataItem.id}, produceNameId={shopDataItem.produceNameId}, type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}, label={shopDataItem.labelZh}");
 
         // ★ bug54：复购弹窗的「加量不加价」加赠金币只对这一单生效（不污染商店里的商品数据）
         int giftBonusGold = ConsumePendingGiftBonus(shopDataItem.produceNameId);
@@ -2935,12 +2935,12 @@ public partial class ShopManager : MonoBehaviour
         // 商品本身就是去广告 SKU（RemoveADS / RemoveAdsWeek）：内容里没写 6/7 时才按商品名兜底
         if (IsRemoveAdsProduct(shopDataItem.produceNameId) && !removeAdsGrantedByContent)
         {
-            LogShop($"非消耗型: 去广告 {shopDataItem.produceNameId}");
+             Debug.Log($"[Shop]非消耗型: 去广告 {shopDataItem.produceNameId}");
             HandleRemoveAdsPurchase(shopDataItem);
         }
         if (IsUnlimitedEnergyProduct(shopDataItem.produceNameId))
         {
-            LogShop($"非消耗型: 无限体力 {shopDataItem.produceNameId}");
+             Debug.Log($"[Shop]非消耗型: 无限体力 {shopDataItem.produceNameId}");
             HandleUnlimitedEnergyPurchase(shopDataItem);
         }
 
@@ -2948,7 +2948,7 @@ public partial class ShopManager : MonoBehaviour
         if (giftBonusGold > 0)
         {
             GameDataManager.Instance.UserData.UpdateGold(giftBonusGold, false, false, "复购礼包加量不加价","推送礼包加赠",ResReason.Iap);
-            LogShop($"[复购] 已发放加赠金币 +{giftBonusGold}（{shopDataItem.produceNameId}）");
+             Debug.Log($"[Shop][复购] 已发放加赠金币 +{giftBonusGold}（{shopDataItem.produceNameId}）");
         }
 
         shopManager.paysuccess = true;
@@ -2965,7 +2965,7 @@ public partial class ShopManager : MonoBehaviour
         // ★ 付费保护（cypz_payProtect）：内购成功 → 保护到期时刻 = 支付时刻 + D 天
         ChessDynamicHardManager.RecordPayProtect("商店内购");
 
-        LogShop($"支付统计: firstPay={firstPay}, TotalPayTimes={GameDataManager.Instance.UserData.TotalPayTimes}, TotalRevenue={GameDataManager.Instance.UserData.TotalRevenue}");
+         Debug.Log($"[Shop]支付统计: firstPay={firstPay}, TotalPayTimes={GameDataManager.Instance.UserData.TotalPayTimes}, TotalRevenue={GameDataManager.Instance.UserData.TotalRevenue}");
 
         if (!UIUtilities.isEditMode)
         {
@@ -2994,7 +2994,7 @@ public partial class ShopManager : MonoBehaviour
         // ★ bug50/bug51：立刻落盘，避免「买完杀进程」导致奖励丢失且平台已标记发货不再补发
         if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
 
-        LogShop($"========== OnPurchaseSuccess 结束: {shopDataItem.produceNameId} ==========");
+         Debug.Log($"[Shop]========== OnPurchaseSuccess 结束: {shopDataItem.produceNameId} ==========");
     }
 
     public const int ReviveToolType = 1002;
@@ -3017,7 +3017,7 @@ public partial class ShopManager : MonoBehaviour
         DateTime newEnd = userData.AddUnlimitedEnergy(hours);
         double afterRemain = userData.GetUnlimitedEnergyRemainSeconds();
 
-        LogShop($"礼包发放无限体力: {item?.produceNameId}, +{hours}h, " +
+         Debug.Log($"[Shop]礼包发放无限体力: {item?.produceNameId}, +{hours}h, " +
                 $"原剩余={TimeSpan.FromSeconds(beforeRemain):hh\\:mm\\:ss}, " +
                 $"新剩余={TimeSpan.FromSeconds(afterRemain):hh\\:mm\\:ss}, " +
                 $"新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
@@ -3042,7 +3042,7 @@ public partial class ShopManager : MonoBehaviour
             hours = shopDataItem.produceNameId == ProductRemoveAdsWeekly ? 7 * 24 : 1 * 24;
         }
 
-        LogShop($"HandleRemoveAdsPurchase: {shopDataItem.produceNameId}, permanent={permanent}, hours={hours}");
+         Debug.Log($"[Shop]HandleRemoveAdsPurchase: {shopDataItem.produceNameId}, permanent={permanent}, hours={hours}");
 
         ShopLimitData exist = GameDataManager.Instance.UserData.limitShopItems.Find(x => x.adstype == adstype);
         // ★ bug64：同 adstype 一律续期（见 GrantRemoveAdsByContent 同款处理），避免剩余时长被覆盖 / 产生重复记录
@@ -3056,7 +3056,7 @@ public partial class ShopManager : MonoBehaviour
                 exist.isopen = false;
                 exist.isoverdate = false;
                 exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                LogShop($"  永久去广告续期: 记录已更新 (id={exist.id})");
+                 Debug.Log($"[Shop]  永久去广告续期: 记录已更新 (id={exist.id})");
             }
             else
             {
@@ -3071,7 +3071,7 @@ public partial class ShopManager : MonoBehaviour
                 exist.isopen = false;
                 exist.isoverdate = false;
                 exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                LogShop($"  续期: 原结束={oldEnd}, 新结束={newEnd}");
+                 Debug.Log($"[Shop]  续期: 原结束={oldEnd}, 新结束={newEnd}");
             }
         }
         else
@@ -3088,7 +3088,7 @@ public partial class ShopManager : MonoBehaviour
                 isget = true,
                 isoverdate = false,
             });
-            LogShop($"  新增记录: adstype={adstype}, endtime={(hours > 0 ? newEnd.ToString("yyyy-MM-dd HH:mm:ss") : "永久")}");
+             Debug.Log($"[Shop]  新增记录: adstype={adstype}, endtime={(hours > 0 ? newEnd.ToString("yyyy-MM-dd HH:mm:ss") : "永久")}");
         }
 
         OnRemoveAdsApplied(adstype);
@@ -3102,7 +3102,7 @@ public partial class ShopManager : MonoBehaviour
         int hours = ParseUnlimitedEnergyHours(shopDataItem);
         if (hours <= 0)
         {
-            LogShop($"HandleUnlimitedEnergyPurchase 跳过: {shopDataItem.produceNameId} 未解析到有效小时数");
+             Debug.Log($"[Shop]HandleUnlimitedEnergyPurchase 跳过: {shopDataItem.produceNameId} 未解析到有效小时数");
             return;
         }
 
@@ -3112,7 +3112,7 @@ public partial class ShopManager : MonoBehaviour
         DateTime newEnd = userData.AddUnlimitedEnergy(hours);
         double afterRemain = userData.GetUnlimitedEnergyRemainSeconds();
 
-        LogShop($"HandleUnlimitedEnergyPurchase: {shopDataItem.produceNameId}, +{hours}h, " +
+         Debug.Log($"[Shop]HandleUnlimitedEnergyPurchase: {shopDataItem.produceNameId}, +{hours}h, " +
                 $"原剩余={TimeSpan.FromSeconds(beforeRemain):hh\\:mm\\:ss}, " +
                 $"新剩余={TimeSpan.FromSeconds(afterRemain):hh\\:mm\\:ss}, " +
                 $"新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
@@ -3141,12 +3141,12 @@ public partial class ShopManager : MonoBehaviour
     /// </summary>
     public void OnPackPurchased(ShopDataItem shopDataItem)
     {
-        LogShop($"OnPackPurchased 开始: {shopDataItem.produceNameId}, type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
+         Debug.Log($"[Shop]OnPackPurchased 开始: {shopDataItem.produceNameId}, type={shopDataItem.type}, giftType={shopDataItem.giftType}, price={shopDataItem.price}");
 
         if (shopDataItem.type == 2)
         {
             _lastPurchasedPack = shopDataItem;
-            LogShop($"  记录上次购买礼包: {_lastPurchasedPack.produceNameId}");
+             Debug.Log($"[Shop]  记录上次购买礼包: {_lastPurchasedPack.produceNameId}");
 
             // ★ bug54：复购策略要以「最近一次完成购买的礼包A」为基准，必须跨进程保存
             SaveRepurchaseLastPack(shopDataItem);
@@ -3195,17 +3195,17 @@ public partial class ShopManager : MonoBehaviour
                 }
             }
 
-            LogShop($"  付费倾向积分更新（基准档 a={a}）：同档位 +2 → {sameTierCount} 个，" +
+             Debug.Log($"[Shop]  付费倾向积分更新（基准档 a={a}）：同档位 +2 → {sameTierCount} 个，" +
                     $"a+1 +1 → {nextTierCount} 个，a+2 +0.5 → {aboveTierCount} 个");
         }
 
         limit.exploreScore += 3f;
-        LogShop($"  探价加分: {shopDataItem.produceNameId} +3, 当前={limit.exploreScore:F1}");
+         Debug.Log($"[Shop]  探价加分: {shopDataItem.produceNameId} +3, 当前={limit.exploreScore:F1}");
         if (a > 0)
         {
             int tierCount = GetTierBuyCount(a) + 1;
             SetTierBuyCount(a, tierCount);
-            LogShop($"  档位 a={a} 累计购买次数={tierCount}");
+             Debug.Log($"[Shop]  档位 a={a} 累计购买次数={tierCount}");
             if (tierCount % 3 == 0)
             {
                 foreach (var cfg in _recommendConfigs)
@@ -3217,7 +3217,7 @@ public partial class ShopManager : MonoBehaviour
                     {
                         ShopLimitData ld = GetOrCreateLimitData(it);
                         ld.exploreScore += 6f;
-                        LogShop($"    探价加分: 下一档 {it.produceNameId} +6");
+                         Debug.Log($"[Shop]    探价加分: 下一档 {it.produceNameId} +6");
                     }
                 }
             }
@@ -3225,7 +3225,7 @@ public partial class ShopManager : MonoBehaviour
 
         float failBefore = limit.conversionFailScore;
         limit.conversionFailScore = 0;
-        LogShop($"  [转化失败分] {shopDataItem.produceNameId} {failBefore:F1} → 0");
+         Debug.Log($"[Shop]  [转化失败分] {shopDataItem.produceNameId} {failBefore:F1} → 0");
 
         limit.buyCount++;
 
@@ -3242,14 +3242,14 @@ public partial class ShopManager : MonoBehaviour
         if (slot.HasValue && featured > 0)
         {
             LockSlot(slot.Value, featured, shopDataItem);
-            LogShop($"  锁定推荐位: slot={slot.Value}, featured={featured}, 回显礼包={shopDataItem.produceNameId}");
+             Debug.Log($"[Shop]  锁定推荐位: slot={slot.Value}, featured={featured}, 回显礼包={shopDataItem.produceNameId}");
         }
         else
         {
-            LogShop($"  无法定位 {shopDataItem.produceNameId} 所属 slot/featured，跳过锁定 (slot={(slot.HasValue ? slot.Value.ToString() : "null")}, featured={featured})");
+             Debug.Log($"[Shop]  无法定位 {shopDataItem.produceNameId} 所属 slot/featured，跳过锁定 (slot={(slot.HasValue ? slot.Value.ToString() : "null")}, featured={featured})");
         }
 
-        LogShop($"OnPackPurchased 结束: {shopDataItem.produceNameId}, payTendency={limit.payTendencyScore:F1}, explore={limit.exploreScore:F1}, fail={limit.conversionFailScore:F1}, buyCount={limit.buyCount}");
+         Debug.Log($"[Shop]OnPackPurchased 结束: {shopDataItem.produceNameId}, payTendency={limit.payTendencyScore:F1}, explore={limit.exploreScore:F1}, fail={limit.conversionFailScore:F1}, buyCount={limit.buyCount}");
 
         // ★ 购买后打印权重快照：当前礼包 + 同档位所有礼包（此时各项积分都已更新）
         if (shopDataItem.type == 2 || shopDataItem.giftType > 0)
@@ -3273,12 +3273,12 @@ public partial class ShopManager : MonoBehaviour
         RecommendSlot? purchasedSlot = GetSlotOfPack(purchased);
 
         LogShop("========== 【购买后权重快照】 ==========");
-        LogShop($"刚购买的礼包：{purchased.produceNameId}" +
+         Debug.Log($"[Shop]刚购买的礼包：{purchased.produceNameId}" +
                 $"（档位={tier}，推荐位={SlotNameCn(purchasedSlot)}，featured={(purchasedCfg != null ? purchasedCfg.featured : 0)}，价格={purchased.price:0.##}）");
 
         LogPackWeightLine("当前礼包", purchased, purchasedSlot);
 
-        LogShop($"---------- 同档位（档位={tier}）其它礼包 ----------");
+         Debug.Log($"[Shop]---------- 同档位（档位={tier}）其它礼包 ----------");
         int sameTierCount = 0;
         foreach (var kv in _recommendConfigs)
         {
@@ -3318,18 +3318,18 @@ public partial class ShopManager : MonoBehaviour
 
         if (cfg == null)
         {
-            LogShop($"{basic} → 无推荐配置（shop_recommend 里没有该礼包），不参与权重计算");
+             Debug.Log($"[Shop]{basic} → 无推荐配置（shop_recommend 里没有该礼包），不参与权重计算");
             return;
         }
 
         DecisionWeightInfo info = EvaluateDecisionWeight(item, cfg, slot ?? RecommendSlot.DynamicStore);
         if (!info.valid)
         {
-            LogShop($"{basic} → 不参与推荐：{info.skipReason}");
+             Debug.Log($"[Shop]{basic} → 不参与推荐：{info.skipReason}");
             return;
         }
 
-        LogShop($"{basic} → 基础权重={info.baseWeight:F1}，付费倾向={info.payTendency:F1}，" +
+         Debug.Log($"[Shop]{basic} → 基础权重={info.baseWeight:F1}，付费倾向={info.payTendency:F1}，" +
                 $"探价={info.exploreScore:F1}，转化失败分={info.failScore:F1}，" +
                 $"礼包分={info.packWeight:F2}(封顶{info.cap:F0})；" +
                 $"节日周末={info.specialWeight:F1}，高峰={info.peakWeight:F1}，流失回归={info.returnWeight:F1}；" +
@@ -3365,7 +3365,7 @@ public partial class ShopManager : MonoBehaviour
 
     public void OnPurchaseCanceled(string productId, bool invokedSystemPay = true)
     {
-        LogShop($"OnPurchaseCanceled: productId={productId}, invokedSystemPay={invokedSystemPay}");
+         Debug.Log($"[Shop]OnPurchaseCanceled: productId={productId}, invokedSystemPay={invokedSystemPay}");
         ShopDataItem shopDataItem = GetProduct(productId);
         if (shopDataItem != null)
         {
@@ -3375,7 +3375,7 @@ public partial class ShopManager : MonoBehaviour
         }
         else
         {
-            LogShop($"  未找到商品: {productId}");
+             Debug.Log($"[Shop]  未找到商品: {productId}");
         }
 
         SystemManager.Instance.ShowPanel(PanelType.BuyFailScreen);
@@ -3383,7 +3383,7 @@ public partial class ShopManager : MonoBehaviour
 
     public void OnPurchaseFailed(string productId, string error)
     {
-        LogShop($"OnPurchaseFailed: productId={productId}, error={error}");
+         Debug.Log($"[Shop]OnPurchaseFailed: productId={productId}, error={error}");
         OnPurchaseCanceled(productId, false);
     }
 
@@ -3410,7 +3410,7 @@ public partial class ShopManager : MonoBehaviour
             MessageSystem.Instance?.HideLoadingAnimation();
 
             int count = items != null ? items.Length : 0;
-            LogShop($"RestorePurchases 回调: success={success}, 恢复商品数={count}" +
+             Debug.Log($"[Shop]RestorePurchases 回调: success={success}, 恢复商品数={count}" +
                     (count > 0
                         ? $", 商品=[{string.Join(",", items.Select(x => x != null ? x.ProductId : "null"))}]"
                         : ""));
@@ -3446,7 +3446,7 @@ public partial class ShopManager : MonoBehaviour
 
         if (_restoreCallbackInvoked) yield break;
 
-        LogShop($"RestorePurchases: {seconds}s 内没有平台回调，按「没有可恢复的内购」处理");
+         Debug.Log($"[Shop]RestorePurchases: {seconds}s 内没有平台回调，按「没有可恢复的内购」处理");
         MessageSystem.Instance?.HideLoadingAnimation();
         MessageSystem.Instance?.ShowTip("没有可恢复的内购");
     }
@@ -3465,7 +3465,7 @@ public partial class ShopManager : MonoBehaviour
             if (string.IsNullOrEmpty(name)) name = r.produceNameId;
             result.Add($"{r.buyTime} | {name} | {r.price:0.##}{r.currency}");
         }
-        LogShop($"GetPurchaseRecords: 共 {result.Count} 条本地记录");
+         Debug.Log($"[Shop]GetPurchaseRecords: 共 {result.Count} 条本地记录");
         return result;
     }
 
@@ -3489,7 +3489,7 @@ public partial class ShopManager : MonoBehaviour
         _discountConfig.rocketDailyLimit = GetInt(p[3]);
         _discountConfig.triggerInterval = GetInt(p[4]);
 
-        LogShop($"ParseDiscountConfig: enable={_discountConfig.enable}, bulbDaily={_discountConfig.bulbDailyLimit}, rocketDaily={_discountConfig.rocketDailyLimit}, interval={_discountConfig.triggerInterval}");
+         Debug.Log($"[Shop]ParseDiscountConfig: enable={_discountConfig.enable}, bulbDaily={_discountConfig.bulbDailyLimit}, rocketDaily={_discountConfig.rocketDailyLimit}, interval={_discountConfig.triggerInterval}");
     }
 
     private void LoadDiscountConfig()
@@ -3513,7 +3513,7 @@ public partial class ShopManager : MonoBehaviour
 
         _bulbDiscountToday++;
         _lastBulbDiscountTime = DateTime.Now;
-        LogShop($"TryTriggerBulbDiscount: 触发成功, 今日次数={_bulbDiscountToday}");
+         Debug.Log($"[Shop]TryTriggerBulbDiscount: 触发成功, 今日次数={_bulbDiscountToday}");
         return true;
     }
 
@@ -3531,7 +3531,7 @@ public partial class ShopManager : MonoBehaviour
 
         _rocketDiscountToday++;
         _lastRocketDiscountTime = DateTime.Now;
-        LogShop($"TryTriggerRocketDiscount: 触发成功, 今日次数={_rocketDiscountToday}");
+         Debug.Log($"[Shop]TryTriggerRocketDiscount: 触发成功, 今日次数={_rocketDiscountToday}");
         return true;
     }
 
@@ -3544,7 +3544,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (isBulb) _bulbDiscountConsumed = true;
         else _rocketDiscountConsumed = true;
-        LogShop($"OnDiscountUsed: isBulb={isBulb}");
+         Debug.Log($"[Shop]OnDiscountUsed: isBulb={isBulb}");
     }
 
     private void RefreshDailyCounters()
@@ -3555,7 +3555,7 @@ public partial class ShopManager : MonoBehaviour
             _discountDate = today;
             _bulbDiscountToday = 0;
             _rocketDiscountToday = 0;
-            LogShop($"RefreshDailyCounters: 跨天重置, 日期={today}");
+             Debug.Log($"[Shop]RefreshDailyCounters: 跨天重置, 日期={today}");
         }
     }
 
@@ -3581,7 +3581,7 @@ public partial class ShopManager : MonoBehaviour
             _firstBulbVideoGifted = true;
             GameDataManager.Instance.UserData.UpdateGold(50, false, false, "激励视频赠礼");
             SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
-            LogShop($"OnBulbRewardVideoFinished: 首个激励视频, 赠 50 金币");
+             Debug.Log($"[Shop]OnBulbRewardVideoFinished: 首个激励视频, 赠 50 金币");
             return;
         }
 
@@ -3591,7 +3591,7 @@ public partial class ShopManager : MonoBehaviour
         int gold = rewards[Mathf.Min(_bulbVideoGiftCount - 1, 2)];
         GameDataManager.Instance.UserData.UpdateGold(gold, false, false, "激励视频赠礼");
         SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
-        LogShop($"OnBulbRewardVideoFinished: 第{_bulbVideoGiftCount}个视频, 赠 {gold} 金币");
+         Debug.Log($"[Shop]OnBulbRewardVideoFinished: 第{_bulbVideoGiftCount}个视频, 赠 {gold} 金币");
     }
 
     public void OnInterstitialClosed(int currentLevel)
@@ -3604,7 +3604,7 @@ public partial class ShopManager : MonoBehaviour
 
         if (currentLevel < 30)
         {
-            LogShop($"OnInterstitialClosed: 关卡={currentLevel} < 30, 不赠送");
+             Debug.Log($"[Shop]OnInterstitialClosed: 关卡={currentLevel} < 30, 不赠送");
             return;
         }
 
@@ -3616,14 +3616,14 @@ public partial class ShopManager : MonoBehaviour
         }
         if (_interstitialGiftCount >= 5)
         {
-            LogShop($"OnInterstitialClosed: 今日已达上限(5), 不赠送");
+             Debug.Log($"[Shop]OnInterstitialClosed: 今日已达上限(5), 不赠送");
             return;
         }
 
         _interstitialGiftCount++;
         GameDataManager.Instance.UserData.UpdateGold(10, false, false, "插屏赠礼");
         SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
-        LogShop($"OnInterstitialClosed: 第{_interstitialGiftCount}个插屏, 赠 10 金币");
+         Debug.Log($"[Shop]OnInterstitialClosed: 第{_interstitialGiftCount}个插屏, 赠 10 金币");
     }
 
     // ======================= 礼包主动弹出策略 =======================
@@ -3653,7 +3653,7 @@ public partial class ShopManager : MonoBehaviour
 
     private void BuyRemoveAdsEvent(int type)
     {
-        LogShop($"BuyRemoveAdsEvent: type={type}");
+         Debug.Log($"[Shop]BuyRemoveAdsEvent: type={type}");
         OnRemoveAdsApplied(type);
 
         if (type == (int)LimitRewordType.RemoveAds)
@@ -3668,7 +3668,7 @@ public partial class ShopManager : MonoBehaviour
 
     protected virtual void OnRemoveAdsApplied(int adstype)
     {
-        LogShop($"OnRemoveAdsApplied: adstype={adstype} (TODO 广告系统)");
+         Debug.Log($"[Shop]OnRemoveAdsApplied: adstype={adstype} (TODO 广告系统)");
     }
 
     // ======================= 静态打开入口 =======================
@@ -3676,14 +3676,14 @@ public partial class ShopManager : MonoBehaviour
     public void OpenFixedStore()
     {
         shopMode = ShopMode.FixedStore;
-        LogShop($"OpenFixedStore: 打开固定商店");
+         Debug.Log($"[Shop]OpenFixedStore: 打开固定商店");
         SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
     }
 
     public void OpenDynamicStore()
     {
         shopMode = ShopMode.DynamicStore;
-        LogShop($"OpenDynamicStore: 打开动态商店");
+         Debug.Log($"[Shop]OpenDynamicStore: 打开动态商店");
         SystemManager.Instance.ShowPanel(PanelType.ShopScreen);
     }
 }

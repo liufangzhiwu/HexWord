@@ -59,6 +59,34 @@ namespace Middleware
             InitManagers();
         }
 
+        private void Update()
+        {
+            // 监听安卓系统返回键 (全面屏侧滑)：按「场景 / 关卡 / 弹窗」分别路由，
+            // 规则见 BackGestureRouter（Start→退出面板；大厅/结算→去闯关；拼字关→暂停；六边形关→回主页；弹窗→关闭）
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                BackGestureRouter.HandleBackGesture();
+            }
+        }
+
+        /// <summary>
+        /// 调试用：手动触发「退出游戏」弹窗。
+        /// 用法：Play 时在 Hierarchy 选中 Game 物体 → 组件右上角齿轮 → 「调试/触发退出游戏面板」。
+        /// （[ContextMenu] 只在编辑器里有入口，正式包不会有这个菜单，可安全留着。）
+        /// 注意：ShowQuitGamePanel 现在由 QuitPanel 统一管理（单实例复用），不会叠层。
+        /// </summary>
+        [ContextMenu("调试/触发退出游戏面板")]
+        public void DebugShowQuitGamePanel()
+        {
+            if (_uiRoot == null)
+            {
+                Debug.LogWarning("[QuitPanel] _uiRoot 未初始化，退出面板不会实例化（此时调了也没反应）");
+                return;
+            }
+            Debug.Log("[QuitPanel] 手动触发退出面板，CurrentErrorType=ExitPopup");
+            ShowQuitGamePanel();
+        }
+
         public void InitGame()
         { 
             CreateAccounts();
@@ -72,7 +100,6 @@ namespace Middleware
             CreateAd();
             CreateShop();
             CreatePush();
-
         }
 
 
@@ -448,11 +475,16 @@ namespace Middleware
         public void ShowQuitGamePanel()
         {
             if(_uiRoot == null) return;
-            
+
             CurrentErrorType = CommonErrorType.ExitPopup;
-            GameObject pg = Resources.Load<GameObject>("Privacy/NetErrorView");
-            GameObject ps = Instantiate(pg, _uiRoot.transform);
-            ps.SetActive(true);
+            // 统一交给 QuitPanel 管理（单实例 + 按形态切按钮），不再每次 Instantiate 叠层
+            if (QuitPanel.IsShowing) return;
+
+            QuitPanel.Mode mode = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+                                  == BackGestureRouter.SceneStart
+                ? QuitPanel.Mode.ExitApp
+                : QuitPanel.Mode.GoLevel;
+            QuitPanel.Show(mode);
         }
     }
 

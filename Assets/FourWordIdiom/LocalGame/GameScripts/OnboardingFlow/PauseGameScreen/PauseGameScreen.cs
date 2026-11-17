@@ -273,6 +273,15 @@ public class PauseGameScreen : UIWindow
         ChessPlayArea.Instance.ResumeGame();
     }
 
+    /// <summary>
+    /// 侧滑返回时调用：等价于点「继续游戏」。
+    /// 必须走这里而不是直接 HidePanel，否则时间不会恢复、存档也不会落盘。
+    /// </summary>
+    public void ResumeFromBackGesture()
+    {
+        OnCloseClicked();
+    }
+
     private void OnJumpClicked()
     {
         // 双保险：冷却期内即便按钮状态被外部改回可点，也不重复拉广告

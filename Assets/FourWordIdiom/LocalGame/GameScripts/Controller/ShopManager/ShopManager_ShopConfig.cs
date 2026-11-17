@@ -266,7 +266,7 @@ public partial class ShopManager : MonoBehaviour
             List<ShopDataItem> auditItems = GetAuditFixedStoreItems();
             if (auditItems.Count > 0)
             {
-                LogShop($"[Audit] GetShopHomeItems 审核开，全部展示 {auditItems.Count} 个");
+                 Debug.Log($"[Shop][Audit] GetShopHomeItems 审核开，全部展示 {auditItems.Count} 个");
                 return auditItems;
             }
             LogShop("[Audit] GetShopHomeItems 审核开但无商品，回退常规");
@@ -322,7 +322,7 @@ public partial class ShopManager : MonoBehaviour
             EnsureAuditExtraPack(shopDataItems, ProductSpecialPackageA);
             EnsureAuditExtraPack(shopDataItems, ProductSpecialPackageB);
 
-            LogShop($"[Audit] GetShopItems 审核开，常规礼包基础上补入特惠A/B，共 {shopDataItems.Count} 个");
+             Debug.Log($"[Shop][Audit] GetShopItems 审核开，常规礼包基础上补入特惠A/B，共 {shopDataItems.Count} 个");
             return shopDataItems.OrderBy(item => item.price).ToList();
         }
    

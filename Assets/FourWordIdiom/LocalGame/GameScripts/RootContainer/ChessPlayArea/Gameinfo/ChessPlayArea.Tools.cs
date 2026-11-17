@@ -196,6 +196,14 @@ public partial class ChessPlayArea
             SystemManager.Instance.ShowPanel(PanelType.PauseGameScreen);
         }
     }
+
+    /// <summary>
+    /// 侧滑返回时调用：拼字关卡内触发暂停界面（与点击暂停按钮完全同一套逻辑）。
+    /// </summary>
+    public void RequestPauseFromBackGesture()
+    {
+        OnPauseClicked();
+    }
     
     private void SetToolButtonsEnabled(bool enabled)
     {

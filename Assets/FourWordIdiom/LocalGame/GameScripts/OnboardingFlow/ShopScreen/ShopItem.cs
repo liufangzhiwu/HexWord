@@ -191,7 +191,7 @@ public class ShopItem : ShopItemBase
         {
             Button btn = GetComponent<Button>();
             if (btn != null) btn.interactable = false;
-            LogShopItemDetail("商店金币视频次数已用完，按钮置灰");
+            LogShopItem("商店金币视频次数已用完，按钮置灰");
         }
     }
 

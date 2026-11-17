@@ -22,11 +22,11 @@ public partial class ShopManager : MonoBehaviour
         if (rec != null)
         {
             ParseRecommendConfigs(rec.text);
-            LogShop($"LoadBulbBoxConfig: 从 Bundle 加载 shop_bulbbox");
+             Debug.Log($"[Shop]LoadBulbBoxConfig: 从 Bundle 加载 shop_bulbbox");
         }
         else
         {
-            LogShop($"LoadBulbBoxConfig: 未找到 shop_bulbbox, 使用默认值");
+             Debug.Log($"[Shop]LoadBulbBoxConfig: 未找到 shop_bulbbox, 使用默认值");
         }
     }
 
@@ -64,14 +64,14 @@ public partial class ShopManager : MonoBehaviour
 
         if (gold >= 80 || toolCount > 0)
         {
-            LogShop($"AddBulbExposureFail 跳过: {bulb.produceNameId} 条件不满足(金币={gold}, 道具={toolCount})");
+             Debug.Log($"[Shop]AddBulbExposureFail 跳过: {bulb.produceNameId} 条件不满足(金币={gold}, 道具={toolCount})");
             return;
         }
 
         ShopLimitData limit = GetOrCreateLimitData(bulb);
         if (limit == null)
         {
-            LogShop($"AddBulbExposureFail 跳过: {bulb.produceNameId} 无法获取跟踪数据");
+             Debug.Log($"[Shop]AddBulbExposureFail 跳过: {bulb.produceNameId} 无法获取跟踪数据");
             return;
         }
 
@@ -79,13 +79,13 @@ public partial class ShopManager : MonoBehaviour
         if (lastFail != System.DateTime.MinValue
             && (System.DateTime.Now - lastFail).TotalSeconds < FailScoreChangeInterval)
         {
-            LogShop($"AddBulbExposureFail 跳过: {bulb.produceNameId} 距上次不足{FailScoreChangeInterval}s");
+             Debug.Log($"[Shop]AddBulbExposureFail 跳过: {bulb.produceNameId} 距上次不足{FailScoreChangeInterval}s");
             return;
         }
 
         limit.conversionFailScore += 3;
         limit.SetLastFailScoreTime(System.DateTime.Now);
 
-        LogShop($"AddBulbExposureFail: {bulb.produceNameId} 曝光失败分={limit.conversionFailScore:F1}");
+         Debug.Log($"[Shop]AddBulbExposureFail: {bulb.produceNameId} 曝光失败分={limit.conversionFailScore:F1}");
     }
 }
