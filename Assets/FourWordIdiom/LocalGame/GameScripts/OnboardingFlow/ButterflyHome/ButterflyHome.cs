@@ -9,7 +9,7 @@ using UnityEngine.U2D;
 using UnityEngine.UI;
 
 
-public class ButterflyHome : UIWindow
+public class ButterflyHome : UIWindow, IBackGestureClosePanel
 {
     [Header("UI Elements")]
     [SerializeField] private Button backhome;
@@ -170,6 +170,13 @@ public class ButterflyHome : UIWindow
     #endregion
     
     #region 按钮事件
+
+    /// <summary>侧滑 = 点「回主页」按钮（活动界面关闭按钮）。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnBackHomeClick();
+    }
+
     private void OnBackHomeClick()
     {
         backhome.enabled = false;

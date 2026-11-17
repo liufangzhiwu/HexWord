@@ -16,7 +16,7 @@ using UnityEngine.UI;
 /// 原有「限时宝箱倒计时必填」逻辑已移除：仅在存在有效限时截止时才显示倒计时。
 /// 购买统一走 Game.self.Shop.Purchase → ShopManager.OnPurchaseSuccess（发奖 + AwardScreen + 购买记录）。
 /// </summary>
-public class AdsDiscountScreen : UIWindow
+public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
 {
     [SerializeField] private Button closeBtn;      // 关闭按钮
     [SerializeField] private Text titleText;       // 标题（未在 prefab 绑定时留空即可）
@@ -1045,6 +1045,12 @@ public class AdsDiscountScreen : UIWindow
         // 拉起系统支付后未完成购买（取消/失败），由商店统一弹购买未完成弹窗
         if (currentShopItem != null && ShopManager.shopManager != null)
             ShopManager.shopManager.OnPurchaseCanceled(currentShopItem.produceNameId, true, error);
+    }
+
+    /// <summary>侧滑 = 点关闭按钮。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnCloseBtn();
     }
 
     private void OnCloseBtn()

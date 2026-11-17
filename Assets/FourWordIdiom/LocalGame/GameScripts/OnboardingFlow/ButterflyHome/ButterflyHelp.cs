@@ -4,7 +4,7 @@ using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ButterflyHelp : UIWindow
+public class ButterflyHelp : UIWindow, IBackGestureClosePanel
 {
     [SerializeField] private Button closeBtn; // 关闭按钮
     [SerializeField] private Text wordtips;
@@ -36,6 +36,12 @@ public class ButterflyHelp : UIWindow
         closetips.text = "点击关闭";
     }
     
+    /// <summary>侧滑 = 点右上角关闭按钮。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnCloseBtn();
+    }
+
     private void OnCloseBtn()
     {
         base.Close(); // 隐藏面板

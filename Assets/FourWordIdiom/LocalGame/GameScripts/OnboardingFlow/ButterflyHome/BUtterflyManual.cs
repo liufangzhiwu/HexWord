@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.U2D;
 using UnityEngine.UI;
 
-public class BUtterflyManual : UIWindow
+public class BUtterflyManual : UIWindow, IBackGestureClosePanel
 {
     [SerializeField] private Text title;
     [SerializeField] private Button backhome;
@@ -16,16 +16,24 @@ public class BUtterflyManual : UIWindow
     private void Start()
     {
         title.text = MultilingualManager.Instance.GetString("ButterflyUI04", "hudie");
-        backhome.AddVibraClickAction(() =>
-        {
-            SystemManager.Instance.HidePanel(PanelType.ButterflyManual);
-            SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
-        });
+        backhome.AddVibraClickAction(OnBackHomeClick);
         
         help.AddClickAction(() =>
         {
             SystemManager.Instance.ShowPanel(PanelType.ButterflyGardenHelp);
         });
+    }
+
+    /// <summary>侧滑 = 点「返回」按钮。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnBackHomeClick();
+    }
+
+    private void OnBackHomeClick()
+    {
+        SystemManager.Instance.HidePanel(PanelType.ButterflyManual);
+        SystemManager.Instance.ShowPanel(PanelType.ButterflyHome);
     }
 
     protected override void OnEnable()

@@ -11,7 +11,7 @@ public enum RankTabType
     HallOfFame  // 禅贤阁
 }
 
-public class OverallRankingScreen : UIWindow
+public class OverallRankingScreen : UIWindow, IBackGestureClosePanel
 {
     [Header("Top Bar UI")]
     [SerializeField] private Button backHome;
@@ -400,6 +400,12 @@ public class OverallRankingScreen : UIWindow
             }
         }
     }
+    /// <summary>侧滑 = 点界面返回按钮。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnClickBack();
+    }
+
     private void OnClickBack()
     {
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)

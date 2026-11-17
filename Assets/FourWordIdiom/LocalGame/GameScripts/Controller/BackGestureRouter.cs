@@ -11,7 +11,9 @@ using UnityEngine.SceneManagement;
 ///   3. 复活弹窗 / 断点续玩窗      → 各自界面内的按钮逻辑
 ///                                  （复活弹窗=CloseBtn；续玩窗=取消 cancelQuitBtn）
 ///   4. 任意弹窗/活动页/商店页/
-///      道具弹窗/礼包弹窗等        → 关掉最上层那个
+///      道具弹窗/礼包弹窗/模式选择    → 关掉最上层那个；若它实现了 IBackGestureClosePanel，
+///                                  则执行它自己的按钮逻辑（SelectMode = 点当前模式的按钮；
+///                                  活动页/商店页等有回主页、恢复顶栏等收尾副作用）
 ///   5. 拼字关卡（ChessPlayArea） → 弹出 PauseGameScreen
 ///   6. 六边形 / 消消关卡         → 返回主页
 ///   7. Start 场景               → QuitPanel（隐藏关闭按钮，主按钮「取消」）
@@ -45,13 +47,18 @@ public static class BackGestureRouter
         PanelType.DebugMenu,
     };
 
-    /// <summary>层级是 BasePanel，但语义上是「活动页 / 子页面」，侧滑应当关闭它。</summary>
+    /// <summary>
+    /// 这些界面侧滑时应当「关闭它」，即使层级不是常规弹窗层也要纳入。
+    /// SelectMode 打开时 HeaderSection 被隐藏、PrimaryInterface 折叠，
+    /// 必须走它自己的「选模式 → 收弹窗回主页」流程，不能直接 HidePanel。
+    /// </summary>
     private static readonly HashSet<string> PopupCloseExtraPages = new HashSet<string>
     {
         PanelType.ZenRankScreen,
         PanelType.ButterflyHome,
         PanelType.ButterflyManual,
         PanelType.ButterflyGardenHelp,
+        PanelType.SelectMode,
     };
 
     /// <summary>弹窗层：这些层级的可见界面都算「可以侧滑关掉」。</summary>
@@ -203,6 +210,16 @@ public static class BackGestureRouter
         }
 
         if (top == null) return false;
+
+        // 界面自己实现了「关闭按钮」语义（活动页 / 商店页等）→ 走它自己的关闭逻辑，
+        // 这样侧滑和玩家点关闭按钮的副作用（回主页、恢复 HeaderSection 等）完全一致。
+        IBackGestureClosePanel closable = top as IBackGestureClosePanel;
+        if (closable != null)
+        {
+            Debug.Log($"[BackGesture] 侧滑触发界面关闭按钮：{top.WindowName}");
+            closable.CloseFromBackGesture();
+            return true;
+        }
 
         Debug.Log($"[BackGesture] 侧滑关闭弹窗：{top.WindowName}");
         SystemManager.Instance.HidePanel(top.WindowName);

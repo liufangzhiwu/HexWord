@@ -6,7 +6,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ZenRankScreen : UIWindow
+public class ZenRankScreen : UIWindow, IBackGestureClosePanel
 {
     [SerializeField] private Text title;
     [SerializeField] private RectTransform LeaderView;
@@ -521,6 +521,12 @@ public class ZenRankScreen : UIWindow
     {
         _returnTargetPanel = sourcePanel;
     }
+    /// <summary>侧滑 = 点界面左上角返回按钮。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnClickBack();
+    }
+
     private void OnClickBack()
     {
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)

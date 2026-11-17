@@ -5,7 +5,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class LimitTimeScreen : UIWindow
+public class LimitTimeScreen : UIWindow, IBackGestureClosePanel
 {        
     [SerializeField] private GameObject minTimeObj; // 关闭按钮
     [SerializeField] private Button helpBtn; // 关闭按钮
@@ -200,6 +200,12 @@ public class LimitTimeScreen : UIWindow
     private void OnHelpBtn()
     {
         SystemManager.Instance.ShowPanel(PanelType.LimitHelpScreen);
+    }
+
+    /// <summary>侧滑 = 点关闭按钮（含 QuickComplete 等收尾逻辑）。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnCloseBtn();
     }
 
     private void OnCloseBtn()

@@ -670,7 +670,15 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // ★ 计算完分层后立刻按分层刷新 _layerConfig
+        string previousLayer = _layerConfig != null ? _layerConfig.userLayer : string.Empty;
         ApplyLayerConfig(layer);
+
+        // ★ 分层发生变化 → 立即上报用户属性（UserPropertie：UserLayer / 金币 / 道具 / 关卡 / 去广告状态等）
+        //   相同分层由 AnalyticMgr.NotifyUserLayerChanged 内部去重，这里不必再判断。
+        if (previousLayer != layer)
+        {
+            AnalyticMgr.NotifyUserLayerChanged(previousLayer, layer);
+        }
 
         return layer;
     }

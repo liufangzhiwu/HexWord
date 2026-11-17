@@ -4,7 +4,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ZenRankStartScreen : UIWindow
+public class ZenRankStartScreen : UIWindow, IBackGestureClosePanel
 {
     [Header("UI 面板 (阶段1)")]
     [SerializeField] private GameObject stage1Panel;
@@ -209,6 +209,12 @@ public class ZenRankStartScreen : UIWindow
             // Sequence 执行完毕后自动停止，圆不再继续变大，而雷达线还在继续转
         }
     }
+    /// <summary>侧滑 = 点关闭按钮。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnCloseClicked();
+    }
+
     private void OnCloseClicked()
     {
         // 关闭当前窗口并返回大厅

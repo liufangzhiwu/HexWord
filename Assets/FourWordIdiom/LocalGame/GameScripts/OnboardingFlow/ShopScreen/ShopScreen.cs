@@ -22,7 +22,7 @@ using Button = UnityEngine.UI.Button;
 ///
 /// 顶部资源栏展示：金币 / 提示灯 / 火箭 / 蝴蝶 / 复活道具（105）
 /// </summary>
-public class ShopScreen : UIWindow
+public class ShopScreen : UIWindow, IBackGestureClosePanel
 {
     // ======================= 固定商店序列化字段 =======================
 
@@ -986,6 +986,12 @@ public class ShopScreen : UIWindow
     }
 
     // ======================= 关闭 =======================
+
+    /// <summary>侧滑 = 点右上角关闭按钮（会回主页/结算页并恢复 HeaderSection）。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnCloseBtn();
+    }
 
     private void OnCloseBtn()
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ModeSelect : UIWindow
+public class ModeSelect : UIWindow, IBackGestureClosePanel
 {
     [Header("弹出窗组件")] 
     [SerializeField] private RectTransform popupPanel;
@@ -16,6 +16,8 @@ public class ModeSelect : UIWindow
 
     private float slideDuration = 0.3f;
     private AnimationCurve sliderCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    private bool _isClosing;
+    private Coroutine _slideRoutine;
     private Vector2 hiddenPosition;
     private Vector2 shownPosition;
     // Start is called before the first frame update
@@ -47,6 +49,8 @@ public class ModeSelect : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+        _isClosing = false;
+        _slideRoutine = null;
         InitUI();
         OpenPopup();
     }
@@ -154,6 +158,27 @@ public class ModeSelect : UIWindow
         }
     }
 
+    /// <summary>
+    /// 侧滑 = 点击「当前模式」那个模式按钮（wordBtn / chessBtn / hexaBtn 的事件完全一致）：
+    /// 记录 levelMode → 打勾 → 关闭弹窗回到主页。
+    /// </summary>
+    public void CloseFromBackGesture()
+    {
+        // 关闭动画期间再侧滑直接忽略，避免重复走「选模式 + 存盘 + 回主页」
+        if (_isClosing) return;
+
+        int mode = GameDataManager.Instance.UserData.levelMode;
+        if (mode != (int)LevelType.BlockWord
+            && mode != (int)LevelType.ChessWord
+            && mode != (int)LevelType.HexWord)
+        {
+            mode = (int)LevelType.BlockWord;
+        }
+
+        Debug.Log($"[BackGesture] 侧滑 = 点击当前模式关卡按钮：{(LevelType)mode}");
+        SelectMode(mode);
+    }
+
     private void SelectMode(int mode)
     {
         
@@ -187,12 +212,26 @@ public class ModeSelect : UIWindow
     private void OpenPopup()
     {
         backBtn.gameObject.SetActive(true);
-        StartCoroutine(SlidePopup(true));
+        StartSlide(true);
     }
 
     private void ClosePopup()
     {
-        StartCoroutine(SlidePopup(false));
+        // 侧滑可能连击（或点在关闭动画期间），重复执行会把返回主页那套流程跑两遍
+        if (_isClosing) return;
+        _isClosing = true;
+        StartSlide(false);
+    }
+
+    /// <summary>同一时刻只跑一条滑动协程，避免「打开动画未播完就关闭」时两条协程互相拉扯。</summary>
+    private void StartSlide(bool isOpen)
+    {
+        if (_slideRoutine != null)
+        {
+            StopCoroutine(_slideRoutine);
+            _slideRoutine = null;
+        }
+        _slideRoutine = StartCoroutine(SlidePopup(isOpen));
     }
 
     private IEnumerator SlidePopup(bool isOpen)

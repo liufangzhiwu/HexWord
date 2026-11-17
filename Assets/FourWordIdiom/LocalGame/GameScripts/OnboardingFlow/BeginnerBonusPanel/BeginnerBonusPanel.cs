@@ -4,7 +4,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class BeginnerBonusPanel : UIWindow
+public class BeginnerBonusPanel : UIWindow, IBackGestureClosePanel
 {
     [Header("顶部与倒计时")]
     [SerializeField] private Text timerText;
@@ -141,6 +141,12 @@ public class BeginnerBonusPanel : UIWindow
         }
     }
     
+    /// <summary>侧滑 = 点关闭按钮。</summary>
+    public void CloseFromBackGesture()
+    {
+        OnCloseClicked();
+    }
+
     private void OnCloseClicked()
     {
         SystemManager.Instance.HidePanel(PanelType.BeginnerBonusPanel);

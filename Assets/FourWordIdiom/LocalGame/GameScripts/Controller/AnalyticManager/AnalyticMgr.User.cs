@@ -422,11 +422,12 @@ public partial class AnalyticMgr
     }
 
     /// <summary>
-    /// 登出时用户数据
+    /// 用户属性（user_set）全量上报：金币/道具/关卡/去广告状态/用户分层等。
+    /// 调用时机：登出（SetLogoutProperties）、用户分层变化（NotifyUserLayerChanged）。
     /// </summary>
-    private static void SetLogoutProperties()
+    private static void UserPropertie()
     {
-        var userData = GameDataManager.Instance.UserData;
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
         if (userData == null) return;
         int levelId = GameDataManager.Instance.UserData.CurrentChessStage;
         
@@ -454,6 +455,24 @@ public partial class AnalyticMgr
             lifeAdFree = ShopManager.shopManager.IsRemoveAdsOwned();
             limitedAdFree = ShopManager.shopManager.IsRemoveAdsActive();
         }
+        
+        string layer = ShopManager.shopManager != null ? ShopManager.shopManager.GetCurrentUserLayer() : string.Empty;   // 分层刷新 _layerConfig
+
+        // ★ 分层口径自检：合法值只可能是 IAAxx / IAPxx（见 ShopManager.GetCurrentUserLayer）。
+        //   出现过 "1"/"2"/"3"/"0" 这类值，说明取到的是 InterAdsGroup（插屏分组）而不是分层，
+        //   或者分层表没加载；用空字符串上报也会污染 TA 上的字段类型，所以这里显式告警。
+        if (string.IsNullOrEmpty(layer))
+        {
+            Debug.LogError("[Analytics] UserLayer 为空：ShopManager 未初始化或分层计算失败，本次按空串上报");
+        }
+        else if (!layer.StartsWith("IAA") && !layer.StartsWith("IAP"))
+        {
+            Debug.LogError($"[Analytics] UserLayer 取值异常：\"{layer}\"（应为 IAAxx / IAPxx，疑似取到了插屏分组 InterAdsGroup）");
+        }
+        else
+        {
+            Debug.Log($"[Analytics] 上报用户属性 UserLayer={layer}");
+        }
 
         var properties = new Dictionary<string, object>
         {
@@ -467,9 +486,78 @@ public partial class AnalyticMgr
             // 去广告状态：1 有 0 无（规范 #用户数据）
             { "Life_AdFree", lifeAdFree ? 1 : 0 },
             { "LimitedTime_AdFree", limitedAdFree ? 1 : 0 },
+            //用户分层
+            { "UserLayer", layer },
         };
        
-        Game.self.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
+        Game.self?.Analytics?.SetUserProperty(properties, Define.DataTarget.Think);
+    }
+
+    // ======================= 用户分层变化 → 立即上报用户属性 =======================
+
+    /// <summary>上次已上报给埋点的用户分层（去重用，保证只在"变化"时上报）</summary>
+    private static string _lastReportedUserLayer = string.Empty;
+
+    /// <summary>
+    /// SDK 未 Init 完成时收到分层变化：先挂起，Init 后补报一次。
+    /// （TD SDK 在 Init 之前调用会直接丢弃数据，见 IsSdkReady 注释）
+    /// </summary>
+    private static bool _pendingUserLayerReport;
+
+    /// <summary>
+    /// 用户分层发生变化时由 ShopManager 调用：立刻把 UserPropertie() 里的整套用户属性
+    /// （UserLayer、金币、道具、关卡、去广告状态等）以 user_set 上报一次。
+    ///
+    /// 去重：与上次上报的分层相同则直接返回，因此可以被高频调用点安全触发
+    /// （每次 GetCurrentUserLayer 都会判断一次）。
+    /// 时序：SDK 未就绪时挂起，OnAnalyticsSdkInit 末尾补报，避免数据被丢弃。
+    /// </summary>
+    /// <param name="previousLayer">变化前的分层（仅用于日志/排查）</param>
+    /// <param name="currentLayer">变化后的分层</param>
+    public static void NotifyUserLayerChanged(string previousLayer, string currentLayer)
+    {
+        if (string.IsNullOrEmpty(currentLayer)) return;
+        if (currentLayer == _lastReportedUserLayer) return;
+
+        // ★ 先写标记再上报：UserPropertie 内部会再次调用 GetCurrentUserLayer，
+        //   提前落标记可防止"变化回调 → 上报 → 再回调"的递归。
+        _lastReportedUserLayer = currentLayer;
+
+        if (!IsSdkReady)
+        {
+            _pendingUserLayerReport = true;
+            Debug.Log($"[Analytics] 用户分层变化 {previousLayer} → {currentLayer}，SDK 未就绪，挂起等 Init 后补报");
+            return;
+        }
+
+        Debug.Log($"[Analytics] 用户分层变化 {previousLayer} → {currentLayer}，立即上报用户属性(UserLayer 等)");
+        UserPropertie();
+    }
+
+    /// <summary>SDK Init 完成后补报挂起的"分层变化"用户属性（OnAnalyticsSdkInit 末尾调用）</summary>
+    private static void FlushPendingUserLayerReport()
+    {
+        if (!_pendingUserLayerReport) return;
+        _pendingUserLayerReport = false;
+        if (string.IsNullOrEmpty(_lastReportedUserLayer)) return;
+
+        Debug.Log($"[Analytics] 补报挂起的用户分层属性：UserLayer={_lastReportedUserLayer}");
+        UserPropertie();
+    }
+
+    /// <summary>清空分层上报缓存（登出 / 切号时调用，避免换号后命中上一账号的去重值）</summary>
+    private static void ResetUserLayerReportCache()
+    {
+        _lastReportedUserLayer = string.Empty;
+        _pendingUserLayerReport = false;
+    }
+
+    /// <summary>
+    /// 登出时用户数据
+    /// </summary>
+    private static void SetLogoutProperties()
+    {
+        UserPropertie();
         
         //处理异常，确保_startTime有值
         if (!_startTime.HasValue)
@@ -560,6 +648,8 @@ public partial class AnalyticMgr
     public static void Logout()
     {
         Game.self?.Analytics?.Logout();
+        // 换号后新账号的分层要能重新上报一次，不能命中旧账号的去重值
+        ResetUserLayerReportCache();
     }
 
     
@@ -625,6 +715,9 @@ public partial class AnalyticMgr
             GameDataManager.Instance.UserData.first_version = Application.version;
         }
         GameStart();
+
+        // 启动阶段若已算出分层（早于 SDK 就绪），这里补报一次 UserLayer 等用户属性
+        FlushPendingUserLayerReport();
     }
 
     public static void Login()
