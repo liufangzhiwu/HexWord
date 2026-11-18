@@ -139,8 +139,10 @@ public class PushMessageReceiver : MonoBehaviour
     //
     //   与 OnOAIDClosedSignal 的区别：
     //     - 这次查询不会弹系统框，也不代表玩家刚做了授权操作，
-    //       所以【不】走埋点（Pop_accept/Pop_refuse）、不发激励、不动引导页；
-    //     - 只把系统里的真实状态同步到存档，并在变化时刷新用户分层。
+    //       所以【不】走埋点（Pop_accept/Pop_refuse）、不动引导页；
+    //     - 只把系统里的真实状态同步到存档，并在变化时刷新用户分层；
+    //     - 唯一例外：状态从"未开启"变成"已开启"（玩家在系统设置里自己开了，或授权回调丢了）
+    //       时，由 AdTrackingManager 补发一次广告追踪激励（GrantReward 内部保证只发一次）。
     // ============================================================
     public void OnOAIDQueryResult(string enabledStr)
     {

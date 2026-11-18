@@ -60,7 +60,18 @@ public class AdTrackingGuidance : MonoBehaviour
         CacheButtonLabel();
         SetText(_buttonLabel, Localize(mode == Mode.Startup ? "Continue" : "GoAndStart"));
 
+        // 奖励金币的 UI 表现挂在按钮上：按钮上方一行"+G"金色角标（G 来自分层配置 AdTrackingStimulate）
+        ApplyRewardBadge(rewardGold);
+
         SetBusy(false);
+    }
+
+    /// <summary>
+    /// 分层配置晚于引导页就绪时（首启 1.2s 就弹页，配置可能还没拉回来）补上奖励角标。
+    /// </summary>
+    public void SetRewardGold(int rewardGold)
+    {
+        ApplyRewardBadge(rewardGold);
     }
 
     /// <summary>请求系统弹窗/跳系统设置期间禁用按钮，避免连点</summary>
@@ -105,6 +116,69 @@ public class AdTrackingGuidance : MonoBehaviour
     {
         if (_buttonLabel != null || _confirmButton == null) return;
         _buttonLabel = _confirmButton.GetComponentInChildren<Text>(true);
+    }
+
+    // ============================================================
+    // 奖励金币角标（挂在主按钮上）
+    // ============================================================
+
+    /// <summary>
+    /// 在按钮上方显示"+G"。G&lt;=0 表示没有激励（S=0 / 配置缺失），角标隐藏。
+    /// 预制体里没有这个节点，所以按需在运行时创建一次；字体/字号沿用按钮文字，保证风格一致。
+    /// </summary>
+    private void ApplyRewardBadge(int rewardGold)
+    {
+        if (rewardGold <= 0)
+        {
+            if (_rewardBadge != null) _rewardBadge.gameObject.SetActive(false);
+            return;
+        }
+
+        EnsureRewardBadge();
+        if (_rewardBadge == null) return;
+
+        _rewardBadge.text = "+" + rewardGold;
+        _rewardBadge.gameObject.SetActive(true);
+    }
+
+    private void EnsureRewardBadge()
+    {
+        if (_rewardBadge != null) return;
+
+        CacheButtonLabel();
+        Transform parent = _confirmButton != null ? _confirmButton.transform : transform;
+
+        GameObject go = new GameObject("RewardBadge", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+        go.transform.SetParent(parent, false);
+        go.transform.SetAsLastSibling();
+
+        Text text = go.GetComponent<Text>();
+        if (_buttonLabel != null)
+        {
+            text.font = _buttonLabel.font;
+            text.fontSize = Mathf.RoundToInt(_buttonLabel.fontSize * 1.05f);
+            text.fontStyle = _buttonLabel.fontStyle;
+        }
+        else
+        {
+            text.fontSize = 56;
+        }
+
+        text.text = string.Empty;
+        text.color = RewardColor;
+        text.alignment = TextAnchor.MiddleCenter;
+        text.raycastTarget = false;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
+
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 1f);   // 贴在按钮上边缘
+        rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot = new Vector2(0.5f, 0f);
+        rt.anchoredPosition = new Vector2(0f, 24f);
+        rt.sizeDelta = new Vector2(620f, 96f);
+
+        _rewardBadge = text;
     }
 
     private static void SetText(Text target, string content)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Middleware;
 using UnityEngine;
 
@@ -12,8 +13,12 @@ using UnityEngine;
 ///      （系统弹窗"关闭"与"结果回调"是同一时刻，所以这里不要求玩家二次点"继续"）
 ///   ② 拒绝授权的玩家，玩法设置里出现"广告关联"开关（S=1 时才出现），点开关 → 引导页"去开启"
 ///      → 跳系统广告追踪设置页 → 回前台校验结果。
-///   ③ 广告追踪激励 S_G：开启后奖励 G 金币（只发一次），奖励 UI 挂在设置开关与引导页按钮上，
-///      回游戏后用"领取金币奖励"弹窗（AdsAwardScreen）表现。
+///   ③ 广告追踪激励 S_G（来源：shop_layer.csv 的 AdTrackingStimulate 列，按用户分层取）：
+///      S=1 开 / S=0 关，G 为金币数。开启授权后奖励 G 金币，只发一次
+///      （UserData.adTrackingRewardClaimed）。奖励 UI：
+///        · 设置页 OptionsView：adsTrackTable 整行（S=0 隐藏）+ 行内 GoldTable 显示 G；
+///        · 引导页 AdTrackingGuidance：按钮上方"+G"角标；
+///      玩家返回游戏后，用"领取金币奖励"弹窗（AwardScreen，走 OverrideRewards 展示金币）表现。
 ///
 /// 平台：
 ///   iOS        → AdTrackingPermission（ATT 原生桥）
@@ -49,8 +54,15 @@ public class AdTrackingManager : MonoBehaviour
     /// <summary>点"继续"关页后，延迟多久放行广告请求（避开系统授权框的弹出时序）</summary>
     private const float GateReleaseDelay = 2f;
 
-    /// <summary>等待主界面出现以展示激励弹窗的最长时间</summary>
+    /// <summary>等待主界面出现以展示激励弹窗的最长时间（首启场景：还在加载/引导里）</summary>
     private const float RewardPopupTimeout = 15f;
+
+    /// <summary>
+    /// 等"设置界面关掉"再弹金币的最长时间。
+    /// 玩家从系统广告追踪设置返回时，设置页还开着，直接弹金币会叠在设置上面；
+    /// 这里等他关掉设置页再弹，需求表现是"返回游戏时弹窗获得金币"。
+    /// </summary>
+    private const float RewardPopupWaitTimeout = 120f;
 
     /// <summary>静默查询授权状态的最小间隔（秒）。启动 / 每次回前台都可能触发，做个节流。</summary>
     private const float StatusQueryThrottle = 3f;
@@ -60,6 +72,9 @@ public class AdTrackingManager : MonoBehaviour
 
     /// <summary>Pop_up 等待埋点就绪的最长时间（秒）。首启引导页出现得早，超时只打错误日志。</summary>
     private const float PopReportRetryTimeout = 10f;
+
+    /// <summary>等分层配置就绪再发激励的最长时间（秒）</summary>
+    private const float RewardGrantRetryTimeout = 10f;
 
     #endregion
 
@@ -76,6 +91,9 @@ public class AdTrackingManager : MonoBehaviour
     private bool _waitingSettingsReturn;
     private bool _openedSystemSettings;
 
+    /// <summary>本次进程内是否已做过"存档未决但引导页弹过"的启动补偿查询</summary>
+    private bool _undeterminedRecoveryTried;
+
     /// <summary>静默查询授权状态是否在进行中（鸿蒙是异步回包，避免连点/重入）</summary>
     private bool _statusQueryInFlight;
 
@@ -83,6 +101,23 @@ public class AdTrackingManager : MonoBehaviour
     private float _lastStatusQueryTime = -999f;
 
     private int _pendingRewardGold;
+
+    /// <summary>"待领金币"弹窗是否已经在等（避免重复起协程）</summary>
+    private bool _pendingRewardPopupRunning;
+
+    /// <summary>
+    /// 本次奖励是否要在"设置页还开着"时就弹（设置入口里同意广告追踪的场景）：
+    /// 需求是设置界面同意后直接弹 AwardScreen 发奖励，不必等玩家关掉设置页。
+    /// </summary>
+    private bool _showRewardOverSettings;
+
+    // ---- 授权前的激励快照（见 CaptureRewardBeforeAuthorization）----
+    /// <summary>授权前分层对应的激励金币数（0 = 没有激励）</summary>
+    private int _rewardGoldBeforeAuth;
+    /// <summary>授权前的分层名（配置迟到时按它回头查表）</summary>
+    private string _rewardLayerBeforeAuth;
+    /// <summary>授权前是否已经成功读到过 AdTrackingStimulate 配置</summary>
+    private bool _rewardResolvedBeforeAuth;
 
     /// <summary>本次引导页实例是否已经上报过 Pop_up（bug44：展示与上报必须是同一时刻，且只报一次）</summary>
     private bool _guidePopReported;
@@ -153,15 +188,51 @@ public class AdTrackingManager : MonoBehaviour
     public bool IsAuthorized => Status == AdTrackingStatus.Authorized;
 
     /// <summary>
-    /// 玩法设置里是否要出现"广告关联"开关：
-    /// 仅在"玩家拒绝过授权"且分层配置 AdTrackingStimulate 的 S=1 时出现。
+    /// UI 口径的授权状态（设置页开关、整行显隐、激励可领判定用）：
+    /// **以存档 adTrackingEnabled 为准**，与用户分层（IAA00/01/02 与 IAA10/11/12）同源；
+    /// 只有存档未决（""）时才回落到系统状态。
+    ///
+    /// ★ 为什么不能直接用 <see cref="Status"/>：在 iOS / 编辑器上 Status 走的是系统 ATT
+    ///   （编辑器读 PlayerPrefs.att_mock_status），和存档是两套数据。一旦两者不一致，
+    ///   就会出现"分层按 adTrackingEnabled=1 算成 IAA1x，设置页开关却按系统状态显示为关"的割裂。
+    ///   存档由所有回调（OnPermissionResult / ApplyTrackingStatus）统一写入，且启动与回前台
+    ///   都会按系统真实状态校正，所以 UI 用它既一致又不会长期偏离系统。
+    ///   需要"系统真实状态"的地方（判断从系统设置返回的结果）仍然用 <see cref="Status"/>。
     /// </summary>
-    public bool ShouldShowSettingsEntry()
+    public bool IsAuthorizedForUI
+    {
+        get
+        {
+            UserData user = User;
+            if (user != null)
+            {
+                if (user.adTrackingEnabled == "1") return true;
+                if (user.adTrackingEnabled == "0") return false;
+            }
+
+            // 存档还没决定过：iOS / 编辑器回落到系统状态，保证首次授权后立刻能显示为开
+            return AdTrackingPermission.IsSupported
+                   && AdTrackingPermission.GetStatus() == AdTrackingStatus.Authorized;
+        }
+    }
+
+    /// <summary>
+    /// 设置页是否展示「广告关联」整行：
+    ///   · 已授权（含"首次启动就同意"）→ 常驻显示，开关呈"开"状态，玩家还能从这里回系统设置关掉；
+    ///   · 未授权 → 只有当前分层 AdTrackingStimulate 的 S=1（有激励）时才显示。
+    ///
+    /// ★ 为什么已授权要单独放行：授权成功后用户分层会立刻从 IAA01/IAA02 切到 IAA11/IAA12（0_0），
+    ///   若只看当前分层的 S，整行会直接消失，玩家在设置里既看不到"已开启"，也无法回到系统设置改回去。
+    /// </summary>
+    public bool ShouldShowSettingsRow()
     {
         if (!PlatformSupportsTracking) return false;
-        if (Status != AdTrackingStatus.Denied) return false;
+        if (IsAuthorizedForUI) return true;
         return TryResolveStimulate(out bool enabled, out int _) && enabled;
     }
+
+    /// <summary>兼容旧名：语义已统一为 <see cref="ShouldShowSettingsRow"/>。</summary>
+    public bool ShouldShowSettingsEntry() => ShouldShowSettingsRow();
 
     /// <summary>设置开关上要展示的激励金币数（没有激励返回 0）</summary>
     public int SettingsEntryRewardGold
@@ -170,6 +241,46 @@ public class AdTrackingManager : MonoBehaviour
         {
             if (!TryResolveStimulate(out bool enabled, out int gold)) return 0;
             return enabled ? gold : 0;
+        }
+    }
+
+    /// <summary>
+    /// 激励策略开关 S（AdTrackingStimulate = S_G）：
+    ///   S=1 → 设置里出现「广告关联」行，开启授权后送 G 金币；
+    ///   S=0 → 未授权时不展示这一行（不引导、不发奖）；已授权的玩家仍常驻显示（见 ShouldShowSettingsRow）。
+    /// </summary>
+    public bool StimulateEnabled
+    {
+        get { return TryResolveStimulate(out bool enabled, out int _) && enabled; }
+    }
+
+    /// <summary>激励金币数 G（未开启激励或配置缺失时返回 0）</summary>
+    public int StimulateGold
+    {
+        get
+        {
+            if (!TryResolveStimulate(out bool enabled, out int gold)) return 0;
+            return enabled ? gold : 0;
+        }
+    }
+
+    /// <summary>
+    /// 当前是否还有「开启即得 G 金币」可拿：S=1 且 G&gt;0 且没领过 且还没授权。
+    /// 设置页 GoldTable 的显隐、引导页按钮角标的显隐都用它判断。
+    /// </summary>
+    public bool IsRewardClaimable
+    {
+        get
+        {
+            if (!PlatformSupportsTracking) return false;
+            if (!TryResolveStimulate(out bool enabled, out int gold)) return false;
+            if (!enabled || gold <= 0) return false;
+
+            UserData user = User;
+            if (user == null) return false;
+            if (user.adTrackingRewardClaimed) return false;
+
+            return !IsAuthorizedForUI;   // 已经开启过就没有"开启即送"了（与开关状态同源，避免"开关是开还给 +G"）
         }
     }
 
@@ -191,8 +302,9 @@ public class AdTrackingManager : MonoBehaviour
     ///                  （内部只调 requestPermissionsFromUser：已决定过时系统不弹框，直接返回同意/拒绝），
     ///                  结果经 PushMessageReceiver.OnOAIDQueryResult → OnTrackingStatusQueried 回来。
     ///
-    /// 只在"已经决定过"（存档为 1 或 0）时才查：
-    ///   - 存档为空表示还没走过引导页，查询有可能会拉起系统授权框；这种情况交给引导页流程处理。
+    /// 只在"可以确定不会拉起系统弹窗"时才查：
+    ///   - iOS / 编辑器：GetStatus 是只读查询，存档为空也能对齐；
+    ///   - 鸿蒙：只有存档为 1 或 0（已决定过）时才查，存档为空交给引导页流程处理。
     /// </summary>
     /// <param name="reason">日志用（启动 / 回前台）</param>
     public void SyncTrackingStatusFromPlatform(string reason)
@@ -200,8 +312,13 @@ public class AdTrackingManager : MonoBehaviour
         UserData user = User;
         if (user == null) return;
 
-        // 还没决定过授权 → 交给引导页流程，别在这里拉系统弹窗
-        if (user.adTrackingEnabled != "1" && user.adTrackingEnabled != "0")
+        // 还没决定过授权时的两种处理：
+        //   · iOS / 编辑器：GetStatus 是只读查询（编辑器读 att_mock_status，不弹框），可以直接对齐。
+        //     否则会出现"存档是空、设置页按系统状态显示为开、用户分层却按未授权算"的割裂
+        //     （典型场景：存档被清 / 换新号，但系统里 ATT 早就是已同意）。
+        //   · 鸿蒙等无只读接口的平台：清空态一律交给引导页流程，别在这里拉系统弹窗。
+        if (user.adTrackingEnabled != "1" && user.adTrackingEnabled != "0"
+            && !AdTrackingPermission.IsSupported)
         {
             Debug.Log($"[AdTracking] {reason}静默核对跳过：授权状态还未决定（adTrackingEnabled=\"{user.adTrackingEnabled}\"）");
             return;
@@ -277,6 +394,10 @@ public class AdTrackingManager : MonoBehaviour
         }
 
         string before = user.adTrackingEnabled;
+
+        // 同 OnPermissionResult：授前先定激励金额（分层会随授权状态切换）
+        if (granted) CaptureRewardBeforeAuthorization();
+
         user.adTrackingEnabled = want;
         if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
 
@@ -285,6 +406,12 @@ public class AdTrackingManager : MonoBehaviour
 
         Debug.Log($"[AdTracking] {reason}: 授权状态 {before} → {want}（系统真实状态），已刷新用户分层 → {layer}");
         OnAuthorizationChanged?.Invoke(granted);
+
+        // ★ 补发路径：这次变化来自"静默核对系统状态"，不是我们主动发起的授权请求，
+        //   说明玩家在系统设置里自己开启了（或者我们的授权回调丢了：进程被系统杀掉等）。
+        //   需求是"开启广告追踪激励 → 奖励 G 金币，只能领一次"，所以这里补发一次；
+        //   GrantReward 内部用 adTrackingRewardClaimed 兜住重复。
+        if (granted) StartCoroutine(GrantRewardWhenReady());
     }
 
     #endregion
@@ -308,10 +435,28 @@ public class AdTrackingManager : MonoBehaviour
 
         _startupFlowStarted = true;
 
+#if UNITY_EDITOR
+        // ★ 编辑器专用：模拟状态被手动清成"未决定"（菜单 重置 / 当前状态-未决定），
+        //   但存档还留着上一次的 1/0 → 把存档也清回未决，本轮重新走引导页、结果重新随机。
+        //   真机不会出现这种组合（ATT / 鸿蒙的授权状态不会自己回到未决定），只在编辑器生效。
+        if (AdTrackingPermission.GetStatus() == AdTrackingStatus.NotDetermined
+            && !string.IsNullOrEmpty(User.adTrackingEnabled))
+        {
+            User.adTrackingEnabled = "";
+            User.adTrackingGuideShown = false;
+            if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
+            Debug.Log("[AdTracking][编辑器] 模拟状态=未决定 → 存档同步清回未决，本轮重新走引导页（结果按策略重新掷）");
+        }
+#endif
+
         // ★ bug34：启动时先静默核对系统里的真实授权状态（玩家可能在系统设置里改过），
         //   状态变了会写回存档并刷新分层。必须放在判断要不要弹引导页之前，
         //   这样"已经弹过引导页"的玩家也能拿到正确的分层。
         SyncTrackingStatusFromPlatform("启动");
+
+        // ★ 补偿：引导页弹过、但授权状态还是空（同意后回包前被杀 / 桥接消息丢）→ 静默补查一次。
+        //   上面的 SyncTrackingStatusFromPlatform 对"未决"是主动跳过的，所以单独走这一条。
+        TryRecoverUndeterminedStatusOnStartup();
 
         if (!ShouldRunStartupFlow(out string skipReason))
         {
@@ -325,6 +470,61 @@ public class AdTrackingManager : MonoBehaviour
         Debug.Log("[AdTracking] 加载页已显示，准备弹出广告追踪引导页");
         _startupFlowFinished = false;
         StartCoroutine(StartupGuideRoutine());
+    }
+
+    /// <summary>
+    /// 启动补偿：引导页已经弹过（adTrackingGuideShown=true），但存档里的授权状态仍是空字符串。
+    ///
+    /// 出现的场景：玩家在系统授权框上点了"同意"，但回包（鸿蒙 TuanjieSendMessage / iOS 回调）
+    /// 在进程被杀、桥接未就绪、消息丢失时没到 Unity → adTrackingEnabled 一直是 ""，
+    /// 结果是 IAA 分层按"未授权"算、设置页开关显示为关，和系统真实状态不一致。
+    ///
+    /// 与 <see cref="SyncTrackingStatusFromPlatform"/> 的区别：那边对"未决"主动跳过（怕拉起系统框），
+    /// 这里只在"引导页确实弹过"的前提下补查一次，说明我们此前已经申请过该权限。
+    /// 一次进程内只尝试一次。
+    /// </summary>
+    private void TryRecoverUndeterminedStatusOnStartup()
+    {
+        if (!PlatformSupportsTracking || _undeterminedRecoveryTried) return;
+
+        UserData user = User;
+        if (user == null) return;
+        if (!user.IsAgreePrivacy) return;                 // 隐私还没同意，先不碰系统接口
+        if (!user.adTrackingGuideShown) return;           // 没弹过引导 → 交给引导流程处理
+        if (user.adTrackingEnabled == "1" || user.adTrackingEnabled == "0") return;
+
+        _undeterminedRecoveryTried = true;
+
+        // iOS / 编辑器：GetStatus 是只读查询，不会弹框，可以直接读
+        if (AdTrackingPermission.IsSupported)
+        {
+            AdTrackingStatus status = AdTrackingPermission.GetStatus();
+            if (status == AdTrackingStatus.Authorized || status == AdTrackingStatus.Denied)
+            {
+                Debug.Log($"[AdTracking] 启动补偿：存档未决但系统状态为 {status}，写回归档");
+                ApplyTrackingStatus(status == AdTrackingStatus.Authorized, "启动补偿（系统状态）");
+            }
+            else
+            {
+                Debug.Log($"[AdTracking] 启动补偿跳过：系统状态仍为 {status}");
+            }
+            return;
+        }
+
+#if UNITY_OPENHARMONY && !UNITY_EDITOR
+        // 鸿蒙没有只读接口：QueryTrackingConsent 内部走 requestPermissionsFromUser。
+        // 引导页弹过 = 此前已申请过该权限，系统不会再弹标准框（已同意立刻返回 0 / 已拒绝返回 -1）；
+        // 只有"引导页是超时自动关闭、根本没真正申请过"这一种情况可能弹一次系统框。
+        if (Game.self == null) return;
+
+        if (_statusQueryInFlight &&
+            Time.realtimeSinceStartup - _lastStatusQueryTime < StatusQueryTimeout) return;
+
+        _statusQueryInFlight = true;
+        _lastStatusQueryTime = Time.realtimeSinceStartup;
+        Debug.Log("[AdTracking] 启动补偿：存档未决但引导页已弹过，静默查询系统授权状态");
+        Game.self.QueryTrackingConsent();
+#endif
     }
 
     /// <summary>加载流程在 allowSceneActivation 之前等待它，保证"引导页 → 加载页"的顺序</summary>
@@ -478,7 +678,31 @@ public class AdTrackingManager : MonoBehaviour
 
     #region 设置入口（广告关联）
 
-    /// <summary>设置里点"广告关联"开关：出引导页（去开启模式）</summary>
+    /// <summary>
+    /// 引导页已经显示、但分层配置还没回来时，等配置就绪把"+G"角标补上。
+    /// 超时就不补（不影响流程，只是少了奖励提示）。
+    /// </summary>
+    private IEnumerator RefreshGuideRewardWhenReady()
+    {
+        float waited = 0f;
+        while (waited < LayerConfigWait)
+        {
+            if (TryResolveStimulate(out bool enabled, out int gold) && enabled && gold > 0)
+            {
+                if (_guide != null)
+                {
+                    _guide.SetRewardGold(gold);
+                    Debug.Log($"[AdTracking] 分层配置就绪，补上引导页奖励角标 +{gold}");
+                }
+                yield break;
+            }
+
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    /// <summary>设置入口（广告关联）</summary>
     public void OpenSettingsGuide(Transform uiParent = null)
     {
         if (_guide != null) return;
@@ -546,6 +770,10 @@ public class AdTrackingManager : MonoBehaviour
 
         _guide.OnPrimaryClicked += HandleGuidePrimary;
         _guide.Setup(mode, rewardGold);
+
+        // 首启时引导页弹得很早（加载页 1.2s 后），分层配置可能还没就绪 → rewardGold 取到 0，
+        // 角标就空了。这里在 LayerConfigWait 内等配置到位再补一次（只补 UI，不影响发奖）。
+        if (rewardGold <= 0) StartCoroutine(RefreshGuideRewardWhenReady());
 
         // ★ bug44：页面真正显示出来这一刻才上报 Pop_up，并且每个实例只报一次。
         //   （原来在 StartupGuideRoutine / OpenSettingsGuide 里"先报再弹"，
@@ -704,6 +932,11 @@ public class AdTrackingManager : MonoBehaviour
   
         _waitingSettingsReturn = false;
 
+        // ★ 必须在写 adTrackingEnabled 之前把激励金额定下来：
+        //   授权状态一变，分层会立刻从 IAA01/IAA02（1_200/1_500）切到 IAA11/IAA12（0_0），
+        //   之后再读配置就会读到"关闭"，奖励发不出来。
+        if (granted) CaptureRewardBeforeAuthorization();
+
         user.adTrackingEnabled = granted ? "1" : "0";
         if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
 
@@ -742,7 +975,12 @@ public class AdTrackingManager : MonoBehaviour
         OnAuthorizationChanged?.Invoke(granted);
 
         // ---------- 激励发放（同意才发，且只发一次） ----------
-        if (wasAwaiting && granted) GrantReward();
+        // 走"等配置就绪"的协程：首启阶段可能 ShopManager 的分层表还没加载完，
+        // 直接发会读到空配置而静默漏发。
+        //
+        // ★ 设置界面里同意的：奖励弹窗不等设置页关闭，直接盖在上面弹（需求）。
+        _showRewardOverSettings = fromSettings && granted;
+        if (wasAwaiting && granted) StartCoroutine(GrantRewardWhenReady());
     }
 
     
@@ -757,6 +995,14 @@ public class AdTrackingManager : MonoBehaviour
         if (AdTrackingPermission.IsSupported)
         {
             AdTrackingPermission.OpenSystemSettings();
+
+#if UNITY_EDITOR
+            // ★ 编辑器没有真实的系统设置页，App 也不会失焦/回前台，OnFocusChanged 不会触发，
+            //   于是 CheckSettingsResultRoutine 永远跑不到 → 点开关后状态不变。
+            //   这里按"玩家关掉系统设置页返回游戏"处理，走和真机完全相同的返回校验分支，
+            //   保证编辑器里"开 → 关 → 开"整条链路可验证。
+            StartCoroutine(CheckSettingsResultRoutine());
+#endif
             return;
         }
 
@@ -817,7 +1063,7 @@ public class AdTrackingManager : MonoBehaviour
         SyncTrackingStatusFromPlatform("系统设置返回");
 
         // 状态没变化时 SyncTrackingStatusFromPlatform 不会回调 → 这里再刷一次开关，保证界面同步
-        OnAuthorizationChanged?.Invoke(IsAuthorized);
+        OnAuthorizationChanged?.Invoke(IsAuthorizedForUI);
     }
 
     private IEnumerator CheckSettingsResultRoutine()
@@ -832,6 +1078,14 @@ public class AdTrackingManager : MonoBehaviour
         }
         else
         {
+            // ★ 玩家在系统设置里把开关关掉了：存档必须同步成 "0"（用户分层依据），
+            //   否则会出现"分层按 adTrackingEnabled=1、设置页却显示关"的割裂。
+            //   这里直接用系统读到的真实结果写档，不走 OnPermissionResult（那条路会跑埋点/激励）。
+            if (Status == AdTrackingStatus.Denied || Status == AdTrackingStatus.Restricted)
+                ApplyTrackingStatus(false, "iOS 系统设置返回未开启");
+            else
+                OnAuthorizationChanged?.Invoke(IsAuthorizedForUI);   // 未决/受限等：只刷一次 UI
+
             _waitingSettingsReturn = false;
             _openedSystemSettings = false;
             if (_guide != null) _guide.SetBusy(false);
@@ -843,15 +1097,97 @@ public class AdTrackingManager : MonoBehaviour
 
     #region 激励（S_G）
 
+    /// <summary>
+    /// 在写 adTrackingEnabled **之前**调用：用"授权前的分层"把激励金币定下来。
+    ///
+    /// 为什么不能等发奖时再读配置：广告追踪权限本身就是 IAA 分层的输入之一，
+    /// 玩家一开启，分层立刻从 IAA01/IAA02（AdTrackingStimulate=1_200 / 1_500）切成
+    /// IAA11/IAA12（0_0）。发奖时再读就会读到"关闭"，奖励永远发不出去。
+    ///
+    /// 配置可能还没缓存（首启早期），这时先记下分层名，交给 GrantRewardWhenReady 回头查表。
+    /// </summary>
+    private void CaptureRewardBeforeAuthorization()
+    {
+        // 同一个授予结果可能重复回调（鸿蒙既走 SendMessage 又走 Promise）。
+        // 已经锁定过就不要再覆盖：第二次进来时状态已是"已开启"，会读到 IAA11 的 0_0 把奖励冲掉。
+        if (_rewardGoldBeforeAuth > 0) return;
+
+        _rewardGoldBeforeAuth = 0;
+        _rewardLayerBeforeAuth = null;
+        _rewardResolvedBeforeAuth = false;
+
+        if (ShopManager.shopManager == null) return;
+
+        _rewardLayerBeforeAuth = ShopManager.shopManager.GetCurrentUserLayer();
+
+        if (!TryResolveStimulate(out bool enabled, out int gold))
+        {
+            // 分层表还没就绪 → 保留 layer 名，稍后按名字查
+            Debug.LogWarning($"[AdTracking] 授权前激励配置暂不可用（分层={_rewardLayerBeforeAuth}），稍后按分层名重试");
+            return;
+        }
+
+        _rewardResolvedBeforeAuth = true;
+        if (enabled && gold > 0)
+        {
+            _rewardGoldBeforeAuth = gold;
+            Debug.Log($"[AdTracking] 授权前锁定激励：分层={_rewardLayerBeforeAuth}，+{gold} 金币");
+        }
+        else
+        {
+            Debug.Log($"[AdTracking] 授权前分层 {_rewardLayerBeforeAuth} 未开启广告追踪激励（S=0）");
+        }
+    }
+
+    /// <summary>
+    /// 发奖（使用 <see cref="CaptureRewardBeforeAuthorization"/> 锁定的金币数）：
+    /// 配置迟到时先按授权前的分层名回头查表，最多等 <see cref="RewardGrantRetryTimeout"/> 秒。
+    /// </summary>
+    private IEnumerator GrantRewardWhenReady()
+    {
+        float waited = 0f;
+        while (waited < RewardGrantRetryTimeout)
+        {
+            UserData user = User;
+            if (user == null || user.adTrackingRewardClaimed) yield break;   // 没数据 / 已经领过
+
+            // ① 授权前已经读到配置：按快照处理，不需要再等
+            if (_rewardResolvedBeforeAuth)
+            {
+                if (_rewardGoldBeforeAuth > 0) GrantReward();
+                yield break;
+            }
+
+            // ② 配置迟到：按授权前的分层名回头查表
+            if (ShopManager.shopManager != null
+                && ShopManager.shopManager.TryGetAdTrackingStimulateByLayer(
+                       _rewardLayerBeforeAuth, out bool enabled, out int gold))
+            {
+                _rewardResolvedBeforeAuth = true;
+                if (enabled && gold > 0)
+                {
+                    _rewardGoldBeforeAuth = gold;
+                    GrantReward();
+                }
+                yield break;
+            }
+
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        Debug.LogWarning("[AdTracking] 等分层配置超时，本次激励发放跳过（adTrackingRewardClaimed 仍为 false）");
+    }
+
     private void GrantReward()
     {
-        if (!TryResolveStimulate(out bool enabled, out int gold)) return;
-        if (!enabled || gold <= 0) return;
-
         UserData user = User;
-        if (user == null || user.adTrackingRewardClaimed) return;
+        if (user == null || user.adTrackingRewardClaimed) return;   // 只能领一次
 
-        user.adTrackingRewardClaimed = true;   // 只能领一次
+        int gold = _rewardGoldBeforeAuth;
+        if (gold <= 0) return;
+
+        user.adTrackingRewardClaimed = true;
         user.Gold += gold;
         if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
 
@@ -872,44 +1208,107 @@ public class AdTrackingManager : MonoBehaviour
         }
     }
 
-    /// <summary>进入游戏后补弹"领取金币"弹窗（复用 AdsAwardScreen 的表现）</summary>
+    /// <summary>进入游戏后补弹"领取金币"弹窗（用 AwardScreen 的领取 + 飞入表现）</summary>
     public void TryShowPendingReward()
     {
-        if (_pendingRewardGold <= 0) return;
+        // 发奖与大厅启动都会调这里，加个在途标记，避免同一笔奖励起两条协程
+        if (_pendingRewardGold <= 0 || _pendingRewardPopupRunning) return;
         StartCoroutine(ShowPendingRewardRoutine());
     }
 
     private IEnumerator ShowPendingRewardRoutine()
     {
+        _pendingRewardPopupRunning = true;
+
+        // ① 等主界面出来（首启场景：还在加载页/引导页，大厅刚创建时 PrimaryInterface 还没显示）
         float waited = 0f;
-        while (waited < RewardPopupTimeout &&
-               (SystemManager.Instance == null || !SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface)))
+        while (waited < RewardPopupTimeout && !IsLobbyReady())
         {
             waited += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        if (_pendingRewardGold <= 0) yield break;
+        // ② 设置页还开着时：
+        //    · 设置界面里同意的（_showRewardOverSettings）→ 直接收掉设置页并立刻弹 AwardScreen，
+        //      不等玩家手动关（AwardScreen 在 PopPanel，设置页在 UpPopPanel，不收掉会被挡在后面）；
+        //    · 其它路径（授权回调迟到 / 启动静默核对补发）→ 仍等设置页自己关掉再弹。
+        bool overSettings = _showRewardOverSettings;
+        _showRewardOverSettings = false;
+
         if (SystemManager.Instance == null)
         {
+            _pendingRewardPopupRunning = false;
             Debug.LogWarning("[AdTracking] SystemManager 为空，金币弹窗跳过");
+            yield break;
+        }
+
+        if (overSettings && IsSettingsShowing())
+        {
+            SystemManager.Instance.HidePanel(PanelType.OptionsView);
+
+            float closeWait = 0f;
+            while (closeWait < 0.6f && IsSettingsShowing())
+            {
+                closeWait += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            Debug.Log("[AdTracking] 设置页内同意 → 收起设置页，直接弹 AwardScreen 发放奖励");
+        }
+        else if (!overSettings)
+        {
+            waited = 0f;
+            while (waited < RewardPopupWaitTimeout && IsSettingsShowing())
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+        }
+
+        if (_pendingRewardGold <= 0)
+        {
+            _pendingRewardPopupRunning = false;
             yield break;
         }
 
         int gold = _pendingRewardGold;
         _pendingRewardGold = 0;
 
-        UIWindow window = SystemManager.Instance.ShowPanel(PanelType.AdsAwardScreen);
-        AdsAwardScreen screen = window != null ? window.GetComponent<AdsAwardScreen>() : null;
+        // ★ AwardScreen 展示"非商店奖励"的方式：静态 OverrideRewards（同分享奖励），
+        //   面板关闭时自己会清空。这里只放一项金币。
+        AwardScreen.OverrideRewards = new List<RewardItem>
+        {
+            new RewardItem { type = (int)LimitRewordType.Coins, amount = gold }
+        };
+
+        UIWindow window = SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
+        AwardScreen screen = window != null ? window.GetComponent<AwardScreen>() : null;
         if (screen == null)
         {
-            Debug.LogWarning("[AdTracking] AdsAwardScreen 加载失败，金币已直接发放");
+            AwardScreen.OverrideRewards = null;
+            _pendingRewardPopupRunning = false;
+            Debug.LogWarning("[AdTracking] AwardScreen 加载失败，金币已直接发放");
             yield break;
         }
 
-        string tip = Localize("AdTrackingRewardTip").Replace("{0}", gold.ToString());
-        screen.SetContent(false, gold, tip, null);
+        Debug.Log($"[AdTracking] 广告追踪激励弹窗已弹出（AwardScreen，+{gold} 金币，来源=设置页内同意:{overSettings}）");
         EventDispatcher.instance.TriggerChangeGoldUI(0, true);
+
+        _pendingRewardPopupRunning = false;
+    }
+
+    /// <summary>大厅主页是否已经显示（金币弹窗挂在这里）</summary>
+    private static bool IsLobbyReady()
+    {
+        return SystemManager.Instance != null
+               && SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface);
+    }
+
+    /// <summary>设置页是否还开着（从系统设置返回后要先等它关掉再弹金币）</summary>
+    private static bool IsSettingsShowing()
+    {
+        return SystemManager.Instance != null
+               && SystemManager.Instance.PanelIsShowing(PanelType.OptionsView);
     }
 
     private int ResolveRewardGold()

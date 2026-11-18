@@ -43,7 +43,12 @@ public partial class ShopManager : MonoBehaviour
     /// 灯泡一号位曝光失败分。
     /// 审核开时内购特殊处理不生效，直接跳过。
     /// </summary>
-    public void AddBulbExposureFail()
+    /// <param name="shownPack">
+    /// 本次界面**实际展示**的 1 号位礼包。由调用方（GetItemScreen.Close）传入最可靠；
+    /// 传 null 时依次回退到「本关该推荐位已展示记录」→「候选池第一个」（兜底，会打警告）。
+    /// 不能用候选池第一个当默认值：候选顺序 ≠ 实际决策展示的礼包，会记到没曝光的包上。
+    /// </param>
+    public void AddBulbExposureFail(ShopDataItem shownPack = null)
     {
         if (AuditConfig.IsAuditOpen)
         {
@@ -51,13 +56,36 @@ public partial class ShopManager : MonoBehaviour
             return;
         }
 
-        List<ShopDataItem> candidates = GetSlotCandidates(RecommendSlot.Bulb, 1);
-        if (candidates.Count == 0)
+        // ---------- 1. 确定"实际展示的礼包"：调用方传入 → 本关展示记录 → 候选池兜底 ----------
+        string source;
+        ShopDataItem bulb = null;
+
+        if (shownPack != null && IsBulbPack(shownPack.produceNameId))
         {
-            LogShop("AddBulbExposureFail 跳过: 灯泡一号位无候选");
-            return;
+            bulb = shownPack;
+            source = "调用方传入";
         }
-        ShopDataItem bulb = candidates[0];
+        else
+        {
+            ShopDataItem lastShown = GetLastShownPack(RecommendSlot.Bulb, 1);
+            if (lastShown != null && IsBulbPack(lastShown.produceNameId))
+            {
+                bulb = lastShown;
+                source = "本关已展示记录";
+            }
+            else
+            {
+                List<ShopDataItem> candidates = GetSlotCandidates(RecommendSlot.Bulb, 1);
+                if (candidates.Count == 0)
+                {
+                    LogShop("AddBulbExposureFail 跳过: 灯泡一号位无候选");
+                    return;
+                }
+                bulb = candidates[0];
+                source = "候选池兜底";
+                 Debug.LogWarning($"[Shop]AddBulbExposureFail 未拿到展示礼包，回退候选池第一个: {bulb.produceNameId}（可能与实际展示不符）");
+            }
+        }
 
         int gold = GameDataManager.Instance.UserData.Gold;
         int toolCount = GameDataManager.Instance.UserData.toolInfo[102].count;
@@ -86,6 +114,21 @@ public partial class ShopManager : MonoBehaviour
         limit.conversionFailScore += 3;
         limit.SetLastFailScoreTime(System.DateTime.Now);
 
-         Debug.Log($"[Shop]AddBulbExposureFail: {bulb.produceNameId} 曝光失败分={limit.conversionFailScore:F1}");
+        // ---------- 2. 写后回读：确认这条记录真的在存档表里（不是孤儿对象） ----------
+        List<ShopLimitData> table = GameDataManager.Instance != null && GameDataManager.Instance.UserData != null
+            ? GameDataManager.Instance.UserData.limitShopItems
+            : null;
+        bool inList = table != null && table.Contains(limit);
+        int listCount = table != null ? table.Count : -1;
+
+         Debug.Log($"[Shop]AddBulbExposureFail: {bulb.produceNameId} 曝光失败分={limit.conversionFailScore:F1} " +
+                  $"来源={source} inList={inList} listCount={listCount} cacheCount={shoplimitDatas.Count}, " +
+                  $"nameid={limit.nameid}, id={limit.id}");
+
+        if (!inList)
+        {
+            Debug.LogError($"[Shop]AddBulbExposureFail 写入落在表外(孤儿对象)! {bulb.produceNameId} " +
+                           $"listCount={listCount} cacheCount={shoplimitDatas.Count} → 该失败分不会被存档，重进游戏会归零");
+        }
     }
 }

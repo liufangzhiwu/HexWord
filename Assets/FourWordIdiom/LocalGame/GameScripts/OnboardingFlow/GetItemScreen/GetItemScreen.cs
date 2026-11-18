@@ -824,8 +824,13 @@ public class GetItemScreen : UIWindow
         AudioManager.Instance.TriggerVibration(10, 200);
 
         // ★ 曝光未付费：灯泡一号位（金币<80 且灯泡/火箭持有均为 0）时 F+3（C-RECO-04）
+        //   把本界面实际展示的 1 号位礼包（shopDataItem = packs[0]）传过去，
+        //   不要让它去猜候选池顺序 —— 候选顺序 ≠ 实际展示，会记到没曝光的礼包上。
         if (ShopManager.shopManager != null && !ShopManager.shopManager.paysuccess)
-            ShopManager.shopManager.AddBulbExposureFail();
+        {
+            ShopDataItem shownBulbPack = limitRewordType == LimitRewordType.Tipstool ? shopDataItem : null;
+            ShopManager.shopManager.AddBulbExposureFail(shownBulbPack);
+        }
 
         base.Close();
     }

@@ -739,6 +739,58 @@ public partial class ShopManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// 按**指定分层名**解析 AdTrackingStimulate（S_G），不改变 _layerConfig。
+    ///
+    /// 用途：广告追踪授权会即时改变 IAA 分层（未授权 IAA01/IAA02 → 已授权 IAA11/IAA12，
+    /// 后者的 AdTrackingStimulate 通常是 0_0）。授权回调里如果直接读"当前分层"，
+    /// 会读到已经变成 0_0 的配置，奖励就发不出去。所以 AdTrackingManager 会在授权前
+    /// 记下分层名，授权后按这个名字回查本方法。
+    ///
+    /// 返回 false 表示"配置表还没就绪"（而不是 S=0），调用方可据此继续等待。
+    /// </summary>
+    /// <summary>TryGetAdTrackingStimulateByLayer 的兜底加载只尝试一次，避免协程每帧重读配置刷日志</summary>
+    private bool _layerLoadTriedOnce;
+
+    public bool TryGetAdTrackingStimulateByLayer(string layer, out bool enabled, out int gold)
+    {
+        enabled = false;
+        gold = 0;
+        if (string.IsNullOrEmpty(layer)) return false;
+
+        // 配置表可能还没缓存（首启早期），兜底加载一次；仍为空就返回 false 让调用方继续等
+        if ((_layerRecords == null || _layerColMap == null || _layerDataStartRow <= 0) && !_layerLoadTriedOnce)
+        {
+            _layerLoadTriedOnce = true;
+            LoadLayerConfig();
+        }
+        if (_layerRecords == null || _layerColMap == null || _layerDataStartRow <= 0)
+            return false;
+
+        int col = _layerColMap.ContainsKey("AdTrackingStimulate") ? _layerColMap["AdTrackingStimulate"] : 9;
+
+        for (int i = _layerDataStartRow; i < _layerRecords.Count; i++)
+        {
+            var f = _layerRecords[i];
+            if (f == null || f.Count < 6) continue;
+            if (GetField(f, 0) != layer) continue;
+
+            string raw = GetField(f, col);
+            if (string.IsNullOrEmpty(raw)) return false;
+
+            string[] parts = raw.Split('_');
+            if (parts.Length < 2) return false;
+
+            enabled = GetInt(parts[0]) == 1;
+            gold = Mathf.Max(0, GetInt(parts[1]));
+            return true;
+        }
+
+        // 表里没有这个分层行
+        LogShop($"[AdTracking] 分层 {layer} 在 shop_layer 表中不存在，激励配置读取失败");
+        return false;
+    }
+
     /// <summary>是否 IAA 层（纯广告变现层；破冰礼包只对 IAA 层生效）</summary>
     private bool IsIaaLayer()
     {

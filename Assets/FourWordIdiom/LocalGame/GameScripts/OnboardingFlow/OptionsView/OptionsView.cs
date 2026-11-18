@@ -27,6 +27,11 @@ public class OptionsView : UIWindow
     [SerializeField] private GameObject auHandle; // 震动开关的视觉手柄
     [SerializeField] private GameObject adsHandle; // 广告开关的视觉手柄
 
+    [Header("广告关联行的激励表现（留空会按节点名自动查找）")]
+    //[SerializeField] private GameObject adsTrackTable;     // 整行：分层配置 AdTrackingStimulate 的 S=0 时隐藏
+    [SerializeField] private GameObject adsTrackGoldTable; // 行内 GoldTable（金币图标 + 数量）
+    [SerializeField] private Text adsTrackGoldText;         // GoldTable 里的数量文本
+
     [SerializeField] private Text VersionText;
     [SerializeField] private Text HeaderText;
     // [SerializeField] private Text musicText; // 音乐文本显示
@@ -47,7 +52,9 @@ public class OptionsView : UIWindow
         Opensprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_OpenToggle");
         Closesprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_CloseToggle");
         UpdateToggleStates(false); // 启用时更新状态，不带动画
+        ResolveAdTrackingNodes();   // 广告关联行 / GoldTable 节点（预制体未绑定时按名字兜底）
         RefreshAdTrackingToggle(); // 广告关联开关（预制体常驻行，只同步开关状态）
+        RefreshAdTrackingEntry();  // 广告追踪激励：整行显隐 + GoldTable 金币数
 #if UNITY_OPENHARMONY
         opinionBtn.gameObject.SetActive(true);
         restoreBuyBtn.gameObject.SetActive(false);
@@ -69,7 +76,9 @@ public class OptionsView : UIWindow
         VersionText.text = "Ver " + Application.version;
 
         UpdateAutoPushToggle();
+        ResolveAdTrackingNodes();
         RefreshAdTrackingToggle();
+        RefreshAdTrackingEntry();
         SubscribeAdTrackingEvent();
     }
 
@@ -169,7 +178,9 @@ public class OptionsView : UIWindow
         if (_adTracking == null) _adTracking = AdTrackingManager.Instance;
         if (_adTracking == null) _adTracking = AdTrackingManager.EnsureInstance();
 
-        bool isOn = _adTracking != null && _adTracking.IsAuthorized;
+        // 开关状态 = 存档口径（与用户分层同源），不要用 Status（iOS/编辑器上那是系统 ATT，
+        // 会和 adTrackingEnabled=1 的分层判定打架，表现为"分层算授权了，开关却显示关"）
+        bool isOn = _adTracking != null && _adTracking.IsAuthorizedForUI;
         SetToggleVisuals(adsHandle, isOn);
     }
 
@@ -185,6 +196,75 @@ public class OptionsView : UIWindow
         _adTracking.OpenSystemTrackingSettingsFromEntry();
     }
 
+    // ============================================================
+    // 广告追踪激励（AdTrackingStimulate = S_G）
+    //      S=1：显示整行 + 未领取时在行内 GoldTable 上显示"金币图标 + G"；
+    //      S=0：整行隐藏（不引导、不发奖）；
+    //      奖励领过一次后 GoldTable 不再出现（UserData.adTrackingRewardClaimed）。
+    // ============================================================
+
+    /// <summary>预制体没绑字段时，按节点名在自身层级里兜底查找（递归，避免依赖具体路径）。</summary>
+    private void ResolveAdTrackingNodes()
+    {
+        // if (adsTrackTable == null)
+        // {
+        //     Transform t = FindDeep(transform, "adsTrackTable");
+        //     if (t != null) adsTrackTable = t.gameObject;
+        // }
+
+        if (adsTrackGoldTable == null)
+        {
+            Transform t = FindDeep(transform, "GoldTable");
+            if (t != null) adsTrackGoldTable = t.gameObject;
+        }
+
+        // // ★ 预制体里 adsTrackTable 这个序列化字段被误绑到了 GoldTable（和 adsTrackGoldTable 是同一个节点），
+        // //   结果整行显隐实际去开关了"金币角标"，真正的行永远不受控。这里按名字纠正一次。
+        // if (adsTrackTable != null && adsTrackTable == adsTrackGoldTable)
+        // {
+        //     Transform t = FindDeep(transform, "adsTrackTable");
+        //     if (t != null) adsTrackTable = t.gameObject;
+        //     else adsTrackTable = null;
+        // }
+
+        if (adsTrackGoldText == null && adsTrackGoldTable != null)
+            adsTrackGoldText = adsTrackGoldTable.GetComponentInChildren<Text>(true);
+    }
+
+    /// <summary>同步"广告关联"整行与激励角标（GoldTable）。</summary>
+    private void RefreshAdTrackingEntry()
+    {
+        ResolveAdTrackingNodes();
+
+        if (_adTracking == null) _adTracking = AdTrackingManager.Instance;
+        if (_adTracking == null) _adTracking = AdTrackingManager.EnsureInstance();
+
+        // 整行显隐：平台支持，且「已授权」或「当前分层有激励（S=1）」
+        // ★ 已授权必须放行：授权后分层切到 IAA11（0_0），只看 S 会让整行消失，
+        //   首次启动就同意追踪的玩家进设置会看不到"已开启"状态。
+        bool showRow = _adTracking != null && _adTracking.ShouldShowSettingsRow();
+        //if (adsTrackTable != null) adsTrackTable.SetActive(showRow);
+
+        // 激励角标：还有"开启即得 G"可拿时才出现
+        bool showGold = showRow && _adTracking.IsRewardClaimable;
+        if (adsTrackGoldTable != null) adsTrackGoldTable.SetActive(showGold);
+        if (showGold && adsTrackGoldText != null)
+            adsTrackGoldText.text = _adTracking.StimulateGold.ToString();
+    }
+
+    private static Transform FindDeep(Transform root, string name)
+    {
+        if (root == null) return null;
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            if (child.name == name) return child;
+            Transform found = FindDeep(child, name);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
     private void SubscribeAdTrackingEvent()
     {
         if (_adTracking == null) _adTracking = AdTrackingManager.Instance;
@@ -198,6 +278,8 @@ public class OptionsView : UIWindow
     private void HandleAdAuthorizationChanged(bool granted)
     {
         RefreshAdTrackingToggle();
+        // 授权成功后：GoldTable 收起（奖励已经到手/不再可领），整行状态同步
+        RefreshAdTrackingEntry();
     }
 
     private void ToggleSounds()

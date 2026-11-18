@@ -298,7 +298,7 @@ public class EnergyScreen : UIWindow
         }
         
         GameDataManager.Instance.UserData.UpdateGold(-AppGameSettings.ShopItems.EnergyCost,true,true,"金币购买体力");
-        GameDataManager.Instance.UserData.AddBonusEnergy(1, "金币购买");
+        GameDataManager.Instance.UserData.AddBonusEnergy(1, "金币购买体力");
         MessageSystem.Instance.ShowTip("体力购买成功！");
         GameDataManager.Instance.CommitGameData();
     }

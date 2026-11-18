@@ -649,7 +649,10 @@ public class UserData
         // 评价界面显示时间
         showRateusTime = user.showRateusTime;
         //限时商店数据
-        limitShopItems = user.limitShopItems ?? new List<ShopLimitData>();
+        // ★ 不能整表替换：服务器 / 读档那份不携带决策运行时数据（F / 付费倾向 / 探价 / 购买次数），
+        //   直接赋值会把本地刚写入的记录连同 ShopManager 的缓存一起变成"孤儿"——写进去的失败分
+        //   存不下来、下次进店读回 0。改为按 id 合并，运行时字段以本地为准。
+        limitShopItems = MergeLimitShopItems(limitShopItems, user.limitShopItems);
         // ★ 购买记录（旧存档没有该字段时为 null，兜底成空列表）
         purchaseRecords = user.purchaseRecords ?? new List<PurchaseRecord>();
         isDayFreeGet = user.isDayFreeGet;
@@ -823,6 +826,52 @@ public class UserData
         CheckLifecycleEvents();
 
         CheckShopBuyData();
+
+        // ★ 表被合并/替换后，ShopManager 的 shoplimitDatas 缓存必须跟着重建，
+        //   否则它仍然指向旧对象，后续 AddBulbExposureFail 等写入会落到表外（存档看不到）。
+        if (GameDataManager.Instance != null && GameDataManager.Instance.UserData != null
+            && ShopManager.shopManager != null)
+            ShopManager.shopManager.RefreshLimitData();
+    }
+
+    /// <summary>
+    /// 合并限购跟踪表：服务器 / 读档数据只带持久字段，决策运行时字段以本地为准。
+    /// 说明：以 remote 为结果集（保持服务端新增的记录），但保留本地 id 相同记录的运行时数值。
+    /// </summary>
+    private static List<ShopLimitData> MergeLimitShopItems(List<ShopLimitData> local, List<ShopLimitData> remote)
+    {
+        if (remote == null) return local ?? new List<ShopLimitData>();
+        if (local == null || local.Count == 0) return remote;
+
+        int carried = 0;
+        foreach (ShopLimitData r in remote)
+        {
+            if (r == null) continue;
+
+            ShopLimitData l = local.FirstOrDefault(x => x != null && x.id == r.id
+                                                        && !string.IsNullOrEmpty(x.nameid)
+                                                        && x.nameid == r.nameid);
+            // id 相同但 nameid 不同（历史脏数据）时退回按 nameid 找
+            if (l == null && !string.IsNullOrEmpty(r.nameid))
+                l = local.FirstOrDefault(x => x != null && x.nameid == r.nameid);
+
+            if (l == null) continue;
+
+            // 服务器不携带 / 只携带旧值的决策运行时数据，一律以本地为准
+            r.conversionFailScore = l.conversionFailScore;
+            r.lastFailScoreTime = l.lastFailScoreTime;
+            r.payTendencyScore = l.payTendencyScore;
+            r.exploreScore = l.exploreScore;
+            r.pushStateIndex = l.pushStateIndex;
+            r.isActivityPack = l.isActivityPack;
+            if (string.IsNullOrEmpty(r.limitEndTime)) r.limitEndTime = l.limitEndTime;
+            if (r.buyCount < l.buyCount) r.buyCount = l.buyCount;
+            if (!r.isget && l.isget) { r.isget = l.isget; r.gettime = l.gettime; }
+            carried++;
+        }
+
+        Debug.Log($"[ShopLimit] 合并限购跟踪表: 本地={local.Count}, 服务器={remote.Count}, 命中保留={carried}");
+        return remote;
     }
 
     #endregion
@@ -1770,7 +1819,7 @@ public class UserData
     public void AddBonusEnergy(int amount, string message = "奖励获取")
     {
         Energy += amount;
-        SendCurrencyEvent(amount, "体力", message);
+        SendCurrencyEvent(amount, "体力", message,"",message);
     }
 
     public string GetEnergyDisplayString()
