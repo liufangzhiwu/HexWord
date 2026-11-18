@@ -34,7 +34,7 @@ public class LogManager : MonoBehaviour
     [Tooltip("勾选后：每条普通日志都会附带调用堆栈（方法名/行号）。\n" +
              "默认不勾选——Console / logcat 里只输出日志内容本身。\n" +
              "排查某个具体问题时再临时打开，或运行时调用 LogManager.SetStackTraceEnabled(true)。")]
-    public bool printStackTrace = true;
+    public bool printStackTrace = false;
 
     [Tooltip("错误 / 异常日志是否始终附带脚本堆栈（建议保持勾选，方便定位崩溃）。\n" +
              "取消勾选后，错误日志同样不带堆栈，只保留报错内容。")]

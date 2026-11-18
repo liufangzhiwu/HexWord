@@ -447,6 +447,12 @@ public class DebugMenu : UIWindow
         if (ShopManager.shopManager != null)
             ShopManager.shopManager.ClearPromotionLocalData("GM重置游戏数据");
 
+        // ★ 存档已整体归零（limitShopItems 换成空表），商店的运行时缓存必须一起重建：
+        //   否则缓存里全是"表外孤儿"，之后加的曝光失败分 / 购买计数都写不回去，
+        //   重进界面也仍按重置前的展示记录做决策 → 表现为"失败分没生效、重启后归零"。
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnGameDataWiped("GM重置游戏数据");
+
         //EventDispatcher.instance.TriggerChangeGoldUI(0,false);
         //EventDispatcher.OnChangeLanguageUpdateUI?.Invoke();
         StageHexController.Instance.LimitPuzzlecount = 0;

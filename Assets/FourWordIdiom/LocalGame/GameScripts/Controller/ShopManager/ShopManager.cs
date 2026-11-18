@@ -674,6 +674,37 @@ public partial class ShopManager : MonoBehaviour
          Debug.Log($"[Shop]RefreshLimitData: 限购数据={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
     }
 
+    /// <summary>
+    /// 存档被整体重置（GM 重置游戏数据 / 清档 / 新号）后，重建商店的全部运行时缓存。
+    ///
+    /// 为什么需要专门做一次：`UserData.InitData()` 只是把存档字段归零、换掉 limitShopItems 整张表，
+    /// 而 ShopManager 里这些缓存不会自动跟着变，会留下"重置前的旧状态"：
+    ///   - `shoplimitDatas` / `_limitAdsGifts` → 旧对象变孤儿，之后写入 F 全部落在表外；
+    ///   - `_slotLastShownPack` / `_shownNewcomer` / `_slotLockedThisLevel` → 重开界面时
+    ///     仍按重置前的展示记录做决策变化判定与回显，看起来就像"没有重新计算权重"；
+    ///   - `_slot1Decision` → 共享 1 号位决策不重算，直接返回旧结果；
+    ///   - `_propVideoTimes` → 当日视频次数还按重置前的缓存走。
+    /// 重置的语义是"回到干净新号"，所以这些必须一起清。
+    /// </summary>
+    public void OnGameDataWiped(string reason = "重置游戏数据")
+    {
+        RefreshLimitData();
+
+        _slotLastShownPack.Clear();
+        _slotLockedThisLevel.Clear();
+        _shownNewcomer.Clear();
+        ResetSlot1Decision(reason);
+
+        paysuccess = false;
+        _lastPurchasedPack = null;
+
+        // 视频次数按 UserData.adLimit 重新加载（存档已被 InitData 归零）
+        _propVideoTimes = null;
+        _propVideoTimesLoaded = false;
+
+        LogShop($"[Shop]存档已重置，运行时缓存重建完成（{reason}）：限购={shoplimitDatas.Count}, 限时礼包={_limitAdsGifts.Count}");
+    }
+
     // ======================= 日志 =======================
 
     /// <summary>
@@ -1104,12 +1135,118 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= ShopLimitData 读写 =======================
 
+    /// <summary>
+    /// 取缓存里的限购跟踪数据，并校验它**仍在 UserData.limitShopItems 表内**。
+    ///
+    /// 为什么必须校验：`limitShopItems` 会被整表换掉（读档 InitData / 服务器覆盖 / GM 重置清档），
+    /// 而 `shoplimitDatas` 是 ShopManager 的缓存字典，不会自动跟着换。
+    /// 一旦表换了而缓存没换，缓存里就全是"表外孤儿"：
+    ///   - GetOrCreateLimitData 返回孤儿 → F / buyCount 写到表外 → 存档里没有 → 重进游戏归零；
+    ///   - 读的时候又读到孤儿上过期的值，看起来像"权重没重算"。
+    /// 这里用引用比较（ShopLimitData 是 class，Contains 走 Equals→引用）做兜底，
+    /// 即使哪条路径漏了 RefreshLimitData，也不会再往表外写。
+    /// </summary>
+    private bool TryGetCachedLimitData(int id, out ShopLimitData data)
+    {
+        data = null;
+        if (!shoplimitDatas.TryGetValue(id, out data) || data == null)
+            return false;
+
+        var table = GameDataManager.Instance != null && GameDataManager.Instance.UserData != null
+            ? GameDataManager.Instance.UserData.limitShopItems
+            : null;
+
+        if (table != null && table.Contains(data))
+            return true;
+
+        // 孤儿：从缓存剔除，让调用方回表里重新取
+        shoplimitDatas.Remove(id);
+        Debug.LogWarning($"[Shop]限购缓存与存档表脱钩，已剔除孤儿: id={id}, nameid={data.nameid}, " +
+                         $"F={data.conversionFailScore:F1}, 表内条数={table?.Count ?? -1}");
+        data = null;
+        return false;
+    }
+
+    // ======================= F（转化失败分）变化节流 =======================
+    //
+    // 需求：礼包的 F 每发生一次数值变化（加分 / 归零 / 清空），该礼包在
+    //       FailScoreChangeInterval（30s）内不能再次变化。
+    // 统一收口在 TryBeginFailScoreChange + ApplyFailScoreChanged，
+    // 避免各条路径各写一份时间戳判断，出现「某条忘了检查 / 忘了刷新时间戳」的漏网。
+
+    /// <summary>F 冷却剩余秒数（0 = 现在可以变化）。日志统一用它输出倒数。</summary>
+    public float GetFailScoreCooldownRemain(ShopLimitData limit)
+    {
+        if (limit == null) return 0f;
+        DateTime last = limit.GetLastFailScoreTime();
+        if (last == DateTime.MinValue) return 0f;
+        float remain = FailScoreChangeInterval - (float)(DateTime.Now - last).TotalSeconds;
+        return remain > 0f ? remain : 0f;
+    }
+
+    /// <summary>F 冷却文案：给日志用（权重日志 / 变化日志统一口径）。</summary>
+    public string FailScoreCooldownText(ShopLimitData limit)
+    {
+        float remain = GetFailScoreCooldownRemain(limit);
+        return remain > 0f ? $"倒计时剩余 {remain:F1}s" : "可变化";
+    }
+
+    /// <summary>
+    /// F 变化前的节流检查；false = 本次变化必须跳过（未满 30 秒）。
+    /// </summary>
+    /// <param name="ignoreCooldown">
+    /// 强事件豁免（如「购买成功」）：不受 30 秒间隔约束，立即生效。
+    /// 需求口径：买了礼包就该清零，不能因为刚加过分而被节流拦下。
+    /// </param>
+    private bool TryBeginFailScoreChange(ShopLimitData limit, string tag, bool ignoreCooldown = false)
+    {
+        if (limit == null) return false;
+
+        float remain = GetFailScoreCooldownRemain(limit);
+        if (remain <= 0f) return true;
+
+        if (ignoreCooldown)
+        {
+            Debug.Log($"[Shop][失败分节流] {tag} 豁免强事件: {limit.nameid} 失败分清零，倒计时剩清零，立即生效");
+            return true;
+        }
+
+         Debug.Log($"[Shop][失败分节流] {tag} 跳过: {limit.nameid} 当前失败分={limit.conversionFailScore:F1}，" +
+                  $"倒计时剩余 {remain:F1}s（需满 {FailScoreChangeInterval:F0}s，上次变化={limit.lastFailScoreTime}）");
+        return false;
+    }
+
+    /// <summary>
+    /// F 变化提交：刷新时间戳 + 统一日志（变化后倒计时重新计 30s）。
+    /// </summary>
+    /// <param name="clearCooldown">
+    /// 强事件（购买成功）用：变化后直接清空冷却记录，让该礼包立刻可以重新累计 F，
+    /// 不把"买完"当成"刚被惩罚过"。
+    /// </param>
+    private void ApplyFailScoreChanged(ShopLimitData limit, float before, float after, string tag,
+                                       string extra = null, bool clearCooldown = false)
+    {
+        if (limit == null) return;
+
+        if (clearCooldown)
+            limit.SetLastFailScoreTime(DateTime.MinValue);   // 存空串 → 冷却视为已结束
+        else
+            limit.SetLastFailScoreTime(DateTime.Now);
+
+        string tail = string.IsNullOrEmpty(extra) ? string.Empty : "，" + extra;
+        string cooldownText = clearCooldown
+            ? "冷却已清空（强事件，可立即再次变化）"
+            : $"下次可变化倒计时 {GetFailScoreCooldownRemain(limit):F1}s（间隔 {FailScoreChangeInterval:F0}s）";
+
+         Debug.Log($"[Shop][失败分变化] {tag}: {limit.nameid} F {before:F1} → {after:F1}{tail}，{cooldownText}");
+    }
+
     private ShopLimitData GetOrCreateLimitData(ShopDataItem item)
     {
         if (item == null) return null;
 
         ShopLimitData data;
-        if (shoplimitDatas.TryGetValue(item.id, out data) && data != null)
+        if (TryGetCachedLimitData(item.id, out data))
             return data;
 
         data = GameDataManager.Instance.UserData.limitShopItems
@@ -1136,7 +1273,7 @@ public partial class ShopManager : MonoBehaviour
         if (item == null) return null;
 
         ShopLimitData data;
-        if (shoplimitDatas.TryGetValue(item.id, out data) && data != null)
+        if (TryGetCachedLimitData(item.id, out data))
             return data;
 
         data = GameDataManager.Instance.UserData.limitShopItems
@@ -1672,6 +1809,9 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>
     /// 决策结果变化时，把上一次展示礼包的转化失败分 F 归零（需求 C-RECO-04）。
     /// 换包说明上一次的 F 已不适用于新决策，避免旧分持续压制/抬高候选。
+    ///
+    /// ★ 归零也是一次"F 数值变化"，同样受 FailScoreChangeInterval（30s）节流约束：
+    ///   刚加过分 30 秒内不会归零，避免「加 3 → 立刻归零 → 再加」的自我抵消。
     /// </summary>
     public void ResetFailScoreOnDecisionChange(RecommendSlot slot, int featured, ShopDataItem newPack)
     {
@@ -1681,16 +1821,42 @@ public partial class ShopManager : MonoBehaviour
         if (last != null && last.produceNameId != newPack.produceNameId)
         {
             ShopLimitData limit = GetLimitData(last);
-            if (limit != null && limit.conversionFailScore != 0f)
+
+            // ★ 旧包是新人礼、且本关被规则排除（新人礼互斥/归属别的槽）时，换包不是 F 压下去的，
+            //   而是「本关不能再出」。这时归零等于把刚累计的 F 白清掉，
+            //   等下一关新人礼重新可展示时 F 已经没了，惩罚彻底失效 → 这里保留 F。
+            if (limit != null && limit.conversionFailScore != 0f
+                && IsNewcomerLabel(last.labelZh) && IsNewcomerBlockedForSlot(slot))
+            {
+                 Debug.Log($"[Shop][决策变化归零] {slot}_{featured} 跳过: {last.produceNameId} 是新人礼且本关不可再展示（规则排除，非 F 生效），" +
+                          $"保留 F={limit.conversionFailScore:F1}，新决策={newPack.produceNameId}");
+            }
+            else if (limit != null && limit.conversionFailScore != 0f
+                && TryBeginFailScoreChange(limit, $"[决策变化归零] {slot}_{featured}"))
             {
                 float before = limit.conversionFailScore;
                 limit.conversionFailScore = 0f;
-                limit.SetLastFailScoreTime(DateTime.Now);
-                 Debug.Log($"[Shop]  [决策变化归零] {slot}_{featured}: {last.produceNameId} F {before:F1} → 0，新决策={newPack.produceNameId}");
+                ApplyFailScoreChanged(limit, before, 0f, $"[决策变化归零] {slot}_{featured}",
+                                      $"新决策={newPack.produceNameId}");
+
+                // 归零同样是权重输入变化，延迟落盘
+                if (GameDataManager.Instance != null)
+                    GameDataManager.Instance.CommitGameDataDelayed();
             }
         }
 
         RecordSlotShownPack(slot, featured, newPack);
+    }
+
+    /// <summary>
+    /// 该推荐位当前是否被「槽位互斥」挡住（不能出新人礼）。不产生额外日志。
+    /// 注意：本关已出过新人礼**不再**算被挡（同槽允许重复出）。
+    /// </summary>
+    private bool IsNewcomerBlockedForSlot(RecommendSlot slot)
+    {
+        ResolveNewcomerOwner();
+        if (!_newcomerOwner.HasValue) return true;             // 本关没有归属槽，谁都不能出
+        return _newcomerOwner.Value != slot;                    // 已归属别的槽
     }
 
     public void UnlockAllSlots()
@@ -1740,7 +1906,8 @@ public partial class ShopManager : MonoBehaviour
         }
 
          Debug.Log($"[Shop]计算决策权重(CalculateDecisionWeight) {item.produceNameId}（推荐位={SlotNameCn(slot)}）：" +
-                $"基础={info.baseWeight:F1}，付费倾向={info.payTendency:F1}，探价={info.exploreScore:F1}，失败分={info.failScore:F1}" +
+                $"基础={info.baseWeight:F1}，付费倾向={info.payTendency:F1}，探价={info.exploreScore:F1}，" +
+                $"失败分={info.failScore:F1}({FailScoreCooldownText(GetLimitData(item))})" +
                 $" → 礼包分={info.packWeight:F2}(封顶{info.cap:F0})；" +
                 $"节日周末={info.specialWeight:F2}，高峰={info.peakWeight:F2}，流失回归={info.returnWeight:F2}，" +
                 $"冷却={info.cooldown:F2}，推送指数={info.pushIndex:F2} → 最终权重={info.decision:F2}");
@@ -2042,7 +2209,12 @@ public partial class ShopManager : MonoBehaviour
             return null;
         }
 
-        List<KeyValuePair<ShopDataItem, float>> scored = pool
+        // ★ 权重计算与「能否展示」解耦：
+        //   以前直接对 pool 算权重，新人礼被互斥剔除后连权重都不算、日志也不打，
+        //   于是它身上记的曝光失败分 F 永远不会被「重新计算」，看起来像 F 没生效。
+        //   现在：全部有效候选都算权重并打日志（F 真正参与计算），
+        //        但只有 pool 内的礼包才有资格胜出（展示规则不变）。
+        List<KeyValuePair<ShopDataItem, float>> scored = valid
             .Select(c => new KeyValuePair<ShopDataItem, float>(c, CalculateDecisionWeight(c, GetCfg(c.produceNameId), slot)))
             .ToList();
 
@@ -2050,14 +2222,18 @@ public partial class ShopManager : MonoBehaviour
         {
             var item = kv.Key;
             ShopLimitData limit = GetLimitData(item);
-             Debug.Log($"[Shop]      候选明细 {item.produceNameId}: 权重={kv.Value:F2}, " +
-                    $"giftType={item.giftType}, price={item.price}, " +
-                    $"payTendency={limit?.payTendencyScore ?? 0f:F1}, explore={limit?.exploreScore ?? 0f:F1}, fail={limit?.conversionFailScore ?? 0f:F1}, " +
-                    $"pushIndex={limit?.pushStateIndex ?? 1f:F2}, cooldown={GetCooldownCoefficient(item):F2}, label={item.labelZh}");
+            bool selectable = pool.Contains(item);
+             // Debug.Log($"[Shop]      候选明细 {item.produceNameId}: 权重={kv.Value:F2}, " +
+             //        $"giftType={item.giftType}, price={item.price}, " +
+             //        $"payTendency={limit?.payTendencyScore ?? 0f:F1}, explore={limit?.exploreScore ?? 0f:F1}, fail={limit?.conversionFailScore ?? 0f:F1}, " +
+             //        $"pushIndex={limit?.pushStateIndex ?? 1f:F2}, cooldown={GetCooldownCoefficient(item):F2}, label={item.labelZh}, " +
+             //        $"可展示={(selectable ? "是" : "否(新人礼本关已出/归属其他槽)")}");
         }
 
-        float max = scored.Max(x => x.Value);
-        var top = scored.Where(x => Mathf.Approximately(x.Value, max)).ToList();
+        // 胜出只在可展示池里挑（与旧逻辑等价）
+        List<KeyValuePair<ShopDataItem, float>> selectableScored = scored.Where(kv => pool.Contains(kv.Key)).ToList();
+        float max = selectableScored.Max(x => x.Value);
+        var top = selectableScored.Where(x => Mathf.Approximately(x.Value, max)).ToList();
 
         // 权重并列：先按「低价优先」（需求 C-RECO-09），同价再随机
         float minPrice = top.Min(x => x.Key.price);
@@ -2105,9 +2281,14 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>
     /// 当前推荐位本关是否允许出「新人礼」（需求 C-RECO-09）。
-    /// 规则：
-    ///   1. 本关任何弹窗已出过新人礼 → 不再并发第二个；
-    ///   2. 优先级 灯泡 ＞ 复活 ＞ 火箭：更高优先级的弹窗本关已出新人礼时，低优先级弹窗不允许出。
+    /// 规则：只做「槽位互斥」——本关只有一个槽能出新人礼（灯泡 ＞ 复活 ＞ 火箭）。
+    ///
+    /// ★ 已取消「同一关内出过一次就不再出」：
+    ///   那条会让新人礼**自己把自己**标记成出过（_shownNewcomer[slot] = 自己），
+    ///   重开弹窗时新人礼被整包踢出候选，记在它身上的曝光失败分 F 就永远不参与决策，
+    ///   表现为「触发 F 后重开界面权重没重算」。现在允许同槽重复出，由 F 逐步压低它的权重，
+    ///   压到低于其他候选时自然换包。
+    ///   _shownNewcomer 仍保留（只用于日志/排查，不再作为拦截条件）。
     /// </summary>
     private bool CanShowNewcomerGift(RecommendSlot slot)
     {
@@ -2128,11 +2309,11 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
-        // 同一关内已经出过一次就不再出
+        // 仅提示，不再拦截：同槽重复出新人礼是允许的，交给 F 权重决定是否换包
         if (_shownNewcomer.ContainsKey(slot))
         {
-             Debug.Log($"[Shop]CanShowNewcomerGift=false: 本关 {slot} 已出过新人礼({_shownNewcomer[slot]})");
-            return false;
+             Debug.Log($"[Shop]CanShowNewcomerGift: 本关 {slot} 已出过新人礼({_shownNewcomer[slot]})，" +
+                      $"按「仅槽位互斥」口径允许重复出，F 决定是否换包");
         }
 
         return true;
@@ -2479,24 +2660,34 @@ public partial class ShopManager : MonoBehaviour
         }
 
         ShopLimitData limit = GetOrCreateLimitData(item);
-        DateTime lastFail = limit.GetLastFailScoreTime();
+        if (limit == null) return;
 
-        if (lastFail != DateTime.MinValue && (DateTime.Now - lastFail).TotalSeconds < FailScoreChangeInterval)
-        {
-             Debug.Log($"[Shop]AddConversionFail 跳过: {item.produceNameId} 距上次不足{FailScoreChangeInterval}s");
+        // ★ F 每变化一次要间隔 FailScoreChangeInterval 秒才能再变（统一节流）
+        if (!TryBeginFailScoreChange(limit, "转化失败+5"))
             return;
-        }
 
-        limit.conversionFailScore += 5;
-        limit.SetLastFailScoreTime(DateTime.Now);
-         Debug.Log($"[Shop]AddConversionFail: {item.produceNameId} 转化失败分={limit.conversionFailScore:F1}");
+        float before = limit.conversionFailScore;
+        limit.conversionFailScore = before + 5;
+        ApplyFailScoreChanged(limit, before, limit.conversionFailScore, "转化失败+5");
+
+        // F 是决策权重输入，写入后延迟落盘，避免杀进程丢失
+        if (GameDataManager.Instance != null)
+            GameDataManager.Instance.CommitGameDataDelayed();
     }
 
     public void ResetConversionFail(ShopDataItem item)
     {
         if (item == null) return;
         ShopLimitData limit = GetOrCreateLimitData(item);
-        limit.conversionFailScore = 0;
+        if (limit == null || limit.conversionFailScore == 0f) return;
+
+        // ★ 归零同样是一次"数值变化"，同样受 30 秒间隔约束
+        if (!TryBeginFailScoreChange(limit, "转化失败归零"))
+            return;
+
+        float before = limit.conversionFailScore;
+        limit.conversionFailScore = 0f;
+        ApplyFailScoreChanged(limit, before, 0f, "转化失败归零");
     }
 
     // ======================= 购买流程 =======================
@@ -3223,9 +3414,15 @@ public partial class ShopManager : MonoBehaviour
             }
         }
 
-        float failBefore = limit.conversionFailScore;
-        limit.conversionFailScore = 0;
-         Debug.Log($"[Shop]  [转化失败分] {shopDataItem.produceNameId} {failBefore:F1} → 0");
+        // ★ 购买成功是强事件：豁免 30 秒节流，买了就直接清零，并清空该礼包的 F 冷却记录
+        if (limit.conversionFailScore != 0f
+            && TryBeginFailScoreChange(limit, "购买成功归零", ignoreCooldown: true))
+        {
+            float failBefore = limit.conversionFailScore;
+            limit.conversionFailScore = 0f;
+            ApplyFailScoreChanged(limit, failBefore, 0f, "购买成功归零",
+                                  $"礼包={shopDataItem.produceNameId}", clearCooldown: true);
+        }
 
         limit.buyCount++;
 
@@ -3330,7 +3527,7 @@ public partial class ShopManager : MonoBehaviour
         }
 
          Debug.Log($"[Shop]{basic} → 基础权重={info.baseWeight:F1}，付费倾向={info.payTendency:F1}，" +
-                $"探价={info.exploreScore:F1}，转化失败分={info.failScore:F1}，" +
+                $"探价={info.exploreScore:F1}，转化失败分={info.failScore:F1}({FailScoreCooldownText(GetLimitData(item))})，" +
                 $"礼包分={info.packWeight:F2}(封顶{info.cap:F0})；" +
                 $"节日周末={info.specialWeight:F1}，高峰={info.peakWeight:F1}，流失回归={info.returnWeight:F1}；" +
                 $"冷却={info.cooldown:F2}，推送指数={info.pushIndex:F2} → 最终权重={info.decision:F2}");

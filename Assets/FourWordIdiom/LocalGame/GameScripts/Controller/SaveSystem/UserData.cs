@@ -561,6 +561,13 @@ public class UserData
         beginnerBonusStartTime = "";
 
         #endregion
+
+        // ★ 重置数据（GM 重置 / 新号 / 清档）同样换了 limitShopItems 整张表，
+        //   ShopManager 的 shoplimitDatas 缓存必须跟着重建，否则缓存里全是"表外孤儿"：
+        //   后续 AddBulbExposureFail / 购买计数都写到孤儿上，存档里看不到，重进游戏就归零。
+        if (GameDataManager.Instance != null && GameDataManager.Instance.UserData != null
+            && ShopManager.shopManager != null)
+            ShopManager.shopManager.RefreshLimitData();
     }
 
     /// <summary>
@@ -836,14 +843,30 @@ public class UserData
 
     /// <summary>
     /// 合并限购跟踪表：服务器 / 读档数据只带持久字段，决策运行时字段以本地为准。
-    /// 说明：以 remote 为结果集（保持服务端新增的记录），但保留本地 id 相同记录的运行时数值。
+    ///
+    /// ★ 以**本地为基底**（这是关键）：限购跟踪表本质是运行时数据，服务器表经常是空的
+    ///   （旧包没上报 / 服务端不存这个字段）。如果反过来以服务器为结果集，
+    ///   「服务器 = []、本地有 3 条」时会把本地记录整表丢掉，
+    ///   直接表现就是：写了失败分 F → 一次同步后 F 归零、重开界面权重也不带惩罚。
     /// </summary>
     private static List<ShopLimitData> MergeLimitShopItems(List<ShopLimitData> local, List<ShopLimitData> remote)
     {
-        if (remote == null) return local ?? new List<ShopLimitData>();
-        if (local == null || local.Count == 0) return remote;
+        if (local == null) local = new List<ShopLimitData>();
 
-        int carried = 0;
+        // 服务器没有数据（最常见）→ 本地整表原样保留
+        if (remote == null || remote.Count == 0)
+        {
+            Debug.Log($"[ShopLimit] 合并限购跟踪表: 本地={local.Count}, 服务器=空 → 保留本地");
+            return local;
+        }
+
+        if (local.Count == 0)
+        {
+            Debug.Log($"[ShopLimit] 合并限购跟踪表: 本地=空, 服务器={remote.Count} → 采用服务器");
+            return remote;
+        }
+
+        int merged = 0, added = 0;
         foreach (ShopLimitData r in remote)
         {
             if (r == null) continue;
@@ -854,24 +877,30 @@ public class UserData
             // id 相同但 nameid 不同（历史脏数据）时退回按 nameid 找
             if (l == null && !string.IsNullOrEmpty(r.nameid))
                 l = local.FirstOrDefault(x => x != null && x.nameid == r.nameid);
+            if (l == null)
+                l = local.FirstOrDefault(x => x != null && x.id == r.id);
 
-            if (l == null) continue;
+            if (l == null)
+            {
+                // 本地没有、服务器有 → 追加（保留服务端新增记录）
+                local.Add(r);
+                added++;
+                continue;
+            }
 
-            // 服务器不携带 / 只携带旧值的决策运行时数据，一律以本地为准
-            r.conversionFailScore = l.conversionFailScore;
-            r.lastFailScoreTime = l.lastFailScoreTime;
-            r.payTendencyScore = l.payTendencyScore;
-            r.exploreScore = l.exploreScore;
-            r.pushStateIndex = l.pushStateIndex;
-            r.isActivityPack = l.isActivityPack;
-            if (string.IsNullOrEmpty(r.limitEndTime)) r.limitEndTime = l.limitEndTime;
-            if (r.buyCount < l.buyCount) r.buyCount = l.buyCount;
-            if (!r.isget && l.isget) { r.isget = l.isget; r.gettime = l.gettime; }
-            carried++;
+            // ★ 运行时字段（conversionFailScore / lastFailScoreTime / payTendencyScore /
+            //   exploreScore / pushStateIndex / isActivityPack）一律以本地为准，不做覆盖。
+            //   只补本地空缺的持久字段。
+            if (string.IsNullOrEmpty(l.limitEndTime)) l.limitEndTime = r.limitEndTime;
+            if (l.buyCount < r.buyCount) l.buyCount = r.buyCount;
+            if (!l.isget && r.isget) { l.isget = r.isget; l.gettime = r.gettime; }
+            if (l.id <= 0) l.id = r.id;
+            if (string.IsNullOrEmpty(l.nameid)) l.nameid = r.nameid;
+            merged++;
         }
 
-        Debug.Log($"[ShopLimit] 合并限购跟踪表: 本地={local.Count}, 服务器={remote.Count}, 命中保留={carried}");
-        return remote;
+        Debug.Log($"[ShopLimit] 合并限购跟踪表: 本地={local.Count - added}, 服务器={remote.Count}, 命中保留={merged}, 新增={added}");
+        return local;
     }
 
     #endregion

@@ -823,13 +823,16 @@ public class GetItemScreen : UIWindow
     {
         AudioManager.Instance.TriggerVibration(10, 200);
 
-        // ★ 曝光未付费：灯泡一号位（金币<80 且灯泡/火箭持有均为 0）时 F+3（C-RECO-04）
-        //   把本界面实际展示的 1 号位礼包（shopDataItem = packs[0]）传过去，
-        //   不要让它去猜候选池顺序 —— 候选顺序 ≠ 实际展示，会记到没曝光的礼包上。
-        if (ShopManager.shopManager != null && !ShopManager.shopManager.paysuccess)
+        // ★ 曝光未付费：**仅灯泡界面**（limitRewordType=Tipstool）关闭时，给本次实际展示的
+        //   灯泡一号位礼包（shopDataItem = packs[0]）F+3（C-RECO-04）。
+        //   ★ 必须把类型判断放在调用外层：本界面被灯泡/火箭(AutoComplete)/复活(ReStartTool)等共用，
+        //     以前只在"传参"上做判断、方法照样被调用，方法内部再兜底去抓灯泡位候选，
+        //     结果火箭界面关闭时把 F+3 记到了 BulbBox01 上（日志：来源=候选池兜底）。
+        if (ShopManager.shopManager != null
+            && !ShopManager.shopManager.paysuccess
+            && limitRewordType == LimitRewordType.Tipstool)
         {
-            ShopDataItem shownBulbPack = limitRewordType == LimitRewordType.Tipstool ? shopDataItem : null;
-            ShopManager.shopManager.AddBulbExposureFail(shownBulbPack);
+            ShopManager.shopManager.AddBulbExposureFail(shopDataItem);
         }
 
         base.Close();
