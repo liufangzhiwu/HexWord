@@ -10,7 +10,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
-public class SignWinScreen : UIWindow
+public class SignWinScreen : UIWindow, IBackGestureClosePanel
 {
    [SerializeField] private Button okBtn; // 显示日历按钮
    [SerializeField] private Text lastWinTimes; // 连胜签到次数
@@ -241,6 +241,27 @@ public class SignWinScreen : UIWindow
     protected override void InitializeUIComponents()
     {
         okBtn.AddVibraClickAction(ClickOKBtn); // 绑定关闭按钮事件
+    }
+
+    /// <summary>
+    /// 侧滑 = 「领取/确定」按钮（okBtn）。
+    ///
+    /// 这个界面把奖励交接做在了 okBtn 里：签到天数 %10 时要接着弹 SevenSignScreen（宝箱进度领奖），
+    /// 回归玩家要弹 ReturnFirstWinScreen。若侧滑只走 base.Close()，这两条奖励链会被整段跳过，
+    /// 且当天的签到已经记过（ShowSignReward 在 OnEnable 就已领取），玩家当天再进也不会补 —— 奖励直接丢。
+    /// 按钮在入场动画（约 5s）结束前是隐藏的，这段时间侧滑只吞掉手势，避免在动画中途串起弹窗。
+    /// </summary>
+    public void CloseFromBackGesture()
+    {
+        if (okBtn == null) { base.Close(); return; }
+
+        if (!okBtn.gameObject.activeSelf)
+        {
+            Debug.Log("[BackGesture] 签到奖励动画播放中，侧滑忽略（等待领取按钮出现）");
+            return;
+        }
+
+        ClickOKBtn();
     }
 
     private void ClickOKBtn()

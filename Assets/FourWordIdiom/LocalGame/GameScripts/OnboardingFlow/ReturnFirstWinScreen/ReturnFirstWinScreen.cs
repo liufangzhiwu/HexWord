@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ReturnFirstWinScreen : UIWindow
+public class ReturnFirstWinScreen : UIWindow, IBackGestureClosePanel
 {
     [SerializeField] private Button closeBtn; // 关闭按钮
     [SerializeField] private Text title; // 音效文本显示
@@ -38,6 +38,8 @@ public class ReturnFirstWinScreen : UIWindow
     
      private void InitAwardUI()
     {
+        // 注：这是「流失用户回归」奖励，玩家每次隔 15 天以上回归都应再发一次，
+        //     因此不加一次性领取标记；面板每次显示即正常发放。
         VictoryRewardConfig rewardConfig= StreakManager.Instance.GetFirstWinSignRewards();
         rewardItems = rewardConfig.normalRewards;
 
@@ -58,7 +60,7 @@ public class ReturnFirstWinScreen : UIWindow
        
         icon.preserveAspect = true;
         string message = "回归首胜奖励";
-       
+
         switch (type)
         {
             case LimitRewordType.Coins:
@@ -102,6 +104,12 @@ public class ReturnFirstWinScreen : UIWindow
     {
         closeBtn.AddVibraClickAction(Close); // 绑定关闭按钮事件
         ClaimBtn.AddVibraClickAction(ClickClaimBtn); // 绑定关闭按钮事件
+    }
+
+    /// <summary>侧滑 = 「领取」按钮（含奖励飞入动画），与玩家点领取完全一致。</summary>
+    public void CloseFromBackGesture()
+    {
+        ClickClaimBtn();
     }
 
     private void ClickClaimBtn()

@@ -1474,8 +1474,8 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // 条件3：结算页其它弹窗（插屏 / 每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 等）
-        //   ★ 这些更优先的弹窗会弹时：破冰礼包「不主动弹窗」，但**照常登记**，
-        //     这样结束页 / 主页的破冰入口按钮仍然显示，玩家可以自己点开。
+        //   ★ 这些更优先的弹窗会弹时：破冰礼包「不弹窗，也不登记入口」（需求 2026-11-21）——
+        //     入口只属于"弹窗真的弹出来过"的那一次结算。
         if (!entryOnly && IsSettlementOtherPopupShowing())
         {
             SuppressSettlementGiftPopup("结算页会弹更优先的弹窗（破冰）");
@@ -1595,12 +1595,15 @@ public partial class ShopManager : MonoBehaviour
     ///      活动（倒计时）结束后满 7 天才会有新的弹窗。
     ///   6. 金币 &lt; 200。
     ///
-    /// 弹出哪一款（★ 策划口径：A 优先）：
-    ///   1. 有「最近一次成功购买的礼包 A」（不含金币商品和两个去广告）→ 直接弹 A 的优惠款（复购）；
-    ///   2. 没有 A（从没成功买过礼包）→ 才走「支付调起次数」规则：
-    ///      取调起次数最多的礼包，并列取价格最低的；连调起记录都没有则不弹；
-    ///   3. 优惠款 = 加量不加价（额外金币 = 取整(礼包金币价值 × 10%)，显示在 GiftAddItem 里）；
-    ///   4. 限时 = 本次连续周末 / 节假日结束时间。
+    /// 弹出哪一款（★ 策划口径 2026-11-21 修订）：
+    ///   <b>前提</b>：必须存在「最近一次成功购买的礼包 A」（type=2，不含金币商品和两个去广告）。
+    ///     没有 A → <b>不弹</b>；A 已限购售罄 → <b>不弹</b>。
+    ///   1. 金币 &lt; 100，且存在「价格 &gt; MAX(A,10)」的可售礼包（排除有限购次数的礼包和节日活动礼包）
+    ///      → 弹<b>支付调起次数最多</b>的那款；次数并列 → 取价格最低的；
+    ///   2. 金币 &lt; 100，但更贵的礼包都没被点击过（调起次数全 0）→ 回落弹 A；
+    ///   3. 金币 ≥ 100，或不存在价格更高的可售礼包 → 弹 A 的优惠款；
+    ///   4. 优惠款 = 加量不加价（额外金币 = 取整(礼包金币价值 × 10%)，显示在 GiftAddItem 里）；
+    ///   5. 限时 = 本次连续周末 / 节假日结束时间。
     ///
     /// ★ bug54 根因：A / 调起次数 / 上次弹窗时间以前都是运行时字段，杀进程就丢 → 条件永远凑不齐；
     ///   且没有「周末或节假日」这一条、选了「升档礼包（giftType+1）」而不是策划要求的调起次数规则、限时也没设。
@@ -1651,8 +1654,8 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // 条件3：结算页其它弹窗（插屏 / 每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 等）
-        //   ★ 这些更优先的弹窗会弹时：复购礼包「不主动弹窗」，但**照常登记**，
-        //     这样结束页 / 主页的限时折扣入口按钮仍然显示，玩家可以自己点开。
+        //   ★ 这些更优先的弹窗会弹时：复购礼包「不弹窗，也不登记入口」（需求 2026-11-21）——
+        //     入口只属于"弹窗真的弹出来过"的那一次结算。
         if (!entryOnly && IsSettlementOtherPopupShowing())
         {
             SuppressSettlementGiftPopup("结算页会弹更优先的弹窗（复购）");
@@ -1670,29 +1673,33 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // 基准礼包 A：最近一次完成购买的商店礼包（本地记录，排除金币商品/去广告）。
-        // ★ 策划口径：优先弹「最近一次成功购买的礼包A」的优惠款；没有A时才走「支付调起次数」规则。
         ShopDataItem a = GetRepurchaseBasePack();
 
-        // A 已经限购售罄 → 再弹它也买不了，退回调起次数规则
-        if (a != null && IsLimitedOut(a))
+        // ★ 前提（策划 2026-11-21 新增）：必须存在「最近一次成功购买的礼包 A」（type=2，排除金币商品和两个去广告）。
+        //   从没成功买过礼包 → 复购不弹。以前这里会退化成「按调起次数推一款玩家从没买过的礼包」。
+        if (a == null)
         {
-             Debug.Log($"[Shop] 结算礼包 复购 礼包A={a.produceNameId} 已售罄 → 改走支付调起次数规则");
-            a = null;
+            LogShop(" 结算礼包 复购 TryShowRepurchasePopup 跳过: 没有成功购买过的礼包A（非去广告礼包）→ 不弹");
+            return false;
         }
 
-        float basePrice = a != null ? Mathf.Max(a.price, RepurchaseMinBasePrice) : RepurchaseMinBasePrice;
+        // A 已经限购售罄 → 它自己买不了了；按策划口径「A 售罄则不弹」，不再退化成调起次数规则
+        if (IsLimitedOut(a))
+        {
+            LogShop($" 结算礼包 复购 TryShowRepurchasePopup 跳过: 礼包A={a.produceNameId} 已售罄 → 不弹");
+            return false;
+        }
 
-        // 候选：有 A 时按「价格 ≥ MAX(A,10)」；没有 A 时取全部可售礼包（靠调起次数挑）
-        List<ShopDataItem> candidates = BuildRepurchaseCandidates(a, basePrice);
+        float basePrice = Mathf.Max(a.price, RepurchaseMinBasePrice);
 
-        LogShop(a != null
-            ? $" 结算礼包 [复购] 礼包A={a.produceNameId}(price={a.price})，基准价={basePrice}，" +
-              $"候选={candidates.Count} 个：[{string.Join(", ", candidates.Select(x => $"{x.produceNameId}({x.price}/调起{GetPayInvokeCount(x.produceNameId)}次)"))}]"
-            : $"[复购] 没有「成功购买的礼包A」→ 走支付调起次数规则，候选={candidates.Count} 个：" +
-              $"[{string.Join(", ", candidates.Select(x => $"{x.produceNameId}({x.price}/调起{GetPayInvokeCount(x.produceNameId)}次)"))}]");
+        // 候选：价格 > MAX(A,10) 的可售礼包（排除限购次数礼包 / 节日活动礼包 / 去广告）
+        List<ShopDataItem> candidates = BuildRepurchaseCandidates(basePrice);
+
+        LogShop($" 结算礼包 [复购] 礼包A={a.produceNameId}(price={a.price})，基准价={basePrice}，金币={gold}，" +
+                $"候选={candidates.Count} 个：[{string.Join(", ", candidates.Select(x => $"{x.produceNameId}({x.price}/调起{GetPayInvokeCount(x.produceNameId)}次)"))}]");
 
         // 走到这里说明本活动期还没弹过（inOfferCountdown 已在上面 return）→ 正常选包 + 主动弹窗
-        ShopDataItem chosen = PickRepurchasePack(a, candidates);
+        ShopDataItem chosen = PickRepurchasePack(a, candidates, gold);
         // 限时 = 本次连续周末 / 节假日结束时间
         DateTime endTime = GetCurrentHolidayEndTime();
 
@@ -1719,13 +1726,16 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 复购候选礼包池：type=2、非去广告、未售罄、非活动礼包、不限购；有 A 时要求价格 ≥ MAX(A,10)。
+    /// 复购候选礼包池：type=2、非去广告、未售罄、非活动礼包、不限购；要求价格 <b>严格大于</b> MAX(A,10)。
+    ///
+    /// 需求·弹出礼包 3：「存在价格 &gt; A 的礼包（排除有限购次数的礼包和节日活动礼包）」——
+    /// 基准取 MAX(A,10)（需求·弹出礼包 2 的统计口径），用 &gt; 而不是 &gt;=，A 自己正好等于基准价会被自然排除。
     /// </summary>
-    private List<ShopDataItem> BuildRepurchaseCandidates(ShopDataItem a, float basePrice)
+    private List<ShopDataItem> BuildRepurchaseCandidates(float basePrice)
     {
         return shopItems
             .Where(x => x != null && x.type == 2
-                        && (a == null || x.price >= basePrice)
+                        && x.price > basePrice
                         && !IsRemoveAdsProduct(x.produceNameId)
                         && !IsLimitedOut(x)
                         && !IsActivityPack(x)
@@ -1750,9 +1760,23 @@ public partial class ShopManager : MonoBehaviour
         if (offer == null)
         {
             ShopDataItem a = GetRepurchaseBasePack();
-            if (a != null && IsLimitedOut(a)) a = null;
-            float basePrice = a != null ? Mathf.Max(a.price, RepurchaseMinBasePrice) : RepurchaseMinBasePrice;
-            offer = PickRepurchasePack(a, BuildRepurchaseCandidates(a, basePrice));
+
+            // 前提：必须有成功购买过的礼包 A；A 限购售罄则不弹（策划口径）→ 按钮也不给
+            if (a == null)
+            {
+                LogShop("[Shop] 结算礼包 复购 没有成功购买过的礼包A → 结算页不显示复购按钮");
+                ClearSettlementGift("没有成功购买过的礼包A");
+                return;
+            }
+            if (IsLimitedOut(a))
+            {
+                LogShop($"[Shop] 结算礼包 复购 礼包A={a.produceNameId} 已售罄 → 结算页不显示复购按钮");
+                ClearSettlementGift("礼包A已售罄");
+                return;
+            }
+
+            float basePrice = Mathf.Max(a.price, RepurchaseMinBasePrice);
+            offer = PickRepurchasePack(a, BuildRepurchaseCandidates(basePrice), GetPlayerGold());
             if (offer != null) SaveRepurchaseOfferPack(offer.produceNameId);
         }
 
@@ -1775,44 +1799,55 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 选包（策划口径）：
-    ///   1. 优先「最近一次成功购买的礼包A」的优惠款（复购）；
-    ///   2. 没有 A（从没成功买过礼包）才走「支付调起次数」：次数最多 → 并列取价格最低；
-    ///   3. 连调起记录也没有 → 不弹（返回 null）。
+    /// 选包（策划口径 2026-11-21 修订）：
+    ///   <b>前提</b>：必须存在「最近一次成功购买的礼包 A」（type=2，排除金币商品和两个去广告）。
+    ///     从没成功买过礼包 → 复购<b>不弹</b>（以前会退化成按调起次数推一款没买过的礼包）。
+    ///   1. 金币 &lt; 100 且存在「价格 &gt; MAX(A,10)」的可售礼包 → 挑<b>支付调起次数最多</b>的那款；
+    ///      次数并列 → 取<b>价格最低</b>的；
+    ///   2. 金币 &lt; 100 但更贵的礼包都<b>没被点击过</b>（调起次数全 0）→ 回落弹 A；
+    ///   3. 金币 ≥ 100 / 没有更贵的可售礼包 → 弹 A 的优惠款。
     /// </summary>
-    private ShopDataItem PickRepurchasePack(ShopDataItem a, List<ShopDataItem> candidates)
+    private ShopDataItem PickRepurchasePack(ShopDataItem a, List<ShopDataItem> candidates, long gold)
     {
-        // 1. 有成功购买的礼包 → 直接弹它的优惠款
-        if (a != null)
+        // ★ 前提（新增）：必须有成功购买过的礼包 A
+        if (a == null)
         {
-             Debug.Log($"[Shop] 结算礼包 复购 优先弹最近一次成功购买礼包的优惠款：{a.produceNameId}(price={a.price})");
-            return a;
-        }
-
-        // 2. 没有 A → 用支付调起次数（玩家点过但没付款的礼包）
-        if (candidates == null || candidates.Count == 0)
-        {
-            LogShop(" [Shop] 结算礼包 复购 没有成功购买的礼包A，也没有可售礼包 → 不弹");
+            LogShop(" [Shop] 结算礼包 复购 没有成功购买过的礼包A（非去广告礼包）→ 不弹");
             return null;
         }
 
-        int maxInvoke = 0;
-        for (int i = 0; i < candidates.Count; i++)
-            maxInvoke = Mathf.Max(maxInvoke, GetPayInvokeCount(candidates[i].produceNameId));
-
-        if (maxInvoke <= 0)
+        // ★ 金币 < 100 且存在价格 > MAX(A,10) 的可售礼包 → 优先推「调起次数最多」的那款
+        if (gold < RepurchaseLowGoldThreshold && candidates != null && candidates.Count > 0)
         {
-            LogShop("[Shop] 结算礼包 复购 没有成功购买的礼包，也没有支付调起记录 → 不弹");
-            return null;
+            int maxInvoke = 0;
+            for (int i = 0; i < candidates.Count; i++)
+                maxInvoke = Mathf.Max(maxInvoke, GetPayInvokeCount(candidates[i].produceNameId));
+
+            if (maxInvoke > 0)
+            {
+                // 次数并列 → 价格最低
+                ShopDataItem picked = candidates
+                    .Where(x => GetPayInvokeCount(x.produceNameId) == maxInvoke)
+                    .OrderBy(x => x.price)
+                    .FirstOrDefault();
+
+                 Debug.Log($"[Shop] 结算礼包 复购 金币={gold} < {RepurchaseLowGoldThreshold} 且存在 {candidates.Count} 个更贵礼包 → " +
+                        $"取调起次数最多({maxInvoke})的礼包：{picked?.produceNameId}(price={picked?.price})");
+                return picked ?? a;
+            }
+
+            LogShop($"[Shop] 结算礼包 复购 金币={gold} < {RepurchaseLowGoldThreshold}，{candidates.Count} 个更贵礼包都没有调起记录 → 回落弹礼包A");
+        }
+        else
+        {
+            LogShop(gold >= RepurchaseLowGoldThreshold
+                ? $"[Shop] 结算礼包 复购 金币={gold} ≥ {RepurchaseLowGoldThreshold} → 弹礼包A的优惠款"
+                : "[Shop] 结算礼包 复购 没有价格更高的可售礼包 → 弹礼包A的优惠款");
         }
 
-        ShopDataItem picked = candidates
-            .Where(x => GetPayInvokeCount(x.produceNameId) == maxInvoke)
-            .OrderBy(x => x.price)
-            .FirstOrDefault();
-
-         Debug.Log($"[Shop] 结算礼包 复购 无礼包 → 取调起次数最多({maxInvoke})的礼包：{picked?.produceNameId}");
-        return picked;
+        // 兜底：弹 A 的优惠款
+        Debug.Log($"[Shop] 结算礼包 复购 弹最近一次成功购买礼包的优惠款：{a.produceNameId}(price={a.price})");
+        return a;
     }
 
     /// <summary>展示复购弹窗：展示用副本里补一条加赠金币，真实商品数据不动，加赠只在成交那一单发放。</summary>
@@ -2062,8 +2097,9 @@ public partial class ShopManager : MonoBehaviour
     /// <returns>登记后主页是否应显示礼包入口</returns>
     public bool TryEnsureHomeSettlementGiftEntry()
     {
-        if (CurrentSettlementGift != SettlementGiftKind.None)
-            return true;    // 结算页带过来的登记还在，直接用
+        // 结算页带过来的登记还在、且入口当时是"弹过窗才亮"的可见态 → 直接用
+        if (SettlementGiftEntryVisible && CurrentSettlementGift != SettlementGiftKind.None)
+            return true;
 
         bool breakIceRestorable = CanRestoreBreakIceEntry();
         bool repurchaseRestorable = CanRestoreRepurchaseEntry();
@@ -2157,9 +2193,10 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 【预登记】只跑策略、只登记结算页礼包（不弹窗），让破冰/复购按钮跟结算页一起出现。
-    /// 之后再调 PlayPreparedSettlementGiftPopup() 才真正弹 AdsDiscountScreen。
-    /// 用于拼字结算页：以前是结算页出来 1.2s 后才判定，按钮「啪」地晚一步冒出来，很突兀。
+    /// 【预登记】只跑策略、只登记礼包数据（不弹窗，<b>入口也先不显示</b>）。
+    /// 之后再调 PlayPreparedSettlementGiftPopup() 才真正弹 AdsDiscountScreen，
+    /// 弹窗弹出的那一刻才把结束页/主页的礼包入口点亮（需求 2026-11-21）。
+    /// 用于拼字结算页：策略提前跑完，避免结算页出来才发现没礼包。
     /// </summary>
     public bool PrepareSettlementGift(int interAdsCount)
     {
@@ -2185,7 +2222,8 @@ public partial class ShopManager : MonoBehaviour
     {
         if (!_settlementGiftPopupPending) return;
 
-        // ★ 到点前再确认一次：结算页已经被插屏 / 七日胜利 / 灯明心悟 / 锦鲤竞速等占住 → 礼包不弹（按钮保留）
+        // ★ 到点前再确认一次：结算页已经被插屏 / 七日胜利 / 灯明心悟 / 锦鲤竞速等占住
+        //   → 礼包不弹，并且入口也不给（本次礼包整体作废，需求 2026-11-21）
         if (IsSettlementOtherPopupShowing())
         {
             CancelPreparedSettlementGiftPopup("到点时有更优先的结算页弹窗/插屏在展示");

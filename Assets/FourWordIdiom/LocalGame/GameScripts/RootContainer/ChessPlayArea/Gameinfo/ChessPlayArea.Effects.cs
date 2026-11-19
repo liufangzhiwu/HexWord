@@ -1570,12 +1570,65 @@ public partial class ChessPlayArea
             if (kvp.Value != null)
             {
                 kvp.Value.transform.DOKill();
-                kvp.Value.SetActive(false);
+                StopParticlesAndDeactivate(kvp.Value);
             }
         }
     
         _isPraiseShowing = false;
         _currentActivePriority = int.MaxValue;
+    }
+
+    /// <summary>
+    /// 退出/进入关卡时把鼓励横幅（UIEffect_shoushi01_x 鼓掌 + UIEffect_shoushi02_x 底板）
+    /// 的池实例、协程、状态全部复位。
+    ///
+    /// 为什么必须有这一步：面板 SetActive(false) 时 Unity 会停掉 PlayPraiseUISequence，
+    /// 迭代器被丢弃，finally 里的 SetActive(false) 不会执行 —— 池里那两个对象就停在
+    /// activeSelf=true。下次进关卡面板一激活，它们跟着亮起来，于是"退出再进关卡又看到
+    /// 上次的鼓掌手势 + 底板"；同时 _isPraiseShowing 仍是 true，新关卡的鼓励还会被
+    /// 「已有横幅在展示」这条规则挡掉。
+    /// </summary>
+    private void ResetPraiseEffects(string reason)
+    {
+        if (_praiseDisplayRoutine != null)
+        {
+            StopCoroutine(_praiseDisplayRoutine);
+            _praiseDisplayRoutine = null;
+        }
+
+        foreach (var kvp in _praiseCachePool)
+        {
+            GameObject obj = kvp.Value;
+            if (obj == null) continue;
+
+            obj.transform.DOKill();
+            StopParticlesAndDeactivate(obj);
+        }
+
+        _isPraiseShowing = false;
+        _currentActivePriority = int.MaxValue;
+
+        if (_praiseCachePool.Count > 0)
+            Debug.Log($"[Praise] {reason}：已复位 {_praiseCachePool.Count} 个鼓励横幅池实例");
+    }
+
+    /// <summary>
+    /// 停粒子再隐藏。只 SetActive(false) 不够 —— 粒子系统在重新激活时按 Play On Awake
+    /// 重播，上一次没播完的粒子会跟着一起放出来。
+    /// </summary>
+    private static void StopParticlesAndDeactivate(GameObject obj)
+    {
+        if (obj == null) return;
+
+        var pss = obj.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < pss.Length; i++)
+        {
+            if (pss[i] == null) continue;
+            pss[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            pss[i].Clear(true);
+        }
+
+        obj.SetActive(false);
     }
     private IEnumerator PlayPraiseUISequence(PraiseConfig config)
     {
@@ -1699,6 +1752,7 @@ public partial class ChessPlayArea
         if (_praiseCachePool.TryGetValue(prefabName, out GameObject obj) && obj != null)
         {
             obj.SetActive(true);
+            RestartParticles(obj);   // 池实例上次可能停在播到一半，取用时强制从头播
             return obj;
         }
 
@@ -1707,11 +1761,26 @@ public partial class ChessPlayArea
         {
             obj = Instantiate(prefab, this.transform);
             _praiseCachePool[prefabName] = obj;
+            RestartParticles(obj);   // 首次实例化同样统一走一次，避免 Play On Awake 与代码播放撞车
             return obj;
         }
 
         Debug.LogError($"🚨 鼓励反馈预制体加载失败: {prefabName}");
         return null;
+    }
+
+    /// <summary>清掉残留粒子后重新播放，保证每次取用都是干净的一遍。</summary>
+    private static void RestartParticles(GameObject obj)
+    {
+        if (obj == null) return;
+
+        var pss = obj.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < pss.Length; i++)
+        {
+            if (pss[i] == null) continue;
+            pss[i].Clear(true);
+            pss[i].Play(true);
+        }
     }
     
     /// <summary>

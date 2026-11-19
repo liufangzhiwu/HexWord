@@ -5,7 +5,7 @@ using Middleware;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class AdsAwardScreen : UIWindow
+public class AdsAwardScreen : UIWindow, IBackGestureClosePanel
 {
     [Header("UI Elements")]
     [SerializeField] private Image bImage;
@@ -24,6 +24,7 @@ public class AdsAwardScreen : UIWindow
     private Action _onClaimed;
     private bool _hasContent;
     private bool _firstAds;
+    private bool _closing;
 
     private void Start()
     {
@@ -35,6 +36,7 @@ public class AdsAwardScreen : UIWindow
     protected override void OnEnable()
     {
         base.OnEnable();
+        _closing = false;   // 面板复用：每次打开复位关闭标记
         ApplyContent();
     }
 
@@ -94,10 +96,24 @@ public class AdsAwardScreen : UIWindow
     }
 
     /// <summary>
+    /// 侧滑 = 「领取/关闭」按钮（两者本来就共用 OnCloseClicked）。
+    ///
+    /// 直接 HidePanel 会跳过金币飞入与 HeaderSection 的隐藏，留下一个常驻的顶栏，
+    /// 并且下一次金币弹窗会叠在它上面，所以统一走按钮逻辑。
+    /// </summary>
+    public void CloseFromBackGesture()
+    {
+        OnCloseClicked();
+    }
+
+    /// <summary>
     /// 关闭和下方按钮共用：发放金币 + 关闭
     /// </summary>
     private void OnCloseClicked()
     {
+        if (_closing) return;   // 侧滑与 AutoHide 协程可能同时到，防重复飞入/重复关面板
+        _closing = true;
+
         //var cb = _onClaimed;
         _onClaimed = null;  // 防止重复触发
         //cb?.Invoke();

@@ -7,6 +7,9 @@ using UnityEngine.UI;
 
 public class LimitTimeScreen : UIWindow, IBackGestureClosePanel
 {        
+    /// <summary>自动过关开启时，活动页自动关闭前的停留时长（秒）。</summary>
+    private const float AutoCloseDelayWhenAutoPlay = 10f;
+
     [SerializeField] private GameObject minTimeObj; // 关闭按钮
     [SerializeField] private Button helpBtn; // 关闭按钮
     [SerializeField] private Button closeBtn; // 关闭按钮
@@ -68,12 +71,17 @@ public class LimitTimeScreen : UIWindow, IBackGestureClosePanel
         yield return new WaitForSeconds(1.2f);
         
         UpdateProgress();
-        
-        yield return new WaitForSeconds(0.5f);
-        
-        if (GameCoreManager.Instance.IsTrueAuto)
+
+        // 自动过关（挂机）状态：不再 1.7s 就把活动页弹走，停留 AutoCloseDelayWhenAutoPlay 秒后再自动收尾，
+        // 期间玩家仍可手动关闭/查看帮助；若期间已手动关闭则不再重复关闭。
+        if (GameCoreManager.Instance != null && GameCoreManager.Instance.IsTrueAuto)
         {
-            OnCloseBtn();
+            yield return new WaitForSeconds(AutoCloseDelayWhenAutoPlay);
+
+            if (gameObject != null && gameObject.activeInHierarchy)
+            {
+                OnCloseBtn();
+            }
         }
     }
 

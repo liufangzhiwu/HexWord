@@ -66,7 +66,7 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
     private static readonly Color BreakIceTitleOutline = new Color(0.2343f, 0.015f, 0.485f, 1f);
 
     /// <summary>破冰礼包奖励容器的 GridLayoutGroup 左边距（Padding.Left）</summary>
-    private const int BreakIceGridPaddingLeft = 130;
+    private const int BreakIceGridPaddingLeft = 0;
     /// <summary>破冰礼包奖励网格的横向间距</summary>
     private const float BreakIceGridSpacingX = 80f;
 
@@ -632,7 +632,7 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
         {
             TimeSpan span = _endTime.Subtract(DateTime.Now);
             if (timeText != null)
-                timeText.text = UIUtilities.FormatTimeRemaining(span);
+                timeText.text = UIUtilities.FormatGiftCountdownHms(span);
             yield return new WaitForSeconds(1f);
         }
 
@@ -922,10 +922,15 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
         float height = large
             ? (repurchaseLarge ? RepurchaseRewardBgHeightLarge : RewardBgHeightLarge)
             : RewardBgHeightSmall;
-
+        
         float iconY = large
             ? (repurchaseLarge ? RepurchaseGiftIconYLarge : GiftIconYLarge)
             : GiftIconYSmall;
+
+        if (IsBreakIcePopup())
+        {
+            iconY = 0;
+        }
 
         if (rewardBg == null)
         {
@@ -977,6 +982,11 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
                 giftIcon.SetNativeSize();       // 原图大小
             else
                 iconRt.sizeDelta = _defaultGiftIconSize;
+            
+            if (IsBreakIcePopup())
+            {
+                giftIcon.SetNativeSize();  
+            }
         }
 
         Debug.Log($"[AdsDiscountScreen] 奖励区布局: 奖励数={rewardCount}{(repurchaseLarge ? "(复购)" : "")} → " +

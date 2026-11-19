@@ -228,6 +228,22 @@ public class ZenSettlementScreen : UIWindow
             StartCoroutine(GrantAndCloseRoutine());
         }
     }
+    /// <summary>
+    /// 侧滑返回：等价于点「继续 / 领取」按钮，而不是把面板关掉。
+    /// 领取奖励、上报服务器、清缓存这些副作用全在按钮流程里，侧滑必须复用它，
+    /// 否则玩家一滑就跳过领奖（或关掉下层 ZenRankScreen 造成状态错位）。
+    /// 动画播放期间与点按钮一致：忽略本次操作。
+    /// </summary>
+    public void AdvanceFromBackGesture()
+    {
+        if (isAnimating)
+        {
+            Debug.Log("[BackGesture] 段位结算动画中，侧滑忽略（等价于按钮不可点）");
+            return;
+        }
+        OnNextButtonClicked();
+    }
+
     // 🌟 专用于不展示第二阶段时，等待金币飞完直接关闭界面
     private IEnumerator GrantAndCloseRoutine()
     {

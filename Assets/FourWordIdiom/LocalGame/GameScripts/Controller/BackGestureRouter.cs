@@ -12,6 +12,8 @@ using UnityEngine.SceneManagement;
 ///   2. 暂停界面开着              → 关掉并继续游戏（走 PauseGameScreen 自己的恢复逻辑）
 ///   3. 复活弹窗 / 断点续玩窗      → 各自界面内的按钮逻辑
 ///                                  （复活弹窗=CloseBtn；续玩窗=取消 cancelQuitBtn）
+///   3.1 排行榜结算（月榜/段位）    → 等价于点「继续 / 领取」，不是关面板
+///                                  （领奖、上报服务器、清缓存都挂在按钮流程里）
 ///   4. 任意弹窗/活动页/商店页/
 ///      道具弹窗/礼包弹窗/模式选择    → 关掉最上层那个；若它实现了 IBackGestureClosePanel，
 ///                                  则执行它自己的按钮逻辑（SelectMode = 点当前模式的按钮；
@@ -29,6 +31,8 @@ public static class BackGestureRouter
     /// <summary>
     /// 这些界面即使在弹窗层，也不参与「侧滑关弹窗」——它们由关卡/场景规则接管，
     /// 或者有自己的关闭流程（复活弹窗 / 断点续玩窗 / 暂停窗）。
+    /// 其中 ZenSettlementScreen / OverallSettlementScreen 不关窗，侧滑改为
+    /// 「继续 / 领取」，见 TryAdvanceRankSettlement。
     /// </summary>
     private static readonly HashSet<string> PopupCloseBlacklist = new HashSet<string>
     {
@@ -121,6 +125,9 @@ public static class BackGestureRouter
 
         // 3. 复活弹窗 / 断点续玩窗：侧滑 = 点击它们自己的关闭按钮
         if (TryCloseReviveOrContinue()) return;
+
+        // 3.1 排行榜结算界面：侧滑 = 「继续 / 领取」，不是关面板
+        if (TryAdvanceRankSettlement()) return;
 
         // 4. 各类弹窗 / 活动页 / 商店页 / 道具 / 礼包弹窗
         if (TryCloseTopPopup()) return;
@@ -245,6 +252,45 @@ public static class BackGestureRouter
             {
                 Debug.Log("[BackGesture] 侧滑 = 断点续玩窗的「取消」按钮");
                 cont.CloseFromBackGesture();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 排行榜结算（月榜 OverallSettlementScreen / 段位 ZenSettlementScreen）显示时，
+    /// 侧滑等价于点它自己的「继续 / 领取」主按钮，而不是关面板。
+    ///
+    /// 这两个界面在 PopupCloseBlacklist 里（不能被 TryCloseTopPopup 直接 HidePanel），
+    /// 领取奖励、上报服务器、清排行榜缓存、存档都挂在按钮流程上；
+    /// 直接关面板 = 玩家看到奖励却一分钱没拿到，月榜还会让
+    /// CheckMonthlySettlementRoutine 误判「已结算」而不再补发。
+    /// </summary>
+    private static bool TryAdvanceRankSettlement()
+    {
+        // 月榜优先：它的关闭会让下层段位结算继续走，两者同时可见时先推进上面那个。
+        if (SystemManager.Instance.PanelIsShowing(PanelType.OverallSettlementScreen))
+        {
+            OverallSettlementScreen monthly =
+                SystemManager.Instance.GetPanel(PanelType.OverallSettlementScreen) as OverallSettlementScreen;
+            if (monthly != null)
+            {
+                Debug.Log("[BackGesture] 侧滑 = 月榜结算的「继续 / 领取」");
+                monthly.AdvanceFromBackGesture();
+                return true;
+            }
+        }
+
+        if (SystemManager.Instance.PanelIsShowing(PanelType.ZenSettlementScreen))
+        {
+            ZenSettlementScreen zen =
+                SystemManager.Instance.GetPanel(PanelType.ZenSettlementScreen) as ZenSettlementScreen;
+            if (zen != null)
+            {
+                Debug.Log("[BackGesture] 侧滑 = 段位结算的「继续 / 领取」");
+                zen.AdvanceFromBackGesture();
                 return true;
             }
         }

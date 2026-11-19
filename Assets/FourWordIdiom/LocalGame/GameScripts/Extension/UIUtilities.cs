@@ -181,6 +181,21 @@ public static class UIUtilities
         return $"{hoursText}{HourSymbol}{minutesText}{MinuteSymbol}";
     }
 
+    /// <summary>
+    /// 礼包 / 去广告倒计时专用格式：<c>时:分:秒</c>（例 23:59:01）。
+    ///
+    /// 用在礼包弹窗（AdsDiscountScreen）、礼包入口按钮（结算页 / 主页）、去广告界面（RemoveAdsScreen）上，
+    /// 需求统一为这个数字格式，不再走 <see cref="FormatTimeRemaining"/> 的「X小时Y分」多语言文案。
+    /// 小时取<b>总小时数</b>（超过 24 小时照常显示，例如 71:59:01），不折算成"天"。
+    /// </summary>
+    public static string FormatGiftCountdownHms(TimeSpan remainingTime)
+    {
+        if (remainingTime < TimeSpan.Zero) remainingTime = TimeSpan.Zero;
+
+        int totalHours = (int)remainingTime.TotalHours;
+        return string.Format("{0:00}:{1:00}:{2:00}", totalHours, remainingTime.Minutes, remainingTime.Seconds);
+    }
+
     /// <summary>默认货币文化（ja-JP）。缓存成静态对象：原来每个商品都要 CreateSpecificCulture 一次。</summary>
     private static readonly CultureInfo DefaultCurrencyCulture = CultureInfo.CreateSpecificCulture("ja-JP");
 

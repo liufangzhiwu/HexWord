@@ -201,7 +201,10 @@ public class ShopItem : ShopItemBase
             adsShiny.enabled = true;
             adsShiny.GetComponent<Image>().sprite = LoadShopIcon("UI_button_Bg");
             transform.GetComponent<Button>().interactable = true;
-            btnTagicon.gameObject.SetActive(true);
+            // ★ 每日免费金币：当日首次是「免费直发」，不挂广告视频角标；
+            //   领过之后要播激励视频，才需要角标提示。原来这里无条件打开，
+            //   会把「免费」状态下也标上一个视频图标（与 FreeItemTable.InitUI 的口径相反）。
+            btnTagicon.gameObject.SetActive(GameDataManager.Instance.UserData.isDayFreeGet);
             shopPriceText.gameObject.SetActive(true);
         }
     }
@@ -391,7 +394,10 @@ public class ShopItem : ShopItemBase
     {
         if (shopDataItem == null) return;
 
-        if (shopDataItem.produceNameId == "FreeGoods" && GameDataManager.Instance.UserData.isDayFreeGet)
+        bool isFreeGoods = shopDataItem.produceNameId == "FreeGoods";
+        bool needVideo = isFreeGoods && GameDataManager.Instance.UserData.isDayFreeGet;
+
+        if (needVideo)
         {
             if (!isAdStateActive)
             {
@@ -406,6 +412,10 @@ public class ShopItem : ShopItemBase
             isAdStateActive = false;
             _lastShakeZ = 0f;
             if (adsShiny != null) adsShiny.enabled = false;
+
+            // ★ 每日免费金币在「当日首次免费还没领」时是免广告直发 → 不挂广告视频角标。
+            //   （非 FreeGoods 商品不动 btnTagicon：那可能是金币图标等其它角标）
+            if (isFreeGoods && btnTagicon != null) btnTagicon.gameObject.SetActive(false);
 
             if (isTransformCached)
             {

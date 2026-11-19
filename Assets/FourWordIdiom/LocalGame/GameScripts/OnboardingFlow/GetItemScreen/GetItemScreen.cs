@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class GetItemScreen : UIWindow
+public class GetItemScreen : UIWindow, IBackGestureClosePanel
 {
     [SerializeField] private Button closeBtn; // 关闭按钮
     [SerializeField] private List<Button> pointBtns; // 页面按钮模板（只用 [0] 实例化）
@@ -818,6 +818,17 @@ public class GetItemScreen : UIWindow
     }
 
     // ======================= 关闭 =======================
+
+    /// <summary>
+    /// 侧滑 = 右上角关闭按钮（本界面 Close()）。
+    ///
+    /// 直接 HidePanel 会跳过 Close() 里的曝光未付费埋点（灯泡位 F+3）以及震动反馈，
+    /// 因此统一走按钮逻辑；「领取」按钮要拉激励视频，侧滑不代替玩家看广告。
+    /// </summary>
+    public void CloseFromBackGesture()
+    {
+        Close();
+    }
 
     public void Close()
     {

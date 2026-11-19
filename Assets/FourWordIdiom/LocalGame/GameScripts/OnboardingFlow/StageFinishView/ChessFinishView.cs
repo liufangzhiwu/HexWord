@@ -195,7 +195,8 @@ public class ChessFinishView : UIWindow
         
         StartCoroutine(UpdateFishRankUI());
         DailyTaskManager.Instance.UpateButterflyTaskUI();
-        butterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
+        // 蝶园入口显隐/锁定态统一由 RefreshButterflyButtonState 处理（未解锁也要露出带锁入口）
+        RefreshButterflyButtonState();
         // 去重：oldPupaCount 已在方法开头声明，这里直接复用（同步合并时重复引入）
         UpdateButterflyProgressUI(Mathf.Max(0, oldPupaCount), true);
 
@@ -218,6 +219,14 @@ public class ChessFinishView : UIWindow
 
         // 结算页礼包入口（破冰 / 限时折扣）：按当前登记状态刷新（策略尚未决定时两个都隐藏）
         RefreshSettlementGiftButtons();
+
+        // ★ 预登记时入口是隐藏的，真正弹窗发生在 1.2s 后的 PlayPreparedSettlementGiftPopup，
+        //   那时要靠这个事件把按钮淡入，否则结算页会一直看不到入口。
+        if (ShopManager.shopManager != null)
+        {
+            ShopManager.shopManager.OnSettlementGiftChanged -= RefreshSettlementGiftButtons; // 防重复订阅
+            ShopManager.shopManager.OnSettlementGiftChanged += RefreshSettlementGiftButtons;
+        }
     }
 
     // ======================= 限时去广告 BUFF 逻辑 =======================
@@ -308,8 +317,9 @@ public class ChessFinishView : UIWindow
     }
 
     /// <summary>
-    /// 剩余时间格式化：与复购礼包 / AdsDiscountScreen 的倒计时统一（X小时Y分，走多语言符号）。
-    /// 以前这里是「X天 HH:mm:ss / HH:mm:ss / mm:ss」。
+    /// 剩余时间格式化：多语言「X小时Y分」。
+    /// 注：这不是礼包入口 —— 礼包弹窗与礼包按钮的倒计时已统一改为「时:分:秒」
+    /// （见 <see cref="UIUtilities.FormatGiftCountdownHms"/>），限时去广告 BUFF 文案保持原格式。
     /// </summary>
     private string FormatRemoveAdsRemainTime(double remainSeconds)
     {
@@ -342,7 +352,10 @@ public class ChessFinishView : UIWindow
     /// </summary>
     public void RefreshSettlementGiftButtons()
     {
+        // ★ 入口只属于「礼包弹窗真的弹出来过」的那次结算（需求 2026-11-21）：
+        //   被每日连胜 / 灯笼结算 / 新手奖励压掉时，弹窗不出，入口也不出。
         ShopManager.SettlementGiftKind kind = ShopManager.shopManager != null
+                                                 && ShopManager.shopManager.SettlementGiftEntryVisible
             ? ShopManager.shopManager.CurrentSettlementGift
             : ShopManager.SettlementGiftKind.None;
 
@@ -497,9 +510,9 @@ public class ChessFinishView : UIWindow
         bool visible = show && remainSeconds > 0;
         if (timeObj != null && timeObj.activeSelf != visible) timeObj.SetActive(visible);
 
-        // ★ 格式必须和 AdsDiscountScreen 的倒计时一致（同一个工具方法：X小时Y分）
+        // ★ 格式必须和 AdsDiscountScreen 的倒计时一致（同一个工具方法：时:分:秒，如 23:59:01）
         if (timeText != null && visible)
-            timeText.text = UIUtilities.FormatTimeRemaining(TimeSpan.FromSeconds(remainSeconds));
+            timeText.text = UIUtilities.FormatGiftCountdownHms(TimeSpan.FromSeconds(remainSeconds));
     }
 
     /// <summary>按钮下的倒计时节点（TimeObj/TimeText）没绑定时按路径自动查找。</summary>
@@ -593,6 +606,10 @@ public class ChessFinishView : UIWindow
             }
         }
     }
+    /// <summary>
+    /// 蝶园入口三态：未到展示关卡隐藏 → 达到展示关卡（第 8 关通关后）显示带锁态 → 第 12 关解锁。
+    /// 锁态表现：蝴蝶图标半透明 + 锁图标 + 「第12关」文本，按钮不可点。
+    /// </summary>
     private void RefreshButterflyButtonState()
     {
         if (butterflyBtn == null) return;
@@ -602,17 +619,87 @@ public class ChessFinishView : UIWindow
         bool isShow = curStage > AppGameSettings.ShowRequirements.ButterflyGardenShowLevel || isLegacyOpened;
         butterflyBtn.gameObject.SetActive(isShow);
         if (!isShow) return;
-        
+
+        bool isLocked = !isLegacyOpened;
+        butterflyBtn.interactable = !isLocked;
+
+        // 锁图标 / 解锁文案节点：预制体引用缺失时按节点名兜底查找
+        GameObject lockObj = ButterflyLock != null
+            ? ButterflyLock
+            : FindChildNode(butterflyBtn.transform, "butterfylock");
+        GameObject lockTextObj = ButterflyLockText != null
+            ? ButterflyLockText
+            : FindChildNode(butterflyBtn.transform, "TimeObj");
+
+        if (lockObj != null) lockObj.SetActive(isLocked);
+
+        Slider slider = butterflyBtn.GetComponentInChildren<Slider>(true);
+        // 进度文字是 Slider 的子节点，跟着进度条一起收起
+        Text pupaText = slider != null ? slider.GetComponentInChildren<Text>(true) : null;
+
+        if (isLocked)
+        {
+            Image icon = butterflyBtn.GetComponent<Image>();
+            if (icon != null)
+            {
+                Color c = icon.color;
+                c.a = 0.9f;
+                icon.color = c;
+            }
+
+            if (slider != null) slider.gameObject.SetActive(false);
+            if (pupaText != null) pupaText.gameObject.SetActive(false);
+            if (ButterflyRedpoint != null) ButterflyRedpoint.SetActive(false);
+            // 锁态不展示蝶蛹计时（TimeObj/bdTimeText 已被锁文案占用）
+            if (_butterflyTimerDisplay != null) _butterflyTimerDisplay.SetActive(false);
+
+            if (lockTextObj != null)
+            {
+                lockTextObj.SetActive(true);
+                Text lockText = lockTextObj.GetComponentInChildren<Text>(true);
+                if (lockText != null)
+                {
+                    // 预制体里这个 Text 组件默认关闭，锁态需要显式打开
+                    lockText.enabled = true;
+                    lockText.text = $"第{AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel}关";
+                }
+                Image bg = lockTextObj.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
+            }
+            return;
+        }
+
+        // 已解锁：复原图标与进度区
+        Image unlockedIcon = butterflyBtn.GetComponent<Image>();
+        if (unlockedIcon != null)
+        {
+            Color c = unlockedIcon.color;
+            c.a = 1f;
+            unlockedIcon.color = c;
+        }
+        if (lockTextObj != null) lockTextObj.SetActive(false);
+
         if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
         {
-            // 补齐局部引用（原代码直接使用未声明的 slider / pupaText）
-            Slider slider = butterflyBtn.GetComponentInChildren<Slider>(true);
-            Text pupaText = butterflyBtn.GetComponentInChildren<Text>(true);
             if (slider != null) slider.gameObject.SetActive(true);
             if (pupaText != null) pupaText.gameObject.SetActive(true);
             UpdateButterflyProgressUI(_currentVisualPupa, true);
         }
+    }
+
+    /// <summary>按名字在当前节点及其子层级里查找（预制体引用未绑定时兜底用）。</summary>
+    private static GameObject FindChildNode(Transform root, string childName)
+    {
+        if (root == null) return null;
+        Transform direct = root.Find(childName);
+        if (direct != null) return direct.gameObject;
+        for (int i = 0; i < root.childCount; i++)
+        {
+            GameObject found = FindChildNode(root.GetChild(i), childName);
+            if (found != null) return found;
+        }
+        return null;
     }
     
     
@@ -1099,7 +1186,7 @@ public class ChessFinishView : UIWindow
             CheckReturnFirstWinScreen();
         }
 
-        // ★ 结算页更优先的弹窗（插屏 / 七日胜利 / 灯明心悟 / 锦鲤竞速…）会弹时，破冰/复购礼包不弹（按钮保留）
+        // ★ 结算页更优先的弹窗（插屏 / 七日胜利 / 灯明心悟 / 锦鲤竞速…）会弹时，破冰/复购礼包不弹、也不出入口
         CancelSettlementGiftIfBlocked();
         
         if (isShowWinSign||isTriggerFirstWin)
@@ -1144,7 +1231,7 @@ public class ChessFinishView : UIWindow
                 yield return new WaitUntil(() => !SystemManager.Instance.PanelIsShowing(PanelType.LimitTimeScreen));
                 
                 int pupaEarnedFromLimit = GameDataManager.Instance.ButterflyData.currPupa - pupaBeforeLimit;
-                if (pupaEarnedFromLimit > 0 && butterflyBtn.gameObject.activeSelf)
+                if (pupaEarnedFromLimit > 0 && butterflyBtn.gameObject.activeSelf && ButterfliesManager.Instance.IsOpen)
                 {
                     // 从限时活动按钮(世界坐标)起飞向蝴蝶按钮
                     yield return StartCoroutine(PlayPupaFlyAnim(pupaEarnedFromLimit, _limitBtnTable._limitTimeEventButton.transform.position, true));
@@ -1258,7 +1345,8 @@ public class ChessFinishView : UIWindow
             yield return StartCoroutine(PlayZenLotusFlyAnim());
         }
 
-        if (butterflyBtn.gameObject.activeSelf && ChessStageController.Instance.EarnedPupaThisLevel > 0)
+        if (butterflyBtn.gameObject.activeSelf && ButterfliesManager.Instance.IsOpen
+            && ChessStageController.Instance.EarnedPupaThisLevel > 0)
         {
             yield return StartCoroutine(PlayPupaFlyAnim(ChessStageController.Instance.EarnedPupaThisLevel,Vector3.zero, false));
         }
@@ -1616,6 +1704,8 @@ public class ChessFinishView : UIWindow
 
     private void OnButterflyClick()
     {
+        // 未解锁（第 12 关前）只展示带锁入口，不进入蝶园
+        if (!ButterfliesManager.Instance.IsOpen) return;
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
         {
             SystemManager.Instance.HidePanel(PanelType.PrimaryInterface);
@@ -1717,14 +1807,17 @@ public class ChessFinishView : UIWindow
     }
 
     /// <summary>
-    /// 结算页会弹更优先的弹窗时，取消本次破冰/复购礼包弹窗（结算页的礼包按钮保留，玩家仍可手动点开）。
+    /// 结算页会弹更优先的弹窗时，取消本次破冰/复购礼包（<b>弹窗不出，入口也不出</b>）。
     ///
-    /// 需求（破冰/复购「弹窗条件 3」）：当前结算页会弹以下任意一个 → 礼包不弹，只留入口：
+    /// 需求（2026-11-21 口径）：当前结算页会弹以下任意一个 → 本次礼包整条链路作废：
     ///   1. 插屏（AdRuleManager.CanShowInterstitial 预判，本页稍后才真正播）
     ///   2. 每日连胜 / 七日胜利弹窗（SignWinScreen）/ 七日签到（SevenSignScreen）
     ///   3. 灯笼结算 / 灯明心悟页面（LimitTimeScreen，达成进度会自动弹）
     ///   4. 新手奖励活动进度弹窗（BeginnerBonusPanel）
     ///   5. 锦鲤竞速活动开始弹窗（CompetitionStart，玩家点捕鱼入口才弹；展示中会走 ShopManager 的实时拦截）
+    ///
+    /// ★ 以前这里只"取消弹窗、保留按钮"，玩家会看到一个没弹过窗的礼包入口；
+    ///   现在 <see cref="ShopManager.SuppressSettlementGiftPopup"/> 会连登记和入口一起撤掉。
     /// </summary>
     private void CancelSettlementGiftIfBlocked()
     {
@@ -1942,6 +2035,8 @@ public class ChessFinishView : UIWindow
         DailyTaskManager.Instance.OnDailyButterflyTaskUI -= UpdateButterflyTime;
         LimitTimeManager.Instance.OnLimitTimeBtnUI -= UpdateSliderProgress;
         FishInfoController.Instance.OnFishTimeUpdated -= _matchFishtable.UpdateFishTime;
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnSettlementGiftChanged -= RefreshSettlementGiftButtons;
         ChessStageController.Instance.LimitPuzzleCount = 0;
         //GameDataManager.Instance?.UserData.ClearPuzzleVocabulary();
 

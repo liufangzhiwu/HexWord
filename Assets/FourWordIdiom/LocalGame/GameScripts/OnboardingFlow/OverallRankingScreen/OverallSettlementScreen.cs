@@ -25,6 +25,7 @@ public class OverallSettlementScreen : UIWindow
     [SerializeField] private Button step2ContinueButton;
     [SerializeField] private GameObject step2ChestDecor;       // 图3 底部两箱，按美术稿为装饰/额外展示，无需动态填就常显
     [SerializeField] private Transform step2ChestIcon;  // 图3 中间大宝箱，飞金币起点
+    [SerializeField] private Transform wordAppear;  // 粒子
 
     private SettlementData _data;
     private bool isAnimating = false;
@@ -61,6 +62,7 @@ public class OverallSettlementScreen : UIWindow
         hasGrantedRewards = false;// ← 补
         step1Panel.SetActive(true);
         step2Panel.SetActive(false);
+        RefreshWordAppear();      // 先按本次奖励复位粒子，避免沿用上一次结算的状态
         BuildStep1List(data);
 
         // 按钮文案：有奖励=领取奖励，无奖励=点击继续
@@ -153,9 +155,31 @@ public class OverallSettlementScreen : UIWindow
         StartCoroutine(GrantAndCloseRoutine());
     }
 
+    /// <summary>
+    /// 侧滑返回：等价于点当前步骤的主按钮（第一步「领取奖励 / 点击继续」，第二步「恭喜获得」）。
+    /// 侧滑若只是关面板，服务器领奖、本地发资产、清缓存都会漏掉，
+    /// 且 CheckMonthlySettlementRoutine 正 WaitUntil 面板关闭，会误以为已结算。
+    /// 动画播放期间与点按钮一致：忽略本次操作。
+    /// </summary>
+    public void AdvanceFromBackGesture()
+    {
+        if (isAnimating)
+        {
+            Debug.Log("[BackGesture] 月榜结算动画中，侧滑忽略（等价于按钮不可点）");
+            return;
+        }
+        if (_data == null) return;   // 数据还没推过来时不动作，避免 NRE
+
+        if (currentStep == 2)
+            OnClickStep2Continue();
+        else
+            OnClickStep1();
+    }
+
     private IEnumerator PlayStep2Anim()
     {
         isAnimating = true;
+        RefreshWordAppear();                            // ★ 有宝箱时隐藏 WordAppear 粒子
         SetRankIcon(_data.myRank); 
         step2ChestIcon.localScale = Vector3.zero;       // 大宝箱
         step2RewardsContent.localScale = Vector3.zero;  // 3个道具容器
@@ -352,5 +376,34 @@ public class OverallSettlementScreen : UIWindow
         Image chest = step2ChestIcon.GetComponent<Image>();
         chest.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("give_box_" + rank);
         chest.SetNativeSize();
+    }
+
+    /// <summary>
+    /// 本次结算是否发宝箱：月榜前三名的大图标就是宝箱（give_box_1~3）；
+    /// 兜底再看奖励里有没有金/银/铜奖牌（16/17/18），有也算宝箱。
+    /// </summary>
+    private bool HasChestReward()
+    {
+        if (_data == null) return false;
+        if (_data.myRank >= 1 && _data.myRank <= 3) return true;
+
+        if (_data.rewards != null &&
+            (_data.rewards.ContainsKey(16) || _data.rewards.ContainsKey(17) || _data.rewards.ContainsKey(18)))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// WordAppear 是第二步"恭喜获得"的装饰粒子，和宝箱叠在一起会穿帮 —— 发宝箱时把它藏掉。
+    /// 每次进结算都显式设置一次，避免上一次隐藏后残留到下一位玩家。
+    /// </summary>
+    private void RefreshWordAppear()
+    {
+        if (wordAppear == null) return;
+
+        bool hasChest = HasChestReward();
+        wordAppear.gameObject.SetActive(!hasChest);
     }
 }

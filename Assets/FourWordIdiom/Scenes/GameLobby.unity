@@ -128,12 +128,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 33097731}
   - component: {fileID: 33097733}
   - component: {fileID: 33097732}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Label
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -207,12 +208,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 73885346}
   - component: {fileID: 73885348}
   - component: {fileID: 73885347}
   m_Layer: 3
+  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -282,12 +284,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 424731344}
   - component: {fileID: 424731343}
   - component: {fileID: 424731342}
   m_Layer: 0
+  m_HasEditorInfo: 1
   m_Name: EventSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -350,11 +353,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 705507995}
   - component: {fileID: 705507994}
   m_Layer: 0
+  m_HasEditorInfo: 1
   m_Name: Directional Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -423,6 +427,7 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+  m_UseOcclusionCulling: 1
 --- !u!4 &705507995
 Transform:
   m_ObjectHideFlags: 0
@@ -444,7 +449,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 815710028}
   - component: {fileID: 815710027}
@@ -452,6 +457,7 @@ GameObject:
   - component: {fileID: 815710025}
   - component: {fileID: 815710024}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: tipsCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -562,7 +568,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 963194228}
   - component: {fileID: 963194227}
@@ -572,6 +578,7 @@ GameObject:
   - component: {fileID: 963194233}
   - component: {fileID: 963194235}
   m_Layer: 0
+  m_HasEditorInfo: 1
   m_Name: Main Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
@@ -624,6 +631,8 @@ Camera:
   m_TargetEye: 3
   m_HDR: 1
   m_AllowMSAA: 1
+  m_enableGDRP: 1
+  m_backfaceCulling: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -774,12 +783,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 965426175}
   - component: {fileID: 965426177}
   - component: {fileID: 965426176}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -850,11 +860,12 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1304471235}
   - component: {fileID: 1304471237}
   m_Layer: 3
+  m_HasEditorInfo: 1
   m_Name: VideoCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -926,6 +937,8 @@ Camera:
   m_TargetEye: 3
   m_HDR: 1
   m_AllowMSAA: 1
+  m_enableGDRP: 1
+  m_backfaceCulling: 0
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
@@ -937,11 +950,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1369706650}
   - component: {fileID: 1369706651}
+  - component: {fileID: 1369706653}
+  - component: {fileID: 1369706652}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: AutoLevelToggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1017,18 +1033,59 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &1369706652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1369706649}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!223 &1369706653
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1369706649}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: -1942644843
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!1 &1410944625
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1410944626}
   - component: {fileID: 1410944628}
   - component: {fileID: 1410944627}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Checkmark
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1098,7 +1155,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1484862663}
   - component: {fileID: 1484862662}
@@ -1107,6 +1164,7 @@ GameObject:
   - component: {fileID: 1484862665}
   - component: {fileID: 1484862667}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1239,12 +1297,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1491638179}
   - component: {fileID: 1491638181}
   - component: {fileID: 1491638180}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: AwardToot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1316,12 +1375,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1693891842}
   - component: {fileID: 1693891844}
   - component: {fileID: 1693891843}
   m_Layer: 5
+  m_HasEditorInfo: 1
   m_Name: SoundManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1461,12 +1521,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1700304338}
   - component: {fileID: 1700304340}
   - component: {fileID: 1700304339}
   m_Layer: 3
+  m_HasEditorInfo: 1
   m_Name: EnhancedVideoController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1552,12 +1613,13 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 2084277317}
   - component: {fileID: 2084277319}
   - component: {fileID: 2084277318}
   m_Layer: 3
+  m_HasEditorInfo: 1
   m_Name: RawImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1639,13 +1701,14 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
+  serializedVersion: 7
   m_Component:
   - component: {fileID: 1333013303782275395}
   - component: {fileID: 3777239304497824833}
   - component: {fileID: 3777239304497824836}
   - component: {fileID: 3777239304497824835}
   m_Layer: 0
+  m_HasEditorInfo: 1
   m_Name: WaterManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}

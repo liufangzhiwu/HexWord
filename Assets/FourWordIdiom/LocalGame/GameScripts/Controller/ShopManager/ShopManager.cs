@@ -330,6 +330,21 @@ public partial class ShopManager : MonoBehaviour
     /// </summary>
     public SettlementGiftKind CurrentSettlementGift { get; private set; } = SettlementGiftKind.None;
 
+    /// <summary>
+    /// 结算页 / 主页的礼包入口是否可见。
+    ///
+    /// 需求（2026-11-21）：<b>只有礼包弹窗真的弹出过，才允许显示礼包入口</b>。
+    /// 结算页要被更优先的弹窗（每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速 / 插屏）占位时，
+    /// 这一次既不出礼包弹窗，也不能在结束页（或主页）留下入口按钮 ——
+    /// 否则玩家关掉那个更优先的界面后会看到一个"从来没弹过、也说不清哪来的"礼包入口。
+    ///
+    /// 语义：
+    ///   - RegisterSettlementGift(entryVisible:false) → 只存数据，入口隐藏（预登记阶段）；
+    ///   - OpenSettlementGiftPopup（弹窗真正 ShowPanel）→ 置 true 并通知 UI 淡入入口；
+    ///   - 抑制 / 取消 / 清空登记 → 置 false。
+    /// </summary>
+    public bool SettlementGiftEntryVisible { get; private set; }
+
     /// <summary>登记的结算页礼包（展示用副本，含加赠金币）</summary>
     private ShopDataItem _settlementGiftItem;
 
@@ -344,24 +359,31 @@ public partial class ShopManager : MonoBehaviour
     private bool _settlementGiftPopupPending;
 
     /// <summary>
-    /// 本次结算「只登记入口、不主动弹窗」。
-    /// 结算页会弹更优先的弹窗（每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 / 插屏）时置 true，
-    /// 礼包仍然登记（结束页和主页的入口按钮照常显示），只是不主动弹 AdsDiscountScreen。
+    /// 本次结算「不弹礼包弹窗、也不出入口」。
+    /// 结算页会弹更优先的弹窗（每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 / 插屏）时置 true。
+    ///
+    /// ★ 2026-11-21 口径变更：以前是"只保留入口按钮"，现在连入口都不给 ——
+    ///   入口只属于"弹窗真的弹出来过"的那一次结算。这里顺手把已经登记（并已露出）的入口撤掉，
+    ///   避免策略先登记、后判定被占位的顺序留下一个孤零零的按钮。
     /// </summary>
     private bool _settlementGiftPopupSuppressed;
 
     /// <summary>本次结算不弹窗的原因（仅用于日志）</summary>
     private string _settlementGiftSuppressReason;
 
-    /// <summary>标记本次结算只登记不弹窗。</summary>
+    /// <summary>标记本次结算既不弹窗也不出入口。</summary>
     public void SuppressSettlementGiftPopup(string reason)
     {
         if (!_settlementGiftPopupSuppressed)
-             Debug.Log($"[Shop][结算礼包] 本次结算不主动弹窗：{reason}（只保留入口按钮）");
+             Debug.Log($"[Shop][结算礼包] 本次结算不主动弹窗：{reason}（既不出弹窗，也不显示入口）");
 
         _settlementGiftPopupSuppressed = true;
         _settlementGiftSuppressReason = reason;
         _settlementGiftPopupPending = false;
+
+        // 已经登记过（策略先登记、后判定被占位）→ 把入口和数据一起撤掉
+        if (SettlementGiftEntryVisible || CurrentSettlementGift != SettlementGiftKind.None)
+            ClearSettlementGift($"本次结算不弹窗，撤销入口（{reason}）");
     }
 
     /// <summary>本次结算是否只登记入口、不主动弹窗。</summary>
@@ -374,7 +396,9 @@ public partial class ShopManager : MonoBehaviour
     public bool IsSettlementGiftPopupPending => _settlementGiftPopupPending;
 
     /// <summary>
-    /// 取消「待弹出」的结算礼包弹窗，但<b>保留</b>结算页按钮的登记（玩家仍可手动点开）。
+    /// 取消「待弹出」的结算礼包弹窗。
+    /// ★ 2026-11-21：以前这里<b>保留</b>结算页按钮的登记（玩家仍可手动点开），现在连入口一起撤 ——
+    ///   本次礼包弹窗没能真正弹出来，就不该在结束页留入口。
     /// 用于结算页要弹更优先的弹窗（插屏 / 七日胜利 / 灯明心悟 / 锦鲤竞速…）时。
     /// </summary>
     public void CancelPreparedSettlementGiftPopup(string reason)
@@ -382,8 +406,10 @@ public partial class ShopManager : MonoBehaviour
         if (!_settlementGiftPopupPending) return;
 
         _settlementGiftPopupPending = false;
-         Debug.Log($"[Shop][结算礼包] 取消本次礼包弹窗（{reason}），结算页按钮保留: " +
+         Debug.Log($"[Shop][结算礼包] 取消本次礼包弹窗（{reason}），入口一并撤销: " +
                 $"kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
+
+        ClearSettlementGift($"礼包弹窗被取消，撤销入口（{reason}）");
     }
 
     /// <summary>结算页是否指定类型（破冰 / 复购）的礼包可售。</summary>
@@ -395,24 +421,25 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>
     /// 登记结算页礼包并立刻弹出 AdsDiscountScreen。
     /// 调用方：TryShowBreakIcePopup（破冰）/ ShowRepurchasePopup（复购）。
-    /// 处于「预登记」状态（PrepareSettlementGift）时只登记，弹窗留给 PlayPreparedSettlementGiftPopup。
+    /// 处于「预登记」状态（PrepareSettlementGift）时只登记数据，弹窗留给 PlayPreparedSettlementGiftPopup；
+    /// 入口按钮在这两种情况下都<b>先不显示</b>，等弹窗真正打开时由 OpenSettlementGiftPopup 点亮。
     /// </summary>
     public void ShowSettlementGift(SettlementGiftKind kind, ShopDataItem displayItem, System.DateTime endTime,
                                    int bonusGold = 0, string bonusPackId = null)
     {
-        RegisterSettlementGift(kind, displayItem, endTime, bonusGold, bonusPackId);
-
-        if (CurrentSettlementGift == SettlementGiftKind.None) return;   // 登记失败（礼包为空）
-
-        // ★ 结算页会弹更优先的弹窗（每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 / 插屏…）：
-        //   只保留入口按钮，不主动弹礼包弹窗。
+        // ★ 本次结算会被更优先的弹窗占位：既不出礼包弹窗，也不登记入口（需求 2026-11-21）。
         if (_settlementGiftPopupSuppressed)
         {
             _settlementGiftPopupPending = false;
-             Debug.Log($"[Shop][结算礼包] 本次结算不弹窗（{_settlementGiftSuppressReason}），只保留入口: " +
-                    $"kind={kind}, 礼包={displayItem.produceNameId}");
+             Debug.Log($"[Shop][结算礼包] 本次结算不弹窗（{_settlementGiftSuppressReason}），也不出入口: " +
+                    $"kind={kind}, 礼包={displayItem?.produceNameId}");
             return;
         }
+
+        // 预登记阶段先只存数据（入口隐藏），等 OpenSettlementGiftPopup 真正弹窗后再点亮入口
+        RegisterSettlementGift(kind, displayItem, endTime, bonusGold, bonusPackId, entryVisible: false);
+
+        if (CurrentSettlementGift == SettlementGiftKind.None) return;   // 登记失败（礼包为空）
 
         if (_suspendGiftPopup)
         {
@@ -426,10 +453,11 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>
     /// 只登记结算页礼包、<b>不弹窗</b>（结算页的「破冰礼包 / 限时折扣礼包」按钮据此显示）。
-    /// 场景：复购弹窗在本活动期已经主动弹过一次 → 后续结算只保留按钮，不再主动弹出。
+    /// 场景：礼包在本活动期已经主动弹过一次 → 后续结算只保留按钮，不再主动弹出。
+    /// 这类调用说明「弹窗出现过」，所以默认 entryVisible = true。
     /// </summary>
     public void RegisterSettlementGift(SettlementGiftKind kind, ShopDataItem displayItem, System.DateTime endTime,
-                                       int bonusGold = 0, string bonusPackId = null)
+                                       int bonusGold = 0, string bonusPackId = null, bool entryVisible = true)
     {
         if (displayItem == null)
         {
@@ -442,10 +470,12 @@ public partial class ShopManager : MonoBehaviour
         _settlementGiftEndTime = endTime;
         _settlementGiftBonusGold = bonusGold;
         _settlementGiftBonusPackId = bonusPackId;
+        SettlementGiftEntryVisible = entryVisible;
 
         // ★ 破冰 / 复购礼包在活动期间允许【反复购买】，所以这里不恢复任何「已购买」锁：
         //   每关结算重新登记都可以再次打开弹窗购买，直到活动倒计时结束。
          Debug.Log($"[Shop]RegisterSettlementGift: 登记结算页礼包 kind={kind}, item={displayItem.produceNameId}, " +
+                $"入口可见={entryVisible}, " +
                 $"endTime={(endTime == System.DateTime.MinValue ? "无限时" : endTime.ToString("yyyy-MM-dd HH:mm:ss"))}, 加赠={bonusGold}");
 
         NotifySettlementGiftChanged();
@@ -500,6 +530,14 @@ public partial class ShopManager : MonoBehaviour
         SetPendingGiftPopup(_settlementGiftItem, mode, _settlementGiftEndTime);
         SetPendingGiftBonus(_settlementGiftBonusPackId, _settlementGiftBonusGold);
 
+        // ★ 弹窗真的弹出来了 → 这时候才允许结束页 / 主页显示礼包入口（需求 2026-11-21）。
+        //   先置位再 Notify，UI 收到的就是"该亮入口了"，按钮跟着弹窗一起淡入。
+        if (!SettlementGiftEntryVisible)
+        {
+            SettlementGiftEntryVisible = true;
+            NotifySettlementGiftChanged();
+        }
+
         if (SystemManager.Instance != null)
             SystemManager.Instance.ShowPanel(PanelType.AdsDiscountScreen);
 
@@ -511,7 +549,15 @@ public partial class ShopManager : MonoBehaviour
     {
         _settlementGiftPopupPending = false;
 
-        if (CurrentSettlementGift == SettlementGiftKind.None) return;
+        // 入口可见性必须无条件复位：哪怕登记已被清掉（kind=None），也不能留下"入口还亮着"的鬼状态
+        bool entryWasVisible = SettlementGiftEntryVisible;
+        SettlementGiftEntryVisible = false;
+
+        if (CurrentSettlementGift == SettlementGiftKind.None)
+        {
+            if (entryWasVisible) NotifySettlementGiftChanged();
+            return;
+        }
 
         CurrentSettlementGift = SettlementGiftKind.None;
         _settlementGiftItem = null;
@@ -2548,10 +2594,23 @@ public partial class ShopManager : MonoBehaviour
                 $"下次需间隔 {cooldownDays} 天");
     }
 
-    /// <summary>记录「支付调起次数」（点击礼包、成功拉起系统支付但没完成购买时 +1），本地持久化。</summary>
+    /// <summary>
+    /// 记录「支付调起次数」（点击礼包、成功拉起系统支付但没完成购买时 +1），本地持久化。
+    ///
+    /// 需求·弹出礼包 2：只对礼包统计（金币商品 / 两个去广告不参与复购选包），无效数据不记。
+    /// 价格门槛（&gt; MAX(A,10)）不在这里判：A 会随玩家购买变化，按当时的 A 过滤会丢掉历史有效次数，
+    /// 统一放到选包时按「当前 A」筛。
+    /// </summary>
     public void RecordPayInvoke(string produceNameId)
     {
         if (string.IsNullOrEmpty(produceNameId)) return;
+
+        ShopDataItem item = GetProduct(produceNameId) ?? FormAllItemsGetProduct(produceNameId);
+        if (item != null && (item.type != 2 || IsRemoveAdsProduct(produceNameId)))
+        {
+             Debug.Log($"[Shop][复购] 不记调起次数（非礼包 / 去广告商品）: {produceNameId}, type={item.type}");
+            return;
+        }
 
         int c = GetPayInvokeCount(produceNameId) + 1;
         _payInvokeCount[produceNameId] = c;
@@ -3755,9 +3814,18 @@ public partial class ShopManager : MonoBehaviour
         ShopDataItem shopDataItem = GetProduct(productId);
         if (shopDataItem != null)
         {
-            RecordPayInvoke(productId);
+            // ★ 需求·弹出礼包 1：「点击礼包（成功拉起系统支付但未完成购买）」才算一次调起。
+            //   平台初始化失败 / 客户端内部错误（OnPurchaseFailed 传 invokedSystemPay=false）不计数，
+            //   否则会把「压根没弹收银台」也算进调起次数，选包结果被污染。
             if (invokedSystemPay)
+            {
+                RecordPayInvoke(productId);
                 AddConversionFail(shopDataItem);
+            }
+            else
+            {
+                 Debug.Log($"[Shop]  未拉起系统支付（invokedSystemPay=false）→ 不计调起次数: {productId}");
+            }
         }
         else
         {

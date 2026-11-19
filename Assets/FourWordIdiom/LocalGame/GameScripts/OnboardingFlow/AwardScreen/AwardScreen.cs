@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class AwardScreen : UIWindow
+public class AwardScreen : UIWindow, IBackGestureClosePanel
 {
     [SerializeField] private Button closeBtn; // 关闭按钮
     [SerializeField] private Text title; // 音效文本显示
@@ -215,6 +215,17 @@ public class AwardScreen : UIWindow
     {
         closeBtn.AddVibraClickAction(ClickClaimBtn); // 绑定关闭按钮事件
         ClaimBtn.AddVibraClickAction(ClickClaimBtn); // 绑定关闭按钮事件
+    }
+
+    /// <summary>
+    /// 侧滑 = 「领取」按钮（本界面的关闭按钮本来就绑的是领取）。
+    ///
+    /// 走 base.Close() 会跳过 TriggerAwardClaimed（资源栏背景恢复）与飞入动画，
+    /// 侧滑和点按钮的表现会不一致；这里统一到领取流程。_claiming 已做重复保护。
+    /// </summary>
+    public void CloseFromBackGesture()
+    {
+        ClickClaimBtn();
     }
 
     /// <summary>领取中标记：防止连点导致两组飞入动画同时播、面板被关两次。</summary>

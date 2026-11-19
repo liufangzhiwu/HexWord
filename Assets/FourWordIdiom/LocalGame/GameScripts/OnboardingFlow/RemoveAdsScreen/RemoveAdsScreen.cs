@@ -102,9 +102,8 @@ public class RemoveAdsScreen : UIWindow
 
     private string FormatRemain(double seconds)
     {
-        // ★ 与复购礼包倒计时统一格式（X小时Y分，HourSymbol/MinuteSymbol 走多语言），
-        //   以前这里是「X天 HH:mm:ss / HH:mm:ss / mm:ss」，和礼包弹窗两种风格。
-        return UIUtilities.FormatTimeRemaining(TimeSpan.FromSeconds(Math.Max(0d, seconds)));
+        // 统一为「时:分:秒」（如 23:59:01），与礼包弹窗 / 礼包入口按钮一致。
+        return UIUtilities.FormatGiftCountdownHms(TimeSpan.FromSeconds(Math.Max(0d, seconds)));
     }
 
     /// <summary>多语言取值，缺失时回退中文兜底。</summary>

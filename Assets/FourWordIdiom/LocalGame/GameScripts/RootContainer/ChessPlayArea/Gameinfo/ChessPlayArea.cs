@@ -335,6 +335,10 @@ public partial class ChessPlayArea : UIWindow
         ClearAndResetLeafSliderComponents();
         GameCoreManager.Instance.SetBackgroundImage(new Color(1,1,1,0.75f));
         ThemeManager.Instance.CheckAndUpdateSkinRedPoint();
+
+        // ★ 开局兜底再复位一次鼓励横幅：覆盖"没走 OnDisable 就换关"（直接重开/切关）的路径，
+        //   否则上一关残留的鼓掌 + 底板会在新关卡第一帧就亮出来。
+        ResetPraiseEffects("进入关卡");
     }
     #endregion
    
@@ -472,6 +476,10 @@ public partial class ChessPlayArea : UIWindow
             if (banner != null) banner.SetActive(false);
         }
         if (_bannerLiziCache != null) _bannerLiziCache.SetActive(false); // 安全卸载粒子
+        // ★ 局内鼓励横幅（鼓掌 UIEffect_shoushi01_x + 底板 UIEffect_shoushi02_x）
+        //   协程随面板失活被掐断，finally 不会执行，池实例会停在 activeSelf=true，
+        //   下次进关卡就"复活"成上次那条横幅。这里显式复位。
+        ResetPraiseEffects("退出关卡");
         // CanvasScaler scaler = FindObjectOfType<Canvas>().GetComponent<CanvasScaler>();
         // scaler.screenMatchMode     = CanvasScaler.ScreenMatchMode.Expand;
         _isTimerRunning = false; // 隐藏界面时停止计时

@@ -834,33 +834,67 @@ public class PrimaryInterface : UIWindow
         ThemeManager.Instance.CheckAndUpdateSkinRedPoint();
     }
 
-    /// <summary>蝶园入口：显隐 + 未解锁态 + 进度渲染（保留 HexWord 原有实现）</summary>
+    /// <summary>
+    /// 蝶园入口三态：未到展示关卡隐藏 → 通关第 8 关后显示带锁态 → 第 12 关解锁。
+    /// 锁态表现：蝴蝶图标半透明 + 锁图标 + 「第12关」文本，按钮不可点。
+    /// </summary>
     private void CheckButterflyBtnUI()
     {
-        ButterflyBtn.gameObject.SetActive(ButterfliesManager.Instance.IsOpen);
-        // 🌟 核心修改：全收集满后，隐藏按钮上的进度条和文字
-        bool isAllCollected = ButterfliesManager.Instance.IsAllButterfliesCollected();
+        if (ButterflyBtn == null) return;
+
+        bool isUnlocked = ButterfliesManager.Instance.IsOpen;
+        bool isShow = CurrentProgressStage > AppGameSettings.ShowRequirements.ButterflyGardenShowLevel || isUnlocked;
+        ButterflyBtn.gameObject.SetActive(isShow);
+        if (!isShow) return;
+
+        bool isLocked = !isUnlocked;
+        ButterflyBtn.interactable = !isLocked;
+
+        // 锁图标 / 解锁文案节点：HexWord 预制体上这两个引用是空的，按节点名兜底查找
+        GameObject lockObj = ButterflyLock != null
+            ? ButterflyLock
+            : FindChildNode(ButterflyBtn.transform, "butterfylock");
+        GameObject unlockTextObj = ButterflyUnlockText != null
+            ? ButterflyUnlockText
+            : FindChildNode(ButterflyBtn.transform, "TimeObj");
+
+        if (lockObj != null) lockObj.SetActive(isLocked);
+
         Slider pupaSlider = ButterflyBtn.GetComponentInChildren<Slider>(true);
-        Text pupaText = ButterflyBtn.GetComponentInChildren<Text>(true);
-        // 3. 未解锁状态：隐藏进度条、文字和红点
-        bool isLocked = !ButterfliesManager.Instance.IsOpen;
+        // 进度文字是 Slider 的子节点，跟着进度条一起收起
+        Text pupaText = pupaSlider != null ? pupaSlider.GetComponentInChildren<Text>(true) : null;
+
+        // 1. 未解锁状态：隐藏进度条、文字和红点，显示锁 + 「第12关」
         if (isLocked)
         {
-            // 锁文案节点是 WT 新增的，HexWord 预制体暂无，做空保护
-            if (ButterflyUnlockText != null)
+            if (unlockTextObj != null)
             {
-                ButterflyUnlockText.SetActive(true);
-                var lockText = ButterflyUnlockText.GetComponentInChildren<Text>(true);
-                if (lockText != null) lockText.text = $"第{AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel}关";
+                unlockTextObj.SetActive(true);
+                var lockText = unlockTextObj.GetComponentInChildren<Text>(true);
+                if (lockText != null)
+                {
+                    // 预制体里这个 Text 组件默认关闭，锁态需要显式打开
+                    lockText.enabled = true;
+                    lockText.text = $"第{AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel}关";
+                }
+                Image bg = unlockTextObj.GetComponent<Image>();
+                if (bg != null) bg.enabled = true;
             }
             if (pupaSlider != null) pupaSlider.gameObject.SetActive(false);
             if (pupaText != null) pupaText.gameObject.SetActive(false);
             if (ButterflyRedpoint != null) ButterflyRedpoint.gameObject.SetActive(false);
+
+            Image lockedIcon = ButterflyBtn.GetComponent<Image>();
+            if (lockedIcon != null) lockedIcon.color = new Color(1, 1, 1, 0.9f);
             return;
         }
-        // 4. 已解锁状态：隐藏锁文本，处理正常的进度逻辑
-        if (ButterflyUnlockText != null) ButterflyUnlockText.gameObject.SetActive(false);
-        
+
+        // 2. 已解锁状态：复原图标、隐藏锁文本，处理正常的进度逻辑
+        Image icon = ButterflyBtn.GetComponent<Image>();
+        if (icon != null) icon.color = Color.white;
+        if (unlockTextObj != null) unlockTextObj.gameObject.SetActive(false);
+
+        bool isAllCollected = ButterfliesManager.Instance.IsAllButterfliesCollected();
         if (isAllCollected)
         {
             // 🎉 全收集满：关掉进度条和进度文字，给玩家一个干净清爽的满级蝴蝶按钮
@@ -888,6 +922,20 @@ public class PrimaryInterface : UIWindow
             if (ButterflyRedpoint != null)
                 ButterflyRedpoint.gameObject.SetActive(ButterfliesManager.Instance.showButterflyRedPoint);
         }
+    }
+
+    /// <summary>按名字在当前节点及其子层级里查找（预制体引用未绑定时兜底用）。</summary>
+    private static GameObject FindChildNode(Transform root, string childName)
+    {
+        if (root == null) return null;
+        Transform direct = root.Find(childName);
+        if (direct != null) return direct.gameObject;
+        for (int i = 0; i < root.childCount; i++)
+        {
+            GameObject found = FindChildNode(root.GetChild(i), childName);
+            if (found != null) return found;
+        }
+        return null;
     }
     
     private void UpdateTimeDisplay(string time)
@@ -1066,6 +1114,8 @@ public class PrimaryInterface : UIWindow
     
     private void OnButterflyClick()
     {
+        // 未解锁（第 12 关前）只展示带锁入口，不进入蝶园
+        if (!ButterfliesManager.Instance.IsOpen) return;
         
         if (GameCoreManager.Instance.PanelState == PanelState.MainMenuPanel)
         {
@@ -1103,6 +1153,7 @@ public class PrimaryInterface : UIWindow
         _refreshingGiftEntry = true;
 
         ShopManager.SettlementGiftKind kind = ShopManager.shopManager != null
+                                                 && ShopManager.shopManager.SettlementGiftEntryVisible
             ? ShopManager.shopManager.CurrentSettlementGift
             : ShopManager.SettlementGiftKind.None;
 
@@ -1252,9 +1303,9 @@ public class PrimaryInterface : UIWindow
         bool visible = show && remainSeconds > 0;
         if (timeObj != null && timeObj.activeSelf != visible) timeObj.SetActive(visible);
 
-        // 格式与结算页 / AdsDiscountScreen 保持一致（X小时Y分）
+        // 格式与结算页 / AdsDiscountScreen 保持一致（时:分:秒，如 23:59:01）
         if (timeText != null && visible)
-            timeText.text = UIUtilities.FormatTimeRemaining(TimeSpan.FromSeconds(remainSeconds));
+            timeText.text = UIUtilities.FormatGiftCountdownHms(TimeSpan.FromSeconds(remainSeconds));
     }
 
     /// <summary>按钮下的倒计时节点（TimeObj/TimeText）没绑定时按路径自动查找。</summary>

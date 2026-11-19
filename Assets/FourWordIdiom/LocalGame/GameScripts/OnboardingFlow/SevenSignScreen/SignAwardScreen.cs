@@ -37,7 +37,9 @@ public class SignAwardScreen : UIWindow
         {
             rewardConfig= StreakManager.Instance.GetBoxSignRewards();
         }
-        
+
+        // 注：这里是「流失回归 / 连胜宝箱」奖励，属于可重复领取的场景（每次触发都该发），
+        //     因此不加一次性领取标记；面板重弹时按业务预期再次发放。
         bool pupaFull = ButterfliesManager.Instance.IsPupaSufficientForAllRemaining(); // 蛹足够时就替换
         if (!pupaFull)
         {
