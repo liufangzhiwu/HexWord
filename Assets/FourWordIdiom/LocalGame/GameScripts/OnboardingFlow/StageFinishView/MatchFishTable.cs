@@ -87,7 +87,12 @@ public class MatchFishTable : MonoBehaviour
     ///      未解锁态不受竞速周时间窗影响，已解锁态沿用活动时间窗。
     /// 说明：拼字结算页（ChessFinishView）与六边形结算页（StageFinishView）共用这一份逻辑。
     /// </summary>
-    public void RefreshEntryState()
+    /// <param name="allowLockedEntry">
+    /// true  = 未解锁时也露出「带锁入口」（拼字结算页 / 主页的表现）。
+    /// false = 未解锁时整个入口隐藏，不显示锁头（六边形结算页口径，与 UnlockButton
+    ///         「未解锁直接隐藏按钮、不显示锁定态」保持一致）。
+    /// </param>
+    public void RefreshEntryState(bool allowLockedEntry = true)
     {
         if (FishBtn == null || GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return;
 
@@ -109,6 +114,15 @@ public class MatchFishTable : MonoBehaviour
         if (!isVisible) return;
 
         bool isLocked = !isUnlocked;
+
+        // 不允许展示锁定态时（六边形结算页），未解锁就整块隐藏，避免右侧莫名多出一把锁
+        if (isLocked && !allowLockedEntry)
+        {
+            FishBtn.interactable = false;
+            if (LockObj != null) LockObj.SetActive(false);
+            if (parent != null) parent.gameObject.SetActive(false);
+            return;
+        }
         FishBtn.interactable = !isLocked;
         if (LockObj != null) LockObj.SetActive(isLocked);
 

@@ -900,6 +900,22 @@ namespace Middleware
             {
                 Debug.Log("[ConsumePurchase Error ] " + "\n "
                  + "Code : " + signal.code + " \n Message : " + signal.message + "\n");
+
+                // ★ 这两种错误说明"这单在平台侧本来就算完成了"，重试没有意义，直接清本地记录：
+                //   1001860053 = 重复发货（已核销过）；1001860052 = 未拥有该商品（订单已失效/被回收）。
+                //   已交付（finishStatus=1）的订单走"只核销"分支时会命中这里，
+                //   不能因为重复核销失败就退避重试刷日志、还把记录留在待处理表里。
+                string consumeCode = ("" + signal.code).Trim();
+                if (consumeCode.Contains("1001860053") || consumeCode.Contains("1001860052"))
+                {
+                    Debug.Log("[IAP] 平台侧已核销/订单已失效，视为完成，清本地记录: code=" + consumeCode);
+                    _consumeRetryAttempt = 0;
+                    if (purchaseParam != null && !string.IsNullOrEmpty(purchaseParam.purchaseToken))
+                        PendingOrderStore.RemoveByToken(purchaseParam.purchaseToken);
+                    purchaseParam = null;
+                    return;
+                }
+
                 // ★ 核销失败必须重试：鸿蒙 IAP 里「未核销」的消耗型订单会一直挡住下一笔购买，
                 //   真机表现就是「付过一次之后再点购买，收银台拉不起来，一直弹购买失败」。
                 //   旧实现只打一行日志等下次启动，玩家当场就再也买不了东西。
@@ -1028,31 +1044,112 @@ namespace Middleware
                                      + " productId=" + purchaseData.productId);
                 }
 
-                // ★ 是否「已确认支付」：
-                //   · finishStatus == "2"  —— 平台明确给出已完成；
-                //   · 或者本地待处理表里已经有这笔订单 —— 说明成功回调到过，这是更硬的证据。
-                //   以前只看 finishStatus，一旦平台口径不是 "2"，玩家真金白银付过的那笔
-                //   就永远不会发货、也永远不会核销，之后同商品再也拉不起收银台（本 bug 的根因之一）。
+                // ★ finishStatus 是「发货状态」，不是「付款状态」（鸿蒙 PurchaseOrderPayload）：
+                //     "1" = 已交付（平台侧已确认发货，即已经 finishPurchase 过）
+                //     "2" = 未交付（钱付了，还没确认发货）
+                //   以前用 `finishStatus == "2"` 一把判定「是否已支付」，把三种完全不同的情况
+                //   压成了一个结论（已交付的历史单会被当成"未确认支付"）。这里拆成三态：
+                //     ① 已交付 + 本地无记录  → 不补发，跳过（历史单 / 已在别处发货）
+                //     ② 已交付 + 本地有记录  → 不重复发货，只做核销收尾
+                //     ③ 未交付 + (有 purchaseTime / 本地有记录 / 平台标 "2") → 真的付了没发货 → 补发 + 核销
+                //     （purchaseTime 为空 = 订单未完成，官方字段口径）
+                bool platformDelivered = purchaseData.finishStatus == "1";
+                bool hasPurchaseTime   = !string.IsNullOrEmpty(purchaseData.purchaseTime);
                 bool knownPaid = !string.IsNullOrEmpty(purchaseData.purchaseToken)
                                  && PendingOrderStore.Get(orderId) != null;
-                bool isPaid = purchaseData.finishStatus == "2" || knownPaid;
 
-                if (!isNonConsumable && !isPaid)
+                if (!isNonConsumable)
                 {
-                    // 没确认支付：绝不发货（防止白送），也不做核销（防止把玩家已付的订单核销掉却丢了货）。
-                    // 只把原始字段打全，便于按真机日志确认 finishStatus 的口径。
-                    Debug.LogError("[IAP][待核对] 消耗型订单未确认支付，本次不发货也不核销。"
-                                   + " finishStatus=" + purchaseData.finishStatus
-                                   + " productId=" + purchaseData.productId
-                                   + " orderId=" + orderId
-                                   + " token=" + purchaseData.purchaseToken);
-                    continue;
-                }
+                    // ① / ② 平台侧已交付：绝不补发（防止清档/重装后历史消耗型订单被批量重发）
+                    if (platformDelivered)
+                    {
+                        if (!knownPaid)
+                        {
+                            // ★ 仅在「正在核单」且正是本轮要买的那个商品时，才尝试把它核销掉：
+                            //   这是唯一可能"平台说已交付、却仍挡住同商品再次购买"的场景（卡单死锁）。
+                            //   平时的启动补单（queryType=ALL 会返回全部历史已交付订单）绝不逐单核销，
+                            //   否则每启动一次就把历史订单全调一遍 finishPurchase → 触发 1001860004 调用过频。
+                            bool couldBlockCurrentPurchase = _reconciling
+                                && !string.IsNullOrEmpty(_pendingProductId)
+                                && purchaseData.productId == _pendingProductId;
 
-                if (knownPaid && purchaseData.finishStatus != "2")
-                {
-                    Debug.LogWarning("[IAP] 该订单本地有成功回调记录（finishStatus=" + purchaseData.finishStatus
-                                     + "），按已支付处理并核销: " + orderId);
+                            if (couldBlockCurrentPurchase)
+                            {
+                                Debug.LogWarning("[IAP] 核单遇到平台侧已交付的同商品订单，尝试核销以解除阻塞（不补发）: "
+                                                 + "productId=" + purchaseData.productId
+                                                 + " orderId=" + orderId);
+                                ConsumePendingOrder(new PendingOrder
+                                {
+                                    orderId       = orderId,
+                                    productId     = purchaseData.productId,
+                                    price         = purchaseData.price.ToString(),
+                                    currency      = purchaseData.currency,
+                                    productType   = (int)purchaseData.productType,
+                                    purchaseToken = purchaseData.purchaseToken,
+                                    granted       = false,
+                                });
+                                continue;
+                            }
+
+                            Debug.Log("[IAP] 跳过平台侧已交付的消耗型订单（历史单/已在别处发过货）: "
+                                      + "productId=" + purchaseData.productId
+                                      + " orderId=" + orderId
+                                      + " purchaseTime=" + purchaseData.purchaseTime);
+                            continue;
+                        }
+
+                        // ② 本地还留着 pending：说明成功回调到过但没核销完。
+                        //   先补一次发奖（内部按 granted 幂等），再只做核销收尾 —— 不再调 finishPurchase 之前那套重复发货流程。
+                        var deliveredOrder = new PendingOrder
+                        {
+                            orderId       = orderId,
+                            productId     = purchaseData.productId,
+                            price         = purchaseData.price.ToString(),
+                            currency      = purchaseData.currency,
+                            productType   = (int)purchaseData.productType,
+                            purchaseToken = purchaseData.purchaseToken,
+                            granted       = false,
+                        };
+                        Debug.LogWarning("[IAP] 订单平台侧已交付且本地仍有待处理记录，先补发再核销（不重复发货）: "
+                                         + "orderId=" + orderId
+                                         + " granted=" + PendingOrderStore.IsGranted(orderId));
+                        GrantRewardIfNeeded(deliveredOrder, ignoreGrantedFlag: false, deliverToUi: false);
+
+                        // 发奖没成功（例如 ShopManager 还没就绪）就不核销：
+                        // 一旦核销，平台侧就没有这笔单了，奖励再也补不回来。
+                        if (!PendingOrderStore.IsGranted(orderId))
+                        {
+                            Debug.LogWarning("[IAP] 已交付订单补发未成功，暂不核销，留待下次: " + orderId);
+                            continue;
+                        }
+
+                        ConsumePendingOrder(deliveredOrder);
+                        continue;
+                    }
+
+                    // ③ 未交付：有 purchaseTime / 本地有成功回调记录 / 平台明确标"未交付" → 认为钱付了
+                    //   （finishStatus=="2" 本身就是"已下单、未发货"，保持与旧行为一致；
+                    //     purchaseTime 为空 = 订单未完成，官方字段口径）
+                    bool hasPaidEvidence = hasPurchaseTime || knownPaid || purchaseData.finishStatus == "2";
+                    if (!hasPaidEvidence)
+                    {
+                        // 订单根本没下成功（purchaseTime 为空）或字段全空：
+                        // 既不发货（防止白送），也不核销（防止把玩家已付的订单核销掉却丢了货）。
+                        Debug.LogWarning("[IAP][待核对] 消耗型订单未完成支付，本次不发货也不核销。"
+                                         + " finishStatus=" + purchaseData.finishStatus
+                                         + " purchaseTime=" + purchaseData.purchaseTime
+                                         + " productId=" + purchaseData.productId
+                                         + " orderId=" + orderId
+                                         + " token=" + purchaseData.purchaseToken);
+                        continue;
+                    }
+
+                    if (knownPaid)
+                    {
+                        Debug.LogWarning("[IAP] 该订单本地有成功回调记录（finishStatus=" + purchaseData.finishStatus
+                                         + " purchaseTime=" + purchaseData.purchaseTime
+                                         + "），按已支付处理并补发 + 核销: " + orderId);
+                    }
                 }
 
                 var pending = new PendingOrder

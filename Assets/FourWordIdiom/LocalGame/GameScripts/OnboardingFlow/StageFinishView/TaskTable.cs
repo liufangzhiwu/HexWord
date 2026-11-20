@@ -123,6 +123,52 @@ public class TaskTable : MonoBehaviour
         });
     }
     
+    /// <summary>
+    /// 结算页「每日任务」入口三态（与主页 PrimaryInterface.CheckTasksBtnUI 同一口径）：
+    ///   1) 进度（六边形 / 拼字取大）未到展示关卡 → 整个按钮隐藏；
+    ///   2) 到了展示关卡但还没解锁 → 显示带锁态（锁头 + 「第31关」，图标半透明、不可点）；
+    ///   3) 已解锁 → 正常显示。
+    /// ★ bug101：以前 StageFinishView 用 UnlockButton 按「解锁关卡」直接显隐，
+    ///   进度卡在「展示关卡～解锁关卡」之间时，结束页完全没有任务按钮，回主页却有，故统一到这里。
+    /// </summary>
+    /// <param name="showLevel">展示关卡（AppGameSettings.ShowRequirements.DailyMissionsShow）</param>
+    public void RefreshEntryState(int showLevel)
+    {
+        if (TaskBtn == null || GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return;
+
+        int progress = Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage,
+                                 GameDataManager.Instance.UserData.CurrentChessStage);
+        bool isOpen = DailyTaskManager.Instance.IsOpen();
+
+        // 1. 显隐：未到展示关卡直接隐藏
+        bool isShow = progress > showLevel || isOpen;
+        TaskBtn.gameObject.SetActive(isShow);
+        if (!isShow) return;
+
+        // 2. 锁定态：锁头 + 半透明图标 + 不可点
+        bool isLocked = !isOpen;
+        TaskBtn.interactable = !isLocked;
+        if (LockObj != null) LockObj.SetActive(isLocked);
+
+        if (TaskBtn.transform.childCount > 0)
+        {
+            Image icon = TaskBtn.transform.GetChild(0).GetComponent<Image>();
+            if (icon != null)
+            {
+                Color c = icon.color;
+                c.a = isLocked ? 0.5f : 1f;
+                icon.color = c;
+            }
+        }
+
+        // 3. 文案与领取态：未解锁分支会写「第31关」并铺底板
+        InitTaskBtnUI();
+
+        // 解锁瞬间报一声（与 ChessFinishView.UnlockButton 的表现一致）
+        if (!isLocked && progress == AppGameSettings.UnlockRequirements.DailyMissions)
+            AudioManager.Instance.PlaySoundEffect("BtnUnlock");
+    }
+
     private void InitTaskBtnUI()
     {
         if (!DailyTaskManager.Instance.IsOpen())

@@ -575,7 +575,10 @@ public class ChessFinishView : UIWindow
     {
         if (btn == null) return;
 
-        int curStage = GameDataManager.Instance.UserData.CurrentChessStage;
+        // 口径与主页 CurrentProgressStage 一致：六边形 / 拼字取大，
+        // 否则只在另一个模式里练过级的玩家，结算页会看不到任务 / 限时入口（bug101）。
+        int curStage = Mathf.Max(GameDataManager.Instance.UserData.CurrentHexStage,
+                                 GameDataManager.Instance.UserData.CurrentChessStage);
 
         // 1. 显隐控制：未达到展示等级，直接隐藏
         bool isShow = curStage > showLevel || isLegacyOpened;
@@ -896,8 +899,7 @@ public class ChessFinishView : UIWindow
             nextStageBtn.gameObject.GetComponent<CanvasGroup>().alpha = 1;
 
             // 维持限时活动图标的状态
-            if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf && LimitTimeManager.Instance != null &&
-                GetCompletedWordCount() >= LimitTimeManager.Instance.CurlimitData.num)
+            if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf && IsLimitTimeReached())
             {
                 Showlimiticon.SetActive(true);
             }
@@ -1165,6 +1167,23 @@ public class ChessFinishView : UIWindow
         return LimitTimeManager.Instance.GetCurWordCount();
     }
 
+    /// <summary>
+    /// 当前限时活动进度是否已达标（用于决定是否点亮灯笼图标 / 自动弹出限时面板）。
+    /// ★ CurlimitData 只在 GetCurWordCount()/ClaimCurrentReward() 里赋值，
+    ///   活动未开放或已领完最后一段配置时会是 null，裸取 .num 会空引用。
+    /// </summary>
+    private bool IsLimitTimeReached()
+    {
+        LimitTimeManager limit = LimitTimeManager.Instance;
+        if (limit == null) return false;
+
+        int wordCount = GetCompletedWordCount(); // 内部会尝试刷新 CurlimitData
+        LimitDataItem limitData = limit.CurlimitData ?? limit.EnsureCurLimitData();
+        if (limitData == null) return false;
+
+        return wordCount >= limitData.num;
+    }
+
 
     /// <summary>
     /// 播放奖励获取序列动画
@@ -1221,8 +1240,7 @@ public class ChessFinishView : UIWindow
             yield return new WaitForSeconds(FinishFlowTiming.LimitPanelGap);
 
             // 根据进度决定是否自动弹出限时活动面板
-            if (LimitTimeManager.Instance != null &&
-                GetCompletedWordCount() >= LimitTimeManager.Instance.CurlimitData.num)
+            if (IsLimitTimeReached())
             {
                 Showlimiticon.SetActive(true);
                 int pupaBeforeLimit = GameDataManager.Instance.ButterflyData.currPupa;

@@ -591,6 +591,10 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
 
         EnsureShopDataItems();
 
+        // ★ 重建前先回收上一轮的全部卡片：本次列表里不再出现的商品（例如买完特惠礼包 A 后
+        //   推荐位换成 B）没有其它回收点，不先全量隐藏就会一直挂在列表里。
+        HideAllCards();
+
         // 1. 固定商店收起状态商品（内部处理一号位兜底）
         List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetFixedStoreExpandedItems();
 
@@ -755,6 +759,9 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
 
         _isExpanded = false;
 
+        // ★ 重建前先回收上一轮卡片（展开态切回收起态时，展开出来的商品必须全部收走）
+        HideAllCards();
+
         // 1. 动态商店收起状态商品（内部处理一号位兜底：去广告/二号位前2权重）
         List<ShopDataItem> collapsedItems = ShopManager.shopManager.GetDynamicStoreCollapsedItems();
 
@@ -856,6 +863,9 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
 
     private IEnumerator ExpandMoreChoicesRoutine(List<ShopDataItem> allDataItems)
     {
+        // ★ 展开是一份新的列表：先回收收起态铺的卡，本次列表里没有的（审核态剔除的 A/B）才不会残留
+        HideAllCards();
+
         yield return CrateShopItemRoutine(allDataItems, ItemsPerFrame);
 
         freeItemTable.gameObject.SetActive(true);
@@ -1039,10 +1049,27 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
 
     public void OnPanelClosed()
     {
-        foreach (var item in shopallItems)
+        HideAllCards();
+    }
+
+    /// <summary>
+    /// 回收列表里的全部商品卡（只隐藏，不清缓存，下次复用）。
+    ///
+    /// ★ 每次重建列表前必须先调用：
+    ///   重建是「增量激活」——只把新列表里的商品 SetActive(true) / 新建，
+    ///   从不处理「上一轮有、这一轮没有」的卡。典型场景：买完特惠礼包 A 后推荐位重算成 B，
+    ///   A 的卡没有任何人回收，就一直留在屏幕上（还会被后续商品的 siblingIndex 顶到列表尾部，
+    ///   看起来像挂在「永久去广告」上方）。同理，审核态展开列表时被剔除的 A/B 也会残留。
+    /// </summary>
+    private void HideAllCards()
+    {
+        if (shopallItems != null)
         {
-            if (item.Value != null)
-                item.Value.gameObject.SetActive(false);
+            foreach (var kv in shopallItems)
+            {
+                if (kv.Value != null)
+                    kv.Value.gameObject.SetActive(false);
+            }
         }
 
         ClearDynamicItems();

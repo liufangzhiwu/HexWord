@@ -307,7 +307,10 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
         if (!IsOpen()) return false;
         
         if(GameDataManager.Instance==null) return false;
-        
+
+        // 配置表没加载出来时按「已结束」处理，避免后面取 .Count 空引用
+        if (limitItems == null) return true;
+
         return GameDataManager.Instance.UserData.timerePuzzleid>limitItems.Count;
     }
     
@@ -369,8 +372,26 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
         return 0;
     }
 
+    /// <summary>
+    /// 兜底获取当前阶段的限时活动配置。
+    /// ★ CurlimitData 只在 GetCurWordCount()/ClaimCurrentReward() 里才会被赋值：
+    ///   - 活动未开放（IsOpen()==false）时 GetCurWordCount 直接 return 0，不会赋值；
+    ///   - ClaimCurrentReward 领完最后一段后 GetLimitItem 可能返回 null，也会把它写成 null。
+    ///   这两条路径都会让结算页拿到 null 的 CurlimitData，直接取 .num 就是空引用。
+    ///   这里按玩家当前阶段 id 重新取一次配置，取不到返回 null，由调用方判空。
+    /// </summary>
+    public LimitDataItem EnsureCurLimitData()
+    {
+        if (CurlimitData != null) return CurlimitData;
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return null;
+
+        CurlimitData = GetLimitItem(GameDataManager.Instance.UserData.timerePuzzleid);
+        return CurlimitData;
+    }
+
     public LimitDataItem GetLimitItem(int limitItemID)
     {
+        if (limitItems == null) return null;
         foreach (var limitItem in limitItems)
         {
             if (limitItem.id == limitItemID)

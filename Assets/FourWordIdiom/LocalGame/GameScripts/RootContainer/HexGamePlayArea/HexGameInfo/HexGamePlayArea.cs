@@ -104,44 +104,64 @@ public class HexGamePlayArea : UIWindow
 
     private void InitToolUI(int value=0,bool isfirst=false)
     {
-        if (GameDataManager.Instance.UserData.toolInfo[104].count > 0) 
+        // 提示灯（toolInfo[102]）与火箭/自动完成（toolInfo[104]）共用同一套角标规则：
+        //   数量 > 0  → 显示数量文本，隐藏「+」
+        //   数量 <= 0 → 隐藏数量文本，显示「+」（提示可补充）
+        //   角标底板常显，否则玩家在数量为 0 时看不到补充入口。
+        // 注意字段名的历史包袱：TipCostObj / AutoTipCostObj 实际指向的是角标底板
+        // （TipsBtn/TipCoutBg、rocketBtn/AutoCoutBg），不是金币价格容器。
+        RefreshToolCountBadge(AutoTipCostObj, AutoTipCounttxt, 104);
+        RefreshToolCountBadge(TipCostObj, TipsCounttxt, 102);
+
+        redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
+        sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
+    }
+
+    /// <summary>
+    /// 刷新道具按钮的数量角标。
+    /// </summary>
+    /// <param name="countBadge">角标底板节点（TipsBtn/TipCoutBg 或 rocketBtn/AutoCoutBg）</param>
+    /// <param name="countTextNode">数量文本节点（TipCoutBg/CountText 或 AutoCoutBg/TipsText）</param>
+    /// <param name="toolId">道具 ID：102=提示灯，104=自动完成（火箭）</param>
+    private void RefreshToolCountBadge(GameObject countBadge, GameObject countTextNode, int toolId)
+    {
+        if (countBadge == null) return;
+
+        int count = 0;
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData != null && userData.toolInfo != null &&
+            userData.toolInfo.TryGetValue(toolId, out ToolInfo tool) && tool != null)
         {
-            AutoTipCounttxt.GetComponentInChildren<Text>().text =GameDataManager.Instance.UserData.toolInfo[104].count.ToString();
-            AutoTipCostObj.gameObject.SetActive(true);
+            count = tool.count;
         }
-        else
+
+        // 角标底板常显：数量为 0 时也要露出「+」，让玩家知道这里能补充道具
+        if (!countBadge.activeSelf) countBadge.SetActive(true);
+
+        // 按名字找「+」号，避免预制体子节点顺序变动时点错节点
+        Transform addIcon = null;
+        foreach (Transform child in countBadge.GetComponentsInChildren<Transform>(true))
         {
-            AutoTipCounttxt.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[104].cost.ToString();
-            AutoTipCostObj.gameObject.SetActive(false);
-            
-            ToolInfo toolInfo = GameDataManager.Instance.UserData.toolInfo[104];
-            if (!CanUseTool(toolInfo))
+            if (child.name == "AddIcon")
             {
-                //ResetAdsObj.gameObject.SetActive(true);
-                //ResetCostObj.gameObject.SetActive(false);
-            }
-            else
-            {
-                //ResetAdsObj.gameObject.SetActive(false);
-                //ResetCostObj.gameObject.SetActive(true);
+                addIcon = child;
+                break;
             }
         }
 
-        if (GameDataManager.Instance.UserData.toolInfo[102].count > 0)
+        bool hasCount = count > 0;
+
+        if (countTextNode != null)
         {
-            TipsCounttxt.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].count.ToString();
-            //HintCostObj.gameObject.SetActive(false);
-            TipCostObj.gameObject.SetActive(true);
+            countTextNode.SetActive(hasCount);
+            if (hasCount)
+            {
+                Text text = countTextNode.GetComponentInChildren<Text>(true);
+                if (text != null) text.text = count.ToString();
+            }
         }
-        else
-        {
-            TipsCounttxt.GetComponentInChildren<Text>().text = GameDataManager.Instance.UserData.toolInfo[102].cost.ToString();
-            //HintCostObj.gameObject.SetActive(true);
-            TipCostObj.gameObject.SetActive(false);
-        }
-        
-        redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
-        sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
+
+        if (addIcon != null) addIcon.gameObject.SetActive(!hasCount);
     }
 
     /// <summary>
@@ -753,22 +773,16 @@ public class HexGamePlayArea : UIWindow
             return;
         }
 
-        bool useCoins =CanUseTool(toolInfo);
+        //bool useCoins =CanUseTool(toolInfo);
 
-        if (toolInfo.count <= 0&&useCoins) 
+        if (toolInfo.count <= 0) 
         {
             GetItemScreen.limitRewordType = LimitRewordType.Tipstool;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
             TipsButton.enabled = true;
             return;
         }
-        
-        if (!useCoins)
-        {
-            ShopManager.shopManager.OpenDynamicStore();
-            return;
-        }
-        
+       
         usetoolCount++;
 
         string Str = GetRandomTipsPuzzle();
@@ -886,18 +900,12 @@ public class HexGamePlayArea : UIWindow
             Debug.LogError("[GameManager] There is no hint with the given hint id: ");
             return;
         }
-        bool useCoins = CanUseTool(toolInfo);
+       
 
-        if (toolInfo.count <= 0&&useCoins)
+        if (toolInfo.count <= 0)
         {
             GetItemScreen.limitRewordType = LimitRewordType.AutoComplete;
             SystemManager.Instance.ShowPanel(PanelType.GetItemScreen);
-            return;
-        }
-
-        if (!useCoins)
-        {
-            ShopManager.shopManager.OpenDynamicStore();
             return;
         }
 
@@ -908,25 +916,25 @@ public class HexGamePlayArea : UIWindow
             CurStageData.AddPuzzleHints(Str);
             List<PuzzleTile> puzzleDatas= crossPuzzleGrid.GetPuzzleTileRowCol(Str);
             StartCoroutine(ShowTipsPuzzle(puzzleDatas));
-            if (useCoins)
-            {
-                // 关卡内用金币买火箭道具，购买与立即使用都归到“金币购买道具火箭”
-                GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true, ResReason.InLevel,
-                    ResReason.IdxBuyRocket, ResReason.InLevel);
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1, ResReason.InLevel,
-                    string.Empty, ResReason.IdxBuyRocket, ResReason.InLevel);
-                GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, ResReason.InLevel,
-                    string.Empty, ResReason.IdxBuyRocket, ResReason.InLevel);
-                AudioManager.Instance.PlaySoundEffect("tishidaoju");
-                DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
-            }
-            else
-            {
+            // if (useCoins)
+            // {
+            //     // 关卡内用金币买火箭道具，购买与立即使用都归到“金币购买道具火箭”
+            //     GameDataManager.Instance.UserData.UpdateGold(-toolInfo.cost,false,true, ResReason.InLevel,
+            //         ResReason.IdxBuyRocket, ResReason.InLevel);
+            //     GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, 1, ResReason.InLevel,
+            //         string.Empty, ResReason.IdxBuyRocket, ResReason.InLevel);
+            //     GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, -1, ResReason.InLevel,
+            //         string.Empty, ResReason.IdxBuyRocket, ResReason.InLevel);
+            //     AudioManager.Instance.PlaySoundEffect("tishidaoju");
+            //     DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
+            // }
+            // else
+            // {
                 GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete,-1,"关卡内使用");
                 InitToolUI();
                 AudioManager.Instance.PlaySoundEffect("tishidaoju");
                 DailyTaskManager.Instance.UpdateTaskProgress(TaskEvent.NeedUseAutoTool,1);
-            }
+            //}
         }
         else
         {

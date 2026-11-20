@@ -57,7 +57,9 @@ public class LimitBtnTable : MonoBehaviour
         }
         
             // 限时活动逻辑
-            LimitTimeManager.Instance.OnLimitTimeBtnUI += InitLimtBtnUI;                
+            // 用 SubscribeLimitTimeBtnUI 做去重订阅：本方法每次结算都会调用，
+            // 而对象若一直 inactive 则 OnDisable 不触发、旧写法会让同一委托被反复 +=
+            SubscribeLimitTimeBtnUI();
             _limitTimeEventButton.gameObject.SetActive(true);
             LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
             
@@ -80,11 +82,18 @@ public class LimitBtnTable : MonoBehaviour
                 //txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
                 if (wordcount > 0)
                 {
+                    // ★ 进度累加必须执行：拼字/六边形结算都靠这里把本局词数记进限时活动
                     LimitTimeManager.Instance.UpdateLimitProgress(wordcount);
                     Effect.gameObject.SetActive(false);
                     AddCount.gameObject.SetActive(false);
                     AddCount.text = "+" + wordcount;
-                    StartCoroutine(ShowLimitWordAnim(parent));
+                    // ★ 灯笼飞入只是纯视觉动画，必须在对象激活时才能起协程：
+                    //   ChessFinishView.prefab 里把整个 LImitTime 覆盖成 m_IsActive=0（拼字结算不展示限时入口），
+                    //   而子按钮 LimitTimeBtn 的 activeSelf 仍是 true，调用方按 activeSelf 判断会照旧调进来，
+                    //   直接 StartCoroutine 就会报 "Coroutine couldn't be started because the game object 'LImitTime' is inactive"
+                    //   并把调用方 PlayRewardSequence 整个中断（下一步按钮/任务/竞速动画全停）。不可见时跳过动画即可。
+                    if (isActiveAndEnabled)
+                        StartCoroutine(ShowLimitWordAnim(parent));
                 }
                 LimitTimeManager.Instance.UpdateLimitTimeBtnUI();
             }
@@ -136,8 +145,10 @@ public class LimitBtnTable : MonoBehaviour
             {
                 Worddouble.gameObject.SetActive(LimitTimeManager.Instance.LimitTimeCanShow());
                 int wordcount = LimitTimeManager.Instance.GetCurWordCount();
+                // CurlimitData 可能为 null（活动未开放 / 已领完最后一段配置），判空后再拼文本
+                LimitDataItem curLimitData = LimitTimeManager.Instance.CurlimitData ?? LimitTimeManager.Instance.EnsureCurLimitData();
                 txtwordprogress.gameObject.SetActive(true); // 确保文本是开启的
-                txtwordprogress.text = wordcount + "/" + LimitTimeManager.Instance.CurlimitData.num;
+                txtwordprogress.text = curLimitData != null ? (wordcount + "/" + curLimitData.num) : wordcount.ToString();
                 if (LimitClaim.activeSelf)
                 {
                     LimitClaim.gameObject.SetActive(false);
@@ -223,11 +234,44 @@ public class LimitBtnTable : MonoBehaviour
         });
     }
 
+    /// <summary>是否已订阅 LimitTimeManager.OnLimitTimeBtnUI，防止重复 += 累积</summary>
+    private bool _limitTimeBtnUISubscribed;
+
+    private void OnEnable()
+    {
+        SubscribeLimitTimeBtnUI();
+    }
+
     private void OnDisable()
     {
+        UnsubscribeLimitTimeBtnUI();
+    }
+
+    /// <summary>
+    /// 对象真正被销毁时兜底退订：
+    /// 若本节点从创建起就是 inactive（如 ChessFinishView 把 LImitTime 覆盖为关闭），
+    /// OnEnable/OnDisable 都不会触发，只有 OnDestroy 能保证解绑，避免事件持有已销毁对象。
+    /// </summary>
+    private void OnDestroy()
+    {
+        UnsubscribeLimitTimeBtnUI();
+    }
+
+    /// <summary>订阅限时活动按钮刷新事件（幂等，可重复调用）</summary>
+    private void SubscribeLimitTimeBtnUI()
+    {
+        if (_limitTimeBtnUISubscribed) return;
+        if (LimitTimeManager.Instance == null) return; // 管理器尚未就绪时放弃，后续调用会再试
+        LimitTimeManager.Instance.OnLimitTimeBtnUI += InitLimtBtnUI;
+        _limitTimeBtnUISubscribed = true;
+    }
+
+    /// <summary>退订限时活动按钮刷新事件（幂等）</summary>
+    private void UnsubscribeLimitTimeBtnUI()
+    {
+        if (!_limitTimeBtnUISubscribed) return;
         if (LimitTimeManager.Instance != null)
-        {
             LimitTimeManager.Instance.OnLimitTimeBtnUI -= InitLimtBtnUI;
-        }
+        _limitTimeBtnUISubscribed = false;
     }
 }

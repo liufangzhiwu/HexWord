@@ -28633,7 +28633,7 @@ PrefabInstance:
     - target: {fileID: 4005738125541357783, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4120417432523936497, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
@@ -28683,37 +28683,37 @@ PrefabInstance:
     - target: {fileID: 5274383509519342361, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5310034184665810897, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5310034184665810897, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5310034184665810897, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 150
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5310034184665810897, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 150
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5310034184665810897, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 102
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5310034184665810897, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -525
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5385960236821049288, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
@@ -28764,32 +28764,32 @@ PrefabInstance:
     - target: {fileID: 6475389697422842710, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6475389697422842710, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6475389697422842710, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 150
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6475389697422842710, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_SizeDelta.y
-      value: 150
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6475389697422842710, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 102
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6475389697422842710, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -305
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7464908824365279939, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
@@ -29053,12 +29053,12 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 8752786462115196353, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3381423741310588761}
+      insertIndex: 0
+      addedObject: {fileID: 2099210043984663466}
     - targetCorrespondingSourceObject: {fileID: 8752786462115196353, guid: 0a82a54c8a622c64f8125320c0a87ad2,
         type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2099210043984663466}
+      insertIndex: 1
+      addedObject: {fileID: 3381423741310588761}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0a82a54c8a622c64f8125320c0a87ad2, type: 3}
 --- !u!114 &4616576570084623178 stripped

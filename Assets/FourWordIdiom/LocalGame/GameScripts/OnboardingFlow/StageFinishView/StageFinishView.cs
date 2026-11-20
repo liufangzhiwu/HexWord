@@ -83,8 +83,9 @@ public class StageFinishView : UIWindow
         if (FishInfoController.Instance != null)
             FishInfoController.Instance.OnFishTimeUpdated += _matchFishtable.UpdateFishTime;
 
-        // 竞速入口三态统一由 MatchFishTable 处理（通关 34 关后带锁露出、通关 38 关后解锁）
-        _matchFishtable.RefreshEntryState();
+        // 竞速入口三态统一由 MatchFishTable 处理。
+        // ★ 六边形结算页不展示「带锁入口」：未解锁时直接隐藏，避免右侧莫名出现一把锁（bug104）。
+        _matchFishtable.RefreshEntryState(false);
         AudioManager.Instance.PlaySoundEffect("StageFinish");
         StartCoroutine(CheckCompletedState());
         DailyTaskManager.Instance.UpateButterflyTaskUI();
@@ -186,8 +187,7 @@ public class StageFinishView : UIWindow
             if (cg != null) cg.alpha = 1;
 
             // 维持限时活动图标的状态
-            if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf && LimitTimeManager.Instance != null &&
-                GetCompletedWordCount() >= LimitTimeManager.Instance.CurlimitData.num)
+            if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf && IsLimitTimeReached())
             {
                 Showlimiticon.SetActive(true);
             }
@@ -215,6 +215,26 @@ public class StageFinishView : UIWindow
         if (LimitTimeManager.Instance == null)
             return 0;
         return LimitTimeManager.Instance.GetCurWordCount();
+    }
+
+    /// <summary>
+    /// 当前限时活动进度是否已达标（本局可领取 / 需要自动弹出限时活动面板）
+    /// ★ 原实现在这里直接取 LimitTimeManager.Instance.CurlimitData.num，会空引用：
+    ///   CurlimitData 只在 GetCurWordCount()/ClaimCurrentReward() 里赋值，
+    ///   活动未开放（IsOpen()==false，例如按钮靠 limitOpenTime 提前显示）或
+    ///   玩家已领完最后一段配置时它一直是 null。
+    ///   这里统一走 EnsureCurLimitData() 兜底，取不到配置就当未达标（只隐藏图标，不弹面板）。
+    /// </summary>
+    private bool IsLimitTimeReached()
+    {
+        LimitTimeManager limit = LimitTimeManager.Instance;
+        if (limit == null) return false;
+
+        int wordCount = GetCompletedWordCount(); // 内部会尝试刷新 CurlimitData
+        LimitDataItem limitData = limit.CurlimitData ?? limit.EnsureCurLimitData();
+        if (limitData == null) return false;
+
+        return wordCount >= limitData.num;
     }
 
     /// <summary>
@@ -301,13 +321,14 @@ public class StageFinishView : UIWindow
         //     yield return StartCoroutine(PlayZenLotusFlyAnim());
         // }
         
-        if (_limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
+        if (_limitBtnTable != null && _limitBtnTable._limitTimeEventButton != null &&
+            _limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
         {
             _limitBtnTable.CheckAndShowLimitedTimeEvent(Enlimiticon.transform);
             yield return new WaitForSeconds(FinishFlowTiming.LimitPanelGap);
             
             // 根据进度决定是否自动弹出限时活动面板
-            if (LimitTimeManager.Instance != null && GetCompletedWordCount() >= LimitTimeManager.Instance.CurlimitData.num)
+            if (IsLimitTimeReached())
             {
                 Showlimiticon.SetActive(true);
                 SystemManager.Instance.ShowPanel(PanelType.LimitTimeScreen);
@@ -417,7 +438,12 @@ public class StageFinishView : UIWindow
             // 未解锁（带锁显示）时只需刷新锁态文案，不必每秒跑排名结算
             if (!_matchFishtable.FishBtn.interactable)
             {
-                _matchFishtable.ShowLockedState();
+                // 六边形结算页不展示锁定态：入口已经被整块隐藏，这里不要再把锁头点亮
+                if (_matchFishtable.FishBtn.transform.parent != null &&
+                    _matchFishtable.FishBtn.transform.parent.gameObject.activeSelf)
+                {
+                    _matchFishtable.ShowLockedState();
+                }
                 yield break;
             }
 
@@ -445,8 +471,9 @@ public class StageFinishView : UIWindow
 
     private void UnlockBtnsUI()
     {
-        UnlockButton(_tasktable.TaskBtn, AppGameSettings.UnlockRequirements.DailyMissions, PanelType.DailyTasksScreen,
-            GameDataManager.Instance.FishUserSave.opentime);
+        // 每日任务入口：与主页同一套三态（展示关卡 → 带锁 → 解锁），否则进度在
+        // 「展示关卡～解锁关卡」之间时结束页没有任务按钮，回主页才出现（bug101）。
+        _tasktable.RefreshEntryState(AppGameSettings.ShowRequirements.DailyMissionsShow);
 
         UnlockButton(_limitBtnTable._limitTimeEventButton, AppGameSettings.UnlockRequirements.TimeLimitMode, PanelType.LimitTimeScreen,
             GameDataManager.Instance.UserData.limitOpenTime);
