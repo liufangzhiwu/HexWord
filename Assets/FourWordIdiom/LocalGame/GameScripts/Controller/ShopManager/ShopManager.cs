@@ -788,7 +788,7 @@ public partial class ShopManager : MonoBehaviour
         yield return new WaitForSeconds(2f);
 
 #if UNITY_OPENHARMONY
-        AuditConfigKey = "Zen_AuditStatus_HM";
+        AuditConfigKey = "AuditStatus";
 #else
         AuditConfigKey = "Zen_AuditStatus_AZ";
 #endif
@@ -798,7 +798,7 @@ public partial class ShopManager : MonoBehaviour
             onSuccess: (response) => { serverResponse = response; isDone = true; },
             onError: (err) =>
             {
-                Debug.LogWarning($"[Zen_AuditStatus_AZ] 在线拉取失败，准备使用本地兜底: {err}");
+                Debug.LogWarning($"[{AuditConfigKey}] 在线拉取失败，准备使用本地兜底: {err}");
                 TextAsset localAuditAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", AuditConfigKey);
                 if (localAuditAsset != null && !string.IsNullOrEmpty(localAuditAsset.text))
                 {
@@ -832,19 +832,19 @@ public partial class ShopManager : MonoBehaviour
             else
             {
                 AuditConfig.ResetToDefault();
-                Debug.Log($"[Zen_AuditStatus_AZ] 版本号不一致 (本地:{localVersion} vs 服务器配置:{configVersion})，忽略配置，审核关。");
+                Debug.Log($"{AuditConfigKey} 版本号不一致 (本地:{localVersion} vs 服务器配置:{configVersion})，忽略配置，审核关。");
             }
         }
         else
         {
             AuditConfig.ResetToDefault();
-            Debug.LogWarning("[Zen_AuditStatus_AZ] 无有效服务端配置，使用默认审核关。");
+            Debug.LogWarning($"{AuditConfigKey} 无有效服务端配置，使用默认审核关。");
         }
 
         IsAuditConfigReady = true;
         OnAuditConfigLoaded?.Invoke();
 
-         Debug.Log($"[Shop][Zen_AuditStatus_AZ] 审核配置就绪: IsAuditOpen={AuditConfig.IsAuditOpen}, " +
+         Debug.Log($"[Shop]{AuditConfigKey} 审核配置就绪: IsAuditOpen={AuditConfig.IsAuditOpen}, " +
                 $"FixedWhitelist={AuditConfig.AuditFixedShopItemIds.Count}, " +
                 $"LampWhitelist={AuditConfig.GetPropShopItems(PropShopType.Lamp).Count}, " +
                 $"RocketWhitelist={AuditConfig.GetPropShopItems(PropShopType.Rocket).Count}, " +
@@ -860,14 +860,14 @@ public partial class ShopManager : MonoBehaviour
             List<List<string>> records = SplitCsvLines(csvText);
             if (records == null || records.Count <= 2)
             {
-                Debug.LogWarning($"[Zen_AuditStatus_AZ] CSV 行数不足，使用默认审核关 (来源: {source})");
+                Debug.LogWarning($"{AuditConfigKey} CSV 行数不足，使用默认审核关 (来源: {source})");
                 return;
             }
 
             List<string> fields = records[2];
             if (fields == null || fields.Count < 1)
             {
-                Debug.LogWarning($"[Zen_AuditStatus_AZ] CSV 字段不足，使用默认审核关 (来源: {source})");
+                Debug.LogWarning($"{AuditConfigKey} CSV 字段不足，使用默认审核关 (来源: {source})");
                 return;
             }
 
@@ -896,7 +896,7 @@ public partial class ShopManager : MonoBehaviour
             FillAuditPropShopItems(fields, 7, PropShopType.Rocket);
             FillAuditPropShopItems(fields, 8, PropShopType.Revive);
 
-             Debug.Log($"[Shop][Zen_AuditStatus_AZ] 解析完成，来源【{source}】 | " +
+             Debug.Log($"[Shop]{AuditConfigKey} 解析完成，来源【{source}】 | " +
                     $"AuditStatusSwitch={AuditConfig.IsAuditOpen}, " +
                     $"Gold6ReplaceVideoPos={AuditConfig.Gold6ReplaceVideoPos}, " +
                     $"RemoveAdsWeeklyUnlockHome={AuditConfig.RemoveAdsWeeklyUnlockHome}");
@@ -904,7 +904,7 @@ public partial class ShopManager : MonoBehaviour
         catch (Exception ex)
         {
             AuditConfig.ResetToDefault();
-            Debug.LogError($"[Zen_AuditStatus_AZ] 解析异常，回默认审核关 (来源: {source}): {ex.Message}");
+            Debug.LogError($"{AuditConfigKey} 解析异常，回默认审核关 (来源: {source}): {ex.Message}");
         }
     }
 
@@ -957,7 +957,7 @@ public partial class ShopManager : MonoBehaviour
             if (string.IsNullOrEmpty(id)) continue;
             ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == id);
             if (item != null) result.Add(item);
-            else  Debug.Log($"[Shop][Audit] 商品ID无效或未配置: {id}");
+            else  Debug.Log($"[Shop][AuditStatus] 商品ID无效或未配置: {id}");
         }
         return result;
     }
@@ -1003,7 +1003,7 @@ public partial class ShopManager : MonoBehaviour
         {
             result = BuildAuditFixedStoreBaseList();
 
-             Debug.Log($"[Shop][Audit] 商店审核固定礼包 {result.Count} 个: " +
+             Debug.Log($"[Shop][AuditStatus] 商店审核固定礼包 {result.Count} 个: " +
                     $"[{string.Join(",", result.Select(x => x.produceNameId))}]");
         }
 
@@ -1048,11 +1048,11 @@ public partial class ShopManager : MonoBehaviour
         if (item != null)
         {
             list.Add(item);
-             Debug.Log($"[Shop][Audit] 补入审核固定商店礼包: {nameId}");
+             Debug.Log($"[Shop][AuditStatus] 补入审核固定商店礼包: {nameId}");
         }
         else
         {
-             Debug.Log($"[Shop][Audit] 特惠礼包未在商店表找到，跳过: {nameId}");
+             Debug.Log($"[Shop][AuditStatus] 特惠礼包未在商店表找到，跳过: {nameId}");
         }
     }
 
@@ -1135,7 +1135,7 @@ public partial class ShopManager : MonoBehaviour
         if(isSort)  
             result = result.OrderBy(x => x.price).ToList();
 
-         Debug.Log($"[Shop][Audit] slot={slot} 审核全量礼包 {result.Count} 个: [{string.Join(",", result.Select(x => x.produceNameId))}]");
+         Debug.Log($"[Shop][AuditStatus] slot={slot} 审核全量礼包 {result.Count} 个: [{string.Join(",", result.Select(x => x.produceNameId))}]");
         return result;
     }
 
@@ -1158,7 +1158,7 @@ public partial class ShopManager : MonoBehaviour
         if (!ShouldReplaceCoinVideoSlotWithGold6()) return null;
         ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == ProductGold6);
         if (item == null)
-             Debug.Log($"[Shop][Audit] Gold6 商品未在商店表中找到: {ProductGold6}");
+             Debug.Log($"[Shop][AuditStatus] Gold6 商品未在商店表中找到: {ProductGold6}");
         return item;
     }
 
@@ -1183,7 +1183,7 @@ public partial class ShopManager : MonoBehaviour
     private bool IsActivityBadgeSuppressedByAudit()
     {
         if (!AuditConfig.IsAuditOpen) return false;
-        LogShop("[Audit] 审核开，促销角标禁用");
+        LogShop("[AuditStatus] 审核开，促销角标禁用");
         return true;
     }
 
@@ -1431,6 +1431,48 @@ public partial class ShopManager : MonoBehaviour
     {
         return GameDataManager.Instance.UserData.limitShopItems
             .Any(item => item.isget && !item.isoverdate && item.adstype == (int)LimitRewordType.RemoveAds);
+    }
+
+    /// <summary>
+    /// 「领取界面 / 购买记录」的统一展示口径：已拥有永久去广告时，
+    /// 礼包内容里的去广告项（6 永久 / 7 限时 N 天）一律不展示。
+    ///
+    /// 背景：玩家买了永久去广告后，再买到含「限时去广告」的内购，奖励内容里仍会列一条 7;N，
+    ///      领取弹窗（AwardScreen）和购买记录（BuyListScreen / PurchaseRecordItem）看起来像"又买了一份广告权益"。
+    ///
+    /// 例外：这一单本身就是「永久去广告」商品（商品名 RemoveADS，或内容里含 6）→ 保留展示，
+    ///      否则玩家刚买完永久去广告，领取界面反而看不到自己买的东西。
+    ///
+    /// 说明：只影响展示，不影响发放（发放侧见 ShopGiftItem.IsContentSkippedOnPurchase）。
+    ///      购买记录按「当前是否拥有永久去广告」判定，所以历史订单里的去广告项也会随之隐藏。
+    /// </summary>
+    /// <param name="produceNameId">商品/订单的商品名（PurchaseRecord.produceNameId）</param>
+    /// <param name="productContent">商品/订单的内容快照（type;count 列表）</param>
+    public static bool ShouldHideRemoveAdsReward(string produceNameId, List<List<string>> productContent)
+    {
+        ShopManager sm = shopManager;
+        if (sm == null) return false;
+
+        var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (userData == null || !sm.IsRemoveAdsOwned()) return false;
+
+        // 本单卖的就是永久去广告 → 保留（领取界面要让玩家看到买到了什么）
+        if (produceNameId == ProductRemoveAds) return false;
+
+        if (productContent != null)
+        {
+            for (int i = 0; i < productContent.Count; i++)
+            {
+                var row = productContent[i];
+                if (row == null || row.Count < 1) continue;
+
+                int type;
+                if (!int.TryParse(row[0], out type)) continue;
+                if (type == (int)LimitRewordType.RemoveAds) return false;
+            }
+        }
+
+        return true;
     }
 
     public bool IsRemoveAdsActive()
@@ -1720,7 +1762,7 @@ public partial class ShopManager : MonoBehaviour
             ? $"{GameDataManager.Instance.UserData.levelMode}_{ctrl.CurrStageInfo.StageNumber}"
             : "-";
 
-        return $"{stage}|audit={AuditConfig.IsAuditOpen}|rmads={IsRemoveAdsOwned()}";
+        return $"{stage}|AuditStatus={AuditConfig.IsAuditOpen}|rmads={IsRemoveAdsOwned()}";
     }
 
     /// <summary>
@@ -3045,9 +3087,11 @@ public partial class ShopManager : MonoBehaviour
         userData.lastPayTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         userData.LastPayTimeTicks = DateTime.Now.Ticks;
         userData.TotalPayTimes++;
-        userData.TotalRevenue += item.LocalizedPrice;
-        if (item.LocalizedPrice > userData.MaxSinglePayAmount)
-            userData.MaxSinglePayAmount = item.LocalizedPrice;
+        // 平台订单价的单位要归一成「元」再记账（华为/鸿蒙是分），否则统计会放大 100 倍
+        float paidYuan = ToYuanPrice(item.LocalizedPrice, shopDataItem.price);
+        userData.TotalRevenue += paidYuan;
+        if (paidYuan > userData.MaxSinglePayAmount)
+            userData.MaxSinglePayAmount = paidYuan;
 
         // ★ 付费保护（cypz_payProtect）：补单也代表这笔支付真实成功，按支付时刻续保护
         ChessDynamicHardManager.RecordPayProtect("补单");
@@ -3086,13 +3130,50 @@ public partial class ShopManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// 把平台回传的价格归一成「元」。
+    /// 华为 / 鸿蒙的订单价单位是分（华为 <c>getPrice()</c> 注释即"单位：分"，鸿蒙 <c>order.price</c> 同理），
+    /// Google Play 的 <c>localizedPrice</c> 是元。这里用配置价做参照：
+    /// 更接近「配置价 × 100」就判定为分，除以 100；否则原样返回。
+    /// 没有配置价可参照时原样返回，不做无依据的换算。
+    /// </summary>
+    /// <param name="rawPrice">平台回调/订单查询给的价格</param>
+    /// <param name="configPrice">本地商品配置价（元），没有则传 0</param>
+    public static float ToYuanPrice(float rawPrice, float configPrice)
+    {
+        if (rawPrice <= 0f) return 0f;
+
+        // 有配置价（元）作参照：比较「按分理解」和「按元理解」哪个更接近配置价
+        if (configPrice > 0f)
+        {
+            float asFen  = Mathf.Abs(rawPrice - configPrice * 100f);
+            float asYuan = Mathf.Abs(rawPrice - configPrice);
+            if (asFen < asYuan) return rawPrice / 100f;
+            return rawPrice;
+        }
+
+        // 没有配置价参照：华为 / 鸿蒙的订单价单位固定是「分」
+        // （Shop_huawei 的 getPrice() 注释即“单位：分”，Shop_harmony 的 order.price 同为分），
+        // 因此这两端可无条件归一；iOS / Android 的价格本身是元，不做换算。
+#if UNITY_HUAWEI || UNITY_OPENHARMONY
+        return rawPrice / 100f;
+#else
+        return rawPrice;
+#endif
+    }
+
     /// <summary>补发时写一条购买记录（结构 / 快照规则与 GiftTable.RecordPurchase、ShopItemBase.RecordPurchase 一致）。</summary>
     private void AddPurchaseRecordForRestore(ShopDataItem shopDataItem, ProductItem item, string source)
     {
         try
         {
-            float price = shopDataItem.price;
-            if (item != null && item.LocalizedPrice > 0) price = item.LocalizedPrice;
+            // ★ 补单金额 100 倍问题：华为/鸿蒙的订单价单位是「分」（华为 getPrice() 注释即"单位：分"，
+            //   鸿蒙 order.price 同样是分），而「消费记录」里的 price 统一按「元」展示
+            //   （正常购买写的是 ShopDataItem.price 配置价）。以前这里直接取 item.LocalizedPrice，
+            //   补单记录就变成了 配置价×100。
+            //   口径：优先配置价（元，与正常购买一致），配置价缺失时才用平台价并做分→元换算。
+            float platformPrice = ToYuanPrice(item?.LocalizedPrice ?? 0f, shopDataItem.price);
+            float price = shopDataItem.price > 0 ? shopDataItem.price : platformPrice;
 
             string nameText = MultilingualManager.Instance?.GetString(shopDataItem.name)
                               ?? shopDataItem.name
@@ -3398,6 +3479,24 @@ public partial class ShopManager : MonoBehaviour
         {
             if (item == null) return;
 
+            // ★ 价格口径统一为「配置价优先 + 平台价兜底并做分→元归一」：
+            //   当前商店列表（shopItems）没匹配到配置时，再从「全量商品表」（allShopItems）捞一次，
+            //   能捞到就用它的配置价（元，与正常购买记录一致）作记录价，同时用它作分/元判定参照；
+            //   实在捞不到才用平台价，并交给 ToYuanPrice 归一。
+            ShopDataItem allConfig = null;
+            if (!string.IsNullOrEmpty(item.ProductId))
+            {
+                try { allConfig = FormAllItemsGetProduct(item.ProductId); }
+                catch (Exception ex) { LogShop($"[购买记录] {source} 全量商品表查找异常: {ex.Message}"); }
+            }
+
+            float configPrice   = allConfig != null && allConfig.price > 0f ? allConfig.price : 0f;
+            float platformPrice = ToYuanPrice(item.LocalizedPrice, configPrice);
+            float price         = configPrice > 0f ? configPrice : platformPrice;
+            float originalPrice = allConfig != null && allConfig.originalPrice > 0f
+                ? allConfig.originalPrice
+                : price;
+
             string produceNameId = !string.IsNullOrEmpty(item.ProductId) ? item.ProductId : item.ItemName;
             string nameText = MultilingualManager.Instance != null
                 ? MultilingualManager.Instance.GetString(item.ItemName)
@@ -3411,19 +3510,21 @@ public partial class ShopManager : MonoBehaviour
                 produceNameId = produceNameId ?? "",
                 nameKey = item.ItemName ?? "",
                 nameText = nameText,
-                price = item.LocalizedPrice,
-                originalPrice = item.LocalizedPrice,
+                price = price,
+                originalPrice = originalPrice,
                 currency = item.IsoCurrencyCode ?? "",
-                showIcon = "",
-                limitRewordType = 0,
+                showIcon = allConfig != null ? (allConfig.showIcon ?? "") : "",
+                limitRewordType = allConfig != null ? allConfig.type : 0,
                 buyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                productContent = new List<List<string>>()
+                productContent = allConfig != null
+                    ? (allConfig.DeepCopy()?.productContent ?? new List<List<string>>())
+                    : new List<List<string>>()
             };
 
             GameDataManager.Instance?.UserData?.AddPurchaseRecord(record);
 
             LogShop($"[购买记录] {source} 兜底写入（商店未匹配配置）: {record.nameText}({record.produceNameId}), " +
-                    $"价格={record.price}, 时间={record.buyTime}");
+                    $"价格={record.price}（配置价={configPrice}, 平台价={item.LocalizedPrice}→{platformPrice}）, 时间={record.buyTime}");
         }
         catch (Exception ex)
         {
@@ -4021,7 +4122,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (AuditConfig.IsAuditOpen)
         {
-            LogShop("[Audit] OnBulbRewardVideoFinished 跳过: 审核开，内购特殊处理不生效");
+            LogShop("[AuditStatus] OnBulbRewardVideoFinished 跳过: 审核开，内购特殊处理不生效");
             return;
         }
 
@@ -4054,7 +4155,7 @@ public partial class ShopManager : MonoBehaviour
     {
         if (AuditConfig.IsAuditOpen)
         {
-            LogShop("[Audit] OnInterstitialClosed 跳过: 审核开，内购特殊处理不生效");
+            LogShop("[AuditStatus] OnInterstitialClosed 跳过: 审核开，内购特殊处理不生效");
             return;
         }
 

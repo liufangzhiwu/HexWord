@@ -44,10 +44,11 @@ public class AwardScreen : UIWindow, IBackGestureClosePanel
     }
 
     /// <summary>
-    /// 控制 AdsTable 显隐：
+    /// 控制 AdsTable（去广告权益说明栏）显隐：
     ///  - CurrentShopDataItem 为空 → 隐藏；
     ///  - productContent 数量 > 2 → 隐藏；
     ///  - productContent 中存在 RemoveAds / RemoveDayAds → 显示；
+    ///  - 已拥有永久去广告（去广告项被隐藏）→ 隐藏；
     ///  - 其余情况 → 隐藏。
     /// </summary>
     private void RefreshAdsTableVisibility()
@@ -68,6 +69,9 @@ public class AwardScreen : UIWindow, IBackGestureClosePanel
         if (shopItem != null && shopItem.productContent != null)
         {
             int count = shopItem.productContent.Count;
+
+            // ★ 已拥有永久去广告 → 奖励里的去广告项不展示，配套的「去广告权益说明」栏也一起收起来
+            bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(shopItem.produceNameId, shopItem.productContent);
             bool hasRemoveAds = false;
 
             for (int i = 0; i < count; i++)
@@ -86,8 +90,8 @@ public class AwardScreen : UIWindow, IBackGestureClosePanel
                 }
             }
 
-            show = (count <= 2) && hasRemoveAds;
-            Debug.Log($"[AwardScreen] AdsTable 显隐: count={count}, hasRemoveAds={hasRemoveAds}, show={show}");
+            show = (count <= 2) && hasRemoveAds && !hideRemoveAds;
+            Debug.Log($"[AwardScreen] AdsTable 显隐: count={count}, hasRemoveAds={hasRemoveAds}, hideRemoveAds={hideRemoveAds}, show={show}");
         }
         else
         {
@@ -105,34 +109,19 @@ public class AwardScreen : UIWindow, IBackGestureClosePanel
             rGameObject.gameObject.SetActive(false);
         }
 
-        // 分享等非商店场景：直接渲染外部传入的奖励列表
+        // 奖励列表统一由 CollectRewards 产出（内部已按"永久去广告已拥有"过滤去广告项），
+        // 保证展示顺序 / 数量与点击领取时的飞入动画完全一致。
+        List<RewardItem> rewards = CollectRewards();
+        int count = Mathf.Min(rewards.Count, rewardList.Count);
+        for (int i = 0; i < count; i++)
+        {
+            ShowItemUI(rewards[i], i);
+        }
+
         if (OverrideRewards != null)
-        {
-            int count = Mathf.Min(OverrideRewards.Count, rewardList.Count);
-            for (int i = 0; i < count; i++)
-            {
-                ShowItemUI(OverrideRewards[i], i);
-            }
             Debug.Log($"[AwardScreen] 使用 OverrideRewards 展示 {count} 项奖励");
-            return;
-        }
-
-        //var items = new List<AnalyticMgr.Item>();
-        if (Game.self.Shop.CurrentShopDataItem != null)
-        {
-            for (int i = 0; i < Game.self.Shop.CurrentShopDataItem.productContent.Count; i++)
-            {
-                var dataitem = Game.self.Shop.CurrentShopDataItem.productContent[i];
-
-                RewardItem rewardItem = new RewardItem()
-                {
-                    type = int.Parse(dataitem[0]),
-                    amount = int.Parse(dataitem[1])
-                };
-                int reward = i;
-                ShowItemUI(rewardItem, reward);
-            }
-        }
+        else
+            Debug.Log($"[AwardScreen] 展示 {count} 项奖励（已按去广告口径过滤）");
     }
 
     private void ShowItemUI(RewardItem rlist, int rewardid)
@@ -250,6 +239,10 @@ public class AwardScreen : UIWindow, IBackGestureClosePanel
     /// <summary>
     /// 收集本次要展示/飞入的奖励，统一成 RewardItem：
     ///   OverrideRewards（分享奖励等外部传入）优先，否则取当前商店商品内容。
+    ///
+    /// ★ 已拥有永久去广告时，商店商品内容里的去广告项（6 永久 / 7 限时 N 天）不再展示：
+    ///   否则玩家买了永久去广告后再买含「限时去广告」的礼包，领取界面还会列一条"×N 天"，
+    ///   看起来像又买了一份广告权益。发放逻辑不受影响，只隐藏展示。
     /// </summary>
     private List<RewardItem> CollectRewards()
     {
@@ -264,16 +257,32 @@ public class AwardScreen : UIWindow, IBackGestureClosePanel
         var shopItem = Game.self != null ? Game.self.Shop.CurrentShopDataItem : null;
         if (shopItem != null && shopItem.productContent != null)
         {
+            bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(shopItem.produceNameId, shopItem.productContent);
+
             foreach (var dataitem in shopItem.productContent)
             {
                 if (dataitem == null || dataitem.Count < 2) continue;
                 if (!int.TryParse(dataitem[0], out int type)) continue;
                 if (!int.TryParse(dataitem[1], out int amount)) continue;
+
+                if (hideRemoveAds && IsRemoveAdsRewardType(type))
+                {
+                    Debug.Log($"[AwardScreen] 已拥有永久去广告 → 领取界面隐藏去广告项 type={type}({(LimitRewordType)type})");
+                    continue;
+                }
+
                 list.Add(new RewardItem { type = type, amount = amount });
             }
         }
 
         return list;
+    }
+
+    /// <summary>是否为去广告类奖励（6 永久去广告 / 7 限时去广告）。</summary>
+    private static bool IsRemoveAdsRewardType(int type)
+    {
+        return type == (int)LimitRewordType.RemoveAds
+            || type == (int)LimitRewordType.RemoveDayAds;
     }
 
     /// <summary>没有对应资源栏的奖励（去广告 / 无限体力）不播飞入。</summary>

@@ -223,6 +223,11 @@ public class ChessDynamicHardManager : MonoBehaviour
         {
             TextAsset csvFile = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_dynamicConfig");
             dynamicCsvData = csvFile?.text;
+            NowConfigSource = csvFile != null ? "本地gameinfo包" : "缺失";
+        }
+        else
+        {
+            NowConfigSource = "服务器";
         }
         if (string.IsNullOrEmpty(levelCsvData))
         {
@@ -242,7 +247,21 @@ public class ChessDynamicHardManager : MonoBehaviour
             ConvertLevelCSVToJSON(levelCsvData);
         else
             Debug.LogError("Failed to load cypz_levelDifficultyChange csv data.");
+
+        // 配置装载结果自检：开关是否真的打开、两张表的解析结果是否齐全
+        string gateLog = "";
+        if (CheckLevelOpen.TryGetValue(1, out var g1))
+            gateLog += $"第1关≤{g1.Time}s→E={g1.Value}；";
+        if (CheckLevelOpen.TryGetValue(4, out var g4))
+            gateLog += $"第4关≤{g4.Time}s→E={g4.Value}；";
+        Debug.Log($"<color=#00FFFF>[动态难度-装载完成]</color> 来源:{(string.IsNullOrEmpty(NowConfigSource) ? "未知" : NowConfigSource)} | " +
+                  $"开关(DynamicHardIsOpen):<b>{DynamicHardIsOpen}</b> | " +
+                  $"提前激活门槛:{CheckLevelOpen.Count}条{(gateLog.Length > 0 ? $"（{gateLog}）" : "（缺失）")} | " +
+                  $"难度档位:{LevelDifficultyDatas.Count}档 | 关卡区间:{LevelBounds.Count}段 | 每日减负:E≥{dayEValue}/{dayDecrLevel}关");
     }
+
+    /// <summary>本次配置来源（服务器 / 本地包），仅用于日志</summary>
+    private string NowConfigSource;
     
     #region  解析能力参数
     /// <summary>
@@ -307,8 +326,16 @@ public class ChessDynamicHardManager : MonoBehaviour
                         string[] level3 = values[2].Split(',');
                         CheckOpen checkOpen2 = new CheckOpen(2, int.Parse(level2[0].Trim()), float.Parse(level2[1].Trim()));
                         CheckOpen checkOpen5 = new CheckOpen(5, int.Parse(level3[0].Trim()), float.Parse(level3[1].Trim()));
-                        CheckLevelOpen.Add(1, checkOpen2);
-                        CheckLevelOpen.Add(4, checkOpen5);
+                        // 与 WT 保持一致：重复初始化时不再抛 ArgumentException
+                        if (!CheckLevelOpen.ContainsKey(1))
+                        {
+                            CheckLevelOpen.Add(1, checkOpen2);
+                        }
+
+                        if (!CheckLevelOpen.ContainsKey(4))
+                        {
+                            CheckLevelOpen.Add(4, checkOpen5);
+                        }
                     }
                 }else if (paramId == "cypz_dynamicLevel3E")
                 {
@@ -627,7 +654,22 @@ public class ChessDynamicHardManager : MonoBehaviour
     /// <param name="propsWordCount">道具提示的词数</param>
     public void CheckLevelClearConditions(int level, int errorCount, float clearTime, bool usedProps, float propsWordCount = 0f)
     {
-        if(!IsOpenDynamicHard()) return;
+        if(!IsOpenDynamicHard())
+        {
+            Debug.Log($"<color=#FF4500>[动态难度-未开启]</color> 第 <b>{level}</b> 关结算，但 DynamicHardIsOpen != 1（配置未加载或 cypz_dynamicLevel3 首位=0），跳过判定。");
+            return;
+        }
+
+        // 门槛关（1/4）打印实际值，便于核对为什么没触发
+        if (level == 1 || level == 4)
+        {
+            CheckOpen gate = default;
+            bool hasGate = CheckLevelOpen != null && CheckLevelOpen.TryGetValue(level, out gate);
+            Debug.Log($"<color=#00FFFF>[动态难度-门槛校验]</color> 第 <b>{level}</b> 关 | 连错:{errorCount} | 用时:{clearTime:F2}s | " +
+                      $"用道具:{usedProps}(提示字数:{propsWordCount}) | " +
+                      $"门槛:{(hasGate ? $"≤{gate.Time}s→E={gate.Value}" : "缺失")} | " +
+                      $"IsEnergy:{GameDataManager.Instance.ChessDynamicHardSave.IsEnergy} | E:{GameDataManager.Instance.ChessDynamicHardSave.EnergyValue}");
+        }
 
         if (level <= StartLevel)
         {

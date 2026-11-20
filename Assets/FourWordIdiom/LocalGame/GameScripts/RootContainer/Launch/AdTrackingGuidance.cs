@@ -61,7 +61,7 @@ public class AdTrackingGuidance : MonoBehaviour
         SetText(_buttonLabel, Localize(mode == Mode.Startup ? "Continue" : "GoAndStart"));
 
         // 奖励金币的 UI 表现挂在按钮上：按钮上方一行"+G"金色角标（G 来自分层配置 AdTrackingStimulate）
-        ApplyRewardBadge(rewardGold);
+        //ApplyRewardBadge(rewardGold);
 
         SetBusy(false);
     }
@@ -71,7 +71,7 @@ public class AdTrackingGuidance : MonoBehaviour
     /// </summary>
     public void SetRewardGold(int rewardGold)
     {
-        ApplyRewardBadge(rewardGold);
+        //ApplyRewardBadge(rewardGold);
     }
 
     /// <summary>请求系统弹窗/跳系统设置期间禁用按钮，避免连点</summary>

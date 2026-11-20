@@ -80,7 +80,7 @@ public class OverallRankingManager : MonoBehaviour
         GameConfigResponse serverResponse = null;
         
 #if UNITY_OPENHARMONY
-        AuditConfigKey = "Zen_AuditStatus_HM";
+        AuditConfigKey = "AuditStatus";
 #else
         AuditConfigKey = "Zen_AuditStatus_AZ";
 #endif
@@ -94,7 +94,7 @@ public class OverallRankingManager : MonoBehaviour
             },
             onError: (err) =>
             {
-                Debug.LogWarning($"[AuditStatus] 在线拉取失败，准备使用本地兜底: {err}");
+                Debug.LogWarning($"[{AuditConfigKey}] 在线拉取失败，准备使用本地兜底: {err}");
                 TextAsset localAuditAsset = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", AuditConfigKey);
                 if (localAuditAsset != null && !string.IsNullOrEmpty(localAuditAsset.text))
                 {
@@ -128,7 +128,7 @@ public class OverallRankingManager : MonoBehaviour
             }
             else
             {
-                Debug.Log($"[AuditStatus] 版本号不一致 (本地:{localVersion} vs 服务器配置:{configVersion})，忽略该配置，使用默认状态。");
+                Debug.Log($"[{AuditConfigKey}] 版本号不一致 (本地:{localVersion} vs 服务器配置:{configVersion})，忽略该配置，使用默认状态。");
             }
         }
         // E. 广播通知UI刷新状态
@@ -163,13 +163,13 @@ public class OverallRankingManager : MonoBehaviour
                 AuditConfig.LotusHeartAppearCondition = appear;
                 AuditConfig.LotusHeartUnlockCondition = unlock;
             }
-            Debug.Log($"[AuditStatus] 审核配置解析完成！当前使用来源: 【{source}】 | " +
+            Debug.Log($"[{AuditConfigKey}] 审核配置解析完成！当前使用来源: 【{source}】 | " +
                       $"TotalSwitch={AuditConfig.TotalSwitch}, ZenSwitch={AuditConfig.ZenSwitch}, " +
                       $"LotusAppear={AuditConfig.LotusHeartAppearCondition}, LotusUnlock={AuditConfig.LotusHeartUnlockCondition}");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[AuditStatus] 解析审核配置异常 (来源: {source}): {ex.Message}");
+            Debug.LogError($"[{AuditConfigKey}] 解析审核配置异常 (来源: {source}): {ex.Message}");
         }
     }
     

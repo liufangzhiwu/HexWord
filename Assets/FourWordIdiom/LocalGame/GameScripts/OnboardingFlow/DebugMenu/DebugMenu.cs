@@ -163,6 +163,7 @@ public class DebugMenu : UIWindow
         
         string bagName=GameDataManager.Instance.UserData.ABName=="1"?"B 包":"A 包";
         ChessStageController.Instance.Initialized();
+        ChessDynamicHardManager.Instance.Initialized();
         ABName = GameDataManager.Instance.UserData.ABName;
         logText.text = "拼字玩法当前为"+bagName+"\n 其中0为A包 1为B包"; // 清空 UI 文本
     }
@@ -426,8 +427,11 @@ public class DebugMenu : UIWindow
     {
         InputField Stagenumtxt = ChessEBtn.GetComponentInChildren<InputField>();
         float value = float.Parse(Stagenumtxt.text);
+        // 调试设 E 值时一并打开 IsEnergy，否则 CheckLevelHardChange 会直接返回 0，看不到任何效果
+        GameDataManager.Instance.ChessDynamicHardSave.IsEnergy = true;
         GameDataManager.Instance.ChessDynamicHardSave.SetEnergy(value);
         GameDataManager.Instance.ChessDynamicHardSave.SaveData();
+        Debug.Log($"<color=#00FFFF>[调试]</color> 拼字动态难度已强制开启：IsEnergy=true, E={value}");
     }
     
     private void OnPassStageClick()

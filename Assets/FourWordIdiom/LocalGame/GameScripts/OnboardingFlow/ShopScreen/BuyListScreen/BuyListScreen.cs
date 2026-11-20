@@ -73,6 +73,9 @@ public class BuyListScreen : UIWindow
     {
         ClearItems();
 
+        // 兜底修正历史数据：补单曾把「分」当成「元」写进记录，打开列表时修正一次并落盘（幂等）
+        GameDataManager.Instance?.UserData?.NormalizePurchaseRecordPrices();
+
         var records = GameDataManager.Instance?.UserData?.purchaseRecords;
         int count = records?.Count ?? 0;
         bool has = count > 0;

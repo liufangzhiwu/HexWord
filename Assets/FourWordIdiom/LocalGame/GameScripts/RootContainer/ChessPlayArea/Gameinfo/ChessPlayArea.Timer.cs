@@ -409,7 +409,10 @@ public partial class ChessPlayArea
             .SetLoops(4, LoopType.Yoyo)
             .OnComplete(() =>
             {
-                if (_timerText != null) _timerText.transform.localScale = Vector3.one;
+                if (_timerText != null)
+                {
+                    _timerText.transform.localScale = Vector3.one;
+                }
             });
     }
 
@@ -499,6 +502,7 @@ public partial class ChessPlayArea
             .SetLoops(WarningBreathLoops, LoopType.Yoyo)
             .OnComplete(() =>
             {
+                _timerText.color = new Color(1f, 1f, 1f, 1f);
                 // 呼吸结束时停在 30/255，再淡到 0 收尾，避免一下跳没
                 red.DOFade(0f, 0.15f).OnComplete(ResetTimeUpRedScreen);
             });
@@ -570,6 +574,52 @@ public partial class ChessPlayArea
         rootRT.pivot = new Vector2(0.5f, 0.5f);
         rootRT.sizeDelta = new Vector2(820f, 208f);   // 底图 1023x259，按比例收缩
         Vector2 centerPos = new Vector2(0f, 120f);
+
+        // ★ 提高显示层级：只 SetAsLastSibling 不够 —— 玩法内的棋子、落子错误提示、棋盘特效都用
+        //   附加 Canvas + overrideSorting + 排序层，同级顺序保证不了盖住它们。
+        //
+        // ★★ 赋值顺序不能改（这就是「设了 TopPanel 但排序层还是 Default」的原因）：
+        //     ① 先 overrideSorting = true   —— Canvas 在 overrideSorting == false 时排序设置不参与渲染，
+        //        且把 overrideSorting 从 false 打开会重置 Canvas 的排序状态，
+        //        先设 sortingLayerName 再开 override 会被打回 Default；
+        //     ② 再 sortingOrder；
+        //     ③ 最后 sortingLayerName。
+        //     与本项目 ChessView.SetChoose / ChessPlayArea.Effects 的写法保持一致。
+        //
+        // 层选 TopPanel 的依据（ProjectSettings/TagManager 的 Sorting Layers 顺序，低→高）：
+        //   Default < BasePanel < BaseEffect < PopPanel < TopPanel < UpPopPanel < UpPopTwoPanel < TipsPanel
+        //   - 高于玩法资源（BasePanel / BaseEffect）→ 横幅不会被关卡资源挡住；
+        //   - 低于失败弹窗（UpPopTwoPanel）和暂停弹窗（TipsPanel）→ 时间到约 2.5s 后弹出的失败界面
+        //     仍能正常盖住横幅，不会反过来盖系统弹窗。
+        Canvas bannerCanvas = root.AddComponent<Canvas>();
+        bannerCanvas.overrideSorting = true;                       // ★ 必须最先打开
+        bannerCanvas.sortingOrder = 10;
+        bannerCanvas.sortingLayerName = UIPanelLayer.TopPanel;     // ★ 最后设层名
+        bannerCanvas.pixelPerfect = false;
+        root.AddComponent<GraphicRaycaster>();   // 子 Canvas 建议配一个；横幅本身 raycastTarget 全关，不影响点击穿透
+
+        // 兜底校验：层名不在 TagManager 的 Sorting Layers 里时 Unity 会静默保持 Default，
+        // 横幅又会压不住关卡资源 → 明确打日志，并用 sortingLayerID 强设一次（name 走 ID 映射，
+        // 某些版本在 overrideSorting 刚打开时设 name 不生效，直接用 ID 更稳）。
+        if (bannerCanvas.sortingLayerName != UIPanelLayer.TopPanel)
+        {
+            int topPanelId = SortingLayer.NameToID(UIPanelLayer.TopPanel);
+            if (topPanelId != 0)
+            {
+                bannerCanvas.sortingLayerID = topPanelId;
+                Debug.LogWarning($"[ChessPlayArea] 时间到横幅排序层 name 设置未生效，已改用 sortingLayerID 强设：" +
+                                 $"当前={bannerCanvas.sortingLayerName}, id={topPanelId}");
+            }
+            else
+            {
+                Debug.LogWarning($"[ChessPlayArea] 时间到横幅排序层设置失败：当前={bannerCanvas.sortingLayerName}，" +
+                                 $"期望={UIPanelLayer.TopPanel}（ProjectSettings/TagManager 里没有这个 Sorting Layer？）");
+            }
+        }
+        else
+        {
+            Debug.Log($"[ChessPlayArea] 时间到横幅排序层={bannerCanvas.sortingLayerName}, sortingOrder={bannerCanvas.sortingOrder}");
+        }
 
         CanvasGroup cg = root.GetComponent<CanvasGroup>();
         cg.alpha = 0f;

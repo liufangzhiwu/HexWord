@@ -978,6 +978,39 @@ public class UserData
     }
 
     /// <summary>
+    /// 修正历史购买记录里被写成「分」的金额（补单写入 LocalizedPrice 造成的 ×100 遗留数据）。
+    /// 参照物用记录里自带的 originalPrice（配置原价，元）：金额达到原价的 10 倍以上就判为「分」，除以 100。
+    /// 幂等：本来就正确的记录（正价或折扣价，price ≤ originalPrice）不会被改动。
+    /// </summary>
+    /// <returns>被修正的记录条数</returns>
+    public int NormalizePurchaseRecordPrices()
+    {
+        if (purchaseRecords == null || purchaseRecords.Count == 0) return 0;
+
+        int fixedCount = 0;
+        for (int i = 0; i < purchaseRecords.Count; i++)
+        {
+            PurchaseRecord record = purchaseRecords[i];
+            if (record == null || record.price <= 0f || record.originalPrice <= 0f) continue;
+
+            // 正常记录：price ≤ originalPrice（正价或折扣）；异常记录：price ≈ originalPrice × 100
+            if (record.price < record.originalPrice * 10f) continue;
+
+            float wrong = record.price;
+            record.price = record.price / 100f;
+            fixedCount++;
+            Debug.Log($"[UserData] 购买记录金额修正(分→元): {record.produceNameId} {wrong} → {record.price}");
+        }
+
+        if (fixedCount > 0)
+        {
+            Debug.Log($"[UserData] 共修正 {fixedCount} 条购买记录金额");
+            SaveData();
+        }
+        return fixedCount;
+    }
+
+    /// <summary>
     /// 清空所有购买记录（调试或用户主动清理时使用）。
     /// </summary>
     public void ClearPurchaseRecords()

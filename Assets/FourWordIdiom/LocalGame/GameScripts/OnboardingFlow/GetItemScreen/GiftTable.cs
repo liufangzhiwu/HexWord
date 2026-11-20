@@ -711,7 +711,9 @@ public class GiftTable : MonoBehaviour
     /// <summary>
     /// 写入一条购买记录到 UserData.purchaseRecords。
     /// - 名称：优先 MultilingualManager 翻译 nameKey，回退 produceNameId；
-    /// - 价格：优先 ProductItem.LocalizedPrice（>0 时），否则回退 ShopDataItem.price；
+    /// - 价格：优先 ShopDataItem.price（配置价，元，与商店展示 / 正常购买口径一致）；
+    ///         配置价缺失才用 ProductItem.LocalizedPrice 兜底，并做「分→元」归一
+    ///         （华为 / 鸿蒙的平台价单位是分，直接入库会变 100 倍）；
     /// - 礼包内容：深拷贝 ShopDataItem.productContent，避免后续引用变化影响历史记录；
     /// - 购买时间：yyyy-MM-dd HH:mm:ss。
     /// </summary>
@@ -725,9 +727,11 @@ public class GiftTable : MonoBehaviour
                 return;
             }
 
-            float price = shopDataItem.price;
-            if (item != null && item.LocalizedPrice > 0)
-                price = item.LocalizedPrice;
+            // ★ 价格：配置价优先，缺失时用平台价兜底并归一（分→元）
+            float rawPlatformPrice = item?.LocalizedPrice ?? 0f;
+            float price = shopDataItem.price > 0f
+                ? shopDataItem.price
+                : ShopManager.ToYuanPrice(rawPlatformPrice, shopDataItem.originalPrice);
 
             string nameText = MultilingualManager.Instance?.GetString(shopDataItem.name)
                               ?? shopDataItem.name
@@ -743,7 +747,7 @@ public class GiftTable : MonoBehaviour
                 nameKey = shopDataItem.name ?? "",
                 nameText = nameText,
                 price = price,
-                originalPrice = shopDataItem.originalPrice,
+                originalPrice = shopDataItem.originalPrice > 0f ? shopDataItem.originalPrice : price,
                 currency = item?.IsoCurrencyCode ?? "",
                 showIcon = shopDataItem.showIcon ?? "",
                 limitRewordType = shopDataItem.type,
@@ -753,7 +757,9 @@ public class GiftTable : MonoBehaviour
 
             GameDataManager.Instance?.UserData?.AddPurchaseRecord(record);
 
-            LogShop($"购买记录已写入: name={record.nameText}, price={record.price}, time={record.buyTime}, contentCount={record.productContent.Count}");
+            LogShop($"购买记录已写入: name={record.nameText}, price={record.price}, " +
+                    $"配置价={shopDataItem.price}, 平台价={rawPlatformPrice}, " +
+                    $"time={record.buyTime}, contentCount={record.productContent.Count}");
         }
         catch (Exception ex)
         {

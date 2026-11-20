@@ -100,11 +100,22 @@ public class PurchaseRecordItem : MonoBehaviour
         }
         _spawned.Clear();
 
+        // ★ 已拥有永久去广告 → 记录内容里的去广告项（6 永久 / 7 限时 N 天）不再展示：
+        //   否则玩家买了永久去广告后，早期买过的「限时去广告」订单里还会挂着一条去广告资源。
+        //   只影响展示，历史存档里的内容快照保持不变。
+        bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(record.produceNameId, record.productContent);
+
         // ---------- GiftItem 方式 ----------
         Color outlineColor = Color.gray; // 记录页不强制按 produceNameId 上色，统一白色描边
         foreach (var row in record.productContent)
         {
             if (row == null || row.Count < 2) continue;
+
+            if (hideRemoveAds && IsRemoveAdsRewardType(row[0]))
+            {
+                Debug.Log($"[PurchaseRecord] 已拥有永久去广告 → 记录内隐藏去广告项 type={row[0]}（{record.produceNameId}）");
+                continue;
+            }
 
             var item = Instantiate(giftItemPrefab, contentParent);
             // itemid 传 0：记录页不创建 tips，避免 shopItemsTipsPanel 冲突
@@ -113,6 +124,15 @@ public class PurchaseRecordItem : MonoBehaviour
             item.gameObject.SetActive(true);
             _spawned.Add(item);
         }
+    }
+
+    /// <summary>是否为去广告类奖励（6 永久去广告 / 7 限时去广告）。</summary>
+    private static bool IsRemoveAdsRewardType(string typeStr)
+    {
+        int t;
+        if (!int.TryParse(typeStr, out t)) return false;
+        return t == (int)LimitRewordType.RemoveAds
+            || t == (int)LimitRewordType.RemoveDayAds;
     }
 
     private string GetTypeName(string typeStr)

@@ -574,8 +574,11 @@ public class LoadingController : MonoBehaviour
 
         //预加载关卡文件
         StageHexController.Instance.LoadPackInfos();
-        ChessStageController.Instance.Initialized();
+        // 与 WT 保持一致：动态难度配置先初始化，并让出一帧，再初始化关卡控制器，
+        // 避免 ChessStageController 建关时读到 DynamicHardIsOpen 仍为 0 的默认值
         ChessDynamicHardManager.Instance.Initialized();
+        yield return null;
+        ChessStageController.Instance.Initialized();
         // 开始场景加载
         yield return LoadMainSceneAsync();
     }
