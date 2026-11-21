@@ -310,7 +310,7 @@ public static class BackGestureRouter
         if (SystemManager.Instance.PanelIsShowing(PanelType.GamePlayArea))
             SystemManager.Instance.HidePanel(PanelType.GamePlayArea);
 
-        GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+        GameDataManager.Instance.UserData.EndStageTime();
         // 主页出现时会自己把 HeaderSection 拉起来（PrimaryInterface.ShowTopPanel）
         SystemManager.Instance.ShowPanel(PanelType.PrimaryInterface);
     }

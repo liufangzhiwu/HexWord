@@ -451,7 +451,7 @@ public class AdsFailScreen : UIWindow
         Debug.Log($"[AdsFail] 单道具购买成功: {productItem?.ProductId}");
 
         if (ShopManager.shopManager != null)
-            ShopManager.shopManager.OnPurchaseSuccess(productItem);
+            ShopManager.shopManager.OnPurchaseSuccess(productItem, "广告失败页道具");
 
         Close();
     }

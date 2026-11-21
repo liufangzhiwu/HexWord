@@ -185,7 +185,13 @@ public class UserData
     public string curStageStartTime; // 当前关卡开始时间
     public bool curIsEnter; // 当前关卡是否已经进入
 
-    public int curStageOnlineTime; // 当前关卡在线时长(秒)
+    public int curStageOnlineTime; // 当前关卡在线时长(秒)，兼容旧字段，值 = curStageElapsedMs/1000
+
+    // ---- 关卡时长计时（毫秒 + 可暂停窗口）----
+    public long curStageElapsedMs;        // 已封存的累计时长(毫秒)
+    public long curStageWindowStartTicks; // 计时窗口起点(UTC Ticks)，0 表示窗口关闭（暂停中）
+    public bool curStageTimerActive;      // 计时窗口当前是否打开
+    public bool curStageSessionOpen;      // 本局计时会话是否已开始且未结束
 
     // 关卡对应通关时长
     public Dictionary<int, int> passLevelUseTime = new Dictionary<int, int>();
@@ -445,6 +451,10 @@ public class UserData
         lastLoginDay = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         curStageStartTime = null;
         curStageOnlineTime = 0;
+        curStageElapsedMs = 0;
+        curStageWindowStartTicks = 0;
+        curStageTimerActive = false;
+        curStageSessionOpen = false;
         curIsEnter = false;
         zenCount = 0;
         overallZenScore = 0;
@@ -770,6 +780,14 @@ public class UserData
        
         curStageStartTime = user.curStageStartTime;
         curStageOnlineTime = user.curStageOnlineTime;
+        // 老存档迁移：只有旧的整型秒数时折算成毫秒累计
+        curStageElapsedMs = user.curStageElapsedMs;
+        if (curStageElapsedMs <= 0 && user.curStageOnlineTime > 0)
+            curStageElapsedMs = user.curStageOnlineTime * 1000L;
+        // 冷启动后窗口一律从关闭态开始，由玩法层在恢复关卡时重新开窗
+        curStageWindowStartTicks = 0;
+        curStageTimerActive = false;
+        curStageSessionOpen = false;
         //显示奖励数据
         timerePuzzleid = user.timerePuzzleid;
         limitOpenTime = user.limitOpenTime;
@@ -1315,23 +1333,131 @@ public class UserData
         return totalToolCost;
     }
 
+    // 单段计时上限：防止用户篡改系统时间导致关卡时长出现天文数字
+    private const long MaxSingleSegmentMs = 30 * 60 * 1000;
+
     /// <summary>
-    /// 更新当前关卡在线时长
+    /// 新开一局：累计清零并开窗
+    /// </summary>
+    public void BeginStageTime()
+    {
+        curStageElapsedMs = 0;
+        curStageOnlineTime = 0;
+        curStageStartTime = DateTime.Now.ToString();
+        curStageWindowStartTicks = DateTime.UtcNow.Ticks;
+        curStageTimerActive = true;
+        curStageSessionOpen = true;
+    }
+
+    /// <summary>
+    /// 回到关卡（从主页/商店/蝴蝶页重新进本关）：保留已累计时长，重新开启计时会话。
+    /// </summary>
+    public void ReopenStageTime()
+    {
+        curStageSessionOpen = true;
+        if (curStageWindowStartTicks <= 0)
+            curStageWindowStartTicks = DateTime.UtcNow.Ticks;
+        if (string.IsNullOrEmpty(curStageStartTime))
+            curStageStartTime = DateTime.Now.ToString();
+        curStageTimerActive = true;
+    }
+
+    /// <summary>
+    /// 续局 / 从暂停恢复：只开窗，保留已累计时长。
+    /// 未处于本局计时会话时不做事，避免在非关卡界面误开计时。
+    /// </summary>
+    public void ResumeStageTime()
+    {
+        if (!curStageSessionOpen) return;
+        if (curStageWindowStartTicks <= 0)
+            curStageWindowStartTicks = DateTime.UtcNow.Ticks;
+        if (string.IsNullOrEmpty(curStageStartTime))
+            curStageStartTime = DateTime.Now.ToString();
+        curStageTimerActive = true;
+    }
+
+    /// <summary>
+    /// 封存当前段，并把窗口滚动到此刻。可反复调用、幂等。
+    /// 注意：这里必须"滚动"而不是置空，否则计时窗口会被永久关闭。
+    /// </summary>
+    public void SealStageTime()
+    {
+        if (curStageWindowStartTicks > 0)
+        {
+            long nowTicks = DateTime.UtcNow.Ticks;
+            long deltaMs = (nowTicks - curStageWindowStartTicks) / TimeSpan.TicksPerMillisecond;
+            if (deltaMs > 0)
+                curStageElapsedMs += Math.Min(deltaMs, MaxSingleSegmentMs);
+            curStageWindowStartTicks = nowTicks;
+        }
+        curStageOnlineTime = (int)(curStageElapsedMs / 1000);
+    }
+
+    /// <summary>
+    /// 暂停计时（暂停页 / 商店 / 广告 / 切后台）：封存当前段并关窗，这段时长不计入关卡。
+    /// </summary>
+    public void PauseStageTime()
+    {
+        if (!curStageTimerActive) return;
+        SealStageTime();
+        curStageWindowStartTicks = 0;
+        curStageTimerActive = false;
+    }
+
+    /// <summary>
+    /// 退出 / 结算：封存后彻底结束本次计时会话
+    /// </summary>
+    public void EndStageTime()
+    {
+        if (curStageSessionOpen)
+            SealStageTime();
+        curStageWindowStartTicks = 0;
+        curStageTimerActive = false;
+        curStageSessionOpen = false;
+    }
+
+    /// <summary>
+    /// 按"当前是否被弹窗/广告暂停"同步计时窗口状态。
+    /// 由玩法层每帧调用，暂停期间不计时，恢复后从当前时刻继续累计。
+    /// </summary>
+    public void SyncStageTime(bool paused)
+    {
+        if (!curStageSessionOpen) return;
+        if (paused) PauseStageTime();
+        else ResumeStageTime();
+    }
+
+    /// <summary>
+    /// 实时读取本局累计毫秒，不改变状态
+    /// </summary>
+    public long GetStageElapsedMs()
+    {
+        long ms = curStageElapsedMs;
+        if (curStageWindowStartTicks > 0)
+        {
+            long deltaMs = (DateTime.UtcNow.Ticks - curStageWindowStartTicks) / TimeSpan.TicksPerMillisecond;
+            if (deltaMs > 0)
+                ms += Math.Min(deltaMs, MaxSingleSegmentMs);
+        }
+        return ms;
+    }
+
+    /// <summary>
+    /// 结算专用：先取值再封存，避免同一段被重复累加
+    /// </summary>
+    public float SealAndGetStageSeconds()
+    {
+        float seconds = GetStageElapsedMs() / 1000f;
+        SealStageTime();
+        return seconds;
+    }
+
+    /// <summary>
+    /// 兼容旧调用点：语义统一为"滚动封存"
     /// </summary>
     public void UpdateOnlineStageTime()
     {
-        if (!string.IsNullOrEmpty(curStageStartTime))
-        {
-            DateTime startTime = DateTime.Parse(curStageStartTime);
-            TimeSpan duration = DateTime.Now - startTime;
-
-            if (duration.TotalSeconds >= 0)
-            {
-                curStageOnlineTime += (int)duration.TotalSeconds;
-            }
-
-            curStageStartTime = null;
-        }
+        SealStageTime();
     }
 
     /// <summary>

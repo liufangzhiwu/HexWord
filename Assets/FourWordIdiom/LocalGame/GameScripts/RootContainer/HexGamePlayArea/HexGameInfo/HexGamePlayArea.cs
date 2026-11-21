@@ -144,6 +144,35 @@ public class HexGamePlayArea : UIWindow
         sale.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint);
     }
 
+    /// <summary>
+    /// 关卡时长计时的暂停判据：暂停页 / 商店 / 道具与词典弹窗 / 失败页 / 评分页，以及广告播放期间。
+    /// 这些时段不计入关卡时长。
+    /// </summary>
+    private bool IsLevelTimePausedByUI()
+    {
+        var sm = SystemManager.Instance;
+        if (sm == null) return true;
+
+        bool isPopShowing =
+            sm.PanelIsShowing(PanelType.LevelWordScreen) ||
+            sm.PanelIsShowing(PanelType.GetItemScreen) ||
+            sm.PanelIsShowing(PanelType.ShopScreen) ||
+            sm.PanelIsShowing(PanelType.PauseGameScreen) ||
+            sm.PanelIsShowing(PanelType.FailGameScreen) ||
+            sm.PanelIsShowing(PanelType.ContinueGameWindow) ||
+            sm.PanelIsShowing(PanelType.RateUsScreen);
+
+        bool isAdPlaying = Game.self != null && Game.self.Ads != null && Game.self.Ads.IsPlaying;
+
+        return isPopShowing || isAdPlaying;
+    }
+
+    private void Update()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return;
+        GameDataManager.Instance.UserData.SyncStageTime(IsLevelTimePausedByUI());
+    }
+
     protected override void OnEnable()
     {
         GameCoreManager.Instance.PanelState = PanelState.GameHexPanel;

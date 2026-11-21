@@ -396,15 +396,6 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
 
             outline.effectColor = (specialColor.HasValue && !highlight) ? specialColor.Value : original;
         }
-
-        if (breakIce)
-            Debug.Log("[AdsDiscountScreen] 破冰礼包标题描边: hsla(268,94%,25%,1)");
-        else if (chuxin)
-            Debug.Log("[AdsDiscountScreen] 初心礼包标题描边: hsla(227,100%,33%,1)");
-        else if (sameBgAsChuxin)
-            Debug.Log($"[AdsDiscountScreen] 复购弹窗：{produceNameId} 与初心礼包同背景图 → 标题描边: hsla(227,100%,33%,1)");
-        else if (sameBgAsYuanman)
-            Debug.Log("[AdsDiscountScreen] 与圆满礼包同背景图 → 标题描边: hsla(293,100%,25%,1)");
     }
 
     /// <summary>
@@ -1018,6 +1009,17 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
         Game.self.Shop.Purchase(currentShopItem.GetProduceName(), OnPurchaseSuccess, OnPurchaseFailed);
     }
 
+    /// <summary>购买来源名：写进「消费记录」，区分是破冰礼包还是限时折扣（复购）礼包成交。</summary>
+    private string GetPurchaseSourceName()
+    {
+        switch (_mode)
+        {
+            case ShopManager.GiftPopupMode.BreakIce: return "破冰礼包";
+            case ShopManager.GiftPopupMode.Repurchase: return "限时折扣礼包";
+            default: return "礼包弹窗";
+        }
+    }
+
     private void OnPurchaseSuccess(ProductItem item)
     {
         _purchasing = false;
@@ -1027,8 +1029,10 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
                            $"item={currentShopItem?.produceNameId}, price={item?.LocalizedPrice}");
 
         // 统一走商店的购买成功处理：发放内容 + 内购成功弹窗 + 购买记录 + 统计 + 失败分归零
+        // ★ 显式传来源：破冰弹窗 / 复购弹窗 / 结算页礼包按钮（结算页按钮也是打开本弹窗成交），
+        //   不再依赖 pendingGiftPopupMode 的残留值，避免消费记录里来源标错。
         if (ShopManager.shopManager != null)
-            ShopManager.shopManager.OnPurchaseSuccess(item);
+            ShopManager.shopManager.OnPurchaseSuccess(item, GetPurchaseSourceName());
 
         MessageSystem.Instance.HideLoadingAnimation();
         Close();

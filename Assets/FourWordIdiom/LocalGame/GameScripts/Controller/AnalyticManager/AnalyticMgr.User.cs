@@ -261,15 +261,8 @@ public partial class AnalyticMgr
     public static void GameStart(bool countAsLogin = true)
     {
         SetLoginProperties(countAsLogin);
-
-        if (SystemManager.Instance != null)
-        {
-            if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
-            {
-                // 记录关卡开始时间
-                GameDataManager.Instance.UserData.curStageStartTime = DateTime.Now.ToString();
-            }
-        }
+        // 计时窗口的恢复交给玩法层（ChessPlayArea / HexGamePlayArea 的 Update 按弹窗/广告状态自动判定），
+        // 这里不再直接改写 curStageStartTime，避免在非关卡界面误开计时。
     }
 
     public static void GameEnd()
@@ -829,18 +822,26 @@ public partial class AnalyticMgr
         }
     }
 
-    public static void LevelStart(float energy)
+    /// <summary>本局所有词的耗时之和，用于关卡时长异常时的兜底</summary>
+    private static float _levelWordDurationSum;
+
+    public static void LevelStart(float energy, bool isResume = false)
     {
+        _levelWordDurationSum = 0f;
         var properties = new Dictionary<string, object>
         {
             // 规范为数值类型，直接传 float，禁止 ToString，避免被锁成字符串字段
-            { "level_difficulty_e", Math.Round((double)energy, 2) }
+            { "level_difficulty_e", Math.Round((double)energy, 2) },
+            { "is_resume", isResume ? 1 : 0 },
+            { "level_start_ts", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }
         };
         Game.self.Analytics.LogEvent("level_start", properties, Define.DataTarget.Think);
     }
     
     public static void LevelProgress(int wordIndex,string word,float duration,int errorCount,int combo,int userToolCount)
     {
+        _levelWordDurationSum += Mathf.Max(0f, duration);
+
         if (CurrentStageForProgressGate() > LevelProgressMaxStage) 
             return;
         
@@ -865,6 +866,8 @@ public partial class AnalyticMgr
     
     public static void LevelProgress(int wordIndex, string word, float duration, int errorCount, int combo, int userToolCount, float energy)
     {
+        _levelWordDurationSum += Mathf.Max(0f, duration);
+
         // 保留 HexWord 侧改装：按进度门槛判定（WT 侧为固定 1000 关，此处不采用）
         if (CurrentStageForProgressGate() > LevelProgressMaxStage) return;
 
@@ -886,11 +889,27 @@ public partial class AnalyticMgr
         Game.self.Analytics.LogEvent("level_progress", properties, Define.DataTarget.Think);
     }
     
+    /// <summary>
+    /// 关卡完成。duration 单位为秒，已排除暂停页 / 商店 / 广告等暂停时段。
+    /// 当计时异常（duration 约等于 0）时，用本局词耗时之和兜底并打标，避免把 0 当正常值上报。
+    /// </summary>
     public static void LevelCompleted(float duration, float energy, float zenScore = 0f, int maxCombo = 0)
     {
+        bool durationFallback = false;
+        if (duration <= 0.01f)
+        {
+            if (_levelWordDurationSum > 0.01f)
+            {
+                duration = _levelWordDurationSum;
+                durationFallback = true;
+            }
+        }
+
         var thinkProps = new Dictionary<string, object>
         {
             { "lv_duration", Math.Round((double)duration, 2) },
+            { "duration_ms", (long)Math.Round(duration * 1000.0) },
+            { "duration_fallback", durationFallback ? 1 : 0 },
             { "level_difficulty_e", Math.Round((double)energy, 2) },
             { "zen_score", zenScore },
             { "max_combo", maxCombo}

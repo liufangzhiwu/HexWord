@@ -1619,14 +1619,14 @@ public partial class ShopManager : MonoBehaviour
         // 条件1：只对 IAP 层推（IAA 层走破冰礼包）
         if (IsIaaLayer())
         {
-             Debug.Log($"[Shop]TryShowRepurchasePopup 跳过: 当前是 IAA 层（{GetCurrentUserLayer()}）");
+             Debug.Log($"[Shop] 结算礼包 复购 TryShowRepurchasePopup 跳过: 当前是 IAA 层（{GetCurrentUserLayer()}）");
             return false;
         }
 
         // 条件4：只在周末 / 节假日弹
         if (!IsHolidayOrWeekend())
         {
-             Debug.Log($"[Shop]TryShowRepurchasePopup 跳过: 今天既不是周末也不是节假日（{DateTime.Now:yyyy-MM-dd dddd}）");
+             Debug.Log($"[Shop] 结算礼包 复购 TryShowRepurchasePopup 跳过: 今天既不是周末也不是节假日（{DateTime.Now:yyyy-MM-dd dddd}）");
             return false;
         }
 
@@ -1646,7 +1646,7 @@ public partial class ShopManager : MonoBehaviour
         long gold = GetPlayerGold();
         if (gold >= RepurchaseMaxGold)
         {
-             Debug.Log($"[Shop]TryShowRepurchasePopup 跳过: 金币={gold} >= {RepurchaseMaxGold}");
+             Debug.Log($"[Shop] 结算礼包 复购 TryShowRepurchasePopup 跳过: 金币={gold} >= {RepurchaseMaxGold}");
             return false;
         }
 
@@ -1664,7 +1664,7 @@ public partial class ShopManager : MonoBehaviour
         if (lastPopupEndTime != DateTime.MinValue
             && DateTime.Now.Subtract(lastPopupEndTime).TotalDays < RepurchaseCooldownDays)
         {
-             Debug.Log($"[Shop]TryShowRepurchasePopup 跳过: 冷却中（上次倒计时结束={lastPopupEndTime:yyyy-MM-dd HH:mm}，" +
+             Debug.Log($"[Shop] 结算礼包 复购 TryShowRepurchasePopup 跳过: 冷却中（上次倒计时结束={lastPopupEndTime:yyyy-MM-dd HH:mm}，" +
                     $"已过 {DateTime.Now.Subtract(lastPopupEndTime).TotalDays:F1} 天，需满 {RepurchaseCooldownDays} 天）");
             return false;
         }
@@ -1676,7 +1676,7 @@ public partial class ShopManager : MonoBehaviour
         // A 已经限购售罄 → 再弹它也买不了，退回调起次数规则
         if (a != null && IsLimitedOut(a))
         {
-             Debug.Log($"[Shop][复购] 礼包A={a.produceNameId} 已售罄 → 改走支付调起次数规则");
+             Debug.Log($"[Shop] 结算礼包 复购 礼包A={a.produceNameId} 已售罄 → 改走支付调起次数规则");
             a = null;
         }
 
@@ -1686,7 +1686,7 @@ public partial class ShopManager : MonoBehaviour
         List<ShopDataItem> candidates = BuildRepurchaseCandidates(a, basePrice);
 
         LogShop(a != null
-            ? $"[复购] 礼包A={a.produceNameId}(price={a.price})，基准价={basePrice}，" +
+            ? $" 结算礼包 [复购] 礼包A={a.produceNameId}(price={a.price})，基准价={basePrice}，" +
               $"候选={candidates.Count} 个：[{string.Join(", ", candidates.Select(x => $"{x.produceNameId}({x.price}/调起{GetPayInvokeCount(x.produceNameId)}次)"))}]"
             : $"[复购] 没有「成功购买的礼包A」→ 走支付调起次数规则，候选={candidates.Count} 个：" +
               $"[{string.Join(", ", candidates.Select(x => $"{x.produceNameId}({x.price}/调起{GetPayInvokeCount(x.produceNameId)}次)"))}]");
@@ -1698,7 +1698,7 @@ public partial class ShopManager : MonoBehaviour
 
         if (chosen == null)
         {
-            LogShop("TryShowRepurchasePopup 跳过: 选包结果为空");
+            LogShop(" 结算礼包 复购 TryShowRepurchasePopup 跳过: 选包结果为空");
             return false;
         }
 
@@ -1709,7 +1709,7 @@ public partial class ShopManager : MonoBehaviour
         {
             // 主页只登记入口：不弹窗、不记「本活动期已弹过」/冷却起点，玩家点入口时再打开弹窗
             RegisterSettlementGift(SettlementGiftKind.Repurchase, chosen.DeepCopy(), endTime, bonusGold, chosen.produceNameId);
-             Debug.Log($"[Shop][复购] 主页只登记入口 chosen={chosen.produceNameId}, 加赠金币={bonusGold}, " +
+             Debug.Log($"[Shop] 结算礼包 复购 主页只登记入口 chosen={chosen.produceNameId}, 加赠金币={bonusGold}, " +
                     $"限时截止={endTime:yyyy-MM-dd HH:mm:ss}");
             return true;
         }
@@ -1743,7 +1743,7 @@ public partial class ShopManager : MonoBehaviour
         ShopDataItem offer = GetRepurchaseLastOfferPack();
         if (offer != null && IsLimitedOut(offer))
         {
-             Debug.Log($"[Shop][复购] 上次展示的 {offer.produceNameId} 已售罄 → 换一款给结算页按钮（不弹窗）");
+             Debug.Log($"[Shop] 结算礼包 复购 上次展示的 {offer.produceNameId} 已售罄 → 换一款给结算页按钮（不弹窗）");
             offer = null;
         }
 
@@ -1758,7 +1758,7 @@ public partial class ShopManager : MonoBehaviour
 
         if (offer == null)
         {
-            LogShop("[复购] 本活动已展示过，但已无可用礼包 → 结算页不显示复购按钮");
+            LogShop("[Shop] 结算礼包 复购 本活动已展示过，但已无可用礼包 → 结算页不显示复购按钮");
             ClearSettlementGift("复购无可用礼包");
             return;
         }
@@ -1770,7 +1770,7 @@ public partial class ShopManager : MonoBehaviour
         // ★ 只登记不弹窗（ShowSettlementGift 才会 OpenSettlementGiftPopup）
         RegisterSettlementGift(SettlementGiftKind.Repurchase, display, offerEndTime, bonusGold, offer.produceNameId);
 
-         Debug.Log($"[Shop][复购] 本活动已主动弹过 → 不再弹出，仅保留结算页按钮: {offer.produceNameId}, " +
+         Debug.Log($"[Shop] 结算礼包 复购 本活动已主动弹过 → 不再弹出，仅保留结算页按钮: {offer.produceNameId}, " +
                 $"加赠金币={bonusGold}, 限时截止={offerEndTime:yyyy-MM-dd HH:mm:ss}");
     }
 
@@ -1785,14 +1785,14 @@ public partial class ShopManager : MonoBehaviour
         // 1. 有成功购买的礼包 → 直接弹它的优惠款
         if (a != null)
         {
-             Debug.Log($"[Shop][复购] 优先弹最近一次成功购买礼包的优惠款：{a.produceNameId}(price={a.price})");
+             Debug.Log($"[Shop] 结算礼包 复购 优先弹最近一次成功购买礼包的优惠款：{a.produceNameId}(price={a.price})");
             return a;
         }
 
         // 2. 没有 A → 用支付调起次数（玩家点过但没付款的礼包）
         if (candidates == null || candidates.Count == 0)
         {
-            LogShop("[复购] 没有成功购买的礼包A，也没有可售礼包 → 不弹");
+            LogShop(" [Shop] 结算礼包 复购 没有成功购买的礼包A，也没有可售礼包 → 不弹");
             return null;
         }
 
@@ -1802,7 +1802,7 @@ public partial class ShopManager : MonoBehaviour
 
         if (maxInvoke <= 0)
         {
-            LogShop("[复购] 没有成功购买的礼包A，也没有支付调起记录 → 不弹");
+            LogShop("[Shop] 结算礼包 复购 没有成功购买的礼包，也没有支付调起记录 → 不弹");
             return null;
         }
 
@@ -1811,7 +1811,7 @@ public partial class ShopManager : MonoBehaviour
             .OrderBy(x => x.price)
             .FirstOrDefault();
 
-         Debug.Log($"[Shop][复购] 无礼包A → 取调起次数最多({maxInvoke})的礼包：{picked?.produceNameId}");
+         Debug.Log($"[Shop] 结算礼包 复购 无礼包 → 取调起次数最多({maxInvoke})的礼包：{picked?.produceNameId}");
         return picked;
     }
 
@@ -1835,14 +1835,14 @@ public partial class ShopManager : MonoBehaviour
         }
         else
         {
-            LogShop("[复购] 本次结算不弹窗（被更优先弹窗占位）→ 不记「本活动期已弹过」");
+            LogShop("[Shop] 结算礼包 复购 本次结算不弹窗（被更优先弹窗占位）→ 不记「本活动期已弹过」");
         }
 
         // 登记到「结算页礼包」（结算页的限时折扣礼包按钮据此显示），并弹出 AdsDiscountScreen
         // （展示用副本 + 加赠金币都由 ShowSettlementGift/OpenSettlementGiftPopup 写进 pending 数据）
         ShowSettlementGift(SettlementGiftKind.Repurchase, display, endTime, bonusGold, pack.produceNameId);
 
-         Debug.Log($"[Shop]TryShowRepurchasePopup: 展示复购礼包 A={basePack?.produceNameId}, chosen={pack.produceNameId}, " +
+         Debug.Log($"[Shop] 结算礼包 复购 TryShowRepurchasePopup: 展示复购礼包 A={basePack?.produceNameId}, chosen={pack.produceNameId}, " +
                 $"price={pack.price}, 加赠金币={bonusGold}(coinValue={pack.coinValue}), " +
                 $"限时截止={endTime:yyyy-MM-dd HH:mm:ss}, 当前金币={GetPlayerGold()}");
     }
@@ -2045,14 +2045,19 @@ public partial class ShopManager : MonoBehaviour
     // ======================= 结算页弹窗调度（破冰 → 复购） =======================
 
     /// <summary>
-    /// 主页礼包入口登记：活动期间（周末/节假日）进入主页就保证入口按钮有数据可显示。
+    /// 主页礼包入口登记：进入主页时按同一套策略补登记一次，让入口按钮有数据可显示。
     ///
     /// 背景：结算页的礼包登记是内存态，杀进程/换场景就没了 → 以前只有「刚打完一局并结算」才看得到入口。
-    /// 现在进主页时按同一套策略重算一次，命中就<b>只登记不弹窗</b>（点入口才打开礼包弹窗），
-    /// 且不消耗破冰的弹窗次数/冷却、也不记复购「本活动期已弹过」，结算页的弹窗节奏完全不变。
     ///
-    /// 判定口径与结算页一致：破冰看 IAA 层 + 累计插屏 &gt; 3 + 未拥有去广告 + 冷却；复购看 IAP 层 + 金币 &lt; 200 + 冷却。
-    /// 区别只有一条：主页不判「结算页其它弹窗会不会弹」——那是结算页特有的拦截条件。
+    /// ★ 时序要求（策划，破冰 / 复购一致）：
+    ///   先按条件在<b>结束页弹出弹窗</b>，<b>之后</b>主页和结束页才展示入口。
+    ///   所以主页补登记的前置条件是「这款礼包已经在结束页真的弹过窗
+    ///   （<see cref="ShopManager.HasBreakIcePopupShown"/> / <see cref="ShopManager.HasRepurchasePopupShown"/>）
+    ///     且本轮活动倒计时还没结束」——
+    ///   启动直接进主页时绝不提前把入口亮出来（否则等于跳过弹窗直接给了入口）。
+    ///
+    /// 主页命中也<b>只登记不弹窗</b>（点入口才打开礼包弹窗），且不消耗破冰的弹窗次数/冷却、
+    /// 也不记复购「本活动期已弹过」，结算页的弹窗节奏完全不变。
     /// </summary>
     /// <returns>登记后主页是否应显示礼包入口</returns>
     public bool TryEnsureHomeSettlementGiftEntry()
@@ -2060,25 +2065,68 @@ public partial class ShopManager : MonoBehaviour
         if (CurrentSettlementGift != SettlementGiftKind.None)
             return true;    // 结算页带过来的登记还在，直接用
 
-        if (!IsHolidayOrWeekend())
-            return false;   // 活动期间之外，主页不显示礼包入口
+        bool breakIceRestorable = CanRestoreBreakIceEntry();
+        bool repurchaseRestorable = CanRestoreRepurchaseEntry();
+
+        if (!IsHolidayOrWeekend() && !breakIceRestorable && !repurchaseRestorable)
+            return false;   // 活动期间之外（且两者都不在展示期），主页不显示礼包入口
 
         int interAdsCount = AdRuleManager.Instance != null ? AdRuleManager.Instance.InterAdsCount : 0;
 
-        if (TryShowBreakIcePopup(interAdsCount, true))
+        if (breakIceRestorable)
         {
-            LogShop("[主页礼包入口] 登记破冰礼包入口");
-            return true;
+            if (TryShowBreakIcePopup(interAdsCount, true))
+            {
+                LogShop("[主页礼包入口] 结束页已弹过破冰弹窗 → 主页补登记破冰入口");
+                return true;
+            }
+        }
+        else
+        {
+            LogShop("[主页礼包入口] 破冰还没在结束页弹过窗 → 不提前显示破冰入口");
         }
 
-        if (TryShowRepurchasePopup(null, true))
+        if (repurchaseRestorable)
         {
-            LogShop("[主页礼包入口] 登记限时折扣礼包入口");
-            return true;
+            if (TryShowRepurchasePopup(null, true))
+            {
+                LogShop("[主页礼包入口] 结束页已弹过限时折扣弹窗 → 主页补登记限时折扣入口");
+                return true;
+            }
+        }
+        else
+        {
+            LogShop("[主页礼包入口] 限时折扣还没在结束页弹过窗 → 不提前显示限时折扣入口");
         }
 
-        LogShop("[主页礼包入口] 活动期间但条件未满足 → 不显示入口");
+        LogShop("[主页礼包入口] 条件未满足 → 不显示入口");
         return false;
+    }
+
+    /// <summary>
+    /// 破冰入口能否在主页「补登记」：必须满足
+    ///   1. 结束页已经真的弹出过破冰弹窗（本地持久化，跨进程保留）；
+    ///   2. 本轮活动倒计时还没结束（入口要一直保留到倒计时走完）。
+    /// 两者都满足才说明现在处于「弹窗后的后续展示期」，主页才允许亮入口。
+    /// </summary>
+    private bool CanRestoreBreakIceEntry()
+    {
+        if (!HasBreakIcePopupShown) return false;
+
+        DateTime cooldownStart = GetBreakIceCooldownStart();   // = 上次弹窗的倒计时结束时间
+        return cooldownStart != DateTime.MinValue && DateTime.Now < cooldownStart;
+    }
+
+    /// <summary>
+    /// 复购（限时折扣）入口能否在主页「补登记」：口径与破冰一致 ——
+    /// 结束页真的弹过复购弹窗 + 本活动倒计时还没结束。
+    /// </summary>
+    private bool CanRestoreRepurchaseEntry()
+    {
+        if (!HasRepurchasePopupShown) return false;
+
+        DateTime offerEndTime = GetRepurchaseLastPopupEndTime();   // = 上次弹窗的倒计时结束时间
+        return offerEndTime != DateTime.MinValue && DateTime.Now < offerEndTime;
     }
 
     /// <summary>
@@ -2097,7 +2145,7 @@ public partial class ShopManager : MonoBehaviour
         _settlementGiftPopupSuppressed = false;
         _settlementGiftSuppressReason = null;
 
-         Debug.Log($"[Shop][结算礼包] 开始调度: 累计插屏={interAdsCount}, 分层={GetCurrentUserLayer()}, " +
+         Debug.Log($"[Shop] 结算礼包 开始调度: 累计插屏={interAdsCount}, 分层={GetCurrentUserLayer()}, " +
                 $"金币={GetPlayerGold()}, 周末/节假日={IsHolidayOrWeekend()}, " +
                 $"上次复购倒计时结束={GetRepurchaseLastPopupEndTime():yyyy-MM-dd HH:mm}");
 

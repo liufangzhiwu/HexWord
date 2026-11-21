@@ -124,6 +124,12 @@ public partial class ChessPlayArea
     {
         // 防抖：限制单帧最大时间流逝为 0.5 秒，防止切后台回来瞬间蒸发大量时间
         float dt = Mathf.Min(Time.deltaTime, 0.5f);
+
+        // 关卡时长计时与倒计时共用同一套暂停判据：
+        // 暂停页 / 商店 / 道具弹窗 / 广告播放 / 切后台期间不计时，恢复后从当前时刻继续累计
+        if (GameDataManager.Instance != null && GameDataManager.Instance.UserData != null)
+            GameDataManager.Instance.UserData.SyncStageTime(IsGamePausedByUI());
+
         // ==========================================
         // 🌟 1. 绝对防御：如果弹窗打开或在看广告，冻结一切！
         // ==========================================

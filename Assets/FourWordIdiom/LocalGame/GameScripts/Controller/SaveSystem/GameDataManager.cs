@@ -581,7 +581,10 @@ public class GameDataManager : SingletonMono<GameDataManager>
         // 应用进入后台
         if (!hasFocus)
         {
-            
+            // 进后台先暂停关卡计时，后台停留时长不计入关卡；回前台由玩法层 Update 自动恢复
+            if (dataInitialized && UserData != null)
+                UserData.PauseStageTime();
+
             //初始化完成后才可以保存，不然保存的数据都为默认数值
             if (dataInitialized)
                 CommitGameData();
@@ -637,10 +640,14 @@ public class GameDataManager : SingletonMono<GameDataManager>
     {
         if (isPaused && dataInitialized)
         {
+            // 暂停期间不计入关卡时长（放在防抖之前，避免 1 秒内重复暂停时漏掉）
+            if (UserData != null)
+                UserData.PauseStageTime();
+
             // 防抖：1秒内不重复保存
             if (Time.realtimeSinceStartup - _lastSaveRealTime < 1f) return;
             _lastSaveRealTime = Time.realtimeSinceStartup;
-            
+
             CommitGameData();
             //StopTracking();
             //Debug.Log("应用暂停，数据已保存");

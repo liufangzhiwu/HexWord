@@ -160,6 +160,9 @@ public class StageHexController
         //   关卡号没变，静态记录会一直生效，导致推荐位被过滤空、时间耗尽后没有内购展示）
         FailGameScreen.ResetPurchasedPackTracking();
 
+        // 先封存上一段计时窗口，避免上一段时间被静默丢弃
+        GameDataManager.Instance.UserData.SealStageTime();
+
         // 初始化关卡配置
         //IsFirstEnterStage = GetIsFirstEnterStage();
         
@@ -169,9 +172,6 @@ public class StageHexController
         // 重置关卡状态
         ResetStageState(StageIndex);
         
-        // 记录关卡开始时间
-        GameDataManager.Instance.UserData.curStageStartTime = DateTime.Now.ToString();
-        Debug.Log("关卡id:"+StageIndex+"关卡开始时间"+GameDataManager.Instance.UserData.curStageStartTime);
         AnalyticMgr.SetCommonProperties();
 
         // 首次进入关卡的特殊处理
@@ -179,14 +179,22 @@ public class StageHexController
         {
             IsFirstEnterStage = true;
             GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Clear();
-            GameDataManager.Instance.UserData.curStageOnlineTime = 0;
             PuzzleComboCount = 0;
             PuzzleZenCount = 0;
+            // 新开一局：累计清零并开窗
+            GameDataManager.Instance.UserData.BeginStageTime();
             // 可在此处添加分析事件...
             float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
             AnalyticMgr.LevelStart(energy);
             GameDataManager.Instance.UserData.curIsEnter = true;
             GameDataManager.Instance.UserData.ClearPuzzleVocabulary();
+        }
+        else
+        {
+            // 续局：保留已累计时长，重新开窗
+            GameDataManager.Instance.UserData.ReopenStageTime();
+            float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
+            AnalyticMgr.LevelStart(energy, true);
         }
         
         CheckRateUsConditions(StageIndex);
@@ -279,24 +287,19 @@ public class StageHexController
 
         yield return new WaitForSeconds(0.7f);
 
-        if (string.IsNullOrEmpty(GameDataManager.Instance.UserData.curStageStartTime))
+        // 结算：先取值再封存。暂停页 / 商店 / 广告期间的时长已在计时窗口中被排除
+        float duration = GameDataManager.Instance.UserData.SealAndGetStageSeconds();
+        if (duration <= 0.01f)
         {
-            Debug.LogError("关卡开始时间异常"+StageNumber);
-            GameDataManager.Instance.UserData.curStageStartTime= DateTime.Now.ToString();
+            // 不再把 start 兜底成"现在"（那必然产 0），改为交给 LevelCompleted 用词耗时兜底并打标
+            Debug.LogError("关卡id:" + StageNumber + " 关卡时长异常(<=0)，将使用本局词耗时兜底");
         }
-        
-        // 计算耗时
-        DateTime startTime = DateTime.Parse(GameDataManager.Instance.UserData.curStageStartTime);
-        float duration = (float)(DateTime.Now - startTime).TotalSeconds + 
-                         GameDataManager.Instance.UserData.curStageOnlineTime;
-        
-        Debug.LogError("关卡id:"+StageNumber+"关卡进行时间(秒)"+duration);
-        // ---- 修复：统一封存最后一段在线时长 ----
-        GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+
         float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
         AnalyticMgr.LevelCompleted(duration,energy,0,0);
         
         GameDataManager.Instance.UserData.UpdateLevelUseTimes(StageNumber,(int)duration);
+        GameDataManager.Instance.UserData.EndStageTime();
         
         if (StageNumber >= 1)
         {

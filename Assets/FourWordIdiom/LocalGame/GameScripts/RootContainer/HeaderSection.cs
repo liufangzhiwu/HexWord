@@ -713,14 +713,14 @@ public class HeaderSection : UIWindow
         {
             AudioManager.Instance.TriggerVibration(40, 50);
             SystemManager.Instance.HidePanel(PanelType.GamePlayArea);
-            GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+            GameDataManager.Instance.UserData.EndStageTime();
         }    
         
         if (SystemManager.Instance.PanelIsShowing(PanelType.HexGamePlayArea))
         {
             AudioManager.Instance.TriggerVibration(40, 50);
             SystemManager.Instance.HidePanel(PanelType.HexGamePlayArea);
-            GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+            GameDataManager.Instance.UserData.EndStageTime();
         }    
         
         if (SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView))
@@ -731,7 +731,7 @@ public class HeaderSection : UIWindow
         {
             AudioManager.Instance.TriggerVibration(40, 50);
             SystemManager.Instance.HidePanel(PanelType.ChessPlayArea);
-            GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+            GameDataManager.Instance.UserData.EndStageTime();
         }    
         
         ChessGuideSystem.Instance.CloseGuide();

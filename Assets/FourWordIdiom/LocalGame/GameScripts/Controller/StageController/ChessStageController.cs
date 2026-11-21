@@ -151,8 +151,8 @@ public partial class ChessStageController
         // 每次进入关卡，重算本关理论最高分
         CalculateOptimalScore();
 
-        // 记录关卡开始时间
-        GameDataManager.Instance.UserData.curStageStartTime = DateTime.Now.ToString();
+        // 先封存上一段计时窗口，避免上一段时间被静默丢弃
+        GameDataManager.Instance.UserData.SealStageTime();
         AnalyticMgr.SetCommonProperties();
 
         // 首次进入关卡的特殊处理, 重置关卡内的分析数据
@@ -163,7 +163,8 @@ public partial class ChessStageController
             CurrentLevelOtherWords.Clear();
 
             GameDataManager.Instance.UserData.GetWordVocabulary().LevelWords.Clear();
-            GameDataManager.Instance.UserData.curStageOnlineTime = 0;
+            // 新开一局：累计清零并开窗
+            GameDataManager.Instance.UserData.BeginStageTime();
             ResetStageState(StageIndex);
             float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
             AnalyticMgr.LevelStart(energy);
@@ -172,6 +173,11 @@ public partial class ChessStageController
         }
         else
         {
+            // 续局：保留已累计时长，重新开窗
+            GameDataManager.Instance.UserData.ReopenStageTime();
+            float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
+            AnalyticMgr.LevelStart(energy, true);
+
             CurrentTotalScore = CurrStageData.CurrentTotalScore;
             PuzzleComboCount = CurrStageData.CurrentCombo;
             MaxComboCount = CurrStageData.MaxCombo;
@@ -596,7 +602,8 @@ public partial class ChessStageController
         if (!isJump) AudioManager.Instance.PlaySoundEffect("success");
 
         yield return new WaitForSeconds(FinishFlowTiming.LevelOutLead);
-        float duration = GameDataManager.Instance.UserData.curStageOnlineTime;
+        // 先取值再封存：暂停页 / 商店 / 广告期间的时长已在计时窗口中被排除
+        float duration = GameDataManager.Instance.UserData.SealAndGetStageSeconds();
         float energy = GameDataManager.Instance.ChessDynamicHardSave.EnergyValue;
         if (!isJump)
         {
@@ -639,8 +646,8 @@ public partial class ChessStageController
             }
         }
 
-        // ---- 修复：统一封存最后一段在线时长 ----
-        GameDataManager.Instance.UserData.UpdateOnlineStageTime();
+        // ---- 结算完成：结束本次计时会话，避免结算页停留被计入下一局 ----
+        GameDataManager.Instance.UserData.EndStageTime();
     }
 
     /// <summary>

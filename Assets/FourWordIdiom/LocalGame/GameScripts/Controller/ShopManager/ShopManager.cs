@@ -489,6 +489,14 @@ public partial class ShopManager : MonoBehaviour
             ? GiftPopupMode.BreakIce
             : GiftPopupMode.Repurchase;
 
+        // ★ 记录「破冰弹窗真的弹出来过」：主页入口只在结束页弹过窗之后才允许补登记，
+        //   启动直接进主页时不能抢先把入口亮出来（需求：先结束页弹窗 → 之后主页/结束页都展示）。
+        //   复购同理（下面 HasRepurchasePopupShown）。
+        if (mode == GiftPopupMode.BreakIce)
+            MarkBreakIcePopupShown();
+        else
+            MarkRepurchasePopupShown();
+
         SetPendingGiftPopup(_settlementGiftItem, mode, _settlementGiftEndTime);
         SetPendingGiftBonus(_settlementGiftBonusPackId, _settlementGiftBonusGold);
 
@@ -2426,10 +2434,14 @@ public partial class ShopManager : MonoBehaviour
     private const string PrefRepurchaseLastPopupEnd = "shop_repurchase_last_popup_end";
     private const string PrefRepurchaseLastOfferPack = "shop_repurchase_last_offer_pack";
     private const string PrefPayInvokePrefix = "shop_pay_invoke_";
+    // 复购弹窗是否真的在结束页弹出过（「本活动期已弹过」的倒计时在策略阶段就会落盘，这里单独记「实际弹过」）
+    private const string PrefRepurchasePopupShown = "shop_repurchase_popup_shown";
 
     // 破冰礼包：冷却起点（倒计时结束时间）+ 已展示次数（决定冷却 7/10/13 天）
     private const string PrefBreakIceCooldownStart = "shop_breakice_cooldown_start";
     private const string PrefBreakIceCount = "shop_breakice_count";
+    // 破冰弹窗是否真的在结束页弹出过（弹窗次数在策略阶段就 +1，这里单独记「实际弹过」）
+    private const string PrefBreakIcePopupShown = "shop_breakice_popup_shown";
 
     // 调试用：手动清除「永久去广告」后，阻止平台非消耗型补单把它重新发回来
     private const string PrefRemoveAdsRestoreBlock = "shop_removeads_restore_block";
@@ -2447,8 +2459,10 @@ public partial class ShopManager : MonoBehaviour
         PlayerPrefs.DeleteKey(PrefRepurchaseLastPopupTime);
         PlayerPrefs.DeleteKey(PrefRepurchaseLastPopupEnd);
         PlayerPrefs.DeleteKey(PrefRepurchaseLastOfferPack);
+        PlayerPrefs.DeleteKey(PrefRepurchasePopupShown);
         PlayerPrefs.DeleteKey(PrefBreakIceCooldownStart);
         PlayerPrefs.DeleteKey(PrefBreakIceCount);
+        PlayerPrefs.DeleteKey(PrefBreakIcePopupShown);
 
         // 重置存档 = 回到干净状态：永久去广告的补单拦截也一并解除
         PlayerPrefs.DeleteKey(PrefRemoveAdsRestoreBlock);
@@ -2486,6 +2500,40 @@ public partial class ShopManager : MonoBehaviour
         string s = PlayerPrefs.GetString(PrefBreakIceCooldownStart, "");
         DateTime t;
         return DateTime.TryParse(s, out t) ? t : DateTime.MinValue;
+    }
+
+    /// <summary>
+    /// 破冰弹窗是否在结束页真正弹出过（本地持久化）。
+    /// 主页入口的补登记以它为前置条件：没弹过窗就不提前显示入口。
+    /// </summary>
+    public bool HasBreakIcePopupShown
+    {
+        get { return PlayerPrefs.GetInt(PrefBreakIcePopupShown, 0) == 1; }
+    }
+
+    private void MarkBreakIcePopupShown()
+    {
+        if (HasBreakIcePopupShown) return;
+        PlayerPrefs.SetInt(PrefBreakIcePopupShown, 1);
+        PlayerPrefs.Save();
+         Debug.Log("[Shop][破冰] 结束页弹窗已触发 → 之后主页/结束页入口可展示");
+    }
+
+    /// <summary>
+    /// 复购（限时折扣）弹窗是否在结束页真正弹出过（本地持久化）。
+    /// 与破冰同口径：主页入口只在弹过窗之后才允许补登记。
+    /// </summary>
+    public bool HasRepurchasePopupShown
+    {
+        get { return PlayerPrefs.GetInt(PrefRepurchasePopupShown, 0) == 1; }
+    }
+
+    private void MarkRepurchasePopupShown()
+    {
+        if (HasRepurchasePopupShown) return;
+        PlayerPrefs.SetInt(PrefRepurchasePopupShown, 1);
+        PlayerPrefs.Save();
+         Debug.Log("[Shop][复购] 结束页弹窗已触发 → 之后主页/结束页入口可展示");
     }
 
     /// <summary>记录破冰礼包本次展示：冷却起点 + 累计次数（本地持久化）。</summary>
@@ -3092,14 +3140,26 @@ public partial class ShopManager : MonoBehaviour
         RefreshLimitData();
     }
 
-    public void OnPurchaseSuccess(ProductItem item)
+    /// <param name="purchaseSource">
+    /// 购买来源（写进「消费记录」便于对账）。推送礼包的三个入口由弹窗显式传入：
+    /// 破冰弹窗 / 复购弹窗 / 结算页礼包按钮（这三者都经 <c>AdsDiscountScreen</c>）、广告失败页单道具。
+    /// 不传则按 <see cref="pendingGiftPopupMode"/> 推断，再不行归为「单道具购买」。
+    /// </param>
+    public void OnPurchaseSuccess(ProductItem item, string purchaseSource = null)
     {
-         Debug.Log($"[Shop]========== OnPurchaseSuccess 开始: ProductId={item?.ProductId}, ItemName={item?.ItemName}, LocalizedPrice={item?.LocalizedPrice} ==========");
+         Debug.Log($"[Shop]========== OnPurchaseSuccess 开始: ProductId={item?.ProductId}, ItemName={item?.ItemName}, LocalizedPrice={item?.LocalizedPrice}, source={purchaseSource} ==========");
+
+        string recordSource = string.IsNullOrEmpty(purchaseSource)
+            ? (pendingGiftPopupMode == GiftPopupMode.None ? "单道具购买" : "推送礼包")
+            : purchaseSource;
 
         ShopDataItem shopDataItem = GetProduct(item.ProductId);
         if (shopDataItem == null)
         {
              Debug.Log($"[Shop]购买成功但商店未找到该商品: {item.ProductId}");
+            // ★ 商品没匹配到商店配置也要留痕：否则一旦配置漏了 / 动态档位没进表，
+            //   玩家付了钱却在「消费记录」里什么都看不到，客服完全无法对账。
+            RecordPurchaseFallback(item, recordSource);
             return;
         }
 
@@ -3168,6 +3228,11 @@ public partial class ShopManager : MonoBehaviour
 
         OnPackPurchased(shopDataItem);
 
+        // ★ 购买记录：推送礼包（破冰 / 复购弹窗、结算页礼包按钮）和广告失败页单道具都只走这条链路，
+        //   而以前这里<b>完全没写购买记录</b> → 「商店→消费记录」里看不到这些订单。
+        //   口径与 ShopItemBase.RecordPurchase / GiftTable.RecordPurchase 保持一致。
+        RecordPurchaseForShopItem(shopDataItem, item, recordSource);
+
         if (shopDataItem.produceNameId == ProductSingleGoods)
         {
             if (!GameDataManager.Instance.UserData.isDayMoneyBuy)
@@ -3189,6 +3254,123 @@ public partial class ShopManager : MonoBehaviour
     }
 
     public const int ReviveToolType = 1002;
+
+    // ======================= ★ 购买记录写入（推送礼包链路） =======================
+
+    /// <summary>
+    /// 写入一条购买记录到 <c>UserData.purchaseRecords</c>（商店「消费记录」弹窗的数据源）。
+    ///
+    /// 背景：只有商店界面（<see cref="ShopItemBase"/>）和礼包表（GiftTable）两条链路写了记录，
+    /// 破冰礼包 / 复购礼包弹窗、结算页礼包按钮、广告失败页单道具都走
+    /// <see cref="OnPurchaseSuccess"/>，这里以前没写 → 「消费记录」里完全看不到这些订单。
+    ///
+    /// 口径（与 ShopItemBase.RecordPurchase / GiftTable.RecordPurchase 一致）：
+    ///   - 名称：优先 MultilingualManager 翻译 nameKey，回退 produceNameId；
+    ///   - 价格：ShopDataItem.price（商店配置价，与其它记录口径一致）；
+    ///   - 内容：productContent 深拷贝快照；<b>带复购加赠金币的这一单用 CurrentShopDataItem</b>，
+    ///     让玩家在记录里看到实际拿到的内容（加赠已并进金币条目）；
+    ///   - 时间：yyyy-MM-dd HH:mm:ss；订单号取第三方 order_id，没有则生成 GUID。
+    /// </summary>
+    public void RecordPurchaseForShopItem(ShopDataItem shopDataItem, ProductItem item, string source = "推送礼包")
+    {
+        try
+        {
+            if (shopDataItem == null)
+            {
+                LogShop($"[购买记录] {source}: shopDataItem 为空，跳过写入");
+                return;
+            }
+
+            // 内容快照源：本次成交的商品副本（复购加赠已并入），否则用配置项
+            ShopDataItem snapshotSource = shopDataItem;
+            if (Game.self != null && Game.self.Shop != null)
+            {
+                ShopDataItem current = Game.self.Shop.CurrentShopDataItem;
+                if (current != null && current.produceNameId == shopDataItem.produceNameId)
+                    snapshotSource = current;
+            }
+
+            string nameText = MultilingualManager.Instance != null
+                ? MultilingualManager.Instance.GetString(shopDataItem.name)
+                : null;
+            if (string.IsNullOrEmpty(nameText)) nameText = shopDataItem.name;
+            if (string.IsNullOrEmpty(nameText)) nameText = shopDataItem.produceNameId ?? "";
+
+            var record = new PurchaseRecord
+            {
+                orderId = string.IsNullOrEmpty(item?.order_id)
+                    ? Guid.NewGuid().ToString("N")
+                    : item.order_id,
+
+                produceNameId = shopDataItem.produceNameId ?? "",
+                nameKey = shopDataItem.name ?? "",
+                nameText = nameText,
+
+                price = shopDataItem.price,
+                originalPrice = shopDataItem.originalPrice,
+                currency = item?.IsoCurrencyCode ?? "",
+
+                showIcon = shopDataItem.showIcon ?? "",
+                limitRewordType = shopDataItem.type,
+
+                buyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+
+                productContent = snapshotSource.DeepCopy()?.productContent ?? new List<List<string>>()
+            };
+
+            GameDataManager.Instance?.UserData?.AddPurchaseRecord(record);
+
+            LogShop($"[购买记录] {source} 已写入: {record.nameText}({record.produceNameId}), " +
+                    $"价格={record.price}, 内容={record.productContent.Count} 项, 时间={record.buyTime}");
+        }
+        catch (Exception ex)
+        {
+            LogShop($"[购买记录] {source} 写入异常: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 兜底购买记录：商品在商店配置里查不到时（动态档位 / 配置漏配），仍按第三方回调里的信息留一条，
+    /// 保证「付了钱但消费记录空白」不会发生。名称/价格只能取支付回调本身带的信息。
+    /// </summary>
+    private void RecordPurchaseFallback(ProductItem item, string source)
+    {
+        try
+        {
+            if (item == null) return;
+
+            string produceNameId = !string.IsNullOrEmpty(item.ProductId) ? item.ProductId : item.ItemName;
+            string nameText = MultilingualManager.Instance != null
+                ? MultilingualManager.Instance.GetString(item.ItemName)
+                : null;
+            if (string.IsNullOrEmpty(nameText)) nameText = item.ItemName;
+            if (string.IsNullOrEmpty(nameText)) nameText = produceNameId ?? "";
+
+            var record = new PurchaseRecord
+            {
+                orderId = string.IsNullOrEmpty(item.order_id) ? Guid.NewGuid().ToString("N") : item.order_id,
+                produceNameId = produceNameId ?? "",
+                nameKey = item.ItemName ?? "",
+                nameText = nameText,
+                price = item.LocalizedPrice,
+                originalPrice = item.LocalizedPrice,
+                currency = item.IsoCurrencyCode ?? "",
+                showIcon = "",
+                limitRewordType = 0,
+                buyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                productContent = new List<List<string>>()
+            };
+
+            GameDataManager.Instance?.UserData?.AddPurchaseRecord(record);
+
+            LogShop($"[购买记录] {source} 兜底写入（商店未匹配配置）: {record.nameText}({record.produceNameId}), " +
+                    $"价格={record.price}, 时间={record.buyTime}");
+        }
+        catch (Exception ex)
+        {
+            LogShop($"[购买记录] {source} 兜底写入异常: {ex.Message}");
+        }
+    }
 
     private bool IsUnlimitedEnergyProduct(string produceNameId)
     {

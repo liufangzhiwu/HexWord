@@ -259,7 +259,7 @@ public class DebugMenu : UIWindow
     }
 
     /// <summary>
-    /// 「设置关卡剩余时间」输入框初始化：在关内就填当前实际剩余秒数，否则填待应用的预设值（没有则 300）。
+    /// 「设置关卡剩余时间」输入框初始化：在关内就填当前实际剩余秒数，否则填待应用的预设值（没有则 10）。
     /// </summary>
     private void InitStageTimeBtnData()
     {
@@ -268,7 +268,7 @@ public class DebugMenu : UIWindow
         InputField numText = SetStageTimeBtn.GetComponentInChildren<InputField>();
         if (numText == null) return;
 
-        float seconds = 300f;
+        float seconds = 10f;
         if (IsInChessLevel())
         {
             seconds = ChessPlayArea.Instance.DebugRemainingTime;
