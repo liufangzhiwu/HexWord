@@ -37,6 +37,12 @@ public class ShopItem : ShopItemBase
     private float shakeTimer = 0f;
     private bool isAdStateActive = false;
 
+    /// <summary>
+    /// 审核态「金币视频点」被替换成 Gold6 付费金币商品（AuditStatusSwitch=1 + Gold6ReplaceVideoPos）。
+    /// 为 true 时这张卡不再展示任何视频相关 UI（广告角标 / 剩余次数 / 高亮），只当普通内购卡用。
+    /// </summary>
+    private bool _coinPurchaseMode;
+
     // ======================= 生命周期 =======================
 
     protected override void OnEnable()
@@ -159,7 +165,19 @@ public class ShopItem : ShopItemBase
 
     private void RefreshAdsUseCountUI()
     {
-        if (shopDataItem == null || shopDataItem.produceNameId != "FreeGoods") return;
+        // 审核态换成 Gold6 付费金币卡：视频点次数不展示
+        if (_coinPurchaseMode)
+        {
+            if (AdsCanUseTable != null) AdsCanUseTable.gameObject.SetActive(false);
+            if (btnTagicon != null) btnTagicon.gameObject.SetActive(false);
+            return;
+        }
+
+        if (shopDataItem == null || shopDataItem.produceNameId != "FreeGoods")
+        {
+            if (AdsCanUseTable != null) AdsCanUseTable.gameObject.SetActive(false);
+            return;
+        }
         if (ShopManager.shopManager == null) return;
 
         int total = ShopManager.shopManager.GetShopGoldVideoTotalLimit();
@@ -183,6 +201,14 @@ public class ShopItem : ShopItemBase
     protected override void RefreshButtonInteractable()
     {
         base.RefreshButtonInteractable();
+
+        // 审核态换成付费金币卡：按普通内购卡处理，不做视频点置灰
+        if (_coinPurchaseMode)
+        {
+            transform.GetComponent<Button>().interactable = true;
+            if (shopPriceText != null) shopPriceText.gameObject.SetActive(true);
+            return;
+        }
 
         if (shopDataItem == null || shopDataItem.produceNameId != "FreeGoods") return;
         if (ShopManager.shopManager == null) return;
@@ -390,8 +416,39 @@ public class ShopItem : ShopItemBase
 
     // ======================= 广告动画状态 =======================
 
+    /// <summary>
+    /// 审核态：这张「金币视频点」卡是否已被 Gold6 付费金币商品替代。
+    /// 商店（FreeItemTable）绑定数据后调用，用来收起广告角标 / 剩余次数 / 高亮。
+    /// </summary>
+    public void SetCoinPurchaseMode(bool active)
+    {
+        _coinPurchaseMode = active;
+
+        if (active)
+        {
+            isAdStateActive = false;
+            _lastShakeZ = 0f;
+            if (adsShiny != null) adsShiny.enabled = false;
+            if (btnTagicon != null) btnTagicon.gameObject.SetActive(false);
+            if (AdsCanUseTable != null) AdsCanUseTable.gameObject.SetActive(false);
+        }
+
+        RefreshAdsUseCountUI();
+        RefreshButtonInteractable();
+    }
+
     public void CheckAdAnimationState()
     {
+        if (_coinPurchaseMode)
+        {
+            isAdStateActive = false;
+            _lastShakeZ = 0f;
+            if (adsShiny != null) adsShiny.enabled = false;
+            if (btnTagicon != null) btnTagicon.gameObject.SetActive(false);
+            if (AdsCanUseTable != null) AdsCanUseTable.gameObject.SetActive(false);
+            return;
+        }
+
         if (shopDataItem == null) return;
 
         bool isFreeGoods = shopDataItem.produceNameId == "FreeGoods";

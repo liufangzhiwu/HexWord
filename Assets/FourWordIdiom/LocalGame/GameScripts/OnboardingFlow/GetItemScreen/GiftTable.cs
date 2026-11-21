@@ -25,6 +25,9 @@ public class GiftTable : MonoBehaviour
     [SerializeField] private Text limintCountText; // 限购次数
     [SerializeField] private Text tagText; // 促销标签
 
+    [Header("促销标签背景（图集 ShopGifts）")]
+    [SerializeField] private Image tagBg; // 标签背景（Tagbg），未绑定时按子节点名自动查找
+
     [Header("购买记录")]
     [SerializeField] private Button purchaseRecordBtn; // 可选：打开购买记录弹窗的按钮
 
@@ -127,6 +130,30 @@ public class GiftTable : MonoBehaviour
                || type == (int)LimitRewordType.RemoveDayAds;
     }
 
+    // ======================= 促销标签背景（图集 ShopGifts） =======================
+
+    /// <summary>标签背景图所在图集（图片实际文件在 Game_UI/ShopGifts/ShopGifts 下，bundle 名 shopgifts）</summary>
+    private const string TagBgAtlas = "ShopGifts";
+
+    /// <summary>标签背景节点名（GiftTable 根节点下的直接子节点，TagText 是它的子节点）</summary>
+    private const string TagBgNodeName = "Tagbg";
+
+    /// <summary>提示灯礼包 1、2 号位的标签背景</summary>
+    private const string TagBgTip = "discountTip";
+    /// <summary>提示灯礼包 3 号位的标签背景</summary>
+    private const string TagBgTip3 = "discountTip1";
+    /// <summary>火箭礼包的标签背景</summary>
+    private const string TagBgRocket = "discountRocket";
+    /// <summary>复活礼包的标签背景</summary>
+    private const string TagBgRestart = "discountRestart";
+
+    /// <summary>Prefab 上的原始标签背景（没有映射 / 图集缺图时回填）</summary>
+    private Sprite _defaultTagBgSprite;
+    private bool _tagBgResolved;
+
+    /// <summary>当前礼包在本页的号位（0 基：0=1 号位）。提示灯礼包 3 号位要用 discountTip1</summary>
+    private int _slotIndex;
+
     // ======================= 生命周期 =======================
 
     private void Start()
@@ -134,7 +161,7 @@ public class GiftTable : MonoBehaviour
         InitEvent();
     }
 
-    public void InitUI(LimitRewordType limitReType, ShopDataItem shopItem)
+    public void InitUI(LimitRewordType limitReType, ShopDataItem shopItem, int slotIndex = 0)
     {
         if (shopItem == null)
         {
@@ -146,6 +173,7 @@ public class GiftTable : MonoBehaviour
 
         limitRewordType = limitReType;
         shopDataItem = shopItem;
+        _slotIndex = Mathf.Max(0, slotIndex);   // 0 基号位，提示灯礼包 3 号位（index=2）单独换图
 
         // ---------- 折扣 ----------
         if (discount != null)
@@ -495,6 +523,11 @@ public class GiftTable : MonoBehaviour
             return;
         }
 
+        // ★ 标签背景图（按礼包类型 + 号位取图集里对应的 discount* 图），
+        //   放在文字判定之前：即使本次没有标签文案（Tagbg 整块隐藏），也要把 sprite 复位/换好，
+        //   避免礼包位复用（复活弹窗横滑、GetItemScreen 反复打开）时残留上一个礼包的背景。
+        RefreshTagBg();
+
         string tag = "";
 
         if (ShopManager.shopManager != null && ShopManager.shopManager.IsLastPurchasedPack(shopDataItem))
@@ -526,6 +559,83 @@ public class GiftTable : MonoBehaviour
             tagText.text = tag;
             tagText.transform.parent.gameObject.SetActive(true);
             LogShop($"促销标签: {tag}");
+        }
+    }
+
+    // ======================= 促销标签背景（换图） =======================
+
+    /// <summary>
+    /// 解析标签背景节点：优先用 Prefab 上绑定的 tagBg，未绑定时按固定子节点名 "Tagbg" 兜底查找
+    /// （GetItemScreen / FailGameScreen 的 GiftTable 下都是 GiftTable/Tagbg/TagText 结构）。
+    /// 同时记住 Prefab 上的原始图，作为没有映射 / 图集缺图时的回填图。
+    /// </summary>
+    private void ResolveTagBgRefs()
+    {
+        if (_tagBgResolved) return;
+        _tagBgResolved = true;
+
+        if (tagBg == null)
+        {
+            Transform node = transform.Find(TagBgNodeName);
+            if (node != null) tagBg = node.GetComponent<Image>();
+        }
+
+        if (tagBg == null)
+        {
+            LogShop("未找到促销标签背景节点 Tagbg，标签背景不做换图");
+            return;
+        }
+
+        _defaultTagBgSprite = tagBg.sprite;
+    }
+
+    /// <summary>
+    /// 按「礼包类型 + 号位」从图集 ShopGifts 加载标签背景图：
+    ///   提示灯礼包 1、2 号位 → discountTip；3 号位 → discountTip1；
+    ///   火箭礼包（AutoComplete）→ discountRocket；复活礼包（ReStartTool）→ discountRestart；
+    ///   其余礼包（金币包 / 去广告 / LuckyBag 等）保持 Prefab 默认图。
+    /// 图集缺图时回填默认图，不隐藏标签（文案仍然可读）。
+    /// </summary>
+    private void RefreshTagBg()
+    {
+        ResolveTagBgRefs();
+        if (tagBg == null) return;
+
+        string spriteName = GetTagBgSpriteName();
+
+        if (string.IsNullOrEmpty(spriteName))
+        {
+            tagBg.sprite = _defaultTagBgSprite;
+            return;
+        }
+
+        // 用 Try 版本：图集里没有这张图时返回 null（不刷 Error），下面回填默认图
+        Sprite sprite = AdvancedBundleLoader.SharedInstance.TryGetSpriteFromAtlas(spriteName, TagBgAtlas);
+
+        if (sprite == null)
+        {
+            LogShop($"标签背景图缺失: {spriteName} @ {TagBgAtlas}，回填 Prefab 默认图");
+            tagBg.sprite = _defaultTagBgSprite;
+            return;
+        }
+
+        tagBg.sprite = sprite;
+        LogShop($"标签背景: {spriteName} @ {TagBgAtlas}（limitRewordType={limitRewordType}, 号位={_slotIndex + 1}）");
+    }
+
+    /// <summary>当前礼包应使用的标签背景图名（返回 null = 不改图，保持 Prefab 默认）。</summary>
+    private string GetTagBgSpriteName()
+    {
+        switch (limitRewordType)
+        {
+            case LimitRewordType.Tipstool:      // 提示灯礼包：1、2 号位 / 3 号位不同图
+                return _slotIndex >= 2 ? TagBgTip3 : TagBgTip;
+            case LimitRewordType.AutoComplete:  // 火箭礼包
+                return TagBgRocket;
+            case LimitRewordType.ReStartTool:   // 复活礼包
+                return TagBgRestart;
+            default:
+                return null;
         }
     }
 

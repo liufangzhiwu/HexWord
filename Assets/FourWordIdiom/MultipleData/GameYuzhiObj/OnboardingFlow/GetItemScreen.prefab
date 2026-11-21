@@ -273,6 +273,7 @@ MonoBehaviour:
   _AddgiftItem: {fileID: 8374087540051798533}
   limintCountText: {fileID: 8718542826887472433}
   tagText: {fileID: 6041419422796782697}
+  tagBg: {fileID: 0}
   purchaseRecordBtn: {fileID: 0}
 --- !u!1 &286171128859312531
 GameObject:
@@ -6839,6 +6840,7 @@ MonoBehaviour:
   _AddgiftItem: {fileID: 9058991786240953373}
   limintCountText: {fileID: 4114284901236823996}
   tagText: {fileID: 3195555769141601888}
+  tagBg: {fileID: 0}
   purchaseRecordBtn: {fileID: 0}
 --- !u!1 &2874124370180430372
 GameObject:

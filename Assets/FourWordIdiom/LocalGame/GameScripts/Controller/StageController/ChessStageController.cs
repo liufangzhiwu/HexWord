@@ -2044,7 +2044,24 @@ public partial class ChessStageController
     #endregion
 
     #region 机制解锁预告 (UI提示)
+
+    /// <summary>
+    /// 「第一个配了 emoji 的关卡」缓存：
+    ///   -1 = 还没算过；
+    ///    0 = 整张关卡表都没有 emoji（此时不展示 Emoji 解锁预告）；
+    ///   &gt;0 = 首个 emoji 关卡号。
+    /// 以前全表没配 emoji 时兜底成 9999，会让第 2 关之后的每次结算都显示
+    /// 「还差 9999-当前关 关解锁 Emoji」（第 3 关即 9996），而且因为 currentStage &lt; 9999 恒成立，
+    /// 后面 冰块 / 记忆 / 叶子 / 花朵 的预告永远走不到。
+    /// </summary>
     private static int _firstEmojiLevel = -1;
+
+    /// <summary>关卡包（A/B 词库）重新加载后清一次缓存，避免沿用上一套表算出来的结果。</summary>
+    public static void ResetMechanicUnlockCache()
+    {
+        _firstEmojiLevel = -1;
+    }
+
     /// <summary>
     /// 获取下一个即将解锁的机制提示信息 (供大厅/关卡入口 UI 调用)
     /// </summary>
@@ -2052,12 +2069,17 @@ public partial class ChessStageController
     /// <returns>返回多语言 Key 和剩余关卡数。如果返回 null 说明没有需要预告的机制。</returns>
     public (string textKey, int remainCount)? GetNextMechanicUnlockHint(int currentStage)
     {
+        // 关卡包还没加载完时不猜（否则会把「没有 emoji」这个结论缓存下来）
+        if (PackInfos == null) return null;
+
         // 按照配置表解锁顺序依次判断
         // "第N关通关" 意味着当前关卡 currentStage >= N + 1
         if (_firstEmojiLevel == -1)
         {
+            _firstEmojiLevel = 0;
+
             // 遍历关卡配置，找到第一个配了 emoji 字符串的关卡
-            for (int i = 1; i <= PackInfos.PackInfos.Count; i++) // 1000为安全上限，防止死循环
+            for (int i = 1; i <= PackInfos.PackInfos.Count; i++)
             {
                 var conf = PackInfos.Get(i);
                 if (conf == null) break; // 读到底了
@@ -2067,12 +2089,15 @@ public partial class ChessStageController
                     break;
                 }
             }
-            // 兜底：万一全游戏都没配Emoji，给个极大值
-            if (_firstEmojiLevel == -1) _firstEmojiLevel = 9999;
+
+            if (_firstEmojiLevel == 0)
+                Debug.LogWarning("[解锁预告] 关卡表里没有任何 emoji 关卡（ChessPackInfo.emoji 全为空），" +
+                                 "Emoji 解锁预告不再展示；冰块/记忆/叶子/花朵的预告可正常显示");
         }
+
         // 1. Emoji (展示条件：第1关通关 -> currentStage >= 2)
         // 注意：需要确保你的配置系统里有 EmojiConfig 并能获取到 FirstLevel
-        if (currentStage >= 2 && currentStage < _firstEmojiLevel)
+        if (_firstEmojiLevel > 0 && currentStage >= 2 && currentStage < _firstEmojiLevel)
         {
             return ("UnlockEmoji", _firstEmojiLevel - currentStage);
         }

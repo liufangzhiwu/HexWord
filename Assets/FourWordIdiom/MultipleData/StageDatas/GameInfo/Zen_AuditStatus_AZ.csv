@@ -1,3 +1,3 @@
-审核总开关,首页的禅意榜入口显示控制,莲心榜的入口出现和解锁条件控制,,,,,,,,,,,,,,,,,
-AuditStatusSwitch,ZenSwitch,LotusHeartSwitch,,,,,,,,
-0,0,1000_1005,
+审核总开关,首页的禅意榜入口显示控制,莲心榜的入口出现和解锁条件控制,Gold6商品替代商店金币视频位,破冰礼包RemoveAdsWeek直接解锁主页入口,审核固定商店白名单,灯泡礼包白名单,火箭礼包白名单,复活礼包白名单,,,,,,,,,,
+AuditStatusSwitch,ZenSwitch,LotusHeartSwitch,Gold6ReplaceVideoPos,RemoveAdsWeeklyUnlockHome,AuditFixedShopIds,LampShopIds,RocketShopIds,ReviveShopIds,,,,,,,,,,
+1,0,1000_1005,1,1,,,,,,,,,,,,,

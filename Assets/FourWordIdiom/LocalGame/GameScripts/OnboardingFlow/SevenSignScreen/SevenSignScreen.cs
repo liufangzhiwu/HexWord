@@ -141,7 +141,7 @@ public class SevenSignScreen : UIWindow
         allMonths = streakManager.GetAllMonthsWithData();
         if (allMonths.Count == 0)
         {
-            DateTime now = DateTime.UtcNow;
+            DateTime now = DateTime.Now;
             allMonths.Add((now.Year, now.Month));
         }
 

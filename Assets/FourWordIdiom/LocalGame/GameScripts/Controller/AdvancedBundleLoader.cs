@@ -225,7 +225,7 @@ public sealed class AdvancedBundleLoader
         if (atlas != null)
             _spriteAtlasCache[atlasName] = atlas;
         else
-            Debug.LogError($"图集加载失败: {atlasName} @ {bundleName}");
+            Debug.Log($"图集加载失败: {atlasName} @ {bundleName}");
 
         return atlas;
     }

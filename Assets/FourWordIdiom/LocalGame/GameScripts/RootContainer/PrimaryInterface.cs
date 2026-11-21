@@ -218,6 +218,10 @@ public class PrimaryInterface : UIWindow
         if (ShopManager.shopManager != null)
             ShopManager.shopManager.OnSettlementGiftChanged += RefreshSettlementGiftEntry;
 
+        // 审核配置是异步拉取的：就绪后要按「审核态破冰周卡入口解锁」再判一次
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnAuditConfigLoaded += OnShopAuditConfigLoaded;
+
         // ★ 活动期间进主页就要看到入口：结算页登记是内存态，重启/换场景会丢，
         //   所以进主页先按活动条件补登记一次（只登记不弹窗），再刷新显隐。
         RefreshHomeGiftEntryOnEnter();
@@ -231,6 +235,15 @@ public class PrimaryInterface : UIWindow
             ShopManager.shopManager.TryEnsureHomeSettlementGiftEntry();
 
         RefreshSettlementGiftEntry();
+    }
+
+    /// <summary>
+    /// 审核配置异步就绪：审核态专属的主页入口（破冰周卡）要按新配置重判一次。
+    /// 否则首次进大厅时配置还没回来，入口就一直不显示。
+    /// </summary>
+    private void OnShopAuditConfigLoaded()
+    {
+        RefreshHomeGiftEntryOnEnter();
     }
 
     /// <summary>
@@ -1152,6 +1165,11 @@ public class PrimaryInterface : UIWindow
         if (_refreshingGiftEntry) return;
         _refreshingGiftEntry = true;
 
+        // ★ 审核开（AuditStatusSwitch=1 且 RemoveAdsWeeklyUnlockHome）：
+        //   破冰礼包（RemoveAdsWeek）入口在主页直接解锁，不依赖结算页登记 / 周末 / 冷却。
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.TryUnlockAuditRemoveAdsWeeklyHomeEntry();
+
         ShopManager.SettlementGiftKind kind = ShopManager.shopManager != null
                                                  && ShopManager.shopManager.SettlementGiftEntryVisible
             ? ShopManager.shopManager.CurrentSettlementGift
@@ -1335,8 +1353,16 @@ public class PrimaryInterface : UIWindow
     {
         Debug.Log("[PrimaryInterface] 点击破冰礼包入口");
 
-        if (ShopManager.shopManager == null
-            || !ShopManager.shopManager.HasSettlementGift(ShopManager.SettlementGiftKind.BreakIce))
+        if (ShopManager.shopManager == null)
+        {
+            RefreshSettlementGiftEntry();
+            return;
+        }
+
+        // 审核态：入口是「直接解锁」的，点击时先补登记，避免登记被别处清掉后点了没反应
+        ShopManager.shopManager.TryUnlockAuditRemoveAdsWeeklyHomeEntry();
+
+        if (!ShopManager.shopManager.HasSettlementGift(ShopManager.SettlementGiftKind.BreakIce))
         {
             RefreshSettlementGiftEntry();
             return;
@@ -1383,6 +1409,8 @@ public class PrimaryInterface : UIWindow
 
         if (ShopManager.shopManager != null)
             ShopManager.shopManager.OnSettlementGiftChanged -= RefreshSettlementGiftEntry;
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnAuditConfigLoaded -= OnShopAuditConfigLoaded;
         StopSettlementGiftCountdown();
  
         if (!LimitTimeManager.Instance.IsComplete())

@@ -141,6 +141,7 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
         { "Box3", "dajueGift" },
         { "Box4", "yuanmanGift" },
         { "NewcomerBox", "newgift" },
+        { "BoxTime", "newgift" },
         { "SpecialPackageA", "tehuiGiftA" },
         { "SpecialPackageB", "tehuiGiftB" },
         { "RemoveAdsWeek", "removeAds" },
@@ -158,6 +159,7 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
         { "NewcomerBox", "tehuibg" },
         { "SpecialPackageA", "tehuibg" },
         { "SpecialPackageB", "tehuibg" },
+        { "BoxTime", "tehuibg" },
         // 高价档
         { "Box3", "highPricebg" },
         { "Box4", "highPricebg" },

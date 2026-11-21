@@ -164,7 +164,8 @@ namespace Middleware
         /// 实现：ArkTS 侧只调 abilityAccessCtrl.requestPermissionsFromUser ——
         ///   已同意 → 直接返回 granted；已拒绝 → 静默返回 -1（系统不会再弹框）；
         ///   从不去拉 requestPermissionOnSetting 兜底弹窗。
-        /// 结果经 TuanjieSendMessage('PushMessageReceiver','OnOAIDQueryResult','1'/'0') 回传。
+        /// 结果经 TuanjieSendMessage('PushMessageReceiver','OnOAIDQueryResult', state) 回传，
+        /// state：'1' 已授权 / '0' 玩家拒绝 / '-1' 未决（系统没弹框 → Unity 侧不写存档）。
         /// ★ 需要重新导出鸿蒙工程（ArkTS 侧是新增的桥接方法），未更新时只会打一条 warning。
         /// </summary>
         public void QueryTrackingConsent()
@@ -242,9 +243,9 @@ namespace Middleware
 
         /// <summary>
         /// 放行广告请求（鸿蒙专用）。
-        /// 广告追踪授权流程结束前，Ads_harmony 会把激励预加载 / 横幅全部挡下，
-        /// 避免 AdsKit 在加载页就去取 OAID、把系统授权框抢在引导页之前弹出来。
-        /// 由 AdTrackingManager 在引导流程结束（弹出过/无需弹/超时）时调用；其它平台空实现。
+        /// 现在只用于"隐私协议已同意"这一个前置条件：广告追踪授权（APP_TRACKING_CONSENT）
+        /// 不再是广告请求的前置条件（鸿蒙部分用户永远不会看到追踪系统弹窗，把它当硬前置会导致
+        /// 整局无广告）。方法幂等；其它平台空实现。
         /// </summary>
         public void AllowAdRequests()
         {

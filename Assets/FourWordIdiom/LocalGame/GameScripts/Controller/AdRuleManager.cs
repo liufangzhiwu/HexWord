@@ -438,11 +438,24 @@ public class AdRuleManager : MonoBehaviour
     /// </summary>
     public void TryShowInterstitial(Action<bool> onComplete)
     {
+        // 0. 结算页礼包弹窗（破冰 / 复购）已经真实占屏 → 插屏让位。
+        //    礼包弹窗是 AdsDiscountScreen（全屏），再叠一个插屏会出现「礼包弹窗 + 插屏」双弹窗。
+        //    注意：礼包「已登记、正在等插屏」的状态不在此列（那是插屏优先、礼包后弹）。
+        if (ShopManager.shopManager != null && ShopManager.shopManager.IsSettlementGiftBlockingInterstitial)
+        {
+            Debug.Log("[AdRule] 插屏让位：结算页礼包弹窗（破冰/复购）正在展示");
+            onComplete?.Invoke(false);
+            return;
+        }
+
         // 1. 拦截审核
         if (!CanShowInterstitial())
         {
             Debug.Log($"[AdRule] 插屏拦截掉了 (当前分层配置 InterAdsSwitch={InterAdsSwitch})");
             onComplete?.Invoke(false);
+            // 礼包可能正在等这次插屏：插屏播不了，礼包立刻补弹，别让玩家白等
+            if (ShopManager.shopManager != null)
+                ShopManager.shopManager.NotifyInterstitialClosed();
             return;
         }
 
@@ -464,6 +477,11 @@ public class AdRuleManager : MonoBehaviour
             }
 
             onComplete?.Invoke(success);
+
+            // ★ 需求（2026-11-21）：结算页破冰 / 复购礼包让位给插屏时，插屏关闭的这一刻补弹礼包弹窗。
+            //   放在 onComplete 之后，让结算页流程先跑完（埋点/按钮态），再叠礼包弹窗。
+            if (ShopManager.shopManager != null)
+                ShopManager.shopManager.NotifyInterstitialClosed();
 
             if (success)
             {
@@ -559,7 +577,7 @@ public class AdRuleManager : MonoBehaviour
         {
             bool owned = ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
             double remain = ShopManager.shopManager != null ? ShopManager.shopManager.GetRemoveAdsRemainSeconds() : 0;
-            Debug.Log($"[AdRule] 被拦截(去广告)：玩家已拥有永久去广告={owned}, 限时去广告剩余={remain:F0}s");
+            Debug.Log($"[AdRule] 被拦截插屏(去广告)：玩家已拥有永久去广告={owned}, 限时去广告剩余={remain:F0}s");
             return false;
         }
 

@@ -464,7 +464,8 @@ public class GetItemScreen : UIWindow, IBackGestureClosePanel
 
             GiftTable gt = Instantiate(prefab, scrollRect.content);
             gt.gameObject.SetActive(true);
-            gt.InitUI(limitRewordType, item);
+            // i 即号位（0 基）：提示灯礼包 3 号位的标签背景要用 discountTip1
+            gt.InitUI(limitRewordType, item, i);
             _giftTableInstances.Add(gt);
 
             int visualIndex = _giftTableInstances.Count - 1;

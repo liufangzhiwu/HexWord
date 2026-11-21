@@ -2097,6 +2097,13 @@ public partial class ShopManager : MonoBehaviour
     /// <returns>登记后主页是否应显示礼包入口</returns>
     public bool TryEnsureHomeSettlementGiftEntry()
     {
+        // ★ 审核开：破冰礼包（RemoveAdsWeek）入口无条件解锁，不走下面的运营条件
+        if (TryUnlockAuditRemoveAdsWeeklyHomeEntry())
+        {
+            LogShop("[主页礼包入口][AuditStatus] 审核开 → 破冰礼包入口直接解锁");
+            return true;
+        }
+
         // 结算页带过来的登记还在、且入口当时是"弹过窗才亮"的可见态 → 直接用
         if (SettlementGiftEntryVisible && CurrentSettlementGift != SettlementGiftKind.None)
             return true;
@@ -2221,18 +2228,35 @@ public partial class ShopManager : MonoBehaviour
     public void PlayPreparedSettlementGiftPopup()
     {
         if (!_settlementGiftPopupPending) return;
+        if (_settlementGiftDeferredForInterstitial) return;   // 已经在等插屏播完
 
-        // ★ 到点前再确认一次：结算页已经被插屏 / 七日胜利 / 灯明心悟 / 锦鲤竞速等占住
+        // ★ 需求（2026-11-21）：本页插屏正在播 / 稍后要播 → 破冰礼包弹窗让位，
+        //   等插屏播放完关闭的那一刻再由 AdRuleManager.NotifyInterstitialClosed() 补弹。
+        //   这里只延后，不取消：登记、入口、pending 全部保留。
+        if (IsInterstitialPlayingOrUpcoming())
+        {
+            DeferSettlementGiftPopupForInterstitial("到点时本页插屏正在播或稍后要播");
+            return;
+        }
+
+        // ★ 到点前再确认一次：结算页已经被七日胜利 / 灯明心悟 / 锦鲤竞速等占住
         //   → 礼包不弹，并且入口也不给（本次礼包整体作废，需求 2026-11-21）
         if (IsSettlementOtherPopupShowing())
         {
-            CancelPreparedSettlementGiftPopup("到点时有更优先的结算页弹窗/插屏在展示");
+            CancelPreparedSettlementGiftPopup("到点时有更优先的结算页弹窗在展示");
             return;
         }
 
         _settlementGiftPopupPending = false;
          Debug.Log($"[Shop][结算礼包] 预登记礼包到点弹窗: kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
         OpenSettlementGiftPopup();
+    }
+
+    /// <summary>本页插屏是否「正在播」或「按规则稍后确实会播」。</summary>
+    private bool IsInterstitialPlayingOrUpcoming()
+    {
+        if (AdRuleManager.Instance == null) return false;
+        return AdRuleManager.Instance.IsInterstitialShowing || AdRuleManager.Instance.CanShowInterstitial();
     }
 
     // ======================= 数据访问桩 =======================

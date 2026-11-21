@@ -370,7 +370,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             // 购买后隐藏推荐位时会把 scrollRect 一起收起，重新打开要恢复，否则 giftTable 在隐藏父节点下显示不出来
             if (scrollRect != null) scrollRect.gameObject.SetActive(true);
             giftTable.gameObject.SetActive(true);
-            giftTable.InitUI(LimitRewordType.ReStartTool, packs[0]);
+            giftTable.InitUI(LimitRewordType.ReStartTool, packs[0], 0);
             if (pointTransform != null) pointTransform.gameObject.SetActive(false);
             LogFailGame($"单礼包模式: {packs[0].produceNameId}(id={packs[0].id}, price={packs[0].price})");
             return;
@@ -383,7 +383,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
             if (scrollRect != null) scrollRect.gameObject.SetActive(true);
             giftTable.gameObject.SetActive(true);
             giftTable.transform.SetParent(scrollRect.content);
-            giftTable.InitUI(LimitRewordType.ReStartTool, packs[0]);
+            giftTable.InitUI(LimitRewordType.ReStartTool, packs[0], 0);
             return;
         }
 
@@ -398,7 +398,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
 
         // 用场景 giftTable 作视觉最左（packs[count-1]）
         giftTable.gameObject.SetActive(true);
-        giftTable.InitUI(LimitRewordType.ReStartTool, packs[count - 1]);
+        giftTable.InitUI(LimitRewordType.ReStartTool, packs[count - 1], count - 1);
         _giftTableInstances.Add(giftTable);
 
         // 实例化其余（packs[count-2] ... packs[0]，依次向右）
@@ -406,7 +406,7 @@ public class FailGameScreen : UIWindow, IPointerDownHandler, IPointerUpHandler
         {
             GiftTable gt = Instantiate(giftTable, scrollRect.content);
             gt.gameObject.SetActive(true);
-            gt.InitUI(LimitRewordType.ReStartTool, packs[i]);
+            gt.InitUI(LimitRewordType.ReStartTool, packs[i], i);
             _giftTableInstances.Add(gt);
 
             LogFailGame($"生成礼包 [视觉位置={_giftTableInstances.Count - 1}]: {packs[i].produceNameId}(id={packs[i].id}, price={packs[i].price})");

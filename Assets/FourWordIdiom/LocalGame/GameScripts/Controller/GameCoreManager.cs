@@ -124,7 +124,7 @@ public sealed class GameCoreManager : MonoBehaviour
 #if Unity_ShowLog || UNITY_EDITOR
         IsTrueAuto = false;
         AutoLevelTalbe.gameObject.SetActive(false);
-        Debug.unityLogger.logEnabled = true;
+        Debug.unityLogger.logEnabled = false;
 #else
         IsTrueAuto = false;
         AutoLevelTalbe.gameObject.SetActive(false);

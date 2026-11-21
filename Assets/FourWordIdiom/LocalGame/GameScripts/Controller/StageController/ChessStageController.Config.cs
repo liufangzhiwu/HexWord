@@ -89,6 +89,9 @@ public partial class ChessStageController
 
         Debug.LogWarning("当前初始化的关卡包是 " + levelConfigName);
 
+        // 换了关卡包（A/B 词库）→ 机制解锁预告里「第一个 emoji 关卡」的缓存要重算
+        ResetMechanicUnlockCache();
+
         TextAsset praiseCsvObj = AdvancedBundleLoader.SharedInstance.LoadTextFile("gameinfo", "cypz_Praise");
         if (praiseCsvObj != null)
         {

@@ -2221,7 +2221,8 @@ namespace Middleware
                 // ★ 桥接补丁：广告追踪授权状态静默查询（bug34）
                 //   Unity 侧 AdTrackingManager 启动/回前台时调用，用于核对系统真实授权状态；
                 //   结果由 SendOAID 经 TuanjieSendMessage('PushMessageReceiver',
-                //   'OnOAIDQueryResult', '1'/'0') 回传（不弹框、不走埋点）。
+                //   'OnOAIDQueryResult', state) 回传，state：'1' 已授权 / '0' 玩家拒绝 /
+                //   '-1' 未决（系统没弹框，Unity 侧不写存档，避免把"没弹过框"当成拒绝）。
                 const string queryMethod = @"  // ★ 桥接补丁：静默查询广告追踪授权状态（APP_TRACKING_CONSENT，不弹框）
   QueryTrackingConsentOnUI(callback: (...args: Array<ESObject>) => ESObject) {
     hilog.info(0x0000, ""SDKKit"", 'QueryTrackingConsentOnUI Start!');

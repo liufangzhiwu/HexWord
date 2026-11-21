@@ -1260,19 +1260,28 @@ public class ChessFinishView : UIWindow
                 Showlimiticon.SetActive(false);
             }
         }
-        AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
+        // ★ 本页礼包弹窗（破冰 / 复购）已经占住结算页 → 本页不插屏，避免两个全屏营销叠在一起。
+        //   这里提前判断是为了不把「主动让位」记成一次插屏失败埋点（AnalyticMgr.InsetAdFail）。
+        if (ShopManager.shopManager != null && ShopManager.shopManager.IsSettlementGiftBlockingInterstitial)
         {
-            if (issuccess)
+            Debug.Log("[ChessFinishView] 结算页礼包弹窗已占位 → 本页跳过插屏");
+        }
+        else
+        {
+            AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
             {
-                AnalyticMgr.InsetAdSuccess("关卡插屏");
-                GameDataManager.Instance.UserData.totalInsetSeeAds++;
-            }
-            else
-            {
-                AnalyticMgr.InsetAdFail("关卡插屏");
-            }
-            Debug.Log($"[AdRule] 调用广告插屏 {issuccess}");
-        });
+                if (issuccess)
+                {
+                    AnalyticMgr.InsetAdSuccess("关卡插屏");
+                    GameDataManager.Instance.UserData.totalInsetSeeAds++;
+                }
+                else
+                {
+                    AnalyticMgr.InsetAdFail("关卡插屏");
+                }
+                Debug.Log($"[AdRule] 调用广告插屏 {issuccess}");
+            });
+        }
         // 将按钮显示逻辑提出来，并加一个安全判定。确保流程走到这里时，必定会展示按钮
         if (!nextStageBtn.gameObject.activeSelf)
         {
@@ -1828,7 +1837,7 @@ public class ChessFinishView : UIWindow
     /// 结算页会弹更优先的弹窗时，取消本次破冰/复购礼包（<b>弹窗不出，入口也不出</b>）。
     ///
     /// 需求（2026-11-21 口径）：当前结算页会弹以下任意一个 → 本次礼包整条链路作废：
-    ///   1. 插屏（AdRuleManager.CanShowInterstitial 预判，本页稍后才真正播）
+    ///   1. 插屏 —— <b>例外</b>：插屏不再让礼包作废，改为「礼包让位、插屏播完关闭后再弹礼包」
     ///   2. 每日连胜 / 七日胜利弹窗（SignWinScreen）/ 七日签到（SevenSignScreen）
     ///   3. 灯笼结算 / 灯明心悟页面（LimitTimeScreen，达成进度会自动弹）
     ///   4. 新手奖励活动进度弹窗（BeginnerBonusPanel）
@@ -1841,6 +1850,15 @@ public class ChessFinishView : UIWindow
     {
         if (ShopManager.shopManager == null) return;
         if (ShopManager.shopManager.IsSettlementGiftPopupSuppressed) return;
+
+        // ★ 礼包弹窗已经真的弹出来了：本页按「礼包优先」走，不再做占位撤销。
+        //   否则会把玩家正看着的弹窗底下的登记/入口撤掉，接着插屏还会叠上来（双弹窗）。
+        //   插屏侧已在 AdRuleManager.TryShowInterstitial 里对「礼包弹窗展示中/待弹出」做让位。
+        if (ShopManager.shopManager.IsSettlementGiftPopupShowing)
+        {
+            Debug.Log("[ChessFinishView] 结算页礼包弹窗已在展示 → 本页不再因插屏等占位撤销礼包，插屏让位");
+            return;
+        }
 
         string reason = null;
 
@@ -1861,10 +1879,13 @@ public class ChessFinishView : UIWindow
             reason = "每日连胜/签到弹窗";
         }
 
-        // 1. 插屏（本页稍后 Rank 流程之后会尝试播，这里提前预判，避免礼包和插屏叠在一起）
-        if (reason == null && AdRuleManager.Instance != null && AdRuleManager.Instance.CanShowInterstitial())
+        // 1. 插屏（本页 Rank 流程之后会尝试播）
+        //   ★ 需求（2026-11-21）：插屏不再让礼包整体作废 —— 礼包「让位」，等插屏播放完关闭后
+        //     由 AdRuleManager → ShopManager.NotifyInterstitialClosed() 补弹，两个全屏不叠、礼包也不丢。
+        if (reason == null && AdRuleManager.Instance != null
+            && (AdRuleManager.Instance.IsInterstitialShowing || AdRuleManager.Instance.CanShowInterstitial()))
         {
-            reason = "插屏";
+            ShopManager.shopManager.DeferSettlementGiftPopupForInterstitial("结算页本页稍后会播插屏");
         }
 
         // 3. 灯笼结算 / 灯明心悟（限时活动页达成条件会自动弹）
@@ -1915,6 +1936,11 @@ public class ChessFinishView : UIWindow
     /// </summary>
     private IEnumerator WaitSettlementGiftPopupClosed()
     {
+        // ★ 礼包已让位给插屏（插屏先播、礼包插屏关闭后再弹）→ 这里不能等，
+        //   否则会一直等到兜底超时，把后面的插屏 / 排行榜流程全卡住。
+        if (ShopManager.shopManager != null && ShopManager.shopManager.IsSettlementGiftDeferredForInterstitial)
+            yield break;
+
         const float maxWait = 20f;
         float waited = 0f;
 

@@ -54,6 +54,13 @@ public class AdTrackingManager : MonoBehaviour
     /// <summary>点"继续"关页后，延迟多久放行广告请求（避开系统授权框的弹出时序）</summary>
     private const float GateReleaseDelay = 2f;
 
+    /// <summary>
+    /// Update 里补放行广告请求的轮询间隔（秒）。
+    /// 隐私同意 / UserData 就绪 / 引导流程收尾这三个条件可能以任意顺序到达，
+    /// 用轮询兜住"当时不满足、之后满足了却没人再调 ReleaseAdGate"的情况。
+    /// </summary>
+    private const float AdGatePollInterval = 0.5f;
+
     /// <summary>等待主界面出现以展示激励弹窗的最长时间（首启场景：还在加载/引导里）</summary>
     private const float RewardPopupTimeout = 15f;
 
@@ -93,6 +100,15 @@ public class AdTrackingManager : MonoBehaviour
 
     /// <summary>本次进程内是否已做过"存档未决但引导页弹过"的启动补偿查询</summary>
     private bool _undeterminedRecoveryTried;
+
+    /// <summary>广告请求是否已经放行（放行后 Update 不再轮询）</summary>
+    private static bool _adGateReleased;
+
+    /// <summary>"等隐私协议同意"的日志只打一次，避免 Update 轮询刷屏</summary>
+    private static bool _adGateWaitLogged;
+
+    /// <summary>Update 轮询计时</summary>
+    private float _adGatePollTimer;
 
     /// <summary>静默查询授权状态是否在进行中（鸿蒙是异步回包，避免连点/重入）</summary>
     private bool _statusQueryInFlight;
@@ -152,6 +168,26 @@ public class AdTrackingManager : MonoBehaviour
         Application.focusChanged -= OnFocusChanged;
         if (_guide != null) _guide.OnPrimaryClicked -= HandleGuidePrimary;
         if (Instance == this) Instance = null;
+    }
+
+    /// <summary>
+    /// 广告请求放行的兜底轮询。
+    ///
+    /// 背景：广告请求只受"隐私协议已同意"约束（鸿蒙的广告追踪授权不再是前置条件）。
+    /// 但 ReleaseAdGate 的调用点（引导流程结束 / 点继续 / 超时收尾）都发生在某个具体时刻，
+    /// 一旦那一刻隐私还没同意（首次启动隐私弹窗较晚、UserData 慢到），之后就没有任何地方再调它，
+    /// 结果整局广告请求被挂起（激励视频、横幅全废）。
+    /// 这里每 0.5s 重试一次，隐私同意后立刻补放行；放行成功即停止轮询。
+    /// </summary>
+    private void Update()
+    {
+        if (_adGateReleased) return;
+
+        _adGatePollTimer += Time.unscaledDeltaTime;
+        if (_adGatePollTimer < AdGatePollInterval) return;
+        _adGatePollTimer = 0f;
+
+        ReleaseAdGate();
     }
 
     #endregion
@@ -376,6 +412,25 @@ public class AdTrackingManager : MonoBehaviour
     {
         _statusQueryInFlight = false;
         ApplyTrackingStatus(granted, "鸿蒙静默查询");
+    }
+
+    /// <summary>
+    /// 鸿蒙静默查询回包：**未决**（ArkTS 回 '-1'）。
+    ///
+    /// 触发场景：系统压根没弹过广告追踪授权框 —— 手机系统设置里关闭了广告标识符 /
+    /// 限制了广告跟踪、此前拒绝过、企业策略禁用、查询异常等。
+    /// 这类玩家从未做过选择，**不能写 adTrackingEnabled**（写 "0" 会让 IAA 分层判成未授权、
+    /// 设置页开关显示为关且永远打不开、激励拿不到）。
+    /// 这里只清掉 in-flight 标记，存档保持为空（"未决"）。
+    /// </summary>
+    public void OnTrackingStatusUndetermined()
+    {
+        _statusQueryInFlight = false;
+
+        UserData user = User;
+        string cur = user != null ? user.adTrackingEnabled : "(UserData 未就绪)";
+        Debug.Log($"[AdTracking] 鸿蒙静默查询：授权状态未决（系统未弹框 / 已禁用广告标识符），" +
+                  $"存档保持 \"{cur}\" 不变，不做分层写入");
     }
 
     /// <summary>
@@ -617,8 +672,13 @@ public class AdTrackingManager : MonoBehaviour
 
         if (User == null)
         {
-            Debug.LogWarning("[AdTracking] 等不到 UserData，本次不弹引导（广告请求保持挂起）");
+            Debug.LogWarning("[AdTracking] 等不到 UserData，本次不弹引导；收尾启动流程（广告放行交给 Update 轮询）");
             if (ShopManager.shopManager != null) ShopManager.shopManager.LogStartupLayerAndConfig();
+
+            // ★ 必须走一次收尾：否则 _startupFlowFinished 停在 false、ReleaseAdGate 也不会被调用，
+            //   广告请求会被永久挂起（激励视频/横幅整局不可用）。这里只做状态收尾，
+            //   UserData 到位后 Update 里的轮询会自动补放行。
+            FinishStartupFlow();
             yield break;
         }
 
@@ -658,17 +718,47 @@ public class AdTrackingManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 授权流程一结束就放行广告请求（鸿蒙）。
-    /// 隐私还没同意时继续挂起：广告请求会触发 AdsKit 的 OAID 获取，等于绕过隐私弹窗。
+    /// 放行广告请求。
+    ///
+    /// ★ 口径变更：**只等隐私协议同意**，不再等广告追踪授权流程。
+    ///   原因：鸿蒙不是每个用户都会看到广告追踪系统弹窗（系统设置里可以关闭广告标识符 /
+    ///   限制广告跟踪），这类用户永远拿不到"授权结果"，把它当硬前置会让整局无广告；
+    ///   而且 AdsKit 在未授权时只是拿不到 OAID（非个性化、低 eCPM），并不会请求失败。
+    ///   追踪授权结果只用于用户分层（IAA）与设置页开关。
+    ///
+    /// 调用点：FinishStartupFlow / 点"继续"后延迟放行 / BeginStartupFlowWhenReady 超时 /
+    ///        Update 兜底轮询。方法幂等，重复调用无副作用。
     /// </summary>
     private static void ReleaseAdGate()
     {
+        if (_adGateReleased) return;
+
         UserData user = User;
-        if (user != null && !user.IsAgreePrivacy)
+        if (user == null)
         {
-            Debug.Log("[AdTracking] 隐私协议未同意，广告请求继续挂起");
+            // UserData 还没到（隐私状态未知）：先不放行，Update 会继续重试
+            if (!_adGateWaitLogged)
+            {
+                _adGateWaitLogged = true;
+                Debug.Log("[AdTracking] UserData 未就绪，广告请求暂缓（Update 轮询等待隐私状态）");
+            }
             return;
         }
+
+        if (!user.IsAgreePrivacy)
+        {
+            // 隐私还没同意：继续挂起，Update 里每 0.5s 重试一次，同意后立刻放行
+            if (!_adGateWaitLogged)
+            {
+                _adGateWaitLogged = true;
+                Debug.Log("[AdTracking] 隐私协议未同意，广告请求暂缓（同意后由 Update 自动放行）");
+            }
+            return;
+        }
+
+        _adGateReleased = true;
+        _adGateWaitLogged = false;
+        Debug.Log("[AdTracking] 隐私协议已同意，放行广告请求（不再等待广告追踪授权结果）");
 
         if (Game.self != null) Game.self.AllowAdRequests();
     }

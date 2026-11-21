@@ -135,7 +135,13 @@ public class PushMessageReceiver : MonoBehaviour
     // ============================================================
     // ★ 广告追踪授权状态「静默查询」回包（bug34）
     //   ArkTS 侧（SendOAID.QueryTrackingConsent）调用：
-    //     Tuanjie.TuanjieSendMessage('PushMessageReceiver', 'OnOAIDQueryResult', '1' or '0')
+    //     Tuanjie.TuanjieSendMessage('PushMessageReceiver', 'OnOAIDQueryResult', state)
+    //     其中 state：'1' 已授权 / '0' 玩家拒绝（系统确实弹过框）/ '-1' 未决（系统没弹框）
+    //
+    //   ★ 为什么要 '-1'：鸿蒙不是每个用户都会看到广告追踪系统弹窗（手机设置里可关闭
+    //     广告标识符 / 限制广告跟踪），这类用户 requestPermissionsFromUser 静默返回 -1。
+    //     如果把查询结果直接当成"玩家拒绝"写进存档，会把从未做过选择的用户判成
+    //     IAA 未授权分层，且设置页开关永远打不开（激励拿不到）。收到 '-1' 时保持存档为空。
     //
     //   与 OnOAIDClosedSignal 的区别：
     //     - 这次查询不会弹系统框，也不代表玩家刚做了授权操作，
@@ -148,15 +154,23 @@ public class PushMessageReceiver : MonoBehaviour
     {
         int enabled = 0;
         int.TryParse(enabledStr, out enabled);
+
+        // < 0 → 未决：系统没弹框 / 查询异常，玩家并没有做出选择，不能写档
+        bool undetermined = enabled < 0;
         bool granted = enabled == 1;
-        Debug.Log($"[PushMessageReceiver] OnOAIDQueryResult 收到, enabledStr={enabledStr}, granted={granted}");
+        Debug.Log($"[PushMessageReceiver] OnOAIDQueryResult 收到, enabledStr={enabledStr}, " +
+                  $"undetermined={undetermined}, granted={granted}");
 
         AdTrackingManager manager = AdTrackingManager.Instance;
         if (manager != null)
         {
-            manager.OnTrackingStatusQueried(granted);
+            if (undetermined) manager.OnTrackingStatusUndetermined();
+            else manager.OnTrackingStatusQueried(granted);
             return;
         }
+
+        // 未决：保持存档为空（写成 "0" 会让分层与设置页开关永久错位）
+        if (undetermined) return;
 
         // 兜底：管理器尚未创建时直接同步存档 + 刷新分层
         var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;

@@ -249,7 +249,7 @@ private void ResetUIForReplay()
             // 如果不是第一次，计算距离上次涨分过去了多少秒
             if (ZenRankManager.Instance.LastScoreUpdateTime != DateTime.MinValue)
             {
-                duration = (int)(DateTime.UtcNow - ZenRankManager.Instance.LastScoreUpdateTime).TotalSeconds;
+                duration = (int)(DateTime.Now - ZenRankManager.Instance.LastScoreUpdateTime).TotalSeconds;
             }
 
             AnalyticMgr.SetCommonProperties();
@@ -257,7 +257,7 @@ private void ResetUIForReplay()
             AnalyticMgr.ActivityProgress("连心榜活动", newScore, duration);
 
             // 埋点完毕后，更新最后一次得分的时间戳，为下次做准备
-            ZenRankManager.Instance.LastScoreUpdateTime = DateTime.UtcNow;
+            ZenRankManager.Instance.LastScoreUpdateTime = DateTime.Now;
 
             Debug.Log($"【Rank Debug - Analytics】结算面板弹出，上报连心榜分数: {newScore}, 距上次耗时: {duration} 秒");
         }

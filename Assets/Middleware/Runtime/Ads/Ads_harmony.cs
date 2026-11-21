@@ -102,58 +102,46 @@ namespace Middleware
         private bool _bannerShowing;
         /// <summary>因为要播全屏广告而临时关掉的横幅，全屏广告结束后要恢复</summary>
         private bool _bannerHiddenByFullScreenAd;
-        /// <summary>闸门关闭期间被挡下的横幅参数同步</summary>
-        private bool _bannerPending;
-        /// <summary>闸门关闭期间被挡下的横幅展示请求</summary>
-        private bool _bannerShowPending;
         /// <summary>横幅拉取失败后的冷却截止时间（避免每次进关都重开一次原生对话框）</summary>
         private DateTime _bannerRetryAt = DateTime.MinValue;
         /// <summary>ArkTS 桥接回调（必须持有引用，否则会被 GC 回收导致回调丢失）</summary>
         private static OpenHarmonyJSCallback _adsBridgeCallback;
 
-        // ================== 广告请求闸门 ==================
+        // ================== 广告请求（已取消追踪授权前置闸门） ==================
         /// <summary>
-        /// 广告请求闸门：广告追踪授权（APP_TRACKING_CONSENT）流程结束前，禁止发起任何广告请求。
+        /// 广告请求开关：**恒为 true**，不再受广告追踪授权（APP_TRACKING_CONSENT）流程约束。
         ///
-        /// 原因：华为 AdsKit 在 loadAd 时会自己去取 OAID，应用还没拿到授权时系统会直接弹
-        /// "广告标识符 / 跟踪"授权框。之前 Init 里 0.2s 就预加载两个激励位、加载页还同步了
-        /// Banner 参数，结果系统弹窗抢在"广告追踪引导页点继续"之前就弹了出来。
-        /// 现在统一的节奏是：引导页 → 点继续 → 系统弹窗 → 结果回来后 Game.AllowAdRequests() 放行广告。
+        /// 变更原因（重要）：
+        ///   1) 鸿蒙不是每个用户都会看到"广告追踪"系统弹窗 —— 手机系统设置里可以关闭广告标识符 /
+        ///      限制广告跟踪，这类用户 requestPermissionsFromUser 会静默返回拒绝，永远不会弹框；
+        ///   2) 之前的实现把它当硬前置：追踪结果没回来就不许请求、不许播激励与横幅。一旦授权流程
+        ///      卡住（隐私未同意、UserData 未就绪、桥接消息丢失），整局只有插屏能播，激励全废；
+        ///   3) 华为 AdsKit 本身允许在未授权 OAID 的情况下请求广告（只是不带 OAID、走非个性化、
+        ///      eCPM 低），所以"没授权就不许播"既不是系统要求，也直接损失收入。
+        ///
+        /// 现在的口径：**广告请求只受隐私协议约束**（由 AdTrackingManager 在隐私同意后调用
+        /// Game.AllowAdRequests() 放行；其它平台为空实现）。追踪授权仅用于用户分层（IAA）与
+        /// 设置页开关，不再参与"能不能播广告"的判定。
+        ///
+        /// 保留属性与 AllowAdRequests() 方法只为兼容既有调用点（现为幂等空操作）。
         /// </summary>
-        public static bool AdRequestsAllowed { get; private set; }
+        public static bool AdRequestsAllowed { get; private set; } = true;
 
-        /// <summary>当前实例，供静态放行入口回调泵起被挡住的请求</summary>
-        private static Ads_harmony _current;
-
-        /// <summary>放行广告请求（由 AdTrackingManager 在广告追踪引导流程结束时调用）</summary>
+        /// <summary>兼容入口：闸门已取消，这里只打一条日志（幂等，不影响任何广告请求）。</summary>
         public static void AllowAdRequests()
         {
-            if (AdRequestsAllowed) return;
+            if (_allowAdRequestsLogged) return;
 
-            AdRequestsAllowed = true;
-            Debug.Log("[AD] 广告追踪流程已结束，放行广告请求");
-            _current?.PumpAfterTrackingGate();
+            _allowAdRequestsLogged = true;
+            Debug.Log("[AD] 广告请求不受追踪授权限制（AllowAdRequests 兼容调用，闸门已取消）");
         }
 
-        /// <summary>闸门打开后，把之前挡下的横幅与预加载补起来</summary>
-        private void PumpAfterTrackingGate()
-        {
-            // 只补"玩家/玩法已经要求展示"的横幅；没要求展示就不要自己弹出来
-            if (_bannerShowPending)
-            {
-                _bannerShowPending = false;
-                ShowBanner();
-            }
-
-            foreach (var kv in _preloadInfos) kv.Value.wantPreload = true;
-            PumpPreload();
-        }
+        private static bool _allowAdRequestsLogged;
 
 
         // ================== 生命周期 ==================
         public void Init(float delay)
         {
-            _current = this;
             CreateAdsObj();
 
             UnityTimer.Delay(delay, () =>
@@ -163,9 +151,9 @@ namespace Middleware
                 SignalHandler.Instance.RegisterSignalDelegate<AdsStatusSignal>(OnAdsStatusTrigger);
                 _uniqueId = Game.self.GetOAID();
 
-                // 注意：这里只是"登记预加载"，真正发请求要等 AdRequestsAllowed 打开，
-                // 否则 AdsKit 会在加载页就去取 OAID，把系统授权弹窗抢在引导页之前弹出来。
-                Debug.Log($"[AD] SDK 初始化完成，两个激励位登记预加载（闸门={(AdRequestsAllowed ? "开" : "关")}）");
+                // 直接登记预加载：广告请求不再等广告追踪授权（未授权只会少 OAID 出价，
+                // 不影响请求与播放；等授权会变成"没弹过追踪框的用户整局无激励"）。
+                Debug.Log("[AD] SDK 初始化完成，两个激励位登记预加载");
                 TryPreload(REWARD_AD_ID, AdType.Reward);
                 TryPreload(TIP_TOOL_REWARD_AD_ID, AdType.Reward);
             });
@@ -229,14 +217,6 @@ namespace Middleware
         {
             var info = GetOrCreateInfo(adId, adType);
 
-            // 广告追踪授权流程没走完之前不发任何广告请求（见 AdRequestsAllowed 注释）
-            if (!AdRequestsAllowed)
-            {
-                info.wantPreload = true;
-                Debug.Log($"[AD] 等待广告追踪授权，暂缓预加载：{adId}");
-                return;
-            }
-
             if (IsPlaying)
             {
                 info.wantPreload = true;
@@ -268,12 +248,6 @@ namespace Middleware
 
         private void PumpPreload()
         {
-            if (!AdRequestsAllowed)
-            {
-                Debug.Log("[AD] Pump 跳过：等待广告追踪授权");
-                return;
-            }
-
             if (IsPlaying)
             {
                 Debug.Log("[AD] Pump 跳过：播放中");
@@ -543,15 +517,8 @@ namespace Middleware
         {
             CreateAdsObj();
 
-            // 闸门关着（广告追踪授权还没走完）时直接回调失败，避免转圈卡死
-            if (!AdRequestsAllowed)
-            {
-                Debug.LogWarning("[AD] 广告追踪授权未完成，激励视频暂不可用");
-                MessageSystem.Instance?.ShowTip("广告资源准备中，请稍后再试");
-                callback?.Invoke(false);
-                return;
-            }
-
+            // 注：不再判断广告追踪授权 —— 未授权只会让 AdsKit 拿不到 OAID（非个性化、eCPM 低），
+            //     不会导致请求失败，这里若挡住就会变成"没弹过追踪框的用户整局看不到激励"。
             Debug.Log($"[AD] 点击视频点：{adId}");
 
             _currentAdKey = key;
@@ -618,13 +585,6 @@ namespace Middleware
             
             CreateAdsObj();
 
-            if (!AdRequestsAllowed)
-            {
-                Debug.LogWarning("[AD] 广告追踪授权未完成，插屏暂不可用");
-                callback?.Invoke(false);
-                return;
-            }
-
             _completeCallback = callback;
             _adType = AdType.Interstitial;
             _isNeedShow_Field = true;
@@ -671,15 +631,8 @@ namespace Middleware
         {
             CreateAdsObj();
 
-            // 授权流程没走完之前不请求广告：AdsKit 取 OAID 时未授权会触发系统跟踪授权框，
-            // 会把弹窗抢在"广告追踪引导页点继续"之前弹出来。
-            if (!AdRequestsAllowed)
-            {
-                _bannerPending = true;
-                Debug.Log("[AD][Banner] 等待广告追踪授权，暂缓横幅");
-                return;
-            }
-
+            // 注：横幅不再等广告追踪授权。未授权时 oaid 为空串，AdsKit 仍可请求（非个性化），
+            //     之前"等授权再拉横幅"会让没弹过追踪框的用户整局看不到横幅。
             // 授权通过后 OAID 才会写进 oaid.txt，这里每次都取最新的，
             // 保证"先拒绝 → 后来在设置里开启"之后横幅能带上 OAID 出价
             string latestOaid = Game.self != null ? Game.self.GetOAID() : null;
@@ -709,14 +662,6 @@ namespace Middleware
 
         public void ShowBanner()
         {
-            // 广告追踪流程没走完：先记账，等 Game.AllowAdRequests() 后由闸门补展示
-            if (!AdRequestsAllowed)
-            {
-                _bannerShowPending = true;
-                Debug.Log("[AD][Banner] 等待广告追踪授权，暂缓展示横幅");
-                return;
-            }
-
             if (_bannerShowing) return;
 
             // 拉取失败后的冷却：横幅失败会由 ArkTS 侧自动关掉对话框，
@@ -731,15 +676,11 @@ namespace Middleware
             LoadBannerAD();
 
             _bannerShowing = true;
-            _bannerShowPending = false;
-            _bannerPending = false;
             Debug.Log($"[AD][Banner] 展示横幅：{BANNER_AD_ID}");
         }
 
         public void HideBanner()
         {
-            _bannerShowPending = false;
-
             if (!_bannerShowing)
             {
                 // 没有展示就不必关，避免对未打开的对话框调 close（ArkTS 侧会报错日志）

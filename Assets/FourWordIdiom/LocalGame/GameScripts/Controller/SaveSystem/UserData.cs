@@ -189,7 +189,7 @@ public class UserData
 
     // ---- 关卡时长计时（毫秒 + 可暂停窗口）----
     public long curStageElapsedMs;        // 已封存的累计时长(毫秒)
-    public long curStageWindowStartTicks; // 计时窗口起点(UTC Ticks)，0 表示窗口关闭（暂停中）
+    public long curStageWindowStartTicks; // 计时窗口起点(本地时间 Ticks)，0 表示窗口关闭（暂停中）
     public bool curStageTimerActive;      // 计时窗口当前是否打开
     public bool curStageSessionOpen;      // 本局计时会话是否已开始且未结束
 
@@ -1370,6 +1370,38 @@ public class UserData
     private const long MaxSingleSegmentMs = 30 * 60 * 1000;
 
     /// <summary>
+    /// 校验计时窗口起点是否可信。
+    /// 无效情形：起点在未来（系统时间被回拨）、起点距今超过单段上限（旧存档里存的是 UTC ticks、
+    /// 或长时间挂机未封存）。无效窗口直接丢弃，不参与累计。
+    /// </summary>
+    private bool IsStageWindowValid(long nowTicks)
+    {
+        if (curStageWindowStartTicks <= 0) return false;
+
+        long deltaMs = (nowTicks - curStageWindowStartTicks) / TimeSpan.TicksPerMillisecond;
+        return deltaMs >= 0 && deltaMs <= MaxSingleSegmentMs;
+    }
+
+    /// <summary>
+    /// 确保计时窗口可用：起点异常时丢弃该段、以此刻重开窗口，不把异常时长计入本局。
+    /// </summary>
+    private void EnsureStageWindow(long nowTicks)
+    {
+        if (IsStageWindowValid(nowTicks)) return;
+
+        long badStartTicks = curStageWindowStartTicks;
+        curStageWindowStartTicks = nowTicks;
+
+        // badStartTicks > 0 说明确实是"有窗口但不可信"，此时打日志便于排查（重开后下一帧即合法，不会刷屏）
+        if (badStartTicks > 0)
+        {
+            long deltaMs = (nowTicks - badStartTicks) / TimeSpan.TicksPerMillisecond;
+            string startText = new DateTime(badStartTicks).ToString("yyyy-MM-dd HH:mm:ss");
+            Debug.Log($"[关卡计时] 窗口起点异常，已重置且不累加：起点={startText}，偏差={deltaMs / 1000f:F1}s（上限{MaxSingleSegmentMs / 1000}s）");
+        }
+    }
+
+    /// <summary>
     /// 新开一局：累计清零并开窗
     /// </summary>
     public void BeginStageTime()
@@ -1377,7 +1409,7 @@ public class UserData
         curStageElapsedMs = 0;
         curStageOnlineTime = 0;
         curStageStartTime = DateTime.Now.ToString();
-        curStageWindowStartTicks = DateTime.UtcNow.Ticks;
+        curStageWindowStartTicks = DateTime.Now.Ticks;
         curStageTimerActive = true;
         curStageSessionOpen = true;
     }
@@ -1388,8 +1420,9 @@ public class UserData
     public void ReopenStageTime()
     {
         curStageSessionOpen = true;
-        if (curStageWindowStartTicks <= 0)
-            curStageWindowStartTicks = DateTime.UtcNow.Ticks;
+        long nowTicks = DateTime.Now.Ticks;
+        // 窗口起点异常（旧存档 UTC ticks / 系统时间回拨 / 超单段上限）→ 视为无效窗口，直接以此刻重开
+        EnsureStageWindow(nowTicks);
         if (string.IsNullOrEmpty(curStageStartTime))
             curStageStartTime = DateTime.Now.ToString();
         curStageTimerActive = true;
@@ -1402,8 +1435,9 @@ public class UserData
     public void ResumeStageTime()
     {
         if (!curStageSessionOpen) return;
-        if (curStageWindowStartTicks <= 0)
-            curStageWindowStartTicks = DateTime.UtcNow.Ticks;
+        long nowTicks = DateTime.Now.Ticks;
+        // 同上：异常窗口丢弃，不累加，避免旧存档 UTC ticks 造成 +时区差 的假时长
+        EnsureStageWindow(nowTicks);
         if (string.IsNullOrEmpty(curStageStartTime))
             curStageStartTime = DateTime.Now.ToString();
         curStageTimerActive = true;
@@ -1417,10 +1451,11 @@ public class UserData
     {
         if (curStageWindowStartTicks > 0)
         {
-            long nowTicks = DateTime.UtcNow.Ticks;
+            long nowTicks = DateTime.Now.Ticks;
             long deltaMs = (nowTicks - curStageWindowStartTicks) / TimeSpan.TicksPerMillisecond;
-            if (deltaMs > 0)
-                curStageElapsedMs += Math.Min(deltaMs, MaxSingleSegmentMs);
+            // 只累加合法区间：负数（时间回拨）与超单段上限（旧存档 UTC ticks / 长时间挂机）都不计入
+            if (deltaMs > 0 && deltaMs <= MaxSingleSegmentMs)
+                curStageElapsedMs += deltaMs;
             curStageWindowStartTicks = nowTicks;
         }
         curStageOnlineTime = (int)(curStageElapsedMs / 1000);
@@ -1468,9 +1503,10 @@ public class UserData
         long ms = curStageElapsedMs;
         if (curStageWindowStartTicks > 0)
         {
-            long deltaMs = (DateTime.UtcNow.Ticks - curStageWindowStartTicks) / TimeSpan.TicksPerMillisecond;
-            if (deltaMs > 0)
-                ms += Math.Min(deltaMs, MaxSingleSegmentMs);
+            long deltaMs = (DateTime.Now.Ticks - curStageWindowStartTicks) / TimeSpan.TicksPerMillisecond;
+            // 与 SealStageTime 口径一致：异常窗口不计入，避免读到"假"时长
+            if (deltaMs > 0 && deltaMs <= MaxSingleSegmentMs)
+                ms += deltaMs;
         }
         return ms;
     }

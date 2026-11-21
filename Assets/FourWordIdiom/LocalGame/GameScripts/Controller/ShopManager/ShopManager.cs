@@ -359,6 +359,16 @@ public partial class ShopManager : MonoBehaviour
     private bool _settlementGiftPopupPending;
 
     /// <summary>
+    /// 礼包弹窗是否「让位给插屏、等插屏播完再弹」。
+    ///
+    /// 需求（2026-11-21）：结算页要推破冰 / 复购礼包，而本页同时还要播关卡插屏时，
+    /// <b>先播插屏，插屏播放完关闭的那一刻再弹礼包弹窗</b>（两个全屏营销不叠，但礼包也不丢）。
+    /// 该标记为 true 时 `_settlementGiftPopupPending` 仍保持 true（登记与入口都保留），
+    /// 由 AdRuleManager 的插屏关闭回调 `NotifyInterstitialClosed()` 触发真正弹出。
+    /// </summary>
+    private bool _settlementGiftDeferredForInterstitial;
+
+    /// <summary>
     /// 本次结算「不弹礼包弹窗、也不出入口」。
     /// 结算页会弹更优先的弹窗（每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 / 插屏）时置 true。
     ///
@@ -375,15 +385,16 @@ public partial class ShopManager : MonoBehaviour
     public void SuppressSettlementGiftPopup(string reason)
     {
         if (!_settlementGiftPopupSuppressed)
-             Debug.Log($"[Shop][结算礼包] 本次结算不主动弹窗：{reason}（既不出弹窗，也不显示入口）");
+             Debug.Log($"[Shop][结算礼包] 本次结算不主动弹窗原因：{reason}（既不出弹窗，也不显示入口）");
 
         _settlementGiftPopupSuppressed = true;
         _settlementGiftSuppressReason = reason;
         _settlementGiftPopupPending = false;
+        _settlementGiftDeferredForInterstitial = false;
 
         // 已经登记过（策略先登记、后判定被占位）→ 把入口和数据一起撤掉
         if (SettlementGiftEntryVisible || CurrentSettlementGift != SettlementGiftKind.None)
-            ClearSettlementGift($"本次结算不弹窗，撤销入口（{reason}）");
+            ClearSettlementGift($"本次结算不弹窗，撤销入口 原因：（{reason}）");
     }
 
     /// <summary>本次结算是否只登记入口、不主动弹窗。</summary>
@@ -396,6 +407,109 @@ public partial class ShopManager : MonoBehaviour
     public bool IsSettlementGiftPopupPending => _settlementGiftPopupPending;
 
     /// <summary>
+    /// 结算礼包弹窗（破冰 / 复购）此刻是否真的在展示中。
+    /// ★ 插屏播放入口据此让位：礼包弹窗已经占了全屏，再叠一个插屏会出现「破冰弹窗 + 插屏」双弹窗。
+    /// </summary>
+    public bool IsSettlementGiftPopupShowing =>
+        CurrentSettlementGift != SettlementGiftKind.None
+        && SystemManager.Instance != null
+        && SystemManager.Instance.PanelIsShowing(PanelType.AdsDiscountScreen);
+
+    /// <summary>
+    /// 结算礼包弹窗（破冰 / 复购）是否已经让位给插屏、正在等插屏关闭后再弹。
+    /// </summary>
+    public bool IsSettlementGiftDeferredForInterstitial => _settlementGiftDeferredForInterstitial;
+
+    /// <summary>
+    /// 结算礼包弹窗是否<b>已经真实占屏</b>（AdsDiscountScreen 正在展示）。
+    /// 供 AdRuleManager / ChessFinishView 判断「本页插屏要不要让位」。
+    ///
+    /// ★ 口径（2026-11-21）：<b>插屏先播、礼包后弹</b>。
+    ///   只有礼包弹窗真的已经在屏上时才挡插屏（避免两个全屏叠在一起）；
+    ///   「已登记但让位给插屏、等它播完」的状态<b>不挡</b>插屏，否则插屏永远播不出来。
+    /// </summary>
+    public bool IsSettlementGiftBlockingInterstitial => IsSettlementGiftPopupShowing;
+
+    /// <summary>
+    /// 让位给插屏：礼包弹窗延后到「插屏播放完关闭」时再弹。
+    /// 登记 / 入口 / `_settlementGiftPopupPending` 全部保留，只置延后标记。
+    /// 调用方：结算页流程（CancelSettlementGiftIfBlocked 判定本页会插屏时）、PlayPreparedSettlementGiftPopup。
+    /// </summary>
+    public void DeferSettlementGiftPopupForInterstitial(string reason)
+    {
+        if (!_settlementGiftPopupPending) return;
+        if (_settlementGiftDeferredForInterstitial) return;
+
+        _settlementGiftDeferredForInterstitial = true;
+        Debug.Log($"[Shop][结算礼包] 礼包弹窗让位给插屏，等插屏播完再弹（{reason}）: " +
+                  $"kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
+
+        // 兜底：万一本页插屏最终没播（无填充 / 被其它规则再拦一次）或回调丢失，
+        // 也不能把礼包吞掉 —— 超时后若插屏已不在播，就照常弹。
+        StartCoroutine(CoSettlementGiftDeferredWatchdog(20f));
+    }
+
+    /// <summary>
+    /// 插屏播放结束（已关闭）时由 AdRuleManager 回调。
+    /// 只有处于「礼包让位给插屏」状态时才有动作：立刻补弹礼包弹窗。
+    /// </summary>
+    public void NotifyInterstitialClosed()
+    {
+        if (!_settlementGiftDeferredForInterstitial) return;
+        if (!_settlementGiftPopupPending) { _settlementGiftDeferredForInterstitial = false; return; }
+
+        // 插屏期间玩家可能已经离开结算页（点下一关 / 回主页）→ 不在关卡画面里硬弹礼包
+        bool stillOnSettlement = SystemManager.Instance != null
+                                 && (SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView)
+                                     || SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface));
+        if (!stillOnSettlement)
+        {
+            _settlementGiftDeferredForInterstitial = false;
+            CancelPreparedSettlementGiftPopup("插屏结束时结算页/主页已关闭");
+            return;
+        }
+
+        // 插屏刚关，页面上可能还有更优先的弹窗（七日胜利 / 灯明心悟 / 锦鲤竞速…）接着弹
+        if (IsSettlementOtherPopupShowing())
+        {
+            _settlementGiftDeferredForInterstitial = false;
+            CancelPreparedSettlementGiftPopup("插屏结束后仍有更优先的结算页弹窗在展示");
+            return;
+        }
+
+        _settlementGiftDeferredForInterstitial = false;
+        _settlementGiftPopupPending = false;
+        Debug.Log($"[Shop][结算礼包] 插屏已关闭 → 补弹礼包弹窗: kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
+        OpenSettlementGiftPopup();
+    }
+
+    /// <summary>让位兜底：等太久仍没等到插屏关闭回调，就照常弹（插屏若还在播则等它播完）。</summary>
+    private System.Collections.IEnumerator CoSettlementGiftDeferredWatchdog(float timeoutSeconds)
+    {
+        float deadline = Time.realtimeSinceStartup + timeoutSeconds;
+        while (Time.realtimeSinceStartup < deadline)
+        {
+            yield return null;
+            if (!_settlementGiftDeferredForInterstitial) yield break;   // 已被插屏回调消费 / 已取消
+        }
+
+        // 超时后仍在等：若插屏确实还在播，说明只是回调慢，等它播完
+        float hardStop = Time.realtimeSinceStartup + 120f;
+        while (_settlementGiftDeferredForInterstitial
+               && AdRuleManager.Instance != null
+               && AdRuleManager.Instance.IsInterstitialShowing
+               && Time.realtimeSinceStartup < hardStop)
+        {
+            yield return null;
+        }
+
+        if (!_settlementGiftDeferredForInterstitial || !_settlementGiftPopupPending) yield break;
+
+        Debug.LogWarning("[Shop][结算礼包] 等插屏超时且插屏未在播 → 兜底直接弹礼包弹窗");
+        NotifyInterstitialClosed();
+    }
+
+    /// <summary>
     /// 取消「待弹出」的结算礼包弹窗。
     /// ★ 2026-11-21：以前这里<b>保留</b>结算页按钮的登记（玩家仍可手动点开），现在连入口一起撤 ——
     ///   本次礼包弹窗没能真正弹出来，就不该在结束页留入口。
@@ -406,6 +520,7 @@ public partial class ShopManager : MonoBehaviour
         if (!_settlementGiftPopupPending) return;
 
         _settlementGiftPopupPending = false;
+        _settlementGiftDeferredForInterstitial = false;
          Debug.Log($"[Shop][结算礼包] 取消本次礼包弹窗（{reason}），入口一并撤销: " +
                 $"kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
 
@@ -548,6 +663,7 @@ public partial class ShopManager : MonoBehaviour
     public void ClearSettlementGift(string reason)
     {
         _settlementGiftPopupPending = false;
+        _settlementGiftDeferredForInterstitial = false;
 
         // 入口可见性必须无条件复位：哪怕登记已被清掉（kind=None），也不能留下"入口还亮着"的鬼状态
         bool entryWasVisible = SettlementGiftEntryVisible;
@@ -783,6 +899,7 @@ public partial class ShopManager : MonoBehaviour
         IsAuditConfigReady = false;
 
         bool isDone = false;
+        bool localConfigApplied = false;
         GameConfigResponse serverResponse = null;
 
         yield return new WaitForSeconds(2f);
@@ -803,6 +920,7 @@ public partial class ShopManager : MonoBehaviour
                 if (localAuditAsset != null && !string.IsNullOrEmpty(localAuditAsset.text))
                 {
                     ParseAuditStatusConfig(localAuditAsset.text, "本地预载(防闪烁)");
+                    localConfigApplied = true;
                 }
                 else
                 {
@@ -834,6 +952,11 @@ public partial class ShopManager : MonoBehaviour
                 AuditConfig.ResetToDefault();
                 Debug.Log($"{AuditConfigKey} 版本号不一致 (本地:{localVersion} vs 服务器配置:{configVersion})，忽略配置，审核关。");
             }
+        }
+        else if (localConfigApplied)
+        {
+            // 已经用本地表兜底解析过了，这里不能再 Reset：否则本地预载等于白读
+            Debug.Log($"{AuditConfigKey} 无有效服务端配置，沿用本地表配置 (审核开={AuditConfig.IsAuditOpen})。");
         }
         else
         {
@@ -885,8 +1008,11 @@ public partial class ShopManager : MonoBehaviour
                 AuditConfig.LotusHeartUnlockCondition = unlock;
             }
 
-            AuditConfig.Gold6ReplaceVideoPos = GetAuditBool(fields, 3);
-            AuditConfig.RemoveAdsWeeklyUnlockHome = GetAuditBool(fields, 4);
+            // ★ 新增的两个审核子开关（Gold6 替代金币视频位 / 破冰周卡解锁主页入口）：
+            //   线上服务端配置表可能还没补这两列，列缺失时按「审核态默认开启」处理，
+            //   显式填 0 才关闭 —— 否则新需求会因为列不存在而永远不生效。
+            AuditConfig.Gold6ReplaceVideoPos = GetAuditBoolDefaultOn(fields, 3);
+            AuditConfig.RemoveAdsWeeklyUnlockHome = GetAuditBoolDefaultOn(fields, 4);
 
             AuditConfig.AuditFixedShopItemIds.Clear();
             AuditConfig.AuditFixedShopItemIds.AddRange(
@@ -923,6 +1049,17 @@ public partial class ShopManager : MonoBehaviour
 
     private static bool GetAuditBool(List<string> fields, int index)
         => GetAuditField(fields, index) == "1";
+
+    /// <summary>
+    /// 布尔字段读取，「列缺失 / 空值」时默认 true。
+    /// 用于后加的审核子开关：老配置表里没有这一列时不至于把新需求整条关掉。
+    /// </summary>
+    private static bool GetAuditBoolDefaultOn(List<string> fields, int index)
+    {
+        string raw = GetAuditField(fields, index);
+        if (string.IsNullOrEmpty(raw)) return true;
+        return raw == "1";
+    }
 
     private static List<string> ParseAuditIdList(string raw)
     {
@@ -1150,6 +1287,11 @@ public partial class ShopManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 审核态「金币视频点」是否换成 Gold6 付费金币商品。
+    /// 商店里 FreeGoods（每日免费金币 / 看视频领金币）这一格，审核开时不展示广告链路，
+    /// 改卖 Gold6（shop.csv id=9，600 金币 / 3 元）。
+    /// </summary>
     public bool ShouldReplaceCoinVideoSlotWithGold6()
         => AuditConfig.IsAuditOpen && AuditConfig.Gold6ReplaceVideoPos;
 
@@ -1167,6 +1309,41 @@ public partial class ShopManager : MonoBehaviour
         if (AuditConfig.IsAuditOpen && AuditConfig.RemoveAdsWeeklyUnlockHome)
             return true;
         return IsRemoveAdsWeeklyOwned();
+    }
+
+    /// <summary>
+    /// 审核开 + 配置「破冰礼包解锁主页入口」：直接把 RemoveAdsWeek（破冰周卡）登记成主页破冰礼包入口，
+    /// 不再依赖「结算页弹过破冰弹窗」与周末/节假日/冷却/插屏累计等运营条件。
+    /// 审核员进主页就能看到并打开去广告周卡，链路里没有任何广告激励。
+    /// </summary>
+    /// <returns>true = 入口已处于解锁态（本次新登记或之前已登记）</returns>
+    public bool TryUnlockAuditRemoveAdsWeeklyHomeEntry()
+    {
+        if (!AuditConfig.IsAuditOpen || !AuditConfig.RemoveAdsWeeklyUnlockHome) return false;
+
+        if (CurrentSettlementGift == SettlementGiftKind.BreakIce && _settlementGiftItem != null)
+        {
+            // 已登记过破冰礼包（可能来自结算页）：只需保证入口可见
+            if (!SettlementGiftEntryVisible)
+            {
+                SettlementGiftEntryVisible = true;
+                NotifySettlementGiftChanged();
+            }
+            return true;
+        }
+
+        ShopDataItem pack = allShopItems.FirstOrDefault(
+            x => x != null && x.produceNameId == ProductRemoveAdsWeekly);
+        if (pack == null)
+        {
+            LogShop($"[Shop][AuditStatus] 破冰礼包入口解锁失败：商店表未配置 {ProductRemoveAdsWeekly}");
+            return false;
+        }
+
+        // 无限时（DateTime.MinValue）：主页入口不显示倒计时，也不会被“入口已过期”逻辑收掉
+        RegisterSettlementGift(SettlementGiftKind.BreakIce, pack, System.DateTime.MinValue, entryVisible: true);
+        LogShop($"[Shop][AuditStatus] 审核开 → 破冰礼包入口直接解锁: {pack.produceNameId}（无限时）");
+        return true;
     }
 
     private bool IsRemoveAdsWeeklyOwned()

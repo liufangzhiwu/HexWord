@@ -53,7 +53,17 @@ export class SendOAID {
   //   · 已拒绝 → 立即返回 -1（系统对被拒过的权限不再弹标准框，静默返回）
   //   · 故意不调 requestPermissionOnSetting：那是带开关的"二次授权弹窗"，启动/回前台不能打扰玩家
   // 结果单独走 OnOAIDQueryResult 回包（区别于 OnOAIDClosedSignal：不埋点、不发奖、不动引导页）。
-  static async QueryTrackingConsent(): Promise<boolean> {
+  //
+  // ★ 三态（重要）：
+  //   返回 '1'  = 已授权
+  //   返回 '0'  = 系统确实弹了标准授权框、玩家点了拒绝（dialogShownResults[0] === true）
+  //   返回 '-1' = **未决/无法判定**：系统压根没弹框（此前拒绝过、手机里关闭了广告标识符 /
+  //               限制了广告跟踪、企业策略禁用、申请异常等）
+  //   为什么必须区分：鸿蒙不是每个用户都会看到广告追踪系统弹窗，手机系统设置里可以关闭它。
+  //   旧实现把 authResults[0] !== 0 一律当"玩家拒绝"，会把这类从未做过选择的用户写成
+  //   adTrackingEnabled='0'，导致 IAA 分层判错、设置页开关"假关闭"且永远打不开（激励拿不到）。
+  //   Unity 侧收到 '-1' 时【不写存档】，保持"未决"。
+  static async QueryTrackingConsent(): Promise<string> {
     try {
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const ctx = (globalThis.AbilityContext ?? getContext()) as common.Context;
@@ -66,24 +76,42 @@ export class SendOAID {
         result != null && result.authResults != null &&
         result.authResults.length > 0 && result.authResults[0] === 0;
 
-      hilog.info(0x0000, 'OAIDPage', `静默查询广告追踪授权: granted=${granted}`);
-      return granted;
+      if (granted) {
+        hilog.info(0x0000, 'OAIDPage', '静默查询广告追踪授权: granted=1');
+        return '1';
+      }
+
+      // dialogShownResults（API 12+）：本次申请系统是否真的弹了框
+      //   true  = 弹了框被拒 → 玩家真实拒绝，回 '0'
+      //   false / 缺失 = 系统没弹框（此前拒过、系统禁用广告标识符/限制广告跟踪、策略禁用）
+      //                  → 属于"未决"，回 '-1'，绝不能当成玩家拒绝
+      const dialogShown: boolean =
+        result != null && result.dialogShownResults != null &&
+        result.dialogShownResults.length > 0 && result.dialogShownResults[0] === true;
+
+      hilog.info(0x0000, 'OAIDPage',
+        `静默查询广告追踪授权: granted=0, dialogShown=${dialogShown}`);
+
+      return dialogShown ? '0' : '-1';
     } catch (err) {
+      // 申请异常（系统服务不可用 / 权限被策略禁用等）同样无法判定，按未决处理，
+      // 避免把"查不到"写成"玩家拒绝"
       hilog.info(0x0000, 'OAIDPage',
         `静默查询广告追踪授权异常: ${(err as BusinessError).code}, ${(err as BusinessError).message}`);
-      return false;
+      return '-1';
     }
   }
 
   // 静默查询并回包到 Unity（PushMessageReceiver.OnOAIDQueryResult）
+  // 回包值：'1' 已授权 / '0' 玩家拒绝（弹过框）/ '-1' 未决（系统没弹框，不要写存档）
   static async QueryTrackingConsentAndReport(): Promise<Array<string>> {
-    const granted: boolean = await SendOAID.QueryTrackingConsent();
+    const state: string = await SendOAID.QueryTrackingConsent();
     Tuanjie.TuanjieSendMessage(
       'PushMessageReceiver',
       'OnOAIDQueryResult',
-      granted ? '1' : '0'
+      state
     );
-    let result: Array<string> = ["AdsTrackingConsent", granted ? "1" : "0"];
+    let result: Array<string> = ["AdsTrackingConsent", state];
     return result;
   }
 

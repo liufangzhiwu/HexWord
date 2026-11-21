@@ -20,23 +20,20 @@ public class FreeItemTable : MonoBehaviour
     private ShopDataItem goldDataItem;
     private ShopDataItem toolDataItem;
 
+    /// <summary>
+    /// 审核态：免费/视频金币这一格（freeitem）已被 Gold6 付费金币商品替代。
+    /// 对应需求：审核开（AuditStatusSwitch=1）时，分享链路里的 Gold6 商品展示在商店中，
+    /// 顶掉「金币视频点」（FreeGoods）的位置，商店不再出现广告领取链路。
+    /// </summary>
+    private bool _auditGold6Replace;
+
     private void Start()
     {
         tipBtn.AddClickAction(()=>ClicktipBtn(),"Button",false);
         
         UnityTimer.Loop(3f, TickTime);
-        
-       freeDataItem =  ShopManager.shopManager.FormAllItemsGetProduct("FreeGoods");
-       goldDataItem =  ShopManager.shopManager.FormAllItemsGetProduct("GoldGoods");
-       toolDataItem =  ShopManager.shopManager.GetProduct("SingleGoods");
 
-        SetShowIcon(freeDataItem);
-        SetShowIcon(goldDataItem);
-        SetShowIcon(toolDataItem);
-        
-        freeitem.SetShopData(freeDataItem);
-        golditem.SetShopData(goldDataItem);
-        toolitem.SetShopData(toolDataItem);
+        ResolveItems();
     }
 
     private void OnEnable()
@@ -44,19 +41,80 @@ public class FreeItemTable : MonoBehaviour
         InitUI();
 
         EventDispatcher.instance.OnChangeFreeTipsPanel += ChangeTipsPanelState;
-        
-        freeitem.SetShopData(freeDataItem);
-        golditem.SetShopData(goldDataItem);
-        toolitem.SetShopData(toolDataItem);
+
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnAuditConfigLoaded += OnAuditConfigLoaded;
+
+        // 审核配置可能是异步回来的，这里每次显示都重新按配置取一次商品数据
+        ResolveItems();
+    }
+
+    /// <summary>审核配置就绪（异步）→ 重新判一次「金币视频点」是否要换成 Gold6。</summary>
+    private void OnAuditConfigLoaded()
+    {
+        ResolveItems();
+    }
+
+    /// <summary>
+    /// 解析并绑定三张固定卡的商品数据。
+    /// 审核态下 freeitem 由 FreeGoods（免费 / 看视频领金币）换成 Gold6（600 金币，付费）。
+    /// </summary>
+    private void ResolveItems()
+    {
+        ShopManager sm = ShopManager.shopManager;
+        if (sm == null) return;
+
+        _auditGold6Replace = sm.ShouldReplaceCoinVideoSlotWithGold6();
+        ShopDataItem gold6Item = _auditGold6Replace ? sm.GetAuditGold6Item() : null;
+
+        freeDataItem = gold6Item != null ? gold6Item : sm.FormAllItemsGetProduct("FreeGoods");
+        goldDataItem = sm.FormAllItemsGetProduct("GoldGoods");
+        toolDataItem = sm.GetProduct("SingleGoods");
+
+        SetShowIcon(freeDataItem);
+        SetShowIcon(goldDataItem);
+        SetShowIcon(toolDataItem);
+
+        if (freeitem != null) freeitem.SetShopData(freeDataItem);
+        if (golditem != null) golditem.SetShopData(goldDataItem);
+        if (toolitem != null) toolitem.SetShopData(toolDataItem);
+
+        ApplyFreeItemMode();
+
+        if (_auditGold6Replace)
+            Debug.Log($"[Shop][AuditStatus] 商店「金币视频点」已替换为 Gold6 付费金币商品: {freeDataItem?.produceNameId}");
+    }
+
+    /// <summary>把「视频金币卡 / 付费金币卡」两种展示态落到 freeitem 上。</summary>
+    private void ApplyFreeItemMode()
+    {
+        if (freeitem == null) return;
+
+        bool replaced = _auditGold6Replace
+                        && freeDataItem != null
+                        && freeDataItem.produceNameId == ShopManager.ProductGold6;
+
+        // 视频角标 / 剩余次数 / 高亮由 ShopItem 统一收口
+        freeitem.SetCoinPurchaseMode(replaced);
+
+        if (replaced && freeitem.btnTagicon != null)
+            freeitem.btnTagicon.gameObject.SetActive(false);
     }
 
     private void SetShowIcon(ShopDataItem shopDataItem)
     {
-        List<string> giftdata=shopDataItem.productContent[0];
+        if (shopDataItem == null || shopDataItem.productContent == null
+            || shopDataItem.productContent.Count == 0 || shopDataItem.productContent[0] == null
+            || shopDataItem.productContent[0].Count == 0)
+            return;
 
-        string spritename="";
-        
-        switch (int.Parse(giftdata[0]))
+        List<string> giftdata = shopDataItem.productContent[0];
+
+        string spritename = "";
+
+        if (!int.TryParse(giftdata[0], out int contentType)) return;
+
+        switch (contentType)
         {
             case (int)LimitRewordType.Coins:
                 spritename = "gold1";
@@ -84,9 +142,13 @@ public class FreeItemTable : MonoBehaviour
     private void InitUI()
     {
         TickTime();
-        
-        freeitem.btnTagicon.gameObject.SetActive(GameDataManager.Instance.UserData.isDayFreeGet);
-        golditem.btnTagicon.gameObject.SetActive(!GameDataManager.Instance.UserData.isDayGoldBuy);
+
+        // 审核态这一格已换成付费金币卡：不挂视频角标
+        if (!_auditGold6Replace && freeitem != null && freeitem.btnTagicon != null)
+            freeitem.btnTagicon.gameObject.SetActive(GameDataManager.Instance.UserData.isDayFreeGet);
+
+        if (golditem != null && golditem.btnTagicon != null)
+            golditem.btnTagicon.gameObject.SetActive(!GameDataManager.Instance.UserData.isDayGoldBuy);
 
         // if (GameDataManager.Instance.UserData.isDayFreeGet)
         // {
@@ -150,5 +212,8 @@ public class FreeItemTable : MonoBehaviour
     private void OnDisable()
     {
         EventDispatcher.instance.OnChangeFreeTipsPanel -= ChangeTipsPanelState;
+
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.OnAuditConfigLoaded -= OnAuditConfigLoaded;
     }
 }
