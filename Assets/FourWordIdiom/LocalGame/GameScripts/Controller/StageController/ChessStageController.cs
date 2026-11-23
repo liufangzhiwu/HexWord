@@ -519,7 +519,10 @@ public partial class ChessStageController
             {
                 basePupa = CurrentTotalScore >= threshold ? 1 : 0;
             }
-            if (stageNumber >= AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel)
+            // ★ bug111：发蛹必须和入口/结算页用同一口径（ButterfliesManager.IsOpen）。
+            //   原来用 stageNumber >= 12 的硬门槛：老用户靠 legacy 豁免看到已解锁入口、进度条也显示，
+            //   但结算时被这道门槛拦下 → 达标却 0 蛹；六边形玩家（hex 进度达标、chess 进度未达标）同样中招。
+            if (ButterfliesManager.Instance.IsOpen)
             {
                 EarnedPupaThisLevel = basePupa + leafPupaReward;
                 if (EarnedPupaThisLevel > 0)

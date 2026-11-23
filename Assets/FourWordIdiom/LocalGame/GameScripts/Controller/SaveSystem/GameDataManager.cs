@@ -208,6 +208,10 @@ public class GameDataManager : SingletonMono<GameDataManager>
         overallRankData.LoadData();
         AchieveSaveDataList.LoadData();
 
+        // ★ bug111~114：离线/本地存档路径也要跑一次解锁迁移（联网路径见 LoadingController.ModifyUserWithABtest）
+        //   persist=false：读档阶段不写文件，避免凭空造存档影响 LocalDataIsNull() 的新号判断
+        FeatureUnlockMigration.EnsureMigrated(playerProfile, false, persist: false);
+
         // ★ 立刻抓「上次离开时间」快照（此后 logoutTime 会被存档不断刷新）
         CaptureSessionLogoutTime(playerProfile.logoutTime);
 

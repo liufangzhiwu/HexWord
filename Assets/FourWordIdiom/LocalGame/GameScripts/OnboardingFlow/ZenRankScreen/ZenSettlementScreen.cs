@@ -258,6 +258,9 @@ public class ZenSettlementScreen : UIWindow
                 GameDataManager.Instance.UserData.Zenlevel = res.new_level;
                 
                 // 🌟 核心状态切换：踢出榜单，准备重新匹配
+                // ★ bug113：这里清的是"本季参赛态"，不能连带把"功能已解锁"一起清掉，
+                //   否则老用户（进度还没到 26 关）结算领奖后首页入口直接消失、再也点不进来。
+                GameDataManager.Instance.UserData.zenRankUnlocked = true;
                 GameDataManager.Instance.UserData.isJoinedZenRank = false; 
                 ZenRankManager.Instance.ClearRankCache();
                 isSuccess = true;

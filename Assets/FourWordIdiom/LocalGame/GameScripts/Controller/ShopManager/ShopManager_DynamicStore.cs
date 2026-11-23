@@ -45,29 +45,23 @@ public partial class ShopManager : MonoBehaviour
     public const string ProductNewcomerBox = "NewcomerBox";
 
     /// <summary>
-    /// 固定商店 - 1号推荐位。
-    /// ★ 迎新礼包（NewcomerBox）固定第一位展示；
-    /// ★ 迎新礼包购买后（限购已满）不再展示。
-    /// ★ bug52：其余礼包按价格排，但「1 号位」必须留在第一位（与动态商店共用同一个 1 号位决策）。
+    /// 固定商店 - 全部商品。
+    /// ★ 迎新礼包（NewcomerBox）不再特殊置顶：未购买时与其它礼包一样参与 1 号位权重竞争，
+    ///   购买后由 GetSlotCandidates 剔除，不再参与权重计算与竞争。
+    /// ★ bug52：1 号位必须留在第一位（与动态商店共用同一个 1 号位决策），其余按价格升序。
     /// </summary>
     public List<ShopDataItem> GetFixedStoreExpandedItems()
     {
         List<ShopDataItem> result = GetRecommendPacks(RecommendSlot.FixedStore);
 
-        // ★ 迎新礼包：未购买则强制置顶；已购买则从列表剔除
-        ShopDataItem newcomer = allShopItems
-            .FirstOrDefault(x => x != null && x.produceNameId == ProductNewcomerBox);
-        bool newcomerAvailable = newcomer != null && !IsNewcomerPurchased(newcomer);
-
-        // 先把迎新礼包摘出去（由下面统一决定是否置顶），再保证 1 号位在最前
-        result = result.Where(x => x != null && x.produceNameId != ProductNewcomerBox).ToList();
+        // ★ 这里原来有一段「迎新礼包未购买就 Insert(0) 强制置顶」的兜底。
+        //   它等于绕开权重把迎新礼包顶到第一位，和「未购买也要参与竞争」的口径冲突，
+        //   还会让日志里的胜出礼包和实际展示的第一张卡对不上。现已移除：
+        //   迎新礼包完全走 GetRecommendPacks 的 1 号位决策（购买后的剔除在 GetSlotCandidates 里）。
         result = OrderStoreItemsKeepingSlot1First(result);
 
-        if (newcomerAvailable)
-            result.Insert(0, newcomer);
-
-         //Debug.Log($"[Shop]GetFixedStoreExpandedItems: newcomerAvailable={newcomerAvailable}, " +
-         //       $"list=[{string.Join(",", result.Select(x => x.produceNameId))}]");
+         Debug.Log($"[Shop]GetFixedStoreExpandedItems: 迎新礼包按权重竞争结果展示（不再强制置顶），" +
+                  $"最终列表=[{string.Join(",", result.Select(x => x.produceNameId))}]");
 
         return result;
     }

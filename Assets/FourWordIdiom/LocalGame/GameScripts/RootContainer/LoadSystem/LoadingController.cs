@@ -457,6 +457,10 @@ public class LoadingController : MonoBehaviour
         }
 
         GameDataManager.Instance.SetNewUser(user);
+
+        // ★ bug111~114：老用户功能解锁持久化迁移。必须放在 SetNewUser 之后（此刻 user 才是真正生效的那份存档），
+        //   且要在广告追踪引导流程 / 首页入口刷新之前完成。
+        FeatureUnlockMigration.EnsureMigrated(user, loginResponse.is_version_upgraded);
     }
 
 

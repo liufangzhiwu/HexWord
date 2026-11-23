@@ -143,19 +143,27 @@ public class ZenRankManager : MonoBehaviour
     {
         if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
 
+        var userData = GameDataManager.Instance.UserData;
         int unlockStage = GetUnlockStageCondition();
-        
-        // 条件 1：等级达标（新版本的新用户）
-        bool isLevelReached = GameDataManager.Instance.UserData.CurrentChessStage >= unlockStage;
-        // 条件 2：老用户豁免
-        // 因为 Zenlevel 建号就有默认值，所以改为判断 isJoinedZenRank。
-        // 只要他在老版本曾经成功加入过排位赛（向服务器确认过），就直接豁免解锁。
-        bool isAuditControlActive = OverallRankingManager.Instance != null && 
-                                    OverallRankingManager.Instance.AuditConfig != null && 
-                                    OverallRankingManager.Instance.AuditConfig.TotalSwitch && 
-                                    OverallRankingManager.Instance.AuditConfig.LotusHeartUnlockCondition > 0;
 
-        bool isLegacyUnlocked = !isAuditControlActive && GameDataManager.Instance.UserData.isJoinedZenRank;
+        // 条件 1：等级达标（HexWord 双模式：六边形 / 拼字任一达标即可）
+        int maxStage = Mathf.Max(userData.CurrentHexStage, userData.CurrentChessStage);
+        bool isLevelReached = maxStage >= unlockStage;
+
+        // 条件 2：老用户豁免（bug113）
+        //   ★ 以 FeatureUnlockMigration 写入的 zenRankUnlocked 为准，isJoinedZenRank 只作为兼容补充。
+        //   原因：isJoinedZenRank 是"本季是否参赛"的会话态——赛季结算领奖时会置 false
+        //   （ZenSettlementScreen），拉榜单又会被服务端 res.my.is_joined 覆盖成 false，
+        //   把它当解锁依据会让老用户"结算一次就掉解锁"。
+        var auditCfg = OverallRankingManager.Instance != null ? OverallRankingManager.Instance.AuditConfig : null;
+        // 审核硬锁：只有服务器明确把莲心榜解锁门槛抬到默认值之上时才生效（审核场景），
+        // 不能因为配了个开关就把所有老用户锁回去。
+        bool isAuditHardLock = auditCfg != null
+                               && auditCfg.TotalSwitch
+                               && auditCfg.LotusHeartUnlockCondition > AppGameSettings.UnlockRequirements.ZenOpenLevel;
+
+        bool isLegacyUnlocked = !isAuditHardLock
+                                && (userData.zenRankUnlocked || userData.isJoinedZenRank);
 
         return isLevelReached || isLegacyUnlocked;
     }
@@ -509,6 +517,8 @@ public class ZenRankManager : MonoBehaviour
                 
                 // 1. 本地状态变更为已加入
                 GameDataManager.Instance.UserData.isJoinedZenRank = true;
+                // ★ bug113：加入过就永久记住"功能已解锁"，与赛季参赛态解耦
+                GameDataManager.Instance.UserData.zenRankUnlocked = true;
                 
                 // 2. 立即持久化，告诉服务器我已经加入
                 GameDataManager.Instance.CommitGameData();

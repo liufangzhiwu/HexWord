@@ -1974,17 +1974,31 @@ public partial class ShopManager : MonoBehaviour
     /// </summary>
     private List<ShopDataItem> DecideSharedSlot1Winner(List<ShopDataItem> candidates, RecommendSlot slot, ICollection<int> excludeIds)
     {
-        // ★ 迎新礼包未购买时固定占 1 号位（固定商店原来是自己 Insert(0)，动态商店没有 → 两边必然不一致）。
-        //   现在把「迎新礼包置顶」也纳入共享 1 号位决策，两个商店在迎新礼包卖掉之前都会展示它。
-        ShopDataItem newcomer = candidates.FirstOrDefault(c => c != null && c.produceNameId == ProductNewcomerBox);
-        if (newcomer != null
-            && !IsNewcomerPurchased(newcomer)
-            && !IsExcludedPack(newcomer, excludeIds))
+        // ★ 迎新礼包不再「固定占位」，改为和普通礼包一样参与权重竞争
+        //   （策划口径：未购买时一起比权重，谁高谁上；购买之后才退出权重计算与竞争）。
+        //   这里只做兜底剔除：GetSlotCandidates 已挡过一次，但候选也可能从别的入口传进来。
+        List<ShopDataItem> newcomerBoxes = candidates.Where(c => IsNewcomerBox(c)).ToList();
+        foreach (ShopDataItem box in newcomerBoxes)
         {
-            _slot1DecisionKey = BuildSlot1DecisionKey();
-            _slot1Decision = newcomer;
-             Debug.Log($"[Shop]  1号位共享决策: 迎新礼包固定置顶 {newcomer.produceNameId}（本次入口={slot}）");
-            return new List<ShopDataItem> { newcomer };
+            bool purchased = IsNewcomerPurchased(box);
+            bool excluded = IsExcludedPack(box, excludeIds);
+            if (purchased || excluded)
+            {
+                 Debug.Log($"[Shop]  1号位共享决策: 迎新礼包 {box.produceNameId} 不参与竞争（" +
+                          (purchased ? "已购买" : "已被本次排除") + $"），从候选剔除");
+                candidates = candidates.Where(c => c != box).ToList();
+            }
+            else
+            {
+                 Debug.Log($"[Shop]  1号位共享决策: 迎新礼包 {box.produceNameId} 未购买，" +
+                          $"与其他候选一起参与权重竞争（本次入口={slot}），结果见下方权重拆解与 DecideWinner");
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+             Debug.Log($"[Shop]  1号位共享决策: 候选为空（迎新礼包已剔除且无其它候选），本次入口={slot}");
+            return null;
         }
 
         string key = BuildSlot1DecisionKey();
@@ -1995,7 +2009,8 @@ public partial class ShopManager : MonoBehaviour
             && !IsExcludedPack(_slot1Decision, excludeIds)
             && candidates.Any(c => c != null && c.id == _slot1Decision.id))
         {
-             Debug.Log($"[Shop]  1号位共享决策: 复用 {_slot1Decision.produceNameId}（本次入口={slot}）");
+             Debug.Log($"[Shop]  1号位共享决策: 复用 {_slot1Decision.produceNameId}（本次入口={slot}）" +
+                      $"—— 同一关卡内两个商店共用同一份决策，本次未重算权重（权重拆解见本关卡首次决策的日志）");
             return new List<ShopDataItem> { _slot1Decision };
         }
 
@@ -2041,6 +2056,15 @@ public partial class ShopManager : MonoBehaviour
             ShopDataItem item = allShopItems.FirstOrDefault(x => x.produceNameId == kv.Key);
             if (item != null && !IsRemoveAdsProduct(item.produceNameId))
             {
+                // ★ 迎新礼包已购买 → 直接不进候选，后续既不参与权重计算也不参与竞争。
+                //   放在候选层剔除而不是只靠 IsLimitedOut：老存档可能没写限购跟踪数据，
+                //   IsNewcomerPurchased 还能用 purchaseRecords 兜底识别。
+                if (IsNewcomerBox(item) && IsNewcomerPurchased(item))
+                {
+                     Debug.Log($"[Shop]    候选剔除迎新礼包 {item.produceNameId}: 已购买，不再参与权重计算与竞争");
+                    continue;
+                }
+
                 if (!IsLimitedOut(item))
                     list.Add(item);
             }
@@ -2093,14 +2117,16 @@ public partial class ShopManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>记录该推荐位本次展示的礼包；若是新人礼则登记本关已出（用于互斥）。</summary>
+    /// <summary>记录该推荐位本次展示的礼包；若是道具弹窗的新人礼则登记本关已出（用于互斥）。</summary>
     public void RecordSlotShownPack(RecommendSlot slot, int featured, ShopDataItem pack)
     {
         if (pack == null) return;
 
         _slotLastShownPack[SlotKey(slot, featured)] = pack;
 
-        if (IsNewcomerLabel(pack.labelZh))
+        // ★ 迎新礼包（商店专属）不参与新人礼互斥，不登记到 _shownNewcomer，
+        //   否则日志里会出现「本关该槽已出过新人礼」的误导信息。
+        if (IsNewcomerLabel(pack.labelZh) && !IsNewcomerBox(pack))
             MarkNewcomerShown(slot, pack.produceNameId);
     }
 
@@ -2123,8 +2149,11 @@ public partial class ShopManager : MonoBehaviour
             // ★ 旧包是新人礼、且本关被规则排除（新人礼互斥/归属别的槽）时，换包不是 F 压下去的，
             //   而是「本关不能再出」。这时归零等于把刚累计的 F 白清掉，
             //   等下一关新人礼重新可展示时 F 已经没了，惩罚彻底失效 → 这里保留 F。
+            // ★ 迎新礼包不参与新人礼互斥，所以它换下去是「权重输了」，不是「规则排除」，
+            //   这里的 F 必须照常归零，否则它的失败分越攒越高、永远翻不了身。
             if (limit != null && limit.conversionFailScore != 0f
-                && IsNewcomerLabel(last.labelZh) && IsNewcomerBlockedForSlot(slot))
+                && IsNewcomerLabel(last.labelZh) && !IsNewcomerBox(last)
+                && IsNewcomerBlockedForSlot(slot))
             {
                  Debug.Log($"[Shop][决策变化归零] {slot}_{featured} 跳过: {last.produceNameId} 是新人礼且本关不可再展示（规则排除，非 F 生效），" +
                           $"保留 F={limit.conversionFailScore:F1}，新决策={newPack.produceNameId}");
@@ -2358,13 +2387,20 @@ public partial class ShopManager : MonoBehaviour
         // ★ 审核开：完全绕过推送权限，返回该类目全部礼包
         if (AuditConfig.IsAuditOpen)
         {
-            
             switch (slot)
             {
-                case RecommendSlot.Bulb: return FilterExcludedPacks(GetAuditPacksForSlot(slot), excludeIds);
-                case RecommendSlot.DynamicStore: maxFeatured = 2; break;
+                case RecommendSlot.Bulb:
                 case RecommendSlot.Rocket:
-                case RecommendSlot.Clock:return FilterExcludedPacks(GetAuditPacksForSlot(slot), excludeIds);
+                case RecommendSlot.Clock:
+                {
+                    // ★ 这三个推荐位在审核开时直接返回全量礼包，不经过 DecideWinner，
+                    //   以前连一条 [Shop] 日志都没有，看起来就像"商店/弹窗没算权重"。
+                    List<ShopDataItem> auditPacks = FilterExcludedPacks(GetAuditPacksForSlot(slot), excludeIds);
+                     Debug.Log($"[Shop]========== GetRecommendPacks 审核开: slot={slot} 直返全量礼包(未走权重决策), " +
+                              $"数量={auditPacks.Count}, 商品=[{string.Join(",", auditPacks.Select(x => x.produceNameId))}] ==========");
+                    return auditPacks;
+                }
+                case RecommendSlot.DynamicStore: maxFeatured = 2; break;
                 case RecommendSlot.FixedStore: maxFeatured = 1;break;
             }
         }
@@ -2492,7 +2528,13 @@ public partial class ShopManager : MonoBehaviour
             return null;
         }
 
-        List<ShopDataItem> newcomers = valid.Where(c => IsNewcomerLabel(c.labelZh)).ToList();
+        // ★ 迎新礼包（NewcomerBox）不进「新人礼互斥」这套规则：
+        //   这里的互斥池是给道具弹窗（灯泡/复活/火箭）的新人礼用的，归属槽只在三者之间决出，
+        //   商店槽永远拿不到归属 → 一旦纳入，迎新礼包会被无条件剔出 pool、永远不可能胜出。
+        //   策划口径是「未购买就正常参与权重竞争」，所以把它从 newcomers 里排除，正常进 pool 比权重。
+        List<ShopDataItem> newcomers = valid
+            .Where(c => IsNewcomerLabel(c.labelZh) && !IsNewcomerBox(c))
+            .ToList();
         bool newcomerAllowed = true;
         if (newcomers.Count > 0)
         {
@@ -2500,7 +2542,9 @@ public partial class ShopManager : MonoBehaviour
              Debug.Log($"[Shop]    新人礼候选=[{string.Join(",", newcomers.Select(x => x.produceNameId))}], newcomerAllowed={newcomerAllowed}");
         }
 
-        List<ShopDataItem> pool = newcomerAllowed ? valid : valid.Where(c => !IsNewcomerLabel(c.labelZh)).ToList();
+        List<ShopDataItem> pool = newcomerAllowed
+            ? valid
+            : valid.Where(c => !IsNewcomerLabel(c.labelZh) || IsNewcomerBox(c)).ToList();
         if (pool.Count == 0)
         {
              Debug.Log($"[Shop]    DecideWinner 结果: 新人礼互斥后无候选");
@@ -2693,6 +2737,19 @@ public partial class ShopManager : MonoBehaviour
     private static bool IsNewcomerLabel(string label)
     {
         return label == "新人礼" || label == "新手礼";
+    }
+
+    /// <summary>
+    /// 是否是「迎新礼包」（商店专属的 NewcomerBox）。
+    ///
+    /// ★ 它的 labelZh 也是「新人礼」，但和道具弹窗（灯泡/复活/火箭）的新人礼不是同一批商品：
+    ///   迎新礼包只出现在商店，必须正常参与权重竞争（策划要求「未购买就参与竞争，买了才退出」），
+    ///   所以它不能走道具槽的「新人礼互斥」池——那套池子的归属槽只在 Bulb/Clock/Rocket 里决出，
+    ///   商店槽永远拿不到归属，等于把迎新礼包永久踢出胜出池。
+    /// </summary>
+    private static bool IsNewcomerBox(ShopDataItem item)
+    {
+        return item != null && item.produceNameId == ProductNewcomerBox;
     }
 
     public void MarkNewcomerShown(RecommendSlot slot, string nameId)

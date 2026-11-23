@@ -281,10 +281,11 @@ public class FishInfoController : MonoBehaviour
             GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
             || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel;
 
-        // 条件 2：老用户豁免（存档里有参赛痕迹：生成过 AI 对手，或已有开赛时间）
-        bool isLegacyUnlocked = GameDataManager.Instance.FishUserSave != null &&
-                                (GameDataManager.Instance.FishUserSave.aiSaveDatas.Count > 0 ||
-                                 !string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.roundstarttime));
+        // 条件 2：老用户豁免 → 只认持久标记 fishRaceUnlocked（FeatureUnlockMigration 写入）。
+        // ★ 不能再用 aiSaveDatas / roundstarttime：这两个是"本回合"状态，
+        //   OpenRoundTime() 和 ResetFishData() 每局结束都会清空（MatchSuccess / CompetitionFail 必调），
+        //   老玩家（进度 <39 关）打完一局就会从"已解锁"退回"锁定/隐藏"，且比赛进度不再计入。
+        bool isLegacyUnlocked = GameDataManager.Instance.UserData.fishRaceUnlocked;
 
         return isLevelReached || isLegacyUnlocked;
     }

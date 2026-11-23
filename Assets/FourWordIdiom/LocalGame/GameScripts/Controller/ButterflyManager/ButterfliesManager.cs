@@ -83,13 +83,18 @@ public class ButterfliesManager : SingletonMono<ButterfliesManager>
         {
             if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
 
-            // 条件 1：等级达标（HexWord 双模式：六边形 / 拼字任一达标即可）
-            bool isLevelReached = GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel
-                                  || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel;
+            var userData = GameDataManager.Instance.UserData;
 
-            // 条件 2：老用户豁免（只要存档里记了已解锁，或者有蝴蝶/蝶蛹残留，说明他以前玩过）
-            bool isLegacyUnlocked = GameDataManager.Instance.ButterflyData.butterflies.Count > 0 || 
-                                    GameDataManager.Instance.ButterflyData.currPupa > 0;
+            // 条件 1：等级达标（HexWord 双模式：六边形 / 拼字任一达标即可）
+            bool isLevelReached = userData.CurrentHexStage >= AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel
+                                  || userData.CurrentChessStage >= AppGameSettings.UnlockRequirements.ButterflyGardenOpenLevel;
+
+            // 条件 2：老用户豁免（bug111）
+            //   ★ 以 FeatureUnlockMigration 写入的持久标记为准；收集痕迹只作为服务器蝴蝶数据晚于迁移到达时的补充，
+            //   不再依赖 currPupa（合成完会归零，会把解锁态吃掉）。
+            bool isLegacyUnlocked = userData.butterflyGardenUnlocked
+                                    || GameDataManager.Instance.ButterflyData.butterflies.Count > 0
+                                    || GameDataManager.Instance.ButterflyData.currPupa > 0;
             return isLevelReached || isLegacyUnlocked;
         }
     }

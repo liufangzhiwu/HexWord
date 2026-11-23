@@ -65,6 +65,23 @@ public class UserData
     // 👇 新增：禅修榜是否主动加入标识（旧版本读取不到会默认为 false，但这没关系，旧版后端会放行）
     public bool isJoinedZenRank = false;
 
+    // ===== 功能解锁持久标记（bug111~114）=====
+    // ★ 只写一次，永不因"每日重置 / 赛季结算 / 资产清空"回退。
+    //   解锁判定统一为：等级达标 OR 这里的持久标记。
+    //   禁止再用 timerePuzzleid / isJoinedZenRank / currPupa 这类可变字段当解锁条件。
+    /// <summary>解锁迁移版本号，0 = 还没跑过迁移</summary>
+    public int unlockSchemaVersion = 0;
+    /// <summary>蝶园（养成）是否已解锁（老用户升级继承）</summary>
+    public bool butterflyGardenUnlocked = false;
+    /// <summary>限时活动（灯笼）是否已解锁（老用户升级继承）</summary>
+    public bool timeLimitUnlocked = false;
+    /// <summary>莲心榜是否已解锁（与"本季是否参赛 isJoinedZenRank"解耦）</summary>
+    public bool zenRankUnlocked = false;
+    /// <summary>每日任务是否已解锁（老用户升级继承）</summary>
+    public bool dailyTaskUnlocked = false;
+    /// <summary>锦鲤竞速（捕鱼）是否已解锁（与"本回合是否在赛 roundstarttime"解耦）</summary>
+    public bool fishRaceUnlocked = false;
+
     #endregion
 
     #region 系统设置数据
@@ -425,6 +442,14 @@ public class UserData
         isJoinedZenRank = false;
         // 同步自 WT 1.9.8
         IsEmojiOn = true;
+
+        // 功能解锁持久标记：新号一律从"未解锁 + 未迁移"开始
+        unlockSchemaVersion = 0;
+        butterflyGardenUnlocked = false;
+        timeLimitUnlocked = false;
+        zenRankUnlocked = false;
+        dailyTaskUnlocked = false;
+        fishRaceUnlocked = false;
 
         // 游戏进度
         TutorialProgress = 0;
@@ -831,6 +856,13 @@ public class UserData
         adTrackingEnabled=user.adTrackingEnabled;
         adTrackingGuideShown = user.adTrackingGuideShown;
         adTrackingRewardClaimed = user.adTrackingRewardClaimed;
+        // ★ 功能解锁持久标记（旧存档没有这些字段时保持默认 false / 0，交给 FeatureUnlockMigration 一次性迁移）
+        unlockSchemaVersion = user.unlockSchemaVersion;
+        butterflyGardenUnlocked = user.butterflyGardenUnlocked;
+        timeLimitUnlocked = user.timeLimitUnlocked;
+        zenRankUnlocked = user.zenRankUnlocked;
+        dailyTaskUnlocked = user.dailyTaskUnlocked;
+        fishRaceUnlocked = user.fishRaceUnlocked;
         MaxSinglePayAmount=user.MaxSinglePayAmount;
 
         // ★ 促销角标消费截止时间（旧存档没有这个字段时为 null，统一兜底成空字符串）

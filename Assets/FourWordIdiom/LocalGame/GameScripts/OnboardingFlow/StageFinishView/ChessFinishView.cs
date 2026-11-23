@@ -682,8 +682,10 @@ public class ChessFinishView : UIWindow
         }
         if (lockTextObj != null) lockTextObj.SetActive(false);
 
-        if (GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.FishOpenLevel
-            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.FishOpenLevel)
+        // ★ 这里判的是"蝶园已解锁"，必须和上面的 isLocked 同口径（ButterfliesManager.IsOpen）。
+        //   原来误用了 FishOpenLevel(39)：解锁蝶园但没到 39 关的玩家（12~38 关）会出现
+        //   "锁图标已去掉、可点进蝶园，但进度条和蝶蛹数被隐藏"的半解锁态。
+        if (ButterfliesManager.Instance.IsOpen)
         {
             if (slider != null) slider.gameObject.SetActive(true);
             if (pupaText != null) pupaText.gameObject.SetActive(true);

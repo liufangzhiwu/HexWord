@@ -59,17 +59,19 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     public bool IsOpen()
     {
         if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
-       
-        // 条件 1：等级达标（新版本的新用户）—— HexWord 双模式：六边形 / 拼字任一达标即可
-        bool isLevelReached = GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
-                              || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode;
 
-        // 条件 2：老用户豁免（只要他以前玩过限时活动，留下了时间戳或完成过轮次，就默认解锁）
-        bool isLegacyUnlocked = GameDataManager.Instance.UserData.timerePuzzleid > 0 || 
-                                GameDataManager.Instance.UserData.timePuzzlecount > 0;
+        var userData = GameDataManager.Instance.UserData;
+
+        // 条件 1：等级达标（新版本的新用户）—— HexWord 双模式：六边形 / 拼字任一达标即可
+        bool isLevelReached = userData.CurrentHexStage >= AppGameSettings.UnlockRequirements.TimeLimitMode
+                              || userData.CurrentChessStage >= AppGameSettings.UnlockRequirements.TimeLimitMode;
+
+        // 条件 2：老用户豁免（bug114）
+        //   ★ 只能用持久标记。原来读 timerePuzzleid / timePuzzlecount，而这两个字段是"当日限时进度"，
+        //   每天 0 点被 UserData.ResetDailyData() 清零（读档时也会触发）→ 升级当天显示解锁、跨天/重启后变回锁定。
+        bool isLegacyUnlocked = userData.timeLimitUnlocked;
 
         return isLevelReached || isLegacyUnlocked;
-        
     }
     
     IEnumerator TickTime()

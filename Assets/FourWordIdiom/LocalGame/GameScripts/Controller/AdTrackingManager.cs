@@ -634,6 +634,23 @@ public class AdTrackingManager : MonoBehaviour
             return false;
         }
 
+        // ★ bug112：广告追踪引导只对新号展示。
+        //   老用户升级时 adTrackingGuideShown 是新增字段（旧存档反序列化后为 false），
+        //   只判这一个标记会让所有老玩家升级后必弹一次。
+        //   迁移（FeatureUnlockMigration）已经给老号置成已看过，这里再兜一层，
+        //   防止登录失败 / 迁移未执行时把引导又弹给有进度的老玩家。
+        bool isNewAccount = user.TutorialProgress <= 0
+                            && Mathf.Max(user.CurrentHexStage, user.CurrentChessStage) <= AppGameSettings.FirstLevel
+                            && user.TotalEarnedGold <= 0
+                            && !user.isJoinedZenRank;
+        if (!isNewAccount)
+        {
+            user.adTrackingGuideShown = true;
+            if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
+            skipReason = "非新账号（老用户 / 已有进度），广告追踪引导只对新号展示";
+            return false;
+        }
+
         if (user.adTrackingGuideShown)
         {
             skipReason = "引导页已经弹过（adTrackingGuideShown=true，只弹一次；调试可清 PlayerPrefs/存档）";

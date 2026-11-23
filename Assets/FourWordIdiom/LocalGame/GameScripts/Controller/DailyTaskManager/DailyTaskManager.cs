@@ -432,9 +432,21 @@ public class DailyTaskManager : MonoBehaviour
     /// <returns></returns>
     public bool IsOpen()
     {
-        return GameDataManager.Instance.UserData.CurrentHexStage>=AppGameSettings.UnlockRequirements.DailyMissions
-            || GameDataManager.Instance.UserData.CurrentChessStage>=AppGameSettings.UnlockRequirements.DailyMissions
-            ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime);
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+
+        bool isLevelReached =
+            GameDataManager.Instance.UserData.CurrentHexStage >= AppGameSettings.UnlockRequirements.DailyMissions
+            || GameDataManager.Instance.UserData.CurrentChessStage >= AppGameSettings.UnlockRequirements.DailyMissions;
+
+        // 老用户豁免 → 只认持久标记 dailyTaskUnlocked（FeatureUnlockMigration 写入）。
+        // ★ 原来用 FishUserSave.opentime（竞速周时间窗）当每日任务的解锁依据：
+        //   ① 语义错误：从没打过竞速的老玩家 opentime 为空 → 进度 17~30 关直接被锁；
+        //   ② 副作用：IsOpen() 为 false 时 UpdateTaskProgress 直接 return，任务进度不计，
+        //      等他后来到 31 关，之前累积的进度全丢；
+        //   ③ opentime 还会被 InitData 清空（换机 / 服务端下发空竞技存档）。
+        bool isLegacyUnlocked = GameDataManager.Instance.UserData.dailyTaskUnlocked;
+
+        return isLevelReached || isLegacyUnlocked;
     }
 
     /// <summary>
@@ -449,9 +461,11 @@ public class DailyTaskManager : MonoBehaviour
         int count = 0;
         foreach (TaskDataItem dataItem in taskItems)
         {
+            // 口径必须与 GetTaskSaveData() 生成任务的过滤条件完全一致，
+            // 否则会出现"任务列表只有 3 条、这里却按 N 条算总数"永远完不成/提前完成。
+            // ★ 原来还多了一个 `|| !string.IsNullOrEmpty(FishUserSave.opentime)`（竞速时间窗），已删除。
             if(GameDataManager.Instance.UserData.CurrentHexStage >= dataItem.unlocklv
-               || GameDataManager.Instance.UserData.CurrentChessStage >= dataItem.unlocklv
-               ||!string.IsNullOrEmpty(GameDataManager.Instance.FishUserSave.opentime))
+               || GameDataManager.Instance.UserData.CurrentChessStage >= dataItem.unlocklv)
                 count+=dataItem.values.Count;
         }
 
