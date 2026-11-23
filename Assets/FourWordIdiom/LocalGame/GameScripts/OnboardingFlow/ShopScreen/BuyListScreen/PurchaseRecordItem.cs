@@ -103,7 +103,8 @@ public class PurchaseRecordItem : MonoBehaviour
         // ★ 已拥有永久去广告 → 记录内容里的去广告项（6 永久 / 7 限时 N 天）不再展示：
         //   否则玩家买了永久去广告后，早期买过的「限时去广告」订单里还会挂着一条去广告资源。
         //   只影响展示，历史存档里的内容快照保持不变。
-        bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(record.produceNameId, record.productContent);
+        //   购买记录没有「购买前」快照，按当前是否拥有判定（历史订单里的去广告项也会随之隐藏）。
+        bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(record.produceNameId);
 
         // ---------- GiftItem 方式 ----------
         Color outlineColor = Color.gray; // 记录页不强制按 produceNameId 上色，统一白色描边

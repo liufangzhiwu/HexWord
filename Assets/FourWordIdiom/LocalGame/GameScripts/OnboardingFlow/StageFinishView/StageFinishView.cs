@@ -136,11 +136,19 @@ public class StageFinishView : UIWindow
         int stage = GameDataManager.Instance.UserData.CurrentHexStage;
         _StageNumberText.text = MultilingualManager.Instance.GetString("Level") + " " + stage;
 
-        // 限时活动进度显示控制
-        if (LimitTimeManager.Instance != null && LimitTimeManager.Instance.IsComplete())
+        // 限时活动（灯笼）解锁判定：未解锁时 StageProgress 整块不显示（策划口径）
+        bool limitUnlocked = LimitTimeManager.Instance != null && LimitTimeManager.Instance.IsOpen();
+        bool limitComplete = LimitTimeManager.Instance != null && LimitTimeManager.Instance.IsComplete();
+
+        // 需求：限时灯笼活动解锁后，StageProgress（挂着 progressSlider 的节点）才显示
+        if (StageProgressObj != null)
+            StageProgressObj.SetActive(limitUnlocked);
+
+        // 限时活动进度显示控制（已解锁但本轮奖励领完 → 连父节点一起收起）
+        if (limitComplete)
             progressSlider.transform.parent.gameObject.SetActive(false);
         else
-            progressSlider.transform.parent.gameObject.SetActive(true);
+            progressSlider.transform.parent.gameObject.SetActive(limitUnlocked);
 
         // 直接同步显示当前进度
         //UpdateSliderProgress();
@@ -164,7 +172,8 @@ public class StageFinishView : UIWindow
                 break;
         }
         
-        if (!LimitTimeManager.Instance.IsComplete() && _limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
+        // 未解锁（limitUnlocked=false）时不展开进度区，避免在锁定态露出 0 进度的空格子/隐形点击区
+        if (limitUnlocked && !limitComplete && _limitBtnTable._limitTimeEventButton.gameObject.activeSelf)
         {
             Content.gameObject.SetActive(true);
             StartCoroutine(UpdateProgress());
@@ -248,6 +257,13 @@ public class StageFinishView : UIWindow
         
         if (LimitTimeManager.Instance == null) yield break;
 
+        // 限时灯笼活动未解锁时不显示进度区（需求：解锁后 StageProgress 才出现）
+        if (!LimitTimeManager.Instance.IsOpen())
+        {
+            if (StageProgressObj != null) StageProgressObj.SetActive(false);
+            yield break;
+        }
+
         progressSlider.transform.parent.gameObject.SetActive(true);
         int wordCount = GetCompletedWordCount();
         LimitDataItem limitData = LimitTimeManager.Instance.CurlimitData;
@@ -280,6 +296,21 @@ public class StageFinishView : UIWindow
 
         progressSlider.value = Mathf.Clamp01((float)wordCount / limitData.num);
         progressText.text = $"{wordCount}/{limitData.num}";
+    }
+
+    /// <summary>
+    /// 限时活动进度区节点 <c>StageProgress</c>（层级 <c>Content/StageProgress</c>）。
+    /// 预制体里 Slider 组件就挂在 StageProgress 这个节点上，所以直接用 <see cref="progressSlider"/>.gameObject 取，
+    /// 不再往预制体上加序列化引用；progressSlider 缺失时按路径兜底查找。
+    /// </summary>
+    private GameObject StageProgressObj
+    {
+        get
+        {
+            if (progressSlider != null) return progressSlider.gameObject;
+            Transform found = transform.Find("Content/StageProgress");
+            return found != null ? found.gameObject : null;
+        }
     }
 
     private void UpdateTimeDisplay(string time)

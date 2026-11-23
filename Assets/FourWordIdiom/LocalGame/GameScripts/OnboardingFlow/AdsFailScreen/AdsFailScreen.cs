@@ -29,14 +29,14 @@ public class AdsFailScreen : UIWindow
     [SerializeField] private Button closeBtn;       // CloseBtn：关闭
     [SerializeField] private Text title;            // HeaderText：标题
     [SerializeField] private Text descText;         // 描述文案
-    [SerializeField] private Image toolIcon;        // 道具主图标（Icon）
+   
     [SerializeField] private Image toolIcon2;       // 道具次图标（icon，可选）
     [SerializeField] private Image buytoolIcon;       // 道具次图标（icon，可选）
 
     [Header("路径1：分享换奖励")]
     [SerializeField] private Button ShareBtn;       // 分享按钮（每天 F 次，达限隐藏）
     [SerializeField] private Text shareBtnText;     // 分享按钮文案（shareText）
-    [SerializeField] private Text countText;        // 剩余分享次数 / 商品数量（countText）
+    [SerializeField] private Text countText;        // 分享按钮下的数量文本（ShareBtn/icon/countText）：本次分享可获得的资源数量
 
     [Header("路径2：单道具商品")]
     [SerializeField] private Button BuyBtn;         // 单道具商品按钮
@@ -234,7 +234,7 @@ public class AdsFailScreen : UIWindow
         Sprite iconSprite = GetSprite(toolType);
         if (iconSprite != null)
         {
-            if (toolIcon != null) toolIcon.sprite = iconSprite;
+            //if (toolIcon != null) toolIcon.sprite = iconSprite;
             if (toolIcon2 != null) toolIcon2.sprite = iconSprite;
             if (buytoolIcon != null) buytoolIcon.sprite = iconSprite;
         }
@@ -259,13 +259,19 @@ public class AdsFailScreen : UIWindow
                          && ShopManager.shopManager.IsShareRewardAvailable();
         ShareBtn.gameObject.SetActive(available);
 
+        // ★ 分享按钮下方（ShareBtn/icon/countText）的文本改为展示「本次分享能获得多少资源」：
+        //   商店金币弹窗 → 金币 50；提示道具 / 复活道具 → 道具 1（口径与 ShopManager.GrantShareReward 一致）。
+        //   原来这里显示的是「剩余次数/上限次数」（1/2），按需求替换。
         if (available && countText != null && ShopManager.shopManager != null)
         {
             var p = ShopManager.shopManager.GetAdFailedParams();
             int remain = ShopManager.shopManager.GetShareRemainCount();
+            int rewardCount = ShopManager.shopManager.GetShareRewardAmount(ShopManager.shopManager.LastAdFailedToolType);
+
             countText.gameObject.SetActive(true);
-            // 显示「剩余次数/上限次数」，如 1/2
-            countText.text = string.Format(GetLocalized("ShareRemainFormat", "{0}/{1}"), remain, p.shareDailyLimit);
+            countText.text = string.Format("×{0}", rewardCount);
+
+            LogManager.ShopLog($"[AdsFailScreen] 分享按钮数量文案: ×{rewardCount}（来源={ShopManager.shopManager.LastAdFailedToolType}, 今日剩余={remain}/{p.shareDailyLimit}）");
         }
         else if (countText != null && !available)
         {
@@ -752,11 +758,11 @@ public class AdsFailScreen : UIWindow
     {
         switch (type)
         {
-            case LimitRewordType.Coins: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("gold0");
+            case LimitRewordType.Coins: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_gold");
             case LimitRewordType.Butterfly: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_Butterfly");
-            case LimitRewordType.Tipstool: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("tipicon");
+            case LimitRewordType.Tipstool: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_tip");
             case LimitRewordType.AutoComplete: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("rocket");
-            case LimitRewordType.ReStartTool: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("clock");
+            case LimitRewordType.ReStartTool: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("UI_Icon_clock");
             case LimitRewordType.InfiniteEnergy: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("InfiniteEnergy");
             case LimitRewordType.RemoveDayAds: return AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("shopads");
             default: return null;

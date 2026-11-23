@@ -244,6 +244,14 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         }
 
         RefreshButtonInteractable();
+
+        // ★ SingleGoods 是每日限购的现金商品：卡片走对象池复用、重进店只走 UpdateUI，
+        //   这里按「当天是否已买」重算折扣角标与价格文案，否则会出现「原价 + 折扣标」的错乱状态。
+        if (shopDataItem != null && shopDataItem.produceNameId == "SingleGoods")
+        {
+            HandleDiscountDisplay(shopDataItem);
+            SetProductPrice(shopDataItem);
+        }
     }
 
     // ======================= 显示：图标 =======================
@@ -309,7 +317,8 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     {
         if (discountbg == null) return;
 
-        bool hasDiscount = !string.IsNullOrEmpty(data.discount);
+        // ★ SingleGoods（单一道具商品）是每日限购的现金商品：当天买过之后折扣已无意义 → 不显示折扣角标
+        bool hasDiscount = !string.IsNullOrEmpty(data.discount) && !IsDailyBoughtProduct(data);
         discountbg.SetActive(hasDiscount);
 
         if (hasDiscount)
@@ -320,6 +329,19 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 discountText.text = $"{data.discount}";
             }
         }
+    }
+
+    /// <summary>
+    /// 商店「每日限购」的现金商品当天是否已购买（购买后折扣角标 / 原价信息都不该再展示）。
+    /// 目前只涉及 SingleGoods；isDayMoneyBuy 由 UserData 按自然日重置。
+    /// </summary>
+    protected bool IsDailyBoughtProduct(ShopDataItem data)
+    {
+        if (data == null) return false;
+        if (data.produceNameId != "SingleGoods") return false;
+
+        return GameDataManager.Instance != null
+               && GameDataManager.Instance.UserData.isDayMoneyBuy;
     }
 
     // ======================= 显示：内容（派生类 override） =======================
@@ -430,7 +452,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 else
                 {
                     shopPriceText.text = "已购买";
-                    discountbg.gameObject.SetActive(false);
+                    if (discountbg != null) discountbg.SetActive(false);
                 }
             }
             else if (shopDataItem.produceNameId == "GoldGoods")
@@ -670,6 +692,10 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         bool hasPermanentRemoveAds = false;
 
+        // ★ 记录「购买前是否已拥有永久去广告」快照（必须在发放与展示 AwardScreen 之前采集）
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.CaptureRemoveAdsOwnedBeforePurchase();
+
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
             Game.self.Shop.CurrentShopDataItem = shopDataItem.DeepCopy();
@@ -765,6 +791,10 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 GameDataManager.Instance.UserData.isDayMoneyBuy = true;
                 shopPriceText.text = "已购买";
             }
+
+            // ★ 购买完成后立即隐藏折扣标签：当天已不能再次购买，折扣信息继续挂着会误导。
+            //   （重进店 / 池复用的状态由 UpdateUI → HandleDiscountDisplay 兜住）
+            if (discountbg != null) discountbg.SetActive(false);
         }
 
         ShopLimitData limitData =

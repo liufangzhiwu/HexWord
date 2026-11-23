@@ -276,8 +276,9 @@ public class ShopItem : ShopItemBase
     {
         int reward = ShopManager.ShopGoldFreeReward;
 
-        CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
-        GameDataManager.Instance.UserData.UpdateGold(reward, true, true, "商店免费金币","商店免费金币");
+        // ★ 同上：先到账（不刷 UI），等金币飞入粒子播完再由回调刷新数字
+        CustomFlyInManager.Instance.FlyInGold(shopIcon.transform, () => RefreshGoldUIAfterFlyIn(reward));
+        GameDataManager.Instance.UserData.UpdateGold(reward, true, false, "商店免费金币","商店免费金币");
 
         GameDataManager.Instance.UserData.isDayFreeGet = true;
 
@@ -287,6 +288,15 @@ public class ShopItem : ShopItemBase
         RefreshFreeGoodsUI();
 
         //LogShopItem($"免费商品直发（当日首次，免广告）: +{reward} 金币");
+    }
+
+    /// <summary>
+    /// 金币飞入粒子播完后刷新金币数量（顶部金币栏 + 商店顶部资源栏都会收到 OnChangeGoldUI）。
+    /// amount 传本次到账金额 → 数字从「旧值」滚到「新值」，不会先跳变。
+    /// </summary>
+    private void RefreshGoldUIAfterFlyIn(int amount)
+    {
+        EventDispatcher.instance.TriggerChangeGoldUI(Mathf.Max(0, amount), amount > 0);
     }
 
     /// <summary>
@@ -332,12 +342,27 @@ public class ShopItem : ShopItemBase
             int count = int.Parse(giftdata[1]);
             int type = int.Parse(giftdata[0]);
           
-            GameDataManager.Instance.UserData.UpdateGold(-needgold, true, true, string.Empty,
-                "GoldGoods", ResReason.Iap);
-            GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count, string.Empty,
-                string.Empty, "GoldGoods", ResReason.Iap);
+            // ★ 商品内容配成金币时：这次买卖=扣金币+发金币，UI 统一等飞入粒子播完再刷一次净额，
+            //   免得数字先显示"已扣钱"，粒子飞完又跳一次。
+            bool gainCoins = type == (int)LimitRewordType.Coins;
 
-            EventDispatcher.instance.TriggerChangeGoldUI(0, true);
+            GameDataManager.Instance.UserData.UpdateGold(-needgold, true, !gainCoins, string.Empty,
+                "GoldGoods", ResReason.Iap);
+
+            if (gainCoins)
+            {
+                GameDataManager.Instance.UserData.UpdateGold(count, true, false, string.Empty,
+                    "GoldGoods", ResReason.Iap);
+                CustomFlyInManager.Instance.FlyInGold(shopIcon.transform,
+                    () => EventDispatcher.instance.TriggerChangeGoldUI(0, false));
+            }
+            else
+            {
+                GameDataManager.Instance.UserData.UpdateTool((LimitRewordType)type, count, string.Empty,
+                    string.Empty, "GoldGoods", ResReason.Iap);
+                EventDispatcher.instance.TriggerChangeGoldUI(0, true);
+            }
+
             GameDataManager.Instance.UserData.isDayGoldBuy = true;
             shopPriceText.text = "已购买";
             if (btnTagicon != null) btnTagicon.gameObject.SetActive(false);
@@ -388,14 +413,17 @@ public class ShopItem : ShopItemBase
         {
             int reward = GetVideoGoldReward();
 
-            CustomFlyInManager.Instance.FlyInGold(shopIcon.transform);
+            // ★ 金币飞入粒子：数据先到账，数字等金币落袋（粒子播完）后再刷新。
+            //   原来 OnShopGoldClaimed 里是 UpdateGold(..., updateui:false)，发完金币没人刷 UI，
+            //   顶部/商店的金币数量一直停在旧值。
+            CustomFlyInManager.Instance.FlyInGold(shopIcon.transform, () => RefreshGoldUIAfterFlyIn(reward));
 
             // ★ 商店金币视频发放统一走 OnShopGoldClaimed（单次 100 金币 + 当日次数累计 + C 阈值兜底，C-STRAT-03）。
             //   注意：这里不能再自己 UpdateGold 一次——原来两处都发，看一次视频实际到手 200。
             if (ShopManager.shopManager != null)
                 ShopManager.shopManager.OnShopGoldClaimed(reward);
             else
-                GameDataManager.Instance.UserData.UpdateGold(reward, true, true, "看广告领取商店金币");
+                GameDataManager.Instance.UserData.UpdateGold(reward, true, false, "看广告领取商店金币");
 
             GameDataManager.Instance.UserData.isDayFreeGet = true;
             if (btnTagicon != null) btnTagicon.gameObject.SetActive(true);

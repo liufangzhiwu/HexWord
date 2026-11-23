@@ -1301,6 +1301,35 @@ public partial class ShopManager : MonoBehaviour
     public const int ShareToolReward = 1;
 
     /// <summary>
+    /// 分享成功后按来源实际发放的资源数量（弹窗卡面展示用）：
+    /// 商店金币 → 金币 50；提示道具 / 复活道具 → 道具 1。
+    /// 必须与 <see cref="GrantShareReward"/> 发奖口径保持一致，避免卡面数字和到手不一致。
+    /// </summary>
+    public int GetShareRewardAmount(LimitRewordType toolType)
+    {
+        switch (toolType)
+        {
+            case LimitRewordType.Coins: return ShareGoldReward;
+            case LimitRewordType.ReStartTool: return ShareToolReward;
+            default: return ShareToolReward;   // 提示道具（含兜底）
+        }
+    }
+
+    /// <summary>
+    /// 分享成功后按来源实际发放的资源类型（与 <see cref="GrantShareReward"/> 一一对应）：
+    /// 商店金币 → Coins；复活道具 → ReStartTool；其它 → Tipstool。
+    /// </summary>
+    public LimitRewordType GetShareRewardType(LimitRewordType toolType)
+    {
+        switch (toolType)
+        {
+            case LimitRewordType.Coins: return LimitRewordType.Coins;
+            case LimitRewordType.ReStartTool: return LimitRewordType.ReStartTool;
+            default: return LimitRewordType.Tipstool;
+        }
+    }
+
+    /// <summary>
     /// 分享返回结算（按弹窗的触发来源发奖，2026-11-13 调整）：
     ///   - 商店金币弹窗（Coins）        → 只发金币 50；
     ///   - 提示道具弹窗（Tipstool）     → 只发提示道具 1；
@@ -1420,7 +1449,28 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 破冰主力商品：一周去广告（配置表 RemoveAdsWeek）；
+    /// 渠道没建周卡时回退到定价最低的礼包（不去用终身去广告，价格过高不适合破冰）。
+    /// </summary>
+    private ShopDataItem ResolveBreakIcePack()
+    {
+        ShopDataItem pack = allShopItems.FirstOrDefault(x => x.produceNameId == ProductRemoveAdsWeekly);
+        if (pack != null) return pack;
+
+        pack = allShopItems
+            .Where(x => x.price > 0 && !IsRemoveAdsProduct(x.produceNameId))
+            .OrderBy(x => x.price)
+            .FirstOrDefault();
+
+        if (pack != null)
+             Debug.Log($"[Shop]TryShowBreakIcePopup: 未配置 {ProductRemoveAdsWeekly}，回退最低价礼包 {pack.produceNameId}");
+
+        return pack;
+    }
+
+    /// <summary>
     /// 破冰礼包策略。
+    /// ★ 2026-11-21 口径：同一个活动期内只主动弹一次；之后结算只登记入口按钮，不再自动弹窗。
     /// </summary>
     /// <param name="interAdsCount">已成功播放的插屏累计次数（存档持久化）</param>
     /// <param name="entryOnly">
@@ -1446,20 +1496,53 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
+        // ★ 需求（2026-11-21）：破冰礼包买过之后入口立即收起，本轮活动期内也不再重新登记 / 不再弹窗。
+        //   购买当时的即时隐藏见 ShopManager.OnPackPurchased；这里管「后续每次结算 / 进主页」不再复活入口。
+        if (IsBreakIcePurchasedInCurrentOffer)
+        {
+            if (CurrentSettlementGift == SettlementGiftKind.BreakIce)
+                ClearSettlementGift("破冰礼包已购买，入口收起");
+            LogShop("TryShowBreakIcePopup 跳过: 本轮活动期已购买破冰礼包");
+            return false;
+        }
+
         // 破冰冷却：从「上次弹窗倒计时结束」起算（策划口径，与复购/升层一致）
-        //   - 倒计时还没结束 → 仍在本次限时展示期内，继续展示；
+        //   - 倒计时还没结束 → 本活动期已经主动弹过一次；
         //   - 倒计时结束后 N 天内（N = 7/10/13 递增）→ 冷却中；
         //   - 无倒计时（非周末/节假日弹出的情况）→ 退化为从弹窗那一刻算，保持原行为。
         int cooldownDays = BreakIceCooldownBaseDays + BreakIcePopupCount * BreakIceCooldownStepDays;
         DateTime lastCooldownStart = GetBreakIceCooldownStart();
         bool inOfferCountdown = lastCooldownStart != DateTime.MinValue && DateTime.Now < lastCooldownStart;
 
+        // ★ 2026-11-21 口径补充：本活动期已经主动弹过一次 → 后续结算**只保留入口按钮，不再主动弹窗**。
+        //   旧实现在这段倒计时里每关都走 ShowSettlementGift，六边形玩法通关频繁时表现为「通关必弹礼包」。
+        //   入口照旧登记（玩家从结算页/主页按钮点开仍可复购，活动期内可反复购买），只是不再自动弹。
+        if (inOfferCountdown)
+        {
+            // 永久去广告仍然拦（周卡对它没有意义）；「限时去广告生效中」不拦（活动期内可继续叠加时长）
+            if (IsRemoveAdsOwned())
+            {
+                LogShop("TryShowBreakIcePopup: 本活动期已弹过且已拥有永久去广告 → 不出入口");
+                return false;
+            }
+
+            ShopDataItem shownPack = ResolveBreakIcePack();
+            if (shownPack == null)
+            {
+                LogShop("TryShowBreakIcePopup: 本活动期已弹过，但当前没有可售破冰礼包 → 不出入口");
+                return false;
+            }
+
+            RegisterSettlementGift(SettlementGiftKind.BreakIce, shownPack, lastCooldownStart);
+            LogShop($"TryShowBreakIcePopup: 本活动期已主动弹过一次（倒计时截止 {lastCooldownStart:yyyy-MM-dd HH:mm}）" +
+                    $"→ 只登记入口，不再自动弹窗（礼包={shownPack.produceNameId}）");
+            return true;
+        }
+
         // 【弹窗条件 5】当前时间必须 ∈ 周末 或 节假日 —— 硬条件。
         // 旧逻辑是「非周末/节假日时 30% 随机放行」，导致 2026-11-09（周一）也弹了破冰礼包；
         // 策划口径是非周末/节假日不弹（周末/节假日的判定见 ShopManager_HolidayWeekend.IsHolidayOrWeekend）。
-        // ★ 本活动限时还没结束（inOfferCountdown）时不看这条：破冰礼包在活动期间允许反复购买，
-        //   活动倒计时走完之前入口必须一直保留。
-        if (!inOfferCountdown && !IsHolidayOrWeekend())
+        if (!IsHolidayOrWeekend())
         {
              Debug.Log($"[Shop]TryShowBreakIcePopup 跳过: 今天({DateTime.Now:yyyy-MM-dd} {DateTime.Now.DayOfWeek})不是周末/节假日");
             return false;
@@ -1481,18 +1564,14 @@ public partial class ShopManager : MonoBehaviour
             SuppressSettlementGiftPopup("结算页会弹更优先的弹窗（破冰）");
         }
 
-        // 本地与云端均无去广告（永久去广告 / 限时去广告生效中都不弹）
-        // ★ 永久去广告仍然拦（周卡对它没有意义）；但「限时去广告生效中」在本次活动限时内不拦：
-        //   玩家买了破冰周卡后还能在同一个活动期里继续复购叠加时长，
-        //   否则买一次之后入口就直接消失，无法「活动期间反复购买」。
-        if (IsRemoveAdsOwned() || (!inOfferCountdown && IsRemoveAdsActive()))
+        // 已拥有去广告（永久 / 限时生效中）都不弹
+        if (IsRemoveAdsOwned() || IsRemoveAdsActive())
         {
              Debug.Log($"[Shop]TryShowBreakIcePopup 跳过: 已拥有去广告(永久={IsRemoveAdsOwned()}, 限时生效={IsRemoveAdsActive()})");
             return false;
         }
 
-        if (!inOfferCountdown
-            && lastCooldownStart != DateTime.MinValue
+        if (lastCooldownStart != DateTime.MinValue
             && DateTime.Now.Subtract(lastCooldownStart).TotalDays < cooldownDays)
         {
              Debug.Log($"[Shop]TryShowBreakIcePopup 跳过: 冷却中（上次倒计时结束={lastCooldownStart:yyyy-MM-dd HH:mm}，" +
@@ -1501,18 +1580,7 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // 破冰主力商品：一周去广告（配置表 RemoveAdsWeek）
-        ShopDataItem pack = allShopItems.FirstOrDefault(x => x.produceNameId == ProductRemoveAdsWeekly);
-
-        if (pack == null)
-        {
-            // 渠道未建周卡时，回退到定价最低的礼包，保证破冰链路可用（不去用终身去广告，价格过高不适合破冰）
-            pack = allShopItems
-                .Where(x => x.price > 0 && !IsRemoveAdsProduct(x.produceNameId))
-                .OrderBy(x => x.price)
-                .FirstOrDefault();
-            if (pack != null)
-                 Debug.Log($"[Shop]TryShowBreakIcePopup: 未配置 {ProductRemoveAdsWeekly}，回退最低价礼包 {pack.produceNameId}");
-        }
+        ShopDataItem pack = ResolveBreakIcePack();
 
         if (pack == null)
         {
@@ -1520,36 +1588,26 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
-        // 限时 = 本次连续周末或节假日区间；倒计时未结束时沿用上次的截止时间（不重置倒计时）
-        DateTime endTime;
-        if (inOfferCountdown)
+        // 限时 = 本次连续周末或节假日区间（本活动期已弹过的情况上面已提前返回）
+        DateTime endTime = GetCurrentHolidayEndTime();
+
+        // 新一轮：累计次数 +1，并记录本轮冷却起点（倒计时结束时间）
+        // ★ 本次结算只登记入口、不弹窗（被更优先的结算页弹窗占位）→ 不消耗弹窗次数/冷却，
+        //   等下一次没有抢占弹窗的结算再正常弹。
+        // ★ 主页「只登记入口」（entryOnly）同样不消耗：进主页不该把破冰的弹窗次数用掉。
+        if (entryOnly)
         {
-            endTime = lastCooldownStart;
-             Debug.Log($"[Shop]TryShowBreakIcePopup: 上次弹窗倒计时未结束（截止 {lastCooldownStart:yyyy-MM-dd HH:mm}）→ 继续展示 {pack.produceNameId}");
+            LogShop("TryShowBreakIcePopup: 主页只登记入口 → 不消耗弹窗次数与冷却");
+        }
+        else if (!_settlementGiftPopupSuppressed)
+        {
+            BreakIcePopupCount = BreakIcePopupCount + 1;
+            SaveBreakIcePopupState(endTime, BreakIcePopupCount);
+            _lastBreakIcePopupTime = DateTime.Now;
         }
         else
         {
-            // 走到这里已经确认是周末/节假日，限时固定取本次连续周末/节假日的结束时间（不会是 MinValue）
-            endTime = GetCurrentHolidayEndTime();
-
-            // 新一轮：累计次数 +1，并记录本轮冷却起点（倒计时结束时间）
-            // ★ 本次结算只登记入口、不弹窗（被更优先的结算页弹窗占位）→ 不消耗弹窗次数/冷却，
-            //   等下一次没有抢占弹窗的结算再正常弹。
-            // ★ 主页「只登记入口」（entryOnly）同样不消耗：进主页不该把破冰的弹窗次数用掉。
-            if (entryOnly)
-            {
-                LogShop("TryShowBreakIcePopup: 主页只登记入口 → 不消耗弹窗次数与冷却");
-            }
-            else if (!_settlementGiftPopupSuppressed)
-            {
-                BreakIcePopupCount = BreakIcePopupCount + 1;
-                SaveBreakIcePopupState(endTime, BreakIcePopupCount);
-                _lastBreakIcePopupTime = DateTime.Now;
-            }
-            else
-            {
-                LogShop("TryShowBreakIcePopup: 本次结算不弹窗（被更优先弹窗占位）→ 不消耗弹窗次数与冷却");
-            }
+            LogShop("TryShowBreakIcePopup: 本次结算不弹窗（被更优先弹窗占位）→ 不消耗弹窗次数与冷却");
         }
 
         // 登记到「结算页礼包」并弹窗：结算页的破冰礼包按钮据此显示，关掉弹窗也能再打开
@@ -1566,7 +1624,7 @@ public partial class ShopManager : MonoBehaviour
 
          Debug.Log($"[Shop]TryShowBreakIcePopup: 展示破冰礼包 {pack.produceNameId}, 累计次数={BreakIcePopupCount}, " +
                 $"下次冷却={BreakIceCooldownBaseDays + BreakIcePopupCount * BreakIceCooldownStepDays}天" +
-                $"（从倒计时结束 {(inOfferCountdown ? lastCooldownStart : endTime):yyyy-MM-dd HH:mm} 起算）, " +
+                $"（从倒计时结束 {endTime:yyyy-MM-dd HH:mm} 起算）, " +
                 $"限时截止={(endTime == DateTime.MinValue ? "无" : endTime.ToString("yyyy-MM-dd HH:mm"))}");
         return true;
     }

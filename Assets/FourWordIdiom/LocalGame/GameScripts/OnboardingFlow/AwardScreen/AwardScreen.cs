@@ -71,7 +71,9 @@ public class AwardScreen : UIWindow, IBackGestureClosePanel
             int count = shopItem.productContent.Count;
 
             // ★ 已拥有永久去广告 → 奖励里的去广告项不展示，配套的「去广告权益说明」栏也一起收起来
-            bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(shopItem.produceNameId, shopItem.productContent);
+            //   （按「购买前是否已拥有」判定：买之前没有、买完才有 → 仍然列出来，让玩家看到买到了什么）
+            bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(shopItem.produceNameId,
+                GetRemoveAdsOwnedBeforePurchase());
             bool hasRemoveAds = false;
 
             for (int i = 0; i < count; i++)
@@ -257,7 +259,8 @@ public class AwardScreen : UIWindow, IBackGestureClosePanel
         var shopItem = Game.self != null ? Game.self.Shop.CurrentShopDataItem : null;
         if (shopItem != null && shopItem.productContent != null)
         {
-            bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(shopItem.produceNameId, shopItem.productContent);
+            bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(shopItem.produceNameId,
+                GetRemoveAdsOwnedBeforePurchase());
 
             foreach (var dataitem in shopItem.productContent)
             {
@@ -283,6 +286,18 @@ public class AwardScreen : UIWindow, IBackGestureClosePanel
     {
         return type == (int)LimitRewordType.RemoveAds
             || type == (int)LimitRewordType.RemoveDayAds;
+    }
+
+    /// <summary>
+    /// 领取界面用的「购买前是否已拥有永久去广告」口径。
+    /// 购买入口（GiftTable / ShopItemBase）在发奖之前写入快照；没有快照时返回 null，
+    /// 由 <see cref="ShopManager.ShouldHideRemoveAdsReward"/> 按当前状态判定。
+    /// </summary>
+    private static bool? GetRemoveAdsOwnedBeforePurchase()
+    {
+        return ShopManager.shopManager != null
+            ? ShopManager.shopManager.RemoveAdsOwnedBeforeCurrentPurchase
+            : (bool?)null;
     }
 
     /// <summary>没有对应资源栏的奖励（去广告 / 无限体力）不播飞入。</summary>

@@ -653,18 +653,23 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
 
         List<List<string>> contents = currentShopItem.productContent;
 
+        // ★ 已拥有永久去广告 → 礼包里的去广告项不展示（与商店卡片 / 领取界面口径一致）。
+        //   后面的排版一律按「实际展示数量」算：否则 7 项礼包（明心/大觉/圆满）隐藏 1 项后
+        //   会空出一格，金币还会被误判成「7 项专属布局」而单独挪到 GoldItem。
+        List<List<string>> display = FilterOwnedRemoveAds(contents);
+
         // ★ 奖励 = 7 个时，金币项用单独的 GoldItem 显示，不占网格里的一格
-        bool sevenRewards = contents.Count == SevenRewardCount;
-        int goldIndex = sevenRewards ? FindCoinsIndex(contents) : -1;
-        bool useGoldItem = ApplyGoldItem(contents, goldIndex);
+        bool sevenRewards = display.Count == SevenRewardCount;
+        int goldIndex = sevenRewards ? FindCoinsIndex(display) : -1;
+        bool useGoldItem = ApplyGoldItem(display, goldIndex);
         if (!useGoldItem) goldIndex = -1;
 
         int shown = 0;
-        for (int i = 0; i < contents.Count; i++)
+        for (int i = 0; i < display.Count; i++)
         {
             if (i == goldIndex) continue;   // 金币项交给 GoldItem
 
-            List<string> itemdata = contents[i];
+            List<string> itemdata = display[i];
             if (GiftItems.Count > shown)
             {
                 GiftItem giftItem = GiftItems[shown];
@@ -689,16 +694,45 @@ public class AdsDiscountScreen : UIWindow, IBackGestureClosePanel
             GiftItems[i].gameObject.SetActive(false);
 
         // 奖励区布局：> 3 个奖励要两排（矮高度会裁掉第二排），同时大图往上让位
-        ApplyRewardLayout(contents.Count);
+        ApplyRewardLayout(display.Count);
 
         // 7 个奖励时的专属排版（parent x / 网格间距）、破冰礼包的左内边距+间距，其它数量恢复 Prefab 默认值
-        ApplyRewardGridLayout(contents.Count);
+        ApplyRewardGridLayout(display.Count);
 
         // 加赠金币单独占一个「加赠」格（不进 productContent，奖励项数量保持礼包原始数量）
         InitGiftAddItem();
 
-        Debug.Log($"[AdsDiscountScreen] 奖励项显示: {contents.Count} 个（网格 {shown} 个" +
+        Debug.Log($"[AdsDiscountScreen] 奖励项显示: {display.Count} 个（原始 {contents.Count} 个，网格 {shown} 个" +
                   $"{(useGoldItem ? " + 金币 GoldItem" : "")}）, 礼包={currentShopItem.produceNameId}");
+    }
+
+    /// <summary>
+    /// 已拥有永久去广告时，过滤掉礼包内容里的去广告项（6 永久 / 7 限时 N 天）。
+    /// 口径与商店卡片（ShopGiftItem.InitGiftItems）、领取界面（AwardScreen）保持一致：不展示也不单独占格。
+    /// </summary>
+    private static List<List<string>> FilterOwnedRemoveAds(List<List<string>> contents)
+    {
+        if (contents == null) return new List<List<string>>();
+
+        bool owns = ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+        if (!owns) return contents;
+
+        List<List<string>> result = new List<List<string>>(contents.Count);
+        for (int i = 0; i < contents.Count; i++)
+        {
+            List<string> row = contents[i];
+
+            int type;
+            if (row != null && row.Count >= 1 && int.TryParse(row[0], out type)
+                && (type == (int)LimitRewordType.RemoveAds || type == (int)LimitRewordType.RemoveDayAds))
+            {
+                Debug.Log($"[AdsDiscountScreen] 已拥有永久去广告，跳过去广告项 type={type}");
+                continue;
+            }
+
+            result.Add(row);
+        }
+        return result;
     }
 
     /// <summary>找金币（type=0）在奖励内容里的下标，没有返回 -1。</summary>

@@ -694,6 +694,12 @@ public partial class ChessPlayArea
             {
                 yield return StartCoroutine(PlayTimeBonusToZenScoreFlow(timeBonusScore));
             }
+
+            // 👇 新增：3. 倒计时兑换来的禅意分要计入蝉蛹门槛（M2 = GetPupa2 = 150）后再刷新圆环
+            //    FinalizeStageData 已把 TimeBonusScore 并入 CurrentTotalScore，和 CompleteStageRoutine
+            //    发蝉蛹时读的是同一个数；这里补的是「视觉」：局内分数没到门槛、靠时间奖励补齐时，
+            //    从禅意分位置发一颗蝉蛹进度粒子飞入圆环。
+            RefreshPupaProgressByTimeBonus();
             bool isBannerFinished = false;
             // 4选1动态加载横幅预制体，内部带有 2.5 秒的展示时常生命周期
             StartCoroutine(PlayZenToCenterBannerFlow(() => isBannerFinished = true));

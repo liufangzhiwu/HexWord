@@ -161,8 +161,9 @@ public class GiftItem : MonoBehaviour
                 break;
             case (int)LimitRewordType.RemoveAds:
                 spritename = "shopads";
-                hengIconSize = new Vector2(110f, 100f);
+                hengIconSize = new Vector2(120f, 130f);
                 SetIconSize(new Vector2(250f, 250f));
+                hengIconAnchoredPosition = new Vector2(-14f, -14f);
                 SetIconAnchoredPosition(new Vector2(0f, -10f));
                 countText.text = "永久";
                 SetCountFontSize(60);
@@ -284,9 +285,10 @@ public class GiftItem : MonoBehaviour
                 break;
             case (int)LimitRewordType.RemoveAds:
                 spritename = "shopads";
-                hengIconSize = new Vector2(110f, 100f);
+                hengIconSize = new Vector2(120f, 120f);
                 SetIconSize(new Vector2(250f, 250f));
-                SetIconAnchoredPosition(new Vector2(0f, -10f));
+                hengIconAnchoredPosition = new Vector2(-14f, -14f);
+                SetIconAnchoredPosition(new Vector2(0f, -25f));
                 countText.text = "永久";
                 SetCountFontSize(60);
                 CreateTipsBtn(pointdes);

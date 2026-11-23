@@ -206,6 +206,48 @@ public partial class ShopManager : MonoBehaviour
         return DateTime.Now < endTime;
     }
 
+    // ======================= 活动礼包角标：解锁门槛 =======================
+
+    /// <summary>
+    /// 活动礼包角标（金币栏 add 按钮上方那条促销贴）的解锁关卡：
+    /// 策划口径 2026-11-21 —— <b>通关第 19 关之后</b>才显示。
+    /// </summary>
+    public const int ActivityBadgeUnlockClearedStage = 19;
+
+    /// <summary>已通关关卡数（按当前模式取：拼字用 CurrentChessStage，其余用 CurrentHexStage）。</summary>
+    public int GetClearedStageCount()
+    {
+        var user = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        if (user == null) return 0;
+
+        int current = user.levelMode == (int)LevelType.ChessWord ? user.CurrentChessStage : user.CurrentHexStage;
+        return current - 1;
+    }
+
+    /// <summary>活动礼包角标是否已解锁：通关第 19 关后为 true。</summary>
+    public bool IsActivityBadgeUnlocked()
+    {
+        return GetClearedStageCount() >= ActivityBadgeUnlockClearedStage;
+    }
+
+    /// <summary>
+    /// 商店入口（金币栏上的商店按钮）红点 / 促销是否解锁。
+    /// 策划口径 2026-11-21：与活动礼包角标同一门槛 —— <b>通关第 19 关之后</b>才允许出现。
+    /// 未解锁时调用方一律按"不展示"处理，避免新玩家开局就被红点引导进店。
+    /// </summary>
+    public bool IsShopEntryRedPointUnlocked()
+    {
+        return IsActivityBadgeUnlocked();
+    }
+
+    /// <summary>某个商店入口红点当前是否应该显示（解锁 + 未被进店消费隐藏）。</summary>
+    public bool ShouldShowShopEntryRedPoint()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+        if (!IsShopEntryRedPointUnlocked()) return false;
+        return !GameDataManager.Instance.UserData.isHideShopRedPoint;
+    }
+
     // ======================= 促销角标入口（审核开禁用） =======================
 
     public ShopEntryBadgeInfo GetShopEntryBadge()
@@ -244,6 +286,13 @@ public partial class ShopManager : MonoBehaviour
 
     private ShopEntryBadgeInfo BuildActivityBadgeInfo(string caller)
     {
+        // ★ 显示条件补充：通关第 19 关后才展示活动礼包角标（未达标的玩家连节日/周末也不贴角标）
+        if (!IsActivityBadgeUnlocked())
+        {
+             Debug.Log($"[Shop]{caller}: 未通关第 {ActivityBadgeUnlockClearedStage} 关（已通关 {GetClearedStageCount()} 关）, 不展示活动礼包角标");
+            return new ShopEntryBadgeInfo { showBadge = false };
+        }
+
         if (!IsHolidayOrWeekend())
         {
              Debug.Log($"[Shop]{caller}: 非节日/周末, 不展示");

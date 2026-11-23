@@ -150,6 +150,17 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
     {
         base.OnEnable();
         AudioManager.Instance.PlaySoundEffect("ShowUI");
+
+        // ★ 需求：进店先不露礼包 —— 先盖 loading（全屏遮罩），
+        //   等礼包推荐位计算 + 卡片铺完，进店动画真正开始滑入时才 HideLoadingAnimation。
+        //   放在最前面：连字体预热 / 顶部栏刷新这些同步开销也一起被遮罩盖住。
+        MessageSystem.Instance?.ShowLoadingAnimation();
+        _loadingShowRealtime = Time.realtimeSinceStartup;
+
+        // ★ 第二道保险：不管遮罩有没有正常盖上来（资源没就绪 / 别的界面提前把 loading 关掉），
+        //   商品列表本身先整体透明，收起 loading 的那一刻才放出来 —— 保证"进店先不展示礼包"。
+        SetStoreContentVisible(false);
+
         InitPool();
         // 字体先烤一次，避免铺卡片时多个字号轮番触发字体图集重建
         PreheatFonts();
@@ -186,6 +197,9 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
             freeItemTable.gameObject.SetActive(true);
         }
 
+        // ★ 进店动画：铺列表结束后卡片逐个从右往左滑入 + 淡入（每次进店只播一次）
+        _pendingEnterAnim = true;
+
         // ★ 商品列表改为分帧创建：界面先出来，卡片逐帧铺，避免打开那一帧卡住
         StartBuildStore();
 
@@ -212,12 +226,21 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
 
     protected override void OnDisable()
     {
+        // 兜底：铺列表协程被打断时没人收 loading，全屏遮罩会盖住后续界面
+        MessageSystem.Instance?.HideLoadingAnimation();
+        // 列表透明是进店 loading 期间的状态，出店必须还原，否则下次进店前是"空商店"
+        SetStoreContentVisible(true);
+
         // 界面关掉时停掉还在跑的铺列表协程，避免下次进店两个协程同时往同一个列表里塞卡片
         if (_buildRoutine != null)
         {
             StopCoroutine(_buildRoutine);
             _buildRoutine = null;
         }
+
+        // 进店动画也要停掉并还原，否则残留的 alpha=0 / 偏移位置会被池对象带到下次进店
+        StopEnterAnimation(true);
+        _pendingEnterAnim = false;
 
         EventDispatcher.instance.OnChangeGoldUI -= InitUI;
         EventDispatcher.instance.OnAwardClaimed -= OnAwardClaimed;
@@ -508,6 +531,7 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
                 SetSiblingIndexIfNeeded(shopItem.transform, i);
                 shopItem.gameObject.SetActive(true);
                 shopItem.UpdateUI();
+                PrepareCardForEnterAnim(shopItem);   // 进店时先透明，等进场动画淡入
             }
             else
             {
@@ -518,6 +542,7 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
 
                 shopItem = pool.GetObject<ShopItemBase>(itemparent);
                 shopItem.SetShopData(shopDataItem);
+                PrepareCardForEnterAnim(shopItem);   // 进店时先透明，等进场动画淡入
 
                 if (shopDataItem.type == 1)
                 {
@@ -565,7 +590,13 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
     /// <summary>开始铺商品列表（同一时间只保留一个铺列表协程）。</summary>
     private void StartBuildStore()
     {
-        if (ShopManager.shopManager == null) return;
+        if (ShopManager.shopManager == null)
+        {
+            // 没拿到商店管理器就不会有构建协程去收 loading，这里必须兜底关掉，否则全屏遮罩会一直盖着
+            MessageSystem.Instance?.HideLoadingAnimation();
+            SetStoreContentVisible(true);
+            return;
+        }
 
         if (_buildRoutine != null)
         {
@@ -573,7 +604,12 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
             _buildRoutine = null;
         }
 
-        if (!isActiveAndEnabled) return;
+        if (!isActiveAndEnabled)
+        {
+            MessageSystem.Instance?.HideLoadingAnimation();
+            SetStoreContentVisible(true);
+            return;
+        }
 
         _buildRoutine = ShopManager.shopManager.shopMode == ShopMode.DynamicStore
             ? StartCoroutine(ShowCollapsedStateRoutine())
@@ -585,6 +621,10 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
     {
         if (ShopManager.shopManager == null || ShopManager.shopManager.shopMode != ShopMode.FixedStore)
         {
+            // 提前退出时把已置透明的卡片还原，避免整屏卡片不可见
+            RestoreEnterAnimStates();
+            MessageSystem.Instance?.HideLoadingAnimation();   // 退出路径也不能把 loading 留在屏幕上
+            SetStoreContentVisible(true);
             _buildRoutine = null;
             yield break;
         }
@@ -618,6 +658,11 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
         // 4. 等布局跑完再复位滚动位置（提前设会被后续布局冲掉，还要多跑一轮重建）
         yield return null;
         ResetScrollToTop();
+
+        // 5. 列表铺完 → 播进店动画（loading 由动画协程在布局稳定、真正开始滑入的那一帧收起，
+        //    免得中间空出一帧"列表是空的"）
+        //    （礼包推荐位 / 卡片内容到这里才算「计算完成」）
+        PlayEnterAnimation();
 
         _buildRoutine = null;
     }
@@ -670,6 +715,383 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
         float oldY = pos.y;
         pos.y = 0f;
         content.anchoredPosition = pos;
+    }
+
+    // ======================= ★ 进店动画：卡片逐个从右往左滑入 + 淡入 =======================
+
+    /// <summary>单张卡的滑入时长（秒）</summary>
+    private const float EnterAnimDuration = 0.26f;
+
+    /// <summary>相邻两张卡的启动间隔（秒）——形成「逐个」的错峰</summary>
+    private const float EnterAnimStagger = 0.055f;
+
+    /// <summary>起始横向偏移（像素，正值 = 屏幕右侧），滑到 0 即归位</summary>
+    private const float EnterAnimOffsetX = 280f;
+
+    /// <summary>本次进店是否还欠一次进入动画（购买后重排不重播，避免每买一次整屏重滑一遍）</summary>
+    private bool _pendingEnterAnim;
+
+    /// <summary>进店 loading 最短显示时长（秒）：礼包算得太快时也要撑住，否则遮罩一闪而过。</summary>
+    private const float LoadingMinShowSeconds = 0.5f;
+
+    /// <summary>本次进店 ShowLoadingAnimation 的触发时刻（Time.realtimeSinceStartup，不受 timeScale 影响）</summary>
+    private float _loadingShowRealtime;
+
+    /// <summary>商品列表根节点的 CanvasGroup（进店 loading 期间整体透明，收起遮罩后再放出来）</summary>
+    private CanvasGroup _storeContentGroup;
+
+    /// <summary>
+    /// 进店 loading 期间把整块商品列表（含金币档 / 免费位 / 购买记录入口）藏起来。
+    /// 只改 CanvasGroup.alpha，不动 SetActive / 布局：卡片照常分帧创建、布局照常算，
+    /// 只是"看不见"，所以进场动画拿到的 anchoredPosition 依然是准确的。
+    /// </summary>
+    private void SetStoreContentVisible(bool visible)
+    {
+        if (parent == null) return;
+
+        if (_storeContentGroup == null)
+        {
+            _storeContentGroup = parent.GetComponent<CanvasGroup>();
+            if (_storeContentGroup == null) _storeContentGroup = parent.gameObject.AddComponent<CanvasGroup>();
+        }
+
+        _storeContentGroup.alpha = visible ? 1f : 0f;
+        _storeContentGroup.blocksRaycasts = visible;
+    }
+
+    private Coroutine _enterAnimRoutine;
+
+    /// <summary>单张卡的动画状态（动画中断时要按这个还原，否则池对象会残留 alpha=0 或被挪位）</summary>
+    private class EnterAnimState
+    {
+        public RectTransform rt;
+        public CanvasGroup cg;
+        public Vector2 basePosition;
+
+        /// <summary>礼包卡：这张卡动画播完后要单独点亮它的粒子（非礼包卡为 null）</summary>
+        public ShopGiftItem gift;
+
+        /// <summary>本卡粒子是否已点亮（避免逐帧重复调用）</summary>
+        public bool particlesShown;
+    }
+
+    private readonly List<EnterAnimState> _enterAnimStates = new List<EnterAnimState>();
+
+    /// <summary>已被本模块置为透明、等待进场动画接管的卡片（构建中断时按这个还原，避免卡片"消失"）</summary>
+    private readonly HashSet<RectTransform> _enterAnimPendingCards = new HashSet<RectTransform>();
+
+    // 动画期间被临时停用的布局组件（Content 的竖排 + 金币档等子容器横排），动画结束时原样恢复
+    private readonly List<LayoutGroup> _animDisabledGroups = new List<LayoutGroup>();
+    private readonly List<ContentSizeFitter> _animDisabledFitters = new List<ContentSizeFitter>();
+
+    /// <summary>
+    /// 播放进店动画：铺列表结束后调用（每次进店只播一次）。
+    /// </summary>
+    private void PlayEnterAnimation()
+    {
+        // 不做动画也必须收掉进店 loading，否则全屏遮罩会一直盖着商店
+        if (!_pendingEnterAnim || !isActiveAndEnabled)
+        {
+            MessageSystem.Instance?.HideLoadingAnimation();
+            SetStoreContentVisible(true);
+            return;
+        }
+
+        _pendingEnterAnim = false;
+
+        // 上一轮可能被打断（快速进出店 / 连续重建），先把残留状态还原
+        StopEnterAnimation(true);
+
+        _enterAnimRoutine = StartCoroutine(EnterAnimationRoutine());
+    }
+
+    private IEnumerator EnterAnimationRoutine()
+    {
+        // 等一帧：让刚铺完的卡片先跑完布局，拿到真实的 anchoredPosition
+        yield return null;
+
+        // ★ 需求：进店 loading 至少显示约 1 秒。
+        //   礼包推荐位 / 卡片内容通常几十毫秒就算完了，直接收起会让遮罩一闪而过，
+        //   这里补足最短时长（用 realtime 计时，timeScale = 0 时照样走）。
+        while (Time.realtimeSinceStartup - _loadingShowRealtime < LoadingMinShowSeconds)
+        {
+            yield return null;
+        }
+
+        // ★ 礼包（推荐位 + 卡片内容）到这里已计算/铺完 → 收起进店 loading；
+        //   紧接着本协程就进入滑入循环，中间不留"空列表"的可见帧。
+        MessageSystem.Instance?.HideLoadingAnimation();
+        // 遮罩收起的同一帧放出商品列表：卡片本身还是 alpha=0，再由下面的滑入逐张点亮
+        SetStoreContentVisible(true);
+
+        List<RectTransform> targets = CollectEnterAnimTargets();
+
+        // 构建阶段被置为透明、但没进动画列表的卡（例如铺列表被中途打断）→ 立即恢复可见，
+        // 否则它们会永远停在 alpha=0，看起来像"丢卡"。
+        RestorePendingCardsExcept(targets);
+        _enterAnimPendingCards.Clear();
+
+        if (targets.Count == 0)
+        {
+            _enterAnimRoutine = null;
+            yield break;
+        }
+
+        // ★ 动画期间先关掉各级父容器的布局：
+        //   卡片位置由 VerticalLayoutGroup 接管，只要有一次布局重建（卡片内文本/角标变化都会触发）
+        //   就会把滑入中的位置刷回原位 → 滑动会「跳」。关掉后位置由本协程独占，结束时再交还并重建。
+        DisableLayoutForEnterAnim(targets);
+
+        _enterAnimStates.Clear();
+        for (int i = 0; i < targets.Count; i++)
+        {
+            RectTransform rt = targets[i];
+            if (rt == null) continue;
+
+            CanvasGroup cg = rt.GetComponent<CanvasGroup>();
+            if (cg == null) cg = rt.gameObject.AddComponent<CanvasGroup>();
+
+            var state = new EnterAnimState
+            {
+                rt = rt,
+                cg = cg,
+                basePosition = rt.anchoredPosition,
+                gift = rt.GetComponent<ShopGiftItem>()
+            };
+            _enterAnimStates.Add(state);
+
+            // ★ 动画开始前再次确认粒子是收起的：
+            //   粒子不受 CanvasGroup.alpha 影响，卡片还在透明的滑入阶段时粒子一旦亮着就会「浮在空中」。
+            if (state.gift != null) state.gift.HideParticlesForEnter();
+
+            rt.anchoredPosition = new Vector2(state.basePosition.x + EnterAnimOffsetX, state.basePosition.y);
+            cg.alpha = 0f;
+        }
+
+        float total = Mathf.Max(0f, (_enterAnimStates.Count - 1) * EnterAnimStagger) + EnterAnimDuration;
+        float elapsed = 0f;
+
+        while (elapsed < total)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            for (int i = 0; i < _enterAnimStates.Count; i++)
+            {
+                EnterAnimState s = _enterAnimStates[i];
+                if (s.rt == null || s.cg == null) continue;
+
+                float progress = Mathf.Clamp01((elapsed - i * EnterAnimStagger) / EnterAnimDuration);
+                float eased = EaseOutCubic(progress);
+
+                s.rt.anchoredPosition = new Vector2(
+                    Mathf.Lerp(s.basePosition.x + EnterAnimOffsetX, s.basePosition.x, eased),
+                    s.basePosition.y);
+                s.cg.alpha = eased;
+
+                // ★ 单张礼包卡动画播完（alpha 已到 1）→ 才点亮这张卡自己的粒子；
+                //   后面的卡还没轮到，继续保持无粒子，避免"卡片没出现粒子先飘出来"。
+                if (!s.particlesShown && progress >= 1f)
+                {
+                    s.particlesShown = true;
+                    if (s.gift != null) s.gift.ShowParticlesAfterEnter();
+                }
+            }
+
+            yield return null;
+        }
+
+        RestoreEnterAnimStates();
+        _enterAnimRoutine = null;
+    }
+
+    /// <summary>缓出曲线：起步快、收尾慢，滑入更有"惯入"感。</summary>
+    private static float EaseOutCubic(float t)
+    {
+        float f = 1f - t;
+        return 1f - f * f * f;
+    }
+
+    /// <summary>
+    /// 收集本次要进场的卡片，按「先上后下、再左后右」排序 —— 视觉顺序即播放顺序。
+    /// </summary>
+    private List<RectTransform> CollectEnterAnimTargets()
+    {
+        var targets = new List<RectTransform>();
+        if (parent == null) return targets;
+
+        ShopItemBase[] items = parent.GetComponentsInChildren<ShopItemBase>(false);
+        var active = new List<ShopItemBase>(items.Length);
+
+        for (int i = 0; i < items.Length; i++)
+        {
+            ShopItemBase item = items[i];
+            if (item == null) continue;
+            if (!item.gameObject.activeInHierarchy) continue;
+            if (item.transform is RectTransform rt && rt != null) active.Add(item);
+        }
+
+        active.Sort((a, b) =>
+        {
+            float dy = b.transform.position.y - a.transform.position.y;
+            if (Mathf.Abs(dy) > 1f) return dy > 0f ? 1 : -1;   // y 大的（更靠上）先播
+            return a.transform.position.x.CompareTo(b.transform.position.x);
+        });
+
+        for (int i = 0; i < active.Count; i++)
+            targets.Add((RectTransform)active[i].transform);
+
+        return targets;
+    }
+
+    /// <summary>停掉进店动画。restore=true 时把卡片位置 / 透明度还原，并把排版交还给 LayoutGroup。</summary>
+    private void StopEnterAnimation(bool restore)
+    {
+        if (_enterAnimRoutine != null)
+        {
+            StopCoroutine(_enterAnimRoutine);
+            _enterAnimRoutine = null;
+        }
+
+        if (restore) RestoreEnterAnimStates();
+    }
+
+    /// <summary>
+    /// 卡片刚创建/激活时调用（仅在本次进店还没播过动画时生效）：
+    /// 先把卡片置为透明，等进场动画轮到它时再淡入。
+    /// 否则分帧铺列表的过程中，卡片会先"亮"在原位，动画一开始又整体跳走 → 视觉上闪一下。
+    /// </summary>
+    private void PrepareCardForEnterAnim(ShopItemBase item)
+    {
+        if (!_pendingEnterAnim || item == null) return;
+
+        CanvasGroup cg = item.GetComponent<CanvasGroup>();
+        if (cg == null) cg = item.gameObject.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+
+        // ★ 铺列表阶段就收起礼包卡的粒子：粒子不受 CanvasGroup.alpha 控制，
+        //   卡片全透明时粒子会提前「亮」出来。等这张卡的进场动画播完再单独点亮。
+        if (item is ShopGiftItem gift) gift.HideParticlesForEnter();
+
+        if (item.transform is RectTransform rt) _enterAnimPendingCards.Add(rt);
+    }
+
+    /// <summary>把「已置透明但没进动画列表」的卡片恢复为可见。</summary>
+    private void RestorePendingCardsExcept(List<RectTransform> keepHidden)
+    {
+        if (_enterAnimPendingCards.Count == 0) return;
+
+        foreach (RectTransform rt in _enterAnimPendingCards)
+        {
+            if (rt == null) continue;
+            if (keepHidden != null && keepHidden.Contains(rt)) continue;
+
+            CanvasGroup cg = rt.GetComponent<CanvasGroup>();
+            if (cg != null) cg.alpha = 1f;
+
+            // 这张卡不进进场动画了（被中途打断/提前退出）→ 粒子也要跟着恢复，否则会一直缺粒子
+            if (rt.TryGetComponent(out ShopGiftItem gift)) gift.ShowParticlesAfterEnter();
+        }
+    }
+
+    /// <summary>把动画中的卡片复原（位置 + alpha 1），并恢复自动排版。</summary>
+    private void RestoreEnterAnimStates()
+    {
+        for (int i = 0; i < _enterAnimStates.Count; i++)
+        {
+            EnterAnimState s = _enterAnimStates[i];
+            if (s == null) continue;
+
+            if (s.rt != null) s.rt.anchoredPosition = s.basePosition;
+            if (s.cg != null) s.cg.alpha = 1f;
+
+            // ★ 收尾时统一还原粒子：正常结束时最后几张卡在循环内没走到 progress=1，
+            //   中途被打断时也可能还停在"粒子收起"状态 —— 两种情况都要点亮，否则卡片会缺粒子。
+            //   ShowParticlesAfterEnter 幂等，已点亮的不会重启。
+            if (s.gift != null && !s.particlesShown)
+            {
+                s.particlesShown = true;
+                s.gift.ShowParticlesAfterEnter();
+            }
+        }
+        _enterAnimStates.Clear();
+
+        // 还没轮到进场就被打断的卡，同样要恢复可见
+        if (_enterAnimPendingCards.Count > 0)
+        {
+            RestorePendingCardsExcept(null);
+            _enterAnimPendingCards.Clear();
+        }
+
+        RestoreLayoutAfterEnterAnim();
+    }
+
+    /// <summary>临时关掉参与动画的各级父容器布局（Content 的竖排 + 金币档等子容器的横排）。</summary>
+    private void DisableLayoutForEnterAnim(List<RectTransform> targets)
+    {
+        _animDisabledGroups.Clear();
+        _animDisabledFitters.Clear();
+
+        var seen = new HashSet<Transform>();
+
+        for (int i = 0; i < targets.Count; i++)
+        {
+            RectTransform rt = targets[i];
+            if (rt == null) continue;
+
+            Transform p = rt.parent;
+            if (p != null && seen.Add(p)) CollectLayoutsToDisable(p);
+
+            // 子容器的卡片：容器本身也可能被上一级布局摆位，一并把上一级收进来
+            Transform gp = p != null ? p.parent : null;
+            if (gp != null && gp == parent && seen.Add(gp)) CollectLayoutsToDisable(gp);
+        }
+
+        if (parent != null && seen.Add(parent)) CollectLayoutsToDisable(parent);
+    }
+
+    private void CollectLayoutsToDisable(Transform t)
+    {
+        if (t == null) return;
+
+        LayoutGroup group = t.GetComponent<LayoutGroup>();
+        if (group != null && group.enabled)
+        {
+            group.enabled = false;
+            _animDisabledGroups.Add(group);
+        }
+
+        ContentSizeFitter fitter = t.GetComponent<ContentSizeFitter>();
+        if (fitter != null && fitter.enabled)
+        {
+            fitter.enabled = false;
+            _animDisabledFitters.Add(fitter);
+        }
+    }
+
+    /// <summary>把动画期间关掉的布局全部打开，并重建一次让卡片归位。</summary>
+    private void RestoreLayoutAfterEnterAnim()
+    {
+        for (int i = 0; i < _animDisabledGroups.Count; i++)
+        {
+            if (_animDisabledGroups[i] != null) _animDisabledGroups[i].enabled = true;
+        }
+        for (int i = 0; i < _animDisabledFitters.Count; i++)
+        {
+            if (_animDisabledFitters[i] != null) _animDisabledFitters[i].enabled = true;
+        }
+
+        bool any = _animDisabledGroups.Count > 0 || _animDisabledFitters.Count > 0;
+        _animDisabledGroups.Clear();
+        _animDisabledFitters.Clear();
+
+        if (!any) return;
+
+        // 交还排版后立刻重建一次，避免下一帧才归位出现"闪一下"
+        // （界面已隐藏时不重建，否则会对非激活对象跑布局）
+        // 注意：parent 序列化的是 Transform，LayoutRebuilder 需要 RectTransform，这里显式转一次。
+        RectTransform contentRT = parent as RectTransform;
+        if (contentRT != null && contentRT.gameObject.activeInHierarchy)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRT);
     }
 
     /// <summary>缓存商店商品配置（只取一次）。</summary>
@@ -753,6 +1175,10 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
     {
         if (ShopManager.shopManager == null || ShopManager.shopManager.shopMode != ShopMode.DynamicStore)
         {
+            // 提前退出时把已置透明的卡片还原，避免整屏卡片不可见
+            RestoreEnterAnimStates();
+            MessageSystem.Instance?.HideLoadingAnimation();   // 退出路径也不能把 loading 留在屏幕上
+            SetStoreContentVisible(true);
             _buildRoutine = null;
             yield break;
         }
@@ -814,6 +1240,9 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
 
         yield return null;
         ResetScrollToTop();
+
+        // 收起态铺完 → 播进店动画（loading 在动画真正开始那一帧收起）
+        PlayEnterAnimation();
 
         _buildRoutine = null;
     }
@@ -898,6 +1327,7 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
             shopItem.gameObject.SetActive(true);
             // 复用缓存卡片不走 UpdateUI，这里补一次恢复（关店时隐藏的粒子/数量文本）
             if (shopItem is ShopGiftItem cachedGift) cachedGift.RestoreDecoration();
+            PrepareCardForEnterAnim(shopItem);   // 进店时先透明，等进场动画淡入
             return false;
         }
 
@@ -907,6 +1337,7 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
 
         ShopItemBase item = pool.GetObject<ShopItemBase>(parent);
         item.SetShopData(data);
+        PrepareCardForEnterAnim(item);           // 进店时先透明，等进场动画淡入
 
         if (siblingIndex >= 0) SetSiblingIndexIfNeeded(item.transform, siblingIndex);
         item.gameObject.SetActive(true);
@@ -1063,6 +1494,10 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
     /// </summary>
     private void HideAllCards()
     {
+        // ★ 收起全部卡片前先停掉进店动画并还原：池对象若带着 alpha=0 / 偏移位置被复用，
+        //   下次进店会「看不见」或位置错乱。
+        StopEnterAnimation(true);
+
         if (shopallItems != null)
         {
             foreach (var kv in shopallItems)
@@ -1073,6 +1508,19 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
         }
 
         ClearDynamicItems();
+
+        // 场景里预置的固定卡片（免费道具 / 金币档）不走创建流程，也要一并在进店时置透明
+        PrepareActiveCardsForEnterAnim();
+    }
+
+    /// <summary>把当前已激活、但还没被置透明的卡片统一登记到进场动画（进店那一次才执行）。</summary>
+    private void PrepareActiveCardsForEnterAnim()
+    {
+        if (!_pendingEnterAnim || parent == null) return;
+
+        ShopItemBase[] items = parent.GetComponentsInChildren<ShopItemBase>(false);
+        for (int i = 0; i < items.Length; i++)
+            PrepareCardForEnterAnim(items[i]);
     }
 
     /// <summary>

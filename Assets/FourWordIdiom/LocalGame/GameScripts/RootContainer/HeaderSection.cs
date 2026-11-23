@@ -93,7 +93,11 @@ public class HeaderSection : UIWindow
         
         // 红点（进店消费入口角标）
         // 同步自 WT 1.9.8：总榜未就绪（CanIsLaunch=false）时先不亮商店红点，避免启动瞬间闪一下
-        redpoint.SetActive(!GameDataManager.Instance.UserData.isHideShopRedPoint
+        // ★ 补充（2026-11-21）：金币栏入口红点同样要「通关第 19 关」之后才允许出现，
+        //   与金币栏上方的活动礼包角标同一门槛，避免新玩家开局就被红点引导进店。
+        bool shopEntryUnlocked = ShopManager.shopManager != null && ShopManager.shopManager.IsShopEntryRedPointUnlocked();
+        redpoint.SetActive(shopEntryUnlocked
+                           && !GameDataManager.Instance.UserData.isHideShopRedPoint
                            && GameDataManager.Instance.OverallRank.CanIsLaunch);
 
         // ★ 节日/周末礼包角标：有活动礼包时 sale 显示并展示礼包标签

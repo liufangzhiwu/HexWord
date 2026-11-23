@@ -1321,6 +1321,9 @@ public partial class ShopManager : MonoBehaviour
     {
         if (!AuditConfig.IsAuditOpen || !AuditConfig.RemoveAdsWeeklyUnlockHome) return false;
 
+        // ★ 需求（2026-11-21）：破冰礼包买过之后入口不能再亮（审核态也不例外）
+        if (IsBreakIcePurchasedInCurrentOffer) return false;
+
         if (CurrentSettlementGift == SettlementGiftKind.BreakIce && _settlementGiftItem != null)
         {
             // 已登记过破冰礼包（可能来自结算页）：只需保证入口可见
@@ -1617,39 +1620,52 @@ public partial class ShopManager : MonoBehaviour
     /// 背景：玩家买了永久去广告后，再买到含「限时去广告」的内购，奖励内容里仍会列一条 7;N，
     ///      领取弹窗（AwardScreen）和购买记录（BuyListScreen / PurchaseRecordItem）看起来像"又买了一份广告权益"。
     ///
-    /// 例外：这一单本身就是「永久去广告」商品（商品名 RemoveADS，或内容里含 6）→ 保留展示，
+    /// 例外：这一单本身就是「永久去广告」独立商品（商品名 RemoveADS）→ 保留展示，
     ///      否则玩家刚买完永久去广告，领取界面反而看不到自己买的东西。
     ///
-    /// 说明：只影响展示，不影响发放（发放侧见 ShopGiftItem.IsContentSkippedOnPurchase）。
-    ///      购买记录按「当前是否拥有永久去广告」判定，所以历史订单里的去广告项也会随之隐藏。
+    /// ★ 注意：不能再用「内容里含 6 就保留」来判定。明心/大觉/圆满礼包（Box2/Box3/Box4）
+    ///   现在内容里都带一条 6;1（永久去广告），若仍按老规则，玩家已购永久去广告后再买这几个礼包，
+    ///   领取界面和购买记录里又会列一条去广告。正确口径是「购买前是否已拥有」：
+    ///   领奖界面传购买前快照 <paramref name="ownedBeforePurchase"/>，已拥有 → 隐藏。
+    ///
+    /// 说明：只影响展示，不影响发放（发放侧见 GrantProductContent / ShopGiftItem.IsContentSkippedOnPurchase）。
+    ///      购买记录不传快照，按「当前是否拥有永久去广告」判定，所以历史订单里的去广告项也会随之隐藏。
     /// </summary>
     /// <param name="produceNameId">商品/订单的商品名（PurchaseRecord.produceNameId）</param>
-    /// <param name="productContent">商品/订单的内容快照（type;count 列表）</param>
-    public static bool ShouldHideRemoveAdsReward(string produceNameId, List<List<string>> productContent)
+    /// <param name="ownedBeforePurchase">
+    /// 「本单购买前」是否已拥有永久去广告（领奖界面传购买前快照）；
+    /// 传 null 时按当前是否拥有判定（购买记录 / 其它历史数据）。
+    /// </param>
+    public static bool ShouldHideRemoveAdsReward(string produceNameId, bool? ownedBeforePurchase = null)
     {
         ShopManager sm = shopManager;
         if (sm == null) return false;
 
         var userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
-        if (userData == null || !sm.IsRemoveAdsOwned()) return false;
+        if (userData == null) return false;
 
-        // 本单卖的就是永久去广告 → 保留（领取界面要让玩家看到买到了什么）
+        bool owned = ownedBeforePurchase ?? sm.IsRemoveAdsOwned();
+        if (!owned) return false;
+
+        // 本单卖的就是永久去广告独立商品 → 保留（领取界面要让玩家看到买到了什么）
         if (produceNameId == ProductRemoveAds) return false;
 
-        if (productContent != null)
-        {
-            for (int i = 0; i < productContent.Count; i++)
-            {
-                var row = productContent[i];
-                if (row == null || row.Count < 1) continue;
-
-                int type;
-                if (!int.TryParse(row[0], out type)) continue;
-                if (type == (int)LimitRewordType.RemoveAds) return false;
-            }
-        }
-
+        // 已拥有永久去广告 → 礼包里的去广告项（6 永久 / 7 限时）一律不展示
         return true;
+    }
+
+    /// <summary>
+    /// 「本次购买前」是否已拥有永久去广告的快照。
+    /// 由购买入口在发放奖励【之前】调用 <see cref="CaptureRemoveAdsOwnedBeforePurchase"/> 写入，
+    /// 供领取界面（AwardScreen）判断礼包里的去广告项要不要展示 ——
+    /// 只有「买之前没有、买完才有」的这种情况才需要把去广告项列出来。
+    /// </summary>
+    public bool RemoveAdsOwnedBeforeCurrentPurchase { get; private set; }
+
+    /// <summary>购买入口在发放奖励之前调用，记录当前（购买前）是否已拥有永久去广告。</summary>
+    public void CaptureRemoveAdsOwnedBeforePurchase()
+    {
+        RemoveAdsOwnedBeforeCurrentPurchase = IsRemoveAdsOwned();
     }
 
     public bool IsRemoveAdsActive()
@@ -1778,11 +1794,20 @@ public partial class ShopManager : MonoBehaviour
     /// <summary>
     /// 是否「永久去广告」商品：商品名是 RemoveADS，或礼包内容里带 6（RemoveAds）。
     /// 注意不含 7（限时去广告）—— 那个是消耗型，补单本身就靠购买记录去重。
+    ///
+    /// ★ 礼包（type=2）不参与本判定：明心/大觉/圆满礼包（Box2/Box3/Box4）内容里也带 6;1，
+    ///   但它们本质是「金币 + 道具 + 去广告」的一次性消耗礼包，一旦被当成非消耗型去广告商品：
+    ///     · 补单会被「永久去广告补单拦截」标记整单拦掉（玩家付了钱什么都收不到）；
+    ///     · 恢复购买会走 removeAdsOnlyRestore，只还去广告权益、金币/道具全丢。
+    ///   礼包按普通消耗型商品处理，补单靠 order_id 去重即可。
     /// </summary>
     private bool IsPermanentRemoveAdsProduct(ShopDataItem item)
     {
         if (item == null) return false;
         if (item.produceNameId == ProductRemoveAds) return true;
+
+        // 礼包：按消耗型处理（见上）
+        if (item.type == 2) return false;
 
         if (item.productContent != null)
         {
@@ -2707,6 +2732,8 @@ public partial class ShopManager : MonoBehaviour
     private const string PrefBreakIceCount = "shop_breakice_count";
     // 破冰弹窗是否真的在结束页弹出过（弹窗次数在策略阶段就 +1，这里单独记「实际弹过」）
     private const string PrefBreakIcePopupShown = "shop_breakice_popup_shown";
+    // 破冰礼包已成交：本活动期的截止时间（成交后入口立即收起，且本活动期不再出现）
+    private const string PrefBreakIcePurchasedUntil = "shop_breakice_purchased_until";
 
     // 调试用：手动清除「永久去广告」后，阻止平台非消耗型补单把它重新发回来
     private const string PrefRemoveAdsRestoreBlock = "shop_removeads_restore_block";
@@ -2728,6 +2755,7 @@ public partial class ShopManager : MonoBehaviour
         PlayerPrefs.DeleteKey(PrefBreakIceCooldownStart);
         PlayerPrefs.DeleteKey(PrefBreakIceCount);
         PlayerPrefs.DeleteKey(PrefBreakIcePopupShown);
+        PlayerPrefs.DeleteKey(PrefBreakIcePurchasedUntil);
 
         // 重置存档 = 回到干净状态：永久去广告的补单拦截也一并解除
         PlayerPrefs.DeleteKey(PrefRemoveAdsRestoreBlock);
@@ -2782,6 +2810,49 @@ public partial class ShopManager : MonoBehaviour
         PlayerPrefs.SetInt(PrefBreakIcePopupShown, 1);
         PlayerPrefs.Save();
          Debug.Log("[Shop][破冰] 结束页弹窗已触发 → 之后主页/结束页入口可展示");
+    }
+
+    /// <summary>
+    /// 破冰礼包是否已在「本轮活动期」内成交。
+    /// 成交后入口立即收起，且本轮活动结束前不再重新登记 / 不再弹窗（需求 2026-11-21）。
+    /// </summary>
+    public bool IsBreakIcePurchasedInCurrentOffer
+    {
+        get
+        {
+            string s = PlayerPrefs.GetString(PrefBreakIcePurchasedUntil, "");
+            DateTime until;
+            if (!DateTime.TryParse(s, out until)) return false;
+            return DateTime.Now < until;
+        }
+    }
+
+    /// <summary>
+    /// 记录「破冰礼包已成交」：写入本轮活动期的截止时间。
+    /// 活动没有明确截止时间（非周末/节假日弹出的情况，endTime = MinValue）→ 按成交时刻起 7 天内不再推。
+    /// </summary>
+    private void MarkBreakIcePurchased(DateTime offerEndTime)
+    {
+        if (offerEndTime == DateTime.MinValue)
+            offerEndTime = DateTime.Now.AddDays(BreakIceCooldownBaseDays);
+
+        PlayerPrefs.SetString(PrefBreakIcePurchasedUntil, offerEndTime.ToString("yyyy-MM-dd HH:mm:ss"));
+        PlayerPrefs.Save();
+         Debug.Log($"[Shop][破冰] 礼包已成交 → 入口立即收起，本活动期（至 {offerEndTime:yyyy-MM-dd HH:mm}）不再展示");
+    }
+
+    /// <summary>
+    /// 这笔购买是否算「破冰礼包成交」：
+    /// 破冰主力商品是一周去广告（RemoveAdsWeek），渠道没建周卡时会回退成最低价礼包，两种都算成交。
+    /// </summary>
+    private bool IsBreakIcePackPurchase(ShopDataItem item)
+    {
+        if (item == null) return false;
+        if (IsRemoveAdsProduct(item.produceNameId)) return true;
+
+        return _settlementGiftItem != null
+            && !string.IsNullOrEmpty(_settlementGiftItem.produceNameId)
+            && _settlementGiftItem.produceNameId == item.produceNameId;
     }
 
     /// <summary>
@@ -3091,12 +3162,25 @@ public partial class ShopManager : MonoBehaviour
 
                 case (int)LimitRewordType.RemoveAds:
                     // 内容里的 6;N = 永久去广告（N 无意义，按永久发）
+                    // ★ 已拥有永久去广告 → 礼包里的这条不发放（明心/大觉/圆满礼包含 6;1）。
+                    //   与展示口径一致（ShouldHideRemoveAdsReward / ShopGiftItem.IsContentSkippedOnPurchase）。
+                    if (item.produceNameId != ProductRemoveAds && IsRemoveAdsOwned())
+                    {
+                         Debug.Log($"[Shop]{logPrefix} 已拥有永久去广告，跳过内容里的永久去广告发放 (item={item.produceNameId})");
+                        break;
+                    }
                     GrantRemoveAdsByContent((int)LimitRewordType.RemoveAds, 0, item);
                     removeAdsGranted = true;
                     break;
 
                 case (int)LimitRewordType.RemoveDayAds:
                     // 内容里的 7;N = N 天限时去广告
+                    // ★ 已拥有永久去广告 → 限时去广告没有意义，不发放（也不叠加时长）
+                    if (IsRemoveAdsOwned())
+                    {
+                         Debug.Log($"[Shop]{logPrefix} 已拥有永久去广告，跳过内容里的限时去广告发放 (item={item.produceNameId})");
+                        break;
+                    }
                     GrantRemoveAdsByContent((int)LimitRewordType.RemoveDayAds, count * 24, item);
                     removeAdsGranted = true;
                     break;
@@ -3171,6 +3255,11 @@ public partial class ShopManager : MonoBehaviour
     ///   - 以前补发不写购买记录，玩家在「购买记录」里看不到这笔（bug50）。
     ///
     /// 幂等：同一 orderId 已经有购买记录 → 直接跳过（防止重复发货、重复累加支付统计）。
+    ///
+    /// 例外（非消耗型只恢复权益）：永久去广告（含去广告的礼包）在平台侧是非消耗型商品，
+    /// 换机/重装/清档/购买记录被裁剪时会被反复查回来。这类商品只恢复 6/7 去广告权益，
+    /// 金币(0)、蝴蝶(1)、提示(2)、自动完成(3)、复活(8)、无限体力(9) 等消耗品一律跳过，
+    /// 否则「恢复购买」会变成可以反复刷金币的漏洞（详见方法内的 removeAdsOnlyRestore）。
     /// </summary>
     /// <param name="item">平台回调的订单信息（order_id 一定要带上，用于幂等）</param>
     /// <param name="source">日志用来源标记（启动补单 / 恢复购买）</param>
@@ -3204,6 +3293,20 @@ public partial class ShopManager : MonoBehaviour
             return false;
         }
 
+        // ★ 永久去广告（非消耗型）的「恢复」只恢复权益，不补发消耗品。
+        //   这类商品的内容是「6;1#0;300」（去广告 + 300 金币），以前恢复时金币会跟着一起补：
+        //   换机/重装/清存档、购买记录被 100 条上限挤掉、或正常购买时 order_id 为空（写成 Guid），
+        //   都会让订单号去重失效 → 每恢复一次就白送一次金币（鸿蒙每次启动的已购查询都会把它查回来，可反复刷）。
+        //   权益侧（GrantRemoveAdsByContent）本身幂等，重复发无害；金币 / 道具 / 体力是消耗品，
+        //   恢复购买在语义上只该「把权益还回来」，所以这里只放行 6/7（去广告），其余类型一律跳过。
+        //   正常购买不受影响（走 ShopItemBase / GiftTable 的完整发货）。
+        bool removeAdsOnlyRestore = IsPermanentRemoveAdsProduct(shopDataItem);
+        if (removeAdsOnlyRestore)
+        {
+             Debug.Log($"[Shop][补发] {shopDataItem.produceNameId} 为永久去广告（非消耗型）→ " +
+                    $"本次只恢复去广告权益，跳过金币/道具等消耗品（order={item.order_id}, source={source}）");
+        }
+
          Debug.Log($"[Shop][补发] 开始发货: {shopDataItem.produceNameId}(id={shopDataItem.id}), " +
                 $"order={item.order_id}, price={item.LocalizedPrice}, currency={item.IsoCurrencyCode}, source={source}");
 
@@ -3216,6 +3319,17 @@ public partial class ShopManager : MonoBehaviour
                 int type = GetInt(dataitem[0]);
                 int count = GetInt(dataitem[1]);
                 if (count <= 0) continue;
+
+                // 非消耗型的恢复：只放行去广告类（6 永久 / 7 限时），其余（0 金币、1 蝴蝶、2 提示、
+                // 3 自动完成、8 复活、9 无限体力 …）都是消耗品，恢复了就等于凭空补发一次奖励。
+                if (removeAdsOnlyRestore
+                    && type != (int)LimitRewordType.RemoveAds
+                    && type != (int)LimitRewordType.RemoveDayAds)
+                {
+                     Debug.Log($"[Shop][补发] 跳过消耗品: type={type}, count={count}" +
+                            $"（永久去广告恢复只发权益，不发消耗品）");
+                    continue;
+                }
 
                  Debug.Log($"[Shop][补发] 发放: type={type}, count={count}");
                 switch (type)
@@ -3491,6 +3605,11 @@ public partial class ShopManager : MonoBehaviour
             // 内购成功弹窗里也要看到这份加赠（并进已有金币条目，不新增奖励项）
             MergeBonusGoldIntoContent(Game.self.Shop.CurrentShopDataItem, giftBonusGold);
         }
+
+        // ★ 记录「购买前是否已拥有永久去广告」快照：AwardScreen 的 OnEnable 在 ShowPanel 时就跑，
+        //   必须在这之前采集，否则发完礼包里的 6;1 之后状态已变成「已拥有」。
+        CaptureRemoveAdsOwnedBeforePurchase();
+
         SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
 
         // ★ 推送礼包（破冰 / 复购弹窗、结算页礼包按钮、广告失败页单道具）都走这里。
@@ -3864,6 +3983,15 @@ public partial class ShopManager : MonoBehaviour
 
         // ★ 破冰 / 复购礼包在活动期间可反复购买：购买后【不加】任何「已购买」锁，
         //   结算页入口照常保留到活动倒计时结束，玩家可以继续点开再次购买。
+        //
+        // ★ 需求（2026-11-21）：破冰礼包例外 —— 买过之后入口必须立即隐藏，本活动期也不再出现
+        //   （破冰是「首购引导」型礼包，卖的是去广告周卡，重复推没有意义）。
+        //   复购礼包仍保持「活动期内可反复购买」，不受影响。
+        if (CurrentSettlementGift == SettlementGiftKind.BreakIce && IsBreakIcePackPurchase(shopDataItem))
+        {
+            MarkBreakIcePurchased(GetSettlementGiftEndTime());
+            ClearSettlementGift("破冰礼包已购买，入口立即收起");
+        }
 
         ShopLimitData limit = GetOrCreateLimitData(shopDataItem);
 

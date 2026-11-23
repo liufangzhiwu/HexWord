@@ -124,7 +124,10 @@ public sealed class GameCoreManager : MonoBehaviour
 #if Unity_ShowLog || UNITY_EDITOR
         IsTrueAuto = false;
         AutoLevelTalbe.gameObject.SetActive(false);
-        Debug.unityLogger.logEnabled = false;
+        // ★ 必须为 true：这里是全局日志总开关，置 false 会把 Unity 控制台 / logcat / 日志文件
+        //   的 Debug.Log 全部掐掉（含商店 [Shop]计算决策权重 等诊断日志），
+        //   只有真正对外发布、且未定义 Unity_ShowLog 的包才走下面的 false 分支。
+        Debug.unityLogger.logEnabled = true;
 #else
         IsTrueAuto = false;
         AutoLevelTalbe.gameObject.SetActive(false);

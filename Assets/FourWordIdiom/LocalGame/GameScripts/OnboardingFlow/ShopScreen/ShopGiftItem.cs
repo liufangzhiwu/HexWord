@@ -16,6 +16,9 @@ using UnityEngine.UI;
 ///  - HandleSpecialTypeItems：空实现，阻止基类把 type=1 按"单物品道具"展示；
 ///  - HandleProductContentDisplay：礼包名 + 礼包底图 + （type=2）金币数量；
 ///      ★ 礼包底图（dibg）：特惠礼包B 且【已购买永久去广告】→ shopGiftTeB2，其它情况 → showIcon；
+///      ★ 礼包 icon（shopIcon）的 x 坐标：圆满礼包（Box4）→ 216，其它礼包 → 200（复位 Prefab 默认）；
+///      ★ Star 粒子（GiftName/FX_LightSpin 下的 Star 节点）：礼包价格 &gt; 30 元才显示，其它情况停止并隐藏；
+///      ★ 进店进场动画期间粒子一律收起（HideParticlesForEnter），单卡动画播完再点亮（ShowParticlesAfterEnter）；
 ///  - HandleMultiProductContent / InitGiftItems：创建多个 GiftItem
 ///      ★ 实际需要创建的数量 > 4 时用 giftHengItemPrefab（横向布局，父节点 giftsHengParent），否则用 giftItemPrefab（父节点 giftsParent）；
 ///      ★ 广告 / 体力类资源（RemoveAds / RemoveDayAds / InfiniteEnergy）优先挂到 itemEnergyList（若配置）；
@@ -63,6 +66,7 @@ public class ShopGiftItem : ShopItemBase
     [SerializeField] protected Text oldPriceText;                // 原价文本（有折扣时显示 originalPrice）
     [SerializeField] protected Text limitCountText;              // 限购次数文本
     [SerializeField] protected Text tagText;                     // 礼包标签
+    [SerializeField] protected GameObject starEffect;            // 礼包卡 Star 粒子（价格 > 30 元时显示；未挂时按名字兜底查找）
 
     // 说明：礼包内容描边色复用基类的 _color（原实现在这里重复声明同名字段，会隐藏基类字段）
 
@@ -101,6 +105,31 @@ public class ShopGiftItem : ShopItemBase
     /// </summary>
     private const string SpecialPackageBOwnedAdsBackground = "shopGiftTeB2";
 
+    // ======================= ★ 礼包 icon（shopIcon）的 x 坐标（按礼包区分） =======================
+
+    /// <summary>圆满礼包（Box4）的 produceNameId</summary>
+    private const string YuanmanPackId = "Box4";
+
+    /// <summary>圆满礼包：shopIcon（礼包卡上的 icon 节点）的 anchoredPosition.x</summary>
+    private const float YuanmanIconX = 216f;
+
+    /// <summary>其它礼包：shopIcon 的 anchoredPosition.x 复位值（与 ShopGiftItem.prefab 默认一致）</summary>
+    private const float CommonIconX = 200f;
+
+    // ======================= ★ 礼包卡 Star 粒子（按价格显示） =======================
+
+    /// <summary>
+    /// Star 粒子显示门槛：礼包价格【大于】该值（单位：人民币元，取 shop.csv 的展示价格 price）时才显示。
+    /// 30 元本身不显示（"大于 30"）。
+    /// </summary>
+    private const float StarEffectPriceThreshold = 30f;
+
+    /// <summary>Star 粒子节点（首次用到时解析并缓存；预制体未挂引用时按节点名兜底查找）。</summary>
+    private GameObject _starEffectObj;
+
+    /// <summary>Star 粒子是否已完成查找（含"确实没有"的情况，避免重复查找）。</summary>
+    private bool _starEffectResolved;
+
     /// <summary>本次已生成的 GiftItem 列表（用于回收，避免对象池复用时旧子物体残留）</summary>
     private readonly List<GiftItem> _spawnedGiftItems = new List<GiftItem>();
 
@@ -113,18 +142,35 @@ public class ShopGiftItem : ShopItemBase
     private bool _giftParticlesCached;
 
     /// <summary>
+    /// 缓存礼包卡上的粒子（排除 Star —— 它由价格规则 ApplyStarEffect 单独管理）。
+    /// includeInactive: true —— 卡片可能刚 SetActive、子节点尚未完全激活，用 false 会缓存成空数组。
+    /// </summary>
+    private void EnsureGiftParticlesCached()
+    {
+        if (_giftParticlesCached) return;
+        _giftParticlesCached = true;
+
+        var allParticles = GetComponentsInChildren<ParticleSystem>(true);
+        GameObject star = ResolveStarEffect();
+        var owned = new List<ParticleSystem>(allParticles.Length);
+        for (int i = 0; i < allParticles.Length; i++)
+        {
+            var ps = allParticles[i];
+            if (ps == null) continue;
+            // ★ Star 由价格规则单独管理，不能进这份缓存：否则 RestoreDecoration 会无视价格把它强行点亮
+            if (star != null && ps.gameObject == star) continue;
+            owned.Add(ps);
+        }
+        _giftParticles = owned.ToArray();
+    }
+
+    /// <summary>
     /// 关店时立即隐藏礼包卡上的「粒子 + 数量文本」。
     /// 只做隐藏，不改任何层级。
     /// </summary>
     public void HideDecorationImmediately()
     {
-        if (!_giftParticlesCached)
-        {
-            _giftParticlesCached = true;
-            // includeInactive: true —— 卡片可能刚 SetActive、子节点尚未完全激活，
-            // 用 false 会缓存成空数组
-            _giftParticles = GetComponentsInChildren<ParticleSystem>(true);
-        }
+        EnsureGiftParticlesCached();
 
         if (_giftParticles != null)
         {
@@ -140,6 +186,70 @@ public class ShopGiftItem : ShopItemBase
         }
 
         if (shopCountText != null) shopCountText.gameObject.SetActive(false);
+
+        // Star 粒子同样随关店立即隐藏；下次进店由 ApplyStarEffect 按价格重新决定是否点亮
+        GameObject star = ResolveStarEffect();
+        if (star != null && star.activeSelf)
+        {
+            var starPs = star.GetComponent<ParticleSystem>();
+            if (starPs != null) starPs.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            star.SetActive(false);
+        }
+    }
+
+    /// <summary>
+    /// ★ 进场动画开始前：只隐藏粒子（不动数量文本、不动商品数据）。
+    /// 粒子不是 UI 图形，不受 CanvasGroup.alpha 控制，卡片还在透明状态时粒子就会「先亮出来」，
+    /// 所以铺列表阶段（卡片 alpha=0）就要把粒子收起来，等这张卡的滑入动画播完再点亮。
+    /// 幂等：重复调用只是再确认一次隐藏。
+    /// </summary>
+    public void HideParticlesForEnter()
+    {
+        EnsureGiftParticlesCached();
+
+        if (_giftParticles != null)
+        {
+            for (int i = 0; i < _giftParticles.Length; i++)
+            {
+                var ps = _giftParticles[i];
+                if (ps == null) continue;
+
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                if (ps.gameObject.activeSelf) ps.gameObject.SetActive(false);
+            }
+        }
+
+        GameObject star = ResolveStarEffect();
+        if (star == null || !star.activeSelf) return;
+
+        var starPs = star.GetComponent<ParticleSystem>();
+        if (starPs != null) starPs.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        star.SetActive(false);
+    }
+
+    /// <summary>
+    /// ★ 单张礼包卡的进场动画播完后：恢复该卡的粒子。
+    /// Star 仍交给价格规则（价格 &gt; 30 元才亮）；已经在播的粒子不重启，避免末尾二次闪一下。
+    /// 幂等：动画正常结束与中途还原都会调用。
+    /// </summary>
+    public void ShowParticlesAfterEnter()
+    {
+        EnsureGiftParticlesCached();
+
+        if (_giftParticles != null)
+        {
+            for (int i = 0; i < _giftParticles.Length; i++)
+            {
+                var ps = _giftParticles[i];
+                if (ps == null) continue;
+
+                if (!ps.gameObject.activeSelf) ps.gameObject.SetActive(true);
+                if (!ps.isPlaying) ps.Play();
+            }
+        }
+
+        // Star：按当前礼包价格重新判定（> 30 元才显示）
+        ApplyStarEffect(shopDataItem);
     }
 
     /// <summary>
@@ -148,6 +258,8 @@ public class ShopGiftItem : ShopItemBase
     /// </summary>
     public void RestoreDecoration()
     {
+        EnsureGiftParticlesCached();
+
         if (_giftParticles != null)
         {
             for (int i = 0; i < _giftParticles.Length; i++)
@@ -312,7 +424,16 @@ public class ShopGiftItem : ShopItemBase
 
         var icon = LoadShopIcon(shopDataItem.showIcon + "_Icon");
         if (icon != null)
+        {
             shopIcon.sprite = icon;
+
+            if (shopDataItem.produceNameId != "BoxTime")
+            {
+                shopIcon.SetNativeSize();
+            }
+            
+        }
+          
     }
 
     // ======================= 阻止基类把 type=1 按"单物品道具"展示 =======================
@@ -355,6 +476,9 @@ public class ShopGiftItem : ShopItemBase
     {
         base.UpdateUI();
         RestoreDecoration();
+
+        // 对象池复用：图标 x 也按当前礼包重算一次（防只走 UpdateUI 时残留上一个礼包的位置）
+        ApplyGiftIconX(shopDataItem);
     }
 
     protected override void HandleProductContentDisplay(ShopDataItem data)
@@ -380,6 +504,13 @@ public class ShopGiftItem : ShopItemBase
             if (sprite != null)
                 dibg.sprite = sprite;
         }
+
+        // ★ 礼包 icon 的 x 坐标按礼包区分（圆满礼包 216，其它 200）；
+        //   礼包卡走对象池复用，必须每次刷新重设，否则会把上一个礼包的 x 残留下来。
+        ApplyGiftIconX(data);
+
+        // ★ Star 粒子：价格 > 30 元才显示（对象池复用必须每次按当前礼包重算）
+        ApplyStarEffect(data);
 
         // shopCountText 金币数量显示规则：
         //  - type=1 广告礼包：金币由 GiftItem 展示 → shopCountText 隐藏；
@@ -512,6 +643,92 @@ public class ShopGiftItem : ShopItemBase
         }
 
         InitGiftItems(selectedPrefab);
+    }
+
+    // ======================= ★ 礼包 icon 的 x 坐标（按礼包区分） =======================
+
+    /// <summary>
+    /// ★ 按礼包设置 shopIcon（礼包卡上的 icon 节点）的 x 坐标：
+    ///  - 圆满礼包（Box4）→ 216（圆满礼包的美术图构图更宽，需要整体右移）；
+    ///  - 其它礼包 → 200（复位为 Prefab 默认值，对象池复用必须显式复位，
+    ///    否则会把 216 残留给下一个礼包）。
+    /// 只改 x，y 与尺寸保持不变。
+    /// </summary>
+    private void ApplyGiftIconX(ShopDataItem data)
+    {
+        if (shopIcon == null) return;
+
+        float targetX = (data != null && data.produceNameId == YuanmanPackId)
+            ? YuanmanIconX
+            : CommonIconX;
+
+        RectTransform rt = shopIcon.rectTransform;
+        Vector2 pos = rt.anchoredPosition;
+
+        if (Mathf.Approximately(pos.x, targetX)) return;
+
+        pos.x = targetX;
+        rt.anchoredPosition = pos;
+    }
+
+    // ======================= ★ 礼包卡 Star 粒子（价格 > 30 元才显示） =======================
+
+    /// <summary>
+    /// 解析 Star 粒子节点：优先用 Prefab 上挂的 <see cref="starEffect"/>，
+    /// 没挂时按节点名 "Star" 在自身层级里兜底查找（含未激活节点）。只查一次并缓存。
+    /// </summary>
+    private GameObject ResolveStarEffect()
+    {
+        if (_starEffectResolved) return _starEffectObj;
+        _starEffectResolved = true;
+
+        if (starEffect != null)
+        {
+            _starEffectObj = starEffect;
+            return _starEffectObj;
+        }
+
+        // 兜底：按名字找（Star 在 GiftName/FX_LightSpin 下，默认非激活，必须 includeInactive）
+        var particles = GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < particles.Length; i++)
+        {
+            var ps = particles[i];
+            if (ps == null) continue;
+            if (ps.gameObject.name != "Star") continue;
+
+            _starEffectObj = ps.gameObject;
+            starEffect = _starEffectObj;   // 回填，后续直接命中
+            break;
+        }
+
+        return _starEffectObj;
+    }
+
+    /// <summary>
+    /// ★ 按礼包价格控制 Star 粒子显隐：
+    ///  - 价格 &gt; 30 元（shop.csv 展示价格 price）→ 激活并播放；
+    ///  - 否则（含 30 元、含取不到价格）→ 停止并清除已发射粒子，再隐藏。
+    /// 礼包卡走对象池复用，必须每次刷新都按当前礼包重算，否则高价礼包的 Star 会残留给下一个礼包。
+    /// </summary>
+    private void ApplyStarEffect(ShopDataItem data)
+    {
+        GameObject star = ResolveStarEffect();
+        if (star == null) return;
+
+        bool show = data != null && data.price > StarEffectPriceThreshold;
+
+        if (!show)
+        {
+            var ps = star.GetComponent<ParticleSystem>();
+            if (ps != null) ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            if (star.activeSelf) star.SetActive(false);
+            return;
+        }
+
+        if (!star.activeSelf) star.SetActive(true);
+
+        var system = star.GetComponent<ParticleSystem>();
+        if (system != null && !system.isPlaying) system.Play();
     }
 
     // ======================= ★ itemEnergyList 细节微调 =======================

@@ -911,6 +911,41 @@ public partial class ChessPlayArea
     }
     
     /// <summary>
+    /// 【结算】倒计时兑换成禅意分之后，按「含时间奖励的最终总分」刷新蝉蛹圆环。
+    /// 说明：
+    ///  1. 门槛口径与 CompleteStageRoutine 发蝉蛹时完全一致：都读 CurrentTotalScore，
+    ///     而 TimeBonusScore 在 FinalizeStageData 里已经提前并入（每 10 秒 = 2 分）。
+    ///     所以「局内 140 分 + 倒计时奖励 20 分 = 160 ≥ M2(150)」这一关就该出蝉蛹。
+    ///  2. 局内圆环只涨到「局内分数」，不含时间奖励。若这一步刚好补满，
+    ///     就从禅意分位置发一颗蝉蛹进度粒子飞入圆环，让玩家看清这颗蝉蛹是怎么来的。
+    /// </summary>
+    private void RefreshPupaProgressByTimeBonus()
+    {
+        if (pupaObj == null || !pupaObj.activeSelf) return;
+
+        int finalScore = ChessStageController.Instance.CurrentTotalScore; // 已含 TimeBonusScore
+        int threshold = ButterfliesManager.Instance.GetScoreThresholdForPupa();
+        if (threshold <= 0) return;
+
+        // 局内已经满环（分数早就达标）：不重复播粒子，只做一次数值兜底
+        if (pupaProgressBar.fillAmount >= 0.999f)
+        {
+            UpdatePupaProgress(finalScore, false);
+            return;
+        }
+
+        if (finalScore >= threshold && _zenScoreText != null)
+        {
+            // ★ 起飞点 = 禅意分：这颗蝉蛹正是时间兑换的禅意分补上来的
+            FlyToPupa(_zenScoreText.transform.position, finalScore);
+        }
+        else
+        {
+            UpdatePupaProgress(finalScore, false);
+        }
+    }
+
+    /// <summary>
     /// 显示 Emoji 关闭提示气泡
     /// </summary>
     private void ShowEmojiTip()

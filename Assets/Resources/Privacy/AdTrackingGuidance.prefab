@@ -53,7 +53,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 544819141270032009}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -154,8 +154,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1.35
-  m_Text: "\u901A\u8FC7\u5141\u8BB8\u5173\u8054\u6D3B\u52A8\uFF0C\u5E2E\u52A9\u652F\u6301\u6211\u4EEC\u514D\u8D39\u63D0\u4F9B\u6B64\u5E94\u7528\uFF0C\u5E76
-    <color=#FFF05D>\u51CF\u5C11\u60A8\u4E0D\u559C\u6B22\u7684\u5E7F\u544A</color>\u3002\r\n\u60A8\u53EF\u4EE5\u968F\u65F6\u5728\u7CFB\u7EDF\u8BBE\u7F6E\u4E2D\u66F4\u6539\u6B64\u8BBE\u7F6E\u3002"
+  m_Text: "\u901A\u8FC7\u5141\u8BB8\u5173\u8054\u6D3B\u52A8\uFF0C\u5E2E\u52A9\u652F\u6301\u6211\u4EEC\u514D\u8D39\u63D0\u4F9B\u6B64\u5E94\u7528\uFF0C\u5E76<color=#FFF05D>\u51CF\u5C11\u60A8\u4E0D\u559C\u6B22\u7684\u5E7F\u544A</color>\u3002\r\n\u60A8\u53EF\u4EE5\u968F\u65F6\u5728\u7CFB\u7EDF\u8BBE\u7F6E\u4E2D\u66F4\u6539\u6B64\u8BBE\u7F6E\u3002"
 --- !u!1 &2859069898731227261
 GameObject:
   m_ObjectHideFlags: 0
@@ -357,7 +356,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.78431374}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.9411765}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

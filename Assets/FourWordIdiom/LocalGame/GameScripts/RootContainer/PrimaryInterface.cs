@@ -76,6 +76,10 @@ public class PrimaryInterface : UIWindow
     [SerializeField] private Text Stagetxt;                // 关卡文本
     [SerializeField] private GameObject hardStageTable;          // 困难模式
     [SerializeField] private GameObject extrahardStageTable;     // 特别困难模式
+    /// <summary>「困难」标签下 0 号子对象的文本（显示当前关卡，懒查找并缓存）</summary>
+    private Text _hardTagLevelTxt;
+    /// <summary>「极难」标签下 0 号子对象的文本（显示当前关卡，懒查找并缓存）</summary>
+    private Text _extraHardTagLevelTxt;
     [SerializeField] private Button ModeBtn;          // 模式选择按钮
     [SerializeField] private Animator ModeIndicator;  // 模式按钮指示器
     [SerializeField] private GameObject nextUnlockTip;    // 下一种游戏元素提示
@@ -1467,6 +1471,15 @@ public class PrimaryInterface : UIWindow
             // 1. 开启自身专属 UI
             if (hardStageTable != null) hardStageTable.gameObject.SetActive(difficulty == LevelModes.Hard);
             if (extrahardStageTable != null) extrahardStageTable.gameObject.SetActive(difficulty == LevelModes.ExtraHard);
+
+            // 六边形玩法 + 困难模式：「困难」标签下 0 号子对象的文本显示当前关卡（例：关卡 15）
+            // 该 Text 在预制体里写的是占位文案，代码此前从未刷新过，切关后仍是旧内容。
+            // 「极难」标签结构相同（0 号子对象同为占位文案），一并刷新，避免同一处显示错误数字。
+            if (currentPlayMode is 1 or 3)
+            {
+                RefreshDifficultyTagLevelText(hardStageTable, ref _hardTagLevelTxt, "困难", Stage);
+                RefreshDifficultyTagLevelText(extrahardStageTable, ref _extraHardTagLevelTxt, "极难", Stage);
+            }
         
             // 2. 强制关闭拼字模式专属 UI，防止残留
             if (nextUnlockTip != null) nextUnlockTip.SetActive(false);
@@ -1590,6 +1603,39 @@ public class PrimaryInterface : UIWindow
             }
         }
         return LevelModes.Normal;
+    }
+
+    /// <summary>
+    /// 刷新难度标签（困难 / 极难）里的关卡文本：标签节点的 0 号子对象（Text）显示当前关卡，
+    /// 文案口径与主页关卡文本 <c>Stagetxt</c> 一致（多语言 Level + 空格 + 关卡数，例："关卡 15"）。
+    /// 节点只在首次调用时查找并缓存，之后复用。
+    /// </summary>
+    /// <param name="tagRoot">难度标签根节点（hardStageTable / extrahardStageTable）</param>
+    /// <param name="cachedTxt">缓存的标签文本组件</param>
+    /// <param name="tagName">标签名，仅用于日志</param>
+    /// <param name="stage">当前关卡号（六边形玩法取 CurrentHexStage）</param>
+    private void RefreshDifficultyTagLevelText(GameObject tagRoot, ref Text cachedTxt, string tagName, int stage)
+    {
+        if (tagRoot == null) return;
+
+        if (cachedTxt == null)
+        {
+            // 需求指定：取标签节点的 0 号子对象
+            Transform child = tagRoot.transform.childCount > 0 ? tagRoot.transform.GetChild(0) : null;
+            if (child != null)
+                cachedTxt = child.GetComponent<Text>();
+            // 兜底：结构被改过时退化为子节点里第一个 Text
+            if (cachedTxt == null)
+                cachedTxt = tagRoot.GetComponentInChildren<Text>(true);
+            if (cachedTxt == null)
+            {
+                Debug.LogWarning($"[PrimaryInterface] {tagName}标签下未找到 0 号子对象的 Text 组件，跳过关卡文本刷新");
+                return;
+            }
+        }
+
+        if (stage <= 0) stage = 1;
+        cachedTxt.text = MultilingualManager.Instance.GetString("Level") + " " + stage;
     }
 
     

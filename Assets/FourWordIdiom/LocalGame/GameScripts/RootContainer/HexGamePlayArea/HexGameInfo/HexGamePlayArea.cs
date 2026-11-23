@@ -265,9 +265,20 @@ public class HexGamePlayArea : UIWindow
         if (CurStageInfo.StageNumber >= 1)
         {
 #if UNITY_OPENHARMONY
-            Game.self?.Ads?.ShowBanner();
-            rectTransform.offsetMin = new Vector2(0, 150); // Left 和 Bottom
-            Debug.LogError("底部位置" + rectTransform.offsetMin);
+            // ★ 与拼字玩法（ChessPlayArea）同口径：Banner 统一走广告规则层，
+            //   不再直接 Game.self.Ads.ShowBanner()——直连会绕过「去广告生效 / 分层开关关闭」的拦截，
+            //   导致买了去广告（永久或限时）后六边形玩法里横幅照样出现。
+            if (AdRuleManager.Instance != null && AdRuleManager.Instance.CanShowBanner())
+            {
+                AdRuleManager.Instance.TryShowBanner();
+                rectTransform.offsetMin = new Vector2(0, 150); // Left 和 Bottom
+                Debug.LogError("底部位置" + rectTransform.offsetMin);
+            }
+            else
+            {
+                // Banner 不展示时不给底部额外留白，避免棋盘下方空一条
+                Debug.Log("[HexGamePlayArea] Banner 被拦截（去广告生效 / 分层开关关闭），底部不额外留白");
+            }
 #endif
         }
 

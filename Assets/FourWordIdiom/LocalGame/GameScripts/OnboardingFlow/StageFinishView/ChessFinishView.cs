@@ -1375,7 +1375,11 @@ public class ChessFinishView : UIWindow
         if (butterflyBtn.gameObject.activeSelf && ButterfliesManager.Instance.IsOpen
             && ChessStageController.Instance.EarnedPupaThisLevel > 0)
         {
-            yield return StartCoroutine(PlayPupaFlyAnim(ChessStageController.Instance.EarnedPupaThisLevel,Vector3.zero, false));
+            // ★ 蝉蛹进度粒子从「禅意分」位置起飞：本关这颗蝉蛹是倒计时兑换的禅意分补够 M2(150) 才拿到的，
+            //   从禅意分飞出才能把「分够了 → 蝉蛹来了」串起来；禅意分节点缺失时退回原来的面板中心。
+            bool fromZenScore = zenScoreText != null;
+            Vector3 pupaFlyStart = fromZenScore ? zenScoreText.transform.position : Vector3.zero;
+            yield return StartCoroutine(PlayPupaFlyAnim(ChessStageController.Instance.EarnedPupaThisLevel, pupaFlyStart, fromZenScore));
         }
 
         //  步骤三：树叶额外金币起飞（从中央飞向 Header 金币槽）

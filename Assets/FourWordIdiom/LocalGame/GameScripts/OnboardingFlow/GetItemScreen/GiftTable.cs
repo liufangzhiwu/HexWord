@@ -735,6 +735,10 @@ public class GiftTable : MonoBehaviour
             return;
         }
 
+        // ★ 记录「购买前是否已拥有永久去广告」快照：领取界面据此决定礼包里的去广告项要不要列出来
+        //   （必须在展示 AwardScreen / 发放奖励之前采集，否则发完永久去广告后状态就变了）
+        ShopManager.shopManager.CaptureRemoveAdsOwnedBeforePurchase();
+
         if (shopDataItem.GetProduceName() == item.ProductId)
         {
             SystemManager.Instance.HidePanel(PanelType.GetItemScreen);

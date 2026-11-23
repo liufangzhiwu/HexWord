@@ -171,13 +171,44 @@ public partial class ShopManager : MonoBehaviour
 
     // ======================= 活动礼包（特惠礼包）展示 =======================
 
-    /// <summary>特惠礼包命名用的本地化 key（文本形如「{0}特惠礼包」，{0}=节日名/周末）</summary>
+    /// <summary>特惠礼包命名用的标识 key（shop 表 nameKey 列；文本形如「{0}特惠礼包」，{0}=节日名/周末）</summary>
     public const string SpecialOfferNameKey = "SpecialOffer";
+
+    /// <summary>既非节日也非周末时的特惠礼包名称（特惠礼包A/B 均显示此名）。</summary>
+    public const string SpecialOfferPlainName = "特惠礼包";
 
     /// <summary>当前活动段的名称：节日名（如「国庆节」）／「周末」；非节日周末返回空串。</summary>
     public string GetCurrentHolidayName()
     {
         return GetTodayHolidayLabel();
+    }
+
+    /// <summary>
+    /// 是否为「特惠礼包A/B」这两个动态命名礼包。
+    /// shop 表里它们的 nameKey 都是 SpecialOffer，商品名ID 为 SpecialPackageA/B。
+    /// </summary>
+    public bool IsSpecialOfferPack(ShopDataItem item)
+    {
+        if (item == null) return false;
+        if (item.nameKey == SpecialOfferNameKey) return true;
+        return item.produceNameId == ProductSpecialPackageA || item.produceNameId == ProductSpecialPackageB;
+    }
+
+    /// <summary>
+    /// 特惠礼包A/B 的显示名（按当天日期动态变化，不再带 A/B 后缀）：
+    ///   节日 → 「{节日名}特惠礼包」，如「国庆节特惠礼包」「中秋节特惠礼包」；
+    ///   周末 → 「周末特惠礼包」；
+    ///   其他（工作日、仅节气等）→ 「特惠礼包」。
+    /// </summary>
+    public string GetSpecialOfferDisplayName()
+    {
+        string label = GetTodayHolidayLabel();
+
+        // 节气不是购物节日（bug45 同理），工作日节气也按「其他情况」处理
+        if (string.IsNullOrEmpty(label) || IsSolarTerm(label))
+            return SpecialOfferPlainName;
+
+        return label + SpecialOfferPlainName;
     }
 
     /// <summary>节日/周末表里当前活动段配置的固定文案标签（没配返回空串）。</summary>
@@ -236,13 +267,17 @@ public partial class ShopManager : MonoBehaviour
 
     /// <summary>
     /// 礼包展示名：
-    ///  - 普通礼包 → 本地化文本；
-    ///  - 活动礼包（特惠礼包）→ 按本地化 key「SpecialOffer」（{0}特惠礼包）用当前节日名/「周末」填充，
-    ///    例如「国庆节特惠礼包」「周末特惠礼包」；本地化表没配该 key 时用同样的中文格式兜底。
+    ///  - 特惠礼包A/B → 按当天日期动态命名（节日：xx节特惠礼包 / 周末：周末特惠礼包 / 其他：特惠礼包）；
+    ///  - 其他活动礼包 → 按本地化 key「SpecialOffer」（{0}特惠礼包）用当前节日名/「周末」填充；
+    ///  - 普通礼包 → 本地化文本。
     /// </summary>
     public string GetPackDisplayName(ShopDataItem item)
     {
         if (item == null) return "";
+
+        // ★ 特惠礼包A/B：名称只跟着日期走，与是否处于活动限时无关（其他情况也要显示「特惠礼包」）
+        if (IsSpecialOfferPack(item))
+            return GetSpecialOfferDisplayName();
 
         string raw = MultilingualManager.Instance != null
             ? MultilingualManager.Instance.GetString(item.name)
@@ -255,9 +290,6 @@ public partial class ShopManager : MonoBehaviour
 
         if (!string.IsNullOrEmpty(raw) && raw.Contains("{0}"))
             return string.Format(raw, label);
-
-        if (item.name == SpecialOfferNameKey)
-            return $"{label}特惠礼包";
 
         return raw;
     }
