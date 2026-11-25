@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using Button = UnityEngine.UI.Button;
 
@@ -1161,6 +1162,14 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
         if (ShopManager.shopManager == null) return false;
         if (!ShopManager.shopManager.IsLimitedOut(data)) return false;
 
+        // ★ 审核态：限购礼包买满后仍要展示（按钮置灰、不可重复购买），
+        //   不能在这里跳过，否则卡片会从商店里消失。
+        if (AuditConfig.IsAuditOpen)
+        {
+            LogManager.ShopLog($"审核态限购已买满，保留礼包并置灰按钮: {data.produceNameId}(id={data.id}, 限购={data.limited})");
+            return false;
+        }
+
         if (shopallItems != null && shopallItems.TryGetValue(data.id, out var exist) && exist != null)
             exist.gameObject.SetActive(false);
 
@@ -1251,6 +1260,8 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
     private void ExpandMoreChoices()
     {
         if (ShopManager.shopManager.shopMode != ShopMode.DynamicStore) return;
+        
+        moreChoiceBtn.gameObject.SetActive(false);
 
         _isExpanded = true;
 
@@ -1371,14 +1382,57 @@ public class ShopScreen : UIWindow, IBackGestureClosePanel
     /// </summary>
     public void RefreshAllRemoveAdsGiftPacks()
     {
-        foreach (var kv in shopallItems)
+        RefreshRemoveAdsRelatedCards();
+    }
+
+    /// <summary>
+    /// ★ 获得「永久去广告」后立刻刷新商店里所有相关卡片（不用关店重进）：
+    ///  1. 去广告独立商品卡（RemoveADS）→ 价格文案「已购买」、按钮置灰（点击也会被实时拦截）；
+    ///  2. 含去广告项的礼包卡（特惠 / 明心 / 大觉 / 圆满等）→ 去广告项不再展示、底图与排版同步刷新。
+    /// 卡片来自池子（shopallItems 含动态商店卡），所以必须逐张按当前状态重算，不能只刷购买的那一张；
+    /// 折叠态里未激活的卡也要刷 —— 展开时是直接复用的，不会重跑 SetShopData。
+    /// </summary>
+    public void RefreshRemoveAdsRelatedCards()
+    {
+        int giftRefreshed = 0;
+        int cardRefreshed = 0;
+        var visited = new HashSet<ShopItemBase>();
+
+        if (shopallItems != null)
         {
-            var gift = kv.Value as ShopGiftItem;
-            if (gift == null) continue;
-            if (gift.ContainsRemoveAdsContent())
-            {
-                gift.RefreshGiftContentAfterPurchase();
-            }
+            foreach (var kv in shopallItems)
+                RefreshOneRemoveAdsCard(kv.Value, visited, ref giftRefreshed, ref cardRefreshed);
+        }
+
+        // ★ 兜底：场景里预置、没登记进 shopallItems 的卡片（固定商店 / 免费道具位）
+        if (parent != null)
+        {
+            ShopItemBase[] presetItems = parent.GetComponentsInChildren<ShopItemBase>(false);
+            for (int i = 0; i < presetItems.Length; i++)
+                RefreshOneRemoveAdsCard(presetItems[i], visited, ref giftRefreshed, ref cardRefreshed);
+        }
+
+        LogManager.ShopLog($"[Shop]已获得永久去广告 → 刷新商店卡片：礼包 {giftRefreshed} 张、去广告卡 {cardRefreshed} 张");
+    }
+
+    private static void RefreshOneRemoveAdsCard(ShopItemBase item, HashSet<ShopItemBase> visited,
+        ref int giftRefreshed, ref int cardRefreshed)
+    {
+        if (item == null || !visited.Add(item)) return;
+
+        // 1. 礼包内容：去广告项隐藏 + 底图 / 排版 / 金币数
+        if (item is ShopGiftItem gift
+            && (gift.IsPermanentRemoveAdsCard() || gift.ContainsRemoveAdsContent()))
+        {
+            gift.RefreshGiftContentAfterPurchase();
+            giftRefreshed++;
+        }
+
+        // 2. 去广告独立商品卡：价格 / 按钮切到「已购买 + 置灰」
+        if (item.IsPermanentRemoveAdsCard())
+        {
+            item.RefreshRemoveAdsOwnedState();
+            cardRefreshed++;
         }
     }
 

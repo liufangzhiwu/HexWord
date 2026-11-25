@@ -378,6 +378,8 @@ public class DailyTaskManager : MonoBehaviour
             if ((TaskEvent)taskItem.id == TaskEvent.NeedLightLimit)
             {
                 int leftlimitcount = LimitTimeManager.Instance.GetLimitItems().Count - GameDataManager.Instance.UserData.timePuzzlecount;
+                // 幸运循环：最后一个灯笼可无限重复点亮，该任务永远可完成
+                if (LimitTimeManager.Instance.IsLuckyLoop()) leftlimitcount = int.MaxValue;
                 if (leftlimitcount < taskItem.values[0])
                 {
                     continue;

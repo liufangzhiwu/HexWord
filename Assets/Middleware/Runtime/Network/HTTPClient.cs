@@ -188,6 +188,10 @@ public class HTTPClient
 
     private void HandleResponse<T>(HTTPResponse response, Action<T> onSuccess, Action<string> onError)
     {
+        // ★ 用响应头 Date 校准「可信时间」：去广告 / 无限体力这类权益倒计时以服务器时间为准，
+        //   玩家把设备时间调到未来再买、事后调回来，都不会让剩余时长变长。
+        if (response != null) TrySyncServerTime(response);
+
         if (response != null && response.IsSuccess)
         {
             if (IsValidJson(response.DataAsText) == false)
@@ -247,6 +251,40 @@ public class HTTPClient
             Debug.LogError("响应为空，可能因连接超时或服务器无响应");
         }
     }
+    /// <summary>
+    /// 从响应头 <c>Date</c> 解析服务器时间并校准 <see cref="GameTime"/>。
+    /// Date 是 GMT（RFC1123），GameTime 内部按东八区换算（国内游戏，不做时区处理）。
+    /// 解析失败 / 服务端没给 Date 时静默跳过，走 GameTime 的离线兜底逻辑。
+    /// </summary>
+    private void TrySyncServerTime(HTTPResponse response)
+    {
+        try
+        {
+            var values = response.GetHeaderValues("date");
+            if (values == null || values.Count == 0)
+            {
+                // 只提示一次：没有 Date 头就退化成"设备时间 + 上次同步差值"，权益时长失去防篡改能力
+                if (!_warnedNoServerDate)
+                {
+                    _warnedNoServerDate = true;
+                    Debug.LogWarning("[HTTPClient] 响应未返回 Date 头，无法校准服务器时间（权益倒计时将走离线兜底）。" +
+                                     "请确认网关/反向代理没有剔除 Date 响应头。");
+                }
+                return;
+            }
+
+            DateTime serverTime;
+            if (GameTime.TryParseHttpDate(values[0], out serverTime))
+                GameTime.SyncServerTime(serverTime);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[HTTPClient] 解析服务器时间失败: {ex.Message}");
+        }
+    }
+
+    private bool _warnedNoServerDate;
+
     private bool IsValidJson(string json)
     {
         try

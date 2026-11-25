@@ -62,6 +62,12 @@ public class GetItemScreen : UIWindow, IBackGestureClosePanel
     /// <summary>当前道具的主礼包（取推荐位第一个，供其他逻辑兼容使用）</summary>
     private ShopDataItem shopDataItem;
 
+    /// <summary>曝光时刻快照（金币 / 灯泡 / 火箭），用于关闭时判定「曝光未付费」F+3。
+    /// 需求口径是「曝光那一刻玩家金币&lt;80 且灯泡、火箭=0」，不能在关闭时才取实时值。</summary>
+    private int _exposureGold;
+    private int _exposureBulbCount;
+    private int _exposureRocketCount;
+
     /// <summary>本次实例化的 GiftTable 列表（每次打开重新生成）</summary>
     private readonly List<GiftTable> _giftTableInstances = new List<GiftTable>();
 
@@ -97,8 +103,29 @@ public class GetItemScreen : UIWindow, IBackGestureClosePanel
         AudioManager.Instance.PlaySoundEffect("ShowUI");
 
         // ★ 每次打开道具弹窗重置购买标记，用于关闭时判定「曝光未付费」（C-RECO-04 F+3）
+        //   payinvoked：本次曝光是否拉起过收银台；payfailapplied：本次曝光里 +5 是否真的加上了。
+        //   两个标记一起决定关闭时那笔 +3 要不要跟随「取消」事件豁免 30 秒节流。
         if (ShopManager.shopManager != null)
+        {
             ShopManager.shopManager.paysuccess = false;
+            ShopManager.shopManager.payinvoked = false;
+            ShopManager.shopManager.payfailapplied = false;
+        }
+
+        // ★ 曝光快照：F+3 的判定口径是"曝光这一刻"的金币 / 道具持有数。
+        //   如果等到关闭时再取实时值，玩家在弹窗内看广告领了金币（≥80）就会被误判为不满足条件，
+        //   这次未付费曝光就漏记了。这里在弹窗打开时抓一次，关闭时原样带回。
+        UserData userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        _exposureGold = userData != null ? userData.Gold : 0;
+        _exposureBulbCount = GetToolCount(userData, 102);   // 提示灯（灯泡）
+        _exposureRocketCount = GetToolCount(userData, 104); // 火箭（自动完成）
+    }
+
+    private static int GetToolCount(UserData userData, int toolId)
+    {
+        if (userData == null || userData.toolInfo == null) return 0;
+        ToolInfo info;
+        return userData.toolInfo.TryGetValue(toolId, out info) && info != null ? info.count : 0;
     }
 
     protected override void OnDisable()
@@ -840,11 +867,16 @@ public class GetItemScreen : UIWindow, IBackGestureClosePanel
         //   ★ 必须把类型判断放在调用外层：本界面被灯泡/火箭(AutoComplete)/复活(ReStartTool)等共用，
         //     以前只在"传参"上做判断、方法照样被调用，方法内部再兜底去抓灯泡位候选，
         //     结果火箭界面关闭时把 F+3 记到了 BulbBox01 上（日志：来源=候选池兜底）。
+        //   ★ 需求口径：首次点支付又退出、且金币<80、灯泡和火箭=0 → 这笔 F 变化 = +5（取消）+ 3（曝光未支付）。
+        //     所以这里不再把「点过支付」排除掉，而是：若本次 +5 真的加上了（payfailapplied），
+        //     这笔 +3 作为**同一事件的后半段**豁免 30 秒节流；否则按常规节流判定。
         if (ShopManager.shopManager != null
             && !ShopManager.shopManager.paysuccess
             && limitRewordType == LimitRewordType.Tipstool)
         {
-            ShopManager.shopManager.AddBulbExposureFail(shopDataItem);
+            bool accompanyCancel = ShopManager.shopManager.payfailapplied;
+            ShopManager.shopManager.AddBulbExposureFail(shopDataItem,
+                _exposureGold, _exposureBulbCount, _exposureRocketCount, accompanyCancel);
         }
 
         base.Close();

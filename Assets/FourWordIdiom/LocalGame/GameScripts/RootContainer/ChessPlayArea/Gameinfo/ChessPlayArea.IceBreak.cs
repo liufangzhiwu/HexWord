@@ -19,6 +19,11 @@ public partial class ChessPlayArea
     private bool _isIceBreakShowing = false;            // 是否正在倒计时展示中
     private float _iceBreakCountdown = 0f;              // 18s 倒计时计时器
 
+    // ---- 破碎冰块动态视频点开关 / 概率（shop_layer.csv 的 BrokenIce = S_P）----
+    private bool _brokenIcePointEnabled = true;         // S：本关是否允许展示破冰视频点（开局按分层读取）
+    private float _brokenIceProbability = 1f;           // P：满足触发条件时的触发概率（0~1）
+    private bool _brokenIceRolled = false;              // 本关是否已做过概率判定（每关只判定一次）
+
     private float _noInitialStuckTimer = 0f;            // 无初始字卡点计时器 (8s)
     private float _operatedStuckTimer = 0f;             // 交互后未答对计时器 (15s)
     private bool _hasPlayerOperatedThisLevel = false;   // 本关是否已有操作
@@ -49,6 +54,22 @@ public partial class ChessPlayArea
         _noInitialStuckTimer = 0f;
         _operatedStuckTimer = 0f;
         _hasPlayerOperatedThisLevel = false;
+
+        // ★ 读取「破碎冰块动态视频点」控制参数：BrokenIce = S_P（S 开关 / P 触发概率）
+        //   与破冰礼包无关，只作用于本玩法里的破冰视频点。
+        _brokenIceRolled = false;
+        _brokenIcePointEnabled = true;
+        _brokenIceProbability = 1f;
+        if (ShopManager.shopManager != null)
+        {
+            bool enabled;
+            float probability;
+            if (ShopManager.shopManager.TryGetBrokenIceParams(out enabled, out probability))
+            {
+                _brokenIcePointEnabled = enabled;
+                _brokenIceProbability = probability;
+            }
+        }
 
         if (IceBreakTable != null)
         {
@@ -89,14 +110,17 @@ public partial class ChessPlayArea
 
         // 前提条件 场上是否存在未破除的冰块
         if (!HasRemainingIceOnBoard()) return;
-        
+
+        // ★ 破碎冰块动态视频点开关：BrokenIce 的 S=0 → 本关不展示
+        if (!_brokenIcePointEnabled) return;
+
         // --- 条件 1: 场上剩余可答成语均没有初始字，且 8s 内未答出任何成语 ---
         if (CheckIfAllAvailableWordsHaveNoInitial())
         {
             _noInitialStuckTimer += dt;
             if (_noInitialStuckTimer >= NO_INITIAL_WORD_STUCK_TIME)
             {
-                TriggerShowIceBreakEntry();
+                TryTriggerShowIceBreakEntry();
                 return;
             }
         }
@@ -111,10 +135,30 @@ public partial class ChessPlayArea
             _operatedStuckTimer += dt;
             if (_operatedStuckTimer >= OPERATED_STUCK_TIME)
             {
-                TriggerShowIceBreakEntry();
+                TryTriggerShowIceBreakEntry();
                 return;
             }
         }
+    }
+
+    /// <summary>
+    /// 满足触发条件后的概率判定（BrokenIce 的 P 位）。
+    /// 每关只判定一次：命中才展示破冰视频点；未命中本关不再展示
+    /// （否则条件一直满足，逐帧重掷会让概率形同虚设）。
+    /// </summary>
+    private void TryTriggerShowIceBreakEntry()
+    {
+        if (_brokenIceRolled) return;
+        _brokenIceRolled = true;
+
+        if (_brokenIceProbability < 1f && UnityEngine.Random.value > _brokenIceProbability)
+        {
+            Debug.Log($"[IceBreak] BrokenIce 概率未命中（P={_brokenIceProbability}，roll={UnityEngine.Random.value:F3}）" +
+                      $"→ 本关不展示破碎冰块视频点");
+            return;
+        }
+
+        TriggerShowIceBreakEntry();
     }
 
     /// <summary>

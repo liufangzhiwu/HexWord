@@ -275,7 +275,8 @@ public class OverallRankingScreen : UIWindow, IBackGestureClosePanel
                 OverallRankingManager.Instance.SyncLocalScoreToCache();
                 // 1. 将底层网络数据转换为 UI 展示数据
                 var worldStates = new List<OverallRankState>();
-                foreach (var entry in OverallRankingManager.Instance.TotalRanks)
+                // 世界榜只展示前 200 名，200 名以后统一显示为 "200+"（自己的名次在底部常驻条目展示）
+                foreach (var entry in OverallRankingManager.Instance.TotalRanks.Take(OverallRankingManager.FullRankDisplayCount))
                 {
                     worldStates.Add(ConvertEntryToState(entry, false));
                 }
@@ -302,7 +303,8 @@ public class OverallRankingScreen : UIWindow, IBackGestureClosePanel
             
                 //  1. 转换数据
                 var monthlyStates = new List<OverallRankState>();
-                foreach (var entry in OverallRankingManager.Instance.MonthlyRanks)
+                // 月榜同样只展示前 200 名，200 名以后统一显示为 "200+"
+                foreach (var entry in OverallRankingManager.Instance.MonthlyRanks.Take(OverallRankingManager.FullRankDisplayCount))
                 {
                     monthlyStates.Add(ConvertEntryToState(entry, true));
                 }

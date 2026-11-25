@@ -112,6 +112,7 @@ public class OverallRankItem : MonoBehaviour
         else // 四名及以后展示文字排名和金币
         {
             rankText.gameObject.SetActive(true);
+            // 世界榜/月榜统一：前 200 名显示真实名次，200 名后显示 "200+"
             rankText.text = OverallRankingManager.Format(state.Rank);
             // if (isMonthly && state.Reward > 0)
             // {

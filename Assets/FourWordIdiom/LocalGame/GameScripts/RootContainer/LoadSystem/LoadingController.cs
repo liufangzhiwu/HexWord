@@ -211,6 +211,10 @@ public class LoadingController : MonoBehaviour
         });
 
         yield return new WaitUntil(() => isLogined);
+        
+        
+        // ★ 启动审核配置拉取
+        ShopManager.shopManager.StartAuditStatusLoad();
 
         yield return APIGateway.Instance.LoginApi.GetUserData(LoadUserData);
         yield return APIGateway.Instance.LoginApi.FetchUserProfile((res) =>
@@ -220,6 +224,7 @@ public class LoadingController : MonoBehaviour
                 Debug.Log("获取用户信息成功！" + res.uid);
             }
         });
+        
     }
 
 
@@ -393,7 +398,10 @@ public class LoadingController : MonoBehaviour
 
         // ★ 服务器存档覆盖了本地数据 → 「上次离开时间」快照要跟着更新
         //   （商店流失回归权重靠它判断"最近 7 天未登录"，而 logoutTime 随后会被自动存档刷成现在）
-        GameDataManager.CaptureSessionLogoutTime(GameDataManager.Instance.UserData.logoutTime);
+        //   ★ 但只能保留更早的那个：服务器侧可能把 logoutTime 回填成"本次登录时间"，
+        //     直接覆盖会把真正的上次离开冲成 0 天（线上日志里快照 == 当前时间就是这个问题）。
+        //   ★ 只有换账号时才强制覆盖：此时旧快照属于别的身份，保留它就是错的。
+        GameDataManager.CaptureSessionLogoutTime(GameDataManager.Instance.UserData.logoutTime, force: _accountSwitched);
 
         if (serverFishData != null)
             GameDataManager.Instance.FishUserSave.InitData(serverFishData);

@@ -289,7 +289,7 @@ public class ChessDynamicHardSave
         return GetPayProtectRemainDays() > 0f;
     }
 
-    /// <summary>付费保护剩余天数（秒级精度，已过期返回 0）</summary>
+    /// <summary>付费保护剩余天数（秒级精度，已过期返回 0）。比较基准与去广告一致，用服务器时间。</summary>
     public float GetPayProtectRemainDays()
     {
         if (!LocalGameConfig.PayProtectSwitch) return 0f;
@@ -298,7 +298,8 @@ public class ChessDynamicHardSave
         DateTime endTime;
         if (!DateTime.TryParse(PayProtectEndTime, out endTime)) return 0f;
 
-        double remain = (endTime - DateTime.Now).TotalDays;
+        // ★ 与去广告（ShopManager.GetRemoveAdsRemainSeconds）同口径：GameTime.Now = 服务器时间
+        double remain = (endTime - GameTime.Now).TotalDays;
         return remain > 0 ? (float)remain : 0f;
     }
 

@@ -74,7 +74,7 @@ public partial class ChessStageController
     private IEnumerator LoadDynamicConfig()
     {
         string levelConfigName =
-            GameDataManager.Instance.UserData.ABName == "1" ? "ChessPackInfo_B" : "ChessPackInfo_A";
+            GameDataManager.Instance.UserData.ABName == "1" ? "ChessPackInfo_A" : "ChessPackInfo_A";
         // string levelConfigName = "ChessPackInfo_A";   
 
         StagePackInfo =

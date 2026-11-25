@@ -13,6 +13,8 @@ namespace Middleware
         void ShowReward(Define.AdKey key, Action<bool> callback);
         void ShowTipToolReward(Define.AdKey key, Action<bool> callback);
         void ShowInterstitial(Action<bool> callback);
+        void OnEnterHomeScene();
+        
         void OnEnterGameScene();
         
         void LoadBannerAD();

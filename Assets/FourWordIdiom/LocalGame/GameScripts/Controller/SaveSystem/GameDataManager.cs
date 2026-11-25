@@ -66,6 +66,14 @@ public class GameDataManager : SingletonMono<GameDataManager>
 
     public override void Init()
     {
+        // ★ 会话起点要最先记：之后任何一次 SaveData 都会把 logoutTime 刷成“现在”，
+        //   有了这个基准才能识别出“读到的时间其实是本会话刷出来的”，不再当成上次离开。
+        MarkSessionStart();
+
+        // ★ 最先初始化可信时间：读档时会立刻走 CheckShopBuyData 修复「未来时间购买」的脏数据，
+        //   必须在任何权益时间比较之前完成回拨检测。
+        GameTime.Init();
+
         lastSaveTime = DateTime.Now;
         Game.self.Analytics.OnSdkInit += AnalyticMgr.OnAnalyticsSdkInit;
         // Application.wantsToQuit += OnWantsToQuit;
@@ -105,11 +113,58 @@ public class GameDataManager : SingletonMono<GameDataManager>
     /// </summary>
     public static DateTime SessionLogoutTime { get; private set; } = DateTime.MinValue;
 
+    /// <summary>本次进程启动时刻（会话基准，只记一次）。</summary>
+    public static DateTime SessionStartTime { get; private set; } = DateTime.MinValue;
+
     /// <summary>抓取「上次离开时间」快照（启动加载存档 / 应用服务器存档时调用）。</summary>
-    public static void CaptureSessionLogoutTime(string rawLogoutTime)
+    public static void MarkSessionStart()
+    {
+        if (SessionStartTime != DateTime.MinValue) return;
+        SessionStartTime = DateTime.Now;
+        Debug.Log($"[GameDataManager] 会话启动时间快照: {SessionStartTime:yyyy-MM-dd HH:mm:ss}");
+    }
+
+    /// <summary>
+    /// 抓取「上次离开时间」快照（启动加载存档 / 应用服务器存档时调用）。
+    ///
+    /// 两条硬性约束，避免把“现在”当成“上次离开”：
+    ///   ① 时间必须早于本次会话启动 —— 启动阶段读到的时间如果 ≥ 启动时刻，只可能是
+    ///      本次已经存过档（SaveData 会把 logoutTime 刷成现在），或服务器按登录时间回填的，
+    ///      一律视为“已被刷新”，直接忽略；
+    ///   ② 多次装载（本地读档 → 云端数据覆盖）只保留**更晚且合法**的那个：
+    ///      “最近一次真实活动”越晚越准确（例如在别的设备上昨天玩过，服务器时间比本地新）。
+    /// force = true 用于换账号 / 清档：此时旧快照属于别的身份，必须无条件替换。
+    /// </summary>
+    public static void CaptureSessionLogoutTime(string rawLogoutTime, bool force = false)
     {
         DateTime parsed;
-        SessionLogoutTime = DateTime.TryParse(rawLogoutTime, out parsed) ? parsed : DateTime.MinValue;
+        if (!DateTime.TryParse(rawLogoutTime, out parsed) || parsed.Year < 2000)
+        {
+            Debug.LogWarning($"[GameDataManager] 上次离开时间无效，忽略: '{rawLogoutTime}'");
+            return;
+        }
+
+        if (SessionStartTime == DateTime.MinValue) MarkSessionStart();
+
+        // 本次会话开始时读到“现在/未来”，只可能是本会话刚存过档或服务器回填 → 不是上次离开
+        if (!force && parsed >= SessionStartTime)
+        {
+            Debug.LogWarning($"[GameDataManager] 读到的时间 {parsed:yyyy-MM-dd HH:mm:ss} 不早于本次启动 " +
+                             $"{SessionStartTime:yyyy-MM-dd HH:mm:ss}，判定为已被本会话刷新，忽略" +
+                             $"（保留上次离开快照: {(SessionLogoutTime == DateTime.MinValue ? "无" : SessionLogoutTime.ToString("yyyy-MM-dd HH:mm:ss"))}）");
+            return;
+        }
+
+        if (force || SessionLogoutTime == DateTime.MinValue || parsed > SessionLogoutTime)
+        {
+            SessionLogoutTime = parsed;
+            Debug.Log($"[GameDataManager] 上次离开时间快照更新: {SessionLogoutTime:yyyy-MM-dd HH:mm:ss}{(force ? "（强制覆盖）" : "")}");
+        }
+        else
+        {
+            Debug.Log($"[GameDataManager] 读到的时间 {parsed:yyyy-MM-dd HH:mm:ss} 早于已有快照 " +
+                      $"{SessionLogoutTime:yyyy-MM-dd HH:mm:ss}，保留更晚的（最近一次真实活动）");
+        }
     }
 
     #region 本地存档归属账号（防跨账号互相覆盖）
@@ -180,7 +235,8 @@ public class GameDataManager : SingletonMono<GameDataManager>
     public void ResetLocalSaveForOtherAccount()
     {
         playerProfile.InitData();
-        CaptureSessionLogoutTime(playerProfile.logoutTime);
+        // 身份已切换：旧快照属于别的账号，必须强制替换
+        CaptureSessionLogoutTime(playerProfile.logoutTime, force: true);
 
         fishUserSave.InitData();
         dynamicHard.InitData();
@@ -686,7 +742,7 @@ public class GameDataManager : SingletonMono<GameDataManager>
         playerProfile.InitData();
 
         // 清档后 logoutTime 变成"现在"，快照也要同步刷新，避免被当成"流失回归"
-        CaptureSessionLogoutTime(playerProfile.logoutTime);
+        CaptureSessionLogoutTime(playerProfile.logoutTime, force: true);
 
         fishUserSave.InitData();
         LevelProgressDict.Clear();

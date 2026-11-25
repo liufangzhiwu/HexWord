@@ -107,7 +107,8 @@ public class ShopLimitData
     {
         if (!isget || isoverdate) return false;
         if (string.IsNullOrEmpty(endtime)) return true;
-        return GetEndTime() > DateTime.Now;
+        // ★ 用 GameTime.Now（可信时间）而不是 DateTime.Now：设备时间被回拨后不能让权益"续命"
+        return GetEndTime() > GameTime.Now;
     }
 
     /// <summary>剩余有效期（秒），永久或无效返回 0</summary>
@@ -116,7 +117,7 @@ public class ShopLimitData
         if (string.IsNullOrEmpty(endtime)) return 0;
         DateTime end = GetEndTime();
         if (end == DateTime.MinValue) return 0;
-        return Math.Max(0, (end - DateTime.Now).TotalSeconds);
+        return Math.Max(0, (end - GameTime.Now).TotalSeconds);
     }
 
     /// <summary>深拷贝（避免修改共享引用）</summary>

@@ -125,8 +125,10 @@ public class FishUserSaveData
         rank = fishUserSaveData.rank;
         curround = fishUserSaveData.curround;
         matchCount = fishUserSaveData.matchCount;
-        if(aiSaveDatas!=null)
-            aiSaveDatas = new List<FishAISaveData>(fishUserSaveData.aiSaveDatas);
+        // ★ 判空必须判断来源数据（老版本 JSON 可能显式 "aiSaveDatas": null），否则 new List<>(null) 抛异常导致整档被重置
+        aiSaveDatas = fishUserSaveData.aiSaveDatas != null
+            ? new List<FishAISaveData>(fishUserSaveData.aiSaveDatas)
+            : new List<FishAISaveData>();
     }
 
     public void OpenRoundTime()
@@ -157,54 +159,79 @@ public class FishUserSaveData
    
     
     /// <summary>
-    /// 加载数据 
+    /// 加载数据
+    /// ★ 升级兼容加固：任何读档失败分支先备份原始文件再重置，避免进度被静默清零且无法恢复；
+    ///   解密失败时尝试按明文 JSON 解析（兼容老版本未加密存档）。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="data"></param>
     public void LoadData()
-    {           
+    {
         string filePath = Getfilepath;
 
         try
         {
-            if (File.Exists(filePath))
+            if (!File.Exists(filePath))
             {
-                string Dejson = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
-           
-                string json = SecurityProvider.RestoreData(Dejson); //解密   
-                Debug.Log("数据加载路径: " + filePath + "读取json数据" + Dejson + "解密后数据" + json);
-                // 验证 JSON 数据格式
-                if (!IsValidJson(json))
-                { 
-                    Debug.LogError("JSON 格式错误: " + json);
-                    InitData();
-                }
-                else
-                {
-                    FishUserSaveData fishUser = JsonConvert.DeserializeObject<FishUserSaveData>(json);               
-                    Debug.Log("竞速数据已加载: " + json+" 竞速回合数据 "+fishUser.curround);
-                    InitData(fishUser);
-                    Debug.Log("竞速回合数据: " + fishUser.curround);
-                    if (fishUser.curround<=0)
-                    { 
-                        Debug.Log("数据加载异常: " + json);
-                        InitData();
-                    }
-                }
-            }
-            else
-            {
-                Debug.LogWarning("没有找到数据文件, 返回默认数据.");
+                Debug.LogWarning("竞速存档不存在, 使用默认数据: " + filePath);
                 InitData();
-            }      
+                return;
+            }
+
+            string Dejson = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
+            string json = SecurityProvider.RestoreData(Dejson); //解密
+
+            // 解密失败（返回空串）时，兼容老版本未加密的明文存档
+            if (string.IsNullOrEmpty(json) && !string.IsNullOrEmpty(Dejson))
+            {
+                Debug.LogWarning("[FishUserSave] 解密失败，尝试按明文 JSON 解析（老版本兼容）");
+                json = Dejson;
+            }
+
+            Debug.Log("竞速数据加载: 路径=" + filePath + " 解密后=" + json);
+            if (!IsValidJson(json))
+            {
+                // 失败前先保留原始文件，防止后续 SaveData() 覆盖导致进度永久丢失
+                BackupCorruptFile(filePath, "invalid");
+                Debug.LogError("竞速存档 JSON 格式错误，已备份原文件并重置: " + json);
+                InitData();
+                return;
+            }
+
+            FishUserSaveData fishUser = JsonConvert.DeserializeObject<FishUserSaveData>(json);
+            if (fishUser == null || fishUser.curround <= 0)
+            {
+                BackupCorruptFile(filePath, "baddata");
+                Debug.LogError("竞速存档数据异常(curround=" + (fishUser?.curround ?? -1) + ")，已备份原文件并重置");
+                InitData();
+                return;
+            }
+
+            InitData(fishUser);
+            Debug.Log("竞速数据已加载: curround=" + fishUser.curround + " progress=" + fishUser.Puzzleprogress);
         }
         catch (Exception e)
         {
-            Console.WriteLine("竞速数据加载失败"+e);
+            BackupCorruptFile(filePath, "exception");
+            Debug.LogError("竞速数据加载失败，已备份原文件并重置: " + e);
             InitData();
         }
-        
-              
+    }
+
+    /// <summary>
+    /// 读档失败时把原始存档复制一份留底，避免被下一次 SaveData() 覆盖后无法追回。
+    /// </summary>
+    private void BackupCorruptFile(string filePath, string reason)
+    {
+        try
+        {
+            if (!File.Exists(filePath)) return;
+            string bak = filePath + "." + DateTime.Now.ToString("yyyyMMdd_HHmmss") + "." + reason + ".bak";
+            File.Copy(filePath, bak, true);
+            Debug.LogWarning("[FishUserSave] 已备份异常存档: " + bak);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("[FishUserSave] 备份异常存档失败: " + ex);
+        }
     }
     
     public bool IsValidJson(string json)

@@ -132,8 +132,8 @@ public class ChessDynamicHardManager : MonoBehaviour
 
     #region 付费保护（LoclalGameConfig 的 cypz_payProtect = X_D）
 
-    /// <summary>Egroup ≥ 该值 = 正在被加难度，付费保护才降档</summary>
-    public const int PayProtectGroupThreshold = 5;
+    /// <summary>Egroup ≥ 该值 = 正在被加难度，付费保护才降档（4 = 从 -1 字这一档开始保护）</summary>
+    public const int PayProtectGroupThreshold = 4;
 
     /// <summary>保护期内实际使用的档位 = Egroup − 该值</summary>
     public const int PayProtectGroupOffset = 2;
@@ -164,14 +164,16 @@ public class ChessDynamicHardManager : MonoBehaviour
         ChessDynamicHardSave save = GameDataManager.Instance.ChessDynamicHardSave;
         if (save == null) return;
 
-        // 注意：日期按真实支付时刻算，不做跨天的 0 点归一化
-        DateTime endTime = DateTime.Now.AddDays(days);
+        // ★ 起始时间与去广告权益一致：用 GameTime.Now（服务器时间），
+        //   不用设备时间 —— 玩家改表调到未来买、再调回来，保护期不会凭空变长/变短。
+        //   口径：任一支付时刻 + D 天，不做跨天的 0 点归一化
+        DateTime endTime = GameTime.Now.AddDays(days);
         bool changed = save.SetPayProtectEnd(endTime);
         save.SaveData();
 
         Debug.Log($"<color=#00FFFF>[动态难度 付费保护]</color> {source} 支付成功 → " +
                   (changed
-                      ? $"保护到期时刻更新为 <b>{save.PayProtectEndTime}</b>（现在 + {days} 天）"
+                      ? $"保护到期时刻更新为 <b>{save.PayProtectEndTime}</b>（服务器时间 + {days} 天）"
                       : $"原保护 {save.PayProtectEndTime} 更晚，保持不变") +
                   $" | 剩余 {save.GetPayProtectRemainDays():F2} 天");
     }
@@ -538,9 +540,9 @@ public class ChessDynamicHardManager : MonoBehaviour
         change = levelDiff.wordChange;
 
         // ---- 付费保护：只偏移"读取的档位"，E 值与存档里的 Egroup 都不动（保护到期自动恢复） ----
-        //   仍在保护期内，且 Egroup ≥ 5（正在被加难度）→ 实际使用的档位 = Egroup − 2
-        //   例：Egroup=7（-4 字）→ 用档位 5（-2 字）；Egroup=8（-5 字）→ 用档位 6（-3 字）
-        //   档位低于 5 / 不在保护期内 → 原样走
+        //   仍在保护期内，且 Egroup ≥ 4（正在被加难度）→ 实际使用的档位 = Egroup − 2
+        //   例：Egroup=4（-1 字）→ 用档位 2（+1 字）；Egroup=7（-4 字）→ 用档位 5（-2 字）
+        //   档位低于 4 / 不在保护期内 → 原样走
         if (levelDiff.groupId >= PayProtectGroupThreshold && IsPayProtectActive())
         {
             int shiftedGroupId = levelDiff.groupId - PayProtectGroupOffset;

@@ -120,6 +120,14 @@ namespace Middleware
         public void RequestTrackingConsent()
         {
 #if UNITY_OPENHARMONY
+            // ★ 需求：只有引导页点「继续」（或玩家在设置里主动点「广告关联」）才允许拉起系统追踪弹窗。
+            //   这里做最后一道硬约束 —— 任何绕过引导页的调用都会被挡掉，不会抢在引导页之前弹系统框。
+            if (!AdTrackingPromptGate.Consume())
+            {
+                Debug.LogError("[OAID] 已拦截广告追踪授权请求：引导页还没点「继续」，系统弹窗只允许由引导页触发");
+                return;
+            }
+
             try
             {
                 OpenHarmonyJSObject adsObj = OHSDKKitManager.OHKitAdsManagerObj;
@@ -171,6 +179,15 @@ namespace Middleware
         public void QueryTrackingConsent()
         {
 #if UNITY_OPENHARMONY
+            // ★ 引导页正在等玩家点「继续」时一律不查：
+            //   鸿蒙的 requestPermissionsFromUser 在权限"未决"时会直接弹系统框，
+            //   这种"静默查询"会把系统框抢在引导页前面弹出来（本次需求要修的问题）。
+            if (!AdTrackingPromptGate.CanQuerySilently)
+            {
+                Debug.Log("[OAID] 跳过广告追踪状态静默查询：引导页正在等待玩家点「继续」，查询在未决时会拉起系统框");
+                return;
+            }
+
             try
             {
                 OpenHarmonyJSObject adsObj = OHSDKKitManager.OHKitAdsManagerObj;
@@ -212,6 +229,13 @@ namespace Middleware
         public void OpenTrackingSettings()
         {
 #if UNITY_OPENHARMONY
+            // 设置弹窗也必须由用户动作触发（播放器点开「广告关联」），避免启动期被动弹出
+            if (!AdTrackingPromptGate.Consume())
+            {
+                Debug.LogError("[OAID] 已拦截广告关联设置弹窗：没有用户主动点击（引导页未点「继续」/ 未点设置开关）");
+                return;
+            }
+
             try
             {
                 OpenHarmonyJSObject adsObj = OHSDKKitManager.OHKitAdsManagerObj;

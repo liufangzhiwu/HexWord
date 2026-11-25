@@ -245,6 +245,13 @@ public class UserData
     public bool isDayEnterLimint; // 限时活动重置后是否为首次进入
 
     /// <summary>
+    /// 限时活动「幸运循环」标记：最后一个灯笼（最后一段）已至少完成过一次。
+    /// 置位后 timerePuzzleid 固定在最后一段、timePuzzlecount 每完成一次就回到该段起点，
+    /// 玩家可以反复领取最后一个灯笼的奖励，直到 0 点/活动刷新（ResetDailyData）时清零。
+    /// </summary>
+    public bool luckyLoopEntered;
+
+    /// <summary>
     /// 每日任务数据
     /// </summary>
     /// 
@@ -555,6 +562,7 @@ public class UserData
         limitEndTime = null;
         isDayEnterLimint = true;
         timePuzzlecount = 0;
+        luckyLoopEntered = false;
         isNeedShowHelp = true;
         //每日任务数据
         completeTaskList = new List<CompleteTaskData>();
@@ -820,6 +828,7 @@ public class UserData
         limitEndTime = user.limitEndTime;
         isDayEnterLimint = user.isDayEnterLimint;
         timePuzzlecount = user.timePuzzlecount;
+        luckyLoopEntered = user.luckyLoopEntered;   // 幸运循环标记（旧存档无此字段 → false）
         isNeedShowHelp = user.isNeedShowHelp;
         //每日任务数据
         completeTaskList = user.completeTaskList;
@@ -1130,6 +1139,7 @@ public class UserData
         limitEndTime = null;
         timePuzzlecount = 0;
         isDayEnterLimint = true;
+        luckyLoopEntered = false;   // 活动刷新（跨天）后幸运循环一并重置
         //每日通过数据
         dayPassStageCount = 0;
         chessdayPassStageCount = 0;
@@ -1196,6 +1206,11 @@ public class UserData
 
             if (shopdata.isget && shopdata.adstype == (int)LimitRewordType.RemoveDayAds)
             {
+                // ★ 一次性修复：购买时把设备时间调到未来 → gettime / endtime 都落在未来，
+                //   设备时间调回真实时间后剩余时长会凭空变长（线上反馈的「7 天周卡变成 286时55分」）。
+                //   这里把整条记录按「gettime 超出当前时间的量」整体平移回真实时间轴，总时长不变。
+                RepairFuturePurchasedRemoveAds(shopdata);
+
                 // ★ bug64 修复：以前固定用「gettime + 7 天」判过期，只要玩家买到的不是 7 天（或中途续过期），
                 //   就会被误标 isoverdate；重启补单时补单逻辑看到「已过期」就按 Now + 时长重新计时，
                 //   玩家剩余的去广告时长被直接覆盖。
@@ -1210,7 +1225,8 @@ public class UserData
 
                 if (adEndTime != DateTime.MinValue)
                 {
-                    bool expired = (adEndTime - DateTime.Now).TotalMinutes <= 0;
+                    // ★ 用 GameTime.Now：设备时间被回拨后不能让权益"续命"
+                    bool expired = (adEndTime - GameTime.Now).TotalMinutes <= 0;
                     if (expired)
                     {
                         shopdata.isoverdate = true;
@@ -1224,6 +1240,46 @@ public class UserData
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 小于该容差的「未来时间」视为正常校时抖动，不做修复。
+    /// 权益时间已改为以服务器时间为准（<see cref="GameTime"/>），且国内单时区、不做时区换算，
+    /// 正常记录不可能出现 gettime 比当前时间还晚 2 小时以上 —— 只看"超前量是不是天级"即可。
+    /// </summary>
+    private const int FuturePurchaseRepairToleranceMinutes = 2 * 60;
+
+    /// <summary>
+    /// 修复「用未来时间购买」的限时去广告记录。
+    ///
+    /// 判定：记录的 gettime 比当前时间还晚（超过容差）—— 正规购买不可能出现。
+    /// 处理：把 gettime / endtime 同时减去这段超前量（总时长 endtime-gettime 不变），
+    ///       平移后 gettime == now，不会重复触发。
+    ///
+    /// 注：这里必须用 <see cref="GameTime.Now"/> 而不是 DateTime.Now —— 已进入"修正后时间轴"的记录
+    ///     （gettime 本身已经带 offset）用原始时间比较会被判成"未来购买"，从而被误缩短。
+    /// </summary>
+    private void RepairFuturePurchasedRemoveAds(ShopLimitData shopdata)
+    {
+        DateTime getTime = shopdata.GetGetTime();
+        if (getTime == DateTime.MinValue) return;
+
+        TimeSpan ahead = getTime - GameTime.Now;
+        if (ahead.TotalMinutes <= FuturePurchaseRepairToleranceMinutes) return;
+
+        DateTime oldEnd = shopdata.GetEndTime();
+        if (oldEnd != DateTime.MinValue)
+            shopdata.SetEndTime(oldEnd - ahead);
+        shopdata.SetGetTime(getTime - ahead);
+
+        // 修完立刻按新时间轴重算过期标记
+        DateTime fixedEnd = shopdata.GetEndTime();
+        if (fixedEnd != DateTime.MinValue && (fixedEnd - GameTime.Now).TotalMinutes <= 0)
+            shopdata.isoverdate = true;
+
+        Debug.LogWarning($"[ShopLimit] 检测到用未来时间购买的去广告记录，已修正 {ahead.TotalHours:F2} 小时：" +
+                         $"购买时间 {getTime:yyyy-MM-dd HH:mm:ss} → {shopdata.GetGetTime():yyyy-MM-dd HH:mm:ss}，" +
+                         $"结束时间 {oldEnd:yyyy-MM-dd HH:mm:ss} → {fixedEnd:yyyy-MM-dd HH:mm:ss}");
     }
 
     public float GetBestClearTime(int wordCount)

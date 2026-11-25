@@ -1495,8 +1495,8 @@ public class PrimaryInterface : UIWindow
             if (extrahardStageTable != null) extrahardStageTable.gameObject.SetActive(false);
             
             int stageBgIndex = ChessStageController.Instance.GetLevelGameplayID(Stage);
-            if (nextStageImage != null)
-                nextStageImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
+            // if (nextStageImage != null)
+            //     nextStageImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("stageBtnBg" + stageBgIndex, "UI_MainBase");
             if (stageSpace != null)
                 stageSpace.SetActive(stageBgIndex is not (0 or 4 or 5 or 6));
 

@@ -6,7 +6,7 @@ using UnityEngine;
 /// <summary>
 /// 用户分层配置（来源：商店表"用户分层付费设计20260906（禅意之境）/（成语消消闯关）"）
 /// 相关字段：用户标记 AdTracking（开关_活跃天数）与 AdTrackingStimulate（S_G）、
-///          AdFailed（S_F_T_A_B_C 广告失败策略）、BrokenIce（破冰礼包冷却 P）、
+///          AdFailed（S_F_T_A_B_C 广告失败策略）、BrokenIce（破碎冰块动态视频点 S_P）、
 ///          InterAdsGroup（插屏分组）、特惠礼包主动弹出（开/关，第11列）。
 /// </summary>
 [Serializable]
@@ -14,7 +14,7 @@ public class ShopLayerConfig
 {
     public string userLayer = "";   // 当前用户分层（初始为空，第一次 GetCurrentUserLayer 时被填充）
     public string adFailed = "1_1_60_4_-1_3";   // 广告失败策略 S_F_T_A_B_C
-    public string brokenIce = "1_1";      // 破冰礼包策略（开关_P冷却参数）
+    public string brokenIce = "1_1";      // 破碎冰块动态视频点（开关_触发概率 S_P，与破冰礼包无关）
     public string interAdsGroup = "0";    // 插屏分组（插屏>3 次数判断用）
     public string adTrackingStimulate = "0_0"; // 广告追踪刺激 S_G（活跃天数/金币数）
     public bool allowSpecialPopup = true; // 特惠礼包主动弹出（开/关）
@@ -582,19 +582,20 @@ public partial class ShopManager : MonoBehaviour
     {
         if (userData == null) return 0;
 
-#if Unity_ShowLog || UNITY_EDITOR
-        // 调试：按首次登录日期实时算生命周期天数，改本地时间即可生效
-        if (!string.IsNullOrEmpty(userData.firstLoginTime) &&
-            DateTime.TryParse(userData.firstLoginTime, out var firstLogin))
-        {
-            int lifeDays = (DateTime.Now.Date - firstLogin.Date).Days + 1;
-            return lifeDays > 0 ? lifeDays : 1;
-        }
-        // 首次登录时间缺失时回退累加值
+// #if Unity_ShowLog || UNITY_EDITOR
+//         // 调试：按首次登录日期实时算生命周期天数，改本地时间即可生效
+//         if (!string.IsNullOrEmpty(userData.firstLoginTime) &&
+//             DateTime.TryParse(userData.firstLoginTime, out var firstLogin))
+//         {
+//             int lifeDays = (DateTime.Now.Date - firstLogin.Date).Days + 1;
+//             return lifeDays > 0 ? lifeDays : 1;
+//         }
+//         // 首次登录时间缺失时回退累加值
+//         return userData.activeDayCnt;
+// #else
+        //活跃周期天数
         return userData.activeDayCnt;
-#else
-        return userData.activeDayCnt;
-#endif
+//#endif
     }
 
     /// <summary>
@@ -1469,6 +1470,39 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 读取「破碎冰块动态视频点」参数（shop_layer.csv 的 BrokenIce 列，格式 <c>S_P</c>）：
+    ///   S = 开关（1 开 / 0 关）——0 时拼字玩法里本关不展示破冰视频点；
+    ///   P = 满足该视频点触发条件时的触发概率（0~1，越界自动收敛，缺省 1 = 100%）。
+    /// 例：<c>BrokenIce=1_0.1</c> → 开启，条件满足时 10% 概率触发。
+    /// ★ 只服务于 ChessPlayArea 的破冰视频点，与「破冰礼包」主动弹窗无关。
+    /// </summary>
+    /// <returns>配置是否可用（分层配置未加载时返回 false，调用方按默认值处理）</returns>
+    public bool TryGetBrokenIceParams(out bool enabled, out float probability)
+    {
+        enabled = true;
+        probability = 1f;
+
+        string raw = _layerConfig != null ? _layerConfig.brokenIce : null;
+        if (string.IsNullOrEmpty(raw)) return false;
+
+        string[] parts = raw.Split('_');
+        if (parts.Length >= 1)
+            enabled = parts[0].Trim() == "1";
+
+        if (parts.Length >= 2)
+        {
+            float p;
+            if (float.TryParse(parts[1].Trim(), System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out p))
+            {
+                probability = Mathf.Clamp01(p);
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// 破冰礼包策略。
     /// ★ 2026-11-21 口径：同一个活动期内只主动弹一次；之后结算只登记入口按钮，不再自动弹窗。
     /// </summary>
@@ -1479,12 +1513,9 @@ public partial class ShopManager : MonoBehaviour
     /// </param>
     public bool TryShowBreakIcePopup(int interAdsCount, bool entryOnly = false)
     {
-        string[] bi = _layerConfig.brokenIce.Split('_');
-        if (bi.Length < 1 || bi[0] != "1")
-        {
-            LogShop("TryShowBreakIcePopup 跳过: BrokenIce 开关关闭");
-            return false;
-        }
+        // ★ 注意：破冰礼包与 shop_layer.csv 的 BrokenIce 列**无关**。
+        //   BrokenIce（S_P）只控制「拼字玩法里的破碎冰块动态视频点」（见 ChessPlayArea.IceBreak），
+        //   以前这里误读 bi[0] 当开关，会让视频点的开关顺带关掉破冰礼包，已移除。
         if (!IsIaaLayer())
         {
             LogShop("TryShowBreakIcePopup 跳过: 非 IAA 层");
@@ -1512,7 +1543,20 @@ public partial class ShopManager : MonoBehaviour
         //   - 无倒计时（非周末/节假日弹出的情况）→ 退化为从弹窗那一刻算，保持原行为。
         int cooldownDays = BreakIceCooldownBaseDays + BreakIcePopupCount * BreakIceCooldownStepDays;
         DateTime lastCooldownStart = GetBreakIceCooldownStart();
-        bool inOfferCountdown = lastCooldownStart != DateTime.MinValue && DateTime.Now < lastCooldownStart;
+
+        // ★ 兜底：「有冷却起点」不等于「弹窗真的弹过」。
+        //   旧版在预登记阶段就写冷却起点，如果那次弹窗被插屏/其它弹窗/玩家点下一关取消掉，
+        //   本地就留下"已弹过"的脏数据 → 这一整轮活动期都只出按钮、不再弹窗。
+        //   这里要求「结束页确实弹过窗」才算处于本活动期的后续展示期，脏数据会自动恢复成可弹状态。
+        bool inOfferCountdown = lastCooldownStart != DateTime.MinValue
+                                && DateTime.Now < lastCooldownStart
+                                && HasBreakIcePopupShown;
+
+        if (lastCooldownStart != DateTime.MinValue && DateTime.Now < lastCooldownStart && !HasBreakIcePopupShown)
+        {
+             Debug.Log($"[Shop]TryShowBreakIcePopup: 发现历史脏数据（冷却起点={lastCooldownStart:yyyy-MM-dd HH:mm}，" +
+                      $"但结束页从未真正弹过窗）→ 视为未弹过，重新走弹窗流程");
+        }
 
         // ★ 2026-11-21 口径补充：本活动期已经主动弹过一次 → 后续结算**只保留入口按钮，不再主动弹窗**。
         //   旧实现在这段倒计时里每关都走 ShowSettlementGift，六边形玩法通关频繁时表现为「通关必弹礼包」。
@@ -1533,7 +1577,7 @@ public partial class ShopManager : MonoBehaviour
                 return false;
             }
 
-            RegisterSettlementGift(SettlementGiftKind.BreakIce, shownPack, lastCooldownStart);
+            RegisterSettlementGift(SettlementGiftKind.BreakIce, shownPack, lastCooldownStart, entryVisible: true);
             LogShop($"TryShowBreakIcePopup: 本活动期已主动弹过一次（倒计时截止 {lastCooldownStart:yyyy-MM-dd HH:mm}）" +
                     $"→ 只登记入口，不再自动弹窗（礼包={shownPack.produceNameId}）");
             return true;
@@ -1595,15 +1639,18 @@ public partial class ShopManager : MonoBehaviour
         // ★ 本次结算只登记入口、不弹窗（被更优先的结算页弹窗占位）→ 不消耗弹窗次数/冷却，
         //   等下一次没有抢占弹窗的结算再正常弹。
         // ★ 主页「只登记入口」（entryOnly）同样不消耗：进主页不该把破冰的弹窗次数用掉。
+        // ★ 2026-11-23：这里不再直接记账，只置「待记账」标记。
+        //   预登记 → 1.2s 后弹窗之间还可能被插屏让位 / 其它结算弹窗 / 玩家点下一关取消，
+        //   提前写盘会留下"没弹过却已消耗次数+冷却"的脏数据，导致之后整轮活动期只出按钮不弹窗。
+        //   真正记账在 OpenSettlementGiftPopup() → CommitBreakIcePopupStateOnShow()。
         if (entryOnly)
         {
             LogShop("TryShowBreakIcePopup: 主页只登记入口 → 不消耗弹窗次数与冷却");
         }
         else if (!_settlementGiftPopupSuppressed)
         {
-            BreakIcePopupCount = BreakIcePopupCount + 1;
-            SaveBreakIcePopupState(endTime, BreakIcePopupCount);
-            _lastBreakIcePopupTime = DateTime.Now;
+            _breakIcePopupCommitPending = true;
+            LogShop("TryShowBreakIcePopup: 本次预登记已排队弹窗，次数与冷却等弹窗真正打开后再记账");
         }
         else
         {
@@ -1695,7 +1742,19 @@ public partial class ShopManager : MonoBehaviour
         // ★ 新口径（2026-11-08）：同一个活动期内**只主动弹一次**，之后不再主动弹出；
         //   但活动期间结算页的「限时折扣（复购）」按钮要一直保留（玩家想买随时能点开）。
         DateTime lastPopupEndTime = GetRepurchaseLastPopupEndTime();
-        bool inOfferCountdown = lastPopupEndTime != DateTime.MinValue && DateTime.Now < lastPopupEndTime;
+        // ★ 兜底（与破冰同口径）：「有倒计时结束时间」不等于「弹窗真的弹过」。
+        //   旧版在预登记阶段就写这两个值，如果那次弹窗被插屏/其它弹窗/玩家点下一关取消掉，
+        //   本地就留下"已弹过"的脏数据 → 这一整轮活动期都只出按钮、不再弹窗。
+        //   这里要求「结束页确实弹过复购弹窗」才算处于本活动期的后续展示期，脏数据自动恢复成可弹状态。
+        bool inOfferCountdown = lastPopupEndTime != DateTime.MinValue
+                                && DateTime.Now < lastPopupEndTime
+                                && HasRepurchasePopupShown;
+
+        if (lastPopupEndTime != DateTime.MinValue && DateTime.Now < lastPopupEndTime && !HasRepurchasePopupShown)
+        {
+             Debug.Log($"[Shop] 结算礼包 复购: 发现历史脏数据（倒计时结束={lastPopupEndTime:yyyy-MM-dd HH:mm}，" +
+                      $"但结束页从未真正弹过窗）→ 视为未弹过，重新走弹窗流程");
+        }
 
         if (inOfferCountdown)
         {
@@ -1921,10 +1980,14 @@ public partial class ShopManager : MonoBehaviour
         // 倒计时未结束时下次结算继续展示同一款。
         // ★ 本次结算只登记入口、不弹窗（被更优先的结算页弹窗占位）→ 不算「本活动期已弹过」，
         //   下次没有抢占弹窗的结算仍然可以正常弹。
+        // ★ 2026-11-23：这里不再直接写盘，只置「待记账」标记。
+        //   预登记 → 1.2s 后弹窗之间还可能被插屏让位 / 其它结算弹窗 / 玩家点下一关取消，
+        //   提前写盘会留下"没弹过却已记成弹过"的脏数据，之后整轮活动期只出按钮不弹窗。
+        //   真正记账在 OpenSettlementGiftPopup() → CommitRepurchasePopupStateOnShow()。
         if (!_settlementGiftPopupSuppressed)
         {
-            SaveRepurchaseLastPopupTime(DateTime.Now);
-            SaveRepurchaseLastPopupEndTime(endTime, pack.produceNameId);
+            _repurchasePopupCommitPending = true;
+            LogShop("结算礼包 复购: 本次预登记已排队弹窗，活动期展示记录等弹窗真正打开后再记账");
         }
         else
         {
@@ -2287,6 +2350,17 @@ public partial class ShopManager : MonoBehaviour
     {
         if (!_settlementGiftPopupPending) return;
         if (_settlementGiftDeferredForInterstitial) return;   // 已经在等插屏播完
+
+        // ★ 1.2s 的等待期间玩家可能已经点「下一关」/回主页：结算页都关了还照弹，
+        //   礼包会盖在下一关开局或主页上。这里当次作废（弹窗和入口都不给），
+        //   等下一次结算再重新走完整策略 —— 反正这次还没记账，不会污染活动期状态。
+        bool stillOnFinishView = SystemManager.Instance != null
+                                 && SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView);
+        if (!stillOnFinishView)
+        {
+            CancelPreparedSettlementGiftPopup("等待弹窗期间结算页已关闭");
+            return;
+        }
 
         // ★ 需求（2026-11-21）：本页插屏正在播 / 稍后要播 → 破冰礼包弹窗让位，
         //   等插屏播放完关闭的那一刻再由 AdRuleManager.NotifyInterstitialClosed() 补弹。

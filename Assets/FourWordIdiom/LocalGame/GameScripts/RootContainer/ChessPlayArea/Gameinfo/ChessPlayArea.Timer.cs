@@ -927,6 +927,14 @@ public partial class ChessPlayArea
         int threshold = ButterfliesManager.Instance.GetScoreThresholdForPupa();
         if (threshold <= 0) return;
 
+        // ★ 没有时间奖励（含「复活后的不限时」）就不存在"靠时间分把蝉蛹补满"这回事：
+        //   只按当前分数刷新圆环，不从禅意分位置发粒子（那个飞行动画只用来解释时间分的贡献）。
+        if (ChessStageController.Instance.TimeBonusScore <= 0)
+        {
+            UpdatePupaProgress(finalScore, false);
+            return;
+        }
+
         // 局内已经满环（分数早就达标）：不重复播粒子，只做一次数值兜底
         if (pupaProgressBar.fillAmount >= 0.999f)
         {

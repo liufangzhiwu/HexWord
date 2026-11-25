@@ -100,11 +100,13 @@ public class PurchaseRecordItem : MonoBehaviour
         }
         _spawned.Clear();
 
-        // ★ 已拥有永久去广告 → 记录内容里的去广告项（6 永久 / 7 限时 N 天）不再展示：
-        //   否则玩家买了永久去广告后，早期买过的「限时去广告」订单里还会挂着一条去广告资源。
-        //   只影响展示，历史存档里的内容快照保持不变。
-        //   购买记录没有「购买前」快照，按当前是否拥有判定（历史订单里的去广告项也会随之隐藏）。
-        bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(record.produceNameId);
+        // ★ 展示口径：按「本单购买前是否已拥有永久去广告」判定：
+        //   - 买之前没有（第一次买到永久去广告，含明心/大觉/圆满礼包里的 6;1）→ 展示；
+        //   - 买之前已拥有（第二次及以后再买含去广告的礼包）→ 隐藏，
+        //     否则玩家每买一次这几个大礼包，记录里都会重复列一条「去广告」。
+        //   新记录用购买时写入的快照；旧记录没有快照字段 → 用「更早的订单里是否已出现过永久去广告」推断。
+        bool hideRemoveAds = ShopManager.ShouldHideRemoveAdsReward(
+            record.produceNameId, ResolveOwnedRemoveAdsBeforePurchase(record));
 
         // ---------- GiftItem 方式 ----------
         Color outlineColor = Color.gray; // 记录页不强制按 produceNameId 上色，统一白色描边
@@ -114,8 +116,13 @@ public class PurchaseRecordItem : MonoBehaviour
 
             if (hideRemoveAds && IsRemoveAdsRewardType(row[0]))
             {
-                Debug.Log($"[PurchaseRecord] 已拥有永久去广告 → 记录内隐藏去广告项 type={row[0]}（{record.produceNameId}）");
+                Debug.Log($"[PurchaseRecord] 购买前已拥有永久去广告 → 记录内隐藏去广告项 type={row[0]}（{record.produceNameId}）");
                 continue;
+            }
+
+            if (!hideRemoveAds && IsRemoveAdsRewardType(row[0]))
+            {
+                Debug.Log($"[PurchaseRecord] 购买前未拥有永久去广告 → 记录内展示去广告项 type={row[0]}（{record.produceNameId}）");
             }
 
             var item = Instantiate(giftItemPrefab, contentParent);
@@ -125,6 +132,61 @@ public class PurchaseRecordItem : MonoBehaviour
             item.gameObject.SetActive(true);
             _spawned.Add(item);
         }
+    }
+
+    /// <summary>
+    /// 「本单购买前」是否已拥有永久去广告。
+    ///  - 新记录：直接用购买时写入的快照 ownedRemoveAdsBeforePurchase；
+    ///  - 旧记录（字段为 null）：按「更早的订单里是否已经出现过永久去广告」推断 ——
+    ///    purchaseRecords 是「最近的在前」，所以下标更大的才是更早的订单。
+    ///    更早的订单里已出现过 6（或独立去广告商品）→ 本单购买前就已拥有；都没有 → 本单是第一次拿到。
+    ///  - 推断不了（拿不到列表）→ 退回「当前是否已拥有」。
+    /// </summary>
+    private static bool ResolveOwnedRemoveAdsBeforePurchase(PurchaseRecord record)
+    {
+        if (record == null) return false;
+        if (record.ownedRemoveAdsBeforePurchase.HasValue)
+            return record.ownedRemoveAdsBeforePurchase.Value;
+
+        var records = GameDataManager.Instance != null && GameDataManager.Instance.UserData != null
+            ? GameDataManager.Instance.UserData.purchaseRecords
+            : null;
+
+        if (records != null)
+        {
+            int index = records.IndexOf(record);
+            if (index >= 0)
+            {
+                for (int i = index + 1; i < records.Count; i++)
+                {
+                    if (ContainsPermanentRemoveAds(records[i]))
+                        return true;
+                }
+                return false;
+            }
+        }
+
+        return ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
+    }
+
+    /// <summary>该订单里是否含「永久去广告」：内容里的 6，或本身就是独立去广告商品。</summary>
+    private static bool ContainsPermanentRemoveAds(PurchaseRecord record)
+    {
+        if (record == null) return false;
+
+        if (record.produceNameId == ShopManager.ProductRemoveAds) return true;
+
+        if (record.productContent == null) return false;
+        for (int i = 0; i < record.productContent.Count; i++)
+        {
+            var row = record.productContent[i];
+            if (row == null || row.Count < 1) continue;
+
+            int t;
+            if (int.TryParse(row[0], out t) && t == (int)LimitRewordType.RemoveAds)
+                return true;
+        }
+        return false;
     }
 
     /// <summary>是否为去广告类奖励（6 永久去广告 / 7 限时去广告）。</summary>

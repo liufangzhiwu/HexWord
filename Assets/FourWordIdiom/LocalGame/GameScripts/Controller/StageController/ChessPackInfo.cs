@@ -74,6 +74,19 @@ public class ChessPackInfo : ScriptableObject
     // 仅在编辑器下烘培数据使用
     public void BuildFromJson(string jsonText, string csvText = "")
     {
+        // ★ 烘培前先按 levelDiff 备一份现有 emoji。
+        // 原因：JSON 里没有 emoji 字段，list.Clear() 后整包 emoji 会被清空，
+        // 导致"配好的 emoji 关卡烘一次全没了"（A/B 两个包都中招）。
+        Dictionary<string, string> keepEmoji = new();
+        if (list != null)
+        {
+            foreach (var c in list)
+            {
+                if (c == null || string.IsNullOrEmpty(c.levelDiff) || string.IsNullOrEmpty(c.emoji)) continue;
+                keepEmoji[c.levelDiff] = c.emoji;
+            }
+        }
+
         list.Clear();
         var root = JObject.Parse (jsonText);
         Dictionary<string, ChessLevelConf> temp = new();
@@ -160,6 +173,20 @@ public class ChessPackInfo : ScriptableObject
                 }
             }
         }
+        // 4. JSON / CSV 都没提供 emoji 的关卡，回填烘培前的配置，避免烘培把 emoji 关卡洗掉
+        int restored = 0;
+        foreach (var kv in temp)
+        {
+            if (!string.IsNullOrEmpty(kv.Value.emoji)) continue;
+            if (keepEmoji.TryGetValue(kv.Key, out string kept) && !string.IsNullOrEmpty(kept))
+            {
+                kv.Value.emoji = kept;
+                restored++;
+            }
+        }
+        if (keepEmoji.Count > 0)
+            Debug.Log($"[ChessPackInfo] 烘培保留 emoji：烘培前 {keepEmoji.Count} 关，回填 {restored} 关");
+
         foreach(var kv in temp)
         {
             list.Add(kv.Value);

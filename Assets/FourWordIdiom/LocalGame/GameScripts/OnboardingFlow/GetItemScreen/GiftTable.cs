@@ -248,6 +248,9 @@ public class GiftTable : MonoBehaviour
         // ---------- 限购次数 ----------
         RefreshLimitCount();
 
+        // ---------- 审核态：限购已买满 → 购买按钮置灰（不可重复购买） ----------
+        RefreshBuyButtonState();
+
         // ---------- 促销标签 ----------
         RefreshTag();
 
@@ -511,6 +514,26 @@ public class GiftTable : MonoBehaviour
         LogShop($"限购次数: limited={shopDataItem.limited}, buyCount={buyCount}, remain={remain}, 显示='{limintCountText.text}'");
     }
 
+    // ======================= 审核态：限购买满 → 按钮置灰 =======================
+
+    /// <summary>
+    /// 审核开（IsAuditOpen=1）且礼包限购次数已买满 → 购买按钮置灰并拦截点击。
+    /// 审核过程中同一礼包会被反复打开（白名单固定），不能靠「隐藏礼包」来防重复购买，
+    /// 必须把按钮置灰；非审核态仍按原逻辑隐藏礼包。
+    /// </summary>
+    private void RefreshBuyButtonState()
+    {
+        if (BuyBtn == null) return;
+
+        bool soldOutInAudit = ShopManager.shopManager != null
+                              && ShopManager.shopManager.IsAuditSoldOutLimited(shopDataItem);
+
+        BuyBtn.interactable = !soldOutInAudit;
+
+        if (soldOutInAudit)
+            LogShop("审核态限购已买满，购买按钮置灰（不可重复购买）");
+    }
+
     // ======================= 促销标签 =======================
 
     private void RefreshTag()
@@ -697,6 +720,14 @@ public class GiftTable : MonoBehaviour
 
     private void OnBuyButtonClicked()
     {
+        // ★ 审核态：限购买满 → 拦截重复购买（按钮已置灰，这里再兜一层，防误触/重复点击）
+        if (ShopManager.shopManager != null && ShopManager.shopManager.IsAuditSoldOutLimited(shopDataItem))
+        {
+            LogShop("审核态限购已买满，拦截重复购买");
+            MessageSystem.Instance.ShowTip("已售空");
+            return;
+        }
+
         LogShop("点击购买");
         MessageSystem.Instance.ShowLoadingAnimation();
 
@@ -762,7 +793,18 @@ public class GiftTable : MonoBehaviour
             FailGameScreen failScreen = GetComponentInParent<FailGameScreen>();
 
             // ★ 限购一次礼包购买后立即隐藏（下一关卡由推荐权重重新选出新礼包）
-            if (ShopManager.shopManager != null && ShopManager.shopManager.IsLimitedOut(shopDataItem))
+            //   ★ 审核态例外：礼包保留展示，只把购买按钮置灰（不可重复购买）
+            bool soldOutInAudit = AuditConfig.IsAuditOpen
+                                  && ShopManager.shopManager != null
+                                  && ShopManager.shopManager.IsLimitedOut(shopDataItem);
+
+            if (soldOutInAudit)
+            {
+                LogShop($"审核态限购已买满，保留礼包并置灰按钮: {shopDataItem.produceNameId}");
+                RefreshLimitCount();
+                RefreshBuyButtonState();
+            }
+            else if (ShopManager.shopManager != null && ShopManager.shopManager.IsLimitedOut(shopDataItem))
             {
                 LogShop($"限购已满，立即隐藏礼包: {shopDataItem.produceNameId}");
                 gameObject.SetActive(false);
@@ -770,7 +812,8 @@ public class GiftTable : MonoBehaviour
 
             // ★ 复活弹窗里买的礼包：购买后立刻隐藏（本次弹窗内不再展示），
             //   下次打开弹窗（进入下一关 / 退出游戏后再进）会由 RefreshGiftTables 重建并恢复显示。
-            if (failScreen != null)
+            //   ★ 审核态限购已买满：保留卡片置灰，不隐藏推荐位
+            if (failScreen != null && !soldOutInAudit)
             {
                 LogShop($"通知复活弹窗隐藏已购买礼包: {shopDataItem.produceNameId}");
                 failScreen.HideGiftTableAfterPurchase(this, shopDataItem);
@@ -866,6 +909,13 @@ public class GiftTable : MonoBehaviour
                 showIcon = shopDataItem.showIcon ?? "",
                 limitRewordType = shopDataItem.type,
                 buyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+
+                // ★ 本单购买前是否已拥有永久去广告（OnPurchaseSuccess 发放前采集的快照）：
+                //   购买记录据此决定去广告项展示与否 —— 第一次买到 → 展示，之后再买 → 隐藏。
+                ownedRemoveAdsBeforePurchase = ShopManager.shopManager != null
+                    ? ShopManager.shopManager.RemoveAdsOwnedBeforeCurrentPurchase
+                    : (bool?)null,
+
                 productContent = DeepCopyContent(shopDataItem.productContent)
             };
 

@@ -90,6 +90,11 @@ namespace Middleware
             // }
         }
 
+        public void OnEnterHomeScene()
+        {
+            throw new NotImplementedException();
+        }
+
         public void OnEnterGameScene()
         {
             //throw new NotImplementedException();

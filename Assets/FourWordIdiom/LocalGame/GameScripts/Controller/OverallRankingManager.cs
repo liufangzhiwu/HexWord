@@ -600,25 +600,24 @@ public class OverallRankingManager : MonoBehaviour
         InvalidateHallOfFameCache();
     }
     
+    /// <summary>榜单列表直接展示真实名次的最大名次：前 200 名显示具体名次，之后统一显示 "200+"。</summary>
+    public const int FullRankDisplayCount = 200;
+
+    /// <summary>
+    /// 名次格式化：前 200 名显示真实名次，200 名之后统一显示 "200+"。
+    /// </summary>
     public static string Format(int rank)
     {
         if (rank <= 0) return null;
-    
-        if (rank > 10000)
+
+        // 前 200 名（含第 200 名）显示真实名次
+        if (rank <= FullRankDisplayCount)
         {
-            return $"{rank / 10000}万+";
+            return rank.ToString();
         }
-        else if (rank > 1000)
-        {
-            return $"{rank / 1000}千+";
-        }
-        else if (rank > 100)
-        {
-            return $"{rank / 100}00+";
-        }
-    
-        // 排名 < 100，正常显示数字
-        return rank.ToString(); 
+
+        // 200 名之后统一显示 "200+"
+        return $"{FullRankDisplayCount}+";
     }
     
     /// <summary>

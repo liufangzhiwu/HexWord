@@ -695,7 +695,16 @@ public class HeaderSection : UIWindow
         ShopManager.shopManager.OpenFixedStore();
         if (SystemManager.Instance.PanelIsShowing(PanelType.GetItemScreen))
         {
-            SystemManager.Instance.HidePanel(PanelType.GetItemScreen);
+            // ★ 走 GetItemScreen.Close()，不要直接 HidePanel：
+            //   道具弹窗的「灯泡一号位曝光未付费 F+3」是在 Close() 里结算的，
+            //   直接隐藏会绕过它（玩家从灯泡弹窗点顶栏商店离开 → 这次曝光白记）。
+            GetItemScreen itemScreen = SystemManager.Instance.GetPanel(PanelType.GetItemScreen) != null
+                ? SystemManager.Instance.GetPanel(PanelType.GetItemScreen).GetComponent<GetItemScreen>()
+                : null;
+            if (itemScreen != null)
+                itemScreen.Close();
+            else
+                SystemManager.Instance.HidePanel(PanelType.GetItemScreen);
         }
         ChessGuideSystem.Instance.CloseGuide();
     }

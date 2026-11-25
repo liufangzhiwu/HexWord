@@ -311,18 +311,18 @@ public class FishItem : MonoBehaviour
             TrackEntry runTrack = fishSpine.AnimationState.SetAnimation(0, "run", true); // 关键点：设置为不循环
             fishSpine.DOPlay();
                 
-            // 计算移动所需时间（根据固定速度）
+            // 计算移动所需时间（匀速：全程走完按 FullTrackSeconds 秒的恒定速度，位移越长耗时越长）
             float currentX = fishRect.anchoredPosition.x;
             float distance = Mathf.Abs(targetx - currentX);
-            //float moveDuration = distance / moveSpeed;
-            float moveDuration = point <= 0.5f ?1f:2.5f;
+            float moveDuration = GetMoveDuration(distance);
 
-            // 开始移动
+            // 开始移动（先杀掉同节点旧 tween，避免连续调用时双 tween 叠加抖动）
+            fishRect.DOKill();
             fishRect.DOAnchorPosX(targetx, moveDuration).OnComplete(() =>
             {
                 // 强制切换到idle动画
                 TrackEntry idleTrack= fishSpine.AnimationState.SetAnimation(0, "idle", true);
-                fishSpine.DOPlay();                   
+                fishSpine.DOPlay();
             });
             waittime = moveDuration;
             return;
@@ -330,23 +330,47 @@ public class FishItem : MonoBehaviour
         else
         {
             SkeletonAnimation fishSpine = spinefishitem.GetComponent<SkeletonAnimation>();
-            
-            // 开始移动
-            fishRect.DOAnchorPosX(targetx, 0.1f).OnComplete(() =>
+
+            // 开始移动（同样按匀速，替代原来的 0.1s 瞬移贴位，避免"刷新即跳一大格"）
+            float distance2 = Mathf.Abs(targetx - fishRect.anchoredPosition.x);
+            float moveDuration2 = GetMoveDuration(distance2);
+            fishRect.DOKill();
+            fishRect.DOAnchorPosX(targetx, moveDuration2).OnComplete(() =>
             {
                 // 强制切换到idle动画
                 TrackEntry idleTrack= fishSpine.AnimationState.SetAnimation(0, "idle", true);
-                fishSpine.DOPlay();                   
+                fishSpine.DOPlay();
             });
+            waittime = Mathf.Min(moveDuration2, 0.5f);
         }
-        
-        waittime = 0;
+    }
+
+    /// <summary>
+    /// 匀速移动时长：以"游完整个赛道需要 FullTrackSeconds 秒"的恒定速度换算，
+    /// 短距离最快 0.2s，整段赛道最多 FullTrackSeconds 秒。
+    /// </summary>
+    private float GetMoveDuration(float distance)
+    {
+        const float FullTrackSeconds = 1.5f;
+        float trackLen = Mathf.Max(1f, distanceX);
+        return Mathf.Clamp(FullTrackSeconds * distance / trackLen, 0.2f, FullTrackSeconds);
     }
     
     // private float CalculateMoveDuration(float from, float to) {
     //     float distance = Mathf.Abs(to - from);
     //     return distance / moveSpeed;
     // }
+
+    /// <summary>
+    /// ★ 确保鱼移动到当前进度对应的位置（进度=100 时即终点），返回移动所需秒数（0=已在目标位置）。
+    /// 供发奖励前等待鱼先到位，避免"鱼没到终点就发奖励"。
+    /// </summary>
+    public float EnsureArriveFinish()
+    {
+        if (fishRect == null) UpdateFishLocation();
+        FishMove(out float waittime, true);
+        return waittime;
+    }
 
     public void FlyBoxToTarget(int rank)
     {

@@ -368,6 +368,48 @@ public partial class ShopManager : MonoBehaviour
     /// </summary>
     private bool _settlementGiftDeferredForInterstitial;
 
+    /// <summary>让位给插屏后，等它结束的轮询协程（见 CoSettlementGiftWaitInterstitial）。</summary>
+    private Coroutine _settlementGiftDeferCo;
+
+    /// <summary>
+    /// 让位后先给插屏的宽限时间（秒）。
+    /// 插屏是"拉起 → 点播等待 → 真正播放"，刚让位时 IsInterstitialShowing 可能还没置上/还在加载，
+    /// 这段宽限内不做任何补弹判定，避免礼包抢在插屏前面弹出来。
+    /// </summary>
+    private const float InterstitialDeferGraceSeconds = 2f;
+
+    /// <summary>
+    /// 礼包让位给插屏的**最长**等待（秒）。到点仍未收到插屏结束信号 → 判定插屏播放失败/回调丢失，
+    /// 强制收尾并补弹礼包（宁可礼包晚到，也不能被插屏异常吞掉）。
+    /// 正常插屏（含关闭操作）一般 5~30s，取 30s 与之相当。
+    /// </summary>
+    private const float InterstitialDeferMaxWaitSeconds = 30f;
+
+    /// <summary>让位期间的轮询间隔（秒）</summary>
+    private const float InterstitialDeferPollSeconds = 0.25f;
+
+    /// <summary>
+    /// 本次结算的破冰礼包「预登记完成、已排队等弹窗」，但**次数与冷却还没记账**。
+    ///
+    /// ★ 为什么需要它：破冰的次数/冷却以前是在预登记阶段就写 PlayerPrefs，
+    ///   而预登记之后弹窗还要等 1.2s（结算页展示）才真正 ShowPanel，中间可能被
+    ///   插屏让位 / 其它结算弹窗 / 玩家直接点下一关 取消掉。
+    ///   一旦取消，本地就已经记成「本活动期已弹过」→ 下一次结算只出按钮不再弹窗，
+    ///   玩家整轮活动期都看不到弹窗。现在改成弹窗真正打开（OpenSettlementGiftPopup）时才记账。
+    /// </summary>
+    private bool _breakIcePopupCommitPending;
+
+    /// <summary>
+    /// 本次结算的复购礼包「预登记完成、已排队等弹窗」，但**活动期展示记录还没记账**
+    /// （`SaveRepurchaseLastPopupTime` / `SaveRepurchaseLastPopupEndTime`）。
+    ///
+    /// ★ 与破冰完全同构的问题：这两个值以前在预登记阶段就写盘，而弹窗还要等 1.2s 才真正打开，
+    ///   中间被插屏让位 / 其它结算弹窗 / 玩家点下一关取消掉，本地就记成「本活动期已弹过」。
+    ///   之后每次结算都走 inOfferCountdown 分支 → 只登记「限时折扣礼包」按钮、整轮活动期不再弹窗。
+    ///   现在改成弹窗真正打开（OpenSettlementGiftPopup）时才记账。
+    /// </summary>
+    private bool _repurchasePopupCommitPending;
+
     /// <summary>
     /// 本次结算「不弹礼包弹窗、也不出入口」。
     /// 结算页会弹更优先的弹窗（每日连胜 / 灯笼结算 / 新手奖励进度 / 锦鲤竞速开始 / 插屏）时置 true。
@@ -391,6 +433,8 @@ public partial class ShopManager : MonoBehaviour
         _settlementGiftSuppressReason = reason;
         _settlementGiftPopupPending = false;
         _settlementGiftDeferredForInterstitial = false;
+        _breakIcePopupCommitPending = false;   // 不弹窗 → 破冰的次数/冷却不记账
+        _repurchasePopupCommitPending = false; // 不弹窗 → 复购的活动期展示记录也不记账
 
         // 已经登记过（策略先登记、后判定被占位）→ 把入口和数据一起撤掉
         if (SettlementGiftEntryVisible || CurrentSettlementGift != SettlementGiftKind.None)
@@ -444,9 +488,86 @@ public partial class ShopManager : MonoBehaviour
         Debug.Log($"[Shop][结算礼包] 礼包弹窗让位给插屏，等插屏播完再弹（{reason}）: " +
                   $"kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
 
-        // 兜底：万一本页插屏最终没播（无填充 / 被其它规则再拦一次）或回调丢失，
-        // 也不能把礼包吞掉 —— 超时后若插屏已不在播，就照常弹。
-        StartCoroutine(CoSettlementGiftDeferredWatchdog(20f));
+        // ★ 不再只依赖插屏的「关闭回调」（插屏播放失败/回调丢失时那个回调根本不会来，
+        //   礼包会被永久吞掉）。这里启动一个轮询：插屏一停就补弹，同时保留 NotifyInterstitialClosed
+        //   作为事件式快路径，两条路谁先到谁弹（HasPending 已清理则不会重复弹）。
+        if (_settlementGiftDeferCo != null)
+        {
+            StopCoroutine(_settlementGiftDeferCo);
+            _settlementGiftDeferCo = null;
+        }
+        _settlementGiftDeferCo = StartCoroutine(CoSettlementGiftWaitInterstitial());
+    }
+
+    /// <summary>
+    /// 等插屏结束再补弹礼包（轮询版，兼容插屏播放失败）。
+    ///
+    /// 三种收尾方式：
+    ///   1. 插屏真的开始播了（IsInterstitialShowing=true）→ 它一停就补弹（正常关闭 / 播放失败 / 被强制结束）；
+    ///   2. 插屏始终没开始播，且按规则已经不可能播（被拦截 / 冷却 / 去广告）→ 立刻补弹，不白等；
+    ///   3. 超过 InterstitialDeferMaxWaitSeconds 仍然"在播"（SDK 没回调）→ 强制复位插屏状态并补弹。
+    /// 所有分支都走 NotifyInterstitialClosed / ForcePlayDeferredSettlementGiftPopup，
+    /// 由它们统一做「结算页是否还在」「是否有更优先弹窗」的复核。
+    /// </summary>
+    private System.Collections.IEnumerator CoSettlementGiftWaitInterstitial()
+    {
+        float startTime = Time.realtimeSinceStartup;
+        float nextProbeAt = startTime + InterstitialDeferGraceSeconds;
+        bool seenShowing = false;
+
+        while (Time.realtimeSinceStartup - startTime < InterstitialDeferMaxWaitSeconds)
+        {
+            // 被取消 / 已被事件式回调消费 → 直接退出
+            if (!_settlementGiftDeferredForInterstitial || !_settlementGiftPopupPending)
+            {
+                _settlementGiftDeferCo = null;
+                yield break;
+            }
+
+            bool showing = AdRuleManager.Instance != null && AdRuleManager.Instance.IsInterstitialShowing;
+            if (showing) seenShowing = true;
+
+            if (seenShowing)
+            {
+                // 插屏开始过 → 它一停就补弹
+                if (!showing)
+                {
+                    _settlementGiftDeferCo = null;
+                    NotifyInterstitialClosed();
+                    yield break;
+                }
+            }
+            else if (Time.realtimeSinceStartup >= nextProbeAt)
+            {
+                // CanShowInterstitial() 每次都会打日志、且含每日首关的概率判定，不宜高频调用 → 1 秒探一次
+                nextProbeAt = Time.realtimeSinceStartup + 1f;
+                if (AdRuleManager.Instance == null || !AdRuleManager.Instance.CanShowInterstitial())
+                {
+                    _settlementGiftDeferCo = null;
+                    Debug.Log("[Shop][结算礼包] 让位期间插屏始终没有开始播放（规则已不允许播）→ 立即补弹礼包");
+                    NotifyInterstitialClosed();
+                    yield break;
+                }
+            }
+
+            yield return new WaitForSecondsRealtime(InterstitialDeferPollSeconds);
+        }
+
+        if (!_settlementGiftDeferredForInterstitial || !_settlementGiftPopupPending)
+        {
+            _settlementGiftDeferCo = null;
+            yield break;
+        }
+
+        // 超时：插屏状态一直挂着（SDK 无回调 / 点播卡死）→ 强制收尾，绝不让礼包被吞掉
+        Debug.LogWarning($"[Shop][结算礼包] 礼包等插屏超过 {InterstitialDeferMaxWaitSeconds:F0}s 仍无结束信号" +
+                         "（插屏大概率播放失败/回调丢失）→ 强制补弹礼包弹窗");
+
+        if (AdRuleManager.Instance != null)
+            AdRuleManager.Instance.ForceResetInterstitialState("礼包等插屏超时");
+
+        _settlementGiftDeferCo = null;
+        ForcePlayDeferredSettlementGiftPopup("等插屏超时兜底");
     }
 
     /// <summary>
@@ -459,8 +580,12 @@ public partial class ShopManager : MonoBehaviour
         if (!_settlementGiftPopupPending) { _settlementGiftDeferredForInterstitial = false; return; }
 
         // 插屏期间玩家可能已经离开结算页（点下一关 / 回主页）→ 不在关卡画面里硬弹礼包
+        // ★ StageFinishView：六边形玩法的结算页。以前这里只认 ChessFinishView（拼字结算）和主页，
+        //   六边形结算让位给插屏后，插屏一关就被判成"结算页已关闭"→ 礼包直接被取消，
+        //   玩家整轮活动期都看不到这个推送礼包。
         bool stillOnSettlement = SystemManager.Instance != null
                                  && (SystemManager.Instance.PanelIsShowing(PanelType.ChessFinishView)
+                                     || SystemManager.Instance.PanelIsShowing(PanelType.StageFinishView)
                                      || SystemManager.Instance.PanelIsShowing(PanelType.PrimaryInterface));
         if (!stillOnSettlement)
         {
@@ -480,33 +605,26 @@ public partial class ShopManager : MonoBehaviour
         _settlementGiftDeferredForInterstitial = false;
         _settlementGiftPopupPending = false;
         Debug.Log($"[Shop][结算礼包] 插屏已关闭 → 补弹礼包弹窗: kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
-        OpenSettlementGiftPopup();
+
+        // 走到这里说明插屏已经结束（或被强制判定结束）→ 绕过入口处的「插屏在播」闸门，
+        // 否则状态没来得及复位时会再次 defer，礼包又被挂起一轮。
+        OpenSettlementGiftPopupInternal(ignoreInterstitialGate: true);
     }
 
-    /// <summary>让位兜底：等太久仍没等到插屏关闭回调，就照常弹（插屏若还在播则等它播完）。</summary>
-    private System.Collections.IEnumerator CoSettlementGiftDeferredWatchdog(float timeoutSeconds)
+    /// <summary>
+    /// 强制补弹：已经确定插屏不会再播 / 插屏异常卡死时，直接弹礼包（不再走让位闸门）。
+    /// 与 NotifyInterstitialClosed 的区别：这条路径自己清理让位与待弹标记，不需要外部先复位插屏状态。
+    /// </summary>
+    private void ForcePlayDeferredSettlementGiftPopup(string reason)
     {
-        float deadline = Time.realtimeSinceStartup + timeoutSeconds;
-        while (Time.realtimeSinceStartup < deadline)
-        {
-            yield return null;
-            if (!_settlementGiftDeferredForInterstitial) yield break;   // 已被插屏回调消费 / 已取消
-        }
+        if (!_settlementGiftPopupPending) return;
 
-        // 超时后仍在等：若插屏确实还在播，说明只是回调慢，等它播完
-        float hardStop = Time.realtimeSinceStartup + 120f;
-        while (_settlementGiftDeferredForInterstitial
-               && AdRuleManager.Instance != null
-               && AdRuleManager.Instance.IsInterstitialShowing
-               && Time.realtimeSinceStartup < hardStop)
-        {
-            yield return null;
-        }
+        _settlementGiftDeferredForInterstitial = false;
+        _settlementGiftPopupPending = false;
+        Debug.LogWarning($"[Shop][结算礼包] {reason} → 强制补弹礼包弹窗: " +
+                         $"kind={CurrentSettlementGift}, 礼包={GetSettlementGiftPackId()}");
 
-        if (!_settlementGiftDeferredForInterstitial || !_settlementGiftPopupPending) yield break;
-
-        Debug.LogWarning("[Shop][结算礼包] 等插屏超时且插屏未在播 → 兜底直接弹礼包弹窗");
-        NotifyInterstitialClosed();
+        OpenSettlementGiftPopupInternal(ignoreInterstitialGate: true);
     }
 
     /// <summary>
@@ -546,6 +664,8 @@ public partial class ShopManager : MonoBehaviour
         if (_settlementGiftPopupSuppressed)
         {
             _settlementGiftPopupPending = false;
+            _breakIcePopupCommitPending = false;   // 本次不弹窗 → 不记账
+            _repurchasePopupCommitPending = false; // 本次不弹窗 → 不记账
              Debug.Log($"[Shop][结算礼包] 本次结算不弹窗（{_settlementGiftSuppressReason}），也不出入口: " +
                     $"kind={kind}, 礼包={displayItem?.produceNameId}");
             return;
@@ -621,9 +741,40 @@ public partial class ShopManager : MonoBehaviour
     /// </summary>
     public void OpenSettlementGiftPopup()
     {
+        OpenSettlementGiftPopupInternal(ignoreInterstitialGate: false);
+    }
+
+    /// <summary>
+    /// 真正弹结算礼包弹窗。
+    /// </summary>
+    /// <param name="ignoreInterstitialGate">
+    /// true = 跳过入口处「插屏正在播 → 让位」的闸门。
+    /// 只给"已经确认插屏结束（或判定插屏异常）"的补弹路径用，否则会二次让位、礼包又被挂起。
+    /// </param>
+    private void OpenSettlementGiftPopupInternal(bool ignoreInterstitialGate)
+    {
         if (CurrentSettlementGift == SettlementGiftKind.None || _settlementGiftItem == null)
         {
             LogShop("OpenSettlementGiftPopup 跳过: 当前结算页没有可售礼包");
+            return;
+        }
+
+        // ★ 统一兜底：插屏正在播 → 礼包弹窗让位，等插屏关闭后由
+        //   AdRuleManager.NotifyInterstitialClosed() 补弹（两个全屏营销不叠，礼包也不丢）。
+        //
+        //   为什么必须放在这里而不是只放在 PlayPreparedSettlementGiftPopup：
+        //   拼字结算（ChessStageController → PrepareSettlementGift → PlayPreparedSettlementGiftPopup）
+        //   走的是预登记 + 让位流程，没问题；但六边形结算（StageHexController.PlayCompletionEffects）
+        //   是「先拉起插屏，1.5s 后直接调 TryShowSettlementGiftPopup → ShowSettlementGift →
+        //   OpenSettlementGiftPopup」，绕过了预登记，也让位判断落空 ——
+        //   于是 IAA 层破冰礼包（结算页推送礼包）会直接盖在正在播放的插屏上。
+        //   这里做最后一道闸门，任何调用路径都绕不过去。
+        if (!ignoreInterstitialGate
+            && AdRuleManager.Instance != null
+            && AdRuleManager.Instance.IsInterstitialShowing)
+        {
+            _settlementGiftPopupPending = true;
+            DeferSettlementGiftPopupForInterstitial("弹窗到点时关卡插屏正在播（通用兜底）");
             return;
         }
 
@@ -638,9 +789,15 @@ public partial class ShopManager : MonoBehaviour
         //   启动直接进主页时不能抢先把入口亮出来（需求：先结束页弹窗 → 之后主页/结束页都展示）。
         //   复购同理（下面 HasRepurchasePopupShown）。
         if (mode == GiftPopupMode.BreakIce)
+        {
             MarkBreakIcePopupShown();
+            CommitBreakIcePopupStateOnShow();
+        }
         else
+        {
             MarkRepurchasePopupShown();
+            CommitRepurchasePopupStateOnShow();
+        }
 
         SetPendingGiftPopup(_settlementGiftItem, mode, _settlementGiftEndTime);
         SetPendingGiftBonus(_settlementGiftBonusPackId, _settlementGiftBonusGold);
@@ -659,11 +816,52 @@ public partial class ShopManager : MonoBehaviour
          Debug.Log($"[Shop]OpenSettlementGiftPopup: kind={CurrentSettlementGift}, item={_settlementGiftItem.produceNameId}");
     }
 
+    /// <summary>
+    /// 破冰礼包弹窗**真正打开**时才记账：累计次数 +1、写入本轮冷却起点。
+    ///
+    /// 只有 <c>_breakIcePopupCommitPending</c> 为 true（本次结算预登记了一个待弹的破冰礼包）才动作：
+    ///   - 主页「只登记入口」（entryOnly）不置该标记 → 不消耗次数/冷却；
+    ///   - 本活动期已弹过、只保留按钮的分支也不会走到这里；
+    ///   - 预登记后被插屏/其它弹窗/离开结算页取消 → 标记被清掉，同样不记账。
+    /// </summary>
+    private void CommitBreakIcePopupStateOnShow()
+    {
+        if (!_breakIcePopupCommitPending) return;
+        _breakIcePopupCommitPending = false;
+
+        BreakIcePopupCount = BreakIcePopupCount + 1;
+        SaveBreakIcePopupState(_settlementGiftEndTime, BreakIcePopupCount);
+        _lastBreakIcePopupTime = System.DateTime.Now;
+    }
+
+    /// <summary>
+    /// 复购礼包弹窗**真正打开**时才记账：写入本活动期的展示时间 / 倒计时结束时间 / 展示的礼包。
+    ///
+    /// 只有 <c>_repurchasePopupCommitPending</c> 为 true（本次结算预登记了一个待弹的复购礼包）才动作：
+    ///   - 本活动期已弹过、只保留按钮的分支（RegisterRepurchaseSettlementButton）不置该标记；
+    ///   - 预登记后被插屏 / 其它弹窗 / 离开结算页取消 → 标记被清掉，同样不记账；
+    ///   - 玩家从结算页按钮手动重开弹窗也不会重复记账（标记已被消费）。
+    /// </summary>
+    private void CommitRepurchasePopupStateOnShow()
+    {
+        if (!_repurchasePopupCommitPending) return;
+        _repurchasePopupCommitPending = false;
+
+        SaveRepurchaseLastPopupTime(System.DateTime.Now);
+        SaveRepurchaseLastPopupEndTime(_settlementGiftEndTime, _settlementGiftBonusPackId);
+        LogShop($"[Shop][复购] 弹窗真正打开 → 记录本活动期展示: 限时截止={_settlementGiftEndTime:yyyy-MM-dd HH:mm:ss}, " +
+                $"礼包={_settlementGiftBonusPackId}");
+    }
+
     /// <summary>清空结算页礼包登记（换结算 / 离开结算页 / 活动限时结束）。</summary>
     public void ClearSettlementGift(string reason)
     {
         _settlementGiftPopupPending = false;
         _settlementGiftDeferredForInterstitial = false;
+        // ★ 还没真正弹窗 → 预登记的破冰不记账（否则会变成"没弹过却已消耗次数/冷却"）
+        _breakIcePopupCommitPending = false;
+        // ★ 复购同理：没弹过就不该记「本活动期已展示」，否则之后整轮只出按钮
+        _repurchasePopupCommitPending = false;
 
         // 入口可见性必须无条件复位：哪怕登记已被清掉（kind=None），也不能留下"入口还亮着"的鬼状态
         bool entryWasVisible = SettlementGiftEntryVisible;
@@ -708,6 +906,20 @@ public partial class ShopManager : MonoBehaviour
     public Action<string, bool> UpdateAdsBtnUI;
     public Dictionary<int, GameObject> shopItemsTipsPanel = new Dictionary<int, GameObject>();
     [HideInInspector] public bool paysuccess;
+
+    /// <summary>
+    /// 本次「道具弹窗曝光」期间是否真的拉起过系统收银台（不管最终支付成功还是取消）。
+    /// 由 GetItemScreen.OnEnable 复位、OnPurchaseCanceled 置位。
+    /// 用途：关闭弹窗时判断这次曝光是不是"点过支付又退出"，用于把 +3 和这次取消绑成同一事件。
+    /// </summary>
+    [HideInInspector] public bool payinvoked;
+
+    /// <summary>
+    /// 本次曝光里「转化失败 +5」是否真的加上了（被 30 秒节流拦下 / 第 1 档跳过时都是 false）。
+    /// 用途：关闭弹窗时决定那笔「曝光未支付 +3」要不要跟随同一事件豁免 30 秒节流。
+    /// 需求口径：首次点支付又退出，且金币&lt;80、灯泡火箭=0 → F 变化 = +5（取消）+ 3（曝光未支付）。
+    /// </summary>
+    [HideInInspector] public bool payfailapplied;
 
     // ======================= 推荐位决策共享状态 =======================
 
@@ -801,9 +1013,6 @@ public partial class ShopManager : MonoBehaviour
         LoadLayerConfig();
         LoadHolidayWeekendTable();
         LoadDiscountConfig();
-
-        // ★ 启动审核配置拉取
-        StartAuditStatusLoad();
 
          Debug.Log($"[Shop]LoadRuntimeConfigs 完成: 推荐位配置数={_recommendConfigs.Count}, 折扣开关={_discountConfig.enable}, 灯泡每日={_discountConfig.bulbDailyLimit}, 火箭每日={_discountConfig.rocketDailyLimit}, 间隔={_discountConfig.triggerInterval}s");
     }
@@ -1614,6 +1823,29 @@ public partial class ShopManager : MonoBehaviour
     }
 
     /// <summary>
+    /// ★ 获得「永久去广告」后，立刻刷新商店里「去除广告」相关卡片的状态。
+    /// 覆盖所有购买入口（商店卡片 / 破冰 / 复购弹窗 / 结算页礼包按钮 / 道具弹窗礼包）：
+    ///  - 去广告独立商品卡（RemoveADS）→ 价格「已购买」、按钮置灰；
+    ///  - 含去广告项的礼包卡 → 去广告项立即隐藏、底图与排版同步刷新。
+    /// 商店没在展示时什么都不做（下次进店会按新状态重建）。
+    /// </summary>
+    public void RefreshRemoveAdsCardsIfShopShowing()
+    {
+        if (SystemManager.Instance == null) return;
+        if (!SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen)) return;
+
+        ShopScreen shopScreen = SystemManager.Instance.GetPanel(PanelType.ShopScreen) as ShopScreen;
+        if (shopScreen == null)
+        {
+            LogShop("[去广告] 商店面板未找到，跳过购买后的卡片刷新");
+            return;
+        }
+
+        shopScreen.RefreshRemoveAdsRelatedCards();
+        LogShop($"[去广告] 已获得永久去广告 → 立刻刷新商店内去广告相关卡片（IsRemoveAdsOwned={IsRemoveAdsOwned()}）");
+    }
+
+    /// <summary>
     /// 「领取界面 / 购买记录」的统一展示口径：已拥有永久去广告时，
     /// 礼包内容里的去广告项（6 永久 / 7 限时 N 天）一律不展示。
     ///
@@ -1629,12 +1861,15 @@ public partial class ShopManager : MonoBehaviour
     ///   领奖界面传购买前快照 <paramref name="ownedBeforePurchase"/>，已拥有 → 隐藏。
     ///
     /// 说明：只影响展示，不影响发放（发放侧见 GrantProductContent / ShopGiftItem.IsContentSkippedOnPurchase）。
-    ///      购买记录不传快照，按「当前是否拥有永久去广告」判定，所以历史订单里的去广告项也会随之隐藏。
+    ///      购买记录（PurchaseRecordItem）现在也传自己的快照
+    ///      <see cref="PurchaseRecord.ownedRemoveAdsBeforePurchase"/>：
+    ///      第一次买到去广告 → 展示；之后再买含去广告的礼包 → 隐藏。
+    ///      老记录没有该字段（null）→ 按当前是否拥有判定。
     /// </summary>
     /// <param name="produceNameId">商品/订单的商品名（PurchaseRecord.produceNameId）</param>
     /// <param name="ownedBeforePurchase">
-    /// 「本单购买前」是否已拥有永久去广告（领奖界面传购买前快照）；
-    /// 传 null 时按当前是否拥有判定（购买记录 / 其它历史数据）。
+    /// 「本单购买前」是否已拥有永久去广告（领奖界面 / 购买记录传购买前快照）；
+    /// 传 null 时按当前是否拥有判定（旧存档的购买记录 / 其它历史数据）。
     /// </param>
     public static bool ShouldHideRemoveAdsReward(string produceNameId, bool? ownedBeforePurchase = null)
     {
@@ -1670,9 +1905,12 @@ public partial class ShopManager : MonoBehaviour
 
     public bool IsRemoveAdsActive()
     {
+        // ★ 加一道实时到期判断：isoverdate 只在读档 / 打开商店时刷新（CheckShopBuyData），
+        //   局内跨过 endtime 时靠它兜住，广告能按时恢复。
         return GameDataManager.Instance.UserData.limitShopItems
             .Any(item => item.isget && !item.isoverdate
-                && (item.adstype == (int)LimitRewordType.RemoveDayAds));
+                && item.adstype == (int)LimitRewordType.RemoveDayAds
+                && (string.IsNullOrEmpty(item.endtime) || item.GetEndTime() > GameTime.Now));
     }
 
     public double GetRemoveAdsRemainSeconds()
@@ -1687,7 +1925,9 @@ public partial class ShopManager : MonoBehaviour
             DateTime end = item.GetEndTime();
             if (end != DateTime.MinValue)
             {
-                remain = Math.Max(remain, end.Subtract(DateTime.Now).TotalSeconds);
+                // ★ 用 GameTime.Now（服务器时间）：毫秒级跟"真实流逝"走，
+                //   玩家把设备时间调到未来买、再调回来，都不会让剩余时长变长（线上 286时55分 即此类）。
+                remain = Math.Max(remain, end.Subtract(GameTime.Now).TotalSeconds);
             }
         }
         return Math.Max(0, remain);
@@ -2085,6 +2325,18 @@ public partial class ShopManager : MonoBehaviour
         return buyCount >= item.limited;
     }
 
+    /// <summary>
+    /// 审核态「限购礼包已买满」：审核开（IsAuditOpen=1）时限购礼包买满后**不隐藏**，
+    /// 保留卡片并把购买按钮置灰、拦截点击，避免审核过程中重复购买；
+    /// 非审核态返回 false，调用方沿用原有「隐藏 / 不展示」逻辑。
+    /// </summary>
+    public bool IsAuditSoldOutLimited(ShopDataItem item)
+    {
+        if (item == null || item.limited <= 0) return false;
+        if (!AuditConfig.IsAuditOpen) return false;
+        return IsLimitedOut(item);
+    }
+
     // ======================= 推荐位锁定 =======================
 
     private string SlotKey(RecommendSlot slot, int featured)
@@ -2328,13 +2580,16 @@ public partial class ShopManager : MonoBehaviour
 
         double snapshotDays = snapshotLogout == DateTime.MinValue ? 0 : (now - snapshotLogout).TotalDays;
         double currentDays = currentLogout == DateTime.MinValue ? 0 : (now - currentLogout).TotalDays;
+        // 设备时间被回拨时可能算出负数，按 0 处理
+        if (snapshotDays < 0) snapshotDays = 0;
+        if (currentDays < 0) currentDays = 0;
 
         bool isReturn = snapshotDays >= ChurnReturnDays || currentDays >= ChurnReturnDays;
 
         if (_lastChurnReturnLogged != isReturn)
         {
             _lastChurnReturnLogged = isReturn;
-             Debug.Log($"[Shop][权重] 流失回归: 启动前离开={FormatTime(snapshotLogout)}({snapshotDays:F1}天前), " +
+             Debug.Log($"[Shop][权重] 流失回归: 现在={now:yyyy-MM-dd HH:mm}, 启动前离开={FormatTime(snapshotLogout)}({snapshotDays:F1}天前), " +
                     $"当前 logoutTime={FormatTime(currentLogout)}({currentDays:F1}天前), " +
                     $"阈值={ChurnReturnDays}天 → {isReturn}");
         }
@@ -3107,6 +3362,10 @@ public partial class ShopManager : MonoBehaviour
     public void AddConversionFail(ShopDataItem item)
     {
         if (item == null) return;
+
+        // 先复位：本次调用要么真的加上 +5（下面置 true），要么被跳过（档位 / 节流 / 无数据）
+        payfailapplied = false;
+
         if (item.giftType <= 1)
         {
              Debug.Log($"[Shop]AddConversionFail 跳过: {item.produceNameId} giftType={item.giftType} <= 1");
@@ -3123,6 +3382,7 @@ public partial class ShopManager : MonoBehaviour
         float before = limit.conversionFailScore;
         limit.conversionFailScore = before + 5;
         ApplyFailScoreChanged(limit, before, limit.conversionFailScore, "转化失败+5");
+        payfailapplied = true;
 
         // F 是决策权重输入，写入后延迟落盘，避免杀进程丢失
         if (GameDataManager.Instance != null)
@@ -3294,6 +3554,10 @@ public partial class ShopManager : MonoBehaviour
         }
 
         OnPackPurchased(shopDataItem);
+
+        // ★ 道具弹窗（GetItemScreen）买到的礼包若让玩家获得永久去广告 → 商店若开着也立刻刷新
+        if (IsRemoveAdsOwned() && !RemoveAdsOwnedBeforeCurrentPurchase)
+            RefreshRemoveAdsCardsIfShopShowing();
 
          Debug.Log($"[Shop]HandleGiftTablePurchaseRewards 结束: {shopDataItem.produceNameId}");
     }
@@ -3586,34 +3850,36 @@ public partial class ShopManager : MonoBehaviour
                 exist.isopen = false;
                 exist.isoverdate = false;
                 exist.endtime = "";
-                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                exist.gettime = GameTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             }
             else
             {
                 // 基准时间 = max(原结束时间, 当前时间)：剩余时长保留并叠加，绝不倒退
-                DateTime baseEnd = DateTime.Now;
+                DateTime now = GameTime.Now;
+                DateTime baseEnd = now;
                 DateTime oldEnd = exist.GetEndTime();
-                if (oldEnd != DateTime.MinValue && oldEnd > DateTime.Now) baseEnd = oldEnd;
+                if (oldEnd != DateTime.MinValue && oldEnd > now) baseEnd = oldEnd;
 
                 DateTime newEnd = baseEnd.AddHours(hours);
                 exist.endtime = newEnd.ToString("yyyy-MM-dd HH:mm:ss");
                 exist.isget = true;
                 exist.isopen = false;
                 exist.isoverdate = false;
-                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                exist.gettime = now.ToString("yyyy-MM-dd HH:mm:ss");
                  Debug.Log($"[Shop][补发] 限时去广告续期: 原结束={oldEnd:yyyy-MM-dd HH:mm:ss}, 新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
             }
         }
         else
         {
-            DateTime newEnd = permanent ? DateTime.MinValue : DateTime.Now.AddHours(hours);
+            DateTime now = GameTime.Now;
+            DateTime newEnd = permanent ? DateTime.MinValue : now.AddHours(hours);
             GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData
             {
                 id = source != null ? source.id : 0,
                 nameid = source != null ? source.produceNameId : "",
                 endtime = permanent ? "" : newEnd.ToString("yyyy-MM-dd HH:mm:ss"),
                 isopen = false,
-                gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                gettime = now.ToString("yyyy-MM-dd HH:mm:ss"),
                 adstype = adstype,
                 isget = true,
                 isoverdate = false,
@@ -3624,7 +3890,7 @@ public partial class ShopManager : MonoBehaviour
 
         OnRemoveAdsApplied(adstype);
         if (AdRuleManager.Instance != null) AdRuleManager.Instance.HideBannerAd();
-        UpdateAdsBtnUI?.Invoke(permanent ? null : DateTime.Now.ToString(), true);
+        UpdateAdsBtnUI?.Invoke(permanent ? null : GameTime.Now.ToString(), true);
         RefreshLimitData();
     }
 
@@ -3721,6 +3987,12 @@ public partial class ShopManager : MonoBehaviour
 
         OnPackPurchased(shopDataItem);
 
+        // ★ 本次购买让玩家获得了永久去广告（本单商品 / 礼包内容里的 6;N）→ 立刻刷新商店里去广告相关卡片。
+        //   覆盖破冰 / 复购弹窗、结算页礼包按钮等「不在商店卡片上成交」的入口：
+        //   原来这些入口买完后，商店里「去除广告」那张卡还显示原价、按钮还能点，必须关店重进才刷新。
+        if (IsRemoveAdsOwned() && !RemoveAdsOwnedBeforeCurrentPurchase)
+            RefreshRemoveAdsCardsIfShopShowing();
+
         // ★ 购买记录：推送礼包（破冰 / 复购弹窗、结算页礼包按钮）和广告失败页单道具都只走这条链路，
         //   而以前这里<b>完全没写购买记录</b> → 「商店→消费记录」里看不到这些订单。
         //   口径与 ShopItemBase.RecordPurchase / GiftTable.RecordPurchase 保持一致。
@@ -3807,6 +4079,12 @@ public partial class ShopManager : MonoBehaviour
                 limitRewordType = shopDataItem.type,
 
                 buyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+
+                // ★ 本单购买前是否已拥有永久去广告（发放前在购买入口采集的快照），
+                //   购买记录据此决定去广告项展示与否。
+                ownedRemoveAdsBeforePurchase = shopManager != null
+                    ? shopManager.RemoveAdsOwnedBeforeCurrentPurchase
+                    : (bool?)null,
 
                 productContent = snapshotSource.DeepCopy()?.productContent ?? new List<List<string>>()
             };
@@ -3941,14 +4219,15 @@ public partial class ShopManager : MonoBehaviour
                 exist.isget = true;
                 exist.isopen = false;
                 exist.isoverdate = false;
-                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                exist.gettime = GameTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                  Debug.Log($"[Shop]  永久去广告续期: 记录已更新 (id={exist.id})");
             }
             else
             {
-                DateTime baseEnd = DateTime.Now;
+                DateTime now = GameTime.Now;
+                DateTime baseEnd = now;
                 DateTime oldEnd = exist.GetEndTime();
-                if (oldEnd != DateTime.MinValue && oldEnd > DateTime.Now)
+                if (oldEnd != DateTime.MinValue && oldEnd > now)
                     baseEnd = oldEnd;
 
                 DateTime newEnd = baseEnd.AddHours(hours);
@@ -3956,20 +4235,21 @@ public partial class ShopManager : MonoBehaviour
                 exist.isget = true;
                 exist.isopen = false;
                 exist.isoverdate = false;
-                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                exist.gettime = now.ToString("yyyy-MM-dd HH:mm:ss");
                  Debug.Log($"[Shop]  续期: 原结束={oldEnd}, 新结束={newEnd}");
             }
         }
         else
         {
-            DateTime newEnd = hours > 0 ? DateTime.Now.AddHours(hours) : DateTime.MinValue;
+            DateTime now = GameTime.Now;
+            DateTime newEnd = hours > 0 ? now.AddHours(hours) : DateTime.MinValue;
             GameDataManager.Instance.UserData.limitShopItems.Add(new ShopLimitData()
             {
                 id = shopDataItem.id,
                 nameid = shopDataItem.produceNameId,
                 endtime = hours > 0 ? newEnd.ToString("yyyy-MM-dd HH:mm:ss") : "",
                 isopen = false,
-                gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                gettime = now.ToString("yyyy-MM-dd HH:mm:ss"),
                 adstype = adstype,
                 isget = true,
                 isoverdate = false,
@@ -3978,7 +4258,7 @@ public partial class ShopManager : MonoBehaviour
         }
 
         OnRemoveAdsApplied(adstype);
-        UpdateAdsBtnUI?.Invoke(permanent ? null : DateTime.Now.ToString(), true);
+        UpdateAdsBtnUI?.Invoke(permanent ? null : GameTime.Now.ToString(), true);
 
         RefreshLimitData();
     }
@@ -4282,6 +4562,10 @@ public partial class ShopManager : MonoBehaviour
             //   否则会把「压根没弹收银台」也算进调起次数，选包结果被污染。
             if (invokedSystemPay)
             {
+                // ★ 只要真的拉起过收银台，本次曝光就算"已进入支付流程"，
+                //   关闭道具弹窗时不再重复记「曝光未付费 +3」（避免同一次取消被 +5/+3 各记一遍）。
+                payinvoked = true;
+
                 RecordPayInvoke(productId);
                 AddConversionFail(shopDataItem);
             }
@@ -4581,7 +4865,7 @@ public partial class ShopManager : MonoBehaviour
         }
         else if (type == (int)LimitRewordType.RemoveDayAds)
         {
-            ShopManager.shopManager.UpdateAdsBtnUIEvent(DateTime.Now.ToString(), true);
+            ShopManager.shopManager.UpdateAdsBtnUIEvent(GameTime.Now.ToString(), true);
         }
     }
 

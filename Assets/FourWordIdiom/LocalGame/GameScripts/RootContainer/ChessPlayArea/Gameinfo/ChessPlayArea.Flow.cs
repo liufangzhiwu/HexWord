@@ -677,7 +677,15 @@ public partial class ChessPlayArea
     private IEnumerator HandleStageCompletion(bool isJump)
     {
         wordUserSeconds = 0;
-        int timeBonusScore = Mathf.FloorToInt(_remainingTime / 10f) * 2;
+        // ★ 倒计时兑换禅意分：每 10 秒 = 2 分。
+        // ★ 复活后本局处于「不限时」状态：ReviveGame 里 +60s 只是给存档/防逃逸用的兜底秒数，
+        //   并不代表玩家真的还剩这么多时间。所以这种情况不换算禅意分，也不播飞分表现
+        //   （timeBonusScore = 0 → 下面 PlayTimeBonusToZenScoreFlow 整段跳过）。
+        int timeBonusScore = IsUnlimitedTime ? 0 : Mathf.FloorToInt(_remainingTime / 10f) * 2;
+        if (IsUnlimitedTime)
+        {
+            Debug.Log("[结算] 复活后的不限时关卡：不发放倒计时兑换的禅意分，也不播放飞分效果");
+        }
         ChessStageController.Instance.TimeBonusScore = timeBonusScore;
         ChessStageController.Instance.FinalizeStageData(isJump);
         yield return null;

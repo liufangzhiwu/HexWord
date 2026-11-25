@@ -911,13 +911,14 @@ public class ChessFinishView : UIWindow
                 StartCoroutine(AutoClickNextDelay());
             }
         }
-        // 刷新新手奖励入口显示，并置顶到右侧最高优先级
+        // 刷新新手奖励入口显示（注：不再强制置顶到父节点第一个子对象）
         if (_beginnerBonusEntryBtn != null)
         {
             _beginnerBonusEntryBtn.RefreshVisibility();
             if (_beginnerBonusEntryBtn.gameObject.activeSelf)
             {
-                _beginnerBonusEntryBtn.transform.SetAsFirstSibling();
+                // 注：不再把新手奖励入口强制设为父节点第一个子对象（层级/渲染顺序改由预制体自身顺序决定）
+                // _beginnerBonusEntryBtn.transform.SetAsFirstSibling();
                 _beginnerBonusEntryBtn.SetPreviousBorderProgress(); // 先钉在旧刻度上
             }
         }

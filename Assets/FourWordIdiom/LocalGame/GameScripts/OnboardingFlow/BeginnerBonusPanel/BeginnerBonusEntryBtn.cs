@@ -34,7 +34,7 @@ public class BeginnerBonusEntryBtn : MonoBehaviour
         if (gameObject.activeSelf)
         {
             // 确保显示在右侧最上/最前位置
-            transform.SetAsFirstSibling();
+            //transform.SetAsFirstSibling();
             if (_timerRoutine != null) StopCoroutine(_timerRoutine);
             _timerRoutine = StartCoroutine(StatusUpdateRoutine());
         }

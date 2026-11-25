@@ -484,6 +484,13 @@ public class CustomFlyInManager : MonoBehaviour
         GameObject Gold = Instantiate(gold,SystemManager.Instance._uiRoot);
         Gold.transform.position = start.position; // 设置起始位置
         Gold.transform.localScale = scale;
+
+        // ★ 金币必须渲染在弹窗（PopPanel/UpPopPanel）之上，否则从结算类弹窗里起飞的金币
+        //   会被面板画布整体盖住，表现为"没有金币飞入效果"。TipsPanel 是项目最顶层。
+        Canvas goldCanvas = Gold.GetComponent<Canvas>();
+        if (goldCanvas == null) goldCanvas = Gold.AddComponent<Canvas>();
+        goldCanvas.overrideSorting = true;
+        goldCanvas.sortingLayerName = "TipsPanel";
        
         Vector3 endPosition = target.position; // 设置起始位置
 

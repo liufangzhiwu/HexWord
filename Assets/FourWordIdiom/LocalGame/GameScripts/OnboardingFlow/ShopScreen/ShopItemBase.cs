@@ -146,6 +146,12 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             return;
         }
 
+        // ★ 审核态：限购已买满的卡片不再按下反馈（按钮已置灰）
+        if (ShopManager.shopManager != null && ShopManager.shopManager.IsAuditSoldOutLimited(shopDataItem))
+        {
+            return;
+        }
+
         isPressed = true;
         pressPosition = eventData.position;
 
@@ -174,6 +180,14 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         if (IsRemoveAdsOwnedProduct(shopDataItem))
         {
             LogShopItem("永久去广告已购买，拦截点击");
+            return;
+        }
+
+        // ★ 审核态：限购礼包买满 → 卡片仍展示，但点击不再拉起支付
+        if (ShopManager.shopManager != null && ShopManager.shopManager.IsAuditSoldOutLimited(shopDataItem))
+        {
+            LogShopItem("审核态限购已买满，拦截点击（不可重复购买）");
+            MessageSystem.Instance.ShowTip("已售空");
             return;
         }
 
@@ -495,6 +509,30 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         return ShopManager.shopManager != null && ShopManager.shopManager.IsRemoveAdsOwned();
     }
 
+    /// <summary>
+    /// 本卡是否就是「永久去广告」独立商品（shop.csv 里 produceNameId = RemoveADS）。
+    /// 购买其它商品获得永久去广告后，要按这个判定把这张卡切到「已购买」。
+    /// </summary>
+    public bool IsPermanentRemoveAdsCard()
+    {
+        return shopDataItem != null && shopDataItem.produceNameId == ShopManager.ProductRemoveAds;
+    }
+
+    /// <summary>
+    /// ★ 获得「永久去广告」后立刻刷新本卡状态（不等关店重进 / 对象池复用）：
+    /// 价格文案 → 「已购买」，按钮置灰（IsRemoveAdsOwnedProduct 实时判定）。
+    /// 之前只有 SetShopData / UpdateUI / OnEnable 才会重跑，买完当场看到的是旧价格、按钮还能点。
+    /// 只处理去广告独立商品卡，其它卡的价格与本次购买无关，不去动它。
+    /// </summary>
+    public void RefreshRemoveAdsOwnedState()
+    {
+        if (shopDataItem == null) return;
+        if (!IsPermanentRemoveAdsCard()) return;
+
+        SetProductPrice(shopDataItem);
+        RefreshButtonInteractable();
+    }
+
     protected virtual void RefreshButtonInteractable()
     {
         var button = GetComponent<Button>();
@@ -507,13 +545,22 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         }
 
         bool owned = IsRemoveAdsOwnedProduct(shopDataItem);
-        button.interactable = !owned;
+        bool soldOutInAudit = ShopManager.shopManager != null
+                              && ShopManager.shopManager.IsAuditSoldOutLimited(shopDataItem);
+
+        button.interactable = !owned && !soldOutInAudit;
 
         if (owned)
         {
             shopPriceText.text = "已购买";
             ShowPriceLoadingState(false);
             LogShopItem("永久去广告已购买，按钮置灰并显示'已购买'");
+        }
+        else if (soldOutInAudit)
+        {
+            // ★ 审核态：限购礼包买满 → 保留卡片，按钮置灰（不可重复购买）
+            ShowPriceLoadingState(false);
+            LogShopItem("审核态限购已买满，卡片保留、购买按钮置灰");
         }
     }
 
@@ -690,8 +737,6 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     {
         LogShopItem($"购买成功: {item.ProductId}");
 
-        bool hasPermanentRemoveAds = false;
-
         // ★ 记录「购买前是否已拥有永久去广告」快照（必须在发放与展示 AwardScreen 之前采集）
         if (ShopManager.shopManager != null)
             ShopManager.shopManager.CaptureRemoveAdsOwnedBeforePurchase();
@@ -727,11 +772,9 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                         GameDataManager.Instance.UserData.UpdateTool(LimitRewordType.AutoComplete, count, "商店购买" + item.ItemName);
                         break;
                     case (int)LimitRewordType.RemoveAds:
-                        hasPermanentRemoveAds = true;
                         HandleRemoveAdsPurchaseInternal((int)LimitRewordType.RemoveAds, 0);
                         break;
                     case (int)LimitRewordType.RemoveDayAds:
-                        hasPermanentRemoveAds = false;
                         HandleRemoveAdsPurchaseInternal((int)LimitRewordType.RemoveDayAds, count * 24);
                         break;
                     case (int)LimitRewordType.ReStartTool:
@@ -750,9 +793,16 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             //   与 GiftTable.RecordPurchase 使用同一份 PurchaseRecord 数据结构与快照规则。
             RecordPurchase(item);
 
-            if (hasPermanentRemoveAds)
+            // ★ 本单让玩家拿到了永久去广告（礼包内容里的 6;N，明心/大觉/圆满都带一条 6;1）
+            //   → 商店里「去除广告」那张卡要立刻变「已购买」并置灰，含去广告项的礼包卡也立刻隐藏该项
+            //   （原来必须关店重进才刷新）。
+            //   判定直接用「购买前快照 × 当前是否拥有」：不依赖内容里 6/7 的书写顺序，
+            //   也不依赖礼包内容是否显式配了 6（RemoveADS 独立商品按商品名兜底发放时同样适用）。
+            if (ShopManager.shopManager != null
+                && ShopManager.shopManager.IsRemoveAdsOwned()
+                && !ShopManager.shopManager.RemoveAdsOwnedBeforeCurrentPurchase)
             {
-                
+                ShopManager.shopManager.RefreshRemoveAdsCardsIfShopShowing();
             }
             SystemManager.Instance.ShowPanel(PanelType.AwardScreen);
         }
@@ -909,6 +959,12 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
                 buyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
 
+                // ★ 本单购买前是否已拥有永久去广告（OnPurchaseSuccess 发放前采集的快照）：
+                //   购买记录据此决定去广告项展示与否 —— 第一次买到 → 展示，之后再买 → 隐藏。
+                ownedRemoveAdsBeforePurchase = ShopManager.shopManager != null
+                    ? ShopManager.shopManager.RemoveAdsOwnedBeforeCurrentPurchase
+                    : (bool?)null,
+
                 productContent = DeepCopyContent(shopDataItem.productContent)
             };
 
@@ -957,14 +1013,16 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 exist.isopen = false;
                 exist.isoverdate = false;
                 exist.endtime = "";
-                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                exist.gettime = GameTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 LogShopItem($"永久去广告续期: 记录已更新 (id={exist.id})");
             }
             else
             {
-                DateTime baseEnd = DateTime.Now;
+                // ★ 用 GameTime.Now（可信时间）：设备时间被调到未来时买的时长不会凭空变长
+                DateTime now = GameTime.Now;
+                DateTime baseEnd = now;
                 DateTime oldEnd = exist.GetEndTime();
-                if (oldEnd != DateTime.MinValue && oldEnd > DateTime.Now)
+                if (oldEnd != DateTime.MinValue && oldEnd > now)
                     baseEnd = oldEnd;
 
                 DateTime newEnd = baseEnd.AddHours(hours);
@@ -972,20 +1030,21 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 exist.isget = true;
                 exist.isopen = false;
                 exist.isoverdate = false;
-                exist.gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                exist.gettime = now.ToString("yyyy-MM-dd HH:mm:ss");
                 LogShopItem($"限时去广告续期: 原结束={oldEnd:yyyy-MM-dd HH:mm:ss}, 新结束={newEnd:yyyy-MM-dd HH:mm:ss}");
             }
         }
         else
         {
-            DateTime newEnd = permanent ? DateTime.MinValue : DateTime.Now.AddHours(hours);
+            DateTime now = GameTime.Now;
+            DateTime newEnd = permanent ? DateTime.MinValue : now.AddHours(hours);
             ShopLimitData newData = new ShopLimitData()
             {
                 id = shopDataItem.id,
                 nameid = shopDataItem.produceNameId,
                 endtime = permanent ? "" : newEnd.ToString("yyyy-MM-dd HH:mm:ss"),
                 isopen = false,
-                gettime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                gettime = now.ToString("yyyy-MM-dd HH:mm:ss"),
                 adstype = adstype,
                 isget = true,
                 isoverdate = false,
@@ -1001,7 +1060,7 @@ public class ShopItemBase : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         if (ShopManager.shopManager != null)
         {
-            ShopManager.shopManager.UpdateAdsBtnUIEvent(permanent ? null : DateTime.Now.ToString(), true);
+            ShopManager.shopManager.UpdateAdsBtnUIEvent(permanent ? null : GameTime.Now.ToString(), true);
             ShopManager.shopManager.RefreshLimitData();
         }
 

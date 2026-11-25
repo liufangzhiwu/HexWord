@@ -124,7 +124,11 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
  
     
     /// <summary>
-    /// 领取当前阶段奖励，处理溢出词数结转到下一阶段
+    /// 领取当前阶段奖励，处理溢出词数结转到下一阶段。
+    /// ★ 注意：本方法内部会调 AdvanceStageAfterClaim() 推进阶段，**不要**在调用它之前
+    ///   再手动 AdvanceStageAfterClaim()——那样在有溢出词数时 id 会一次跳两段，
+    ///   中间那段灯笼不会点亮、奖励也发不出去（2026-11-24 修限时活动跳格 bug 时的定位结论）。
+    ///   限时活动界面（LimitTimeScreen）现在统一用 AdvanceStageAfterClaim() 单点推进。
     /// </summary>
     public void ClaimCurrentReward()
     {
@@ -150,14 +154,113 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
             userData.timePuzzlecount = totalBefore + currentNeed;
             // 保存溢出词数，在下一阶段生效
             userData.timePuzzlecount += overflow;
-            // 递增阶段
-            userData.UpdateLImitid();
-            // 更新当前数据引用
-            CurlimitData = GetLimitItem(userData.timerePuzzleid);
+            // 递增阶段（最后一段 → 幸运循环，见 AdvanceStageAfterClaim）
+            AdvanceStageAfterClaim();
         }
         // 刷新UI
         UpdateLimitTimeBtnUI();
     }
+
+    #region 幸运循环（最后一个灯笼无尽循环）
+
+    /// <summary>限时活动最后一段（“幸运循环”段）的配置 id；配置为空时返回 -1。</summary>
+    public int GetLastLimitId()
+    {
+        if (limitItems == null || limitItems.Count == 0) return -1;
+        return limitItems[limitItems.Count - 1].id;
+    }
+
+    /// <summary>当前是否处在最后一段（幸运循环段）。</summary>
+    public bool IsLastLimitStage()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+        int lastId = GetLastLimitId();
+        return lastId >= 0 && GameDataManager.Instance.UserData.timerePuzzleid >= lastId;
+    }
+
+    /// <summary>幸运循环是否已开启（最后一段至少完成过一次；开启后最后一个灯笼循环可领）。</summary>
+    public bool IsLuckyLoop()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return false;
+        return GameDataManager.Instance.UserData.luckyLoopEntered && IsLastLimitStage();
+    }
+
+    /// <summary>最后一段之前所有阶段的需求总和（幸运循环每轮进度归零的基准值）。</summary>
+    public int GetWordsBeforeLastStage()
+    {
+        int lastId = GetLastLimitId();
+        int total = 0;
+        for (int i = 0; i < lastId; i++)
+        {
+            var item = GetLimitItem(i);
+            if (item != null) total += item.num;
+        }
+        return total;
+    }
+
+    /// <summary>
+    /// 进入 / 继续幸运循环：
+    ///   1. timerePuzzleid 固定在最后一段（不再自增 → IsComplete() 不会成立，活动页不会“领完”）；
+    ///   2. timePuzzlecount 回到最后一段起点 → 灯笼回到待完成状态，进度条从 0 重新走；
+    ///   3. 置 luckyLoopEntered → 最后一个灯笼显示“幸运循环”，且不显示打勾。
+    /// ★ 这里会丢弃溢出词数：最后一段本身可以无限重复，若把溢出结转进来会出现“瞬间连领多次”的刷奖励漏洞。
+    /// </summary>
+    public void EnterLuckyLoop()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return;
+        int lastId = GetLastLimitId();
+        if (lastId < 0) return;
+
+        var userData = GameDataManager.Instance.UserData;
+        userData.luckyLoopEntered = true;
+        userData.timerePuzzleid = lastId;
+        userData.timePuzzlecount = GetWordsBeforeLastStage();
+        CurlimitData = GetLimitItem(lastId);
+
+        Debug.Log($"[LimitTime] 进入幸运循环：stage={lastId} base={userData.timePuzzlecount} need={CurlimitData?.num}");
+        UpdateLimitTimeBtnUI();
+    }
+
+    /// <summary>
+    /// 领取完当前段后推进阶段。
+    /// 普通段 → 走原来的 UpdateLImitid；最后一段 → 进入幸运循环（不推进 id，进度清零）。
+    /// </summary>
+    public void AdvanceStageAfterClaim()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return;
+
+        if (IsLastLimitStage())
+        {
+            EnterLuckyLoop();
+            return;
+        }
+
+        var userData = GameDataManager.Instance.UserData;
+        userData.UpdateLImitid();
+        CurlimitData = GetLimitItem(userData.timerePuzzleid);
+    }
+
+    /// <summary>
+    /// 老存档兼容：上一版本把最后一段也当成普通段推进，领完最后一段后 timerePuzzleid 会越过最后一段（如 12）。
+    /// 这种存档直接归位到最后一段的幸运循环，避免活动页出现“没有任何可领阶段”的空状态。
+    /// </summary>
+    public void EnsureEndlessState()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.UserData == null) return;
+        if (limitItems == null || limitItems.Count == 0) return;
+
+        int lastId = GetLastLimitId();
+        var userData = GameDataManager.Instance.UserData;
+        if (userData.timerePuzzleid <= lastId) return;
+
+        userData.timerePuzzleid = lastId;
+        userData.timePuzzlecount = GetWordsBeforeLastStage();
+        userData.luckyLoopEntered = true;
+        CurlimitData = GetLimitItem(lastId);
+        Debug.Log($"[LimitTime] 老存档迁移到幸运循环：stage={lastId}");
+    }
+
+    #endregion
     
     // <summary>
     /// 根据蝶蛹是否收集满，返回应使用的奖励列表
@@ -205,7 +308,8 @@ public class LimitTimeManager : Singleton<LimitTimeManager>
     public int GetCurWordCount()
     {
         if (!IsOpen()) return 0;
-        
+        EnsureEndlessState();   // 老存档（已越过最后一段）先归位到幸运循环
+
         int needword = 0;
         for (int i = 0; i <= GameDataManager.Instance.UserData.timerePuzzleid; i++)
         {

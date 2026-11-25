@@ -155,6 +155,8 @@ public sealed class GameCoreManager : MonoBehaviour
         {
             GameDataManager.Instance.UserData.UserName = FishInfoController.Instance.GeneratePlayerName();
         }
+        
+        Game.self.Ads?.OnEnterHomeScene();
     }
 
     public void UpdateMyPersonInfo()

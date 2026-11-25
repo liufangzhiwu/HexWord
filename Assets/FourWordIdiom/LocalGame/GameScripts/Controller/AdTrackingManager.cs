@@ -348,6 +348,14 @@ public class AdTrackingManager : MonoBehaviour
         UserData user = User;
         if (user == null) return;
 
+        // ★ 需求（鸿蒙）：引导页正在等玩家点「继续」时，任何"静默查询"都不能发 ——
+        //   鸿蒙的查询接口在权限未决时会直接弹系统框，会抢在引导页前面。
+        if (!AdTrackingPromptGate.CanQuerySilently)
+        {
+            Debug.Log($"[AdTracking] {reason}静默核对跳过：广告追踪引导页正在等待玩家点「继续」");
+            return;
+        }
+
         // 还没决定过授权时的两种处理：
         //   · iOS / 编辑器：GetStatus 是只读查询（编辑器读 att_mock_status，不弹框），可以直接对齐。
         //     否则会出现"存档是空、设置页按系统状态显示为开、用户分层却按未授权算"的割裂
@@ -547,6 +555,11 @@ public class AdTrackingManager : MonoBehaviour
         if (!user.IsAgreePrivacy) return;                 // 隐私还没同意，先不碰系统接口
         if (!user.adTrackingGuideShown) return;           // 没弹过引导 → 交给引导流程处理
         if (user.adTrackingEnabled == "1" || user.adTrackingEnabled == "0") return;
+        if (!AdTrackingPromptGate.CanQuerySilently)       // 引导页正在等「继续」→ 不查（未决时会弹框）
+        {
+            Debug.Log("[AdTracking] 启动补偿跳过：广告追踪引导页正在等待玩家点「继续」");
+            return;
+        }
 
         _undeterminedRecoveryTried = true;
 
@@ -840,6 +853,7 @@ public class AdTrackingManager : MonoBehaviour
         //   所以这里不再因为 IsAuthorized 直接短路返回。
         _waitingSettingsReturn = true;
         _permissionRequested = false;
+        AdTrackingPromptGate.AllowOnce();   // 玩家在设置里主动点击「广告关联」→ 允许拉起系统设置弹窗
 
         ReportPopShow(PopNameTracking);
         OpenSystemTrackingSettings();
@@ -878,6 +892,11 @@ public class AdTrackingManager : MonoBehaviour
         _guide.OnPrimaryClicked += HandleGuidePrimary;
         _guide.Setup(mode, rewardGold);
 
+        // ★ 需求：首启引导页展示期间，禁止任何可能拉起系统广告追踪弹窗的调用
+        //   （查询/请求都算）。闸门一直关到玩家点「继续」为止，保证系统框一定在引导页之后。
+        if (mode == AdTrackingGuidance.Mode.Startup)
+            AdTrackingPromptGate.SetStartupGuidePending(true);
+
         // 首启时引导页弹得很早（加载页 1.2s 后），分层配置可能还没就绪 → rewardGold 取到 0，
         // 角标就空了。这里在 LayerConfigWait 内等配置到位再补一次（只补 UI，不影响发奖）。
         if (rewardGold <= 0) StartCoroutine(RefreshGuideRewardWhenReady());
@@ -915,6 +934,11 @@ public class AdTrackingManager : MonoBehaviour
 
             _permissionRequested = true;
 
+            // ★ 顺序不能反：先放行闸门，再 RequestPermission。
+            //   引导页在屏上时闸门是关的（禁止任何系统追踪调用），点「继续」这一刻才开。
+            AdTrackingPromptGate.SetStartupGuidePending(false);
+            AdTrackingPromptGate.AllowOnce();
+
             CloseGuide();                 // 只关 UI
             _startupFlowFinished = true;  // 放行加载流程
 
@@ -925,6 +949,7 @@ public class AdTrackingManager : MonoBehaviour
 
         // 设置入口："去开启" → 跳系统广告追踪设置页
         _waitingSettingsReturn = true;
+        AdTrackingPromptGate.AllowOnce();   // 玩家主动点击，允许拉起系统设置弹窗
         _guide.SetBusy(true);
         OpenSystemTrackingSettings();
     }
@@ -958,6 +983,11 @@ public class AdTrackingManager : MonoBehaviour
 
     private void CloseGuide()
     {
+        // 引导页一旦结束（点继续 / 超时收尾 / 系统回调关闭），就不再阻塞系统追踪接口。
+        // ★ 放在最前面：_guide 为空（场景卸载 / 实例异常）时也要解开闸门，
+        //   否则整局都无法再请求广告追踪授权。
+        AdTrackingPromptGate.SetStartupGuidePending(false);
+
         if (_guide == null) return;
 
         _guide.OnPrimaryClicked -= HandleGuidePrimary;
@@ -1048,8 +1078,13 @@ public class AdTrackingManager : MonoBehaviour
         if (GameDataManager.Instance != null) GameDataManager.Instance.CommitGameData();
 
         // ---------- 埋点（通用数数方案：系统权限弹窗结果） ----------
-        if (granted) ReportPopAccept(PopNameTracking);
-        else ReportPopRefuse(PopNameTracking);
+        // ★ 只报"我方发起"的授权结果：如果这次系统框不是引导页/设置流程拉起的（外部提前弹了），
+        //   报 accept/refuse 会变成"没有 Pop_up 曝光却有结果"的脏漏斗，这里直接跳过。
+        if (wasAwaiting)
+        {
+            if (granted) ReportPopAccept(PopNameTracking);
+            else ReportPopRefuse(PopNameTracking);
+        }
 
         _openedSystemSettings = false;
 
@@ -1060,7 +1095,9 @@ public class AdTrackingManager : MonoBehaviour
         // 首次启动场景：只有"本次真的发起过请求"才关页（避免登录补写状态把引导页提前关掉），
         //   允许/拒绝都关，玩家不用再点一次"继续"（不关就会卡在引导页，要等 StartupFlowTimeout 才放行）；
         // 设置入口场景：只有"已开启"才关（拒绝的话留页，方便玩家再试一次）。
-        bool closeGuide = granted || (_permissionRequested && !fromSettings);
+        // ★ 必须由我方流程（点过「继续」/ 设置入口）发起的授权才能关页：
+        //   否则外部/SDK 提前拉起的系统框一回包，就会把玩家还没点「继续」的引导页关掉。
+        bool closeGuide = _permissionRequested || (fromSettings && granted);
         if (closeGuide)
         {
             CloseGuideAndFinishStartupFlow(fromSettings
@@ -1101,6 +1138,9 @@ public class AdTrackingManager : MonoBehaviour
 
         if (AdTrackingPermission.IsSupported)
         {
+            // iOS / 编辑器：系统弹窗走原生桥，不经过鸿蒙闸门 → 把放行券消费掉，
+            // 避免残留到下一次鸿蒙请求（同一进程内切换平台调试时才会遇到，白拿一张券）
+            AdTrackingPromptGate.Consume();
             AdTrackingPermission.OpenSystemSettings();
 
 #if UNITY_EDITOR

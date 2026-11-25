@@ -37,6 +37,14 @@ public class PurchaseRecord
     public string buyTime;
 
     /// <summary>
+    /// 「本单购买前」是否已拥有永久去广告的快照（购买入口在发放奖励之前采集）。
+    /// 展示口径：为 false（买之前没有）→ 订单里的永久去广告项要展示；
+    ///           为 true（买之前已拥有）→ 隐藏，避免第二次买含去广告的礼包又列一条。
+    /// 旧存档没有该字段 → 为 null，退回「当前是否已拥有」判定，与历史行为一致。
+    /// </summary>
+    public bool? ownedRemoveAdsBeforePurchase;
+
+    /// <summary>
     /// 礼包内容快照（深拷贝 ShopDataItem.productContent）。
     /// 每一项是 [type, count, ...]，展示时直接喂给 GiftItem.SetShopData。
     /// </summary>

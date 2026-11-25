@@ -33,6 +33,18 @@ public class GiftItem : MonoBehaviour
     /// <summary>Prefab 上 countText 的默认字号（池复用时用来复位，避免上一个资源的大小残留）</summary>
     private int _defaultFontSize;
     private bool _defaultFontSizeCached;
+    /// <summary>Prefab 上 countText 的默认 BestFit 开关（池复用时用来复位，避免专属排版关掉后残留到别的礼包）</summary>
+    private bool _defaultBestFit;
+    private bool _defaultBestFitCached;
+
+    /// <summary>Prefab 上 countText 的默认尺寸（池复用时用来复位，避免放大过的高度残留到别的礼包）</summary>
+    private Vector2 _defaultCountSize;
+    private bool _defaultCountSizeCached;
+
+    /// <summary>Prefab 上 countText 的默认溢出模式（池复用时用来复位）</summary>
+    private HorizontalWrapMode _defaultCountHOverflow;
+    private VerticalWrapMode _defaultCountVOverflow;
+    private bool _defaultCountOverflowCached;
 
     /// <summary>Prefab 上 shopIcon 的默认图（池复用时兜底，避免残留上一个资源的图标）</summary>
     private Sprite _defaultIconSprite;
@@ -57,6 +69,32 @@ public class GiftItem : MonoBehaviour
                 _defaultFontSizeCached = true;
             }
             countText.fontSize = _defaultFontSize;
+
+            if (!_defaultBestFitCached)
+            {
+                _defaultBestFit = countText.resizeTextForBestFit;
+                _defaultBestFitCached = true;
+            }
+            countText.resizeTextForBestFit = _defaultBestFit;
+
+            // ★ 尺寸 / 溢出模式也要复位：ApplyCountTextLayout 为了放下大字号会把控件加高、
+            //   并把 Truncate 改成 Overflow，池复用时不还原会残留给下一个资源。
+            RectTransform countRt = countText.rectTransform;
+            if (!_defaultCountSizeCached)
+            {
+                _defaultCountSize = countRt.sizeDelta;
+                _defaultCountSizeCached = true;
+            }
+            countRt.sizeDelta = _defaultCountSize;
+
+            if (!_defaultCountOverflowCached)
+            {
+                _defaultCountHOverflow = countText.horizontalOverflow;
+                _defaultCountVOverflow = countText.verticalOverflow;
+                _defaultCountOverflowCached = true;
+            }
+            countText.horizontalOverflow = _defaultCountHOverflow;
+            countText.verticalOverflow = _defaultCountVOverflow;
         }
 
         // 记下 Prefab 上的默认图标，池复用时遇到「取不到图」的资源要还原，避免残留上一个资源的图
@@ -79,6 +117,63 @@ public class GiftItem : MonoBehaviour
 
     /// <summary>是否为横向布局 Prefab（GiftHengItem）。横向项的图标位置由 hengIconAnchoredPosition 决定，不做外部覆盖。</summary>
     public bool IsHengItem => isGiftHengItem;
+
+    /// <summary>最近一次 SetShopData / SetBuyListData 传入的资源类型（LimitRewordType），供外部按类型排版。</summary>
+    public int GiftType { get; private set; }
+
+    /// <summary>
+    /// 外部覆盖数量文本（countText）的 y 坐标与字号，并关闭 BestFit（自动缩放）。
+    /// 必须在 SetShopData 之后调用（SetShopData 会按资源类型重设位置/字号，这里是最终覆盖）。
+    /// 用途：未去广告礼包卡（ItemList 内是「去广告 + 金币」两列）的字体排版。
+    ///
+    /// ★ 关闭 BestFit 是必须的：开着 BestFit 时 fontSize 只是上限，Text 会按控件宽度自动缩小，
+    ///   表现上就是「设了 85 实际却小很多」。
+    ///
+    /// ★ 但关掉 BestFit 后必须同步把控件撑高 / 放开溢出，否则会**整行不显示**：
+    ///   Prefab 上 countText 高 100.04、verticalOverflow = Truncate，靠 BestFit（max 70）
+    ///   自动缩小才塞得下；85 号中文字的行高约 100~110，Truncate 直接把这一行裁掉，
+    ///   表现就是「永久」/金币数字完全空掉。这里按字号撑高并改成 Overflow，y 与字号保持调用方给定值。
+    /// </summary>
+    public void ApplyCountTextLayout(float y, int fontSize)
+    {
+        if (countText == null) return;
+
+        RectTransform rt = countText.rectTransform;
+        Vector2 pos = rt.anchoredPosition;
+        pos.y = y;
+        rt.anchoredPosition = pos;
+
+        countText.resizeTextForBestFit = false;
+        countText.fontSize = fontSize;
+
+        // 控件高度至少容纳一行（中文行高约 1.3~1.4 倍字号），再放开溢出兜底
+        Vector2 size = rt.sizeDelta;
+        float needHeight = fontSize * 1.4f;
+        if (size.y < needHeight)
+            rt.sizeDelta = new Vector2(size.x, needHeight);
+
+        countText.verticalOverflow = VerticalWrapMode.Overflow;
+        countText.horizontalOverflow = HorizontalWrapMode.Overflow;
+
+        // 排查「文字不显示」用：把最终生效的文本/字号/控件尺寸/溢出模式打出来
+        // LogManager.ShopLog($"[GiftItem] 数量文本排版: type={GiftType} text=\"{countText.text}\" " +
+        //                    $"y={y} fontSize={fontSize} size={rt.sizeDelta} " +
+        //                    $"vOverflow={countText.verticalOverflow} hOverflow={countText.horizontalOverflow} " +
+        //                    $"active={countText.gameObject.activeInHierarchy}");
+    }
+    
+    public void ApplyAdsCountTextLayout(float y, int fontSize)
+    {
+        if (countText == null) return;
+
+        RectTransform rt = countText.rectTransform;
+        Vector2 pos = rt.anchoredPosition;
+        pos.y = y;
+        rt.anchoredPosition = pos;
+
+        countText.resizeTextForBestFit = false;
+        countText.gameObject.SetActive(false);
+    }
 
     /// <summary>
     /// 直接覆盖图标节点的 anchoredPosition.y 和尺寸（宽 / 高），x 位置保持不变。
@@ -130,7 +225,9 @@ public class GiftItem : MonoBehaviour
                 break;
         }
 
-        switch (int.Parse(data[0]))
+        GiftType = int.Parse(data[0]);
+
+        switch (GiftType)
         {
             case (int)LimitRewordType.Coins:
                 spritename = "gold";
@@ -254,7 +351,9 @@ public class GiftItem : MonoBehaviour
                 break;
         }
 
-        switch (int.Parse(data[0]))
+        GiftType = int.Parse(data[0]);
+
+        switch (GiftType)
         {
             case (int)LimitRewordType.Coins:
                 // 金币图默认 gold2；复购礼包的大额金币（≥5000）由调用方传 gold4
@@ -285,9 +384,9 @@ public class GiftItem : MonoBehaviour
                 break;
             case (int)LimitRewordType.RemoveAds:
                 spritename = "shopads";
-                hengIconSize = new Vector2(120f, 120f);
+                hengIconSize = new Vector2(107f, 100f);
                 SetIconSize(new Vector2(250f, 250f));
-                hengIconAnchoredPosition = new Vector2(-14f, -14f);
+                hengIconAnchoredPosition = new Vector2(-14f, -10f);
                 SetIconAnchoredPosition(new Vector2(0f, -25f));
                 countText.text = "永久";
                 SetCountFontSize(60);
@@ -296,9 +395,9 @@ public class GiftItem : MonoBehaviour
             case (int)LimitRewordType.RemoveDayAds:
                 spritename = "shopads";
                 countText.text = data[1]+"天";
+                hengIconSize = new Vector2(107f, 100f);
                 SetIconSize(new Vector2(230f, 350f));
-                SetIconSize(Vector2.zero);
-                hengIconAnchoredPosition = new Vector2(-14f, -14f);
+                hengIconAnchoredPosition = new Vector2(-14f, -10f);
                 SetIconAnchoredPosition(new Vector2(0f, -25f));
                 SetCountFontSize(60);
                 CreateTipsBtn(pointdes);

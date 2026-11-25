@@ -433,6 +433,56 @@ public class AdRuleManager : MonoBehaviour
     public bool IsInterstitialShowing { get; private set; }
 
     /// <summary>
+    /// 插屏状态看门狗上限（秒）。
+    ///
+    /// ★ 为什么需要：`IsInterstitialShowing` 是"从拉起插屏到收到结束回调"的区间标记。
+    ///   一旦 SDK 拉起失败但不回调（点播卡死 / 桥接异常 / 回调丢失），这个标记会永远是 true，后果是：
+    ///     1. 之后所有插屏都被当成"正在播"永久拦截，再也不出广告；
+    ///     2. 结算页的破冰 / 复购礼包会让位给它，**永远弹不出来**。
+    ///   这里给一个远大于正常插屏时长（一般 5~30s）的上限，到点强制复位状态并唤醒等它的礼包。
+    /// </summary>
+    private const float InterstitialStateWatchdogSeconds = 45f;
+
+    private Coroutine _interstitialStateWatchdog;
+
+    /// <summary>
+    /// 判定本次插屏卡死 / 播放失败，强制把「插屏在播」状态复位。
+    /// ★ 只复位状态，绝不重复调用业务回调（避免同一次插屏回调两次、埋点重复）。
+    /// 调用方：本类的看门狗、ShopManager 的礼包等待超时。
+    /// </summary>
+    public void ForceResetInterstitialState(string reason)
+    {
+        if (!IsInterstitialShowing) return;
+
+        Debug.LogError($"[AdRule] 强制复位插屏状态（{reason}）：插屏拉起后长时间没有收到结束回调，" +
+                       "判定为播放失败/回调丢失（不再阻塞插屏与结算礼包）");
+        IsInterstitialShowing = false;
+    }
+
+    /// <summary>
+    /// 插屏状态看门狗：拉起后一直等不到结束回调 → 超时强制复位，并通知等它的结算礼包补弹。
+    /// </summary>
+    private IEnumerator CoInterstitialStateWatchdog()
+    {
+        float deadline = Time.realtimeSinceStartup + InterstitialStateWatchdogSeconds;
+        while (Time.realtimeSinceStartup < deadline)
+        {
+            if (!IsInterstitialShowing) { _interstitialStateWatchdog = null; yield break; }
+            yield return new WaitForSecondsRealtime(0.5f);
+        }
+
+        if (!IsInterstitialShowing) { _interstitialStateWatchdog = null; yield break; }
+
+        ForceResetInterstitialState($"拉起插屏 {InterstitialStateWatchdogSeconds:F0}s 未收到任何回调");
+
+        // 状态复位后，等它的结算礼包要能立刻补弹（否则礼包要等自己的超时才出来）
+        if (ShopManager.shopManager != null)
+            ShopManager.shopManager.NotifyInterstitialClosed();
+
+        _interstitialStateWatchdog = null;
+    }
+
+    /// <summary>
     /// 展示插屏广告
     /// 流程：拦截审核 → 播广告 → onComplete 立即回调（业务继续）→ 再尝试弹赠礼
     /// </summary>
@@ -465,6 +515,9 @@ public class AdRuleManager : MonoBehaviour
 
         // 2. 播广告
         IsInterstitialShowing = true;
+        if (_interstitialStateWatchdog == null)
+            _interstitialStateWatchdog = StartCoroutine(CoInterstitialStateWatchdog());
+
         Game.self.Ads.ShowInterstitial((success) =>
         {
             IsInterstitialShowing = false;
@@ -493,18 +546,18 @@ public class AdRuleManager : MonoBehaviour
     /// <summary>展示 Banner</summary>
     public void TryShowBanner()
     {
-        if (!CanShowBanner())
-        {
-            Debug.Log("[AdRule] Banner 拦截掉了");
-            return;
-        }
-        Game.self.Ads.ShowBanner();
+        // if (!CanShowBanner())
+        // {
+        //     Debug.Log("[AdRule] Banner 拦截掉了");
+        //     return;
+        // }
+        // Game.self.Ads.ShowBanner();
     }
 
     /// <summary>关闭 Banner</summary>
     public void HideBannerAd()
     {
-        Game.self.Ads.HideBanner();
+        //Game.self.Ads.HideBanner();
     }
 
     /// <summary>展示激励视频</summary>

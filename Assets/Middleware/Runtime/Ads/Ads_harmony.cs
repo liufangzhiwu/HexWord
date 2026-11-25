@@ -151,11 +151,9 @@ namespace Middleware
                 SignalHandler.Instance.RegisterSignalDelegate<AdsStatusSignal>(OnAdsStatusTrigger);
                 _uniqueId = Game.self.GetOAID();
 
-                // 直接登记预加载：广告请求不再等广告追踪授权（未授权只会少 OAID 出价，
+                // 直接登记预加载：广告请求需要等广告追踪授权（未授权只会少 OAID 出价，
                 // 不影响请求与播放；等授权会变成"没弹过追踪框的用户整局无激励"）。
-                Debug.Log("[AD] SDK 初始化完成，两个激励位登记预加载");
-                TryPreload(REWARD_AD_ID, AdType.Reward);
-                TryPreload(TIP_TOOL_REWARD_AD_ID, AdType.Reward);
+                Debug.Log("[AD] SDK 初始化完成");
             });
         }
 
@@ -199,6 +197,14 @@ namespace Middleware
             int count = info.readyAds.Count;
             if (info.isLoading) count++;
             return count;
+        }
+        
+        public void OnEnterHomeScene()
+        {
+            _isInGameScene = true;
+            Debug.Log("[AD] 进入游戏，检查补池");
+            TryPreload(REWARD_AD_ID, AdType.Reward);
+            TryPreload(TIP_TOOL_REWARD_AD_ID, AdType.Reward);
         }
 
         public void OnEnterGameScene()
@@ -744,10 +750,10 @@ namespace Middleware
         /// <summary>全屏广告结束后恢复之前被收起的横幅</summary>
         private void RestoreBannerAfterFullScreenAd()
         {
-            if (!_bannerHiddenByFullScreenAd) return;
-
-            _bannerHiddenByFullScreenAd = false;
-            ShowBanner();
+            // if (!_bannerHiddenByFullScreenAd) return;
+            //
+            // _bannerHiddenByFullScreenAd = false;
+            // ShowBanner();
         }
 
         #endregion

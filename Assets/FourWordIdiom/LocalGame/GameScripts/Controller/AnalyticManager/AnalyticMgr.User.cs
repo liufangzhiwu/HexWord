@@ -342,6 +342,8 @@ public partial class AnalyticMgr
 #endif
         }
         
+        ResolveAdFreeState(userData, out bool loginLifeAdFree, out bool loginLimitedAdFree);
+
         var properties = new Dictionary<string, object>
         {
             //时间类
@@ -356,7 +358,15 @@ public partial class AnalyticMgr
             { "total_item_cost", GameDataManager.Instance.UserData.GetTotalToolCost()},
             { "active_day", userData.activeDayCnt},
             { "life_day", lifeDays},
+            // 去广告状态：1 有 0 无（规范 #用户数据）
+            // ★ 以前只在 UserPropertie() 里上报，而那个入口只有「分层变化 / 切后台」才走，
+            //   登录（新装、每天首次进入）这条必然上报的路径里是没有这两个字段的，
+            //   导致后台很长时间看不到／看到的是旧值。这里补进登录上报。
+            { "Life_AdFree", loginLifeAdFree ? 1 : 0 },
+            { "LimitedTime_AdFree", loginLimitedAdFree ? 1 : 0 },
         };
+        Debug.Log($"[Analytics] 登录上报去广告状态: Life_AdFree={(loginLifeAdFree ? 1 : 0)}, " +
+                  $"LimitedTime_AdFree={(loginLimitedAdFree ? 1 : 0)}（countAsLogin={countAsLogin}）");
         Game.self?.Analytics.SetUserProperty(properties, Define.DataTarget.Think);
 
         // user_setOnce：首登时间与首装版本只写一次
@@ -415,6 +425,41 @@ public partial class AnalyticMgr
     }
 
     /// <summary>
+    /// 解析「去广告」状态，供埋点 user_set 使用（规范 #用户数据）：
+    ///  - lifeAdFree：是否已拥有**永久**去广告（type=6 RemoveAds）；
+    ///  - limitedAdFree：是否处于**限时**去广告有效期（type=7 RemoveDayAds 且未到期）。
+    ///
+    /// ★ 口径与 ShopManager.IsRemoveAdsOwned / IsRemoveAdsActive 保持一致，但**不依赖
+    ///   ShopManager 实例**：埋点可能在 ShopManager 初始化之前上报（登录上报），
+    ///   早期用实例兜底会把「已购买去广告」误报成 0。
+    /// ★ 到期判断用 GameTime.Now（服务器时间），和商店侧同源，避免改设备时间影响。
+    /// </summary>
+    private static void ResolveAdFreeState(UserData userData, out bool lifeAdFree, out bool limitedAdFree)
+    {
+        lifeAdFree = false;
+        limitedAdFree = false;
+
+        var items = userData != null ? userData.limitShopItems : null;
+        if (items == null) return;
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            if (item == null || !item.isget || item.isoverdate) continue;
+
+            if (item.adstype == (int)LimitRewordType.RemoveAds)
+            {
+                lifeAdFree = true;
+            }
+            else if (item.adstype == (int)LimitRewordType.RemoveDayAds)
+            {
+                if (string.IsNullOrEmpty(item.endtime) || item.GetEndTime() > GameTime.Now)
+                    limitedAdFree = true;
+            }
+        }
+    }
+
+    /// <summary>
     /// 用户属性（user_set）全量上报：金币/道具/关卡/去广告状态/用户分层等。
     /// 调用时机：登出（SetLogoutProperties）、用户分层变化（NotifyUserLayerChanged）。
     /// </summary>
@@ -441,14 +486,14 @@ public partial class AnalyticMgr
         int resetCount = userData.toolInfo.TryGetValue(ItemConstants.Audo, out var reset) ? reset.count : 0;
         int flyCount = userData.toolInfo.TryGetValue(ItemConstants.Fly, out var fly) ? fly.count : 0;
 
-        bool lifeAdFree = false;
-        bool limitedAdFree = false;
-        if (ShopManager.shopManager != null)
-        {
-            lifeAdFree = ShopManager.shopManager.IsRemoveAdsOwned();
-            limitedAdFree = ShopManager.shopManager.IsRemoveAdsActive();
-        }
-        
+        // ★ 直接查存档，不依赖 ShopManager 实例：
+        //   UserPropertie 可能在 ShopManager 初始化之前（SetLoginProperties）被调用，
+        //   以前用 ShopManager.shopManager != null 兜底，实例没起来时两个值恒为 0（上报成「无去广告」）。
+        ResolveAdFreeState(userData, out bool lifeAdFree, out bool limitedAdFree);
+        Debug.Log($"[Analytics] 去广告状态: Life_AdFree={(lifeAdFree ? 1 : 0)}, " +
+                  $"LimitedTime_AdFree={(limitedAdFree ? 1 : 0)}" +
+                  $"（limitShopItems={userData.limitShopItems?.Count ?? 0}, ShopManager={(ShopManager.shopManager != null)}）");
+
         string layer = ShopManager.shopManager != null ? ShopManager.shopManager.GetCurrentUserLayer() : string.Empty;   // 分层刷新 _layerConfig
 
         // ★ 分层口径自检：合法值只可能是 IAAxx / IAPxx（见 ShopManager.GetCurrentUserLayer）。

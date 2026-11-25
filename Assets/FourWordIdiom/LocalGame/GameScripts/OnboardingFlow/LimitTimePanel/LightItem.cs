@@ -50,16 +50,20 @@ public class LightItem : MonoBehaviour
             jianImage.sprite = AdvancedBundleLoader.SharedInstance.GetSpriteFromAtlas("jian");
             jianImage.SetNativeSize();
         }
-        
-        if (Curlimitdata.id >= 11)
+
+        // 最后一段只有 2 份奖励，第三个位置让给「幸运循环」标识
+        bool isLastStage = IsLastLanternItem() && id >= LimitTimeManager.Instance.GetLastLimitId();
+        if (isLastStage)
         {
-            huanObject.SetActive(true);
-            rewardList[2].gameObject.SetActive(false);
+            if (rewardList.Count > 2) rewardList[2].gameObject.SetActive(false);
         }
-        else
+        else if (rewardid < rewardList.Count)
         {
             rewardList[rewardid].gameObject.SetActive(true);
         }
+
+        // 幸运循环标识只在「最后一段 + 已进入循环」时显示，普通段/其它灯笼一律隐藏
+        RefreshLuckyLoopSign(isLastStage);
         
         count.fontSize = 70;
         switch (type)
@@ -121,19 +125,22 @@ public class LightItem : MonoBehaviour
     
     public void ShowComplete(int childcount)
     {
-        
-        if (Curlimitdata.id >=10)
+        if (Curlimitdata == null) return;
+
+        // 最后一个灯笼永远不打勾：它承载最后两段，最后一段是「幸运循环」，
+        // 完成后只重置该段进度继续可领（状态机见 LimitTimeManager.EnterLuckyLoop）。
+        if (IsLastLanternItem())
         {
-            LimitDataItem tDataItem = LimitTimeManager.Instance.GetLimitItems()[11];
-            // 防止切换到同一个 id 或已经切换过的 id
-            if (tDataItem != null && tDataItem.id != Curlimitdata.id)
+            LimitDataItem lastItem = LimitTimeManager.Instance.GetLimitItem(LimitTimeManager.Instance.GetLastLimitId());
+            // 倒数第二段（id 10）完成 → 这个灯笼换成最后一段的奖励显示
+            if (lastItem != null && lastItem.id != Curlimitdata.id)
             {
-                SetUI(tDataItem);
+                SetUI(lastItem);
             }
             return;
         }
-        
-        for (int i = 0; i < childcount; i++)
+
+        for (int i = 0; i < childcount && i < rewardList.Count; i++)
         {
             rewardList[i].transform.DOScale(Vector3.zero, 0.4f).OnComplete(() =>
             {
@@ -150,6 +157,41 @@ public class LightItem : MonoBehaviour
             });
         }
         
+    }
+
+    /// <summary>
+    /// 是否为「最后一个灯笼」：它承载倒数第二段 + 最后一段（如 id 10 → 11）两段配置，
+    /// 因此判定用 lastId - 1（id 10 与 11 都算）。
+    /// </summary>
+    private bool IsLastLanternItem()
+    {
+        if (Curlimitdata == null) return false;
+        var items = LimitTimeManager.Instance.GetLimitItems();
+        if (items == null || items.Count == 0) return false;
+        return Curlimitdata.id >= items[items.Count - 1].id - 1;
+    }
+
+    /// <summary>
+    /// 同步最后一个灯笼上的「幸运循环」标识（prefab 里的 huanObject / Text_huan）。
+    /// 只有「最后一段 + 已进入幸运循环」时显示，其余情况隐藏。
+    /// </summary>
+    private void RefreshLuckyLoopSign(bool isLastStage)
+    {
+        if (huanObject == null) return;
+
+        bool show = isLastStage && LimitTimeManager.Instance.IsLuckyLoop();
+        huanObject.SetActive(show);
+        if (!show) return;
+
+        Text label = huanObject.GetComponentInChildren<Text>(true);
+        if (label == null) return;
+
+        string text = MultilingualManager.Instance.GetString("luckyLoop");
+        // 多语言表没有该 key 时 GetString 会原样返回 key，此时保留 prefab 内置的「幸运循环」
+        if (!string.IsNullOrEmpty(text) && text != "luckyLoop")
+        {
+            label.text = text;
+        }
     }
 
     public void ShowReward(bool isPlaySound=true, Action callback=null)

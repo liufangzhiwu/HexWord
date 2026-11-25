@@ -305,19 +305,28 @@ public class StageHexController
         {
 
 #if UNITY_OPENHARMONY || UNITY_HUAWEI
-          
-            AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
+
+            // ★ 结算页礼包弹窗（破冰 / 复购）已经真占屏 → 本页不插屏，也不会把「主动让位」记成一次广告失败埋点。
+            //   与 ChessFinishView 的提前判断口径一致（AdRuleManager 内部也会让位，但那里会回调 false → 误记 InsetAdFail）。
+            if (ShopManager.shopManager != null && ShopManager.shopManager.IsSettlementGiftBlockingInterstitial)
             {
-                if (issuccess)
+                Debug.Log("[StageHexController] 结算页礼包弹窗已占位 → 本页跳过插屏");
+            }
+            else
+            {
+                AdRuleManager.Instance.TryShowInterstitial((issuccess) =>
                 {
-                    AnalyticMgr.InsetAdSuccess("关卡插屏");
-                    GameDataManager.Instance.UserData.totalInsetSeeAds++;
-                }
-                else
-                {
-                    AnalyticMgr.InsetAdFail("关卡插屏");
-                }
-            });
+                    if (issuccess)
+                    {
+                        AnalyticMgr.InsetAdSuccess("关卡插屏");
+                        GameDataManager.Instance.UserData.totalInsetSeeAds++;
+                    }
+                    else
+                    {
+                        AnalyticMgr.InsetAdFail("关卡插屏");
+                    }
+                });
+            }
             
             // // 显示插屏广告
             // Game.self.Ads.ShowInterstitial((bool issuccess) => 

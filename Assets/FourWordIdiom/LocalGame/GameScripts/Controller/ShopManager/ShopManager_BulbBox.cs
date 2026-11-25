@@ -49,7 +49,21 @@ public partial class ShopManager : MonoBehaviour
     /// 原因：GetItemScreen 是灯泡/火箭/复活等道具界面共用的，用兜底会在非灯泡界面
     /// 给灯泡礼包误记曝光失败分（曾复现：火箭界面关闭 → BulbBox01 F+3）。
     /// </param>
-    public void AddBulbExposureFail(ShopDataItem shownPack = null)
+    /// <param name="goldSnapshot">曝光那一刻的金币数（弹窗打开时快照）。
+    /// 需求口径是「曝光时金币 &lt; 80」，不是「关闭时」——玩家在弹窗内看了广告领金币后关闭，
+    /// 关闭时金币已经 ≥80，用实时值会把这次未付费曝光漏记。传 null 才退回实时值。</param>
+    /// <param name="bulbSnapshot">曝光那一刻的灯泡（提示灯 toolInfo[102]）持有数。</param>
+    /// <param name="rocketSnapshot">曝光那一刻的火箭（toolInfo[104]）持有数。需求要求灯泡和火箭都为 0。</param>
+    /// <param name="accompanyCancel">
+    /// 是否伴随「点击支付又退出」的 +5 一起结算（同一次 F 变化 = +5 + 3）。
+    /// true 时豁免 30 秒节流：+5 刚在取消回调里写完时间戳，不豁免的话这笔 +3 必被自己的冷却拦掉。
+    /// 只有本次 +5 真的加上（payfailapplied）才允许传 true，避免重复取消时绕过节流。
+    /// </param>
+    public void AddBulbExposureFail(ShopDataItem shownPack = null,
+                                    int? goldSnapshot = null,
+                                    int? bulbSnapshot = null,
+                                    int? rocketSnapshot = null,
+                                    bool accompanyCancel = false)
     {
         if (AuditConfig.IsAuditOpen)
         {
@@ -73,12 +87,19 @@ public partial class ShopManager : MonoBehaviour
         string source = "调用方传入";
         ShopDataItem bulb = shownPack;
 
-        int gold = GameDataManager.Instance.UserData.Gold;
-        int toolCount = GameDataManager.Instance.UserData.toolInfo[102].count;
+        // ★ 档位不参与本规则的判定：灯泡一号位出什么礼包（含 0.99 的第 1 档 BulbBox01），
+        //   只要满足「金币<80 且 灯泡=0 且 火箭=0 且 本次曝光未支付」就 +3。
+        //   （需求确认口径：这条曝光失败分是针对"1 号位推荐位"的，与礼包档位无关。）
 
-        if (gold >= 80 || toolCount > 0)
+        UserData userData = GameDataManager.Instance != null ? GameDataManager.Instance.UserData : null;
+        int gold = goldSnapshot ?? (userData != null ? userData.Gold : 0);
+        int bulbCount = bulbSnapshot ?? GetToolCount(userData, 102);
+        int rocketCount = rocketSnapshot ?? GetToolCount(userData, 104);
+
+        // 需求：金币 < 80，且灯泡、火箭持有数都为 0
+        if (gold >= 80 || bulbCount > 0 || rocketCount > 0)
         {
-             Debug.Log($"[Shop]AddBulbExposureFail 跳过: {bulb.produceNameId} 条件不满足(金币={gold}, 道具={toolCount})");
+             Debug.Log($"[Shop]AddBulbExposureFail 跳过: {bulb.produceNameId} 条件不满足(金币={gold}, 灯泡={bulbCount}, 火箭={rocketCount})");
             return;
         }
 
@@ -90,12 +111,15 @@ public partial class ShopManager : MonoBehaviour
         }
 
         // ★ F 每变化一次要间隔 FailScoreChangeInterval(30s) 才能再变（统一节流）
-        if (!TryBeginFailScoreChange(limit, "曝光失败+3"))
+        //   accompanyCancel=true：这笔 +3 是同一次「取消支付」事件的第二个组成部分，豁免节流。
+        string tag = accompanyCancel ? "曝光失败+3(随取消同事件)" : "曝光失败+3";
+        if (!TryBeginFailScoreChange(limit, tag, ignoreCooldown: accompanyCancel))
             return;
 
         float failBefore = limit.conversionFailScore;
         limit.conversionFailScore = failBefore + 3;
-        ApplyFailScoreChanged(limit, failBefore, limit.conversionFailScore, "曝光失败+3", $"来源={source}");
+        ApplyFailScoreChanged(limit, failBefore, limit.conversionFailScore, tag,
+                              $"来源={source}{(accompanyCancel ? "，同事件+5已计" : "")}");
 
         // ★ F 是决策权重输入，必须真正落盘：否则玩家直接杀进程 / 断电重启就白记了。
         //   用延迟提交合并写盘（1.5s），不占这一帧的 IO。
@@ -119,5 +143,13 @@ public partial class ShopManager : MonoBehaviour
             Debug.LogError($"[Shop]AddBulbExposureFail 写入落在表外(孤儿对象)! {bulb.produceNameId} " +
                            $"listCount={listCount} cacheCount={shoplimitDatas.Count} → 该失败分不会被存档，重进游戏会归零");
         }
+    }
+
+    /// <summary>取道具持有数（toolInfo 可能在旧存档里缺 key，做一次判空）。</summary>
+    private static int GetToolCount(UserData userData, int toolId)
+    {
+        if (userData == null || userData.toolInfo == null) return 0;
+        ToolInfo info;
+        return userData.toolInfo.TryGetValue(toolId, out info) && info != null ? info.count : 0;
     }
 }

@@ -135,7 +135,9 @@ public class DashCompetition : UIWindow
         
         if (progressComplete)
         {
-            // 优化动画触发条件
+            // ★ 面板打开时进度已完成：先触发鱼的移动（UpdateUI → FishMove），再发奖励，
+            //   否则鱼（fish/shadow）不会移动到终点就直接发奖
+            userfishItem.UpdateUI(false);
             StartCoroutine(PlayerBoxFlyAnim(null));
             yield break;
         }
@@ -170,8 +172,11 @@ public class DashCompetition : UIWindow
             {
                 // 优化动画触发条件
                 if (SystemManager.Instance.PanelIsShowing(PanelType.DashCompetition))
-                {             
-                    yield return new WaitForSeconds(0.9f);
+                {
+                    // ★ 等鱼先移动到终点（EnsureArriveFinish 返回移动所需秒数），再发奖励；
+                    //   原来固定等 0.9s 与 FishMove 的移动时长（最长 2.5s）不同步
+                    float arrivetime = userfishItem.EnsureArriveFinish();
+                    yield return new WaitForSeconds(Mathf.Max(0.9f, arrivetime + 0.1f));
                     StartCoroutine(PlayerBoxFlyAnim(null));
                 }
             }
@@ -238,6 +243,10 @@ public class DashCompetition : UIWindow
                 if (rankInfo.IsPlayer&&!GameDataManager.Instance.FishUserSave.iscliam)
                 {
                     Debug.Log("飞入动画" + rankInfo.name + "排名:" + rankInfo.Rank);
+                    // ★ 匀速移动后耗时可能超过固定等待，发箱前同样等玩家鱼到位
+                    float playerArrivetime = userfishItem.EnsureArriveFinish();
+                    if (playerArrivetime > 0)
+                        yield return new WaitForSeconds(playerArrivetime + 0.1f);
                     userfishItem.FlyBoxToTarget(GameDataManager.Instance.FishUserSave.rank);
                     //yield return new WaitForSeconds(0.5f);
                 }
@@ -247,6 +256,10 @@ public class DashCompetition : UIWindow
                     if (fishItem!=null&&!fishItem.isclaim)
                     {
                         Debug.Log("飞入动画"+rankInfo.name+"排名:"+rankInfo.Rank);
+                        // ★ AI 鱼同样先等它移动到终点，再飞奖励箱（原来固定时序，鱼可能还在半路）
+                        float aiArrivetime = fishItem.EnsureArriveFinish();
+                        if (aiArrivetime > 0)
+                            yield return new WaitForSeconds(aiArrivetime + 0.1f);
                         fishItem.FlyBoxToTarget(fishItem.fishaiSaveData.rank);
                         //yield return new WaitForSeconds(0.5f);
                     }

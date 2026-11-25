@@ -97,6 +97,35 @@ public class ShopGiftItem : ShopItemBase
     /// <summary>其它情况：itemHengList 上 GridLayoutGroup 的 spacing.x（复位值，与 Prefab 默认一致）</summary>
     private const float CommonHengSpacingX = 10f;
 
+    // ======================= ★ 未去广告礼包（ItemList 内是「去广告 + 金币」）排版 =======================
+    //
+    // 需求：「商店中，如果礼包还没去除广告（卡里同时展示 去广告 + 金币，如 ShopAdsItem），
+    //       礼包预制体下 ItemList（= giftsParent）的 HorizontalLayoutGroup：
+    //       left = -30、top = -20、spacing = 0；
+    //       ItemList 下的 GiftItem：去广告资源字体 y = -106、金币资源字体 y = -118、字号 85，且关闭 BestFit。」
+    //
+    // 判定口径：本次生成、且**直接挂在 giftsParent（ItemList）下**的 GiftItem 里存在去广告项（6/7）。
+    //   - ShopAdsItem（广告礼包卡）itemEnergyList 未配置 → 去广告 + 金币 都落在 ItemList，命中；
+    //   - ShopGiftItem 的礼包把去广告挂到 itemEnergyList → 不命中，保持 Prefab 默认，避免影响其它礼包。
+
+    private const int AdsGiftItemListPaddingLeft = -30;
+    private const int AdsGiftItemListPaddingTop = -20;
+    private const float AdsGiftItemListSpacing = 0f;
+    /// <summary>去广告资源（RemoveAds / RemoveDayAds）的数量文本 y</summary>
+    private const float AdsGiftRemoveAdsTextY = -106f;
+    /// <summary>金币资源（Coins）的数量文本 y</summary>
+    private const float AdsGiftCoinsTextY = -118f;
+    /// <summary>上述两类资源的数量文本字号</summary>
+    private const int AdsGiftTextFontSize = 85;
+
+    /// <summary>ItemList 上 HorizontalLayoutGroup 的默认值缓存（对象池复用，每次刷新都要按礼包复位）</summary>
+    private bool _giftsParentLayoutCached;
+    private int _defaultGiftsPaddingLeft;
+    private int _defaultGiftsPaddingTop;
+    private float _defaultGiftsSpacing;
+    /// <summary>当前是否处于「未去广告礼包」专属排版（用于只在状态切换时打日志 / 复位）</summary>
+    private bool _adsGiftLayoutApplied;
+
     // ======================= ★ 礼包底图（按礼包 + 去广告状态区分） =======================
 
     /// <summary>
@@ -1151,6 +1180,82 @@ public class ShopGiftItem : ShopItemBase
 
         // ★ 全部创建完之后再统一处理「itemEnergyList 只有 1 个子对象」的图标微调（依赖真实子节点数量）
         ApplySingleEnergyItemIconLayout();
+
+        // ★ 未去广告礼包卡（ItemList 内同时有 去广告 + 金币）的排版：布局 + 字体位置/字号
+        ApplyAdsGiftItemListLayout();
+    }
+
+    /// <summary>
+    /// 未去广告礼包卡排版：
+    ///  - ItemList（giftsParent）的 HorizontalLayoutGroup：left=-30、top=-20、spacing=0；
+    ///  - ItemList 下的 GiftItem：去广告字体 y=-106、金币字体 y=-118、字号 85（同时关闭 BestFit）；
+    ///  - 不命中时（含已购买永久去广告后去广告项被跳过）复位成 Prefab 默认值。
+    /// 用「本次新生成的 _spawnedGiftItems」判断，避免清池延迟导致旧子物体干扰。
+    /// </summary>
+    private void ApplyAdsGiftItemListLayout()
+    {
+        if (giftsParent == null) return;
+
+        HorizontalLayoutGroup layout = giftsParent.GetComponent<HorizontalLayoutGroup>();
+        if (layout == null) return;
+
+        if (!_giftsParentLayoutCached)
+        {
+            _defaultGiftsPaddingLeft = layout.padding.left;
+            _defaultGiftsPaddingTop = layout.padding.top;
+            _defaultGiftsSpacing = layout.spacing;
+            _giftsParentLayoutCached = true;
+        }
+
+        // 只认「直接挂在 ItemList 下」的项
+        List<GiftItem> itemListItem = new List<GiftItem>();
+        bool hasRemoveAdsItem = false;
+        for (int i = 0; i < _spawnedGiftItems.Count; i++)
+        {
+            GiftItem item = _spawnedGiftItems[i];
+            if (item == null || item.transform.parent != giftsParent) continue;
+
+            itemListItem.Add(item);
+            if (IsRemoveAdsRelatedType(item.GiftType))
+                hasRemoveAdsItem = true;
+        }
+
+        RectOffset padding = layout.padding;
+        if (hasRemoveAdsItem)
+        {
+            padding.left = AdsGiftItemListPaddingLeft;
+            padding.top = AdsGiftItemListPaddingTop;
+            layout.padding = padding;
+            layout.spacing = AdsGiftItemListSpacing;
+
+            for (int i = 0; i < itemListItem.Count; i++)
+            {
+                GiftItem item = itemListItem[i];
+                if (IsRemoveAdsRelatedType(item.GiftType))
+                    item.ApplyAdsCountTextLayout(AdsGiftRemoveAdsTextY, AdsGiftTextFontSize);
+                else if (item.GiftType == (int)LimitRewordType.Coins)
+                    item.ApplyCountTextLayout(AdsGiftCoinsTextY, AdsGiftTextFontSize);
+            }
+
+            LogShopItem($"未去广告礼包排版: ItemList left={AdsGiftItemListPaddingLeft}, top={AdsGiftItemListPaddingTop}, " +
+                        $"spacing={AdsGiftItemListSpacing}；去广告 y={AdsGiftRemoveAdsTextY}、金币 y={AdsGiftCoinsTextY}、" +
+                        $"字号={AdsGiftTextFontSize}、BestFit=关，项数={itemListItem.Count}，含去广告={hasRemoveAdsItem}");
+            _adsGiftLayoutApplied = true;
+        }
+        else
+        {
+            // 没命中：只在上一轮是专属排版时才复位 + 打日志，避免每张卡每次刷新都刷一条
+            if (!_adsGiftLayoutApplied) return;
+
+            padding.left = _defaultGiftsPaddingLeft;
+            padding.top = _defaultGiftsPaddingTop;
+            layout.padding = padding;
+            layout.spacing = _defaultGiftsSpacing;
+            _adsGiftLayoutApplied = false;
+
+            LogShopItem($"未去广告礼包排版: 复位 ItemList 默认 left={_defaultGiftsPaddingLeft}, " +
+                        $"top={_defaultGiftsPaddingTop}, spacing={_defaultGiftsSpacing}");
+        }
     }
 
     /// <summary>
@@ -1328,9 +1433,9 @@ public class ShopGiftItem : ShopItemBase
 
         RefreshGiftContentAfterPurchase();
 
-        // ★ 去广告礼包购买完成后，刷新商店内所有包含去广告的礼包（其他礼包里的「去掉广告」项应一并隐藏）
-        if (ContainsRemoveAdsContent())
-            RefreshAllRemoveAdsGiftPacksInShop();
+        // ★ 获得永久去广告后的「全店刷新」统一由 ShopItemBase.OnPurchaseSuccess 触发
+        //   （ShopManager.RefreshRemoveAdsCardsIfShopShowing → ShopScreen.RefreshRemoveAdsRelatedCards），
+        //   这里不再单独调用，避免同一轮重复刷新所有礼包。
 
         // ★ 限购次数用完（含迎新礼包）→ 隐藏自己并重排商店
         TryHideSelfIfSoldOut();
@@ -1345,6 +1450,15 @@ public class ShopGiftItem : ShopItemBase
     {
         if (shopDataItem == null || ShopManager.shopManager == null) return;
         if (!ShopManager.shopManager.IsLimitedOut(shopDataItem)) return;
+
+        // ★ 审核态：礼包不隐藏，保留卡片并把按钮置灰（不可重复购买）
+        if (AuditConfig.IsAuditOpen)
+        {
+            LogShopItem($"审核态限购已买满，保留礼包并置灰按钮: {shopDataItem.produceNameId}(限购={shopDataItem.limited})");
+            RefreshLimitCount();
+            RefreshButtonInteractable();
+            return;
+        }
 
         LogShopItem($"限购次数已用完，隐藏礼包: {shopDataItem.produceNameId}(id={shopDataItem.id}, 限购={shopDataItem.limited})");
 
@@ -1404,26 +1518,5 @@ public class ShopGiftItem : ShopItemBase
                 return true;
         }
         return false;
-    }
-
-    /// <summary>
-    /// 刷新商店内所有包含去广告内容的礼包。
-    /// 去广告礼包购买完成后，其他礼包里的「去掉广告」项也应一并隐藏（此时 IsRemoveAdsOwned() 已为 true）。
-    /// </summary>
-    private void RefreshAllRemoveAdsGiftPacksInShop()
-    {
-        if (SystemManager.Instance == null) return;
-
-        // 商店未显示时无需刷新（下次打开商店会按新状态重建礼包内容）
-        if (!SystemManager.Instance.PanelIsShowing(PanelType.ShopScreen)) return;
-
-        ShopScreen shopScreen = SystemManager.Instance.GetPanel(PanelType.ShopScreen) as ShopScreen;
-        if (shopScreen == null)
-        {
-            LogShopItem("RefreshAllRemoveAdsGiftPacksInShop: 未找到 ShopScreen 面板，跳过全量刷新");
-            return;
-        }
-
-        shopScreen.RefreshAllRemoveAdsGiftPacks();
     }
 }
