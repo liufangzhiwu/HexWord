@@ -97,6 +97,11 @@ namespace Middleware
             ad.loadAd(new AdParam.Builder().build());
         }
 
+        public void OnEnterHomeScene()
+        {
+            throw new NotImplementedException();
+        }
+
         public void OnEnterGameScene()
         {
             throw new NotImplementedException();

@@ -47,57 +47,38 @@ export class SendOAID {
     SendOAID.fetchAndSaveAttribution(ctx);
   }
 
-  // ---------- 静默查询（bug34）----------
-  // 只读核对当前 APP_TRACKING_CONSENT 是否已授予，【绝不弹任何框】：
-  //   · 已同意 → requestPermissionsFromUser 立即返回 0（不弹框）
-  //   · 已拒绝 → 立即返回 -1（系统对被拒过的权限不再弹标准框，静默返回）
-  //   · 故意不调 requestPermissionOnSetting：那是带开关的"二次授权弹窗"，启动/回前台不能打扰玩家
-  // 结果单独走 OnOAIDQueryResult 回包（区别于 OnOAIDClosedSignal：不埋点、不发奖、不动引导页）。
+  // ---------- 静默查询（bug34 / 广告追踪引导时序）----------
+  // 只读核对当前 APP_TRACKING_CONSENT 是否已授予，【保证不弹任何框】。
   //
-  // ★ 三态（重要）：
-  //   返回 '1'  = 已授权
-  //   返回 '0'  = 系统确实弹了标准授权框、玩家点了拒绝（dialogShownResults[0] === true）
-  //   返回 '-1' = **未决/无法判定**：系统压根没弹框（此前拒绝过、手机里关闭了广告标识符 /
-  //               限制了广告跟踪、企业策略禁用、申请异常等）
-  //   为什么必须区分：鸿蒙不是每个用户都会看到广告追踪系统弹窗，手机系统设置里可以关闭它。
-  //   旧实现把 authResults[0] !== 0 一律当"玩家拒绝"，会把这类从未做过选择的用户写成
-  //   adTrackingEnabled='0'，导致 IAA 分层判错、设置页开关"假关闭"且永远打不开（激励拿不到）。
-  //   Unity 侧收到 '-1' 时【不写存档】，保持"未决"。
+  // ★ 为什么不能再用 requestPermissionsFromUser（本次修复的核心）：
+  //   鸿蒙的 requestPermissionsFromUser 只在"已同意 / 已拒绝"时静默返回；
+  //   权限处于**未决（从未申请过）**状态时，它会**直接弹出系统权限框** —— 这是系统行为，控制不了。
+  //   之前的注释默认"只会静默返回"，于是启动 / 回前台的"静默核对"会把系统追踪框
+  //   抢在广告追踪引导页之前（或引导页还没点「继续」时）弹出，违反需求。
+  //
+  // 现在改用 checkAccessTokenSync（只读，不弹框）：
+  //   GRANTED → '1' 已授权
+  //   DENIED  → '0' 未授权（玩家拒绝 / 系统限制广告标识符，两者在系统层面同为"拿不到 OAID"）
+  //   异常     → '-1' 无法判定，Unity 侧不写存档
+  //
+  // 真正的授权请求只在 RequestOAID 里发生，且只在 Unity 引导页点「继续」后由闸门放行。
   static async QueryTrackingConsent(): Promise<string> {
     try {
+      const bundleInfo = bundleManager.getBundleInfoForSelfSync(
+        bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION);
+      const tokenId: number = bundleInfo.appInfo.accessTokenId;
+
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
-      const ctx = (globalThis.AbilityContext ?? getContext()) as common.Context;
-      const permissions: Array<Permissions> = [SendOAID.PERMISSION_TRACKING];
+      const status: abilityAccessCtrl.GrantStatus =
+        atManager.checkAccessTokenSync(tokenId, SendOAID.PERMISSION_TRACKING);
 
-      const result: PermissionRequestResult =
-        await atManager.requestPermissionsFromUser(ctx, permissions);
-
-      const granted: boolean =
-        result != null && result.authResults != null &&
-        result.authResults.length > 0 && result.authResults[0] === 0;
-
-      if (granted) {
-        hilog.info(0x0000, 'OAIDPage', '静默查询广告追踪授权: granted=1');
-        return '1';
-      }
-
-      // dialogShownResults（API 12+）：本次申请系统是否真的弹了框
-      //   true  = 弹了框被拒 → 玩家真实拒绝，回 '0'
-      //   false / 缺失 = 系统没弹框（此前拒过、系统禁用广告标识符/限制广告跟踪、策略禁用）
-      //                  → 属于"未决"，回 '-1'，绝不能当成玩家拒绝
-      const dialogShown: boolean =
-        result != null && result.dialogShownResults != null &&
-        result.dialogShownResults.length > 0 && result.dialogShownResults[0] === true;
-
+      const granted: boolean = status === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
       hilog.info(0x0000, 'OAIDPage',
-        `静默查询广告追踪授权: granted=0, dialogShown=${dialogShown}`);
-
-      return dialogShown ? '0' : '-1';
+        `静默查询广告追踪授权（checkAccessToken 只读，不弹框）: status=${status}, granted=${granted}`);
+      return granted ? '1' : '0';
     } catch (err) {
-      // 申请异常（系统服务不可用 / 权限被策略禁用等）同样无法判定，按未决处理，
-      // 避免把"查不到"写成"玩家拒绝"
       hilog.info(0x0000, 'OAIDPage',
-        `静默查询广告追踪授权异常: ${(err as BusinessError).code}, ${(err as BusinessError).message}`);
+        `静默查询广告追踪授权异常（不弹框，按未决处理）: ${(err as BusinessError).code}, ${(err as BusinessError).message}`);
       return '-1';
     }
   }

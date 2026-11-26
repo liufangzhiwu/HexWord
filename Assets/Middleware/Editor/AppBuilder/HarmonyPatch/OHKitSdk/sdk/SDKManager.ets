@@ -373,12 +373,11 @@ export class SDKManager {
 
   /**
    * 静默查询 APP_TRACKING_CONSENT 当前是否已授予（bug34）。
-   * 只读核对：不弹任何系统框（已同意/已拒绝时 requestPermissionsFromUser 都直接返回），
-   * 也绝不走 requestPermissionOnSetting 那个带开关的二次授权弹窗。
+   * 只读核对：用 checkAccessTokenSync，**任何情况下都不会弹系统框**，也绝不走
+   * requestPermissionOnSetting 那个带开关的二次授权弹窗。
+   * （注意：以前用的 requestPermissionsFromUser 在权限未决时会直接弹框，已废弃。）
    * 结果由 SendOAID 经 TuanjieSendMessage('PushMessageReceiver', 'OnOAIDQueryResult', state) 回传：
-   *   '1' 已授权 / '0' 玩家拒绝（系统确实弹过框）/ '-1' 未决（系统没弹框，Unity 不写存档）。
-   * ★ 鸿蒙不是每个用户都会弹广告追踪系统框（手机设置里可关闭广告标识符/限制广告跟踪），
-   *   这类用户只能得到 '-1'，绝不能当成"玩家拒绝"。
+   *   '1' 已授权 / '0' 未授权 / '-1' 无法判定（异常，Unity 不写存档）。
    */
   static async QueryTrackingConsent(): Promise<Array<string>> {
     hilog.info(0x0000, 'SDKKit', 'QueryTrackingConsent: 静默查询广告追踪授权状态');
